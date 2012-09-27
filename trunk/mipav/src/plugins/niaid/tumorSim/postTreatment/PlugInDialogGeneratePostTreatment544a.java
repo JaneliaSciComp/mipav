@@ -42,7 +42,7 @@ import java.util.HashSet;
 
 import javax.swing.*;
 
-import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap543a;
+import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap544a;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
@@ -56,7 +56,7 @@ import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap543a;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGeneratePostTreatment544a extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGeneratePostTreatment543a generatePostAlgo = null;
+    private PlugInAlgorithmGeneratePostTreatment544a generatePostAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -152,7 +152,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGeneratePostTreatment543a() { }
+    public PlugInDialogGeneratePostTreatment544a() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -160,7 +160,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGeneratePostTreatment543a(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogGeneratePostTreatment544a(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -201,7 +201,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment543a) {
+        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment544a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generatePostAlgo.isCompleted() == true)) {
@@ -237,7 +237,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment543a(image1, image1Tumor, image1Intensity, image1IntensityStd, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment544a(image1, image1Tumor, image1Intensity, image1IntensityStd, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
                                                                             image2, image2Tumor, image2Intensity, image2IntensityStd, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
                                                                             postThresholdLower, postThresholdUpper, postVOI, normalTissue, normalTissueStd);
 
@@ -288,7 +288,7 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate post treatment map 543a");
+        setTitle("Generate post treatment map 544a");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -358,19 +358,19 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
         double intensity1 = 109, intensity1Std = 10, intensity2 = 201, intensity2Std = 20, normalTissue = 70, normalTissueStd = 7;
         String intenSearch = Preferences.getData(), subSearch;
         try {
-            int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap543a.INTENSITY1);
+            int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap544a.INTENSITY1);
 
-            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.INTENSITY1.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.INTENSITY1.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            intensity1Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            intensity1Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
             loc+=2;
-            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.INTENSITY2.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.INTENSITY2.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            intensity2Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            intensity2Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
             loc+=2;
-            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.NORMAL_TISSUE.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.NORMAL_TISSUE.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            normalTissueStd = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.STD_DEV.length(), intenSearch.indexOf(';', loc)).trim());
+            normalTissueStd = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.STD_DEV.length(), intenSearch.indexOf(';', loc)).trim());
         } catch(Exception e) {
             intensity1 = 109;
             intensity1Std = (int)(intensity1*.1);
@@ -397,8 +397,8 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
         double noise1 = 1, noise2 = 1;
         String noiseSearch = Preferences.getData();
         try {
-            int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap543a.NOISE_LEVEL);
-            double noise = Double.valueOf(noiseSearch.substring(loc+PlugInAlgorithmCreateTumorMap543a.NOISE_LEVEL.length(), noiseSearch.indexOf(';', loc)).trim());
+            int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap544a.NOISE_LEVEL);
+            double noise = Double.valueOf(noiseSearch.substring(loc+PlugInAlgorithmCreateTumorMap544a.NOISE_LEVEL.length(), noiseSearch.indexOf(';', loc)).trim());
             noise1 = noise2 = noise;
         } catch(Exception e) {
             noise1 = noise2 = .05;

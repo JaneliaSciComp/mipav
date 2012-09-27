@@ -30,7 +30,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment543a;
+import niaid.tumorSim.simParams.PlugInDialogSimulateParams544a;
 
 /**
  * 
@@ -44,9 +44,9 @@ import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment543a;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGeneratePostTreatment543a implements PlugInAlgorithm {
+public class PlugInSimulateParams544a implements PlugInGeneric {
 
-    public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "543a"};
+    public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "544a"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -59,12 +59,8 @@ public class PlugInGeneratePostTreatment543a implements PlugInAlgorithm {
      * @see    ModelImage
      * @see    ViewJFrameImage
      */
-    public void run(Frame parentFrame, ModelImage image) {
-
-        if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogGeneratePostTreatment543a(parentFrame, image);
-        } else {
-            MipavUtil.displayError("PlugInDialogGeneratePostTreatment only runs on an image frame.");
-        }
+    public void run() {
+        new PlugInDialogSimulateParams544a(false);
+        
     }
 }
