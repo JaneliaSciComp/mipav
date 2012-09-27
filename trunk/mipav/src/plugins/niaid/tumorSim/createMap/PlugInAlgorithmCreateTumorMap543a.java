@@ -399,6 +399,8 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         VOIExtractionAlgo.setRunningInSeparateThread(false);
         VOIExtractionAlgo.run();
         
+        VOIExtractionAlgo.disposeLocal();
+        
 //        ViewJFrameImage imageFrame = new ViewJFrameImage(imageBin);
 //        imageFrame.setVisible(true);
         
@@ -459,6 +461,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         subsample.setVisible(false);
         subsample.setProcessIndep(false);
         subsample.setDoVOI(false);
+        subsample.setQuietRunning(true);
         subsample.setSubsamplingRate(subsampleAmount);
         subsample.setSeparateThread(false);
         subsample.actionPerformed(new ActionEvent(this, 0, "OK"));

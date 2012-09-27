@@ -71,9 +71,6 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
 
     /** This source image is typically set by the constructor */
     private ModelImage image; // 
-
-    private PlugInDialogCreateTumorMap543a createTumorDialog;
-
     //private PlugInDialogGeneratePostTreatment543a generatePostTreatmentDialog;
 
     private JTextField tumorSizeDevText;
@@ -85,6 +82,8 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
     private double tumorSizeDev;
 
     private int iterNum;
+
+    private PlugInDialogCreateTumorMap543a createTumorDialogTemplate;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -102,7 +101,7 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
     public PlugInDialogSimulateParams543a(boolean modal) {
         super(modal); 
         
-        createTumorDialog = new PlugInDialogCreateTumorMap543a();
+        createTumorDialogTemplate = new PlugInDialogCreateTumorMap543a();
         //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
         init();
@@ -185,7 +184,7 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JPanel createTumorPanel = createTumorDialog.buildMainPanel(false, gui);
+        JPanel createTumorPanel = createTumorDialogTemplate.buildMainPanel(false, gui);
         mainPanel.add(createTumorPanel, gbc);
         
         gbc.gridx++;
@@ -237,33 +236,67 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
     } //end setVariables()
 
     protected void callAlgorithm() {
-        Random r = new Random();
-        for(int i=0; i<iterNum; i++) {
-            Preferences.data("************Begin Iteration "+(i+1)+"*****************\n");
-            
-            double radius = 0;
-            while(radius <= 0) {
-                radius = createTumorDialog.getRadiusField() + r.nextGaussian()*tumorSizeDev;
-            }
-            
-            Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
-            
-            createTumorDialog.setRadiusField(radius);
-            createTumorDialog.setIter((i+1));
-            createTumorDialog.setSeparateThread(false);
-            createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
-            createTumorDialog.dispose();
-            
-//            generatePostTreatmentDialog.setSeparateThread(false);
-//            generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
-//            generatePostTreatmentDialog.setImage2ComboItem(createTumorDialog.getTumorSimAlgo().getImage2a().getImageName());
-//            generatePostTreatmentDialog.setImage1TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage1aTumor().getImageName());
-//            generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
-//            generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
-            
-            Preferences.data("************End Iteration "+(i+1)+"*****************\n");
-        }
+        Thread t = new Thread(new RunTumorMap());
+        t.start();
         
         this.dispose();
     }
+    
+    private class RunTumorMap implements Runnable {
+
+        @Override
+        public void run() {
+            performAlgComp();
+        }
+        
+        private void performAlgComp() {
+            Random r = new Random();
+
+            for(int i=0; i<iterNum; i++) {
+                Preferences.data("************Begin Iteration "+(i+1)+"*****************\n");
+                
+                PlugInDialogCreateTumorMap543a createTumorDialog = new PlugInDialogCreateTumorMap543a(createTumorDialogTemplate, false);
+                
+                double radius = 0;
+                while(radius <= 0) {
+                    radius = createTumorDialog.getRadiusField() + r.nextGaussian()*tumorSizeDev;
+                }
+                
+                Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
+                
+                createTumorDialog.setRadiusField(radius);
+                createTumorDialog.setIter((i+1));
+                createTumorDialog.setSeparateThread(false);
+                createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
+                createTumorDialog.dispose();
+                
+                ViewUserInterface ui = ViewUserInterface.getReference();
+                
+                tryToCleanUp(ui);
+                
+//                generatePostTreatmentDialog.setSeparateThread(false);
+//                generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
+//                generatePostTreatmentDialog.setImage2ComboItem(createTumorDialog.getTumorSimAlgo().getImage2a().getImageName());
+//                generatePostTreatmentDialog.setImage1TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage1aTumor().getImageName());
+//                generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
+//                generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
+                
+                Preferences.data("************End Iteration "+(i+1)+"*****************\n");
+            }
+        }
+
+        private void tryToCleanUp(ViewUserInterface ui) {
+            System.out.println("memory before: "+Runtime.getRuntime().freeMemory());
+            
+            ui.getImageFrameVector().removeAllElements();
+            Runtime.getRuntime().gc();
+            
+            System.out.println("memory after: "+Runtime.getRuntime().freeMemory());
+            System.out.println("Done.");
+            
+        }
+        
+    }
+
+    
 }

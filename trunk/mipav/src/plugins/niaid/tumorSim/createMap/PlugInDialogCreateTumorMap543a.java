@@ -189,6 +189,14 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
         init();
     }
     
+    public PlugInDialogCreateTumorMap543a(PlugInDialogCreateTumorMap543a template, boolean modal) {
+        this(modal);
+        
+        template.saveDefaults();
+        
+        this.loadDefaults();
+    }
+    
     //  ~ Methods --------------------------------------------------------------------------------------------------------
     //
     // ************************************************************************
@@ -309,6 +317,8 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
         System.out.println("Before: "+Runtime.getRuntime().freeMemory());
         
         if(tumorSimAlgo != null) {
+            
+            tumorSimAlgo = null;
             
             ViewUserInterface.getReference().closeAllImages();
             
