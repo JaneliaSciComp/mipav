@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
@@ -193,22 +194,11 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         setBasicInfo(fileInfoImage1TumorOnly, DataType.FLOAT);
         setBasicInfo(fileInfoImage2TumorOnly, DataType.FLOAT);
         
-        ModelImage image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, isRunningInSeparateThread());
-        image1a.setImageName("image1a");
-        ModelImage image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, isRunningInSeparateThread());
-        image2a.setImageName("image2a");
+        ModelImage image1a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[]{xyDim, xyDim, zDim}, "image1a", null);
+        ModelImage image2a = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[]{xyDim, xyDim, zDim}, "image2a", null);
         
-        ModelImage image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly, isRunningInSeparateThread());
-        image1aTumor.setImageName("image1a_tumor");
-        ModelImage image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly, isRunningInSeparateThread());
-        image2aTumor.setImageName("image2a_tumor");
-        
-        if(isRunningInSeparateThread()) {
-            image1a.getParentFrame().setVisible(false);
-            image2a.getParentFrame().setVisible(false);
-            image1aTumor.getParentFrame().setVisible(false);
-            image2aTumor.getParentFrame().setVisible(false);
-        }
+        ModelImage image1aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[]{xyDim, xyDim, zDim}, "image1a_tumor", null);
+        ModelImage image2aTumor = new ModelImage(DataType.DOUBLE.getLegacyNum(), new int[]{xyDim, xyDim, zDim}, "image2a_tumor", null);
         
         if(iter != -1) {
             image1a.setImageName(image1a.getImageName()+"_iter"+iter);
@@ -366,8 +356,8 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         FileInfoImageXML fileInfo = (FileInfoImageXML) image.getFileInfo()[0].clone();
         fileInfo.setDataType(DataType.BOOLEAN.getLegacyNum());
         
-        ModelImage imageBin = ViewUserInterface.getReference().createBlankImage(fileInfo);
-        imageBin.getParentFrame().setVisible(false);
+        ModelImage imageBin = new ModelImage(DataType.BOOLEAN.getLegacyNum(), image.getFileInfo()[0].getExtents(), "image1a_tumor", null);
+        //imageBin.getParentFrame().setVisible(false);
         
         double intensityValue = 0.0;
         for(int i=0; i<image.getDataSize(); i++) {
@@ -398,6 +388,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         image.registerVOI(imageBin.getVOIs().get(0));
         
+        imageBin.disposeLocal();
         ViewUserInterface.getReference().unRegisterImage(imageBin);
     }
 
@@ -459,6 +450,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         subsample.actionPerformed(new ActionEvent(this, 0, "OK"));
 
         subsample.getResultImage().getParentFrame().setVisible(false);
+        image.disposeLocal();
         ViewUserInterface.getReference().unRegisterImage(image);
         return subsample.getResultImage();
     }
