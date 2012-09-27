@@ -165,6 +165,9 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
 
 	private JRadioButton rStarButton;
 
+	/** Iteration number */
+    private int iter;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -250,6 +253,10 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
      */
     protected void callAlgorithm() {
 
+        if(tumorSimAlgo != null) {
+            tumorSimAlgo.finalize();
+        }
+        
         try {
             double noiseParam;
             switch(noise) {
@@ -265,6 +272,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
             tumorSimAlgo = new PlugInAlgorithmCreateTumorMap543a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
                     intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noise, noiseParam, normalTissue, stdDevNormal);
 
+            tumorSimAlgo.setIter(iter);
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
@@ -297,6 +305,23 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
 
     } // end callAlgorithm()
 
+    public void dispose() {
+        System.out.println("Before: "+Runtime.getRuntime().freeMemory());
+        
+        if(tumorSimAlgo != null) {
+            
+            ViewUserInterface.getReference().closeAllImages();
+            
+            Runtime.getRuntime().gc();
+            
+            System.out.println("After: "+Runtime.getRuntime().freeMemory());
+        }
+        
+        
+
+        super.dispose();
+    }
+    
     /**
      * Used in turning your plugin into a script
      */
@@ -660,5 +685,9 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
             diff = Math.abs(1-diff);
         }
         return diff;
+    }
+
+    public void setIter(int i) {
+        this.iter = i;
     }
 }
