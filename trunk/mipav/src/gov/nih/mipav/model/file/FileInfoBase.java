@@ -231,7 +231,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         
         public static Unit getUnitFromAbbrev(String abbrev) {
             for(Unit u : Unit.values()) {
-                if(u.str.equals(abbrev)) {
+                if(u.abbrev.equals(abbrev)) {
                     return u;
                 }
             }
