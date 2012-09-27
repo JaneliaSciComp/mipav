@@ -74,7 +74,7 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
 
     private PlugInDialogCreateTumorMap543a createTumorDialog;
 
-    private PlugInDialogGeneratePostTreatment543a generatePostTreatmentDialog;
+    //private PlugInDialogGeneratePostTreatment543a generatePostTreatmentDialog;
 
     private JTextField tumorSizeDevText;
 
@@ -103,7 +103,7 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
         super(modal); 
         
         createTumorDialog = new PlugInDialogCreateTumorMap543a();
-        generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
+        //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
         init();
     }
@@ -189,13 +189,13 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
         mainPanel.add(createTumorPanel, gbc);
         
         gbc.gridx++;
-        tumorSizeDevText = gui.buildDecimalField("Tumor radius standard deviation: ", 0);
+        tumorSizeDevText = gui.buildDecimalField("Tumor radius standard deviation: ", 1);
         mainPanel.add(tumorSizeDevText.getParent(), gbc);
         
-        gbc.gridx = 0;
-        gbc.gridy++;
-        JPanel generatePostPanel = generatePostTreatmentDialog.buildMainPanel(false, gui);
-        mainPanel.add(generatePostPanel, gbc);
+//        gbc.gridx = 0;
+//        gbc.gridy++;
+//        JPanel generatePostPanel = generatePostTreatmentDialog.buildMainPanel(false, gui);
+//        mainPanel.add(generatePostPanel, gbc);
         
         gbc.gridx++;
         iterNumText = gui.buildIntegerField("Number of iterations: ", 10);              
@@ -252,12 +252,12 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
             createTumorDialog.setSeparateThread(false);
             createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
             
-            generatePostTreatmentDialog.setSeparateThread(false);
-            generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
-            generatePostTreatmentDialog.setImage2ComboItem(createTumorDialog.getTumorSimAlgo().getImage2a().getImageName());
-            generatePostTreatmentDialog.setImage1TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage1aTumor().getImageName());
-            generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
-            generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
+//            generatePostTreatmentDialog.setSeparateThread(false);
+//            generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
+//            generatePostTreatmentDialog.setImage2ComboItem(createTumorDialog.getTumorSimAlgo().getImage2a().getImageName());
+//            generatePostTreatmentDialog.setImage1TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage1aTumor().getImageName());
+//            generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
+//            generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
             
             Preferences.data("************End Iteration "+i+"*****************\n");
         }
