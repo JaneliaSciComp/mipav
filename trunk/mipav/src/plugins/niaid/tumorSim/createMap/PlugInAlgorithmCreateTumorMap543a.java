@@ -85,10 +85,6 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
     private double intensity1, intensity2;
-    /** Result images */
-    private ModelImage image1a, image2a;
-    /** Tumor only images */
-    private ModelImage image1aTumor, image2aTumor;
     private int[][] sphere;
     /** Amount of subsampling to occur */
     private int subsampleAmount;
@@ -171,17 +167,6 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
     }
     
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * Prepares this class for destruction.
-     */
-    public void finalize() {
-        image1a = null;
-        image2a = null;
-        image1aTumor = null;
-        image2aTumor = null;
-        super.finalize();
-    }
     
     /**
      * Starts the algorithm.  At the conclusion of this method, AlgorithmBase reports to any
@@ -208,14 +193,14 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         setBasicInfo(fileInfoImage1TumorOnly, DataType.FLOAT);
         setBasicInfo(fileInfoImage2TumorOnly, DataType.FLOAT);
         
-        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, isRunningInSeparateThread());
+        ModelImage image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, isRunningInSeparateThread());
         image1a.setImageName("image1a");
-        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, isRunningInSeparateThread());
+        ModelImage image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, isRunningInSeparateThread());
         image2a.setImageName("image2a");
         
-        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly, isRunningInSeparateThread());
+        ModelImage image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly, isRunningInSeparateThread());
         image1aTumor.setImageName("image1a_tumor");
-        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly, isRunningInSeparateThread());
+        ModelImage image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly, isRunningInSeparateThread());
         image2aTumor.setImageName("image2a_tumor");
         
         if(isRunningInSeparateThread()) {
@@ -329,6 +314,13 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
 
         image1aTumor.calcMinMax();
         image2aTumor.calcMinMax();
+        
+        if (isRunningInSeparateThread()) {
+            image1a.getParentFrame().setVisible(true);
+            image2a.getParentFrame().setVisible(true);
+            image1aTumor.getParentFrame().setVisible(true);
+            image2aTumor.getParentFrame().setVisible(true);
+        } 
         
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
@@ -564,22 +556,6 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         fileInfo.setEndianess(false);
         fileInfo.setOffset(0);
         fileInfo.setFileDirectory(Preferences.getPreferencesDir());
-    }
-    
-    public ModelImage getImage1a() {
-        return image1a;
-    }
-
-    public ModelImage getImage2a() {
-        return image2a;
-    }
-    
-public ModelImage getImage1aTumor() {
-        return image1aTumor;
-    }
-
-    public ModelImage getImage2aTumor() {
-        return image2aTumor;
     }
 
 private class RayleighRandom extends Random {

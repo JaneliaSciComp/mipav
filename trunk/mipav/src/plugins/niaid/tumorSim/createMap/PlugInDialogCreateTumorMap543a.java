@@ -234,13 +234,6 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
     public void algorithmPerformed(AlgorithmBase algorithm) {
        if (algorithm instanceof PlugInAlgorithmCreateTumorMap543a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
-            
-            if ((tumorSimAlgo.isCompleted()) && !isQuietRunning()) {
-                tumorSimAlgo.getImage1a().getParentFrame().setVisible(true);
-                tumorSimAlgo.getImage2a().getParentFrame().setVisible(true);
-                tumorSimAlgo.getImage1aTumor().getParentFrame().setVisible(true);
-                tumorSimAlgo.getImage2aTumor().getParentFrame().setVisible(true);
-            } 
 
             if (tumorSimAlgo.isCompleted()) {
                 insertScriptLine();
