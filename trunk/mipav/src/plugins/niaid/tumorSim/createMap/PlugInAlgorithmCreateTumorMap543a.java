@@ -378,12 +378,12 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         VOIExtractionAlgo.setRunningInSeparateThread(false);
         VOIExtractionAlgo.run();
         
-        ViewJFrameImage imageFrame = new ViewJFrameImage(imageBin);
-        imageFrame.setVisible(true);
+//        ViewJFrameImage imageFrame = new ViewJFrameImage(imageBin);
+//        imageFrame.setVisible(true);
         
         image.registerVOI(imageBin.getVOIs().get(0));
         
-        //ViewUserInterface.getReference().unRegisterImage(imageBin);
+        ViewUserInterface.getReference().unRegisterImage(imageBin);
     }
 
     private void countPixels(ModelImage image, double intensity) {
