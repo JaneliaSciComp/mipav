@@ -136,7 +136,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
     private Double noiseMax;
 
     /** Whether partial-voluming minimization using perturbation should occur. */
-    private boolean doPerturbRadius = true;
+    //private boolean doPerturbRadius = true; no longer necessary since PV of acquisition taken into account
 
     private JTextField normalTissueText;
 
@@ -348,14 +348,6 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
 
     public PlugInAlgorithmCreateTumorMap543a getTumorSimAlgo() {
         return tumorSimAlgo;
-    }
-
-    public boolean doPerturbRadius() {
-        return doPerturbRadius;
-    }
-
-    public void setDoPerturbRadius(boolean doPerturbRadius) {
-        this.doPerturbRadius = doPerturbRadius;
     }
 
     public JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
@@ -628,10 +620,6 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
 	    doCenter = doCenterCheck.isSelected();
 
 	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
-	    
-	    if(doPerturbRadius) {
-	        initRadius = perturbRadius(initRadius, xyRes, zRes);
-	    }
 	    
 		return true;
 	} //end setVariables()
