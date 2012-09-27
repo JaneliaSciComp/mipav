@@ -106,6 +106,8 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
     private double stdDevIntensity1, stdDevIntensity2, stdDevNormal;
     /** Noise mode */
     private NoiseMode noise;
+    /** Alg iteration number */
+    private int iter = -1;
    
     public PlugInAlgorithmCreateTumorMap543a() {
         // TODO Auto-generated constructor stub
@@ -174,8 +176,10 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        destImage = null;
-        srcImage = null;
+        image1a = null;
+        image2a = null;
+        image1aTumor = null;
+        image2aTumor = null;
         super.finalize();
     }
     
@@ -191,25 +195,42 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         FileInfoImageXML fileInfoImage1TumorOnly = new FileInfoImageXML("image1a_tumor", null, FileUtility.RAW);
         FileInfoImageXML fileInfoImage2TumorOnly = new FileInfoImageXML("image2a_tumor", null, FileUtility.RAW);
         
+        if(iter != -1) {
+            fileInfoImage1.setFileName(fileInfoImage1.getFileName()+"_iter"+iter);
+            fileInfoImage1TumorOnly.setFileName(fileInfoImage1TumorOnly.getFileName()+"_iter"+iter);
+            fileInfoImage2.setFileName(fileInfoImage2.getFileName()+"_iter"+iter);
+            fileInfoImage2TumorOnly.setFileName(fileInfoImage2TumorOnly.getFileName()+"_iter"+iter);
+        }
+        
         setBasicInfo(fileInfoImage1, DataType.FLOAT);
         setBasicInfo(fileInfoImage2, DataType.FLOAT);
         
         setBasicInfo(fileInfoImage1TumorOnly, DataType.FLOAT);
         setBasicInfo(fileInfoImage2TumorOnly, DataType.FLOAT);
         
-        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
-        image1a.getParentFrame().setVisible(false);
+        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, isRunningInSeparateThread());
         image1a.setImageName("image1a");
-        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
+        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, isRunningInSeparateThread());
         image2a.setImageName("image2a");
-        image2a.getParentFrame().setVisible(false);
         
-        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly);
-        image1aTumor.getParentFrame().setVisible(false);
+        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly, isRunningInSeparateThread());
         image1aTumor.setImageName("image1a_tumor");
-        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly);
+        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly, isRunningInSeparateThread());
         image2aTumor.setImageName("image2a_tumor");
-        image2aTumor.getParentFrame().setVisible(false);
+        
+        if(isRunningInSeparateThread()) {
+            image1a.getParentFrame().setVisible(false);
+            image2a.getParentFrame().setVisible(false);
+            image1aTumor.getParentFrame().setVisible(false);
+            image2aTumor.getParentFrame().setVisible(false);
+        }
+        
+        if(iter != -1) {
+            image1a.setImageName(image1a.getImageName()+"_iter"+iter);
+            image1aTumor.setImageName(image1aTumor.getImageName()+"_iter"+iter);
+            image2a.setImageName(image2a.getImageName()+"_iter"+iter);
+            image2aTumor.setImageName(image2aTumor.getImageName()+"_iter"+iter);
+        }
         
         setNormalTissue(image1a, stdDevIntensity1);
         setNormalTissue(image2a, stdDevIntensity2);
@@ -407,6 +428,13 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         for(int i=0; i<image.getDataSize(); i++) {
             image.set(i, normalTissue+r.nextGaussian()*stdDevIntensity);
         }
+    }
+
+    /**
+     * @param iter the iter to set
+     */
+    public void setIter(int iter) {
+        this.iter = iter;
     }
 
     private void generateNoise(ModelImage image) {
