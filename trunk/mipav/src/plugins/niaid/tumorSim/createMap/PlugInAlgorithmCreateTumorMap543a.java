@@ -222,20 +222,20 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         	xCenter = r.nextInt(xyDim);
             yCenter = r.nextInt(xyDim);
             doBoundCheck = true;
-            if((xyDim-2*xyLargerRadius) < 0) {
+            if((xyDim-1-2*xyLargerRadius) < 0) {
                 Preferences.data("Unable to enclose tumor within FOV due to large radius. \n");
             }
         } else { //ensures entire tumor is inside image
-        	xCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
-            yCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
+        	xCenter = r.nextInt(xyDim-1-2*xyLargerRadius)+xyLargerRadius;
+            yCenter = r.nextInt(xyDim-1-2*xyLargerRadius)+xyLargerRadius;
         }
         
         int zLargerRadius = (int)Math.ceil(defineLargerRadius()/zRes);
         
-        if(!doCenter || (zDim-2*zLargerRadius) <= 0) {
+        if(!doCenter || (zDim-1-2*zLargerRadius) <= 0) {
         	zCenter = r.nextInt(zDim);
         } else {
-        	zCenter = r.nextInt(zDim-2*zLargerRadius)+zLargerRadius;
+        	zCenter = r.nextInt(zDim-1-2*zLargerRadius)+zLargerRadius;
         	doBoundCheck = true;
         }
         
