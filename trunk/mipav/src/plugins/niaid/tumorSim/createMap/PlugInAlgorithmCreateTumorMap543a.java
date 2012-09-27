@@ -218,10 +218,13 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         doBoundCheck = false;
         Random r = new Random(); 
-        if(!doCenter) {
+        if(!doCenter || (xyDim-2*xyLargerRadius) <= 0) {
         	xCenter = r.nextInt(xyDim);
             yCenter = r.nextInt(xyDim);
             doBoundCheck = true;
+            if((xyDim-2*xyLargerRadius) < 0) {
+                Preferences.data("Unable to enclose tumor within FOV due to large radius. \n");
+            }
         } else { //ensures entire tumor is inside image
         	xCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
             yCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
@@ -229,7 +232,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         int zLargerRadius = (int)Math.ceil(defineLargerRadius()/zRes);
         
-        if(!doCenter) {
+        if(!doCenter || (xyDim-2*xyLargerRadius) <= 0) {
         	zCenter = r.nextInt(zDim);
         } else {
         	zCenter = r.nextInt(zDim-2*zLargerRadius)+zLargerRadius;
@@ -375,9 +378,12 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         VOIExtractionAlgo.setRunningInSeparateThread(false);
         VOIExtractionAlgo.run();
         
+        ViewJFrameImage imageFrame = new ViewJFrameImage(imageBin);
+        imageFrame.setVisible(true);
+        
         image.registerVOI(imageBin.getVOIs().get(0));
         
-        ViewUserInterface.getReference().unRegisterImage(imageBin);
+        //ViewUserInterface.getReference().unRegisterImage(imageBin);
     }
 
     private void countPixels(ModelImage image, double intensity) {
