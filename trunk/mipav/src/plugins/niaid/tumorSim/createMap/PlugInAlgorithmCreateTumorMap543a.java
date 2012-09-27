@@ -232,7 +232,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         int zLargerRadius = (int)Math.ceil(defineLargerRadius()/zRes);
         
-        if(!doCenter || (xyDim-2*xyLargerRadius) <= 0) {
+        if(!doCenter || (zDim-2*zLargerRadius) <= 0) {
         	zCenter = r.nextInt(zDim);
         } else {
         	zCenter = r.nextInt(zDim-2*zLargerRadius)+zLargerRadius;
