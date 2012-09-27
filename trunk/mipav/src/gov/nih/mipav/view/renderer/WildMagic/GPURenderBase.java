@@ -160,7 +160,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         UpdateSceneRotation();
         return kVNode;
     }
-
+    
     protected boolean m_bDispose = false;
 	public void dispose()
     {
@@ -612,6 +612,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
   
+
+    public void setDefaultLighting()
+    {
+        if ( m_akLights == null )
+        {
+        	m_akLights = new Light[2];
+        	m_akLights[0] = new Light(Light.LightType.LT_DIRECTIONAL);
+        	m_akLights[0].Intensity = 0.5f;
+        	m_akLights[0].Ambient.Set(1f, 1f, 1f);
+        	m_akLights[0].Diffuse.Set(1f, 1f, 1f);
+        	m_akLights[0].Specular.Set(1f, 1f, 1f);
+        	m_akLights[0].Position.Set(0f,0f,3f);
+        	m_akLights[0].DVector.Set( 0f, 0f, 1f );
+		    		
+        	m_akLights[1] = new Light();
+        	m_akLights[1].Intensity = 0.5f;
+        	m_akLights[1].Ambient.Set(1f, 1f, 1f);
+        	m_akLights[1].Diffuse.Set(1f, 1f, 1f);
+        	m_akLights[1].Specular.Set(1f, 1f, 1f);
+        }
+        updateLighting( m_akLights );
+    }
     
     /**
      * Called from JPanelLight. Updates the lighting parameters.
