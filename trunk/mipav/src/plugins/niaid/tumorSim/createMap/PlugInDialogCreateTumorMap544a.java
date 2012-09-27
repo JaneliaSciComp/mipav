@@ -56,7 +56,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
     private ModelImage resultImage = null;
     
     /** This is your algorithm */
-    private PlugInAlgorithmCreateTumorMap543a tumorSimAlgo = null;
+    private PlugInAlgorithmCreateTumorMap544a tumorSimAlgo = null;
 
     private JTextField initRadiusText;
 
@@ -176,7 +176,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogCreateTumorMap543a() { }
+    public PlugInDialogCreateTumorMap544a() { }
 
     /**
      * Sets up variables but does not show dialog.
@@ -184,13 +184,13 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogCreateTumorMap543a(boolean modal) {
+    public PlugInDialogCreateTumorMap544a(boolean modal) {
         super(modal); 
 
         init();
     }
     
-    public PlugInDialogCreateTumorMap543a(PlugInDialogCreateTumorMap543a template, boolean modal) {
+    public PlugInDialogCreateTumorMap544a(PlugInDialogCreateTumorMap544a template, boolean modal) {
         this(modal);
         
         template.saveDefaults();
@@ -232,7 +232,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmCreateTumorMap543a) {
+       if (algorithm instanceof PlugInAlgorithmCreateTumorMap544a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
 
             if (tumorSimAlgo.isCompleted()) {
@@ -271,7 +271,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
             }
             
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap543a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap544a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
                     intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noise, noiseParam, normalTissue, stdDevNormal);
 
             tumorSimAlgo.setIter(iter);
@@ -342,7 +342,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Create tumor maps 543a");
+        setTitle("Create tumor maps 544a");
         try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -371,7 +371,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
         return Double.valueOf(initRadiusText.getText()).doubleValue();
     }
 
-    public PlugInAlgorithmCreateTumorMap543a getTumorSimAlgo() {
+    public PlugInAlgorithmCreateTumorMap544a getTumorSimAlgo() {
         return tumorSimAlgo;
     }
 
