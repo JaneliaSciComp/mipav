@@ -5263,14 +5263,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 for (int i = nVOI - 1; i >= 0; i--) {    
                     VOI kVOI = VOIs.get(i);
                     Vector<VOIBase> kCurves = kVOI.getCurves();
-                    for ( int k = 0; k < kCurves.size(); k++ )
-                    {
-                        VOIBase kVOI3D = kCurves.get(k);
-                        offscreenGraphics2d.setColor( kVOI.getColor() );
-                        voiManager.draw( kVOI3D, 
-                                    imageA.getResolutions(0), 
-                                    imageA.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                    if(kCurves != null) {
+                        for ( int k = 0; k < kCurves.size(); k++ )
+                        {
+                            VOIBase kVOI3D = kCurves.get(k);
+                            offscreenGraphics2d.setColor( kVOI.getColor() );
+                            voiManager.draw( kVOI3D, 
+                                        imageA.getResolutions(0), 
+                                        imageA.getUnitsOfMeasure(), slice, 
+                                        offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                        }
                     }
                 }
             }
@@ -5284,13 +5286,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 for (int i = nVOI - 1; i >= 0; i--) {    
                     VOI kVOI = VOIs.get(i);
                     Vector<VOIBase> kCurves = kVOI.getCurves();
-                    for ( int k = 0; k < kCurves.size(); k++ )
-                    {
-                        VOIBase kVOI3D = kCurves.get(k);
-                        voiManager.draw( kVOI3D, 
-                                    imageB.getResolutions(0), 
-                                    imageB.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                    if(kCurves != null) {
+                        for ( int k = 0; k < kCurves.size(); k++ )
+                        {
+                            VOIBase kVOI3D = kCurves.get(k);
+                            voiManager.draw( kVOI3D, 
+                                        imageB.getResolutions(0), 
+                                        imageB.getUnitsOfMeasure(), slice, 
+                                        offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                        }
                     }
                 }
             }
