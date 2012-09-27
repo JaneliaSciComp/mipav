@@ -239,7 +239,7 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
     protected void callAlgorithm() {
         Random r = new Random();
         for(int i=0; i<iterNum; i++) {
-            Preferences.data("************Begin Iteration "+i+"*****************\n");
+            Preferences.data("************Begin Iteration "+(i+1)+"*****************\n");
             
             double radius = 0;
             while(radius <= 0) {
@@ -249,8 +249,10 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
             Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
             
             createTumorDialog.setRadiusField(radius);
+            createTumorDialog.setIter((i+1));
             createTumorDialog.setSeparateThread(false);
             createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
+            createTumorDialog.dispose();
             
 //            generatePostTreatmentDialog.setSeparateThread(false);
 //            generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
@@ -259,7 +261,9 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
 //            generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
 //            generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
             
-            Preferences.data("************End Iteration "+i+"*****************\n");
+            Preferences.data("************End Iteration "+(i+1)+"*****************\n");
         }
+        
+        this.dispose();
     }
 }
