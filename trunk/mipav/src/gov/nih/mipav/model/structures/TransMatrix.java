@@ -906,11 +906,33 @@ public class TransMatrix extends Matrix4f
      * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
      * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
      * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * \n // newline
+     * Have transform parameters
+     * 0 // 0 for trilinear interpolation, 2 for nearest neighbor, 3 for cubic bspline, 4 for quadratic bspline
+     * 0.5 // output x resolution
+     * 0.5 // output y resolution
+     * 0.2 // output z resolution
+     * 256 // output x dimension
+     * 256 // output y dimension
+     * 128 // output z dimension
+     * true // transformVOI (true or false)
+     * false // clip (true or false) output image range is clipped to input image range
+     * true // pad (true of false) output image is padded so that all of the original image is present
      * <optional message goes here>
      * </pre>
      *
      *
      * @param  raFile  random access file pointer
+     * @param  interp
+     * @param  oXres
+     * @param  oYres
+     * @param  oZres
+     * @param  oXdim
+     * @param  oYdim
+     * @param  oZdim
+     * @param  tVOI
+     * @param  clip
+     * @param  pad
      * @param  message  String, may be null for no message.
      */
     public void saveMatrix(RandomAccessFile raFile, int interp, float oXres, float oYres, float oZres, int oXdim, 
