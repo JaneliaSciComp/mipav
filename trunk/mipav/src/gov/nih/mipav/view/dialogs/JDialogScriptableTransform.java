@@ -1419,13 +1419,19 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if ( (image.getNDims() == 2) || (do25D)) {
-            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres, Preferences.DEBUG_SCRIPTING);
-            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n", Preferences.DEBUG_SCRIPTING);
-            Preferences.debug("xfrm = " + xfrm, Preferences.DEBUG_SCRIPTING);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
-                    doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            if (fileXdim[0] != 0) {
+                algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileXdim[0],
+                        fileYdim[0], filetVOI[0], fileClip[0], filePad[0]);    
+            }
+            else {
+                Preferences.debug("oXres, oYres = " + oXres + ", " + oYres, Preferences.DEBUG_SCRIPTING);
+                Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n", Preferences.DEBUG_SCRIPTING);
+                Preferences.debug("xfrm = " + xfrm, Preferences.DEBUG_SCRIPTING);
+                algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                        doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            }
         } else { // ((image.getNDims() >= 3) && (!do25D))
             if (fileXdim[0] != 0) {
                 algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileZres[0], fileXdim[0],
