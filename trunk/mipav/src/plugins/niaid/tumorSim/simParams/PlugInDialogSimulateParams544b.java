@@ -42,8 +42,8 @@ import java.util.Random;
 
 import javax.swing.*;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap544a;
-import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment544a;
+import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap544b;
+import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment544b;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
@@ -57,7 +57,7 @@ import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment544a;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogSimulateParams544b extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -83,14 +83,14 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
 
     private int iterNum;
 
-    private PlugInDialogCreateTumorMap544a createTumorDialogTemplate;
+    private PlugInDialogCreateTumorMap544b createTumorDialogTemplate;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogSimulateParams544a() { }
+    public PlugInDialogSimulateParams544b() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -98,10 +98,10 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogSimulateParams544a(boolean modal) {
+    public PlugInDialogSimulateParams544b(boolean modal) {
         super(modal); 
         
-        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544a(false, false);
+        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544b(false, false);
         createTumorDialogTemplate.setVisible(false);
         //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
@@ -162,7 +162,7 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Run simulation 544a");
+        setTitle("Run simulation 544b");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
