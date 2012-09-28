@@ -60,7 +60,7 @@ public class PlugInCreateTumorMap544a implements PlugInGeneric {
      * @see    ViewJFrameImage
      */
     public void run() {
-        new PlugInDialogCreateTumorMap544a(false);
+        new PlugInDialogCreateTumorMap544a(false, true);
         
     }
 }

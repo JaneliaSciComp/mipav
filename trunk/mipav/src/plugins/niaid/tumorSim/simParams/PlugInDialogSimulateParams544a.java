@@ -101,7 +101,7 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
     public PlugInDialogSimulateParams544a(boolean modal) {
         super(modal); 
         
-        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544a(false);
+        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544a(false, false);
         createTumorDialogTemplate.setVisible(false);
         //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
@@ -256,21 +256,20 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
             for(int i=0; i<iterNum; i++) {
                 Preferences.data("************Begin Iteration "+(i+1)+"*****************\n");
                 
-                PlugInDialogCreateTumorMap544a createTumorDialog = new PlugInDialogCreateTumorMap544a(createTumorDialogTemplate, false);
-                
                 double radius = 0;
                 while(radius <= 0) {
-                    radius = createTumorDialog.getRadiusField() + r.nextGaussian()*tumorSizeDev;
+                    radius = createTumorDialogTemplate.getRadiusField() + r.nextGaussian()*tumorSizeDev;
                 }
                 
                 Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
                 
-                createTumorDialog.setRadiusField(radius);
-                createTumorDialog.setIter((i+1));
-                createTumorDialog.setSeparateThread(false);
-                createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
-                createTumorDialog.destroy();
-                createTumorDialog.dispose();
+                createTumorDialogTemplate.setRadiusField(radius);
+                createTumorDialogTemplate.setIter((i+1));
+                createTumorDialogTemplate.setSeparateThread(false);
+                createTumorDialogTemplate.actionPerformed(new ActionEvent(this, 0, "OK"));
+                createTumorDialogTemplate.destroy();
+                
+                System.out.println("Value: "+createTumorDialogTemplate.getRadiusField());
                 
                 ViewUserInterface ui = ViewUserInterface.getReference();
                 
