@@ -621,6 +621,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
+        int xdimA = refImage.getExtents()[0];
+        int ydimA = refImage.getExtents()[1];
+        float xresA = refImage.getFileInfo(0).getResolutions()[0];
+        float yresA = refImage.getFileInfo(0).getResolutions()[1];
         
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
@@ -636,10 +640,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             if (reg2.isCompleted()) {
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
+                    
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     xfrm  = reg2.getTransform();
@@ -710,7 +711,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
                 reg2.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mat");
+                                               refImage.getImageName() + ".mat", interp2, xresA, yresA, 0.0f, xdimA,
+                                               ydimA, 0, true, false, pad, null);
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat\n",Preferences.DEBUG_FILEIO);
 
@@ -746,11 +748,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             if (reg2E.isCompleted()) {
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
-
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     xfrm  = reg2E.getTransform();
 
@@ -820,7 +817,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
                 reg2E.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mat");
+                                               refImage.getImageName() + ".mat", interp2, xresA, yresA, 0.0f, xdimA,
+                                               ydimA, 0, true, false, pad, null);
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat\n",Preferences.DEBUG_FILEIO);
 
