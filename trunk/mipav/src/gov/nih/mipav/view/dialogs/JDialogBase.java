@@ -518,7 +518,9 @@ public abstract class JDialogBase extends JDialog
             String str = String.valueOf(0);
             while(doSave == JOptionPane.NO_OPTION) {
                 str = JOptionPane.showInputDialog(this, "Name the profile");
-                if(Preferences.getProperty(getClass().getName()+str) != null) {
+                if(str != null && str.length() == 0) {
+                    doSave = JOptionPane.NO_OPTION;
+                } else if(Preferences.getProperty(getClass().getName()+str) != null) {
                     doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
                 } else {
                     doSave = JOptionPane.YES_OPTION;
@@ -745,8 +747,11 @@ public abstract class JDialogBase extends JDialog
         ArrayList<String> profiles = new ArrayList<String>();
         for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
             if(objSet.getValue().equals(SAVE_DEFAULT)) {
-                
-                profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
+                try {
+                    profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
+                } catch(Exception e) {
+                    Preferences.debug(objSet.getKey().toString()+" profile could not be loaded.", Preferences.DEBUG_MINOR);
+                }
             }
         }
         
