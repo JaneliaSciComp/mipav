@@ -101,7 +101,8 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
     public PlugInDialogSimulateParams544a(boolean modal) {
         super(modal); 
         
-        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544a();
+        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544a(false);
+        createTumorDialogTemplate.setVisible(false);
         //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
         init();
@@ -184,7 +185,7 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JPanel createTumorPanel = createTumorDialogTemplate.buildMainPanel(false, gui);
+        JPanel createTumorPanel = createTumorDialogTemplate.getMainPanel();
         mainPanel.add(createTumorPanel, gbc);
         
         gbc.gridx++;
@@ -268,6 +269,7 @@ public class PlugInDialogSimulateParams544a extends JDialogScriptableBase implem
                 createTumorDialog.setIter((i+1));
                 createTumorDialog.setSeparateThread(false);
                 createTumorDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
+                createTumorDialog.destroy();
                 createTumorDialog.dispose();
                 
                 ViewUserInterface ui = ViewUserInterface.getReference();

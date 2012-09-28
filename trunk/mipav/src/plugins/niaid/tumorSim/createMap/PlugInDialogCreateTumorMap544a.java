@@ -169,6 +169,8 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
 	/** Iteration number */
     private int iter;
 
+    private JPanel mainPanel;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -219,7 +221,7 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
-            dispose();
+            super.dispose();
         } else {
             super.actionPerformed(event);
         }
@@ -307,7 +309,7 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
 
     } // end callAlgorithm()
 
-    public void dispose() {
+    public void destroy() {
         System.out.println("Before: "+Runtime.getRuntime().freeMemory());
         
         if(tumorSimAlgo != null) {
@@ -350,7 +352,7 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
 		}
         GuiBuilder gui = new GuiBuilder(this);
         
-        JPanel mainPanel = buildMainPanel(true, gui);
+        mainPanel = buildMainPanel(true, gui);
 
         JScrollPane scroll = new JScrollPane(mainPanel);
         
@@ -374,8 +376,12 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
     public PlugInAlgorithmCreateTumorMap544a getTumorSimAlgo() {
         return tumorSimAlgo;
     }
+    
+    public JPanel getMainPanel() {
+        return mainPanel;
+    }
 
-    public JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
+    private JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
