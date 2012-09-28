@@ -777,6 +777,7 @@ public class Preferences {
         
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_DEFAULTS, "true");
 
         // performance information properties
         Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED,
