@@ -643,7 +643,7 @@ public class PlugInDialogCreateTumorMap544b extends JDialogScriptableBase implem
             Preferences.data("Percent change: "+tumorChange+"\n");
             Preferences.data("Intensity1: "+intensity1+"\tIntensity2: "+intensity2+"\n");
             Preferences.data("Noise maximum: "+noiseMax+"\n");
-            Preferences.data("Noise maximum: "+normalTissue+"\n");
+            Preferences.data("Normal tissue: "+normalTissue+"\n");
             Preferences.data("====End create tumor map algorithm information====\n");
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
