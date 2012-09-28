@@ -186,16 +186,18 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogCreateTumorMap544a(boolean modal) {
+    public PlugInDialogCreateTumorMap544a(boolean modal, boolean doOkCancel) {
         super(modal); 
 
-        init();
+        init(doOkCancel);
     }
     
-    public PlugInDialogCreateTumorMap544a(PlugInDialogCreateTumorMap544a template, boolean modal) {
-        this(modal);
-        
+    public PlugInDialogCreateTumorMap544a(PlugInDialogCreateTumorMap544a template, boolean modal, boolean doOkCancel) {
+        this(modal, doOkCancel);
+        System.out.println("Test2");
+        template.setVisible(true);
         template.saveDefaults();
+        template.setVisible(false);
         
         this.loadDefaults();
     }
@@ -342,7 +344,7 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
         //scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
     } //end storeParamsFromGUI()
    
-    private void init() {
+    private void init(boolean doOKCancel) {
         setForeground(Color.black);
         setTitle("Create tumor maps 544a");
         try {
@@ -352,7 +354,7 @@ public class PlugInDialogCreateTumorMap544a extends JDialogScriptableBase implem
 		}
         GuiBuilder gui = new GuiBuilder(this);
         
-        mainPanel = buildMainPanel(true, gui);
+        mainPanel = buildMainPanel(doOKCancel, gui);
 
         JScrollPane scroll = new JScrollPane(mainPanel);
         
