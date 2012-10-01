@@ -1017,9 +1017,37 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
                 measure.getListPanel().setSelectedList(true);
                 measure.callVOIAlgo(vecProcess, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
+		    } else { //no VOIs to process so do whole image analysis
+		        VOIVector wholeImageVec = new VOIVector();
+		        VOI wholeImage = new VOI((short) 0, "wholeImage", VOI.CONTOUR, 0.0f);
+		        int slice = m_kImageActive.getParentFrame().getComponentImage().getSlice();
+		        int xDim = m_kImageActive.getExtents()[0]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+		        int yDim = m_kImageActive.getExtents()[1]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+		        
+	            Vector3f orig = new Vector3f(0, 0, slice);
+	            Vector3f cornerX = new Vector3f(xDim-2, 0, slice);
+	            Vector3f cornerXY = new Vector3f(xDim-2, yDim-2, slice);
+	            Vector3f cornerY = new Vector3f(0, yDim-2, slice);
+	            Vector<Vector3f> points = new Vector<Vector3f>();
+	            points.add(orig);
+	            points.add(cornerX);
+	            points.add(cornerXY);
+	            points.add(cornerY);
+	            VOIContour wholeSlice = new VOIContour(true, true, points);
+	            wholeImage.importCurve(wholeSlice);
+	            wholeSlice.setGroup(wholeImage);
+	            wholeSlice.setProcess(true);
+
+		        wholeImageVec.add(wholeImage);
+		        m_kImageActive.registerVOI(wholeImage);
+		        
+		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
+                measure.getListPanel().setSelectedList(true);
+                measure.callVOIAlgo(wholeImageVec, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
+                
+                m_kImageActive.unregisterVOI(wholeImage);
 		    }
 		    return;
-		    
 		}
 		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 		String command = Preferences.getShortcutCommand(ks);
