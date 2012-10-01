@@ -1069,10 +1069,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(defaultDisplayChoices, gbc2);
         
-        DefaultDisplay defaultChoice = DefaultDisplay.MinMax;
+        DefaultDisplay defaultChoice = DefaultDisplay.Default;
         //preset the choices.
         if(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY) == null) {
-        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
+        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Default.name());
         } else {
         	defaultChoice = DefaultDisplay.valueOf(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY));
         }

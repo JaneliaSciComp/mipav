@@ -103,11 +103,13 @@ public class Preferences {
      */
     public enum DefaultDisplay {
         /** Lookuptable table and associated transfer function */
-        LUT("LUT and transfer function"),
+        LUT("LUT & transfer function"),
         /** Window and level settings (will also be reflected as transfer function */
         WindowLevel("Window & level"),
         /** Minimum and maximum settings  */
-        MinMax("Min & max");
+        MinMax("Min & max"),
+        /** MIPAV default setting */
+        Default("MIPAV setting");
         
         /** The format of default display */
         private String str;
@@ -763,7 +765,7 @@ public class Preferences {
         // location
 
         // look and feel properties
-        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Default.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
