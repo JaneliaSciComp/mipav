@@ -1436,6 +1436,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (fileXdim[0] != 0) {
                 algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileZres[0], fileXdim[0],
                                   fileYdim[0], fileZdim[0], filetVOI[0], fileClip[0], filePad[0]);
+                Preferences.debug("Enhanced .mtx matrix used in supplying transform parameters\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileInterp[0] = " + fileInterp[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileXres[0] = " + fileXres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileYres[0] = " + fileYres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileZres[0] = " + fileZres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileXdim[0] = " + fileXdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileYdim[0] = " + fileYdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileZdim[0] = " + fileZdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("filetVOI[0] = " + filetVOI[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileClip[0] = " + fileClip[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("filePad[0] = " + filePad[0] + "\n", Preferences.DEBUG_ALGORITHM);
             }
             else {
                 algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
