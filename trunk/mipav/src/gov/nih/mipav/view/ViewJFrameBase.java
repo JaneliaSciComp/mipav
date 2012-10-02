@@ -4081,8 +4081,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 max = (float) img.getMax();
             }
 
-            final float imgMin = (float) img.getMin();
-            final float imgMax = (float) img.getMax();
+            float imgMin = (float) img.getMin();
+            float imgMax = (float) img.getMax();
             
             int bins = 1024;
             
@@ -4101,7 +4101,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             for(int i=0; i<histoBuffer.length; i++) {
                 pixCache += histoBuffer[i];
                 if(pixCache/totalPix > .05) {
-                    min = imgMin + i*((imgMax-imgMin)/bins);
+                    imgMin = imgMin + i*((imgMax-imgMin)/bins);
                     break;
                 }
             }
@@ -4110,12 +4110,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             for(int i=histoBuffer.length-1; i>=0; i--) {
                 pixCache += histoBuffer[i];
                 if(pixCache/totalPix > .05) {
-                    max = imgMax - (bins-i)*((imgMax-imgMin)/bins);
+                    imgMax = imgMax - (bins-i)*((imgMax-imgMin)/bins);
                     break;
                 }
             }
 
-            newLUT.resetTransferLine(imgMin, min, imgMax, max);
+            newLUT.resetTransferLine(min, imgMin, max, imgMax);
         }
 
         return newLUT;
