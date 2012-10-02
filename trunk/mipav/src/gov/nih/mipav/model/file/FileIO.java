@@ -14343,12 +14343,6 @@ nList:      for (int i = 0; i < nListImages; i++) {
         FileMinc mincFile;
         FileInfoBase fileInfo;
 
-        if (image.getNDims() != 3) {
-            MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
-
-            return false;
-        }
-
         try { // Construct a new file object
 
             if (options.isSaveAs() && !options.isSet()) {
