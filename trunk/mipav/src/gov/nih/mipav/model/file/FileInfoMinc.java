@@ -852,6 +852,7 @@ public class FileInfoMinc extends FileInfoBase {
         double x = 0;
         double y = 0;
         double z = 0;
+        double t = 0;
 
         for (final FileMincVarElem element : varArray) {
 
@@ -866,6 +867,10 @@ public class FileInfoMinc extends FileInfoBase {
             if (element.name.equals("zspace")) {
                 z = element.trueStart;
             }
+            
+            if (element.name.equals("tspace")) {
+                t = element.trueStart;
+            }
         }
 
         final float[] start = new float[getExtents().length];
@@ -877,6 +882,11 @@ public class FileInfoMinc extends FileInfoBase {
             start[0] = (float) x;
             start[1] = (float) y;
             start[2] = (float) z;
+        } else if (start.length == 4) {
+            start[0] = (float) x;
+            start[1] = (float) y;
+            start[2] = (float) z;
+            start[3] = (float) t;
         }
 
         return start;
@@ -907,17 +917,22 @@ public class FileInfoMinc extends FileInfoBase {
      */
     public final void setImportantImageInfo() {
         int ix = 0, iy = 0, iz = 0;
-
-        final String firstDim = getDimElem(0).name;
+        int i;
+        
+        i = 0;
+        if (getDimElem(0).name.equalsIgnoreCase("time")) {
+            i = 1;
+        }
+        final String firstDim = getDimElem(i).name;
         Preferences.debug("firstDim = " + firstDim + "\n", Preferences.DEBUG_FILEIO);
 
-        final String secondDim = getDimElem(1).name;
+        final String secondDim = getDimElem(i+1).name;
         Preferences.debug("secondDim = " + secondDim + "\n", Preferences.DEBUG_FILEIO);
 
-        final String thirdDim = getDimElem(2).name;
+        final String thirdDim = getDimElem(i+2).name;
         Preferences.debug("thirdDim = " + thirdDim + "\n", Preferences.DEBUG_FILEIO);
 
-        for (int i = 0; i < varArray.length; i++) {
+        for (i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("image")) {
                 setOffset(varArray[i].begin);
@@ -1109,7 +1124,7 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
 
-        for (int i = 0; i < axisOrientation.length; i++) {
+        for (i = 0; i < axisOrientation.length; i++) {
 
             switch (axisOrientation[i]) {
 
