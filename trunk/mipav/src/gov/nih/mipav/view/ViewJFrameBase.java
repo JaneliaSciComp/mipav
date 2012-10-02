@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmHistogram;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -4082,8 +4083,43 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
             final float imgMin = (float) img.getMin();
             final float imgMax = (float) img.getMax();
+            
+            long time = System.currentTimeMillis();
+            
+            int bins = 1024;
+            
+            int[] dimExtents = new int[]{bins};
 
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
+            ModelHistogram histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
+
+            AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, img, true);
+
+            histoAlgo.setRunningInSeparateThread(false);
+            histoAlgo.run();
+            
+            int[] histoBuffer = histoAlgo.getHistoBuffer();
+            int totalPix = histogram.getTotalPixels();
+            double pixCache = 0;
+            for(int i=0; i<histoBuffer.length; i++) {
+                pixCache += histoBuffer[i];
+                if(pixCache/totalPix > .05) {
+                    min = imgMin + i*((imgMax-imgMin)/bins);
+                    break;
+                }
+            }
+            
+            pixCache = 0;
+            for(int i=histoBuffer.length-1; i>=0; i--) {
+                pixCache += histoBuffer[i];
+                if(pixCache/totalPix > .05) {
+                    max = imgMax - (bins-i)*((imgMax-imgMin)/bins);
+                    break;
+                }
+            }
+            
+            System.out.println("Processing took "+(System.currentTimeMillis() - time));
+
+            newLUT.resetTransferLine(imgMin, min, imgMax, max);
         }
 
         return newLUT;
