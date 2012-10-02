@@ -333,7 +333,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * The buffer of all histogram values.
      *
      * @return  int[]
      */
@@ -580,7 +580,6 @@ public class AlgorithmHistogram extends AlgorithmBase {
         
         setCompleted(true);
         imgBuffer = null;
-        histoBuffer = null;
         System.gc();
     }
 
