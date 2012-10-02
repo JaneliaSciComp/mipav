@@ -112,6 +112,8 @@ public class JDialogSaveSlices extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JPanel tiffPanel;
+    
+    private boolean mincEnabled;
 
     /** DOCUMENT ME! */
     private boolean timeEnabled;
@@ -159,6 +161,7 @@ public class JDialogSaveSlices extends JDialogBase {
         maxValue = mxValue;
         timeEnabled = false;
         fourDimEnabled = false;
+        mincEnabled = (options.getFileType() == FileUtility.MINC);
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
         corEnabled = (options.getFileType() == FileUtility.COR);
         afniEnabled = (options.getFileType() == FileUtility.AFNI);
@@ -188,6 +191,7 @@ public class JDialogSaveSlices extends JDialogBase {
         minTimeValue = mnTimeValue;
         maxTimeValue = mxTimeValue;
         timeEnabled = true;
+        mincEnabled = (options.getFileType() == FileUtility.MINC);
         tiffEnabled = (options.getFileType() == FileUtility.TIFF);
         fourDimEnabled = ((options.getFileType() == FileUtility.ANALYZE) ||
                               (options.getFileType() == FileUtility.NIFTI) ||
@@ -201,7 +205,8 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.NRRD)||
                               (options.getFileType() == FileUtility.MINC_HDF) ||
                               (options.getFileType() == FileUtility.DICOM) ||  //will only write 4D dicom in enhanced format 
-                              (options.getFileType() == FileUtility.TIFF)); // TIFF must be stored as a set of 3D volumes
+                              (options.getFileType() == FileUtility.TIFF) ||
+                              (options.getFileType() == FileUtility.MINC)); // TIFF must be stored as a set of 3D volumes
         if (tiffEnabled) {
             enforceDistinctVolumeWriting = true;
         }
@@ -269,7 +274,6 @@ public class JDialogSaveSlices extends JDialogBase {
                     return;
                 }
 
-                // don't test end time period if MINC image, because there is no value there.
                 if (fourDimEnabled) {
                     tmpStr = textLastTimePeriod.getText();
 
