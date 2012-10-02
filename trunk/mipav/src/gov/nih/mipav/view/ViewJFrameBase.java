@@ -4084,8 +4084,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             final float imgMin = (float) img.getMin();
             final float imgMax = (float) img.getMax();
             
-            long time = System.currentTimeMillis();
-            
             int bins = 1024;
             
             int[] dimExtents = new int[]{bins};
@@ -4116,8 +4114,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     break;
                 }
             }
-            
-            System.out.println("Processing took "+(System.currentTimeMillis() - time));
 
             newLUT.resetTransferLine(imgMin, min, imgMax, max);
         }
