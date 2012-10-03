@@ -1067,13 +1067,14 @@ public class FileMinc extends FileBase {
 
 
                         } else {
-
-                            image.exportData(options.getBeginTime()*volSize + options.getBeginSlice()*sliceSize, sliceSize, sliceData);
+                            _image.exportData(options.getBeginTime()*volSize + options.getBeginSlice()*sliceSize, sliceSize, sliceData);
                             for (int k = 0; k < sliceSize; k++) {
                                 sliceData[k] = (float) ( (sliceData[k] - intercepts[0]) / slopes[0]);
                             }
 
                             image.importData(0, sliceData, false);
+                            
+                            rawChunkFile.writeImage(image, 0, sliceSize, 0);
                             
                         }
 
@@ -2082,18 +2083,26 @@ public class FileMinc extends FileBase {
             currentNonHeaderStartLocation += acquisitionVarSize;
         }
 
+        int adjust2D = 0;
+        if (nImages == 1) {
+            adjust2D = -1;
+        }
+        int adjust4D = 0;
+        if (nVolumes > 1) {
+            adjust4D = 1;
+        }
         if (mincModality != null && sliceThickness != 0) {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups + the study tag + the acquisition tag)
-            writeInt(9 + dicomConvertedTagTable.size(), endianess);
+            writeInt(9 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         } else if (mincModality != null || sliceThickness != 0) {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups + (either the the study tag OR the acquisition tag))
-            writeInt(8 + dicomConvertedTagTable.size(), endianess);
+            writeInt(8 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         } else {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups) -- neither the study or acquisition tags
-            writeInt(7 + dicomConvertedTagTable.size(), endianess);
+            writeInt(7 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         }
 
         writeName("rootvariable", 0, endianess); // always in MINC files (not sure what it means)
@@ -2419,7 +2428,7 @@ public class FileMinc extends FileBase {
         writeInt(imgBegin + imgSize + pad + (8 * nImages), endianess);
 
         int nextDataPortionLocation = imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages);
-
+        
         // write the image modality to the minc header
         if (mincModality != null) {
             writeName("study", 0, endianess);
