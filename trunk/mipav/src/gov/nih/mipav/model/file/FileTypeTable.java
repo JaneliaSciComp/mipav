@@ -165,6 +165,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".CT", FileUtility.MICRO_CAT);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MINC, new FileTypeInfo("MINC", ".mnc"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MINC_MULTIFILE, new FileTypeInfo("MINC multifile", ".mnc"));
         // TODO: should this be undefined since .mnc can be both minc1 and minc2?
         FileTypeTable.FILE_EXT_TABLE.put(".mnc", FileUtility.MINC);
         FileTypeTable.FILE_EXT_TABLE.put(".MNC", FileUtility.MINC);
