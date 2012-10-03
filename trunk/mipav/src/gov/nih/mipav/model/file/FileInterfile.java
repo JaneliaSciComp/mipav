@@ -3006,6 +3006,7 @@ public class FileInterfile extends FileBase {
                         break;
                     } // if (tEnd == tEndOriginal)
                     else {
+                        tBegin++;
                         tEnd++;
                         seq++;
                     }
@@ -3015,6 +3016,7 @@ public class FileInterfile extends FileBase {
                         break;
                     }
                     else {
+                        zBegin++;
                         zEnd++;
                         seq++;
                     }
