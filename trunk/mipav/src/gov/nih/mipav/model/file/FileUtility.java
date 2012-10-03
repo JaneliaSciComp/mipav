@@ -144,133 +144,136 @@ public class FileUtility {
      * 'Network Common Data Form'. extension: .mnc
      */
     public static final int MINC = 36;
+    
+    /** Multiple files of type MINC. */
+    public static final int MINC_MULTIFILE = 37;
 
     /** Not presently implemented. */
-    public static final int MIPAV = 37;
+    public static final int MIPAV = 38;
 
     /** extension: .mrc. */
-    public static final int MRC = 38;
+    public static final int MRC = 39;
 
     /** NIFTI format. extension: .img, .hdr, .nii */
-    public static final int NIFTI = 39;
+    public static final int NIFTI = 40;
 
     /** NIFTI multi-file format. */
-    public static final int NIFTI_MULTIFILE = 40;
+    public static final int NIFTI_MULTIFILE = 41;
 
     /** Nearly raw raster data. */
-    public static final int NRRD = 41;
+    public static final int NRRD = 42;
     
     /** Nearly raw raster data. */
-    public static final int NRRD_MULTIFILE = 42;
+    public static final int NRRD_MULTIFILE = 43;
 
     /** Washington University OSM dataset structure. extension: .wu */
-    public static final int OSM = 43;
+    public static final int OSM = 44;
 
     /** extension: .pcx. */
-    public static final int PCX = 44;
+    public static final int PCX = 45;
 
     /** extension: .pic. */
-    public static final int PIC = 45;
+    public static final int PIC = 46;
 
     /** extension: .pict. */
-    public static final int PICT = 46;
+    public static final int PICT = 47;
 
     /** extension: .png. */
-    public static final int PNG = 47;
+    public static final int PNG = 48;
 
     /** extension: .psd. */
-    public static final int PSD = 48;
+    public static final int PSD = 49;
 
     /** Quicktime file type. extension: .mov, .qt */
-    public static final int QT = 49;
+    public static final int QT = 50;
 
     /** RAW image data, no header. extension: .raw */
-    public static final int RAW = 50;
+    public static final int RAW = 51;
 
     /** RAW MULTIFLE image data, no header. */
-    public static final int RAW_MULTIFILE = 51;
+    public static final int RAW_MULTIFILE = 52;
 
     /**
      * SPM file format. SPM99 and SPM2 are slight variants of analyze with the same .img, .hdr file extensions. The user
      * could also change the extension .img to .spm to indicate SPM. The header extension would remain .hdr
      */
-    public static final int SPM = 52;
+    public static final int SPM = 53;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
-    public static final int STK = 53;
+    public static final int STK = 54;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACE_XML = 54;
+    public static final int SURFACE_XML = 55;
 
     /** extension: .tga. */
-    public static final int TGA = 55;
+    public static final int TGA = 56;
 
     /** TIFF file; tagged header. extension: .tif, .tiff */
-    public static final int TIFF = 56;
+    public static final int TIFF = 57;
 
     /** Multiple files of TIFF images. */
-    public static final int TIFF_MULTIFILE = 57;
+    public static final int TIFF_MULTIFILE = 58;
 
     /** Optical coherence tomography. extension: .tmg */
-    public static final int TMG = 58;
+    public static final int TMG = 59;
 
     /** VOI file, used to read VOIs. extension: .voi */
-    public static final int VOI_FILE = 59;
+    public static final int VOI_FILE = 60;
 
     /** extension: .xbm. */
-    public static final int XBM = 60;
+    public static final int XBM = 61;
 
     /** MIPAV XML file format. mipav xml image format. extension: .xml */
-    public static final int XML = 61;
+    public static final int XML = 62;
 
     /** MIPAV XML file format. */
-    public static final int XML_MULTIFILE = 62;
+    public static final int XML_MULTIFILE = 63;
 
     /** extension: .xpm. */
-    public static final int XPM = 63;
+    public static final int XPM = 64;
 
     /** extension: "par","parv2","rec","frec". */
-    public static final int PARREC = 64;
+    public static final int PARREC = 65;
     
     /** extension: "par","parv2","rec","frec". */
-    public static final int PARREC_MULTIFILE = 65;
+    public static final int PARREC_MULTIFILE = 66;
     
     /** SPAR file format for use with PARREC images */
-    public static final int SPAR = 66;
+    public static final int SPAR = 67;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACEREF_XML = 67;
+    public static final int SURFACEREF_XML = 68;
 
     /** MINC 2.0 (HDF5) */
-    public static final int MINC_HDF = 68;
+    public static final int MINC_HDF = 69;
 
     /** Improvision OpenLab LIFF .liff */
     /** Do not confuse with Leica image file format .lif */
-    public static final int LIFF = 69;
+    public static final int LIFF = 70;
 
     /** Extension: .hdr for header, .bfloat for data */
-    public static final int BFLOAT = 70;
+    public static final int BFLOAT = 71;
 
     /** Extension: .hdr for header, .img for data */
-    public static final int SIEMENSTEXT = 71;
+    public static final int SIEMENSTEXT = 72;
 
     /** Zeiss ZVI has extension .zvi */
-    public static final int ZVI = 72;
+    public static final int ZVI = 73;
 
-    public static final int JP2 = 73;
+    public static final int JP2 = 74;
     
     /** extension .mat */
-    public static final int MATLAB = 74;
+    public static final int MATLAB = 75;
     
     /** Vista file extension .v */
-    public static final int VISTA = 75;
+    public static final int VISTA = 76;
 
     
     /** Metaimage files are either
      *  separate .mhd header and .raw image data files or
      *  combined .mha header and image data file
      */
-    public static final int METAIMAGE = 76;
+    public static final int METAIMAGE = 77;
     
     
 
@@ -278,10 +281,10 @@ public class FileUtility {
             "biorad", "bmp", "bmp multifile", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
             "GE genesis", "GE genisis multifile", "GE signa4x", "GE Signa4x multifile", "gif", "ico", "ics",
             "interfile", "interfile multifile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision", "Megnatom vision multifile", "map",
-            "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "nrrd multifile", "osm", "pcx",
-            "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
-            "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile", "spar", "surfaceref xml",
-            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage"};
+            "medivision", "mgh", "micro cat", "minc", "minc multifile", "mipav", "mrc", "nifti", "nifti multifile", "nrrd",
+            "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
+            "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
+            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage"};
 
     
 
