@@ -1203,63 +1203,6 @@ public class MipavUtil extends JComponent {
     }
 
     /**
-     * Pops up the MIPAV help for a given help ID.
-     * 
-     * @param ID The ID of the help topic to open.
-     * 
-     * @deprecated Use the showWebHelp(String) method to bring up the new wiki-based help.
-     */
-    public static void showHelp(final String ID) {
-
-        try {
-            final ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
-
-            // the help.jar must be in the classpath !!!!!!!!!!
-            final URL hsURL = HelpSet.findHelpSet(cloader, "MIPAV_dialogs.hs");
-
-            // System.out.println(" URL = " + hsURL.toString());
-            if (hsURL != null) {
-
-                if ( (MipavUtil.hs == null) || (MipavUtil.helpBroker == null)) {
-                    MipavUtil.hs = new HelpSet(cloader, hsURL);
-                    MipavUtil.helpBroker = MipavUtil.hs.createHelpBroker();
-                }
-
-                if (ID != null) {
-                    MipavUtil.helpBroker.setCurrentID(ID);
-                }
-
-                MipavUtil.helpBroker.setSize(new java.awt.Dimension(1000, 600));
-                MipavUtil.helpBroker.setLocation(new java.awt.Point(200, 300));
-
-                // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-                MipavUtil.helpBroker.setDisplayed(true);
-                // hs = null;
-                // helpBroker = null;
-            } else {
-                Preferences.debug("Help file URL is " + hsURL + "\n", Preferences.DEBUG_FILEIO);
-                MipavUtil.displayError("Unable to find helpset.");
-            }
-        } catch (final NullPointerException npe) {
-            Preferences.debug("MIPAV Help cannot be found." + "\n", Preferences.DEBUG_FILEIO);
-            MipavUtil.displayError("MIPAV Help cannot be found.");
-        } catch (final OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory error opening help.");
-        } catch (final HelpSetException error) {
-            Preferences.debug("HelpSet error = " + error, Preferences.DEBUG_FILEIO);
-        } catch (final BadIDException error) {
-            MipavUtil.displayError("HelpSet ID error = " + error);
-            if (ID != null) {
-                // show default help dialogue
-                MipavUtil.showHelp(null);
-            } else {
-                MipavUtil
-                        .displayError("MIPAV cannot display help.  View help at:\nhttp://mipav.cit.nih.gov/documentation.php");
-            }
-        }
-    }
-
-    /**
      * Tests that the entered parameter is in range.
      * 
      * @param str the value entered by the user
