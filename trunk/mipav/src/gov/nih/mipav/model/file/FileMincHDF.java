@@ -368,7 +368,7 @@ public class FileMincHDF extends FileBase {
                 final String attrName = attr.getName();
 
                 if (attrName.equals(FileMincHDF.ATTR_DIM_UNITS)) {
-                    units[dimReorderIndexes[i]] = (Unit.getUnit( ((String[]) attr.getValue())[0])).getLegacyNum();
+                    units[dimReorderIndexes[i]] = (getUnitFromString(((String[]) attr.getValue())[0])).getLegacyNum();
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_START)) {
                     mincStartLoc[dimReorderIndexes[i]] = ((double[]) attr.getValue())[0];
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_LENGTH)) {
@@ -741,6 +741,9 @@ public class FileMincHDF extends FileBase {
                     numParts = numImages;
                     sliceSize = imageData.getWidth() * imageData.getHeight();
                 }
+                
+                // start dims array seems important for 3D images, but not 4D. 3D reading requires incrementing it
+                long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
 
                 for (int j = 0; j < numParts; j++) {
                     if (is4D) {
@@ -761,6 +764,7 @@ public class FileMincHDF extends FileBase {
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (double[])data, false);
                         }
                     } else {
+                        start[0] = j;
                         data = imageData.read();
                         if (fileInfo.getDataType() == ModelStorageBase.SHORT
                                 || fileInfo.getDataType() == ModelStorageBase.USHORT) {
@@ -851,9 +855,9 @@ public class FileMincHDF extends FileBase {
                     dirCosines2[m][2] = dirCosines[m][2];
                 }
                 final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
-                final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                //final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
                 fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step2, dirCosines2,
-                        isCentered2, 0, mincStartLoc2));
+                        isCentered2, 0, mincStartLoc));
 
             } else {
                 fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step, dirCosines,
@@ -881,9 +885,9 @@ public class FileMincHDF extends FileBase {
                         dirCosines2[m][2] = dirCosines[m][2];
                     }
                     final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
-                    final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                    //final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
                     fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step2, dirCosines2,
-                            isCentered2, i, mincStartLoc2));
+                            isCentered2, i, mincStartLoc));
 
                 } else {
                     fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines,
@@ -2337,6 +2341,27 @@ public class FileMincHDF extends FileBase {
         }
 
         return order;
+    }
+    
+    /**
+     * Return the proper unit based on a given unit string (abbrevation or full word).
+     * @param val The unit name or abbreviation.
+     * @return The proper unit for the given string, or Unit.UNKNOWN_MEASURE if not recognized.
+     */
+    public static final Unit getUnitFromString(String val) {
+        Unit u = Unit.getUnit(val);
+        if (u == Unit.UNKNOWN_MEASURE) {
+            u = Unit.getUnitFromAbbrev(val);
+            
+            if (u == Unit.UNKNOWN_MEASURE) {
+                // some minc files use 's' for seconds instead of the 'sec' that we use
+                if (val.equalsIgnoreCase("s")) {
+                    u = Unit.SECONDS;
+                }
+            }
+        }
+        
+        return u;
     }
 
     public class HDFNode extends DefaultMutableTreeNode {

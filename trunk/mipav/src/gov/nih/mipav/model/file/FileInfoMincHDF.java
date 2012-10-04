@@ -361,6 +361,8 @@ public class FileInfoMincHDF extends FileInfoBase {
             matrix.transform(startLocs[0], startLocs[1], transformedPt);
         } else if (getExtents().length == 3) {
             matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
+        } else if (getExtents().length == 4) {
+            matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
         }
 
         // Appears that this transformed Pt...is in the following order....xspace, yspace, zspace
@@ -386,7 +388,7 @@ public class FileInfoMincHDF extends FileInfoBase {
             transformedPtReordered[2] = transformedPt[1];
         }
 
-        if (startLocs.length == 3) {
+        if (startLocs.length == 3 || startLocs.length == 4) {
 
             if (getImageOrientation() == FileInfoBase.SAGITTAL) {
                 transformedPtReordered[0] = -transformedPtReordered[0];
@@ -397,6 +399,11 @@ public class FileInfoMincHDF extends FileInfoBase {
             } else if (getImageOrientation() == FileInfoBase.CORONAL) {
                 transformedPtReordered[0] = -transformedPtReordered[0];
                 transformedPtReordered[2] = -transformedPtReordered[2];
+            }
+            
+            // copy 4th dim origin directly over.  might need to handle in a more complicated manner
+            if (startLocs.length == 4) {
+                transformedPtReordered[3] = mincStartLoc[3];
             }
 
             transformedPt = transformedPtReordered;
@@ -415,8 +422,8 @@ public class FileInfoMincHDF extends FileInfoBase {
      */
     public final void setStartLocations(final double[] origin) {
 
-        if (origin.length != 3) {
-            Preferences.debug("Start locations array must be of length 3.\n", Preferences.DEBUG_FILEIO);
+        if (origin.length != 3 && origin.length != 4) {
+            Preferences.debug("Start locations array must be of length 3 or 4.\n", Preferences.DEBUG_FILEIO);
 
             return;
         }
