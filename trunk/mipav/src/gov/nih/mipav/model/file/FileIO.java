@@ -14309,7 +14309,6 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
             FileInfoDicom[][] infoAr) {
         long time = System.currentTimeMillis();
-        System.out.println("Oute");
         //create sequence ordered by current slice number
         FileDicomSQ seqBase = new FileDicomSQ(); //this is the 5200,9230 sequence
         seqBase.setWriteAsUnknownLength(true); //sequences containing enhanced dicom data always given known length
@@ -14353,10 +14352,35 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 outerItem.setWriteAsUnknownLength(false);
             }
         }
-        System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
+       
         //insert constructed sequence into tag table
         myFileInfo.getTagTable().setValue("0028,0008", tDim*zDim);
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
+        if (myFileInfo.getTagTable().get("0002,0002") == null) {
+            final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface
+                    .getReference().getMainFrame());
+
+            if (choice.okayPressed()) {
+                String str = choice.dicomType() + " ";
+                myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+            }
+        }
+        else {
+            FileDicomTag tag =  myFileInfo.getTagTable().get("0002,0002");
+            String str = (String)tag.getValue(true);
+            if (!(str.trim().equals(DICOM_Constants.UID_EnhancedMRStorage) 
+                    || str.trim().equals(DICOM_Constants.UID_EnhancedCTStorage) 
+                    || str.trim().equals(DICOM_Constants.UID_EnhancedXAStorage))) {
+                final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface
+                        .getReference().getMainFrame());
+
+                if (choice.okayPressed()) {
+                    str = choice.dicomType() + " ";
+                    myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+                }
+            }
+        }
+        System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
     }
 
     /**
