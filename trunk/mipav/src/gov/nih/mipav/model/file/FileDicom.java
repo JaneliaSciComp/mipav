@@ -187,6 +187,9 @@ public class FileDicom extends FileDicomBase {
     /**Whether adequate processing of the file has occurred to allowed image to be extracted, this includes getting offset
      * and pixel representation. */
     private boolean imageLoadReady = false;
+    
+    /** Header loop keeps executing when true */
+    private boolean flag = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -622,7 +625,7 @@ public class FileDicom extends FileDicomBase {
      */
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
         endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
-        boolean flag = true;
+        flag = true;
 
         if (loadTagBuffer == true) {
             loadTagBuffer();
@@ -860,6 +863,9 @@ public class FileDicom extends FileDicomBase {
                 } //else is implicit sequence, so continue
             case SQ:
                 processSequence(tagTable, key, name, endianess);
+                if (flag == false) {
+                    return false;
+                }
                 break;
             }
             
@@ -1021,7 +1027,19 @@ public class FileDicom extends FileDicomBase {
             }
             numSlices = checkMaxSlice(tagTable, numSlices, sliceInt);
             for(int i=1; i<v.size(); i++) { //each entire children tag table is just what's in v
-                enhancedTagTables[i-1] = v.get(i);
+                if (enhancedTagTables == null) {
+                    Preferences.debug("In processSequence enhancedTagTables == null\n", Preferences.DEBUG_FILEIO);
+                    flag = false;
+                    return;
+                }
+                if (enhancedTagTables.length >= i) {
+                    enhancedTagTables[i-1] = v.get(i);
+                }
+                else {
+                    Preferences.debug("In processSequence enhancedTagTables[" + (i-1) + "] is null\n", Preferences.DEBUG_FILEIO);
+                    flag = false;
+                    return;
+                }
                 numSlices = checkMaxSlice(enhancedTagTables[i-1], numSlices, sliceInt);
             }
             enhancedNumSlices = numSlices;
@@ -2932,13 +2950,13 @@ public class FileDicom extends FileDicomBase {
         table.setWriteAsUnknownLength(itemLength == -1); //if reported item length is -1, item will continue to be written with unknown length
         
         final int startfptr = getFilePointer();
-        boolean flag = true; //whether dicom header processing should continue
-        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
+        boolean dataSetflag = true; //whether dicom header processing should continue
+        while (dataSetflag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
             Preferences.debug("Processed seq amount: "+(getFilePointer() - startfptr), Preferences.DEBUG_FILEIO);
             FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
             if(!nameSQ.equals(FileDicom.SEQ_ITEM_END) && !nameSQ.matches(FileDicom.IMAGE_TAG)) {
-                flag = processNextTag(table, key, endianess, true);
+                dataSetflag = processNextTag(table, key, endianess, true);
             } else if(nameSQ.matches(FileDicom.IMAGE_TAG)) {
                 numEmbeddedImages++;
                 seek(getFilePointer()+elementLength); //embedded image not displayed //TODO: make this image availbale in the dicom infobox
