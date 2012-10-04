@@ -679,6 +679,10 @@ public class FileDicom extends FileDicomBase {
             int bPtrOld = getFilePointer();
             try {
                 flag = processNextTag(tagTable, key, endianess, false);
+                if (flag == false) {
+                    Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
+                    return false;
+                }
             } catch(Exception e) {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
