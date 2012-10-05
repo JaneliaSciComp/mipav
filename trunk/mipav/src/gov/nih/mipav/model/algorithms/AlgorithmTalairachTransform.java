@@ -343,7 +343,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                                         int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = CLag.cubicLagrangian3D(xi, yi, zi);
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)CLag.cubicLagrangian3D(xi, yi, zi);
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -368,7 +368,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                                          int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = HLag.hepticLagrangian3D(xi, yi, zi);
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)HLag.hepticLagrangian3D(xi, yi, zi);
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -435,7 +435,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                                           int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = QLag.quinticLagrangian3D(xi, yi, zi);
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)QLag.quinticLagrangian3D(xi, yi, zi);
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
