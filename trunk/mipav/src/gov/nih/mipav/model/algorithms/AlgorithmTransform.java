@@ -126,7 +126,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     private boolean doCenter = false;
 
     /** DOCUMENT ME! */
-    private float[] imgBuf = null;
+    private double[] imgBuf = null;
 
     /** DOCUMENT ME! */
     private float[] imgBuf2 = null;
@@ -897,9 +897,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         try {
             final AlgorithmBSpline Bspline = new AlgorithmBSpline();
             int i, j, k;
-            float X, Y, Z;
-            float value;
-            float imm, jmm, kmm;
+            double X, Y, Z;
+            double value;
+            double imm, jmm, kmm;
             final int xDim = image.getExtents()[0];
             final int yDim = image.getExtents()[1];
             final int zDim = image.getExtents()[2];
@@ -908,14 +908,14 @@ public class AlgorithmTransform extends AlgorithmBase {
             final int length = xDim * yDim * zDim;
             final int mod = length / 100; // mod is 1 percent of length
             int counter = 0; // used for progress bar
-            float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+            double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
             resols[0] = image.getFileInfo()[0].getResolutions()[0];
             resols[1] = image.getFileInfo()[0].getResolutions()[1];
             resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
             final int bufferSize = image.getSliceSize() * image.getExtents()[2];
-            final float[] imgBuffer = new float[bufferSize];
+            final double[] imgBuffer = new double[bufferSize];
 
             try {
 
@@ -929,18 +929,18 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
 
             final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-            T00 = kTM.M00;
-            T01 = kTM.M01;
-            T02 = kTM.M02;
-            T03 = kTM.M03;
-            T10 = kTM.M10;
-            T11 = kTM.M11;
-            T12 = kTM.M12;
-            T13 = kTM.M13;
-            T20 = kTM.M20;
-            T21 = kTM.M21;
-            T22 = kTM.M22;
-            T23 = kTM.M23;
+            T00 = (double)kTM.M00;
+            T01 = (double)kTM.M01;
+            T02 = (double)kTM.M02;
+            T03 = (double)kTM.M03;
+            T10 = (double)kTM.M10;
+            T11 = (double)kTM.M11;
+            T12 = (double)kTM.M12;
+            T13 = (double)kTM.M13;
+            T20 = (double)kTM.M20;
+            T21 = (double)kTM.M21;
+            T22 = (double)kTM.M22;
+            T23 = (double)kTM.M23;
 
             Bspline.setup3DBSpline(imgBuffer, inVolExtents, degree);
 
@@ -1015,9 +1015,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             final TransMatrix xfrm, final ViewJProgressBar progressBar) {
         final AlgorithmBSpline Bspline = new AlgorithmBSpline();
         int i, j, k, l;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int xDim = image.getExtents()[0];
         final int yDim = image.getExtents()[1];
         final int zDim = image.getExtents()[2];
@@ -1031,11 +1031,11 @@ public class AlgorithmTransform extends AlgorithmBase {
         length = xDim * yDim * zDim * tDim;
         mod = length / 100;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
         final int bufferSize = image.getSliceSize() * image.getExtents()[2];
 
-        final float[] imgBuffer = new float[bufferSize];
+        final double[] imgBuffer = new double[bufferSize];
 
         try {
 
@@ -1053,18 +1053,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
         final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; l < tDim; l++) {
             Bspline.setup3DBSpline(imgBuffer, inVolExtents, degree);
@@ -1156,10 +1156,10 @@ public class AlgorithmTransform extends AlgorithmBase {
         try {
             final AlgorithmBSpline Bspline = new AlgorithmBSpline();
             int i, j, k;
-            float X, Y, Z;
-            float[] value = new float[4];
+            double X, Y, Z;
+            double[] value = new double[4];
             int sliceSize;
-            float imm, jmm, kmm;
+            double imm, jmm, kmm;
             final int xDim = image.getExtents()[0];
             final int yDim = image.getExtents()[1];
             final int zDim = image.getExtents()[2];
@@ -1170,10 +1170,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             int counter = 0; // used for progress bar
             sliceSize = xDim * yDim;
 
-            float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+            double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
             int index;
             final int bufferSize = 4 * image.getSliceSize() * image.getExtents()[2];
-            final float[] imgBuffer = new float[bufferSize];
+            final double[] imgBuffer = new double[bufferSize];
             final float[] imgBuffer2 = new float[imgBuffer.length];
 
             try {
@@ -1192,18 +1192,18 @@ public class AlgorithmTransform extends AlgorithmBase {
             resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
             final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-            T00 = kTM.M00;
-            T01 = kTM.M01;
-            T02 = kTM.M02;
-            T03 = kTM.M03;
-            T10 = kTM.M10;
-            T11 = kTM.M11;
-            T12 = kTM.M12;
-            T13 = kTM.M13;
-            T20 = kTM.M20;
-            T21 = kTM.M21;
-            T22 = kTM.M22;
-            T23 = kTM.M23;
+            T00 = (double)kTM.M00;
+            T01 = (double)kTM.M01;
+            T02 = (double)kTM.M02;
+            T03 = (double)kTM.M03;
+            T10 = (double)kTM.M10;
+            T11 = (double)kTM.M11;
+            T12 = (double)kTM.M12;
+            T13 = (double)kTM.M13;
+            T20 = (double)kTM.M20;
+            T21 = (double)kTM.M21;
+            T22 = (double)kTM.M22;
+            T23 = (double)kTM.M23;
 
             Bspline.setup3DBSplineC(imgBuffer, inVolExtents, degree);
 
@@ -1242,10 +1242,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         index = 4 * (i + (j * xDim) + (k * sliceSize));
-                        imgBuffer2[index] = value[0];
-                        imgBuffer2[index + 1] = value[1];
-                        imgBuffer2[index + 2] = value[2];
-                        imgBuffer2[index + 3] = value[3];
+                        imgBuffer2[index] = (float)value[0];
+                        imgBuffer2[index + 1] = (float)value[1];
+                        imgBuffer2[index + 2] = (float)value[2];
+                        imgBuffer2[index + 3] = (float)value[3];
 
                         counter++;
                     } // end for k
@@ -1286,10 +1286,10 @@ public class AlgorithmTransform extends AlgorithmBase {
             final TransMatrix xfrm, final ViewJProgressBar progressBar) {
         final AlgorithmBSpline Bspline = new AlgorithmBSpline();
         int i, j, k, l;
-        float X, Y, Z;
-        float[] value = new float[4];
+        double X, Y, Z;
+        double[] value = new double[4];
         int sliceSize;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int xDim = image.getExtents()[0];
         final int yDim = image.getExtents()[1];
         final int zDim = image.getExtents()[2];
@@ -1304,12 +1304,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         mod = length / 100;
         sliceSize = xDim * yDim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int index;
 
         final int bufferSize = image.getSliceSize() * image.getExtents()[2];
 
-        final float[] imgBuffer = new float[bufferSize];
+        final double[] imgBuffer = new double[bufferSize];
 
         try {
 
@@ -1329,18 +1329,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
         final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; l < tDim; l++) {
             Bspline.setup3DBSplineC(imgBuffer, inVolExtents, degree);
@@ -1380,10 +1380,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         index = 4 * (i + (j * xDim) + (k * sliceSize));
-                        imgBuffer2[index] = value[0];
-                        imgBuffer2[index + 1] = value[1];
-                        imgBuffer2[index + 2] = value[2];
-                        imgBuffer2[index + 3] = value[3];
+                        imgBuffer2[index] = (float)value[0];
+                        imgBuffer2[index + 1] = (float)value[1];
+                        imgBuffer2[index + 2] = (float)value[2];
+                        imgBuffer2[index + 3] = (float)value[3];
 
                         counter++;
                     } // end for k
@@ -5245,7 +5245,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 byteBuf = new byte[imgLength];
                 srcImage.exportData(0, imgLength, byteBuf);
             } else {
-                imgBuf = new float[imgLength];
+                imgBuf = new double[imgLength];
                 srcImage.exportData(0, imgLength, imgBuf);
             }
 
@@ -5720,15 +5720,15 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer Image array
      * @param xfrm Transformation matrix to be applied
      */
-    private void transform2DVOI(final ModelImage image, final float[] imgBuffer, final TransMatrix kTM) {
+    private void transform2DVOI(final ModelImage image, final double[] imgBuffer, final TransMatrix kTM) {
 
         int i, j;
         int iAdj, jAdj;
         int X0pos, Y0pos;
-        float X, Y;
-        float temp1, temp2;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double temp1, temp2;
+        double value;
+        double imm, jmm;
         int roundX, roundY;
         int index;
         int index2;
@@ -5736,18 +5736,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         int length = iXdim * iYdim;
         int index2Size;
 
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         ModelImage tmpMask;
         VOIVector voiVector;
 
         final int mod = Math.max(1, oXdim / 50);
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
         
         voiVector = image.getVOIs();
         
@@ -5889,14 +5889,14 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer Image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transform25DVOI(final ModelImage image, final float[] imgBuffer, final TransMatrix kTM) {
+    private void transform25DVOI(final ModelImage image, final double[] imgBuffer, final TransMatrix kTM) {
     	int i, j, z;
         int iAdj, jAdj;
         int X0pos, Y0pos;
-        float X, Y;
-        float temp1, temp2;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double temp1, temp2;
+        double value;
+        double imm, jmm;
         int roundX, roundY;
         int index;
         int index2;
@@ -5910,18 +5910,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         int zFound[] = new int[iZdim];
         boolean duplicateZ = false;
 
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         ModelImage tmpMask = null;
         VOIVector voiVector;
 
         final int mod = Math.max(1, oXdim / 50);
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
         
         voiVector = image.getVOIs();
         
@@ -6116,14 +6116,14 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer Image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transform3DVOI(final ModelImage image, final float[] imgBuffer, final TransMatrix kTM) {
+    private void transform3DVOI(final ModelImage image, final double[] imgBuffer, final TransMatrix kTM) {
     	int i, j, k, z;
         int iAdj, jAdj, kAdj;
         int X0pos, Y0pos, Z0pos;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
-        float k1, k2, k3, j1, j2, j3;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
+        double k1, k2, k3, j1, j2, j3;
         int index;
         int index2;
         int indexC;
@@ -6132,22 +6132,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index2Size;
         VOIBaseVector curves = null;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask = null;
         VOIVector voiVector;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
         
         voiVector = image.getVOIs();
         
@@ -6543,32 +6543,32 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf Image array
      * @param kTM Matrix to be applied
      */
-    private void transformBilinear(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformBilinear(final double[] imgBuf, final TransMatrix kTM) {
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int x0, y0;
-        float j1, j2;
-        float value;
-        float imm, jmm;
+        double j1, j2;
+        double value;
+        double imm, jmm;
         int deltaX, deltaY;
 
         final int mod = Math.max(1, oYdim / 25);
 
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 =(double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         int position;
-        float dx, dy, dx1, dy1;
+        double dx, dy, dx1, dy1;
 
-        final float invXRes = 1 / iXres;
-        final float invYRes = 1 / iYres;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
 
         int index = 0;
 
@@ -6655,26 +6655,26 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf Image array
      * @param kTM Matrix to be applied
      */
-    private void transformBilinear3D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformBilinear3D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
-        float X, Y;
-        float x0, y0;
-        float x1, y1;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double value;
+        double imm, jmm;
         int roundX, roundY;
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
@@ -6761,31 +6761,31 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 Output image array
      * @param kTM Matrix to be applied
      */
-    private void transformBilinear3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformBilinear3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
-        float X, Y;
-        float x0, y0;
-        float x1, y1;
-        float imm, jmm;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double imm, jmm;
 
         final int mod = Math.max(1, oXdim / 50);
 
         int counter = 0; // used for progress bar
         int roundX, roundY;
-        float x1y1, x0y1, x1y0, x0y0;
-        float temp1, temp2;
+        double x1y1, x0y1, x1y0, x0y0;
+        double temp1, temp2;
         int temp3, temp4, temp5, temp6, temp7, temp8;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -6831,10 +6831,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 X0pos = Math.min(roundX, iXdim - 1);
                                 Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                 temp4 = 4 * (Y0pos + X0pos);
-                                imgBuf2[4 * (i + (j * oXdim))] = imgBuf[temp4];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 1] = imgBuf[temp4 + 1];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 2] = imgBuf[temp4 + 2];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 3] = imgBuf[temp4 + 3];
+                                imgBuf2[4 * (i + (j * oXdim))] = (float)imgBuf[temp4];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 1] = (float)imgBuf[temp4 + 1];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 2] = (float)imgBuf[temp4 + 2];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 3] = (float)imgBuf[temp4 + 3];
                             } else {
 
                                 // set intensity of i,j,k to new transformed coordinate if
@@ -6855,14 +6855,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 x0y1 = x0 * y1;
                                 x1y0 = x1 * y0;
                                 x0y0 = x0 * y0;
-                                imgBuf2[temp3] = (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
-                                        + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]);
-                                imgBuf2[temp3 + 1] = (x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
-                                        + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]);
-                                imgBuf2[temp3 + 2] = (x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
-                                        + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]);
-                                imgBuf2[temp3 + 3] = (x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
-                                        + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]);
+                                imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
+                                        + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]));
+                                imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
+                                        + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
+                                imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
+                                        + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
+                                imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
+                                        + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                             }
                         } // end if Y in bounds
                     } // end if X in bounds
@@ -6897,27 +6897,26 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf Image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transformBilinear4D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformBilinear4D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
-        float X, Y;
-        float x0, y0;
-        float x1, y1;
-        float value;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double value;
         float imm, jmm;
-        int counter = 0; // used for progress bar
         int roundX, roundY;
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -6977,7 +6976,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         } // end if X in bounds
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     } // end for j
                 } // end for i
 
@@ -7004,28 +7002,28 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 Output image array
      * @param kTM Matrix to be applied
      */
-    private void transformBilinear4DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformBilinear4DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
-        float X, Y;
-        float x0, y0;
-        float x1, y1;
-        float imm, jmm;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double imm, jmm;
         int counter = 0; // used for progress bar
         int roundX, roundY;
-        float x1y1, x0y1, x1y0, x0y0;
-        float temp1, temp2;
+        double x1y1, x0y1, x1y0, x0y0;
+        double temp1, temp2;
         int temp3, temp4, temp5, temp6, temp7, temp8;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -7071,10 +7069,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                                     X0pos = Math.min(roundX, iXdim - 1);
                                     Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                     temp4 = 4 * (Y0pos + X0pos);
-                                    imgBuf2[temp3] = imgBuf[temp4];
-                                    imgBuf2[temp3 + 1] = imgBuf[temp4 + 1];
-                                    imgBuf2[temp3 + 2] = imgBuf[temp4 + 2];
-                                    imgBuf2[temp3 + 3] = imgBuf[temp4 + 3];
+                                    imgBuf2[temp3] = (float)imgBuf[temp4];
+                                    imgBuf2[temp3 + 1] = (float)imgBuf[temp4 + 1];
+                                    imgBuf2[temp3 + 2] = (float)imgBuf[temp4 + 2];
+                                    imgBuf2[temp3 + 3] = (float)imgBuf[temp4 + 3];
                                 } else {
 
                                     // set intensity of i,j,k to new transformed coordinate if
@@ -7095,14 +7093,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                                     x0y1 = x0 * y1;
                                     x1y0 = x1 * y0;
                                     x0y0 = x0 * y0;
-                                    imgBuf2[temp3] = (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
-                                            + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]);
-                                    imgBuf2[temp3 + 1] = (x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
-                                            + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]);
-                                    imgBuf2[temp3 + 2] = (x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
-                                            + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]);
-                                    imgBuf2[temp3 + 3] = (x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
-                                            + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]);
+                                    imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
+                                            + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]));
+                                    imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
+                                            + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
+                                    imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
+                                            + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
+                                    imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
+                                            + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                                 }
                             } // end if Y in bounds
                         } // end if X in bounds
@@ -7139,31 +7137,31 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 Output image array
      * @param kTM Matrix to be applied
      */
-    private void transformBilinearC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformBilinearC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         int X1pos, Y1pos;
-        float X, Y;
-        float x0, y0;
-        float x1, y1;
-        float imm, jmm;
+        double X, Y;
+        double x0, y0;
+        double x1, y1;
+        double imm, jmm;
 
         final int mod = Math.max(1, oXdim / 50);
 
         int counter = 0; // used for progress bar
         int roundX, roundY;
-        float x1y1, x0y1, x1y0, x0y0;
-        float temp1, temp2;
+        double x1y1, x0y1, x1y0, x0y0;
+        double temp1, temp2;
         int temp3, temp4, temp5, temp6, temp7, temp8;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -7210,10 +7208,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                             X0pos = Math.min(roundX, iXdim - 1);
                             Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                             temp4 = 4 * (Y0pos + X0pos);
-                            imgBuf2[temp3] = imgBuf[temp4];
-                            imgBuf2[temp3 + 1] = imgBuf[temp4 + 1];
-                            imgBuf2[temp3 + 2] = imgBuf[temp4 + 2];
-                            imgBuf2[temp3 + 3] = imgBuf[temp4 + 3];
+                            imgBuf2[temp3] = (float)imgBuf[temp4];
+                            imgBuf2[temp3 + 1] = (float)imgBuf[temp4 + 1];
+                            imgBuf2[temp3 + 2] = (float)imgBuf[temp4 + 2];
+                            imgBuf2[temp3 + 3] = (float)imgBuf[temp4 + 3];
                         } else {
 
                             // set intensity of i,j,k to new transformed coordinate if
@@ -7234,14 +7232,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                             x0y1 = x0 * y1;
                             x1y0 = x1 * y0;
                             x0y0 = x0 * y0;
-                            imgBuf2[temp3] = (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6]) + (x1y0 * imgBuf[temp7])
-                                    + (x0y0 * imgBuf[temp8]);
-                            imgBuf2[temp3 + 1] = (x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
-                                    + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]);
-                            imgBuf2[temp3 + 2] = (x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
-                                    + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]);
-                            imgBuf2[temp3 + 3] = (x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
-                                    + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]);
+                            imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6]) + (x1y0 * imgBuf[temp7])
+                                    + (x0y0 * imgBuf[temp8]));
+                            imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
+                                    + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
+                            imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
+                                    + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
+                            imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
+                                    + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                         }
                     } // end if Y in bounds
                 } // end if X in bounds
@@ -7268,28 +7266,27 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 */
-	private void transformAlgorithmBspline2D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline2D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j;
 		int iAdj, jAdj;
-		float X, Y;
-		float value;
-		float imm, jmm;
+		double X, Y;
+		double value;
+		double imm, jmm;
 		final int mod = Math.max(1, oYdim / 50);
-		;
 
-		float j1, j2;
-		float T00, T01, T02, T10, T11, T12;
+		double j1, j2;
+		double T00, T01, T02, T10, T11, T12;
 		int nz;
 		int x, y, z;
-		float sliceMin;
-		float sliceMax;
+		double sliceMin;
+		double sliceMax;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
 
 		if (srcImage.getNDims() == 2) {
 			nz = 1;
@@ -7395,25 +7392,25 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 */
-	private void transformAlgorithmBspline2DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline2DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j;
 		int iAdj, jAdj;
-		float X, Y;
-		float[] value = new float[4];
-		float imm, jmm;
+		double X, Y;
+		double[] value = new double[4];
+		double imm, jmm;
 		final int mod = Math.max(1, oYdim / 50);
 
-		float j1, j2;
-		float T00, T01, T02, T10, T11, T12;
+		double j1, j2;
+		double T00, T01, T02, T10, T11, T12;
 		int nz;
 		int x, y, z;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
 
 		if (srcImage.getNDims() == 2) {
 			nz = 1;
@@ -7425,8 +7422,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
 		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
 
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
+		final double invXRes = 1.0 / iXres;
+		final double invYRes = 1.0 / iYres;
 
 		final int[] index = new int[4];
 		index[0] = 0;
@@ -7434,8 +7431,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 		index[2] = 2;
 		index[3] = 3;
 
-		final float[] imageMin = new float[4];
-		final float[] imageMax = new float[4];
+		final double[] imageMin = new double[4];
+		final double[] imageMax = new double[4];
 
 		for (z = 0; z < nz; z++) {
 
@@ -7543,43 +7540,43 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 */
-	private void transformAlgorithmBspline3D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline3D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j, k;
 		int iAdj, jAdj, kAdj;
-		float X, Y, Z;
-		float value;
-		float imm, jmm, kmm;
+		double X, Y, Z;
+		double value;
+		double imm, jmm, kmm;
 		final int mod = Math.max(1, oZdim / 50);
 		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
-		float imageMin;
-		float imageMax;
+		double imageMin;
+		double imageMax;
 
 		srcImage.calcMinMax();
-		imageMin = (float) srcImage.getMin();
-		imageMax = (float) srcImage.getMax();
+		imageMin = srcImage.getMin();
+		imageMax = srcImage.getMax();
 
-		float k1, k2, k3, j1, j2, j3;
+		double k1, k2, k3, j1, j2, j3;
 
-		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T03 = kTM.M03;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
-		T13 = kTM.M13;
-		T20 = kTM.M20;
-		T21 = kTM.M21;
-		T22 = kTM.M22;
-		T23 = kTM.M23;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T03 = (double)kTM.M03;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
+		T13 = (double)kTM.M13;
+		T20 = (double)kTM.M20;
+		T21 = (double)kTM.M21;
+		T22 = (double)kTM.M22;
+		T23 = (double)kTM.M23;
 
 		Bspline.setup3DBSpline(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
 
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
-		final float invZRes = 1 / iZres;
+		final double invXRes = 1.0 / iXres;
+		final double invYRes = 1.0 / iYres;
+		final double invZRes = 1.0 / iZres;
 
 		int index = 0;
 
@@ -7659,36 +7656,36 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 * */
-	private void transformAlgorithmBspline3DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline3DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j, k;
 		int iAdj, jAdj, kAdj;
-		float X, Y, Z;
-		float[] value = new float[4];
-		float imm, jmm, kmm;
+		double X, Y, Z;
+		double[] value = new double[4];
+		double imm, jmm, kmm;
 		final int mod = Math.max(1, oZdim / 50);
-		final float[] imageMin = new float[4];
-		final float[] imageMax = new float[4];
+		final double[] imageMin = new double[4];
+		final double[] imageMax = new double[4];
 
-		float k1, k2, k3, j1, j2, j3;
+		double k1, k2, k3, j1, j2, j3;
 
-		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T03 = kTM.M03;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
-		T13 = kTM.M13;
-		T20 = kTM.M20;
-		T21 = kTM.M21;
-		T22 = kTM.M22;
-		T23 = kTM.M23;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T03 = (double)kTM.M03;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
+		T13 = (double)kTM.M13;
+		T20 = (double)kTM.M20;
+		T21 = (double)kTM.M21;
+		T22 = (double)kTM.M22;
+		T23 = (double)kTM.M23;
 
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
-		final float invZRes = 1 / iZres;
+		final double invXRes = 1.0 / iXres;
+		final double invYRes = 1.0 / iYres;
+		final double invZRes = 1.0 / iZres;
 
 		final int[] index = new int[4];
 		index[0] = 0;
@@ -7696,14 +7693,14 @@ public class AlgorithmTransform extends AlgorithmBase {
 		index[2] = 2;
 		index[3] = 3;
 
-		imageMin[0] = (float)srcImage.getMinA();
-		imageMin[1] = (float)srcImage.getMinR();
-		imageMin[2] = (float)srcImage.getMinG();
-		imageMin[3] = (float)srcImage.getMinB();
-		imageMax[0] = (float)srcImage.getMaxA();
-		imageMax[1] = (float)srcImage.getMaxR();
-		imageMax[2] = (float)srcImage.getMaxG();
-		imageMax[3] = (float)srcImage.getMaxB();
+		imageMin[0] = srcImage.getMinA();
+		imageMin[1] = srcImage.getMinR();
+		imageMin[2] = srcImage.getMinG();
+		imageMin[3] = srcImage.getMinB();
+		imageMax[0] = srcImage.getMaxA();
+		imageMax[1] = srcImage.getMaxR();
+		imageMax[2] = srcImage.getMaxG();
+		imageMax[3] = srcImage.getMaxB();
 
 		AlgorithmBSpline Bspline = new AlgorithmBSpline();
 		Bspline.setup3DBSplineC(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
@@ -7789,39 +7786,39 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 */
-	private void transformAlgorithmBspline4D(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline4D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j, k;
 		int iAdj, jAdj, kAdj;
-		float X, Y, Z;
-		float value;
-		float imm, jmm, kmm;
+		double X, Y, Z;
+		double value;
+		double imm, jmm, kmm;
 		int x, y, z;
-		float volMin;
-		float volMax;
+		double volMin;
+		double volMax;
 		int t;
 
-		float k1, k2, k3, j1, j2, j3;
+		double k1, k2, k3, j1, j2, j3;
 
-		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T03 = kTM.M03;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
-		T13 = kTM.M13;
-		T20 = kTM.M20;
-		T21 = kTM.M21;
-		T22 = kTM.M22;
-		T23 = kTM.M23;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T03 = (double)kTM.M03;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
+		T13 = (double)kTM.M13;
+		T20 = (double)kTM.M20;
+		T21 = (double)kTM.M21;
+		T22 = (double)kTM.M22;
+		T23 = (double)kTM.M23;
 
 		AlgorithmBSpline Bspline = new AlgorithmBSpline();
 
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
-		final float invZRes = 1 / iZres;
+		final double invXRes = 1.0 / iXres;
+		final double invYRes = 1.0 / iYres;
+		final double invZRes = 1.0 / iZres;
 
 		int index = 0;
 
@@ -7927,39 +7924,39 @@ public class AlgorithmTransform extends AlgorithmBase {
 	 * @param kTM transformation matrix to be applied
 	 * @param degree degree of polynomial
 	 */
-	private void transformAlgorithmBspline4DC(final float[] imgBuf, final TransMatrix kTM, final int degree) {
+	private void transformAlgorithmBspline4DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
 		int i, j, k;
 		int iAdj, jAdj, kAdj;
-		float X, Y, Z;
-		float[] value = new float[4];
-		float imm, jmm, kmm;
+		double X, Y, Z;
+		double[] value = new double[4];
+		double imm, jmm, kmm;
 		int x, y, z, c;
-		final float volMin[] = new float[4];
-		final float volMax[] = new float[4];
+		final double volMin[] = new double[4];
+		final double volMax[] = new double[4];
 		int t;
 
-		float k1, k2, k3, j1, j2, j3;
+		double k1, k2, k3, j1, j2, j3;
 
-		float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-		T00 = kTM.M00;
-		T01 = kTM.M01;
-		T02 = kTM.M02;
-		T03 = kTM.M03;
-		T10 = kTM.M10;
-		T11 = kTM.M11;
-		T12 = kTM.M12;
-		T13 = kTM.M13;
-		T20 = kTM.M20;
-		T21 = kTM.M21;
-		T22 = kTM.M22;
-		T23 = kTM.M23;
+		T00 = (double)kTM.M00;
+		T01 = (double)kTM.M01;
+		T02 = (double)kTM.M02;
+		T03 = (double)kTM.M03;
+		T10 = (double)kTM.M10;
+		T11 = (double)kTM.M11;
+		T12 = (double)kTM.M12;
+		T13 = (double)kTM.M13;
+		T20 = (double)kTM.M20;
+		T21 = (double)kTM.M21;
+		T22 = (double)kTM.M22;
+		T23 = (double)kTM.M23;
 
 		AlgorithmBSpline Bspline = new AlgorithmBSpline();
 
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
-		final float invZRes = 1 / iZres;
+		final double invXRes = 1.0 / iXres;
+		final double invYRes = 1.0 / iYres;
+		final double invZRes = 1.0 / iZres;
 
 		final int index[] = new int[4];
 		index[0] = 0;
@@ -8081,7 +8078,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip if <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformCubicLagrangian2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
         int iAdj, jAdj;
@@ -8157,7 +8154,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip if true clip output values to be within input range
      */
-    private void transformCubicLagrangian2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformCubicLagrangian2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
@@ -8258,7 +8255,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian3D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformCubicLagrangian3D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -8362,7 +8359,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformCubicLagrangian3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
@@ -8494,7 +8491,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian3Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformCubicLagrangian3Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj;
@@ -8586,7 +8583,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian3Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformCubicLagrangian3Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
@@ -8698,7 +8695,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip if <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian4D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformCubicLagrangian4D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
@@ -8816,7 +8813,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip if <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian4DC(final float[] imgBuf, final float imgBuffer2[], final TransMatrix kTM,
+    private void transformCubicLagrangian4DC(final double[] imgBuf, final float imgBuffer2[], final TransMatrix kTM,
             final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
@@ -8962,7 +8959,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian4Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformCubicLagrangian4Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
@@ -9051,7 +9048,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformCubicLagrangian4Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformCubicLagrangian4Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
@@ -9161,7 +9158,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformHepticLagrangian2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
         int iAdj, jAdj;
@@ -9237,7 +9234,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformHepticLagrangian2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
@@ -9339,7 +9336,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian3D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformHepticLagrangian3D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -9438,7 +9435,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformHepticLagrangian3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
@@ -9570,7 +9567,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian3Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformHepticLagrangian3Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
@@ -9661,7 +9658,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian3Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformHepticLagrangian3Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
@@ -9772,7 +9769,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM transformation matrix to be applied
      * @param clip if true clip output values to be within input range
      */
-    private void transformHepticLagrangian4D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformHepticLagrangian4D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
@@ -9889,7 +9886,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM transformation matrix to be applied
      * @param clip if true clip output values to be within input range
      */
-    private void transformHepticLagrangian4DC(final float[] imgBuf, final float imgBuffer2[], final TransMatrix kTM,
+    private void transformHepticLagrangian4DC(final double[] imgBuf, final float imgBuffer2[], final TransMatrix kTM,
             final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
@@ -10035,7 +10032,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian4Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformHepticLagrangian4Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
@@ -10124,7 +10121,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformHepticLagrangian4Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformHepticLagrangian4Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
@@ -10233,23 +10230,23 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor2D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformNearestNeighbor2D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float value;
-        float imm, jmm;
+        double value;
+        double imm, jmm;
         final int mod = Math.max(1, oXdim / 50);
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10304,23 +10301,23 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 output image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformNearestNeighbor2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float imm, jmm;
+        double imm, jmm;
         final int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10362,10 +10359,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else {
                     xOffset = Math.min(roundX, iXdim - 1);
                     yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                    imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 1] = imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 2] = imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 3] = imgBuf[ (4 * (xOffset + yOffset)) + 3];
+                    imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
+                    imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
+                    imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
+                    imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
                 }
 
                 counter++;
@@ -10390,34 +10387,33 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor3D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformNearestNeighbor3D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int xOffset, yOffset, zOffset;
-        float value;
+        double value;
         int sliceSize;
         int roundX, roundY, roundZ;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         sliceSize = iXdim * iYdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10474,7 +10470,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
         }
@@ -10487,33 +10482,33 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 output image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformNearestNeighbor3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int roundX, roundY, roundZ;
         int xOffset, yOffset, zOffset;
         int sliceSize;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
 
         sliceSize = iXdim * iYdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10567,10 +10562,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                         zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = imgBuf[4 * (xOffset + yOffset + zOffset)];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 1];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 2];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 3];
+                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = (float)imgBuf[4 * (xOffset + yOffset + zOffset)];
+                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 1];
+                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 2];
+                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 3];
                     }
 
                     counter++;
@@ -10596,22 +10591,22 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor3Dim2D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformNearestNeighbor3Dim2D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float value;
-        float imm, jmm;
-        float T00, T01, T02, T10, T11, T12;
+        double value;
+        double imm, jmm;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
@@ -10680,21 +10675,21 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 output image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor3Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformNearestNeighbor3Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float imm, jmm;
-        float T00, T01, T02, T10, T11, T12;
+        double imm, jmm;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5));
@@ -10734,10 +10729,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } else {
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 1] = imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 2] = imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 3] = imgBuf[ (4 * (xOffset + yOffset)) + 3];
+                        imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
+                        imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
+                        imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
+                        imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
                     }
                 }
             }
@@ -10772,33 +10767,33 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor4D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformNearestNeighbor4D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int xOffset, yOffset, zOffset;
-        float value;
+        double value;
         int sliceSize;
         int roundX, roundY, roundZ;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         int counter = 0; // used for progress bar
 
         sliceSize = iXdim * iYdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10878,10 +10873,10 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBufffer2
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor4DC(final float[] imgBuf, final float imgBuffer2[], final TransMatrix kTM) {
+    private void transformNearestNeighbor4DC(final double[] imgBuf, final float imgBuffer2[], final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int xOffset, yOffset, zOffset;
         int temp;
         int sliceSize;
@@ -10889,27 +10884,26 @@ public class AlgorithmTransform extends AlgorithmBase {
         int oVolSize;
         int pos;
         int roundX, roundY, roundZ;
-        float imm, jmm, kmm;
-        int counter = 0; // used for progress bar
+        double imm, jmm, kmm;
 
         sliceSize = iXdim * iYdim;
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10963,12 +10957,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                             zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
                             pos = xOffset + yOffset + zOffset;
-                            imgBuffer2[temp] = imgBuf[4 * pos];
-                            imgBuffer2[temp + 1] = imgBuf[4 * pos + 1];
-                            imgBuffer2[temp + 2] = imgBuf[4 * pos + 2];
-                            imgBuffer2[temp + 3] = imgBuf[4 * pos + 3];
+                            imgBuffer2[temp] = (float)imgBuf[4 * pos];
+                            imgBuffer2[temp + 1] = (float)imgBuf[4 * pos + 1];
+                            imgBuffer2[temp + 2] = (float)imgBuf[4 * pos + 2];
+                            imgBuffer2[temp + 3] = (float)imgBuf[4 * pos + 3];
                         }
-                        counter++;
                     }
                 }
             } // for i
@@ -11000,22 +10993,22 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor4Dim2D(final float[] imgBuf, final TransMatrix kTM) {
+    private void transformNearestNeighbor4Dim2D(final double[] imgBuf, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float value;
-        float imm, jmm;
-        float T00, T01, T02, T10, T11, T12;
+        double value;
+        double imm, jmm;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -11084,27 +11077,27 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2 output image array
      * @param kTM transformation matrix to be applied
      */
-    private void transformNearestNeighbor4Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
+    private void transformNearestNeighbor4Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
+        double X, Y;
         int roundX, roundY;
         int xOffset, yOffset;
-        float imm, jmm;
-        float T00, T01, T02, T10, T11, T12;
-
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-
+        double imm, jmm;
+        double T00, T01, T02, T10, T11, T12;
+    
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+    
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
-
+    
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
+    
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
                     if (pad) {
                         iAdj = i - AlgorithmTransform.margins[0];
@@ -11113,7 +11106,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                     imm = iAdj * oXres;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
+    
                         // transform i,j
                         if (pad) {
                             jAdj = j - AlgorithmTransform.margins[1];
@@ -11123,15 +11116,15 @@ public class AlgorithmTransform extends AlgorithmBase {
                         jmm = jAdj * oYres;
                         X = (imm * T00) + (jmm * T01) + T02;
                         Y = (imm * T10) + (jmm * T11) + T12;
-
+    
                         // set intensity of i,j,k,l to new transformed coordinate if
                         // x,y,z,t is w/in dimensions of image
                         X = X / iXres;
                         Y = Y / iYres;
-
+    
                         roundX = (int) (X + 0.5f);
                         roundY = (int) (Y + 0.5f);
-
+    
                         if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                             imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel is transformed out of bounds
                             imgBuf2[ (4 * (i + (oXdim * j))) + 1] = fillValue;
@@ -11140,35 +11133,37 @@ public class AlgorithmTransform extends AlgorithmBase {
                         } else {
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            imgBuf2[4 * (i + (oXdim * j))] = imgBuf[4 * (xOffset + yOffset)];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 1] = imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 2] = imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 3] = imgBuf[ (4 * (xOffset + yOffset)) + 3];
+                            imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
+                            imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
+                            imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
+                            imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
                         }
                     }
                 }
-
+    
                 try {
                     destImage.importData( (4 * l * oXdim * oYdim * oZdim) + (4 * k * oXdim * oYdim), imgBuf2, true);
                 } catch (final IOException error) {
                     MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
                 }
-
+    
                 if ( (k < (oZdim - 1)) || (l < (oTdim - 1))) {
-
+    
                     try {
                         srcImage.exportData( (l * oZdim * imgLength) + ( (k + 1) * imgLength), imgLength, imgBuf);
                     } catch (final IOException error) {
                         displayError("Algorithm Transform: IOException Error on exportData");
                         setCompleted(false);
-
+    
                         return;
                     }
                 } // if ((k < (oZdim - 1))|| (l < (oTdim - 1)))
             } // for k
         } // for l
-
+    
     }
+
+    
 
     /**
      * Transforms and resamples volume using quintic Lagrangian interpolation.
@@ -11177,7 +11172,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformQuinticLagrangian2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
         int iAdj, jAdj;
@@ -11252,7 +11247,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformQuinticLagrangian2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
@@ -11353,7 +11348,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian3D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformQuinticLagrangian3D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
@@ -11452,7 +11447,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformQuinticLagrangian3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
@@ -11584,7 +11579,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian3Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformQuinticLagrangian3Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
@@ -11675,7 +11670,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian3Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformQuinticLagrangian3Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
@@ -11791,7 +11786,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian4DC(final float[] imgBuf, final float[] imgBuffer2, final TransMatrix kTM,
+    private void transformQuinticLagrangian4DC(final double[] imgBuf, final float[] imgBuffer2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
@@ -11936,7 +11931,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian4D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformQuinticLagrangian4D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
@@ -12054,7 +12049,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian4Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformQuinticLagrangian4Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
@@ -12144,7 +12139,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip if <code>true</code> clip output values to be within input range
      */
-    private void transformQuinticLagrangian4Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformQuinticLagrangian4Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
@@ -12253,47 +12248,47 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer Image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transformTrilinear(final float[] imgBuffer, final TransMatrix kTM) {
+    private void transformTrilinear(final double[] imgBuffer, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float[] tempBuf;
-        float X, Y, Z;
+        double[] tempBuf;
+        double X, Y, Z;
         int x0, y0, z0;
-        float value;
-        float imm, jmm, kmm;
-        float k1, k2, k3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double value;
+        double imm, jmm, kmm;
+        double k1, k2, k3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int deltaX, deltaY, deltaZ;
 
         int sliceSize;
         sliceSize = iXdim * iYdim;
 
         imgLength2 = oXdim * oYdim * oZdim;
-        tempBuf = new float[imgLength2];
+        tempBuf = new double[imgLength2];
 
         final int mod = Math.max(1, oZdim / 50);
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
         // T30 = (float)xfrm[3][0]; T31 = (float)xfrm[3][1]; T32 = (float)xfrm[3][2]; T33 = (float)xfrm[3][3];
 
         int position1, position2;
-        float b1, b2;
-        float dx, dy, dz, dx1, dy1;
+        double b1, b2;
+        double dx, dy, dz, dx1, dy1;
 
-        final float invXRes = 1.f / iXres;
-        final float invYRes = 1.f / iYres;
-        final float invZRes = 1.f / iZres;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
 
         int index = 0;
 
@@ -12433,41 +12428,41 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer Image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transformTrilinear4D(final float[] imgBuffer, final TransMatrix kTM) {
+    private void transformTrilinear4D(final double[] imgBuffer, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int x0, y0, z0;
-        float value;
+        double value;
         int sliceSize;
-        float imm, jmm, kmm;
-        float k1, k2, k3, j1, j2, j3;
+        double imm, jmm, kmm;
+        double k1, k2, k3, j1, j2, j3;
 
         sliceSize = iXdim * iYdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int deltaX, deltaY, deltaZ;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         int position1, position2;
-        float b1, b2;
-        float dx, dy, dz, dx1, dy1;
+        double b1, b2;
+        double dx, dy, dz, dx1, dy1;
 
-        final float invXRes = 1 / iXres;
-        final float invYRes = 1 / iYres;
-        final float invZRes = 1 / iZres;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
 
         int index = 0;
 
@@ -12824,45 +12819,45 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuf2
      * @param kTM Transformation matrix to be applied
      */
-    private void transformTrilinear4DC(final float[] imgBuffer, final float[] imgBuffer2, final TransMatrix kTM) {
+    private void transformTrilinear4DC(final double[] imgBuffer, final float[] imgBuffer2, final TransMatrix kTM) {
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int x0, y0, z0;
         int temp;
         int sliceSize;
         int oSliceSize;
         int oVolSize;
-        float imm, jmm, kmm;
-        float k1, k2, k3, j1, j2, j3;
+        double imm, jmm, kmm;
+        double k1, k2, k3, j1, j2, j3;
 
         sliceSize = iXdim * iYdim;
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
 
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int deltaX, deltaY, deltaZ;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         int position1, position2;
-        float b1, b2;
-        float dx, dy, dz, dx1, dy1;
+        double b1, b2;
+        double dx, dy, dz, dx1, dy1;
 
-        final float invXRes = 1 / iXres;
-        final float invYRes = 1 / iYres;
-        final float invZRes = 1 / iZres;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged(Math.round((float) l / oTdim * 100));
@@ -12969,7 +12964,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY)]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX)])));
 
-                                    imgBuffer2[temp] = ( (1 - dz) * b1) + (dz * b2);
+                                    imgBuffer2[temp] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 1]) + (dx * imgBuffer[4 * (position1 + deltaX) + 1])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 1]) + (dx * imgBuffer[4 * (position1
@@ -12979,7 +12974,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 1]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 1])));
 
-                                    imgBuffer2[temp + 1] = ( (1 - dz) * b1) + (dz * b2);
+                                    imgBuffer2[temp + 1] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 2]) + (dx * imgBuffer[4 * (position1 + deltaX) + 2])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 2]) + (dx * imgBuffer[4 * (position1
@@ -12989,7 +12984,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 2]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 2])));
 
-                                    imgBuffer2[temp + 2] = ( (1 - dz) * b1) + (dz * b2);
+                                    imgBuffer2[temp + 2] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 3]) + (dx * imgBuffer[4 * (position1 + deltaX) + 3])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 3]) + (dx * imgBuffer[4 * (position1
@@ -12999,7 +12994,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 3]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 3])));
 
-                                    imgBuffer2[temp + 3] = ( (1 - dz) * b1) + (dz * b2);
+                                    imgBuffer2[temp + 3] = (float)(( (1 - dz) * b1) + (dz * b2));
                                 } // end if Z in bounds
                             } // end if Y in bounds
                         } // end if X in bounds
@@ -13035,38 +13030,38 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param imgBuffer2 Output image array
      * @param kTM Transformation matrix to be applied
      */
-    private void transformTrilinearC(final float[] imgBuffer, final float[] imgBuffer2, final TransMatrix kTM) {
+    private void transformTrilinearC(final double[] imgBuffer, final float[] imgBuffer2, final TransMatrix kTM) {
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
+        double X, Y, Z;
         int x0, y0, z0;
         int sliceSize, osliceSize;
-        float imm, jmm, kmm;
-        float temp1, temp2, temp3;
+        double imm, jmm, kmm;
+        double temp1, temp2, temp3;
         int temp8;
         int deltaX, deltaY, deltaZ;
         int position1, position2;
-        float b1, b2;
-        float dx, dy, dz, dx1, dy1;
+        double b1, b2;
+        double dx, dy, dz, dx1, dy1;
 
         sliceSize = iXdim * iYdim;
         osliceSize = oXdim * oYdim;
 
-        float i1, i2, i3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
             fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
@@ -13178,7 +13173,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY)]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX)])));
 
-                                imgBuffer2[temp8] = ( (1 - dz) * b1) + (dz * b2);
+                                imgBuffer2[temp8] =(float)( ( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 1]) + (dx * imgBuffer[4 * (position1 + deltaX) + 1])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 1]) + (dx * imgBuffer[4 * (position1
@@ -13188,7 +13183,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 1]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 1])));
 
-                                imgBuffer2[temp8 + 1] = ( (1 - dz) * b1) + (dz * b2);
+                                imgBuffer2[temp8 + 1] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 2]) + (dx * imgBuffer[4 * (position1 + deltaX) + 2])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 2]) + (dx * imgBuffer[4 * (position1
@@ -13198,7 +13193,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 2]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 2])));
 
-                                imgBuffer2[temp8 + 2] = ( (1 - dz) * b1) + (dz * b2);
+                                imgBuffer2[temp8 + 2] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 3]) + (dx * imgBuffer[4 * (position1 + deltaX) + 3])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 3]) + (dx * imgBuffer[4 * (position1
@@ -13208,7 +13203,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 3]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 3])));
 
-                                imgBuffer2[temp8 + 3] = ( (1 - dz) * b1) + (dz * b2);
+                                imgBuffer2[temp8 + 3] = (float)(( (1 - dz) * b1) + (dz * b2));
 
                             } // end if Z in bounds
                         } // end if Y in bounds
@@ -13445,25 +13440,25 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformWSinc2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
 
@@ -13522,28 +13517,28 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformWSinc2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
         int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -13594,10 +13589,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = value[0];
-                imgBuf2[temp3 + 1] = value[1];
-                imgBuf2[temp3 + 2] = value[2];
-                imgBuf2[temp3 + 3] = value[3];
+                imgBuf2[temp3] = (float)value[0];
+                imgBuf2[temp3 + 1] = (float)value[1];
+                imgBuf2[temp3 + 2] = (float)value[2];
+                imgBuf2[temp3 + 3] = (float)value[3];
                 counter++;
             }
         }
@@ -13624,32 +13619,31 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc3D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformWSinc3D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         WSinc.setup3DWSinc(imgBuf, inVolExtents, clip);
 
@@ -13707,7 +13701,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
         }
@@ -13725,37 +13718,36 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc3DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformWSinc3DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float[] value = new float[4];
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         final int osliceSize = oXdim * oYdim;
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
         int temp4;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -13826,11 +13818,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = value[0];
-                    imgBuf2[temp4 + 1] = value[1];
-                    imgBuf2[temp4 + 2] = value[2];
-                    imgBuf2[temp4 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp4] = (float)value[0];
+                    imgBuf2[temp4 + 1] = (float)value[1];
+                    imgBuf2[temp4 + 2] = (float)value[2];
+                    imgBuf2[temp4 + 3] = (float)value[3];
                 }
             }
         }
@@ -13858,26 +13849,25 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc3Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformWSinc3Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -13920,7 +13910,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
 
@@ -13951,29 +13940,28 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc3Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformWSinc3Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -14026,11 +14014,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = value[0];
-                    imgBuf2[temp3 + 1] = value[1];
-                    imgBuf2[temp3 + 2] = value[2];
-                    imgBuf2[temp3 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp3] = (float)value[0];
+                    imgBuf2[temp3 + 1] = (float)value[1];
+                    imgBuf2[temp3 + 2] = (float)value[2];
+                    imgBuf2[temp3 + 3] = (float)value[3];
                 } // for i
             } // for j
 
@@ -14065,33 +14052,32 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc4D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformWSinc4D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -14153,7 +14139,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
             }
@@ -14184,39 +14169,38 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc4DC(final float[] imgBuf, final float[] imgBuffer2, final TransMatrix kTM,
+    private void transformWSinc4DC(final double[] imgBuf, final float[] imgBuffer2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value[] = new float[4];
+        double X, Y, Z;
+        double value[] = new double[4];
         int temp4;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         int oSliceSize;
         int oVolSize;
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -14290,11 +14274,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = value[0];
-                        imgBuffer2[temp4 + 1] = value[1];
-                        imgBuffer2[temp4 + 2] = value[2];
-                        imgBuffer2[temp4 + 3] = value[3];
-                        counter++;
+                        imgBuffer2[temp4] = (float)value[0];
+                        imgBuffer2[temp4 + 1] = (float)value[1];
+                        imgBuffer2[temp4 + 2] = (float)value[2];
+                        imgBuffer2[temp4 + 3] = (float)value[3];
                     }
                 }
             }
@@ -14332,25 +14315,24 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</true> clip output values to be within input range</code>
      */
-    private void transformWSinc4Dim2D(final float[] imgBuf, final TransMatrix kTM, final boolean clip) {
+    private void transformWSinc4Dim2D(final double[] imgBuf, final TransMatrix kTM, final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -14391,7 +14373,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
 
@@ -14423,28 +14404,27 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      * @param clip If <code>true</code> clip output values to be within input range
      */
-    private void transformWSinc4Dim2DC(final float[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
+    private void transformWSinc4Dim2DC(final double[] imgBuf, final float[] imgBuf2, final TransMatrix kTM,
             final boolean clip) {
         AlgorithmWSinc WSinc = new AlgorithmWSinc();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -14495,11 +14475,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = value[0];
-                        imgBuf2[temp3 + 1] = value[1];
-                        imgBuf2[temp3 + 2] = value[2];
-                        imgBuf2[temp3 + 3] = value[3];
-                        counter++;
+                        imgBuf2[temp3] = (float)value[0];
+                        imgBuf2[temp3 + 1] = (float)value[1];
+                        imgBuf2[temp3 + 2] = (float)value[2];
+                        imgBuf2[temp3 + 3] = (float)value[3];
                     } // for i
                 } // for j
 
