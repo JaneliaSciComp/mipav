@@ -56,7 +56,7 @@ public class AlgorithmQuinticLagrangian extends AlgorithmBase {
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
     private double[][] wt = null;
@@ -803,7 +803,7 @@ public class AlgorithmQuinticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DQuinticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup2DQuinticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -850,7 +850,7 @@ public class AlgorithmQuinticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible value of a color
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DQuinticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup2DQuinticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
@@ -930,7 +930,7 @@ public class AlgorithmQuinticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim, zdim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DQuinticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup3DQuinticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -980,7 +980,7 @@ public class AlgorithmQuinticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible value of a color
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DQuinticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup3DQuinticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
