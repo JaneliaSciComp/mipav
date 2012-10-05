@@ -310,7 +310,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
 
         
 		AlgorithmBSpline bSplineX = new AlgorithmBSpline();
-		float[] imageXFloatBuffer = new float[length1];
+		double[] imageXFloatBuffer = new double[length1];
         for (int c = 0; c < 4; c++) {
             for (int z = 0; z < imageX.getExtents()[2]; z++) {
                 for (int y = 0; y < imageX.getExtents()[1]; y++) {
@@ -335,7 +335,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         }
         
 		AlgorithmBSpline bSplineY = new AlgorithmBSpline();
-		float[] imageYFloatBuffer = new float[length2];
+		double[] imageYFloatBuffer = new double[length2];
         for (int c = 0; c < 4; c++) {
             for (int z = 0; z < imageY.getExtents()[2]; z++) {
                 for (int y = 0; y < imageY.getExtents()[1]; y++) {
@@ -494,7 +494,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb1_short[1] = (short) (rgb1[1] & 0xff);
                                     rgb1_short[2] = (short) (rgb1[2] & 0xff);
                                 } else {
-                                	float[] tempValues = bSplineX.bSpline3DC(0, 0, 0, 
+                                	double[] tempValues = bSplineX.bSpline3DC(0, 0, 0, 
                                 			(float)tX1_floor, (float)tY1_floor, (float)tZ1_floor);
     								for ( int c = 0; c < 4; c++ )
     								{
@@ -567,7 +567,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                     rgb2_short[1] = (short) (rgb2[1] & 0xff);
                                     rgb2_short[2] = (short) (rgb2[2] & 0xff);
                                 } else {
-                                	float[] tempValues = bSplineY.bSpline3DC(0, 0, 0, 
+                                	double[] tempValues = bSplineY.bSpline3DC(0, 0, 0, 
                                 			(float)tX2_floor, (float)tY2_floor, (float)tZ2_floor);
     								for ( int c = 0; c < 4; c++ )
     								{
