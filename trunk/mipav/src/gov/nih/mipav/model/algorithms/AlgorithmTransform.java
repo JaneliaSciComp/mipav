@@ -6773,7 +6773,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final int mod = Math.max(1, oXdim / 50);
 
-        int counter = 0; // used for progress bar
         int roundX, roundY;
         double x1y1, x0y1, x1y0, x0y0;
         double temp1, temp2;
@@ -6867,7 +6866,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         } // end if Y in bounds
                     } // end if X in bounds
 
-                    counter++;
                 } // end for j
             } // end for i
 
@@ -7011,7 +7009,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         double x0, y0;
         double x1, y1;
         double imm, jmm;
-        int counter = 0; // used for progress bar
         int roundX, roundY;
         double x1y1, x0y1, x1y0, x0y0;
         double temp1, temp2;
@@ -7105,7 +7102,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                             } // end if Y in bounds
                         } // end if X in bounds
 
-                        counter++;
                     } // end for j
                 } // end for i
 
@@ -7149,7 +7145,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final int mod = Math.max(1, oXdim / 50);
 
-        int counter = 0; // used for progress bar
         int roundX, roundY;
         double x1y1, x0y1, x1y0, x0y0;
         double temp1, temp2;
@@ -7244,7 +7239,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } // end if Y in bounds
                 } // end if X in bounds
 
-                counter++;
             } // end for j
         } // end for i
 
@@ -10309,7 +10303,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         int xOffset, yOffset;
         double imm, jmm;
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
         double T00, T01, T02, T10, T11, T12;
 
         T00 = (double)kTM.M00;
@@ -10365,7 +10358,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
                 }
 
-                counter++;
             }
         }
 
@@ -10491,7 +10483,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         int sliceSize;
         double imm, jmm, kmm;
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         sliceSize = iXdim * iYdim;
 
@@ -10568,7 +10559,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 3];
                     }
 
-                    counter++;
                 }
             }
         }
@@ -10776,7 +10766,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         int sliceSize;
         int roundX, roundY, roundZ;
         double imm, jmm, kmm;
-        int counter = 0; // used for progress bar
 
         sliceSize = iXdim * iYdim;
 
@@ -10847,7 +10836,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
             } // for i
@@ -13449,7 +13437,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
@@ -13500,7 +13487,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 destImage.set(i, j, value);
-                counter++;
             }
         }
 
@@ -13527,7 +13513,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
         double temp1, temp2;
         int temp3;
         double T00, T01, T02, T10, T11, T12;
@@ -13593,7 +13578,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imgBuf2[temp3 + 1] = (float)value[1];
                 imgBuf2[temp3 + 2] = (float)value[2];
                 imgBuf2[temp3 + 3] = (float)value[3];
-                counter++;
             }
         }
 
