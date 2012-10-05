@@ -8085,21 +8085,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
 
@@ -8142,7 +8141,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 destImage.set(i, j, value);
-                counter++;
             }
         }
 
@@ -8164,23 +8162,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -8232,11 +8229,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = value[0];
-                imgBuf2[temp3 + 1] = value[1];
-                imgBuf2[temp3 + 2] = value[2];
-                imgBuf2[temp3 + 3] = value[3];
-                counter++;
+                imgBuf2[temp3] = (float)value[0];
+                imgBuf2[temp3 + 1] = (float)value[1];
+                imgBuf2[temp3 + 2] = (float)value[2];
+                imgBuf2[temp3 + 3] = (float)value[3];
             }
         }
 
@@ -8266,33 +8262,33 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
 
-        float k1, k2, k3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double k1, k2, k3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         CLag.setup3DCubicLagrangian(imgBuf, inVolExtents, clip);
 
-        final float invXRes = 1 / iXres;
-        final float invYRes = 1 / iYres;
-        final float invZRes = 1 / iZres;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
 
         int index = 0;
 
@@ -8371,32 +8367,31 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float[] value = new float[4];
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         final int osliceSize = oXdim * oYdim;
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
         int temp4;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -8467,11 +8462,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = value[0];
-                    imgBuf2[temp4 + 1] = value[1];
-                    imgBuf2[temp4 + 2] = value[2];
-                    imgBuf2[temp4 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp4] = (float)value[0];
+                    imgBuf2[temp4 + 1] = (float)value[1];
+                    imgBuf2[temp4 + 2] = (float)value[2];
+                    imgBuf2[temp4 + 3] = (float)value[3];
                 }
             }
         }
@@ -8504,22 +8498,21 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8562,7 +8555,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
 
@@ -8599,24 +8591,23 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8668,11 +8659,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = value[0];
-                    imgBuf2[temp3 + 1] = value[1];
-                    imgBuf2[temp3 + 2] = value[2];
-                    imgBuf2[temp3 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp3] = (float)value[0];
+                    imgBuf2[temp3 + 1] = (float)value[1];
+                    imgBuf2[temp3 + 2] = (float)value[2];
+                    imgBuf2[temp3 + 3] = (float)value[3];
                 } // for i
             } // for j
 
@@ -8712,29 +8702,28 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
+        double X, Y, Z;
+        double value;
         float imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -8796,7 +8785,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
             }
@@ -8833,33 +8821,32 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value[] = new float[4];
+        double X, Y, Z;
+        double value[] = new double[4];
         int temp4;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         int oSliceSize;
         int oVolSize;
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -8933,11 +8920,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = value[0];
-                        imgBuffer2[temp4 + 1] = value[1];
-                        imgBuffer2[temp4 + 2] = value[2];
-                        imgBuffer2[temp4 + 3] = value[3];
-                        counter++;
+                        imgBuffer2[temp4] = (float)value[0];
+                        imgBuffer2[temp4 + 1] = (float)value[1];
+                        imgBuffer2[temp4 + 2] = (float)value[2];
+                        imgBuffer2[temp4 + 3] = (float)value[3];
                     }
                 }
             }
@@ -8980,21 +8966,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -9035,7 +9020,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
 
@@ -9072,23 +9056,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmCubicLagrangian CLag = new AlgorithmCubicLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -9139,11 +9122,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = value[0];
-                        imgBuf2[temp3 + 1] = value[1];
-                        imgBuf2[temp3 + 2] = value[2];
-                        imgBuf2[temp3 + 3] = value[3];
-                        counter++;
+                        imgBuf2[temp3] = (float)value[0];
+                        imgBuf2[temp3 + 1] = (float)value[1];
+                        imgBuf2[temp3 + 2] = (float)value[2];
+                        imgBuf2[temp3 + 3] = (float)value[3];
                     } // for i
                 } // for j
 
@@ -9183,21 +9165,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -9240,7 +9221,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 destImage.set(i, j, value);
-                counter++;
             }
         }
 
@@ -9262,23 +9242,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -9330,11 +9309,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = value[0];
-                imgBuf2[temp3 + 1] = value[1];
-                imgBuf2[temp3 + 2] = value[2];
-                imgBuf2[temp3 + 3] = value[3];
-                counter++;
+                imgBuf2[temp3] = (float)value[0];
+                imgBuf2[temp3 + 1] = (float)value[1];
+                imgBuf2[temp3 + 2] = (float)value[2];
+                imgBuf2[temp3 + 3] = (float)value[3];
             }
         }
 
@@ -9365,28 +9343,27 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         HLag.setup3DHepticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -9444,7 +9421,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
         }
@@ -9467,32 +9443,31 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float[] value = new float[4];
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         final int osliceSize = oXdim * oYdim;
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
         int temp4;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -9563,11 +9538,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = value[0];
-                    imgBuf2[temp4 + 1] = value[1];
-                    imgBuf2[temp4 + 2] = value[2];
-                    imgBuf2[temp4 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp4] = (float)value[0];
+                    imgBuf2[temp4 + 1] = (float)value[1];
+                    imgBuf2[temp4 + 2] = (float)value[2];
+                    imgBuf2[temp4 + 3] = (float)value[3];
                 }
             }
         }
@@ -9600,22 +9574,21 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -9658,7 +9631,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
 
@@ -9694,24 +9666,23 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -9763,11 +9734,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = value[0];
-                    imgBuf2[temp3 + 1] = value[1];
-                    imgBuf2[temp3 + 2] = value[2];
-                    imgBuf2[temp3 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp3] = (float)value[0];
+                    imgBuf2[temp3 + 1] = (float)value[1];
+                    imgBuf2[temp3 + 2] = (float)value[2];
+                    imgBuf2[temp3 + 3] = (float)value[3];
                 } // for i
             } // for j
 
@@ -9806,29 +9776,28 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -9890,7 +9859,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
             }
@@ -9926,34 +9894,33 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value[] = new float[4];
+        double X, Y, Z;
+        double value[] = new double[4];
         int temp4;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         int oSliceSize;
         int oVolSize;
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -10027,11 +9994,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = value[0];
-                        imgBuffer2[temp4 + 1] = value[1];
-                        imgBuffer2[temp4 + 2] = value[2];
-                        imgBuffer2[temp4 + 3] = value[3];
-                        counter++;
+                        imgBuffer2[temp4] = (float)value[0];
+                        imgBuffer2[temp4 + 1] = (float)value[1];
+                        imgBuffer2[temp4 + 2] =(float)value[2];
+                        imgBuffer2[temp4 + 3] = (float)value[3];
                     }
                 }
             }
@@ -10073,21 +10039,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10128,7 +10093,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
 
@@ -10165,23 +10129,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmHepticLagrangian HLag = new AlgorithmHepticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10232,11 +10195,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = value[0];
-                        imgBuf2[temp3 + 1] = value[1];
-                        imgBuf2[temp3 + 2] = value[2];
-                        imgBuf2[temp3 + 3] = value[3];
-                        counter++;
+                        imgBuf2[temp3] = (float)value[0];
+                        imgBuf2[temp3 + 1] = (float)value[1];
+                        imgBuf2[temp3 + 2] = (float)value[2];
+                        imgBuf2[temp3 + 3] = (float)value[3];
                     } // for i
                 } // for j
 
@@ -11219,21 +11181,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -11275,7 +11236,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 destImage.set(i, j, value);
-                counter++;
             }
         }
 
@@ -11297,23 +11257,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -11364,11 +11323,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = value[0];
-                imgBuf2[temp3 + 1] = value[1];
-                imgBuf2[temp3 + 2] = value[2];
-                imgBuf2[temp3 + 3] = value[3];
-                counter++;
+                imgBuf2[temp3] = (float)value[0];
+                imgBuf2[temp3 + 1] = (float)value[1];
+                imgBuf2[temp3 + 2] = (float)value[2];
+                imgBuf2[temp3 + 3] = (float)value[3];
             }
         }
 
@@ -11399,28 +11357,27 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         QLag.setup3DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -11478,7 +11435,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
         }
@@ -11501,32 +11457,31 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float[] value = new float[4];
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oXdim / 50);
-        int counter = 0; // used for progress bar
 
         final int osliceSize = oXdim * oYdim;
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
         int temp4;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -11597,11 +11552,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = value[0];
-                    imgBuf2[temp4 + 1] = value[1];
-                    imgBuf2[temp4 + 2] = value[2];
-                    imgBuf2[temp4 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp4] = (float)value[0];
+                    imgBuf2[temp4 + 1] = (float)value[1];
+                    imgBuf2[temp4 + 2] = (float)value[2];
+                    imgBuf2[temp4 + 3] = (float)value[3];
                 }
             }
         }
@@ -11634,15 +11588,14 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
         T00 = kTM.M00;
         T01 = kTM.M01;
@@ -11692,7 +11645,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     destImage.set(i, j, k, value);
-                    counter++;
                 }
             }
 
@@ -11728,24 +11680,23 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
         final int mod = Math.max(1, oZdim / 50);
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -11797,11 +11748,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = value[0];
-                    imgBuf2[temp3 + 1] = value[1];
-                    imgBuf2[temp3 + 2] = value[2];
-                    imgBuf2[temp3 + 3] = value[3];
-                    counter++;
+                    imgBuf2[temp3] = (float)value[0];
+                    imgBuf2[temp3 + 1] = (float)value[1];
+                    imgBuf2[temp3 + 2] = (float)value[2];
+                    imgBuf2[temp3 + 3] = (float)value[3];
                 } // for i
             } // for j
 
@@ -11846,33 +11796,32 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value[] = new float[4];
+        double X, Y, Z;
+        double value[] = new double[4];
         int temp4;
-        float imm, jmm, kmm;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         int oSliceSize;
         int oVolSize;
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -11946,11 +11895,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = value[0];
-                        imgBuffer2[temp4 + 1] = value[1];
-                        imgBuffer2[temp4 + 2] = value[2];
-                        imgBuffer2[temp4 + 3] = value[3];
-                        counter++;
+                        imgBuffer2[temp4] = (float)value[0];
+                        imgBuffer2[temp4 + 1] = (float)value[1];
+                        imgBuffer2[temp4 + 2] = (float)value[2];
+                        imgBuffer2[temp4 + 3] = (float)value[3];
                     }
                 }
             }
@@ -11992,29 +11940,28 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj, kAdj;
-        float X, Y, Z;
-        float value;
-        float imm, jmm, kmm;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
         final int[] inVolExtents = {iXdim, iYdim, iZdim};
         final int mod = Math.max(1, oTdim / 50);
-        int counter = 0; // used for progress bar
 
-        float i1, i2, i3, j1, j2, j3;
-        float temp1, temp2, temp3;
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+        double i1, i2, i3, j1, j2, j3;
+        double temp1, temp2, temp3;
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T03 = kTM.M03;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
-        T13 = kTM.M13;
-        T20 = kTM.M20;
-        T21 = kTM.M21;
-        T22 = kTM.M22;
-        T23 = kTM.M23;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T03 = (double)kTM.M03;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
+        T13 = (double)kTM.M13;
+        T20 = (double)kTM.M20;
+        T21 = (double)kTM.M21;
+        T22 = (double)kTM.M22;
+        T23 = (double)kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -12076,7 +12023,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
             }
@@ -12112,21 +12058,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float value;
-        float imm, jmm;
+        double X, Y;
+        double value;
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
-        float T00, T01, T02, T10, T11, T12;
+        double temp1, temp2;
+        double T00, T01, T02, T10, T11, T12;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -12167,7 +12112,6 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         destImage.set(i, j, k, l, value);
-                        counter++;
                     }
                 }
 
@@ -12205,23 +12149,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmQuinticLagrangian QLag = new AlgorithmQuinticLagrangian();
         int i, j, k, l;
         int iAdj, jAdj;
-        float X, Y;
-        float[] value = new float[4];
-        float imm, jmm;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
         final int[] inVolExtents = {iXdim, iYdim};
 
-        int counter = 0; // used for progress bar
-        float temp1, temp2;
+        double temp1, temp2;
         int temp3;
-        float T00, T01, T02, T10, T11, T12;
+        double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = kTM.M00;
-        T01 = kTM.M01;
-        T02 = kTM.M02;
-        T10 = kTM.M10;
-        T11 = kTM.M11;
-        T12 = kTM.M12;
+        T00 = (double)kTM.M00;
+        T01 = (double)kTM.M01;
+        T02 = (double)kTM.M02;
+        T10 = (double)kTM.M10;
+        T11 = (double)kTM.M11;
+        T12 = (double)kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -12272,11 +12215,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = value[0];
-                        imgBuf2[temp3 + 1] = value[1];
-                        imgBuf2[temp3 + 2] = value[2];
-                        imgBuf2[temp3 + 3] = value[3];
-                        counter++;
+                        imgBuf2[temp3] = (float)value[0];
+                        imgBuf2[temp3 + 1] = (float)value[1];
+                        imgBuf2[temp3 + 2] = (float)value[2];
+                        imgBuf2[temp3 + 3] = (float)value[3];
                     } // for j
                 } // for i
 
