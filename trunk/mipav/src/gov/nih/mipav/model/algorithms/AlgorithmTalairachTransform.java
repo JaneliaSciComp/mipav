@@ -180,7 +180,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 return;
             }
 
-            float[] buffer;
+            double[] buffer;
             float[] result;
 
             // find dimensions
@@ -270,7 +270,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
 
                 // image length is length in 2 dims
                 int length = nix * niy * niz;
-                buffer = new float[length];
+                buffer = new double[length];
                 srcImage.exportData(0, length, buffer); // locks and releases lock
                 result = new float[nrx * nry * nrz];
                 fireProgressStateChanged(srcImage.getImageName(), "Processing image ...");
@@ -304,7 +304,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @param  img     DOCUMENT ME!
      * @param  xi      DOCUMENT ME!
      * @param  yi      DOCUMENT ME!
      * @param  zi      DOCUMENT ME!
@@ -313,11 +312,11 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeBSplineImage(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeBSplineImage(float xi, float yi, float zi, float[] result, int xr, int yr,
                                      int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = Bspline.bSpline3D(0, 0, 0, xi, yi, zi);
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)Bspline.bSpline3D(0, 0, 0, xi, yi, zi);
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -330,7 +329,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @param  img     DOCUMENT ME!
      * @param  xi      DOCUMENT ME!
      * @param  yi      DOCUMENT ME!
      * @param  zi      DOCUMENT ME!
@@ -339,7 +337,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeCubicLagrangian(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeCubicLagrangian(float xi, float yi, float zi, float[] result, int xr, int yr,
                                         int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
@@ -355,7 +353,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @param  img     DOCUMENT ME!
      * @param  xi      DOCUMENT ME!
      * @param  yi      DOCUMENT ME!
      * @param  zi      DOCUMENT ME!
@@ -364,7 +361,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeHepticLagrangian(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeHepticLagrangian(float xi, float yi, float zi, float[] result, int xr, int yr,
                                          int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
@@ -389,7 +386,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeNearestImage(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeNearestImage(double[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
                                      int zr) {
         int xa, ya, za;
 
@@ -410,7 +407,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 za = za + 1;
             }
 
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = img[xa + (nix * ya) + (nix * niy * za)];
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)img[xa + (nix * ya) + (nix * niy * za)];
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -422,7 +419,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @param  img     DOCUMENT ME!
      * @param  xi      DOCUMENT ME!
      * @param  yi      DOCUMENT ME!
      * @param  zi      DOCUMENT ME!
@@ -431,7 +427,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeQuinticLagrangian(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeQuinticLagrangian(float xi, float yi, float zi, float[] result, int xr, int yr,
                                           int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
@@ -456,7 +452,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeTrilinearImage(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
+    private void computeTrilinearImage(double[] img, float xi, float yi, float zi, float[] result, int xr, int yr,
                                        int zr) {
         int xa, ya, za, xb, yb, zb;
         float ax, bx, ay, by, az, bz;
@@ -491,14 +487,14 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             az = zi - za;
             bz = zb - zi;
 
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = (bx * by * bz * img[xa + (nix * ya) + (nix * niy * za)]) +
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)((bx * by * bz * img[xa + (nix * ya) + (nix * niy * za)]) +
                                                          (ax * by * bz * img[xb + (nix * ya) + (nix * niy * za)]) +
                                                          (bx * ay * bz * img[xa + (nix * yb) + (nix * niy * za)]) +
                                                          (bx * by * az * img[xa + (nix * ya) + (nix * niy * zb)]) +
                                                          (ax * ay * bz * img[xb + (nix * yb) + (nix * niy * za)]) +
                                                          (bx * ay * az * img[xa + (nix * yb) + (nix * niy * zb)]) +
                                                          (ax * by * az * img[xb + (nix * ya) + (nix * niy * zb)]) +
-                                                         (ax * ay * az * img[xb + (nix * yb) + (nix * niy * zb)]);
+                                                         (ax * ay * az * img[xb + (nix * yb) + (nix * niy * zb)]));
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -510,7 +506,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @param  img     DOCUMENT ME!
      * @param  xi      DOCUMENT ME!
      * @param  yi      DOCUMENT ME!
      * @param  zi      DOCUMENT ME!
@@ -519,10 +514,10 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  yr      DOCUMENT ME!
      * @param  zr      DOCUMENT ME!
      */
-    private void computeWSincImage(float[] img, float xi, float yi, float zi, float[] result, int xr, int yr, int zr) {
+    private void computeWSincImage(float xi, float yi, float zi, float[] result, int xr, int yr, int zr) {
 
         if ((xi >= 0) && (xi <= (nix - 1)) && (yi >= 0) && (yi <= (niy - 1)) && (zi >= 0) && (zi <= (niz - 1))) {
-            result[xr + (nrx * yr) + (nrx * nry * zr)] = WSinc.wSinc3D(xi, yi, zi);
+            result[xr + (nrx * yr) + (nrx * nry * zr)] = (float)WSinc.wSinc3D(xi, yi, zi);
 
         } else {
             result[xr + (nrx * yr) + (nrx * nry * zr)] = 0.0f;
@@ -561,7 +556,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      * @param  img     the original image
      * @param  result  the transformed image
      */
-    private void transformTalairachVolume(float[] img, float[] result) {
+    private void transformTalairachVolume(double[] img, float[] result) {
         int x, y, z;
         int i;
 
@@ -641,19 +636,19 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                     } else if (interpolation == NEAREST_NEIGHBOR) {
                         computeNearestImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
                     } else if ((interpolation == BSPLINE3) || (interpolation == BSPLINE4)) {
-                        computeBSplineImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
+                        computeBSplineImage(pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if ((interpolation == BSPLINE3) || (interpolation == BSPLINE4))
                     else if (interpolation == CUBIC_LAGRANGIAN) {
-                        computeCubicLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
+                        computeCubicLagrangian(pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == CUBIC_LAGRANGIAN)
                     else if (interpolation == QUINTIC_LAGRANGIAN) {
-                        computeQuinticLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
+                        computeQuinticLagrangian(pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == QUINTIC_LAGRANGIAN)
                     else if (interpolation == HEPTIC_LAGRANGIAN) {
-                        computeHepticLagrangian(img, pt.X, pt.Y, pt.Z, result, x, y, z);
+                        computeHepticLagrangian(pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == HEPTIC_LAGRANGIAN)
                     else if (interpolation == WSINC) {
-                        computeWSincImage(img, pt.X, pt.Y, pt.Z, result, x, y, z);
+                        computeWSincImage(pt.X, pt.Y, pt.Z, result, x, y, z);
                     } // else if (interpolation == WSINC)
 
                 }
