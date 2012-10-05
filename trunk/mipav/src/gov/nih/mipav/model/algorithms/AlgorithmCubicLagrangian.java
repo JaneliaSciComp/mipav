@@ -51,7 +51,7 @@ public class AlgorithmCubicLagrangian extends AlgorithmBase {
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
     private double[][] wt = null;
@@ -790,7 +790,7 @@ public class AlgorithmCubicLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DCubicLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup2DCubicLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -835,7 +835,7 @@ public class AlgorithmCubicLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible value of a color
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DCubicLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup2DCubicLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
@@ -913,7 +913,7 @@ public class AlgorithmCubicLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim, zdim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DCubicLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup3DCubicLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -961,7 +961,7 @@ public class AlgorithmCubicLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible value for a color
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DCubicLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup3DCubicLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
