@@ -62,7 +62,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
     private double[][] wt = null;
@@ -800,7 +800,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DHepticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup2DHepticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -850,7 +850,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DHepticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup2DHepticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
@@ -933,7 +933,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim, zdim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DHepticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup3DHepticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -986,7 +986,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DHepticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup3DHepticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
