@@ -10448,9 +10448,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     Y = Y / iYres;
                     Z = Z / iZres;
 
-                    roundX = (int) (X + 0.5f);
-                    roundY = (int) (Y + 0.5f);
-                    roundZ = (int) (Z + 0.5f);
+                    roundX = (int) (X + 0.5);
+                    roundY = (int) (Y + 0.5);
+                    roundZ = (int) (Z + 0.5);
 
                     if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
                         value = fillValue; // if voxel transformed out of bounds
@@ -10539,9 +10539,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     Y = Y / iYres;
                     Z = Z / iZres;
 
-                    roundX = (int) (X + 0.5f);
-                    roundY = (int) (Y + 0.5f);
-                    roundZ = (int) (Z + 0.5f);
+                    roundX = (int) (X + 0.5);
+                    roundY = (int) (Y + 0.5);
+                    roundZ = (int) (Z + 0.5);
 
                     if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
                         imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = fillValue; // if voxel transformed out
@@ -10625,8 +10625,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = X / iXres;
                     Y = Y / iYres;
 
-                    roundX = (int) (X + 0.5f);
-                    roundY = (int) (Y + 0.5f);
+                    roundX = (int) (X + 0.5);
+                    roundY = (int) (Y + 0.5);
 
                     if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                         value = fillValue; // if voxel transformed out of bounds
@@ -10708,8 +10708,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                     X = X / iXres;
                     Y = Y / iYres;
 
-                    roundX = (int) (X + 0.5f);
-                    roundY = (int) (Y + 0.5f);
+                    roundX = (int) (X + 0.5);
+                    roundY = (int) (Y + 0.5);
 
                     if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                         imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel transformed out of bounds
@@ -10821,9 +10821,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                         Y = Y / iYres;
                         Z = Z / iZres;
 
-                        roundX = (int) (X + 0.5f);
-                        roundY = (int) (Y + 0.5f);
-                        roundZ = (int) (Z + 0.5f);
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
+                        roundZ = (int) (Z + 0.5);
 
                         if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
                             value = fillValue; // if voxel transformed out of bounds
@@ -10931,9 +10931,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                         Y = Y / iYres;
                         Z = Z / iZres;
 
-                        roundX = (int) (X + 0.5f);
-                        roundY = (int) (Y + 0.5f);
-                        roundZ = (int) (Z + 0.5f);
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
+                        roundZ = (int) (Z + 0.5);
 
                         if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
                             imgBuffer2[temp] = fillValue; // if voxel is transformed out of bounds
@@ -11027,8 +11027,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         X = X / iXres;
                         Y = Y / iYres;
 
-                        roundX = (int) (X + 0.5f);
-                        roundY = (int) (Y + 0.5f);
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
 
                         if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                             value = fillValue; // if voxel is transformed out of bounds
@@ -11110,8 +11110,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         X = X / iXres;
                         Y = Y / iYres;
     
-                        roundX = (int) (X + 0.5f);
-                        roundY = (int) (Y + 0.5f);
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
     
                         if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
                             imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel is transformed out of bounds
