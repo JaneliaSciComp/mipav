@@ -5830,13 +5830,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 		                jmm = jAdj * oYres;
 		                value = fillValue; // if transformed out of bounds.
 		                X = (temp1 + (jmm * T01)) / iXres;
-		                roundX = (int) (X + 0.5f);
+		                roundX = (int) (X + 0.5);
 		
-		                if ( (X >= -0.5f) && (X < iXdim)) {
+		                if ( (X >= -0.5) && (X < iXdim)) {
 		                    Y = (temp2 + (jmm * T11)) / iYres;
-		                    roundY = (int) (Y + 0.5f);
+		                    roundY = (int) (Y + 0.5);
 		
-		                    if ( (Y >= -0.5f) && (Y < iYdim)) {
+		                    if ( (Y >= -0.5) && (Y < iYdim)) {
 		                        X0pos = Math.min(roundX, iXdim - 1);
 		                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
 		                        value = imgBuffer[Y0pos + X0pos];
@@ -6047,13 +6047,13 @@ public class AlgorithmTransform extends AlgorithmBase {
 			                jmm = jAdj * oYres;
 			                value = fillValue; // if transformed out of bounds.
 			                X = (temp1 + (jmm * T01)) / iXres;
-			                roundX = (int) (X + 0.5f);
+			                roundX = (int) (X + 0.5);
 			
-			                if ( (X >= -0.5f) && (X < iXdim)) {
+			                if ( (X >= -0.5) && (X < iXdim)) {
 			                    Y = (temp2 + (jmm * T11)) / iYres;
-			                    roundY = (int) (Y + 0.5f);
+			                    roundY = (int) (Y + 0.5);
 			
-			                    if ( (Y >= -0.5f) && (Y < iYdim)) {
+			                    if ( (Y >= -0.5) && (Y < iYdim)) {
 			                        X0pos = Math.min(roundX, iXdim - 1);
 			                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
 			                        value = imgBuffer[Y0pos + X0pos];
@@ -6260,9 +6260,9 @@ public class AlgorithmTransform extends AlgorithmBase {
 		                            Z = (j3 + (imm * T20)) * invZRes;
 
 		                            if ( (Z >= -0.5) && (Z < iZdim)) {
-		                                X0pos = Math.min((int) (X + 0.5f), iXdim - 1);
-		                                Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
-		                                Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
+		                                X0pos = Math.min((int) (X + 0.5), iXdim - 1);
+		                                Y0pos = Math.min((int) (Y + 0.5), iYdim - 1) * iXdim;
+		                                Z0pos = Math.min((int) (Z + 0.5), iZdim - 1) * sliceSize;
 		                                value = imgBuffer[Z0pos + Y0pos + X0pos];
 		                            } // end if Z in bounds
 		                        } // end if Y in bounds
@@ -6601,10 +6601,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 imm = iAdj * oXres;
                 X = (j1 + (imm * T00)) * invXRes;
 
-                if ( (X > -0.5f) && (X < iXdim)) {
+                if ( (X > -0.5) && (X < iXdim)) {
                     Y = (j2 + (imm * T10)) * invYRes;
 
-                    if ( (Y > -0.5f) && (Y < iYdim)) {
+                    if ( (Y > -0.5) && (Y < iYdim)) {
 
                         if (X <= 0) {
                             x0 = 0;
@@ -6700,11 +6700,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                     jmm = jAdj * oYres;
                     X = (temp1 + (jmm * T01)) / iXres;
-                    roundX = (int) (X + 0.5f);
+                    roundX = (int) (X + 0.5);
 
                     if ( (X >= 0) && (X < iXdim)) {
                         Y = (temp2 + (jmm * T11)) / iYres;
-                        roundY = (int) (Y + 0.5f);
+                        roundY = (int) (Y + 0.5);
 
                         if ( (Y >= 0) && (Y < iYdim)) {
 
@@ -6817,7 +6817,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     jmm = jAdj * oYres;
                     X = (temp1 + (jmm * T01)) / iXres;
-                    roundX = (int) (X + 0.5f);
+                    roundX = (int) (X + 0.5);
 
                     if ( (X >= 0) && (X < iXdim)) {
                         Y = (temp2 + (jmm * T11)) / iYres;
@@ -6942,11 +6942,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
                         jmm = jAdj * oYres;
                         X = (temp1 + (jmm * T01)) / iXres;
-                        roundX = (int) (X + 0.5f);
+                        roundX = (int) (X + 0.5);
 
                         if ( (X >= 0) && (X < iXdim)) {
                             Y = (temp2 + (jmm * T11)) / iYres;
-                            roundY = (int) (Y + 0.5f);
+                            roundY = (int) (Y + 0.5);
 
                             if ( (Y >= 0) && (Y < iYdim)) {
 
@@ -7053,11 +7053,11 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         jmm = jAdj * oYres;
                         X = (temp1 + (jmm * T01)) / iXres;
-                        roundX = (int) (X + 0.5f);
+                        roundX = (int) (X + 0.5);
 
                         if ( (X >= 0) && (X < iXdim)) {
                             Y = (temp2 + (jmm * T11)) / iYres;
-                            roundY = (int) (Y + 0.5f);
+                            roundY = (int) (Y + 0.5);
 
                             if ( (Y >= 0) && (Y < iYdim)) {
 
@@ -7191,11 +7191,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                 jmm = jAdj * oYres;
 
                 X = (temp1 + (jmm * T01)) / iXres;
-                roundX = (int) (X + 0.5f);
+                roundX = (int) (X + 0.5);
 
                 if ( (X >= 0) && (X < iXdim)) {
                     Y = (temp2 + (jmm * T11)) / iYres;
-                    roundY = (int) (Y + 0.5f);
+                    roundY = (int) (Y + 0.5);
 
                     if ( (Y >= 0) && (Y < iYdim)) {
 
@@ -12325,11 +12325,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                     Y = (j2 + (imm * T10)) * invYRes;
                     Z = (j3 + (imm * T20)) * invZRes;
 
-                    if ( (X > -0.5f) && (X < iXdim)) {
+                    if ( (X > -0.5) && (X < iXdim)) {
 
-                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                        if ( (Y > -0.5) && (Y < iYdim)) {
 
-                            if ( (Z > -0.5f) && (Z < iZdim)) {
+                            if ( (Z > -0.5) && (Z < iZdim)) {
 
                                 if (X <= 0) {
                                     x0 = 0;
@@ -12491,13 +12491,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ( (X > -0.5f) && (X < iXdim)) {
+                        if ( (X > -0.5) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ( (Y > -0.5f) && (Y < iYdim)) {
+                            if ( (Y > -0.5) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ( (Z > -0.5f) && (Z < iZdim)) {
+                                if ( (Z > -0.5) && (Z < iZdim)) {
 
                                     if (X <= 0) {
                                         x0 = 0;
@@ -12888,13 +12888,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         imm = iAdj * oXres;
                         X = (j1 + (imm * T00)) * invXRes;
 
-                        if ( (X > -0.5f) && (X < iXdim)) {
+                        if ( (X > -0.5) && (X < iXdim)) {
                             Y = (j2 + (imm * T10)) * invYRes;
 
-                            if ( (Y > -0.5f) && (Y < iYdim)) {
+                            if ( (Y > -0.5) && (Y < iYdim)) {
                                 Z = (j3 + (imm * T20)) * invZRes;
 
-                                if ( (Z > -0.5f) && (Z < iZdim)) {
+                                if ( (Z > -0.5) && (Z < iZdim)) {
 
                                     if (X <= 0) {
                                         x0 = 0;
@@ -13098,13 +13098,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                     kmm = kAdj * oZres;
                     X = (temp3 + (kmm * T02)) / iXres;
 
-                    if ( (X > -0.5f) && (X < iXdim)) {
+                    if ( (X > -0.5) && (X < iXdim)) {
                         Y = (temp2 + (kmm * T12)) / iYres;
 
-                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                        if ( (Y > -0.5) && (Y < iYdim)) {
                             Z = (temp1 + (kmm * T22)) / iZres;
 
-                            if ( (Z > -0.5f) && (Z < iZdim)) {
+                            if ( (Z > -0.5) && (Z < iZdim)) {
                                 if (X <= 0) {
                                     x0 = 0;
                                     dx = 0;
