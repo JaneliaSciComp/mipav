@@ -202,7 +202,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         ydiff = y - ybase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
 
         for (int d = 0; d < orderDx; d++) {
             dx[d] = 0;
@@ -336,7 +336,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         ydiff = y - ybase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
 
         for (int d = 0; d < orderDx; d++) {
             dx[d] = 0;
@@ -388,9 +388,9 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
      * @param   orderDz  derivative order in z direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
-     * @param   z        float point index along the Bspline indicating pointof interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
+     * @param   z        double point index along the Bspline indicating pointof interest
      *
      * @return  the Bspline interpolated data point
      */
@@ -492,7 +492,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         zdiff = z - zbase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
         int d;
 
         for (d = 0; d < orderDx; d++) {
@@ -549,9 +549,9 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
      * @param   orderDz  derivative order in z direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
-     * @param   z        float point index along the Bspline indicating point of interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
+     * @param   z        double point index along the Bspline indicating point of interest
      *
      * @return  the Bspline interpolated data point
      */
@@ -667,7 +667,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         zdiff = z - zbase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
         int d;
 
         for (d = 0; d < orderDx; d++) {
