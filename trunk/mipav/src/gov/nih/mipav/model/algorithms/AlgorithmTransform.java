@@ -10232,6 +10232,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         int xOffset, yOffset;
         double value;
         double imm, jmm;
+        double i1, i2;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
         final int mod = Math.max(1, oXdim / 50);
         double T00, T01, T02, T10, T11, T12;
 
@@ -10254,6 +10257,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 iAdj = i;
             }
             imm = iAdj * oXres;
+            i1 = (imm * T00) + T02;
+            i2 = (imm * T10) + T12;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // transform i,j
@@ -10264,24 +10269,21 @@ public class AlgorithmTransform extends AlgorithmBase {
                     jAdj = j;
                 }
                 jmm = jAdj * oYres;
-                X = (imm * T00) + (jmm * T01) + T02;
-                Y = (imm * T10) + (jmm * T11) + T12;
+                value = fillValue;
+                X = (jmm * T01) + i1;
+                X = X * invXRes;
+                if ((X >= -0.5) && (X < iXdim)) {
+                    Y = (jmm * T11) + i2;
+                    Y = Y * invYRes;
+                    if ((Y >= -0.5) && (Y < iYdim)) {
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
 
-                // set intensity of i,j to new transformed coordinate if
-                // x,y is w/in dimensions of image
-                X = X / iXres;
-                Y = Y / iYres;
-
-                roundX = (int) (X + 0.5f);
-                roundY = (int) (Y + 0.5f);
-
-                if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                    value = fillValue; // if voxel transformed out of bounds
-                } else {
-                    xOffset = Math.min(roundX, iXdim - 1);
-                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                    value = imgBuf[xOffset + yOffset];
-                }
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                        value = imgBuf[xOffset + yOffset];
+                    } // if ((Y >= -0.5) && (Y < iYdim))
+                } // if ((X >= -0.5) && (X < iXdim))
 
                 destImage.set(i, j, value);
             }
@@ -10302,6 +10304,15 @@ public class AlgorithmTransform extends AlgorithmBase {
         int roundX, roundY;
         int xOffset, yOffset;
         double imm, jmm;
+        double i1, i2;
+        float aValue;
+        float rValue;
+        float gValue;
+        float bValue;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        int inputSum;
+        int outputSum;
         final int mod = Math.max(1, oXdim / 50);
         double T00, T01, T02, T10, T11, T12;
 
@@ -10324,6 +10335,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                 iAdj = i;
             }
             imm = iAdj * oXres;
+            i1 = (imm * T00) + T02;
+            i2 = (imm * T10) + T12;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                 // transform i,j
@@ -10333,31 +10346,34 @@ public class AlgorithmTransform extends AlgorithmBase {
                     jAdj = j;
                 }
                 jmm = jAdj * oYres;
-                X = (imm * T00) + (jmm * T01) + T02;
-                Y = (imm * T10) + (jmm * T11) + T12;
+                aValue = fillValue;
+                rValue = fillValue;
+                gValue = fillValue;
+                bValue = fillValue;
+                X = (jmm * T01) + i1;
+                X = X * invXRes;
+                if ((X >= -0.5) && (X < iXdim)) {
+                    Y = (jmm * T11) + i2;
+                    Y = Y * invYRes;
+                    if ((Y >= -0.5) && (Y < iYdim)) {
+                        roundX = (int) (X + 0.5);
+                        roundY = (int) (Y + 0.5);
 
-                // set intensity of i,j,k to new transformed coordinate if
-                // x,y,z is w/in dimensions of image
-                X = X / iXres;
-                Y = Y / iYres;
-
-                roundX = (int) (X + 0.5f);
-                roundY = (int) (Y + 0.5f);
-
-                if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                    imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel transformed out of bounds
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 1] = fillValue;
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 2] = fillValue;
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 3] = fillValue;
-                } else {
-                    xOffset = Math.min(roundX, iXdim - 1);
-                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                    imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                    imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
-                }
-
+                        xOffset = Math.min(roundX, iXdim - 1);
+                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                        inputSum = 4*(xOffset + yOffset);
+                        aValue = (float)imgBuf[inputSum];
+                        rValue = (float)imgBuf[inputSum+1];
+                        gValue = (float)imgBuf[inputSum+2];
+                        bValue = (float)imgBuf[inputSum+3];
+                    } // if ((Y >= -0.5) && (Y < iYdim))
+                } // if ((X >= -0.5) && (X < iXdim))
+                outputSum = 4*(i + (oXdim *j));
+                imgBuf2[outputSum] = aValue;
+                imgBuf2[outputSum+1] = rValue;
+                imgBuf2[outputSum+2] = gValue;
+                imgBuf2[outputSum+3] = bValue;
+                
             }
         }
 
@@ -10388,6 +10404,11 @@ public class AlgorithmTransform extends AlgorithmBase {
         int sliceSize;
         int roundX, roundY, roundZ;
         double imm, jmm, kmm;
+        double i1, i2, i3, j1, j2, j3;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+        
         final int mod = Math.max(1, oXdim / 50);
 
         sliceSize = iXdim * iYdim;
@@ -10419,6 +10440,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 iAdj = i;
             }
             imm = iAdj * oXres;
+            i1 = (imm * T00) + T03;
+            i2 = (imm * T10) + T13;
+            i3 = (imm * T20) + T23;
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
                 if (pad) {
@@ -10427,6 +10451,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     jAdj = j;
                 }
                 jmm = jAdj * oYres;
+                j1 = (jmm * T01) + i1;
+                j2 = (jmm * T11) + i2;
+                j3 = (jmm * T21) + i3;
 
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -10437,29 +10464,28 @@ public class AlgorithmTransform extends AlgorithmBase {
                         kAdj = k;
                     }
                     kmm = kAdj * oZres;
-
-                    X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
-                    Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
-                    Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
-
-                    // set intensity of i,j,k to new transformed coordinate if
-                    // x,y,z is w/in dimensions of image
-                    X = X / iXres;
-                    Y = Y / iYres;
-                    Z = Z / iZres;
-
-                    roundX = (int) (X + 0.5);
-                    roundY = (int) (Y + 0.5);
-                    roundZ = (int) (Z + 0.5);
-
-                    if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
-                        value = fillValue; // if voxel transformed out of bounds
-                    } else {
-                        xOffset = Math.min(roundX, iXdim - 1);
-                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                        value = imgBuf[xOffset + yOffset + zOffset];
-                    }
+                    value = fillValue;
+                    X = (kmm * T02) + j1;
+                    X = X * invXRes;
+                    if ((X >= -0.5) && (X < iXdim)) {
+                        Y = (kmm * T12) + j2;
+                        Y = Y * invYRes;
+                        if ((Y >= -0.5) && (Y < iYdim)) {
+                            Z = (kmm * T22) + j3;
+                            Z = Z * invZRes;
+                            if ((Z >= -0.5) && (Z < iZdim)) {
+        
+                                roundX = (int) (X + 0.5);
+                                roundY = (int) (Y + 0.5);
+                                roundZ = (int) (Z + 0.5);
+                            
+                                xOffset = Math.min(roundX, iXdim - 1);
+                                yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
+                                value = imgBuf[xOffset + yOffset + zOffset];
+                            } // if ((Z >= -0.5) && (Z < iZdim))
+                        } // if ((Y >= -0.5) && (Y < iYdim))
+                    } // if ((X >= -0.5) && (X < iXdim))
 
                     destImage.set(i, j, k, value);
                 }
@@ -10481,10 +10507,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         int roundX, roundY, roundZ;
         int xOffset, yOffset, zOffset;
         int sliceSize;
+        int outSliceSize;
         double imm, jmm, kmm;
+        double i1, i2, i3, j1, j2, j3;
+        float aValue;
+        float rValue;
+        float gValue;
+        float bValue;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+        int inputSum;
+        int outputSum;
         final int mod = Math.max(1, oXdim / 50);
 
         sliceSize = iXdim * iYdim;
+        outSliceSize = oXdim * oYdim;
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
@@ -10512,6 +10550,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 iAdj = i;
             }
             imm = iAdj * oXres;
+            i1 = (imm * T00) + T03;
+            i2 = (imm * T10) + T13;
+            i3 = (imm * T20) + T23;
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
                 if (pad) {
                     jAdj = j - AlgorithmTransform.margins[1];
@@ -10519,6 +10560,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     jAdj = j;
                 }
                 jmm = jAdj * oYres;
+                j1 = (jmm * T01) + i1;
+                j2 = (jmm * T11) + i2;
+                j3 = (jmm * T21) + i3;
                 for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                     // transform i,j,k
@@ -10528,37 +10572,39 @@ public class AlgorithmTransform extends AlgorithmBase {
                         kAdj = k;
                     }
                     kmm = kAdj * oZres;
-
-                    X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
-                    Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
-                    Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
-
-                    // set intensity of i,j,k to new transformed coordinate if
-                    // x,y,z is w/in dimensions of image
-                    X = X / iXres;
-                    Y = Y / iYres;
-                    Z = Z / iZres;
-
-                    roundX = (int) (X + 0.5);
-                    roundY = (int) (Y + 0.5);
-                    roundZ = (int) (Z + 0.5);
-
-                    if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
-                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = fillValue; // if voxel transformed out
-                        // of bounds
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = fillValue;
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = fillValue;
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = fillValue;
-                    } else {
-                        xOffset = Math.min(roundX, iXdim - 1);
-                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                        imgBuf2[4 * (i + (oXdim * j) + (oXdim * oYdim * k))] = (float)imgBuf[4 * (xOffset + yOffset + zOffset)];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 1];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 2];
-                        imgBuf2[ (4 * (i + (oXdim * j) + (oXdim * oYdim * k))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset + zOffset)) + 3];
-                    }
-
+                    aValue = fillValue;
+                    rValue = fillValue;
+                    gValue = fillValue;
+                    bValue = fillValue;
+                    X = (kmm * T02) + j1;
+                    X = X * invXRes;
+                    if ((X >= -0.5) && (X < iXdim)) {
+                        Y = (kmm * T12) + j2;
+                        Y = Y * invYRes;
+                        if ((Y >= -0.5) && (Y < iYdim)) {
+                            Z = (kmm * T22) + j3;
+                            Z = Z * invZRes;
+                            if ((Z >= -0.5) && (Z < iZdim)) {
+                                roundX = (int) (X + 0.5);
+                                roundY = (int) (Y + 0.5);
+                                roundZ = (int) (Z + 0.5);
+                            
+                                xOffset = Math.min(roundX, iXdim - 1);
+                                yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
+                                inputSum = 4*(xOffset + yOffset + zOffset);
+                                aValue = (float)imgBuf[inputSum];
+                                rValue = (float)imgBuf[inputSum+1];
+                                gValue = (float)imgBuf[inputSum+2];
+                                bValue = (float)imgBuf[inputSum+3];
+                            } // if ((Z >= -0.5) && (Z < iZdim))
+                        } // if ((Y >= -0.5) && (Y < iYdim))
+                    } // if ((X >= -0.5) && (X < iXdim))
+                    outputSum = 4*(i + (oXdim *j) + (outSliceSize *k));
+                    imgBuf2[outputSum] = aValue;
+                    imgBuf2[outputSum+1] = rValue;
+                    imgBuf2[outputSum+2] = gValue;
+                    imgBuf2[outputSum+3] = bValue;
                 }
             }
         }
@@ -10589,6 +10635,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         int xOffset, yOffset;
         double value;
         double imm, jmm;
+        double i1, i2;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
         double T00, T01, T02, T10, T11, T12;
 
         T00 = (double)kTM.M00;
@@ -10608,6 +10657,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                     iAdj = i;
                 }
                 imm = iAdj * oXres;
+                i1 = (imm * T00) + T02;
+                i2 = (imm * T10) + T12;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
@@ -10617,25 +10668,22 @@ public class AlgorithmTransform extends AlgorithmBase {
                         jAdj = j;
                     }
                     jmm = jAdj * oYres;
-                    X = (imm * T00) + (jmm * T01) + T02;
-                    Y = (imm * T10) + (jmm * T11) + T12;
+                    value = fillValue;
+                    X = (jmm * T01) + i1;
+                    X = X * invXRes;
+                    if ((X >= -0.5) && (X < iXdim)) {
+                        Y = (jmm * T11) + i2;
+                        Y = Y * invYRes;
+                        if ((Y >= -0.5) && (Y < iYdim)) {
+                            roundX = (int) (X + 0.5);
+                            roundY = (int) (Y + 0.5);
 
-                    // set intensity of i,j,k to new transformed coordinate if
-                    // x,y,z is w/in dimensions of image
-                    X = X / iXres;
-                    Y = Y / iYres;
-
-                    roundX = (int) (X + 0.5);
-                    roundY = (int) (Y + 0.5);
-
-                    if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                        value = fillValue; // if voxel transformed out of bounds
-                    } else {
-                        xOffset = Math.min(roundX, iXdim - 1);
-                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        value = imgBuf[xOffset + yOffset];
-                    }
-
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                            value = imgBuf[xOffset + yOffset];
+                        } // if ((Y >= -0.5) && (Y < iYdim))
+                    } // if ((X >= -0.5) && (X < iXdim))
+                    
                     destImage.set(i, j, k, value);
                 }
             }
@@ -10672,6 +10720,16 @@ public class AlgorithmTransform extends AlgorithmBase {
         int roundX, roundY;
         int xOffset, yOffset;
         double imm, jmm;
+        double i1, i2;
+        float aValue;
+        float rValue;
+        float gValue;
+        float bValue;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        int inputSum;
+        int outputSum;
+        int oSliceSize = oXdim * oYdim;
         double T00, T01, T02, T10, T11, T12;
 
         T00 = (double)kTM.M00;
@@ -10691,6 +10749,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                     iAdj = i;
                 }
                 imm = iAdj * oXres;
+                i1 = (imm * T00) + T02;
+                i2 = (imm * T10) + T12;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                     // transform i,j
@@ -10700,35 +10760,38 @@ public class AlgorithmTransform extends AlgorithmBase {
                         jAdj = j;
                     }
                     jmm = jAdj * oYres;
-                    X = (imm * T00) + (jmm * T01) + T02;
-                    Y = (imm * T10) + (jmm * T11) + T12;
+                    aValue = fillValue;
+                    rValue = fillValue;
+                    gValue = fillValue;
+                    bValue = fillValue;
+                    X = (jmm * T01) + i1;
+                    X = X * invXRes;
+                    if ((X >= -0.5) && (X < iXdim)) {
+                        Y = (jmm * T11) + i2;
+                        Y = Y * invYRes;
+                        if ((Y >= -0.5) && (Y < iYdim)) {
+                            roundX = (int) (X + 0.5);
+                            roundY = (int) (Y + 0.5);
 
-                    // set intensity of i,j,k to new transformed coordinate if
-                    // x,y,z is w/in dimensions of image
-                    X = X / iXres;
-                    Y = Y / iYres;
-
-                    roundX = (int) (X + 0.5);
-                    roundY = (int) (Y + 0.5);
-
-                    if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                        imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel transformed out of bounds
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 1] = fillValue;
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 2] = fillValue;
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 3] = fillValue;
-                    } else {
-                        xOffset = Math.min(roundX, iXdim - 1);
-                        yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                        imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
-                    }
+                            xOffset = Math.min(roundX, iXdim - 1);
+                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                            inputSum = 4*(xOffset + yOffset);
+                            aValue = (float)imgBuf[inputSum];
+                            rValue = (float)imgBuf[inputSum+1];
+                            gValue = (float)imgBuf[inputSum+2];
+                            bValue = (float)imgBuf[inputSum+3];
+                        } // if ((Y >= -0.5) && (Y < iYdim))
+                    } // if ((X >= -0.5) && (X < iXdim))
+                    outputSum = 4*(i + (oXdim *j));
+                    imgBuf2[outputSum] = aValue;
+                    imgBuf2[outputSum+1] = rValue;
+                    imgBuf2[outputSum+2] = gValue;
+                    imgBuf2[outputSum+3] = bValue;
                 }
             }
 
             try {
-                destImage.importData(4 * k * oXdim * oYdim, imgBuf2, true);
+                destImage.importData(4 * k * oSliceSize, imgBuf2, true);
             } catch (final IOException error) {
                 MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
                 setCompleted(false);
@@ -10766,6 +10829,10 @@ public class AlgorithmTransform extends AlgorithmBase {
         int sliceSize;
         int roundX, roundY, roundZ;
         double imm, jmm, kmm;
+        double i1, i2, i3, j1, j2, j3;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
 
         sliceSize = iXdim * iYdim;
 
@@ -10794,6 +10861,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     iAdj = i;
                 }
                 imm = iAdj * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
                     if (pad) {
                         jAdj = j - AlgorithmTransform.margins[1];
@@ -10801,6 +10871,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                         jAdj = j;
                     }
                     jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + i1;
+                    j2 = (jmm * T11) + i2;
+                    j3 = (jmm * T21) + i3;
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
                         // transform i,j,k
@@ -10810,30 +10883,28 @@ public class AlgorithmTransform extends AlgorithmBase {
                             kAdj = k;
                         }
                         kmm = kAdj * oZres;
-
-                        X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
-                        Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
-                        Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
-
-                        // set intensity of i,j,k to new transformed coordinate if
-                        // x,y,z is w/in dimensions of image
-                        X = X / iXres;
-                        Y = Y / iYres;
-                        Z = Z / iZres;
-
-                        roundX = (int) (X + 0.5);
-                        roundY = (int) (Y + 0.5);
-                        roundZ = (int) (Z + 0.5);
-
-                        if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
-                            value = fillValue; // if voxel transformed out of bounds
-                        } else {
-                            xOffset = Math.min(roundX, iXdim - 1);
-                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                            value = imgBuf[xOffset + yOffset + zOffset];
-
-                        }
+                        value = fillValue;
+                        X = (kmm * T02) + j1;
+                        X = X * invXRes;
+                        if ((X >= -0.5) && (X < iXdim)) {
+                            Y = (kmm * T12) + j2;
+                            Y = Y * invYRes;
+                            if ((Y >= -0.5) && (Y < iYdim)) {
+                                Z = (kmm * T22) + j3;
+                                Z = Z * invZRes;
+                                if ((Z >= -0.5) && (Z < iZdim)) {
+            
+                                    roundX = (int) (X + 0.5);
+                                    roundY = (int) (Y + 0.5);
+                                    roundZ = (int) (Z + 0.5);
+                                
+                                    xOffset = Math.min(roundX, iXdim - 1);
+                                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                    zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
+                                    value = imgBuf[xOffset + yOffset + zOffset];
+                                } // if ((Z >= -0.5) && (Z < iZdim))
+                            } // if ((Y >= -0.5) && (Y < iYdim))
+                        } // if ((X >= -0.5) && (X < iXdim))
 
                         destImage.set(i, j, k, l, value);
                     }
@@ -10866,13 +10937,21 @@ public class AlgorithmTransform extends AlgorithmBase {
         int iAdj, jAdj, kAdj;
         double X, Y, Z;
         int xOffset, yOffset, zOffset;
-        int temp;
         int sliceSize;
         int oSliceSize;
         int oVolSize;
-        int pos;
         int roundX, roundY, roundZ;
         double imm, jmm, kmm;
+        double i1, i2, i3, j1, j2, j3;
+        float aValue;
+        float rValue;
+        float gValue;
+        float bValue;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+        int inputSum;
+        int outputSum;
 
         sliceSize = iXdim * iYdim;
         oSliceSize = oXdim * oYdim;
@@ -10903,6 +10982,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     iAdj = i;
                 }
                 imm = iAdj * oXres;
+                i1 = (imm * T00) + T03;
+                i2 = (imm * T10) + T13;
+                i3 = (imm * T20) + T23;
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
                     if (pad) {
                         jAdj = j - AlgorithmTransform.margins[1];
@@ -10910,8 +10992,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         jAdj = j;
                     }
                     jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + i1;
+                    j2 = (jmm * T11) + i2;
+                    j3 = (jmm * T21) + i3;
                     for (k = 0; (k < oZdim) && !threadStopped; k++) {
-                        temp = 4 * (i + (j * oXdim) + (k * oSliceSize));
 
                         // transform i,j,k
                         if (pad) {
@@ -10920,36 +11004,39 @@ public class AlgorithmTransform extends AlgorithmBase {
                             kAdj = k;
                         }
                         kmm = kAdj * oZres;
-
-                        X = (imm * T00) + (jmm * T01) + (kmm * T02) + T03;
-                        Y = (imm * T10) + (jmm * T11) + (kmm * T12) + T13;
-                        Z = (imm * T20) + (jmm * T21) + (kmm * T22) + T23;
-
-                        // set intensity of i,j,k to new transformed coordinate if
-                        // x,y,z is w/in dimensions of image
-                        X = X / iXres;
-                        Y = Y / iYres;
-                        Z = Z / iZres;
-
-                        roundX = (int) (X + 0.5);
-                        roundY = (int) (Y + 0.5);
-                        roundZ = (int) (Z + 0.5);
-
-                        if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim) || (Z < -0.5) || (Z >= iZdim)) {
-                            imgBuffer2[temp] = fillValue; // if voxel is transformed out of bounds
-                            imgBuffer2[temp + 1] = fillValue;
-                            imgBuffer2[temp + 2] = fillValue;
-                            imgBuffer2[temp + 3] = fillValue;
-                        } else {
-                            xOffset = Math.min(roundX, iXdim - 1);
-                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                            pos = xOffset + yOffset + zOffset;
-                            imgBuffer2[temp] = (float)imgBuf[4 * pos];
-                            imgBuffer2[temp + 1] = (float)imgBuf[4 * pos + 1];
-                            imgBuffer2[temp + 2] = (float)imgBuf[4 * pos + 2];
-                            imgBuffer2[temp + 3] = (float)imgBuf[4 * pos + 3];
-                        }
+                        aValue = fillValue;
+                        rValue = fillValue;
+                        gValue = fillValue;
+                        bValue = fillValue;
+                        X = (kmm * T02) + j1;
+                        X = X * invXRes;
+                        if ((X >= -0.5) && (X < iXdim)) {
+                            Y = (kmm * T12) + j2;
+                            Y = Y * invYRes;
+                            if ((Y >= -0.5) && (Y < iYdim)) {
+                                Z = (kmm * T22) + j3;
+                                Z = Z * invZRes;
+                                if ((Z >= -0.5) && (Z < iZdim)) {
+                                    roundX = (int) (X + 0.5);
+                                    roundY = (int) (Y + 0.5);
+                                    roundZ = (int) (Z + 0.5);
+                                
+                                    xOffset = Math.min(roundX, iXdim - 1);
+                                    yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                    zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
+                                    inputSum = 4*(xOffset + yOffset + zOffset);
+                                    aValue = (float)imgBuf[inputSum];
+                                    rValue = (float)imgBuf[inputSum+1];
+                                    gValue = (float)imgBuf[inputSum+2];
+                                    bValue = (float)imgBuf[inputSum+3];
+                                } // if ((Z >= -0.5) && (Z < iZdim))
+                            } // if ((Y >= -0.5) && (Y < iYdim))
+                        } // if ((X >= -0.5) && (X < iXdim))
+                        outputSum = 4*(i + (oXdim *j) + (oSliceSize *k));
+                        imgBuffer2[outputSum] = aValue;
+                        imgBuffer2[outputSum+1] = rValue;
+                        imgBuffer2[outputSum+2] = gValue;
+                        imgBuffer2[outputSum+3] = bValue;
                     }
                 }
             } // for i
@@ -10989,6 +11076,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         int xOffset, yOffset;
         double value;
         double imm, jmm;
+        double i1, i2;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
         double T00, T01, T02, T10, T11, T12;
 
         T00 = (double)kTM.M00;
@@ -11010,6 +11100,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         iAdj = i;
                     }
                     imm = iAdj * oXres;
+                    i1 = (imm * T00) + T02;
+                    i2 = (imm * T10) + T12;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
                         // transform i,j
@@ -11019,25 +11111,22 @@ public class AlgorithmTransform extends AlgorithmBase {
                             jAdj = j;
                         }
                         jmm = jAdj * oYres;
-                        X = (imm * T00) + (jmm * T01) + T02;
-                        Y = (imm * T10) + (jmm * T11) + T12;
+                        value = fillValue;
+                        X = (jmm * T01) + i1;
+                        X = X * invXRes;
+                        if ((X >= -0.5) && (X < iXdim)) {
+                            Y = (jmm * T11) + i2;
+                            Y = Y * invYRes;
+                            if ((Y >= -0.5) && (Y < iYdim)) {
+                                roundX = (int) (X + 0.5);
+                                roundY = (int) (Y + 0.5);
 
-                        // set intensity of i,j to new transformed coordinate if
-                        // x,y is w/in dimensions of image
-                        X = X / iXres;
-                        Y = Y / iYres;
-
-                        roundX = (int) (X + 0.5);
-                        roundY = (int) (Y + 0.5);
-
-                        if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                            value = fillValue; // if voxel is transformed out of bounds
-                        } else {
-                            xOffset = Math.min(roundX, iXdim - 1);
-                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            value = imgBuf[xOffset + yOffset];
-                        }
-
+                                xOffset = Math.min(roundX, iXdim - 1);
+                                yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                value = imgBuf[xOffset + yOffset];
+                            } // if ((Y >= -0.5) && (Y < iYdim))
+                        } // if ((X >= -0.5) && (X < iXdim))
+                        
                         destImage.set(i, j, k, l, value);
                     }
                 }
@@ -11072,6 +11161,17 @@ public class AlgorithmTransform extends AlgorithmBase {
         int roundX, roundY;
         int xOffset, yOffset;
         double imm, jmm;
+        double i1, i2;
+        float aValue;
+        float rValue;
+        float gValue;
+        float bValue;
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        int inputSum;
+        int outputSum;
+        int oSliceSize = oXdim * oYdim;
+        int oVolSize = oSliceSize * oZdim;
         double T00, T01, T02, T10, T11, T12;
     
         T00 = (double)kTM.M00;
@@ -11093,6 +11193,8 @@ public class AlgorithmTransform extends AlgorithmBase {
                         iAdj = i;
                     }
                     imm = iAdj * oXres;
+                    i1 = (imm * T00) + T02;
+                    i2 = (imm * T10) + T12;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
     
                         // transform i,j
@@ -11102,35 +11204,38 @@ public class AlgorithmTransform extends AlgorithmBase {
                             jAdj = j;
                         }
                         jmm = jAdj * oYres;
-                        X = (imm * T00) + (jmm * T01) + T02;
-                        Y = (imm * T10) + (jmm * T11) + T12;
-    
-                        // set intensity of i,j,k,l to new transformed coordinate if
-                        // x,y,z,t is w/in dimensions of image
-                        X = X / iXres;
-                        Y = Y / iYres;
-    
-                        roundX = (int) (X + 0.5);
-                        roundY = (int) (Y + 0.5);
-    
-                        if ( (X < -0.5) || (X >= iXdim) || (Y < -0.5) || (Y >= iYdim)) {
-                            imgBuf2[4 * (i + (oXdim * j))] = fillValue; // if voxel is transformed out of bounds
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 1] = fillValue;
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 2] = fillValue;
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 3] = fillValue;
-                        } else {
-                            xOffset = Math.min(roundX, iXdim - 1);
-                            yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            imgBuf2[4 * (i + (oXdim * j))] = (float)imgBuf[4 * (xOffset + yOffset)];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 1] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 1];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 2] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 2];
-                            imgBuf2[ (4 * (i + (oXdim * j))) + 3] = (float)imgBuf[ (4 * (xOffset + yOffset)) + 3];
-                        }
+                        aValue = fillValue;
+                        rValue = fillValue;
+                        gValue = fillValue;
+                        bValue = fillValue;
+                        X = (jmm * T01) + i1;
+                        X = X * invXRes;
+                        if ((X >= -0.5) && (X < iXdim)) {
+                            Y = (jmm * T11) + i2;
+                            Y = Y * invYRes;
+                            if ((Y >= -0.5) && (Y < iYdim)) {
+                                roundX = (int) (X + 0.5);
+                                roundY = (int) (Y + 0.5);
+
+                                xOffset = Math.min(roundX, iXdim - 1);
+                                yOffset = Math.min(roundY, iYdim - 1) * iXdim;
+                                inputSum = 4*(xOffset + yOffset);
+                                aValue = (float)imgBuf[inputSum];
+                                rValue = (float)imgBuf[inputSum+1];
+                                gValue = (float)imgBuf[inputSum+2];
+                                bValue = (float)imgBuf[inputSum+3];
+                            } // if ((Y >= -0.5) && (Y < iYdim))
+                        } // if ((X >= -0.5) && (X < iXdim))
+                        outputSum = 4*(i + (oXdim *j));
+                        imgBuf2[outputSum] = aValue;
+                        imgBuf2[outputSum+1] = rValue;
+                        imgBuf2[outputSum+2] = gValue;
+                        imgBuf2[outputSum+3] = bValue;
                     }
                 }
     
                 try {
-                    destImage.importData( (4 * l * oXdim * oYdim * oZdim) + (4 * k * oXdim * oYdim), imgBuf2, true);
+                    destImage.importData( (4 * l * oVolSize) + (4 * k * oSliceSize), imgBuf2, true);
                 } catch (final IOException error) {
                     MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
                 }
@@ -12322,13 +12427,11 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     imm = iAdj * oXres;
                     X = (j1 + (imm * T00)) * invXRes;
-                    Y = (j2 + (imm * T10)) * invYRes;
-                    Z = (j3 + (imm * T20)) * invZRes;
 
                     if ( (X > -0.5) && (X < iXdim)) {
-
+                        Y = (j2 + (imm * T10)) * invYRes;
                         if ( (Y > -0.5) && (Y < iYdim)) {
-
+                            Z = (j3 + (imm * T20)) * invZRes;
                             if ( (Z > -0.5) && (Z < iZdim)) {
 
                                 if (X <= 0) {
