@@ -806,6 +806,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		return m_kComponent;
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public ModelImage getImage() {
+	    return m_kImageActive;
+	}
 
 	/**
 	 * Returns a ModelImage in the local image space, if a local ModelImage has already been created it is returned.
@@ -1613,6 +1621,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		m_kCurrentVOI = null;
 	}
+	
+	
 
 	/**
 	 * Called from VOIManagerInterface. Pastes the input VOI onto the current slice.
