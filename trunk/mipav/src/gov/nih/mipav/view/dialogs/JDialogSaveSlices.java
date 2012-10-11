@@ -130,8 +130,12 @@ public class JDialogSaveSlices extends JDialogBase {
     /** Check box for specifying whether DICOM files should be stamped with MIPAV information*/
     private JCheckBox stampSecondaryCheckbox;
     
-    /** Check box for saving dicom files in enhanced format (concatenates all frames in one file */
-    private JCheckBox saveEnhancedDicomCheckbox;
+    private ButtonGroup dicomGroup;
+    
+    /** All frames in one file */
+    private JRadioButton enhancedDicomButton;
+    
+    private JRadioButton multiFileDicomButton;
     
     /** Whether DICOM files should be saved as an encapsulated JPEG2000 */
     private boolean saveAsEncapJP2 = false;
@@ -226,6 +230,7 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
         int endNumber;
         int endDigits;
 
@@ -349,8 +354,8 @@ public class JDialogSaveSlices extends JDialogBase {
             }
             saveAsEncapJP2 = encapJP2Checkbox.isSelected();
             stampSecondary = stampSecondaryCheckbox.isSelected();
-            if(saveEnhancedDicomCheckbox != null) {
-                saveEnhancedDicom = saveEnhancedDicomCheckbox.isSelected();
+            if(enhancedDicomButton != null) {
+                saveEnhancedDicom = enhancedDicomButton.isSelected();
             }
             options.setWritePackBit(packBitCheckbox.isSelected());
 
@@ -423,18 +428,6 @@ public class JDialogSaveSlices extends JDialogBase {
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        Insets insets = new Insets(0, 2, 0, 2);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.insets = insets;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-
         slicePanel = new JPanel();
         slicePanel.setLayout(new GridLayout(2, 2));
         slicePanel.setForeground(Color.black);
@@ -456,15 +449,10 @@ public class JDialogSaveSlices extends JDialogBase {
         if(maxValue == 0) {
         	textFirstSlice.setEnabled(false);
         }
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.EAST;
         textFirstPanel.add(textFirstSlice);
         slicePanel.add(textFirstPanel);
 
         labelLastSlice = new JLabel("Last Slice");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.WEST;
         labelLastSlice.setFont(serif12);
         labelLastSlice.setForeground(Color.black);
         if (maxValue == 0) {
@@ -474,8 +462,6 @@ public class JDialogSaveSlices extends JDialogBase {
 
         JPanel textLastPanel = new JPanel();
         textLastSlice = new JTextField(5);
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.EAST;
         textLastSlice.setText(String.valueOf(maxValue));
         textLastSlice.setFont(serif12);
         textLastSlice.addFocusListener(this);
@@ -544,28 +530,63 @@ public class JDialogSaveSlices extends JDialogBase {
         //encapsulated jpeg2000 dicom panel
         JPanel encapJP2Panel2 = new JPanel();
         dicomInfoPanel = new JPanel();
-        dicomInfoPanel.setLayout(new BorderLayout());
+        dicomInfoPanel.setLayout(new GridBagLayout());
         dicomInfoPanel.setForeground(Color.black);
         dicomInfoPanel.setBorder(buildTitledBorder("DICOM Options"));
+        GridBagConstraints gbc = new GridBagConstraints();
+        Insets insets = new Insets(0, 2, 0, 2);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.insets = insets;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         
         encapJP2Checkbox = new JCheckBox("Save as Encapsulated JPEG2000");
         encapJP2Checkbox.setFont(serif12);
         encapJP2Checkbox.setSelected(false);
         encapJP2Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        dicomInfoPanel.add(encapJP2Checkbox, BorderLayout.NORTH);
+        dicomInfoPanel.add(encapJP2Checkbox, gbc);
         
         stampSecondaryCheckbox = new JCheckBox("Stamp dicom files with MIPAV information");
         stampSecondaryCheckbox.setFont(serif12);
         stampSecondaryCheckbox.setSelected(true);
         stampSecondaryCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        dicomInfoPanel.add(stampSecondaryCheckbox, BorderLayout.CENTER);
+        gbc.gridy++;
+        dicomInfoPanel.add(stampSecondaryCheckbox, gbc);
         
         if(maxValue != 0) { //image is 3D or greater in dimensions
-            saveEnhancedDicomCheckbox = new JCheckBox("Save as enhanced dicom");
-            saveEnhancedDicomCheckbox.setFont(serif12);
-            saveEnhancedDicomCheckbox.setSelected(false);
-            saveEnhancedDicomCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-            dicomInfoPanel.add(saveEnhancedDicomCheckbox, BorderLayout.SOUTH);
+            dicomGroup = new ButtonGroup();
+            if (fourDimEnabled) {
+                enhancedDicomButton = new JRadioButton("Save as single file enhanced dicom", true);
+                enhancedDicomButton.setEnabled(false);
+            }
+            else {
+                enhancedDicomButton = new JRadioButton("Save as single file enhanced dicom", false);
+                enhancedDicomButton.setEnabled(true);
+            }
+            enhancedDicomButton.setFont(serif12);
+            enhancedDicomButton.setForeground(Color.black);
+            dicomGroup.add(enhancedDicomButton);
+            gbc.gridy++;
+            dicomInfoPanel.add(enhancedDicomButton, gbc);
+            
+            if (fourDimEnabled) {
+                multiFileDicomButton = new JRadioButton("Save as multi file nonenhanced dicom", false);
+                multiFileDicomButton.setEnabled(false);
+            }
+            else {
+                multiFileDicomButton = new JRadioButton("Save as multi file nonenhanced dicom", true);
+                multiFileDicomButton.setEnabled(true);
+            }
+            multiFileDicomButton.setFont(serif12);
+            multiFileDicomButton.setForeground(Color.black);
+            dicomGroup.add(multiFileDicomButton);
+            gbc.gridy++;
+            dicomInfoPanel.add(multiFileDicomButton, gbc);
         }
 
         JPanel generalPanel = new JPanel();
