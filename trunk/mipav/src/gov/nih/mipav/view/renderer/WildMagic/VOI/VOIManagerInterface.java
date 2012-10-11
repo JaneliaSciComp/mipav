@@ -3998,15 +3998,30 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private void pasteAll()
     {
+        int i;
+        int j;
+        int k;
+        int iPlane = 0;
+        short id;
+        float xCurve[];
+        float yCurve[];
+        float zCurve[];
+        VOIManager xManager = null;
+        VOIManager yManager = null;
+        VOIManager zManager = null;
+        int xIndex;
+        int yIndex;
+        int zIndex;
         // Get the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
-        for ( int i = 0; i < copyList.size(); i++ )
+        for (i = 0; i < copyList.size(); i++ )
         {
-            VOIBase kCurrentVOI = copyList.get(i); 
+            VOIBase kCurrentVOI = copyList.get(i);
             VOIManager kManager = m_kVOIManagers.elementAt(0);
-            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
+            
+            for (j = 0; j < m_kVOIManagers.size(); j++ )
             {
-            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+            	iPlane = m_kVOIManagers.elementAt(j).getPlane();
             	//System.err.println( iPlane + " " + kCurrentVOI.getPlane() + " " + (iPlane & kCurrentVOI.getPlane()));
                 if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
@@ -4014,8 +4029,209 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     break;
                 }
             }
-            kManager.pasteAllVOI( kCurrentVOI );  
-        }
+            kManager.pasteAllVOI( kCurrentVOI ); 
+            /* In ViewJComponentTriImage if a rect3D is drawn in one window, then the same rect3d appears in the
+             * other 2 windows.
+             */
+            if ((m_kVOIManagers.size() == 3) &&
+                (m_kVOIManagers.elementAt(0).getComponent().toString().contains("ViewJComponentTriImage")) &&
+                (m_kVOIManagers.elementAt(1).getComponent().toString().contains("ViewJComponentTriImage")) &&
+                (m_kVOIManagers.elementAt(2).getComponent().toString().contains("ViewJComponentTriImage"))) {
+                VOI voiXY;
+                VOI voiZY;
+                VOI voiXZ;
+                float x[] = new float[2];
+                float y[] = new float[2];
+                float z[] = new float[2];
+                for (k = 0; k < 3; k++) {
+                    if (m_kVOIManagers.elementAt(k).getPlane() == 1) { // XPLANE
+                        xManager = m_kVOIManagers.elementAt(k);    
+                    }
+                    else if (m_kVOIManagers.elementAt(k).getPlane() == 2) { // YPLANE
+                        yManager = m_kVOIManagers.elementAt(k);
+                    }
+                    else {
+                        zManager = m_kVOIManagers.elementAt(k);
+                    }
+                }
+                kCurrentVOI.getBounds(x, y, z);
+                if (iPlane == 1) { // XPLANE
+                    x[0] = 0;
+                    x[1] = xManager.getLocalImage().getExtents()[2] - 1;
+                    if (yManager.getImage().getVOIs() != null) {
+                        id = (short)yManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXZ = new VOI(id, "VOIXZ", VOI.CONTOUR, 0.0f);
+                    voiXZ.setColor(Color.red);
+                    for (yIndex = Math.round(y[0]); yIndex <= Math.round(y[1]); yIndex++) {
+                        xCurve = new float[4];
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve[0] = x[0];
+                        zCurve[0] = z[0];
+                        yCurve[0] = yIndex;
+                        xCurve[1] = x[1];
+                        zCurve[1] = z[0];
+                        yCurve[1] = yIndex;
+                        xCurve[2] = x[1];
+                        zCurve[2] = z[1];
+                        yCurve[2] = yIndex;
+                        xCurve[3] = x[0];
+                        zCurve[3] = z[1];
+                        yCurve[3] = yIndex;
+                        voiXZ.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    yManager.getImage().registerVOI(voiXZ);
+                    if (zManager.getImage().getVOIs() != null) {
+                        id = (short)zManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXY = new VOI(id, "VOIXY", VOI.CONTOUR, 0.0f);
+                    voiXY.setColor(Color.red);
+                    for (zIndex = Math.round(z[0]); zIndex <= Math.round(z[1]); zIndex++) {
+                        xCurve = new float[4];
+                        yCurve = new float[4];
+                        zCurve = new float[4];
+                        xCurve[0] = x[0];
+                        yCurve[0] = y[0];
+                        zCurve[0] = zIndex;
+                        xCurve[1] = x[1];
+                        yCurve[1] = y[0];
+                        zCurve[1] = zIndex;
+                        xCurve[2] = x[1];
+                        yCurve[2] = y[1];
+                        zCurve[2] = zIndex;
+                        xCurve[3] = x[0];
+                        yCurve[3] = y[1];
+                        zCurve[3] = zIndex;
+                        voiXY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    zManager.getImage().registerVOI(voiXY);
+                }
+                else if (iPlane == 2) { // YPLANE
+                    y[0] = 0;
+                    y[1] = yManager.getLocalImage().getExtents()[2] - 1;
+                    if (xManager.getImage().getVOIs() != null) {
+                        id = (short)xManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiZY = new VOI(id, "voiZY", VOI.CONTOUR, 0.0f);
+                    voiZY.setColor(Color.red);
+                    for (xIndex = Math.round(x[0]); xIndex <= Math.round(x[1]); xIndex++) {
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve = new float[4];
+                        zCurve[0] = z[0];
+                        yCurve[0] = y[0];
+                        xCurve[0] = xIndex;
+                        zCurve[1] = z[1];
+                        yCurve[1] = y[0];
+                        xCurve[1] = xIndex;
+                        zCurve[2] = z[1];
+                        yCurve[2] = y[1];
+                        xCurve[2] = xIndex;
+                        zCurve[3] = z[0];
+                        yCurve[3] = y[1];
+                        xCurve[3] = xIndex;
+                        voiZY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    xManager.getImage().registerVOI(voiZY);
+                    if (zManager.getImage().getVOIs() != null) {
+                        id = (short)zManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXY = new VOI(id, "VOIXY", VOI.CONTOUR, 0.0f);
+                    voiXY.setColor(Color.red);
+                    for (zIndex = Math.round(z[0]); zIndex <= Math.round(z[1]); zIndex++) {
+                        xCurve = new float[4];
+                        yCurve = new float[4];
+                        zCurve = new float[4];
+                        xCurve[0] = x[0];
+                        yCurve[0] = y[0];
+                        zCurve[0] = zIndex;
+                        xCurve[1] = x[1];
+                        yCurve[1] = y[0];
+                        zCurve[1] = zIndex;
+                        xCurve[2] = x[1];
+                        yCurve[2] = y[1];
+                        zCurve[2] = zIndex;
+                        xCurve[3] = x[0];
+                        yCurve[3] = y[1];
+                        zCurve[3] = zIndex;
+                        voiXY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    zManager.getImage().registerVOI(voiXY);
+                }
+                else if (iPlane == 4) { // ZPLANE
+                    z[0] = 0;
+                    z[1] = zManager.getLocalImage().getExtents()[2]-1;
+                    if (xManager.getImage().getVOIs() != null) {
+                        id = (short)xManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiZY = new VOI(id, "voiZY", VOI.CONTOUR, 0.0f);
+                    voiZY.setColor(Color.red);
+                    for (xIndex = Math.round(x[0]); xIndex <= Math.round(x[1]); xIndex++) {
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve = new float[4];
+                        zCurve[0] = z[0];
+                        yCurve[0] = y[0];
+                        xCurve[0] = xIndex;
+                        zCurve[1] = z[1];
+                        yCurve[1] = y[0];
+                        xCurve[1] = xIndex;
+                        zCurve[2] = z[1];
+                        yCurve[2] = y[1];
+                        xCurve[2] = xIndex;
+                        zCurve[3] = z[0];
+                        yCurve[3] = y[1];
+                        xCurve[3] = xIndex;
+                        voiZY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    xManager.getImage().registerVOI(voiZY);
+                    if (yManager.getImage().getVOIs() != null) {
+                        id = (short)yManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXZ = new VOI(id, "VOIXZ", VOI.CONTOUR, 0.0f);
+                    voiXZ.setColor(Color.red);
+                    for (yIndex = Math.round(y[0]); yIndex <= Math.round(y[1]); yIndex++) {
+                        xCurve = new float[4];
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve[0] = x[0];
+                        zCurve[0] = z[0];
+                        yCurve[0] = yIndex;
+                        xCurve[1] = x[1];
+                        zCurve[1] = z[0];
+                        yCurve[1] = yIndex;
+                        xCurve[2] = x[1];
+                        zCurve[2] = z[1];
+                        yCurve[2] = yIndex;
+                        xCurve[3] = x[0];
+                        zCurve[3] = z[1];
+                        yCurve[3] = yIndex;
+                        voiXZ.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    yManager.getImage().registerVOI(voiXZ);
+                }
+                
+            }
+        } // for ( int i = 0; i < copyList.size(); i++ )
     }
 
     private void pasteFromViewUserInterface()
