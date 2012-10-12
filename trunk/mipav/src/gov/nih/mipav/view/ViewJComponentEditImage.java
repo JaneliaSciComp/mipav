@@ -7028,8 +7028,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
         
-        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]) )
         {
             bClipped = true;
         }
@@ -7070,8 +7070,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
         
-        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]) )
         {
             bClipped = true;
         }
