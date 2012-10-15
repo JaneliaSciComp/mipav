@@ -851,6 +851,14 @@ public class FileInfoDicom extends FileInfoBase {
      * @param  tag  The tag to use to update the file info fields (not all tags cause field changes).
      */
     protected final void setInfoFromTag(FileDicomTag tag) {
+        if (tag == null) {
+            Preferences.debug("tag == null on entry to setInfoFromTag(FileDicomTag tag)\n", Preferences.DEBUG_FILEIO);
+            return;
+        }
+        else if (tag.getInfo() == null) {
+            Preferences.debug("tag.getInfo() == null on entry to setInfoFromTag(FileDicomTag tag)\n", Preferences.DEBUG_FILEIO);
+            return;    
+        }
         FileDicomKey tagKey = tag.getInfo().getKey();
         //TODO: JDK7 allows this to turn into switch statements
         // ordering by type 1 tags first.  Then in numerical order.
