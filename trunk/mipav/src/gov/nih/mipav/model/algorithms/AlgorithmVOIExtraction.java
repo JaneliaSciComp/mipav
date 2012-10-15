@@ -72,6 +72,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int yDimE;
+    
+    private BitSet maskExpanded = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -171,6 +173,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         Polygon contourPolygon;
         boolean newGrayScale;
         ViewVOIVector VOIs = null;
+        int xpos;
+        int ypos;
+        int index;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -200,6 +205,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         yDimE = 2 * yDim;
 
         int length = xDimE * yDimE;
+        int expandedLength = (xDimE + 2)*(yDimE + 2);
 
         if (srcImage.getNDims() > 2) {
             zDim = srcImage.getExtents()[2];
@@ -215,6 +221,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             outMask = new BitSet(smallLength);
             mask2 = new BitSet(length);
             maskAll = new BitSet(length);
+            maskExpanded = new BitSet(expandedLength);
             maskList = new short[smallLength][2];
             nextMaskList = new short[smallLength][2];
         } catch (OutOfMemoryError e) {
@@ -264,6 +271,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                 outMask.clear();
                 mask2.clear();
                 maskAll.clear();
+                maskExpanded.clear();
 
                 short val = 0;
                 int xTmpIdx;
@@ -303,12 +311,46 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                             // Expand mask points so as to draw boundary properly.
                             // A pixel point only refers to left upper corner
                             setRegionMaskAll();
+                            
+                            for (ypos = 0; ypos < yDimE; ypos++) {
+                                for (xpos = 0; xpos < xDimE; xpos++) {
+                                    index = xpos + ypos * xDimE;
+                                    if (maskAll.get(index)) {
+                                        if ((xpos == xDimE - 1) && (ypos == yDimE - 1)) {
+                                            maskExpanded.set(xpos + 1 + ypos * (xDimE + 2));  
+                                            maskExpanded.set(xpos + 2 + ypos * (xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+1)*(xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+2)*(xDimE + 2));
+                                            maskExpanded.set(xpos + 1 + (ypos+1) * (xDimE + 2));
+                                            maskExpanded.set(xpos + 2 + (ypos+1) * (xDimE + 2));    
+                                            maskExpanded.set(xpos + 1 + (ypos+2) * (xDimE + 2));    
+                                            maskExpanded.set(xpos + 2 + (ypos+2) * (xDimE + 2)); 
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else if (xpos == xDimE - 1) {
+                                            maskExpanded.set(xpos + 1 + ypos * (xDimE + 2));  
+                                            maskExpanded.set(xpos + 2 + ypos * (xDimE + 2)); 
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else if (ypos == yDimE - 1) {
+                                            maskExpanded.set(xpos + (ypos+1)*(xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+2)*(xDimE + 2));
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else {
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        
+                                    }
+                                }
+                            }
 
                             // Return polygon of contour
                             Point startPt = new Point(x, y);
 
-                            contourPolygon = AlgorithmMorphology2D.genContour(xDimE, yDimE, startPt, maskAll);
+                            contourPolygon = AlgorithmMorphology2D.genContour(xDimE+2, yDimE+2, startPt, maskExpanded);
                             maskAll.clear();
+                            maskExpanded.clear();
                             newGrayScale = true;
 
                             for (i = 0; ((newGrayScale) && (i < grayScaleNumber)); i++) {
@@ -360,6 +402,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                 // Find all zero points 4 connected by other zero points to a zero point on the boundary
                 outMask.clear();
                 maskAll.clear();
+                maskExpanded.clear();
 
                 smallY = 0;
 
@@ -426,13 +469,47 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                             // Expand mask points so as to draw boundary properly.
                             // A pixel point only refers to left upper corner
                             setRegionMaskAll();
+                            
+                            for (ypos = 0; ypos < yDimE; ypos++) {
+                                for (xpos = 0; xpos < xDimE; xpos++) {
+                                    index = xpos + ypos * xDimE;
+                                    if (maskAll.get(index)) {
+                                        if ((xpos == xDimE - 1) && (ypos == yDimE - 1)) {
+                                            maskExpanded.set(xpos + 1 + ypos * (xDimE + 2));  
+                                            maskExpanded.set(xpos + 2 + ypos * (xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+1)*(xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+2)*(xDimE + 2));
+                                            maskExpanded.set(xpos + 1 + (ypos+1) * (xDimE + 2));
+                                            maskExpanded.set(xpos + 2 + (ypos+1) * (xDimE + 2));    
+                                            maskExpanded.set(xpos + 1 + (ypos+2) * (xDimE + 2));    
+                                            maskExpanded.set(xpos + 2 + (ypos+2) * (xDimE + 2)); 
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else if (xpos == xDimE - 1) {
+                                            maskExpanded.set(xpos + 1 + ypos * (xDimE + 2));  
+                                            maskExpanded.set(xpos + 2 + ypos * (xDimE + 2)); 
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else if (ypos == yDimE - 1) {
+                                            maskExpanded.set(xpos + (ypos+1)*(xDimE + 2));
+                                            maskExpanded.set(xpos + (ypos+2)*(xDimE + 2));
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        else {
+                                            maskExpanded.set(xpos + ypos * (xDimE + 2));
+                                        }
+                                        
+                                    }
+                                }
+                            }
 
                             // Return polygon of contour
                             Point startPt = new Point(x, y);
 
-                            contourPolygon = AlgorithmMorphology2D.genContour(xDimE, yDimE, startPt, maskAll);
+                            contourPolygon = AlgorithmMorphology2D.genContour(xDimE+2, yDimE+2, startPt, maskExpanded);
 
                             maskAll.clear();
+                            maskExpanded.clear();
                             newGrayScale = true;
                             // If inside a curve of an existing VOI, make part of this VOI
 
