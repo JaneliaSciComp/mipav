@@ -495,10 +495,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int smallLength = xDim * yDim;
         int backAtStart = 0;
         BitSet mask;
-        Polygon expandedPolygon;
-        int i;
-        int xpos;
-        int ypos;
 
         try {
             mask = new BitSet(smallLength);
@@ -592,28 +588,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000", 
             		Preferences.DEBUG_ALGORITHM);
         }
-        
-        expandedPolygon = new Polygon();
-        for (i = 0; i < resultGon.npoints; i++) {
-            xpos = resultGon.xpoints[i];
-            ypos = resultGon.ypoints[i];
-            if ((xpos > 0) && (ypos > 0) && (resultGon.contains(xpos-1,ypos-1)) &&
-                    (!resultGon.contains(xpos-1,ypos)) &&
-                    (!resultGon.contains(xpos,ypos-1))) {
-                expandedPolygon.addPoint(xpos+1,ypos+1);
-            }
-            else if ((xpos > 0) && (resultGon.contains(xpos-1,ypos))) {
-                expandedPolygon.addPoint(xpos+1, ypos);
-            }
-            else if ((ypos > 0) && (resultGon.contains(xpos, ypos-1))) {
-                expandedPolygon.addPoint(xpos, ypos+1);
-            }
-            else {
-                expandedPolygon.addPoint(xpos, ypos);
-            }
-        }
 
-        return expandedPolygon;
+        return resultGon;
     }
 
     /**
