@@ -1022,7 +1022,13 @@ public class FileInfoDicom extends FileInfoBase {
                 planarConfig = ((Number)tag.getValue(false)).shortValue();
             } else if(tagKey.equals("0028,0004")) { //requires bitsAllocated(0028,0100) and pixelRepresentation(0028,0103) to be set
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0100")));
-                setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
+                if (tagTable.get(new FileDicomKey("0028,0103"))  == null) {
+                    Preferences.debug("In FileInfoDicom.setInfoFromTag tagTable.get(new FileDicomKey(\"0028,0103\"))  == null\n",
+                            Preferences.DEBUG_FILEIO);
+                }
+                else {
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
+                }
                 photometricInterp = ((String) tag.getValue(false)).trim();
                 
                 if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
