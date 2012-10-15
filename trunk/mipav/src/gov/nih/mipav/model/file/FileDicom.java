@@ -679,9 +679,9 @@ public class FileDicom extends FileDicomBase {
             int bPtrOld = getFilePointer();
             try {
                 flag = processNextTag(tagTable, key, endianess, false);
-                if (flag == false) {
+                if (flag == false && imageLoadReady == false) {
                     Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
-                    return false;
+                    break;
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -868,6 +868,7 @@ public class FileDicom extends FileDicomBase {
             case SQ:
                 processSequence(tagTable, key, name, endianess);
                 if (flag == false) {
+                    Preferences.debug("flag was set false in processSequence\n", Preferences.DEBUG_FILEIO);
                     return false;
                 }
                 break;
