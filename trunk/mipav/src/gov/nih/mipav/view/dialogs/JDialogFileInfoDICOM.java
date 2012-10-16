@@ -1760,12 +1760,40 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         i++;
         tagsModel.addRow(rowData);
         tagsModel.setValueAt(null, i, 0);
-        tagsModel.setValueAt("Min", i, 2);
-        tagsModel.setValueAt(new Double(DicomInfo.getMin()), i, 3);
-        tagsModel.addRow(rowData);
-        tagsModel.setValueAt("Max", ++i, 2);
-        tagsModel.setValueAt(null, i, 0);
-        tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 3);
+        if (imageA.isColorImage()) {
+            tagsModel.setValueAt("Min red", i, 2);
+            tagsModel.setValueAt(new Double(DicomInfo.getMinR()), i, 3);
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Max red", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMaxR()), i, 3);
+            
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Min green", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMinG()), i, 3);
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Max green", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMaxG()), i, 3);
+            
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Min blue", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMinB()), i, 3);
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Max blue", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMaxB()), i, 3);
+        }
+        else {
+            tagsModel.setValueAt("Min", i, 2);
+            tagsModel.setValueAt(new Double(DicomInfo.getMin()), i, 3);
+            tagsModel.addRow(rowData);
+            tagsModel.setValueAt("Max", ++i, 2);
+            tagsModel.setValueAt(null, i, 0);
+            tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 3);
+        }
         tagsModel.addRow(rowData);
         tagsModel.setValueAt("X origin", ++i, 2);
         tagsModel.setValueAt(null, i, 0);
