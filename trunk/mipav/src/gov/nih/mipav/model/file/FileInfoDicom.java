@@ -884,8 +884,10 @@ public class FileInfoDicom extends FileInfoBase {
                 setSliceThickness(Float.parseFloat(((String) tag.getValue(false)).trim())); // type 2
             } else if (tagKey.equals("0018,602C")) {
                 setResolutions(((Double) tag.getValue(false)).floatValue(), 0);
+                setUnitsOfMeasure(Unit.CENTIMETERS, 0);
             } else if (tagKey.equals("0018,602E")) {
                 setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
+                setUnitsOfMeasure(Unit.CENTIMETERS, 1);
             } else if (tagKey.equals("0020,0032")) { // type 2c
                 orientation = ((String) tag.getValue(false)).trim();
                 int index1 = -1, index2 = -1;
@@ -1109,10 +1111,6 @@ public class FileInfoDicom extends FileInfoBase {
                     lut.makeIndexedLUT(null);
                     //TODO: store this in file for display
                 }
-            } else if (tagKey.equals("0018,602C")) {
-                setUnitsOfMeasure(Unit.CENTIMETERS, 0);
-            } else if (tagKey.equals("0018,602E")) {
-                setUnitsOfMeasure(Unit.CENTIMETERS, 1);
             } 
         } catch(NumberFormatException ex) {
             Preferences.debug("Tag "+tag.getKey().toString()+" does not contain a number.", Preferences.DEBUG_FILEIO);
