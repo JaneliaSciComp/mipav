@@ -1673,7 +1673,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileRaw
      */
     public void readImage(final short[] buffer, final int imageType, final int imageNo) throws IOException {
-        // System.out.println("in read image short");
+        //System.out.println("in read image short");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1804,8 +1804,8 @@ public class FileDicom extends FileDicomBase {
         fileInfo.setMin(min);
         fileInfo.setMax(max);
 
-        // System.out.println("min = " + min + " max = " + max);
-        if ( (pixelPad <= min) || (pixelPad >= max)) {
+        //System.out.println("min = " + min + " max = " + max);
+        if ((fileInfo.getPixelPadValue() != null) && ((pixelPad <= min) || (pixelPad >= max))) {
 
             for (int i = 0; i < buffer.length; i++) {
 
