@@ -13092,6 +13092,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             FileInfoDicom fileDicom, final FileInfoBase originalFileInfo, final int originalImageDataType,
             final TransMatrix originalImageMatrix, final double originalImageMin, final double originalImageMax,
             final boolean originalIsDicom, final boolean originalIsColor) {
+        int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
@@ -13216,6 +13217,94 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             patientOrientationString.length());
                 }
             }
+            
+            // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
+            float resols[] = image.getFileInfo()[0].getResolutions();
+            float origin[] = image.getFileInfo()[0].getOrigin();
+            int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
+            boolean set;
+
+            for (i = 0; i < 2; i++) {
+                set = true;
+                if (units[i] == Unit.CENTIMETERS.getLegacyNum()) {}
+                else if (units[i] == Unit.INCHES.getLegacyNum()) {
+                    resols[i] = 2.54f * resols[i];
+                    origin[i] = 2.54f * origin[i];
+                } else if (units[i] == Unit.MILS.getLegacyNum()) {
+                    resols[i] = 2.54e-3f * resols[i];
+                    origin[i] = 2.54e-3f * origin[i];
+                } else if (units[i] == Unit.MILLIMETERS.getLegacyNum()) {
+                    resols[i] = 0.1f * resols[i];
+                    origin[i] = 0.1f * origin[i];
+                } else if (units[i] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[i] = 1.0e-8f * resols[i];
+                    origin[i] = 1.0e-8f * origin[i];
+                } else if (units[i] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-7f * resols[i];
+                    origin[i] = 1.0e-7f * origin[i];
+                } else if (units[i] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-4f * resols[i];
+                    origin[i] = 1.0e-4f * origin[i];
+                } else if (units[i] == Unit.METERS.getLegacyNum()) {
+                    resols[i] = 1.0e2f * resols[i];
+                    origin[i] = 1.0e2f * origin[i];
+                } else if (units[i] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e5f * resols[i];
+                    origin[i] = 1.0e5f * origin[i];
+                } else if (units[i] == Unit.MILES.getLegacyNum()) {
+                    resols[i] = 1.6093e5f * resols[i];
+                    origin[i] = 1.6093e5f * origin[i];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    if (i == 0) {
+                        fileDicom.getTagTable().setValue("0018,602C", new Double((double)resols[0]), 8);
+                    }
+                    else if (i == 1) {
+                        fileDicom.getTagTable().setValue("0018,602E", new Double((double)resols[1]), 8);    
+                    }
+                }
+            } // for (i = 0; i < 2; i++)
+            
+            // Distances in DICOM are in millimeters for "0018,0088".
+            if (image.getNDims() >= 3) {
+                set = true;
+                if (units[2] == Unit.MILLIMETERS.getLegacyNum()) { }
+                else if (units[2] == Unit.INCHES.getLegacyNum()) {
+                    resols[2] = 25.4f * resols[2];
+                    origin[2] = 25.4f * origin[2];
+                } else if (units[2] == Unit.MILS.getLegacyNum()) {
+                    resols[2] = 2.54e-2f * resols[2];
+                    origin[2] = 2.54e-2f * origin[2];
+                } else if (units[2] == Unit.CENTIMETERS.getLegacyNum()) {
+                    resols[2] = 10.0f * resols[2];
+                    origin[2] = 10.0f * origin[2];
+                } else if (units[2] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[2] = 1.0e-7f * resols[2];
+                    origin[2] = 1.0e-7f * origin[2];
+                } else if (units[2] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-6f * resols[2];
+                    origin[2] = 1.0e-6f * origin[2];
+                } else if (units[2] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-3f * resols[2];
+                    origin[2] = 1.0e-3f * origin[2];
+                } else if (units[2] == Unit.METERS.getLegacyNum()) {
+                    resols[2] = 1.0e3f * resols[2];
+                    origin[2] = 1.0e3f * origin[2];
+                } else if (units[2] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e6f * resols[2];
+                    origin[2] = 1.0e6f * origin[2];
+                } else if (units[2] == Unit.MILES.getLegacyNum()) {
+                    resols[2] = 1.6093e6f * resols[2];
+                    origin[2] = 1.6093e6f * origin[2];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    fileDicom.getTagTable().setValue("0018,0088", new Double((double)resols[2]), 8);
+                }
+            } // if (image.getNDims() >= 3)
 
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (originalFileInfo.getDataType() == ModelStorageBase.SHORT)
@@ -13316,7 +13405,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 TransMatrix matrix = fileDicom.getPatientOrientation();
                 if (matrix != null) {
                     final TransMatrix transposeMatrix = new TransMatrix(4);
-                    for (int i = 0; i < 4; i++) {
+                    for (i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
                             transposeMatrix.set(i, j, matrix.get(j, i));
                         }
@@ -13388,7 +13477,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 APIndex = 1;
                 ISIndex = 2;
                 increaseRes = true;
-                for (int i = 0; i <= 2; i++) {
+                for (i = 0; i <= 2; i++) {
                     if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                         RLIndex = i;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
@@ -13649,7 +13738,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
      */
     private boolean writeDicom(ModelImage image, final FileWriteOptions options) {
 
-        //int i;
+        int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
@@ -13785,6 +13874,94 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             patientOrientationString.length());
                 }
             }
+            // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
+            float resols[] = image.getFileInfo()[0].getResolutions();
+            float origin[] = image.getFileInfo()[0].getOrigin();
+            int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
+            boolean set;
+
+            for (i = 0; i < 2; i++) {
+                set = true;
+                if (units[i] == Unit.CENTIMETERS.getLegacyNum()) { }
+                else if (units[i] == Unit.INCHES.getLegacyNum()) {
+                    resols[i] = 2.54f * resols[i];
+                    origin[i] = 2.54f * origin[i];
+                } else if (units[i] == Unit.MILS.getLegacyNum()) {
+                    resols[i] = 2.54e-3f * resols[i];
+                    origin[i] = 2.54e-3f * origin[i];
+                } else if (units[i] == Unit.MILLIMETERS.getLegacyNum()) {
+                    resols[i] = 0.1f * resols[i];
+                    origin[i] = 0.1f * origin[i];
+                } else if (units[i] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[i] = 1.0e-8f * resols[i];
+                    origin[i] = 1.0e-8f * origin[i];
+                } else if (units[i] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-7f * resols[i];
+                    origin[i] = 1.0e-7f * origin[i];
+                } else if (units[i] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-4f * resols[i];
+                    origin[i] = 1.0e-4f * origin[i];
+                } else if (units[i] == Unit.METERS.getLegacyNum()) {
+                    resols[i] = 1.0e2f * resols[i];
+                    origin[i] = 1.0e2f * origin[i];
+                } else if (units[i] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e5f * resols[i];
+                    origin[i] = 1.0e5f * origin[i];
+                } else if (units[i] == Unit.MILES.getLegacyNum()) {
+                    resols[i] = 1.6093e5f * resols[i];
+                    origin[i] = 1.6093e5f * origin[i];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    if (i == 0) {
+                        myFileInfo.getTagTable().setValue("0018,602C", new Double((double)resols[0]), 8);
+                    }
+                    else if (i == 1) {
+                        myFileInfo.getTagTable().setValue("0018,602E", new Double((double)resols[1]), 8);    
+                    }
+                }
+            } // for (i = 0; i < 2; i++)
+            
+            // Distances in DICOM are in millimeters for "0018,0088".
+            if (image.getNDims() >= 3) {
+                set = true;
+                if (units[2] == Unit.MILLIMETERS.getLegacyNum()) { }
+                else if (units[2] == Unit.INCHES.getLegacyNum()) {
+                    resols[2] = 25.4f * resols[2];
+                    origin[2] = 25.4f * origin[2];
+                } else if (units[2] == Unit.MILS.getLegacyNum()) {
+                    resols[2] = 2.54e-2f * resols[2];
+                    origin[2] = 2.54e-2f * origin[2];
+                } else if (units[2] == Unit.CENTIMETERS.getLegacyNum()) {
+                    resols[2] = 10.0f * resols[2];
+                    origin[2] = 10.0f * origin[2];
+                } else if (units[2] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[2] = 1.0e-7f * resols[2];
+                    origin[2] = 1.0e-7f * origin[2];
+                } else if (units[2] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-6f * resols[2];
+                    origin[2] = 1.0e-6f * origin[2];
+                } else if (units[2] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-3f * resols[2];
+                    origin[2] = 1.0e-3f * origin[2];
+                } else if (units[2] == Unit.METERS.getLegacyNum()) {
+                    resols[2] = 1.0e3f * resols[2];
+                    origin[2] = 1.0e3f * origin[2];
+                } else if (units[2] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e6f * resols[2];
+                    origin[2] = 1.0e6f * origin[2];
+                } else if (units[2] == Unit.MILES.getLegacyNum()) {
+                    resols[2] = 1.6093e6f * resols[2];
+                    origin[2] = 1.6093e6f * origin[2];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    myFileInfo.getTagTable().setValue("0018,0088", new Double((double)resols[2]), 8);
+                }
+            } // if (image.getNDims() >= 3)
+            
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.SHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.USHORT)) {
@@ -13873,7 +14050,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             if (image.getNDims() > 2) {
                 //create as many file-infos as dicom frames exist in the image
                 int fBaseLength = image.getExtents()[2];
-                for(int i=3; i<image.getExtents().length; i++) {
+                for(i=3; i<image.getExtents().length; i++) {
                     fBaseLength *= image.getExtents()[i];
                 }
                 final FileInfoBase[] fBase = new FileInfoBase[fBaseLength];
@@ -13881,7 +14058,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
                 if (matrix != null) {
                     final TransMatrix transposeMatrix = new TransMatrix(4);
-                    for (int i = 0; i < 4; i++) {
+                    for (i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
                             transposeMatrix.set(i, j, matrix.get(j, i));
                         }
@@ -13954,7 +14131,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 APIndex = 1;
                 ISIndex = 2;
                 increaseRes = true;
-                for (int i = 0; i <= 2; i++) {
+                for (i = 0; i <= 2; i++) {
                     if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                         RLIndex = i;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
@@ -14184,7 +14361,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             if ( !myFileInfo.isMultiFrame() && !options.doEnhanced()) {
                 final String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018")
                         .getValue(true)).toString();
-                for (int i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
+                for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
 
                     myFileInfo = (FileInfoDicom) image.getFileInfo(i);
