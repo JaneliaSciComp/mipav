@@ -2414,6 +2414,9 @@ public class FileDicom extends FileDicomBase {
 
         final String nFramesStr = String.valueOf((endSlice - startSlice + 1)*(endTime - startTime + 1));
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
+        int bitsPerPixel = 16; // writing a short image
+        String bitsPerPixelString = String.valueOf(bitsPerPixel);
+        fileInfo.getTagTable().setValue("0028,0100", bitsPerPixelString, bitsPerPixelString.length());
 
         if (stampSecondary) {
             // store that this DICOM has been saved/modified since original capture:
@@ -2435,14 +2438,14 @@ public class FileDicom extends FileDicomBase {
             writeHeader(raFile, fileInfo, false);
 
             final float[] data = new float[imageSize];
+            
 
             final double invSlope = fileInfo.getRescaleSlope();
             final double intercept = fileInfo.getRescaleIntercept();
             final short[] data2 = new short[imageSize];
 
-            
-            for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
-            	for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+            for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
                     image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
         
                     for (int i = 0; i < data.length; i++) {
@@ -3807,7 +3810,7 @@ public class FileDicom extends FileDicomBase {
         if (fileInfo.getTagTable().getValue("0028,0002") != null) {
             samplesPerPixel = ((Short) fileInfo.getTagTable().getTagList().get("0028,0002").getValue(false)).shortValue();
         }
-
+        
         final int imageLength = image.getSliceSize()
                 * ((Short) fileInfo.getTagTable().getValue("0028,0100", false)).shortValue() / 8 * // bits per pixel
                 samplesPerPixel; // samples per pixel (i.e RGB = 3)
