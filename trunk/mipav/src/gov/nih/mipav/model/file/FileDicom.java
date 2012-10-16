@@ -626,6 +626,8 @@ public class FileDicom extends FileDicomBase {
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
         endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         flag = true;
+        int exceptionCount = 0;
+        int maxExceptionCount = 10;
 
         if (loadTagBuffer == true) {
             loadTagBuffer();
@@ -686,6 +688,11 @@ public class FileDicom extends FileDicomBase {
             } catch(Exception e) {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
+                exceptionCount++;
+                // Prevent infinite looping
+                if (exceptionCount >= maxExceptionCount) {
+                    break;
+                }
             }
             if(bPtrOld+tagElementLength != getFilePointer()) {
                 Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
