@@ -868,6 +868,7 @@ public class FileInfoDicom extends FileInfoBase {
                 // setModalityFromDicomStr() covers the possibility of value == ""
             } else if (tagKey.equals("0018,0088")) {
                 super.setResolutions(Float.parseFloat(tag.getValue(false).toString()), 2); // type 1
+                setUnitsOfMeasure(Unit.MILLIMETERS, 2);
             } else if (tagKey.equals("0028,0100")) {
                 bitsAllocated = ((Short) tag.getValue(false)).shortValue(); // type 1
             } else if (tagKey.equals("0028,0103")) {
