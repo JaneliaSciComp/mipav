@@ -1701,11 +1701,17 @@ public class FileDicom extends FileDicomBase {
             try { // rafile (type RandomAccessFile) for header, rawfile (type FileRaw) for image data.
                 rawFile.setImageFile(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-                if (ModelImage.isColorImage(imageType)) {
+                if (imageType == ModelStorageBase.ARGB) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
                     rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
+                }
+                else if (imageType == ModelStorageBase.ARGB_USHORT) {
+                        rawFile.setPlanarConfig(fileInfo.planarConfig);
+                        rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 6)), imageType);
+                        rawFile.raFile.close();
+                        rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
                             fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
@@ -2420,7 +2426,7 @@ public class FileDicom extends FileDicomBase {
             bitsPerPixel = 8; // writing a ARGB color image
         }
         else {
-            bitsPerPixel = 16; // writing a signed or unsigned short image
+            bitsPerPixel = 16; // writing a signed or unsigned short or ARGB_USHORT image
         }
         String bitsPerPixelString = String.valueOf(bitsPerPixel);
         fileInfo.getTagTable().setValue("0028,0100", bitsPerPixelString, bitsPerPixelString.length());
@@ -2463,6 +2469,25 @@ public class FileDicom extends FileDicomBase {
                     }
                 }        
             } // if (dataType == ModelStorageBase.ARGB)
+            else if (dataType == ModelStorageBase.ARGB_USHORT) {
+                final float[] data = new float[4 *imageSize];
+                final int[] data2 = new int[4 * imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(4*timeNum*volumeSize + 4*sliceNum*imageSize, 4*imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferRGB_USHORT(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
+                    }
+                }            
+            } // else if (dataType == ModelStorageBase.ARGB_USHORT)
             else if (dataType == ModelStorageBase.USHORT) {
                 final float[] data = new float[imageSize];
                 final int[] data2 = new int[imageSize];
