@@ -2804,7 +2804,7 @@ public class FileRaw extends FileBase {
                     try {
                     	
                         fileRW.writeImage(image, (t * offset) + (k * bufferSize),
-                                          (t * offset) + (k * bufferSize) + bufferSize, 0);
+                                          (t * offset) + (k * bufferSize) + bufferSize);
                     	
                     	
                     } catch (IOException error) {
@@ -2904,7 +2904,7 @@ public class FileRaw extends FileBase {
                     try {
                         
                         fileRW.writeImage(image, (t * offset) + (k * bufferSize),
-                                          (t * offset) + (k * bufferSize) + bufferSize, 0);
+                                          (t * offset) + (k * bufferSize) + bufferSize);
                         
                         
                     } catch (IOException error) {
@@ -3029,7 +3029,7 @@ public class FileRaw extends FileBase {
 
 
             try {
-                fileRW.writeImage(image, k * bufferSize, (k * bufferSize) + bufferSize, 0);
+                fileRW.writeImage(image, k * bufferSize, (k * bufferSize) + bufferSize);
 
                 if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                     raFile.close();
@@ -3144,7 +3144,7 @@ public class FileRaw extends FileBase {
 
             // write the given start/end point in the image to a file
             try {
-                fileRW.writeImage(image, t * volSize + beginSlice * sliceSize, (t * volSize) + (endSlice + 1) * sliceSize, 0);
+                fileRW.writeImage(image, t * volSize + beginSlice * sliceSize, (t * volSize) + (endSlice + 1) * sliceSize);
 
                 if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                     raFile.close();
