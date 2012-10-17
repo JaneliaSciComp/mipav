@@ -2451,10 +2451,13 @@ public class FileDicom extends FileDicomBase {
                     for (int i = 0; i < data.length; i++) {
                         data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
                     }
-        
-                    image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
                     
-                    rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize);
+                    rawChunkFile.writeBufferShort(data2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                            fileInfo.getEndianess());
+        
+                    //image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
+                    
+                    //rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize);
                 }
             }
 
