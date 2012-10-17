@@ -1176,7 +1176,7 @@ public class FileMinc extends FileBase {
                                     }
                                     for (int j = 0; j < nSlices; j++) {
                                         int pos = j + m * nSlices; 
-                                        rawChunkFile.writeImage(image,m*nSlices*sliceSize+j*sliceSize, m*nSlices*sliceSize + (j+1)*sliceSize, pos);
+                                        rawChunkFile.writeImage(image,m*nSlices*sliceSize+j*sliceSize, m*nSlices*sliceSize + (j+1)*sliceSize);
                                     }
                                 }
                             }
@@ -1196,7 +1196,7 @@ public class FileMinc extends FileBase {
                                 }
     
                                 for (int j = 0; j < nSlices; j++) {
-                                    rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize, j);
+                                    rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize);
                                     if (!options.isMultiFile()) {
                                         fireProgressStateChanged(50 + Math.round((float) j / nSlices * 50));
                                     }
@@ -1211,7 +1211,7 @@ public class FileMinc extends FileBase {
     
                                 image.importData(0, sliceData, false);
                                 
-                                rawChunkFile.writeImage(image, 0, sliceSize, 0);
+                                rawChunkFile.writeImage(image, 0, sliceSize);
                                 
                             }
     
@@ -1319,7 +1319,7 @@ public class FileMinc extends FileBase {
                             jp = j - zBegin + nSlices*(i - tBegin);
         
                             // System.out.println(" j = " + j);
-                            rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize, jp);
+                            rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize);
                             if (!options.isMultiFile()) {
                                 fireProgressStateChanged(50 + Math.round((float) count / nImages * 50));
                             }
