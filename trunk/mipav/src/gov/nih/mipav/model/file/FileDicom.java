@@ -2414,6 +2414,7 @@ public class FileDicom extends FileDicomBase {
 
         final String nFramesStr = String.valueOf((endSlice - startSlice + 1)*(endTime - startTime + 1));
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
+        int dataType = image.getType();
         int bitsPerPixel = 16; // writing a short image
         String bitsPerPixelString = String.valueOf(bitsPerPixel);
         fileInfo.getTagTable().setValue("0028,0100", bitsPerPixelString, bitsPerPixelString.length());
@@ -2423,7 +2424,6 @@ public class FileDicom extends FileDicomBase {
             stampSecondaryCapture(fileInfo);
         }
         this.image = image;
-        ModelImage image2 = new ModelImage(DataType.SHORT, image.getExtents(), "TempExport");
         
         final int imageSize = image.getSliceSize();
         int volumeSize = 0;
@@ -2442,27 +2442,44 @@ public class FileDicom extends FileDicomBase {
 
             final double invSlope = fileInfo.getRescaleSlope();
             final double intercept = fileInfo.getRescaleIntercept();
-            final short[] data2 = new short[imageSize];
-
-            for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
-                for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
-                    image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
-        
-                    for (int i = 0; i < data.length; i++) {
-                        data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+            if (dataType == ModelStorageBase.USHORT) {
+                final int[] data2 = new int[imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferUShort(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
                     }
-                    
-                    rawChunkFile.writeBufferShort(data2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize,
-                            fileInfo.getEndianess());
-        
-                    //image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
-                    
-                    //rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize);
+                }    
+            } // if (dataType == ModelStorageBase.USHORT)
+            else {
+                final short[] data2 = new short[imageSize];
+    
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferShort(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
+                    }
                 }
-            }
+            } // else
 
             rawChunkFile.close();
-            image2.disposeLocal();
         } catch (final IOException error) {
             throw new IOException("FileDicomWrite: " + error);
         } catch (final OutOfMemoryError error) {
