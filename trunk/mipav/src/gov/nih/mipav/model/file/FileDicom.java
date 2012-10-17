@@ -2415,7 +2415,13 @@ public class FileDicom extends FileDicomBase {
         final String nFramesStr = String.valueOf((endSlice - startSlice + 1)*(endTime - startTime + 1));
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
         int dataType = image.getType();
-        int bitsPerPixel = 16; // writing a short image
+        int bitsPerPixel;
+        if (dataType == ModelStorageBase.ARGB) {
+            bitsPerPixel = 8; // writing a ARGB color image
+        }
+        else {
+            bitsPerPixel = 16; // writing a signed or unsigned short image
+        }
         String bitsPerPixelString = String.valueOf(bitsPerPixel);
         fileInfo.getTagTable().setValue("0028,0100", bitsPerPixelString, bitsPerPixelString.length());
 
@@ -2437,12 +2443,28 @@ public class FileDicom extends FileDicomBase {
         try {
             writeHeader(raFile, fileInfo, false);
 
-            final float[] data = new float[imageSize];
-            
-
             final double invSlope = fileInfo.getRescaleSlope();
             final double intercept = fileInfo.getRescaleIntercept();
-            if (dataType == ModelStorageBase.USHORT) {
+            if (dataType == ModelStorageBase.ARGB) {
+                final float[] data = new float[4 *imageSize];
+                final int[] data2 = new int[4 * imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(4*timeNum*volumeSize + 4*sliceNum*imageSize, 4*imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferRGB(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize);
+            
+                    }
+                }        
+            } // if (dataType == ModelStorageBase.ARGB)
+            else if (dataType == ModelStorageBase.USHORT) {
+                final float[] data = new float[imageSize];
                 final int[] data2 = new int[imageSize];
                 
                 for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
@@ -2461,6 +2483,7 @@ public class FileDicom extends FileDicomBase {
                 }    
             } // if (dataType == ModelStorageBase.USHORT)
             else {
+                final float[] data = new float[imageSize];
                 final short[] data2 = new short[imageSize];
     
                 for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
