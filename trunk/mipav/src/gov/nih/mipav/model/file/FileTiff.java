@@ -6015,7 +6015,7 @@ public class FileTiff extends FileBase {
                                 else {
                                 // adjust for intAlign ????
                                     fileRW.writeImage(image, timeOffset + (k * bufferSize),
-                                                      timeOffset + (k * bufferSize) + bufferSize, 0);
+                                                      timeOffset + (k * bufferSize) + bufferSize);
                                 }
                             } else {
                                 filePB.writePackBitImage(image, timeOffset + (k * bufferSize),
@@ -6042,7 +6042,7 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (!options.isWritePackBit()) {
-                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize, 0);
+                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         } else {
                             filePB.writePackBitImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         }
