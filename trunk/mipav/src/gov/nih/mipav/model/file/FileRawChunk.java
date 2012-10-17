@@ -1671,12 +1671,10 @@ public class FileRawChunk extends FileBase {
      * @param   image      image model from which the data will be read.
      * @param   start      start of data in the read image file in units of extents[0]*extents[1]
      * @param   end        end of data in the read image file in units of extents[0]*extents[1]
-     * @param   fileIndex  index into FileInfo array; mostly used for DICOM and Minc Note that bufferSize is also in
-     *                     units of extents[0]*extents[1]
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public void writeImage(ModelImage image, int start, int end, int fileIndex) throws IOException {
+    public void writeImage(ModelImage image, int start, int end) throws IOException {
         int i, index, j;
         boolean endianess = image.getFileInfo(0).getEndianess();
 
