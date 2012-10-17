@@ -2989,8 +2989,7 @@ public class FileInterfile extends FileBase {
                     timeOffset = t * volSize;
     
                     for (z = zBegin; z <= zEnd; z++, sliceNum++) {
-                        fileRW.writeImage(image, timeOffset + (z * bufferSize), timeOffset + (z * bufferSize) + bufferSize,
-                                          0);
+                        fileRW.writeImage(image, timeOffset + (z * bufferSize), timeOffset + (z * bufferSize) + bufferSize);
                         fireProgressStateChanged(100 * sliceNum / sliceTotal);
                     }
                 }
