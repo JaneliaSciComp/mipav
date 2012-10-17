@@ -1073,6 +1073,11 @@ public class FileInfoDicom extends FileInfoBase {
                     setDataType(ModelStorageBase.ARGB);
                     displayType = ModelStorageBase.ARGB;
                     bytesPerPixel = 3;
+                } else if (photometricInterp.equals("RGB") && (bitsAllocated == 16)) { //requires 0028,0006 to be set
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
+                    setDataType(ModelStorageBase.ARGB_USHORT);
+                    displayType = ModelStorageBase.ARGB_USHORT;
+                    bytesPerPixel = 6;
                 } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {  //requires 0028,0006 to be set
                     setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
                     setDataType(ModelStorageBase.ARGB);
