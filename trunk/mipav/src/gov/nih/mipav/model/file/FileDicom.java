@@ -2454,7 +2454,7 @@ public class FileDicom extends FileDicomBase {
         
                     image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
                     
-                    rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize, sliceNum);
+                    rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize);
                 }
             }
 
