@@ -13343,14 +13343,21 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
                 fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
-            } else if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
-                    || (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+            } else if (image.getType() == ModelStorageBase.ARGB) {
                 fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 fileDicom.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
                 fileDicom.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
                 fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+                fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+                fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+                fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (originalFileInfo.getDataType() == ModelStorageBase.FLOAT)) // this
                     // is
                     // new
@@ -13999,13 +14006,21 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
-            } else if (image.isColorImage()) {
+            } else if (image.getType() == ModelStorageBase.ARGB) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+                myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+                myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+                myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) // 7/8/2008
                     && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
