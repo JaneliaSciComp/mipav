@@ -898,7 +898,7 @@ public class FileSTK extends FileBase {
 
                             if (!options.isWritePackBit()) {
                                 fileRW.writeImage(image, timeOffset + (k * bufferSize),
-                                                  timeOffset + (k * bufferSize) + bufferSize, 0);
+                                                  timeOffset + (k * bufferSize) + bufferSize);
                             } else {
                                 filePB.writePackBitImage(image, timeOffset + (k * bufferSize),
                                                          timeOffset + (k * bufferSize) + bufferSize);
@@ -925,7 +925,7 @@ public class FileSTK extends FileBase {
                     try {
 
                         if (!options.isWritePackBit()) {
-                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize, 0);
+                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         } else {
                             filePB.writePackBitImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         }
