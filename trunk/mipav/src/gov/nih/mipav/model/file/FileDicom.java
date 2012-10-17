@@ -2158,6 +2158,7 @@ public class FileDicom extends FileDicomBase {
         double[] doubleData = null;
         BitSet bufferBitSet = null;
         short[] dataRGB = null;
+        int[] dataRGB_USHORT = null;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
         
@@ -2179,6 +2180,8 @@ public class FileDicom extends FileDicomBase {
             // if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
             if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
                 dataRGB = new short[4 * (end - start)];
+            } else if (fileInfo.getDataType() == ModelStorageBase.ARGB_USHORT) {
+                dataRGB_USHORT = new int[4 * (end - start)];
             } else if (fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	doubleData = new double[(end - start)];
             } else if (fileInfo.getDataType() == ModelStorageBase.BOOLEAN) {
@@ -2215,12 +2218,12 @@ public class FileDicom extends FileDicomBase {
                 pl.put("file_format", "on");
                 pl.put("disable_jp2_extension", "on");
                 final int imgType = image.getType();
-                if (imgType == ModelStorageBase.ARGB) {
+                if ((imgType == ModelStorageBase.ARGB) || (imgType == ModelStorageBase.ARGB_USHORT)) {
                     pl.put("Mct", "on");
                 } else {
                     pl.put("Mct", "off");
                 }
-                if (imgType == ModelStorageBase.ARGB) {
+                if ((imgType == ModelStorageBase.ARGB) || (imgType == ModelStorageBase.ARGB_USHORT)) {
                     final EncoderRAWColor encRAW = new EncoderRAWColor(pl, image);
                     final ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image, 0, saveAsEncapJP2);
                     slice.setSliceIndex(index, true);
@@ -2372,6 +2375,25 @@ public class FileDicom extends FileDicomBase {
 
                         rawChunkFile.writeBufferUByte(dRGB, 0, 3 * length);
                         dRGB = null;
+                        break;
+                        
+                        
+                    case ModelStorageBase.ARGB_USHORT:
+
+                        int[] dRGB_USHORT = new int[3 * length];
+                        image.exportData(index * (4 * length), (4 * length), dataRGB_USHORT);
+
+                        for (int i = 1, iRGB = 0; i < dataRGB_USHORT.length;) {
+
+                            // Not sure slope intercept is needed here for color images
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            i++;
+                        }
+
+                        rawChunkFile.writeBufferUShort(dRGB_USHORT, 0, 3 * length, image.getFileInfo(0).getEndianess());
+                        dRGB_USHORT = null;
                         break;
 
                     default:
