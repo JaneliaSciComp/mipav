@@ -2218,12 +2218,12 @@ public class FileDicom extends FileDicomBase {
                 pl.put("file_format", "on");
                 pl.put("disable_jp2_extension", "on");
                 final int imgType = image.getType();
-                if ((imgType == ModelStorageBase.ARGB) || (imgType == ModelStorageBase.ARGB_USHORT)) {
+                if (imgType == ModelStorageBase.ARGB) {
                     pl.put("Mct", "on");
                 } else {
                     pl.put("Mct", "off");
                 }
-                if ((imgType == ModelStorageBase.ARGB) || (imgType == ModelStorageBase.ARGB_USHORT)) {
+                if (imgType == ModelStorageBase.ARGB) {
                     final EncoderRAWColor encRAW = new EncoderRAWColor(pl, image);
                     final ImgReaderRAWColorSlice slice = new ImgReaderRAWColorSlice(image, 0, saveAsEncapJP2);
                     slice.setSliceIndex(index, true);
