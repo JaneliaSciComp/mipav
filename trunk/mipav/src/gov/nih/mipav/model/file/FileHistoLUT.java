@@ -60,6 +60,9 @@ public class FileHistoLUT extends FileBase {
     /** Whether to use the LUT or the RGB model. */
     private boolean useLUT = true;
 
+    /** ModelImage to use for reference */
+    private ModelImage img = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -459,9 +462,16 @@ public class FileHistoLUT extends FileBase {
        
         if( functName.equals("Transfer")) {
         	float min, max, diff;    
-        	ModelImage img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        	boolean keepImgRef = true;
+        	if(img == null) {
+        	    img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        	    keepImgRef = false;
+        	}
         	min = (float)img.getMin();
         	max = (float)img.getMax();
+        	if(!keepImgRef) {
+        	    img = null;
+        	}
         	diff = max - min;
         	
         	// remap the xfer function from 0->1 to min->max
@@ -495,6 +505,13 @@ public class FileHistoLUT extends FileBase {
         // initialize lut
         this.lut = lut;
         this.useLUT = true; // using lut, not rgb
+    }
+
+    /**
+     * @param img the img to set
+     */
+    public void setImg(ModelImage img) {
+        this.img = img;
     }
 
     /**
@@ -691,9 +708,16 @@ public class FileHistoLUT extends FileBase {
 
         if( name.equals("Transfer")) {
         	float min, max, diff;
-        	ModelImage img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        	boolean keepImgRef = true;
+            if(img == null) {
+                img = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+                keepImgRef = false;
+            }
         	min = (float)img.getMin();
         	max = (float)img.getMax();
+        	if(!keepImgRef) {
+        	    img = null;
+        	}
         	diff = max - min;
         	
         	// remap the xfer function from min->max to 0->1 
