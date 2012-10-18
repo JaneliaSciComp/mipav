@@ -2702,6 +2702,19 @@ public class Preferences {
             Preferences.setProperty(Preferences.PREF_DEBUG, str);
         }
     }
+    
+    /**
+     * Sets the default display mode for 2D/3D image display.
+     * 
+     * @param display the DefaultDisplay type
+     */
+    public static void setDefaultDisplay(DefaultDisplay display) {
+        if(display == null) {
+            return;
+        }
+        
+        Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, display.name());
+    }
 
     /**
      * Sets the user-configured columns that indicate the DICOM tags that are displayed in the DICOM browser table.
@@ -2768,6 +2781,11 @@ public class Preferences {
         }
     }
 
+    /**
+     * Sets the display interpolation mode for 2D image display.
+     * 
+     * @param interp the InterpolateDisplay type
+     */
     public static void setInterpolationMode(InterpolateDisplay interp) {
         if(interp == null) {
             return;
