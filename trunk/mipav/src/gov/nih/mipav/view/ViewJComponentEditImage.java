@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.*;
 
 
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogCheckerBoard.Animate;
@@ -4088,6 +4089,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
+            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
 
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());

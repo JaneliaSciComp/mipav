@@ -10,6 +10,7 @@ import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -2763,7 +2764,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
-
+            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
+            
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
