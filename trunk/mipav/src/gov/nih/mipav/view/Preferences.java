@@ -739,7 +739,7 @@ public class Preferences {
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         Preferences.defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
