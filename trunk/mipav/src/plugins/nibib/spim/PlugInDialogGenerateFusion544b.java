@@ -191,6 +191,10 @@ public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implem
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
     private JTextField slidingWindowText;
     private JCheckBox doSlideWindowBox;
+    /** Combobox for selecting save result type */
+    private JComboBox saveTypeText;
+	/** File format for saving result images */
+	private String saveType;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -286,7 +290,7 @@ public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implem
                                                                                 saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
-                                                                                maxAlgo);
+                                                                                maxAlgo, saveType);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -433,7 +437,11 @@ public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implem
         mtxPanel.add(rangeFusionText.getParent(), gbc);
         gbc.gridy++;
         
-        JLabel dirMove = new JLabel("Enter translation to apply to transformed image (optional)");
+        saveTypeText = gui.buildComboBox("Save result images as type: ", new String[]{"Raw", "Tiff"}, 0);
+        mtxPanel.add(saveTypeText.getParent(), gbc);
+        gbc.gridy++;
+        
+        JLabel dirMove = new JLabel("Enter translation to apply to transformed image (optional):");
         mtxPanel.add(dirMove, gbc);
         gbc.gridy++;
         
@@ -939,6 +947,8 @@ public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implem
         showMaxProj = doShowMaxProjBox.isSelected();
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
+        
+        saveType = saveTypeText.getSelectedItem().toString();
         
         boolean maxProjCreate = true;
         if(saveGeoMean) {
