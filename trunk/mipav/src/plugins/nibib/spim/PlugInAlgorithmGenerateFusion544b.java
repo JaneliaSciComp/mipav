@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.stream.FileImageOutputStream;
@@ -125,6 +127,8 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
     private boolean showMaxProj, saveMaxProj;
     /** Optional MIP algorithm */
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
+    /** File format for saving result images */
+	private String saveType;
 
     /**
      * Constructor.
@@ -161,6 +165,7 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
      * @param transformGeoWeight 
      * @param baseGeoWeight 
      * @param maxAlgo can be null if no MIP is supposed to take place
+     * @param saveType 
      */
     public PlugInAlgorithmGenerateFusion544b(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
@@ -168,13 +173,14 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
-                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo) {
+                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
         this.showGeoMean = doGeoMean;
         this.showMaxProj = showMaxProj;
         this.doThreshold = doThreshold;
+        this.saveType = saveType;
         
         this.resX = resX;
         this.resY = resY;
@@ -241,8 +247,8 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        
-        ExecutorService exec = Executors.newFixedThreadPool(concurrentNum);
+    	
+    	ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         
         ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
         for(int i=0; i<transformImageAr.length; i++) {
@@ -251,9 +257,12 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             
+            while(exec.getActiveCount() == concurrentNum) {}
+            
             FusionAlg algInstance = new FusionAlg(null, baseImage, transformImage);
             algList.add(algInstance);
             exec.execute(algInstance);
+
         }
         
         exec.shutdown();  
@@ -603,7 +612,13 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
             
             FileIO io = new FileIO();
             FileWriteOptions options = new FileWriteOptions(null, null, true);
-            options.setFileType(FileUtility.TIFF);
+            saveType = saveType.toLowerCase();
+            if(saveType.contains("raw")) {
+            	options.setFileType(FileUtility.XML);
+            } else {
+            	options.setFileType(FileUtility.TIFF);
+            }
+            
             options.setIsScript(true);
             options.setOptionsSet(true);
             
@@ -1118,8 +1133,7 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
             return subAriImage;
         }
     }
-    
-    
+
     private void threshold(ModelImage baseImage, double threshold) {
         for(int i=0; i<baseImage.getDataSize(); i++) {
             if(baseImage.getDouble(i) <= thresholdIntensity) {
@@ -1127,6 +1141,4 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
             }
         }
     }
-
-    
 }
