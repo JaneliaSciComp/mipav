@@ -854,7 +854,6 @@ public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
                         for(int j=0; j<resImageVec.size(); j++) {
                             options.setFileDirectory(parentDir.getAbsolutePath()+File.separator+projFolder+File.separator);
                             options.setFileName(resImageVec.get(j).getImageFileName());
-                            options.setFileType(FileUtility.TIFF);
                             options.setBeginSlice(0);
                             options.setOptionsSet(true);
                             options.setSaveAs(false);
