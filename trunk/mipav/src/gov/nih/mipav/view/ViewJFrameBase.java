@@ -4146,11 +4146,19 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 break;
                 
             case MinMax:
-                final String minString = Preferences.getProperty(Preferences.PREF_MIN);
-                final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
+                float minPref = imgMin;
+                float maxPref = imgMax;
                 
-                float minPref = Float.valueOf(minString);
-                float maxPref = Float.valueOf(maxString);
+                try {
+                    final String minString = Preferences.getProperty(Preferences.PREF_MIN);
+                    final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
+                    
+                    minPref = Float.valueOf(minString);
+                    maxPref = Float.valueOf(maxString);
+                } catch(Exception e) {
+                    Preferences.debug("Default min/max could not be loaded", Preferences.DEBUG_FILEIO);
+                    e.printStackTrace();
+                }
 
                 y[1] = 255.0f;
                 x[1] = minPref;
@@ -4163,11 +4171,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 break;
                 
             case WindowLevel:
-                final String levelText = Preferences.getProperty(Preferences.PREF_LEVEL);
-                final String windowText = Preferences.getProperty(Preferences.PREF_WINDOW);
+                float level = imgMin;
+                float window = 1;
                 
-                float level = Float.valueOf(levelText);
-                float window = Float.valueOf(windowText);
+                try {
+                    final String levelText = Preferences.getProperty(Preferences.PREF_LEVEL);
+                    final String windowText = Preferences.getProperty(Preferences.PREF_WINDOW);
+                   
+                    level = Float.valueOf(levelText);
+                    window = Float.valueOf(windowText);
+                } catch(Exception e) {
+                    Preferences.debug("Default win/level could not be loaded", Preferences.DEBUG_FILEIO);
+                    e.printStackTrace();
+                }
+                
+                
 
                 if (window == 0) {
                     window = 1;
