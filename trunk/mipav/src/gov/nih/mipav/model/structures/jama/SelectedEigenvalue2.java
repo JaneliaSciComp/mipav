@@ -4737,6 +4737,475 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         return;
   } // dlarre
   
+  /*> \brief \b DLARRF finds a new relatively robust representation such that at least one of the eigenvalues is relatively isolated.
+  *
+  * =========== DOCUMENTATION ===========
+  *
+  * Online html documentation available at
+  * http://www.netlib.org/lapack/explore-html/
+  *
+  *> \htmlonly
+  *> Download DLARRF + dependencies
+  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlarrf.f">
+  *> [TGZ]</a>
+  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlarrf.f">
+  *> [ZIP]</a>
+  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlarrf.f">
+  *> [TXT]</a>
+  *> \endhtmlonly
+  *
+  * Definition:
+  * ===========
+  *
+  * SUBROUTINE DLARRF( N, D, L, LD, CLSTRT, CLEND,
+  * W, WGAP, WERR,
+  * SPDIAM, CLGAPL, CLGAPR, PIVMIN, SIGMA,
+  * DPLUS, LPLUS, WORK, INFO )
+  *
+  * .. Scalar Arguments ..
+  * INTEGER CLSTRT, CLEND, INFO, N
+  * DOUBLE PRECISION CLGAPL, CLGAPR, PIVMIN, SIGMA, SPDIAM
+  * ..
+  * .. Array Arguments ..
+  * DOUBLE PRECISION D( * ), DPLUS( * ), L( * ), LD( * ),
+  * $ LPLUS( * ), W( * ), WGAP( * ), WERR( * ), WORK( * )
+  * ..
+  *
+  *
+  *> \par Purpose:
+  * =============
+  *>
+  *> \verbatim
+  *>
+  *> Given the initial representation L D L^T and its cluster of close
+  *> eigenvalues (in a relative measure), W( CLSTRT ), W( CLSTRT+1 ), ...
+  *> W( CLEND ), DLARRF finds a new relatively robust representation
+  *> L D L^T - SIGMA I = L(+) D(+) L(+)^T such that at least one of the
+  *> eigenvalues of L(+) D(+) L(+)^T is relatively isolated.
+  *> \endverbatim
+  *
+  * Arguments:
+  * ==========
+  *
+  *> \param[in] N
+  *> \verbatim
+  *> N is INTEGER
+  *> The order of the matrix (subblock, if the matrix splitted).
+  *> \endverbatim
+  *>
+  *> \param[in] D
+  *> \verbatim
+  *> D is DOUBLE PRECISION array, dimension (N)
+  *> The N diagonal elements of the diagonal matrix D.
+  *> \endverbatim
+  *>
+  *> \param[in] L
+  *> \verbatim
+  *> L is DOUBLE PRECISION array, dimension (N-1)
+  *> The (N-1) subdiagonal elements of the unit bidiagonal
+  *> matrix L.
+  *> \endverbatim
+  *>
+  *> \param[in] LD
+  *> \verbatim
+  *> LD is DOUBLE PRECISION array, dimension (N-1)
+  *> The (N-1) elements L(i)*D(i).
+  *> \endverbatim
+  *>
+  *> \param[in] CLSTRT
+  *> \verbatim
+  *> CLSTRT is INTEGER
+  *> The index of the first eigenvalue in the cluster.
+  *> \endverbatim
+  *>
+  *> \param[in] CLEND
+  *> \verbatim
+  *> CLEND is INTEGER
+  *> The index of the last eigenvalue in the cluster.
+  *> \endverbatim
+  *>
+  *> \param[in] W
+  *> \verbatim
+  *> W is DOUBLE PRECISION array, dimension
+  *> dimension is >= (CLEND-CLSTRT+1)
+  *> The eigenvalue APPROXIMATIONS of L D L^T in ascending order.
+  *> W( CLSTRT ) through W( CLEND ) form the cluster of relatively
+  *> close eigenalues.
+  *> \endverbatim
+  *>
+  *> \param[in,out] WGAP
+  *> \verbatim
+  *> WGAP is DOUBLE PRECISION array, dimension
+  *> dimension is >= (CLEND-CLSTRT+1)
+  *> The separation from the right neighbor eigenvalue in W.
+  *> \endverbatim
+  *>
+  *> \param[in] WERR
+  *> \verbatim
+  *> WERR is DOUBLE PRECISION array, dimension
+  *> dimension is >= (CLEND-CLSTRT+1)
+  *> WERR contain the semiwidth of the uncertainty
+  *> interval of the corresponding eigenvalue APPROXIMATION in W
+  *> \endverbatim
+  *>
+  *> \param[in] SPDIAM
+  *> \verbatim
+  *> SPDIAM is DOUBLE PRECISION
+  *> estimate of the spectral diameter obtained from the
+  *> Gerschgorin intervals
+  *> \endverbatim
+  *>
+  *> \param[in] CLGAPL
+  *> \verbatim
+  *> CLGAPL is DOUBLE PRECISION
+  *> \endverbatim
+  *>
+  *> \param[in] CLGAPR
+  *> \verbatim
+  *> CLGAPR is DOUBLE PRECISION
+  *> absolute gap on each end of the cluster.
+  *> Set by the calling routine to protect against shifts too close
+  *> to eigenvalues outside the cluster.
+  *> \endverbatim
+  *>
+  *> \param[in] PIVMIN
+  *> \verbatim
+  *> PIVMIN is DOUBLE PRECISION
+  *> The minimum pivot allowed in the Sturm sequence.
+  *> \endverbatim
+  *>
+  *> \param[out] SIGMA
+  *> \verbatim
+  *> SIGMA is DOUBLE PRECISION
+  *> The shift used to form L(+) D(+) L(+)^T.
+  *> \endverbatim
+  *>
+  *> \param[out] DPLUS
+  *> \verbatim
+  *> DPLUS is DOUBLE PRECISION array, dimension (N)
+  *> The N diagonal elements of the diagonal matrix D(+).
+  *> \endverbatim
+  *>
+  *> \param[out] LPLUS
+  *> \verbatim
+  *> LPLUS is DOUBLE PRECISION array, dimension (N-1)
+  *> The first (N-1) elements of LPLUS contain the subdiagonal
+  *> elements of the unit bidiagonal matrix L(+).
+  *> \endverbatim
+  *>
+  *> \param[out] WORK
+  *> \verbatim
+  *> WORK is DOUBLE PRECISION array, dimension (2*N)
+  *> Workspace.
+  *> \endverbatim
+  *>
+  *> \param[out] INFO
+  *> \verbatim
+  *> INFO is INTEGER
+  *> Signals processing OK (=0) or failure (=1)
+  *> \endverbatim
+  *
+  * Authors:
+  * ========
+  *
+  *> \author Univ. of Tennessee
+  *> \author Univ. of California Berkeley
+  *> \author Univ. of Colorado Denver
+  *> \author NAG Ltd.
+  *
+  *> \date September 2012
+  *
+  *> \ingroup auxOTHERauxiliary
+  *
+  *> \par Contributors:
+  * ==================
+  *>
+  *> Beresford Parlett, University of California, Berkeley, USA \n
+  *> Jim Demmel, University of California, Berkeley, USA \n
+  *> Inderjit Dhillon, University of Texas, Austin, USA \n
+  *> Osni Marques, LBNL/NERSC, USA \n
+  *> Christof Voemel, University of California, Berkeley, USA
+  *
+  * =====================================================================
+  SUBROUTINE DLARRF( N, D, L, LD, CLSTRT, CLEND,
+  $ W, WGAP, WERR,
+  $ SPDIAM, CLGAPL, CLGAPR, PIVMIN, SIGMA,
+  $ DPLUS, LPLUS, WORK, INFO )
+  *
+  * -- LAPACK auxiliary routine (version 3.4.2) --
+  * -- LAPACK is a software package provided by Univ. of Tennessee, --
+  * -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+  * September 2012
+  *
+  * .. Scalar Arguments ..
+  INTEGER CLSTRT, CLEND, INFO, N
+  DOUBLE PRECISION CLGAPL, CLGAPR, PIVMIN, SIGMA, SPDIAM
+  * ..
+  * .. Array Arguments ..
+  DOUBLE PRECISION D( * ), DPLUS( * ), L( * ), LD( * ),
+  $ LPLUS( * ), W( * ), WGAP( * ), WERR( * ), WORK( * )
+  * ..
+  *
+  * =====================================================================
+  *
+  * .. Parameters ..
+  DOUBLE PRECISION FOUR, MAXGROWTH1, MAXGROWTH2, ONE, QUART, TWO
+  PARAMETER ( ONE = 1.0D0, TWO = 2.0D0, FOUR = 4.0D0,
+  $ QUART = 0.25D0,
+  $ MAXGROWTH1 = 8.D0,
+  $ MAXGROWTH2 = 8.D0 )
+  * ..
+  * .. Local Scalars ..
+  LOGICAL DORRR1, FORCER, NOFAIL, SAWNAN1, SAWNAN2, TRYRRR1
+  INTEGER I, INDX, KTRY, KTRYMAX, SLEFT, SRIGHT, SHIFT
+  PARAMETER ( KTRYMAX = 1, SLEFT = 1, SRIGHT = 2 )
+  DOUBLE PRECISION AVGAP, BESTSHIFT, CLWDTH, EPS, FACT, FAIL,
+  $ FAIL2, GROWTHBOUND, LDELTA, LDMAX, LSIGMA,
+  $ MAX1, MAX2, MINGAP, OLDP, PROD, RDELTA, RDMAX,
+  $ RRR1, RRR2, RSIGMA, S, SMLGROWTH, TMP, ZNM2
+  * ..
+  * .. External Functions ..
+  LOGICAL DISNAN
+  DOUBLE PRECISION DLAMCH
+  EXTERNAL DISNAN, DLAMCH
+  * ..
+  * .. External Subroutines ..
+  EXTERNAL DCOPY
+  * ..
+  * .. Intrinsic Functions ..
+  INTRINSIC ABS
+  * ..
+  * .. Executable Statements ..
+  *
+  INFO = 0
+  FACT = DBLE(2**KTRYMAX)
+  EPS = DLAMCH( 'Precision' )
+  SHIFT = 0
+  FORCER = .FALSE.
+  * Note that we cannot guarantee that for any of the shifts tried,
+  * the factorization has a small or even moderate element growth.
+  * There could be Ritz values at both ends of the cluster and despite
+  * backing off, there are examples where all factorizations tried
+  * (in IEEE mode, allowing zero pivots & infinities) have INFINITE
+  * element growth.
+  * For this reason, we should use PIVMIN in this subroutine so that at
+  * least the L D L^T factorization exists. It can be checked afterwards
+  * whether the element growth caused bad residuals/orthogonality.
+  * Decide whether the code should accept the best among all
+  * representations despite large element growth or signal INFO=1
+  NOFAIL = .TRUE.
+  *
+  * Compute the average gap length of the cluster
+  CLWDTH = ABS(W(CLEND)-W(CLSTRT)) + WERR(CLEND) + WERR(CLSTRT)
+  AVGAP = CLWDTH / DBLE(CLEND-CLSTRT)
+  MINGAP = MIN(CLGAPL, CLGAPR)
+  * Initial values for shifts to both ends of cluster
+  LSIGMA = MIN(W( CLSTRT ),W( CLEND )) - WERR( CLSTRT )
+  RSIGMA = MAX(W( CLSTRT ),W( CLEND )) + WERR( CLEND )
+  * Use a small fudge to make sure that we really shift to the outside
+  LSIGMA = LSIGMA - ABS(LSIGMA)* FOUR * EPS
+  RSIGMA = RSIGMA + ABS(RSIGMA)* FOUR * EPS
+  * Compute upper bounds for how much to back off the initial shifts
+  LDMAX = QUART * MINGAP + TWO * PIVMIN
+  RDMAX = QUART * MINGAP + TWO * PIVMIN
+  LDELTA = MAX(AVGAP,WGAP( CLSTRT ))/FACT
+  RDELTA = MAX(AVGAP,WGAP( CLEND-1 ))/FACT
+  *
+  * Initialize the record of the best representation found
+  *
+  S = DLAMCH( 'S' )
+  SMLGROWTH = ONE / S
+  FAIL = DBLE(N-1)*MINGAP/(SPDIAM*EPS)
+  FAIL2 = DBLE(N-1)*MINGAP/(SPDIAM*SQRT(EPS))
+  BESTSHIFT = LSIGMA
+  *
+  * while (KTRY <= KTRYMAX)
+  KTRY = 0
+  GROWTHBOUND = MAXGROWTH1*SPDIAM
+  5 CONTINUE
+  SAWNAN1 = .FALSE.
+  SAWNAN2 = .FALSE.
+  * Ensure that we do not back off too much of the initial shifts
+  LDELTA = MIN(LDMAX,LDELTA)
+  RDELTA = MIN(RDMAX,RDELTA)
+  * Compute the element growth when shifting to both ends of the cluster
+  * accept the shift if there is no element growth at one of the two ends
+  * Left end
+  S = -LSIGMA
+  DPLUS( 1 ) = D( 1 ) + S
+  IF(ABS(DPLUS(1)).LT.PIVMIN) THEN
+  DPLUS(1) = -PIVMIN
+  * Need to set SAWNAN1 because refined RRR test should not be used
+  * in this case
+  SAWNAN1 = .TRUE.
+  ENDIF
+  MAX1 = ABS( DPLUS( 1 ) )
+  DO 6 I = 1, N - 1
+  LPLUS( I ) = LD( I ) / DPLUS( I )
+  S = S*LPLUS( I )*L( I ) - LSIGMA
+  DPLUS( I+1 ) = D( I+1 ) + S
+  IF(ABS(DPLUS(I+1)).LT.PIVMIN) THEN
+  DPLUS(I+1) = -PIVMIN
+  * Need to set SAWNAN1 because refined RRR test should not be used
+  * in this case
+  SAWNAN1 = .TRUE.
+  ENDIF
+  MAX1 = MAX( MAX1,ABS(DPLUS(I+1)) )
+  6 CONTINUE
+  SAWNAN1 = SAWNAN1 .OR. DISNAN( MAX1 )
+  IF( FORCER .OR.
+  $ (MAX1.LE.GROWTHBOUND .AND. .NOT.SAWNAN1 ) ) THEN
+  SIGMA = LSIGMA
+  SHIFT = SLEFT
+  GOTO 100
+  ENDIF
+  * Right end
+  S = -RSIGMA
+  WORK( 1 ) = D( 1 ) + S
+  IF(ABS(WORK(1)).LT.PIVMIN) THEN
+  WORK(1) = -PIVMIN
+  * Need to set SAWNAN2 because refined RRR test should not be used
+  * in this case
+  SAWNAN2 = .TRUE.
+  ENDIF
+  MAX2 = ABS( WORK( 1 ) )
+  DO 7 I = 1, N - 1
+  WORK( N+I ) = LD( I ) / WORK( I )
+  S = S*WORK( N+I )*L( I ) - RSIGMA
+  WORK( I+1 ) = D( I+1 ) + S
+  IF(ABS(WORK(I+1)).LT.PIVMIN) THEN
+  WORK(I+1) = -PIVMIN
+  * Need to set SAWNAN2 because refined RRR test should not be used
+  * in this case
+  SAWNAN2 = .TRUE.
+  ENDIF
+  MAX2 = MAX( MAX2,ABS(WORK(I+1)) )
+  7 CONTINUE
+  SAWNAN2 = SAWNAN2 .OR. DISNAN( MAX2 )
+  IF( FORCER .OR.
+  $ (MAX2.LE.GROWTHBOUND .AND. .NOT.SAWNAN2 ) ) THEN
+  SIGMA = RSIGMA
+  SHIFT = SRIGHT
+  GOTO 100
+  ENDIF
+  * If we are at this point, both shifts led to too much element growth
+  * Record the better of the two shifts (provided it didn't lead to NaN)
+  IF(SAWNAN1.AND.SAWNAN2) THEN
+  * both MAX1 and MAX2 are NaN
+  GOTO 50
+  ELSE
+  IF( .NOT.SAWNAN1 ) THEN
+  INDX = 1
+  IF(MAX1.LE.SMLGROWTH) THEN
+  SMLGROWTH = MAX1
+  BESTSHIFT = LSIGMA
+  ENDIF
+  ENDIF
+  IF( .NOT.SAWNAN2 ) THEN
+  IF(SAWNAN1 .OR. MAX2.LE.MAX1) INDX = 2
+  IF(MAX2.LE.SMLGROWTH) THEN
+  SMLGROWTH = MAX2
+  BESTSHIFT = RSIGMA
+  ENDIF
+  ENDIF
+  ENDIF
+  * If we are here, both the left and the right shift led to
+  * element growth. If the element growth is moderate, then
+  * we may still accept the representation, if it passes a
+  * refined test for RRR. This test supposes that no NaN occurred.
+  * Moreover, we use the refined RRR test only for isolated clusters.
+  IF((CLWDTH.LT.MINGAP/DBLE(128)) .AND.
+  $ (MIN(MAX1,MAX2).LT.FAIL2)
+  $ .AND.(.NOT.SAWNAN1).AND.(.NOT.SAWNAN2)) THEN
+  DORRR1 = .TRUE.
+  ELSE
+  DORRR1 = .FALSE.
+  ENDIF
+  TRYRRR1 = .TRUE.
+  IF( TRYRRR1 .AND. DORRR1 ) THEN
+  IF(INDX.EQ.1) THEN
+  TMP = ABS( DPLUS( N ) )
+  ZNM2 = ONE
+  PROD = ONE
+  OLDP = ONE
+  DO 15 I = N-1, 1, -1
+  IF( PROD .LE. EPS ) THEN
+  PROD =
+  $ ((DPLUS(I+1)*WORK(N+I+1))/(DPLUS(I)*WORK(N+I)))*OLDP
+  ELSE
+  PROD = PROD*ABS(WORK(N+I))
+  END IF
+  OLDP = PROD
+  ZNM2 = ZNM2 + PROD**2
+  TMP = MAX( TMP, ABS( DPLUS( I ) * PROD ))
+  15 CONTINUE
+  RRR1 = TMP/( SPDIAM * SQRT( ZNM2 ) )
+  IF (RRR1.LE.MAXGROWTH2) THEN
+  SIGMA = LSIGMA
+  SHIFT = SLEFT
+  GOTO 100
+  ENDIF
+  ELSE IF(INDX.EQ.2) THEN
+  TMP = ABS( WORK( N ) )
+  ZNM2 = ONE
+  PROD = ONE
+  OLDP = ONE
+  DO 16 I = N-1, 1, -1
+  IF( PROD .LE. EPS ) THEN
+  PROD = ((WORK(I+1)*LPLUS(I+1))/(WORK(I)*LPLUS(I)))*OLDP
+  ELSE
+  PROD = PROD*ABS(LPLUS(I))
+  END IF
+  OLDP = PROD
+  ZNM2 = ZNM2 + PROD**2
+  TMP = MAX( TMP, ABS( WORK( I ) * PROD ))
+  16 CONTINUE
+  RRR2 = TMP/( SPDIAM * SQRT( ZNM2 ) )
+  IF (RRR2.LE.MAXGROWTH2) THEN
+  SIGMA = RSIGMA
+  SHIFT = SRIGHT
+  GOTO 100
+  ENDIF
+  END IF
+  ENDIF
+  50 CONTINUE
+  IF (KTRY.LT.KTRYMAX) THEN
+  * If we are here, both shifts failed also the RRR test.
+  * Back off to the outside
+  LSIGMA = MAX( LSIGMA - LDELTA,
+  $ LSIGMA - LDMAX)
+  RSIGMA = MIN( RSIGMA + RDELTA,
+  $ RSIGMA + RDMAX )
+  LDELTA = TWO * LDELTA
+  RDELTA = TWO * RDELTA
+  KTRY = KTRY + 1
+  GOTO 5
+  ELSE
+  * None of the representations investigated satisfied our
+  * criteria. Take the best one we found.
+  IF((SMLGROWTH.LT.FAIL).OR.NOFAIL) THEN
+  LSIGMA = BESTSHIFT
+  RSIGMA = BESTSHIFT
+  FORCER = .TRUE.
+  GOTO 5
+  ELSE
+  INFO = 1
+  RETURN
+  ENDIF
+  END IF
+  100 CONTINUE
+  IF (SHIFT.EQ.SLEFT) THEN
+  ELSEIF (SHIFT.EQ.SRIGHT) THEN
+  * store new L and D back into DPLUS, LPLUS
+  CALL DCOPY( N, WORK, 1, DPLUS, 1 )
+  CALL DCOPY( N-1, WORK(N+1), 1, LPLUS, 1 )
+  ENDIF
+  RETURN
+  *
+  * End of DLARRF
+  *
+  END*/
+  
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrk.  LAPACK is a software package provided by Univ. of Tennessee,    --
   -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
   dlarrk computes one eigenvalue of a symmetric tridiagonal
@@ -5010,7 +5479,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
            be applied.  Note that dol and dou refer to the order in which the eigenvalues are stored in w.
            If the user wants to compute only selected eigenvalues, then the columns dol-2 to dou of the
            eigenvector space Z contain the computed eigenvectors.  All other columns of Z are set to 0.
-  @param mingrp input double
+  @param minrgp input double
   @param rtol1 input double
   @param rtol2 input double  Parameters for bisection.  An interval [left, right] has converged if
            right - left < max(rtol1*gap, rtol2 * max(|left|, |right|))
@@ -5064,7 +5533,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   */
   
   private void dlarrv(int n, double vl, double vu, double d[], double l[], double pivmin, int isplit[],
-                      int m, int dol, int dou, double mingrp, double rtol1, double rtol2, double w[],
+                      int m, int dol, int dou, double minrgp, double rtol1, double rtol2, double w[],
                       double werr[], double wgap[], int iblock[], int indexw[], double gers[], double Z[][],
                       int ldz, int isuppz[], double work[], int iwork[], int info[]) {
   
@@ -5108,7 +5577,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         int negcnt;
         int newcls;
         int newfst;
-        int newfit;
+        int newftt;
         int newlst;
         int newsiz;
         int offset;
@@ -5158,6 +5627,13 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double tol;
         double ztz;
         double array[][];
+        double vec[];
+        double vec2[];
+        double vec3[];
+        double vec4[];
+        double vec5[];
+        double vec6[];
+        int ivec[];
        
         
         // Executable Statements ..
@@ -5386,160 +5862,210 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                  } // if (ndepth > 0)
 
                  // Compute DL and DLL of current RRR
-                /* DO 50 J = IBEGIN, IEND-1
-                    TMP = D( J )*L( J )
-                    WORK( INDLD-1+J ) = TMP
-                    WORK( INDLLD-1+J ) = TMP*L( J )
-     50          CONTINUE
+                 for (j = ibegin-1; j <= iend-2; j++) {
+                    tmp = d[j]*l[j];
+                    work[indld-1+j] = tmp;
+                    work[indlld-1+j] = tmp*l[j];
+                 }
 
-                 IF( NDEPTH.GT.0 ) THEN
-  *                 P and Q are index of the first and last eigenvalue to compute
-  *                 within the current block
-                    P = INDEXW( WBEGIN-1+OLDFST )
-                    Q = INDEXW( WBEGIN-1+OLDLST )
-  *                 Offset for the arrays WORK, WGAP and WERR, i.e., the P-OFFSET
-  *                 through the Q-OFFSET elements of these arrays are to be used.
-  *                  OFFSET = P-OLDFST
-                    OFFSET = INDEXW( WBEGIN ) - 1
-  *                 perform limited bisection (if necessary) to get approximate
-  *                 eigenvalues to the precision needed.
-                    CALL DLARRB( IN, D( IBEGIN ),
-       $                         WORK(INDLLD+IBEGIN-1),
-       $                         P, Q, RTOL1, RTOL2, OFFSET,
-       $                         WORK(WBEGIN),WGAP(WBEGIN),WERR(WBEGIN),
-       $                         WORK( INDWRK ), IWORK( IINDWK ),
-       $                         PIVMIN, SPDIAM, IN, IINFO )
-                    IF( IINFO.NE.0 ) THEN
-                       INFO = -1
-                       RETURN
-                    ENDIF
-  *                 We also recompute the extremal gaps. W holds all eigenvalues
-  *                 of the unshifted matrix and must be used for computation
-  *                 of WGAP, the entries of WORK might stem from RRRs with
-  *                 different shifts. The gaps from WBEGIN-1+OLDFST to
-  *                 WBEGIN-1+OLDLST are correctly computed in DLARRB.
-  *                 However, we only allow the gaps to become greater since
-  *                 this is what should happen when we decrease WERR
-                    IF( OLDFST.GT.1) THEN
-                       WGAP( WBEGIN+OLDFST-2 ) =
-       $             MAX(WGAP(WBEGIN+OLDFST-2),
-       $                 W(WBEGIN+OLDFST-1)-WERR(WBEGIN+OLDFST-1)
-       $                 - W(WBEGIN+OLDFST-2)-WERR(WBEGIN+OLDFST-2) )
-                    ENDIF
-                    IF( WBEGIN + OLDLST -1 .LT. WEND ) THEN
-                       WGAP( WBEGIN+OLDLST-1 ) =
-       $               MAX(WGAP(WBEGIN+OLDLST-1),
-       $                   W(WBEGIN+OLDLST)-WERR(WBEGIN+OLDLST)
-       $                   - W(WBEGIN+OLDLST-1)-WERR(WBEGIN+OLDLST-1) )
-                    ENDIF
-  *                 Each time the eigenvalues in WORK get refined, we store
-  *                 the newly found approximation with all shifts applied in W
-                    DO 53 J=OLDFST,OLDLST
-                       W(WBEGIN+J-1) = WORK(WBEGIN+J-1)+SIGMA
-   53               CONTINUE
-                 END IF
+                 if (ndepth > 0) {
+                    // p and q are index of the first and last eigenvalue to compute within the current block
+                    p = indexw[wbegin-2+oldfst];
+                    q = indexw[wbegin-2+oldlst];
+                    // Offset for the arrays work, wgap and werr, i.e., the p-OFFSET
+                    // through the q-OFFSET elements of these arrays are to be used.
+                    //  offset = p-oldfst
+                    offset = indexw[wbegin-1] - 1;
+                    // perform limited bisection (if necessary) to get approximate
+                    // eigenvalues to the precision needed.
+                    vec = new double[in];
+                    for (index = 0; index < in; index++) {
+                        vec[index] = d[ibegin-1+index];
+                    }
+                    vec2 = new double[in-1];
+                    for (index = 0; index < in-1; index++) {
+                        vec2[index] = work[indlld+ibegin-2+index];
+                    }
+                    vec3 =  new double[in];
+                    for (index = 0; index < in; index++) {
+                        vec3[index] = work[wbegin-1+index];
+                    }
+                    vec4 = new double[in-1];
+                    for (index = 0; index <in-1; index++) {
+                        vec4[index] = wgap[wbegin-1+index];
+                    }
+                    vec5 = new double[in];
+                    for (index = 0; index < in; index++) {
+                        vec5[index] = werr[wbegin-1+index];
+                    }
+                    vec6 = new double[2*in];
+                    ivec = new int[2*in];
+                    dlarrb(in, vec, vec2, p, q, rtol1, rtol2, offset,
+                           vec3, vec4, vec5, vec6, ivec, pivmin, spdiam, in, iinfo);
+                    for (index = 0; index < in; index++) {
+                        work[wbegin-1+index] = vec3[index];
+                    }
+                    for (index = 0; index <in-1; index++) {
+                        wgap[wbegin-1+index] = vec4[index];
+                    }
+                    for (index = 0; index < in; index++) {
+                        werr[wbegin-1+index] = vec5[index];
+                    }
+                    if (iinfo[0] != 0) {
+                       info[0] = -1;
+                       return;
+                    }
+                    // We also recompute the extremal gaps. w holds all eigenvalues
+                    // of the unshifted matrix and must be used for computation
+                    // of wgap, the entries of work might stem from RRRs with
+                    // different shifts. The gaps from wbegin-1+oldfst to
+                    // wbegin-1+oldlst are correctly computed in dlarrb.
+                    // However, we only allow the gaps to become greater since
+                    // this is what should happen when we decrease werr
+                    if (oldfst > 1) {
+                       wgap[wbegin+oldfst-3] = Math.max(wgap[wbegin+oldfst-3],
+                         w[wbegin+oldfst-2]-werr[wbegin+oldfst-2]- w[wbegin+oldfst-3]-werr[wbegin+oldfst-3] );
+                    }
+                    if (wbegin + oldlst -1 < wend) {
+                       wgap[wbegin+oldlst-2] = Math.max(wgap[wbegin+oldlst-2],
+                           w[wbegin+oldlst-1]-werr[wbegin+oldlst-1] - w[wbegin+oldlst-2]-werr[wbegin+oldlst-2] );
+                    }
+                    // Each time the eigenvalues in WORK get refined, we store
+                    // the newly found approximation with all shifts applied in w
+                    for (j = oldfst; j <= oldlst; j++) {
+                       w[wbegin+j-2] = work[wbegin+j-2]+sigma;
+                    }
+                 } // if (ndepth > 0)
 
-  *              Process the current node.
-                 NEWFST = OLDFST
-                 DO 140 J = OLDFST, OLDLST
-                    IF( J.EQ.OLDLST ) THEN
-  *                    we are at the right end of the cluster, this is also the
-  *                    boundary of the child cluster
-                       NEWLST = J
-                    ELSE IF ( WGAP( WBEGIN + J -1).GE.
-       $                    MINRGP* ABS( WORK(WBEGIN + J -1) ) ) THEN
-  *                    the right relative gap is big enough, the child cluster
-  *                    (NEWFST,..,NEWLST) is well separated from the following
-                       NEWLST = J
-                     ELSE
-  *                    inside a child cluster, the relative gap is not
-  *                    big enough.
-                       GOTO 140
-                    END IF
+                 // Process the current node.
+                 newfst = oldfst;
+                 for (j = oldfst; j <= oldlst; j++) {
+                    if (j == oldlst) {
+                       // we are at the right end of the cluster, this is also the boundary of the child cluster
+                       newlst = j;
+                    }
+                    else if (wgap[wbegin + j -2] >= minrgp * Math.abs(work[wbegin+j-2] ) ) {
+                       // the right relative gap is big enough, the child cluster
+                       // (newfst,..,newlst) is well separated from the following
+                       newlst = j;
+                    }
+                    else {
+                       // inside a child cluster, the relative gap is not big enough.
+                       continue;
+                    }
 
-  *                 Compute size of child cluster found
-                    NEWSIZ = NEWLST - NEWFST + 1
+                    // Compute size of child cluster found
+                    newsiz = newlst - newfst + 1;
 
-  *                 NEWFTT is the place in Z where the new RRR or the computed
-  *                 eigenvector is to be stored
-                    IF((DOL.EQ.1).AND.(DOU.EQ.M)) THEN
-  *                    Store representation at location of the leftmost evalue
-  *                    of the cluster
-                       NEWFTT = WBEGIN + NEWFST - 1
-                    ELSE
-                       IF(WBEGIN+NEWFST-1.LT.DOL) THEN
-  *                       Store representation at the left end of Z array
-                          NEWFTT = DOL - 1
-                       ELSEIF(WBEGIN+NEWFST-1.GT.DOU) THEN
-  *                       Store representation at the right end of Z array
-                          NEWFTT = DOU
-                       ELSE
-                          NEWFTT = WBEGIN + NEWFST - 1
-                       ENDIF
-                    ENDIF
+                    // newfit is the place in Z where the new RRR or the computed eigenvector is to be stored
+                    if ((dol == 1) && (dou == m)) {
+                       // Store representation at location of the leftmost evalue of the cluster
+                       newftt = wbegin + newfst - 1;
+                    }
+                    else {
+                       if (wbegin+newfst-1 < dol) {
+                          // Store representation at the left end of Z array
+                          newftt = dol - 1;
+                       }
+                       else if (wbegin+newfst-1 > dou) {
+                          // Store representation at the right end of Z array
+                          newftt = dou;
+                       }
+                       else {
+                          newftt = wbegin + newfst - 1;
+                       }
+                    }
 
-                    IF( NEWSIZ.GT.1) THEN
-  *
-  *                    Current child is not a singleton but a cluster.
-  *                    Compute and store new representation of child.
-  *
-  *
-  *                    Compute left and right cluster gap.
-  *
-  *                    LGAP and RGAP are not computed from WORK because
-  *                    the eigenvalue approximations may stem from RRRs
-  *                    different shifts. However, W hold all eigenvalues
-  *                    of the unshifted matrix. Still, the entries in WGAP
-  *                    have to be computed from WORK since the entries
-  *                    in W might be of the same order so that gaps are not
-  *                    exhibited correctly for very close eigenvalues.
-                       IF( NEWFST.EQ.1 ) THEN
-                          LGAP = MAX( ZERO,
-       $                       W(WBEGIN)-WERR(WBEGIN) - VL )
-                      ELSE
-                          LGAP = WGAP( WBEGIN+NEWFST-2 )
-                       ENDIF
-                       RGAP = WGAP( WBEGIN+NEWLST-1 )
-  *
-  *                    Compute left- and rightmost eigenvalue of child
-  *                    to high precision in order to shift as close
-  *                    as possible and obtain as large relative gaps
-  *                    as possible
-  *
-                       DO 55 K =1,2
-                          IF(K.EQ.1) THEN
-                             P = INDEXW( WBEGIN-1+NEWFST )
-                          ELSE
-                             P = INDEXW( WBEGIN-1+NEWLST )
-                          ENDIF
-                          OFFSET = INDEXW( WBEGIN ) - 1
-                          CALL DLARRB( IN, D(IBEGIN),
-       $                       WORK( INDLLD+IBEGIN-1 ),P,P,
-       $                       RQTOL, RQTOL, OFFSET,
-       $                       WORK(WBEGIN),WGAP(WBEGIN),
-       $                       WERR(WBEGIN),WORK( INDWRK ),
-       $                       IWORK( IINDWK ), PIVMIN, SPDIAM,
-       $                       IN, IINFO )
-   55                  CONTINUE
-  *
-                       IF((WBEGIN+NEWLST-1.LT.DOL).OR.
-       $                  (WBEGIN+NEWFST-1.GT.DOU)) THEN
-  *                       if the cluster contains no desired eigenvalues
-  *                       skip the computation of that branch of the rep. tree
-  *
-  *                       We could skip before the refinement of the extremal
-  *                       eigenvalues of the child, but then the representation
-  *                       tree could be different from the one when nothing is
-  *                       skipped. For this reason we skip at this place.
-                          IDONE = IDONE + NEWLST - NEWFST + 1
-                          GOTO 139
-                       ENDIF
-  *
-  *                    Compute RRR of child cluster.
-  *                    Note that the new RRR is stored in Z
-  *
-  *                    DLARRF needs LWORK = 2*N
-                       CALL DLARRF( IN, D( IBEGIN ), L( IBEGIN ),
+                    if (newsiz > 1) {
+  
+                       // Current child is not a singleton but a cluster.
+                       // Compute and store new representation of child.
+   
+   
+                       // Compute left and right cluster gap.
+   
+                       // lgap and rgap are not computed from work because
+                       // the eigenvalue approximations may stem from RRRs
+                       // different shifts. However, w hold all eigenvalues
+                       // of the unshifted matrix. Still, the entries in WGAP
+                       // have to be computed from work since the entries
+                       // in w might be of the same order so that gaps are not
+                       // exhibited correctly for very close eigenvalues.
+                       if (newfst == 1) {
+                          lgap = Math.max(0.0, w[wbegin-1]-werr[wbegin-1] - vl);
+                       }
+                       else {
+                          lgap = wgap[wbegin+newfst-3];
+                       }
+                       rgap = wgap[wbegin+newlst-2];
+   
+                       // Compute left- and rightmost eigenvalue of child
+                       // to high precision in order to shift as close
+                       // as possible and obtain as large relative gaps
+                       // as possible
+   
+                       for (k = 1; k <= 2; k++) {
+                          if (k == 1) {
+                             p = indexw[wbegin-2+newfst];
+                          }
+                          else {
+                             p = indexw[wbegin-2+newlst];
+                          }
+                          offset = indexw[wbegin-1] - 1;
+                          vec = new double[in];
+                          for (index = 0; index < in; index++) {
+                              vec[index] = d[ibegin-1+index];
+                          }
+                          vec2 = new double[in-1];
+                          for (index = 0; index < in-1; index++) {
+                              vec2[index] = work[indlld+ibegin-2+index];
+                          }
+                          vec3 =  new double[in];
+                          for (index = 0; index < in; index++) {
+                              vec3[index] = work[wbegin-1+index];
+                          }
+                          vec4 = new double[in-1];
+                          for (index = 0; index <in-1; index++) {
+                              vec4[index] = wgap[wbegin-1+index];
+                          }
+                          vec5 = new double[in];
+                          for (index = 0; index < in; index++) {
+                              vec5[index] = werr[wbegin-1+index];
+                          }
+                          vec6 = new double[2*in];
+                          ivec = new int[2*in];
+                          dlarrb(in, vec, vec2, p, p, rqtol, rqtol, offset,
+                                 vec3, vec4, vec5, vec6, ivec, pivmin, spdiam, in, iinfo);
+                          for (index = 0; index < in; index++) {
+                              work[wbegin-1+index] = vec3[index];
+                          }
+                          for (index = 0; index <in-1; index++) {
+                              wgap[wbegin-1+index] = vec4[index];
+                          }
+                          for (index = 0; index < in; index++) {
+                              werr[wbegin-1+index] = vec5[index];
+                          }
+                       } // for (k = 1; k <= 2; k++)
+   
+                       if ((wbegin+newlst-1 < dol) || (wbegin+newfst-1 > dou)) {
+                          // if the cluster contains no desired eigenvalues
+                          // skip the computation of that branch of the rep. tree
+   
+                          // We could skip before the refinement of the extremal
+                          // eigenvalues of the child, but then the representation
+                          // tree could be different from the one when nothing is
+                          // skipped. For this reason we skip at this place.
+                          idone = idone + newlst - newfst + 1;
+                          // Proceed to any remaining child nodes
+                          newfst = j + 1;
+                          continue;
+                       }
+   
+                       // Compute RRR of child cluster.
+                       // Note that the new RRR is stored in Z
+   
+                       // dlarrf needs LWORK = 2*n
+                       /*CALL DLARRF( IN, D( IBEGIN ), L( IBEGIN ),
        $                         WORK(INDLD+IBEGIN-1),
        $                         NEWFST, NEWLST, WORK(WBEGIN),
        $                         WGAP(WBEGIN), WERR(WBEGIN),
@@ -5579,8 +6105,9 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        ELSE
                           INFO = -2
                           RETURN
-                       ENDIF
-                    ELSE
+                       ENDIF*/
+                    } // if (newsiz > 1)
+                    /*ELSE
   *
   *                    Compute eigenvector of singleton
   *
@@ -5841,13 +6368,12 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                           ENDIF
                        ENDIF
                        IDONE = IDONE + 1
-                    ENDIF
-  *                 here ends the code for the current child
-  *
-   139              CONTINUE
-  *                 Proceed to any remaining child nodes
-                    NEWFST = J + 1
-   140           CONTINUE*/
+                    ENDIF*/
+                    // here ends the code for the current child
+   
+                    // Proceed to any remaining child nodes
+                    newfst = j + 1;
+                 } // for (j = oldfst; j <= oldlst; j++)
               } // for (i = 1; i <= oldncl; i++)
               ndepth++;
            } // while (idone < im)
