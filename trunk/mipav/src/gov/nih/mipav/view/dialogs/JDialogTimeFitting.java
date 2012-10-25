@@ -423,7 +423,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(choiceLabel2, gbc);
         
-        JLabel choiceLabel3 = new JLabel("a0 fitting is in the first output volume");
+        JLabel choiceLabel3 = new JLabel("Parameter a0 fitting is in the first output volume");
         choiceLabel3.setForeground(Color.black);
         choiceLabel3.setFont(serif12);
         gbc.gridy++;
@@ -434,6 +434,12 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         choiceLabel4.setFont(serif12);
         gbc.gridy++;
         mainPanel.add(choiceLabel4, gbc);
+        
+        JLabel choiceLabel5 = new JLabel("a chi-squared volume is the last volume");
+        choiceLabel5.setForeground(Color.black);
+        choiceLabel5.setFont(serif12);
+        gbc.gridy++;
+        mainPanel.add(choiceLabel5, gbc);
         
         buttonImage = new JButton("Choose an image");
         buttonImage.setForeground(Color.black);
