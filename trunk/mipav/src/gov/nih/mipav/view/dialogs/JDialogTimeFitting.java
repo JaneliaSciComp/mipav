@@ -2,11 +2,17 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.AlgorithmSM2;
+import gov.nih.mipav.model.algorithms.AlgorithmTimeFitting;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOI;
+
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -22,6 +28,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 
 import java.util.Enumeration;
 
@@ -58,6 +65,8 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     /** result image **/
     private ModelImage resultImage;
+    
+    private ModelImage exitStatusImage;
       
     /** boolean isMultifile **/
     private boolean isMultifile;
@@ -95,6 +104,23 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     private boolean useLog = false;
 
 	private JComboBox imageList;
+	
+	private JLabel labelVOI;
+	
+	private JButton buttonVOIFile;
+	
+	private JTextField textVOIFile;
+	
+	private ViewUserInterface UI = ViewUserInterface.getReference();
+	
+	private String directoryVOI;
+	
+	private String fileNameVOI;
+	
+	private FileVOI fileVOI;
+    private VOI[] voi;
+    
+    private AlgorithmTimeFitting tfAlgo;
 	
 	
 	public JDialogTimeFitting() {
@@ -135,7 +161,81 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 numVariablesField.setEnabled(false);    
 	    	}
 	     
-	    } else {
+	     } else if (command.equals("VOIFile")) {
+
+	            try {
+	                JFileChooser chooser = new JFileChooser();
+
+	                if (UI.getDefaultDirectory() != null) {
+	                    File file = new File(UI.getDefaultDirectory());
+
+	                    if (file != null) {
+	                        chooser.setCurrentDirectory(file);
+	                    } else {
+	                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	                    }
+	                } else {
+	                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+	                }
+
+	                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+	                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+	                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+	                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+	                chooser.setDialogTitle("Open VOI file");
+	                directoryVOI = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
+
+	                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+
+	                if (returnValue == JFileChooser.APPROVE_OPTION) {
+	                    fileNameVOI = chooser.getSelectedFile().getName();
+	                    directoryVOI = String.valueOf(chooser.getCurrentDirectory()) + File.separator;
+	                    UI.setDefaultDirectory(directoryVOI);
+	                } else {
+	                    fileNameVOI = null;
+
+	                    return;
+	                }
+
+	                if (fileNameVOI != null) {
+
+	                    try {
+	                        fileVOI = new FileVOI(fileNameVOI, directoryVOI, image);
+	                    }
+	                    catch (IOException e) {
+	                        MipavUtil.displayError("IOException on new FileVOI(fileNameVOI, directoryVOI, image)");
+	                        return;
+	                    }
+
+	                    try {
+	                        voi = fileVOI.readVOI(false);
+	                    }
+	                    catch (IOException e) {
+	                        MipavUtil.displayError("IOException on fileVOI.readVOI(false)");
+	                        return;
+	                    }
+	                    
+	                    if (voi.length > 1) {
+	                        MipavUtil.displayError("Found " + voi.length + " vois in file instead of 1");
+	                        return;
+	                    }
+	                    
+	                    textVOIFile.setText(fileNameVOI);
+	                    voi[0].setColor(0.0f);
+	                    image.registerVOI(voi[0]);
+
+	                    //  when everything's done, notify the image listeners
+	                    image.notifyImageDisplayListeners();   
+	                }
+
+	                
+	            } catch (OutOfMemoryError e) {
+	                MipavUtil.displayError("Out of memory in JDialogTimeFitting.");
+
+	                return;
+	            }
+	        } else {
             super.actionPerformed(event);
         }
 	     
@@ -146,29 +246,50 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	 *  call algorithm
 	 */
 	protected void callAlgorithm() {
-		int xDim;
-		int yDim;
-		int zDim;
-		int tDim;
-		int volSize;
-		int size4D;
-		double destArray[][];
-		int destExitStatusArray[];
 		int i;
-		int j;
 		
-	    xDim = image.getExtents()[0];
-        yDim = image.getExtents()[1];
-        zDim = image.getExtents()[2];
-        tDim = image.getExtents()[3];
-        volSize = xDim * yDim * zDim;
-        size4D = volSize * tDim;
-        destArray = new double[4][volSize];
-        destExitStatusArray = new int[volSize];
-        for (i = 0; i < 4; i++) {
-            for (j = 0; j < volSize; j++) {
-                destArray[i][j] = Float.NaN;
+		try {
+		
+    		int resultExtents[] = new int[4];
+            for (i = 0; i < 3; i++) {
+                resultExtents[i] = image.getExtents()[i];
             }
+            // Put chi-squared in the last fourth dimension slot
+            resultExtents[3] = numVariables+1;
+    		resultImage = new ModelImage(ModelStorageBase.DOUBLE, resultExtents, image.getImageName() + "_params");
+    		int statusExtents[] = new int[3];
+    		for (i = 0; i < 3; i++) {
+    		    statusExtents[i] = image.getExtents()[i];
+    		}
+    		exitStatusImage = new ModelImage(ModelStorageBase.INTEGER, statusExtents, image.getImageName() + "_exit_status");
+    		
+    		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables);
+    
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            tfAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), tfAlgo);
+            
+            // Hide dialog
+            setVisible(false);
+            
+            if (isRunInSeparateThread()) {
+            
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (tfAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+            } else {
+                tfAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+        
+        System.gc();
+        MipavUtil.displayError("Dialog TimeFitting: unable to allocate enough memory");
+        
+        return;
         }
 		
 		
@@ -220,7 +341,51 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		
-		dispose();
+	    if (algorithm instanceof AlgorithmTimeFitting) {
+            Preferences.debug("Time fitting elapsed: " + algorithm.getElapsedTime());
+            image.clearMask();
+
+            if ((tfAlgo.isCompleted() == true) && (resultImage != null)) {
+
+                resultImage.clearMask();
+
+                try {
+                    openNewFrame(resultImage);
+                 //   openNewFrame(resultImage);
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame for resultImage");
+                }
+                
+                if (exitStatusImage != null) {
+                    try {
+                        openNewFrame(exitStatusImage);
+                     //   openNewFrame(resultImage);
+                    } catch (OutOfMemoryError error) {
+                        System.gc();
+                        MipavUtil.displayError("Out of memory: unable to open new frame for exitStatusImage");
+                    }    
+                }
+            } else if ((resultImage != null) || (exitStatusImage != null)) {
+                
+                if (resultImage != null) {
+                    // algorithm failed but result image still has garbage
+                    resultImage.disposeLocal(); // clean up memory
+                    resultImage = null;
+                }
+                
+                if (exitStatusImage != null) {
+                    exitStatusImage.disposeLocal();
+                    exitStatusImage = null;
+                }
+                System.gc();
+
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
 	}
 	
 	
@@ -304,7 +469,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 1;
         mainPanel.add(textImage, gbc);
         
-        logCheckBox = new JCheckBox("Fit the log of intensity values", false);
+        logCheckBox = new JCheckBox("Fit the log10 of intensity values", false);
         logCheckBox.setFont(serif12);
         logCheckBox.setForeground(Color.black);
         gbc.fill = GridBagConstraints.NONE;
@@ -406,6 +571,30 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(rayleighFit, gbc);
+        
+        labelVOI = new JLabel("Optionally open a VOI file or draw a VOI");
+        labelVOI.setForeground(Color.black);
+        labelVOI.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labelVOI, gbc);
+        
+        buttonVOIFile = new JButton("Open an optioanl VOI file");
+        buttonVOIFile.setForeground(Color.black);
+        buttonVOIFile.setFont(serif12B);
+        buttonVOIFile.addActionListener(this);
+        buttonVOIFile.setActionCommand("VOIFile");
+        buttonVOIFile.setPreferredSize(new Dimension(205, 30));
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        mainPanel.add(buttonVOIFile, gbc);
+        
+        textVOIFile = new JTextField();
+        textVOIFile.setFont(serif12);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        gbc.gridy++;
+        mainPanel.add(textVOIFile, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -440,18 +629,23 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     	
         if (linearFit.isSelected()) {
             functionFit = LINEAR_FIT;
+            numVariables = 2;
         }
         else if (exponentialFit.isSelected()) {
             functionFit = EXPONENTIAL_FIT;
+            numVariables = 3;
         }
         else if (gaussianFit.isSelected()) {
             functionFit = GAUSSIAN_FIT;
+            numVariables = 3;
         }
         else if (laplaceFit.isSelected()) {
             functionFit = LAPLACE_FIT;
+            numVariables = 3;
         }
         else if (lorentzFit.isSelected()) {
             functionFit = LORENTZ_FIT;
+            numVariables = 3;
         }
         else if (multiExponentialFit.isSelected()) {
             functionFit = MULTIEXPONENTIAL_FIT;
@@ -464,6 +658,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         }
         else if (rayleighFit.isSelected()) {
             functionFit = RAYLEIGH_FIT;
+            numVariables = 3;
         }
     	
     	return true;
