@@ -136,8 +136,16 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         int srcSize4D;
         int destSize4D;
         FitLine lineModel;
-        double[] params;
-        double chi_squared;
+        FitExponential expModel;
+        FitGaussian gaussianModel;
+        FitLaplace laplaceModel;
+        FitLorentz lorentzModel;
+        double[] params = null;
+        double[] oldParams;
+        double chi_squared = 0.0;
+        double old_chi_squared;
+        int status = 0;
+        int oldStatus;
         int j;
         long normalTerminations = 0;
         long abnormalTerminations = 0;
@@ -249,9 +257,31 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         initial = new double[numVariables];
         switch(functionFit) {
             case LINEAR_FIT:
-                initial[0] = 0; // y intercept
-                initial[1] = -1; // slope
-                break;    
+                initial[0] = 0.0; // y intercept
+                initial[1] = -1.0; // slope
+                break;
+            case EXPONENTIAL_FIT:
+                // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
+                // signs and take the one with the lowest chi-squared value. 
+                initial[0] = 0.0;
+                initial[1] = 1.0;
+                initial[2] = -1.0;
+                break;
+            case GAUSSIAN_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
+            case LAPLACE_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
+            case LORENTZ_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
         }
         
         for (i = 0; i < numVariables; i++) {
@@ -280,34 +310,76 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             lineModel.driver();
                             params = lineModel.getParameters();
                             chi_squared = lineModel.getChiSquared();
-                            for (j = 0; j < numVariables; j++) {
-                                destArray[j*volSize +i] = params[j];
-                            }
-                            if (Double.isNaN(params[j])) {
-                                paramNaN[j]++;
-                            } else if (Double.isInfinite(params[j])) {
-                                paramInf[j]++;
-                            } else {
-                                if (params[j] < paramMin[j]) {
-                                    paramMin[j] = params[j];
-                                }
-                                if (params[j] > paramMax[j]) {
-                                    paramMax[j] = params[j];
-                                }
-                            }
-                            if (lineModel.getExitStatus() > 0) {
-                                validVoxels++;
-                                for (j = 0; j < numVariables; j++) {
-                                    paramTotal[j] += params[j];
-                                }
-                            } else if (lineModel.getExitStatus() <= 0) {
-                                bitMask.clear(i);
-                            }
-                            destArray[(numVariables * volSize) + i] = chi_squared;
-                            destExitStatusArray[i] = lineModel.getExitStatus();
-                            exitStatus[ (lineModel.getExitStatus() + 11)]++;
+                            status = lineModel.getExitStatus();
                             break;
+                        case EXPONENTIAL_FIT:
+                            // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
+                            // signs and take the one with the lowest chi-squared value.
+                            initial[2] = -1.0;
+                            expModel = new FitExponential(y_array, initial);
+                            expModel.driver();
+                            oldParams = expModel.getParameters();
+                            old_chi_squared = expModel.getChiSquared();
+                            oldStatus = expModel.getExitStatus();
+                            initial[2] = 1.0;
+                            expModel = new FitExponential(y_array, initial);
+                            expModel.driver();
+                            params = expModel.getParameters();
+                            chi_squared = expModel.getChiSquared();
+                            status = expModel.getExitStatus();
+                            if (old_chi_squared < chi_squared) {
+                                for (j = 0; j < numVariables; j++) {
+                                    params[j] = oldParams[j];
+                                }
+                                chi_squared = old_chi_squared;
+                                status = oldStatus;
+                            }
+                            break;
+                        case GAUSSIAN_FIT:
+                            gaussianModel = new FitGaussian(y_array, initial);
+                            gaussianModel.driver();
+                            params = gaussianModel.getParameters();
+                            chi_squared = gaussianModel.getChiSquared();
+                            break;
+                        case LAPLACE_FIT:
+                            laplaceModel = new FitLaplace(y_array, initial);
+                            laplaceModel.driver();
+                            params = laplaceModel.getParameters();
+                            chi_squared = laplaceModel.getChiSquared();
+                            break;
+                        case LORENTZ_FIT:
+                            lorentzModel = new FitLorentz(y_array, initial);
+                            lorentzModel.driver();
+                            params = lorentzModel.getParameters();
+                            chi_squared = lorentzModel.getChiSquared();
+                            break;
+                    } // switch(functionFit)
+                    for (j = 0; j < numVariables; j++) {
+                        destArray[j*volSize +i] = params[j];
                     }
+                    if (Double.isNaN(params[j])) {
+                        paramNaN[j]++;
+                    } else if (Double.isInfinite(params[j])) {
+                        paramInf[j]++;
+                    } else {
+                        if (params[j] < paramMin[j]) {
+                            paramMin[j] = params[j];
+                        }
+                        if (params[j] > paramMax[j]) {
+                            paramMax[j] = params[j];
+                        }
+                    }
+                    if (status > 0) {
+                        validVoxels++;
+                        for (j = 0; j < numVariables; j++) {
+                            paramTotal[j] += params[j];
+                        }
+                    } else {
+                        bitMask.clear(i);
+                    }
+                    destArray[(numVariables * volSize) + i] = chi_squared;
+                    destExitStatusArray[i] = status;
+                    exitStatus[status + 11]++;
                 } // if (wholeImage || bitMask.get(i))
             } // for (i = 0; i < volSize; i++)
         //} // else processors == 1
@@ -1285,6 +1357,402 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             return;
         }
 
+        
+    }
+    
+    class FitExponential extends NLConstrainedEngine {
+        final double ydata[];
+        
+        public FitExponential(final double ydata[], final double intial[]) {
+         // tDim data points, 3 coefficients, and exponential fitting
+            super(tDim, 3);
+            this.ydata = ydata;
+            
+            bounds = 0; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+        
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying line fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        /** 
+         * Fit to function - a0 + a1*exp(a2*x).
+         * @param a The best guess parameter values.
+         * @param residuals ymodel - yData.
+         * @param covarMat The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+            int ctrl;
+            int j;
+            double ymod = 0;
+
+            try {
+                ctrl = ctrlMat[0];
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
+                if ( (ctrl == -1) || (ctrl == 1)) {
+                    
+                    // evaluate the residuals[j] = ymod - yData[j]
+                    for (j = 0; j < nPts; j++) {
+                        ymod = a[0] + (a[1] * Math.exp(a[2] * timeVals[j]));
+                        residuals[j] = ymod - ydata[j];
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                    // Calculate the Jacobian analytically
+                    for (j = 0; j < nPts; j++) {
+                        covarMat[j][0] = 1; // a0 partial derivative
+                        covarMat[j][1] = Math.exp(a[2] * timeVals[j]); // a1 partial derivative
+                        covarMat[j][2] = a[1] * timeVals[j] * Math.exp(a[2] * timeVals[j]); // a2 partial derivative
+                    }
+                }
+                // Calculate the Jacobian numerically
+                // else if (ctrl == 2) {
+                // ctrlMat[0] = 0;
+                // }
+            } catch (final Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+
+            return;
+        }
+        
+        
+        
+    }
+    
+    class FitGaussian extends NLConstrainedEngine {
+        final double ydata[];
+        
+        public FitGaussian(final double ydata[], final double intial[]) {
+            // tDim data points, 3 coefficients, and Gaussian fitting
+            super(tDim, 3);
+            this.ydata = ydata;
+            
+            bounds = 0; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+        
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying line fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitGaussian ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        /** 
+         * Fit to function - a0*exp(-(t-a1)^2/(2*(a2)^2))
+         * @param a The best guess parameter values.
+         * @param residuals ymodel - yData.
+         * @param covarMat The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+            int ctrl;
+            int j;
+            double ymod = 0;
+            double diff;
+            double diffSq;
+            double a2Sq;
+
+            try {
+                ctrl = ctrlMat[0];
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
+                if ( (ctrl == -1) || (ctrl == 1)) {
+                    
+                    // evaluate the residuals[j] = ymod - yData[j]
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        ymod = a[0] * Math.exp(-(diff*diff)/(2.0*a[2]*a[2]));
+                        residuals[j] = ymod - ydata[j];
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                    // Calculate the Jacobian analytically
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        diffSq = diff * diff;
+                        a2Sq = a[2] * a[2];
+                        covarMat[j][0] = Math.exp(-(diffSq)/(2.0*a2Sq)); // a0 partial derivative
+                        covarMat[j][1] = (a[0] * diff * covarMat[j][0])/a2Sq; // a1 partial derivative
+                        covarMat[j][2] = (a[0] * diffSq * covarMat[j][0])/(a2Sq * a[2]); // a2 partial derivative
+                    }
+                }
+                // Calculate the Jacobian numerically
+                // else if (ctrl == 2) {
+                // ctrlMat[0] = 0;
+                // }
+            } catch (final Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+
+            return;
+        }
+        
+        
+        
+    }
+    
+    class FitLaplace extends NLConstrainedEngine {
+        final double ydata[];
+        
+        public FitLaplace(final double ydata[], final double intial[]) {
+            // tDim data points, 3 coefficients, and Laplace fitting
+            super(tDim, 3);
+            this.ydata = ydata;
+            
+            bounds = 0; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+        
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying line fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitLaplace ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        /** 
+         * Fit to function - a0*exp(-|x-a1|/a2)
+         * @param a The best guess parameter values.
+         * @param residuals ymodel - yData.
+         * @param covarMat The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+            int ctrl;
+            int j;
+            double ymod = 0;
+            double diff;
+
+            try {
+                ctrl = ctrlMat[0];
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
+                if ( (ctrl == -1) || (ctrl == 1)) {
+                    
+                    // evaluate the residuals[j] = ymod - yData[j]
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        ymod = a[0] * Math.exp(-Math.abs(diff)/a[2]);
+                        residuals[j] = ymod - ydata[j];
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                    // Calculate the Jacobian analytically
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        covarMat[j][0] = Math.exp(-Math.abs(diff)/a[2]); // a0 partial derivative
+                        covarMat[j][1] = -(a[0] * Math.signum(-diff) * covarMat[j][0])/a[2]; // a1 partial derivative
+                        covarMat[j][2] = (a[0] * Math.abs(diff) * covarMat[j][0])/(a[2] * a[2]); // a2 partial derivative
+                    }
+                }
+                // Calculate the Jacobian numerically
+                // else if (ctrl == 2) {
+                // ctrlMat[0] = 0;
+                // }
+            } catch (final Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+
+            return;
+        }
+        
+        
+        
+    }
+    
+    class FitLorentz extends NLConstrainedEngine {
+        final double ydata[];
+        
+        public FitLorentz(final double ydata[], final double intial[]) {
+            // tDim data points, 3 coefficients, and Lorentz fitting
+            super(tDim, 3);
+            this.ydata = ydata;
+            
+            bounds = 0; // bounds = 0 means unconstrained
+
+            // bounds = 1 means same lower and upper bounds for
+            // all parameters
+            // bounds = 2 means different lower and upper bounds
+            // for all parameters
+            
+            // The default is internalScaling = false
+            // To make internalScaling = true and have the columns of the
+            // Jacobian scaled to have unit length include the following line.
+            // internalScaling = true;
+            // Suppress diagnostic messages
+            outputMes = false;
+
+            gues[0] = initial[0];
+            gues[1] = initial[1];
+            gues[2] = initial[2];
+        }
+        
+        /**
+         * Starts the analysis.
+         */
+        public void driver() {
+            super.driver();
+        }
+
+        /**
+         * Display results of displaying line fitting parameters.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitLorentz ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        /** 
+         * Fit to function - ((a0/PI) * a2)/((x-a1)*(x-a1) + a2*a2)
+         * @param a The best guess parameter values.
+         * @param residuals ymodel - yData.
+         * @param covarMat The derivative values of y with respect to fitting parameters.
+         */
+        public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
+            int ctrl;
+            int j;
+            double ymod = 0;
+            double diff;
+            double diffSq;
+            double a2Sq;
+            double num;
+            double denom;
+
+            try {
+                ctrl = ctrlMat[0];
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
+                if ( (ctrl == -1) || (ctrl == 1)) {
+                    
+                    // evaluate the residuals[j] = ymod - yData[j]
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        diffSq = diff * diff;
+                        a2Sq = a[2]*a[2];
+                        ymod = ((a[0]/Math.PI) * a[2])/(diffSq + a2Sq);
+                        residuals[j] = ymod - ydata[j];
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // if ((ctrl == -1) || (ctrl == 1))
+                else if (ctrl == 2) {
+                    // Calculate the Jacobian analytically
+                    for (j = 0; j < nPts; j++) {
+                        diff = timeVals[j] - a[1];
+                        diffSq = diff * diff;
+                        a2Sq = a[2]*a[2];
+                        covarMat[j][0] = (a[2]/Math.PI)/(diffSq + a2Sq); // a0 partial derivative
+                        num = 2.0 * a[0] * a[2] * diff/Math.PI;
+                        denom = a2Sq + diffSq;
+                        covarMat[j][1] = num/(denom * denom); // a1 partial derivative
+                        num = (a[0]/Math.PI)*(diffSq - a2Sq);
+                        covarMat[j][2] = num/(denom * denom); // a2 partial derivative
+                    }
+                }
+                // Calculate the Jacobian numerically
+                // else if (ctrl == 2) {
+                // ctrlMat[0] = 0;
+                // }
+            } catch (final Exception exc) {
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+
+            return;
+        }
+        
+        
         
     }
 
