@@ -269,7 +269,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         if (selfTest) {
-            volSize = 4;
+            volSize = 9;
             tDim = 100;
             srcArray = new double[tDim * volSize];
             y_array = new double[tDim];
@@ -320,7 +320,71 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             a2 = -1.0E-3;
             for (t = 0; t < tDim; t++) {
                 srcArray[t * volSize + 3] = a0 + a1 * Math.exp(a2 * t);
-            }       
+            } 
+            functionArray[4] = GAUSSIAN_FIT;
+            numVariablesArray[4] = 3;
+            initialArray[4][0] = 2.5;
+            initialArray[4][1] = 35.0;
+            initialArray[4][2] = 20.0;
+            a0 = 5.0;
+            a1 = 30.0;
+            a2 = 10.0;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 4] = a0* Math.exp(-((t-a1)*(t-a1))/(2.0 * a2 * a2));
+            }
+            functionArray[5] = LAPLACE_FIT;
+            numVariablesArray[5] = 3;
+            initialArray[5][0] = 2.5;
+            initialArray[5][1] = 35.0;
+            initialArray[5][2] = 20.0;
+            a0 = 5.0;
+            a1 = 30.0;
+            a2 = 10.0;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 5] = a0*Math.exp(-Math.abs(t - a1)/a2);
+            }
+            functionArray[6] = LORENTZ_FIT; 
+            numVariablesArray[6] = 3;
+            initialArray[6][0] = 2.5;
+            initialArray[6][1] = 35.0;
+            initialArray[6][2] = 20.0;
+            a0 = 5.0;
+            a1 = 30.0;
+            a2 = 10.0;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 6] = ((a0/Math.PI) * a2)/((t-a1)*(t-a1) + a2*a2);
+            }
+            functionArray[7] = MULTIEXPONENTIAL_FIT;
+            numVariablesArray[7] = 5;
+            initialArray[7][0] = -80.0;
+            initialArray[7][1] = -22.0;
+            initialArray[7][2] = -2.9E-3;
+            initialArray[7][3] = -90.0;
+            initialArray[7][4] = -1.1E-2;
+            a0 = -85.0;
+            a1 = -25.0;
+            a2 = -2.5E-3;
+            a3 = -100.0;
+            a4 = -1.0E-2;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 7] = a0 + a1 * Math.exp(a2 * t) + a3 * Math.exp(a4 * t);
+            } 
+            functionArray[8] = RAYLEIGH_FIT; 
+            numVariablesArray[8] = 3;
+            initialArray[8][0] = 45.0;
+            initialArray[8][1] = 35.0;
+            initialArray[8][2] = 20.0;
+            a0 = 50.5;
+            a1 = 30.0;
+            a2 = 10.0;
+            for (t = 0; t < tDim; t++) {
+                if (t >= 50.5) {
+                    srcArray[t * volSize + 8] = a2 * (2/a1)*(t-a0)*Math.exp(-(t-a0)*(t-a0)/a1);
+                }
+                else {
+                    srcArray[t * volSize + 8] = 0.0;
+                }
+            }
         }
         
         //if (processors > 1) {
@@ -1893,7 +1957,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         
         public FitMultiExponential(final double ydata[]) {
             // tDim data points, numVariable coefficients, and multiexponential fitting
-            super(tDim, 3);
+            super(tDim, numVariables);
             this.ydata = ydata;
             
             bounds = 2; // bounds = 0 means unconstrained
