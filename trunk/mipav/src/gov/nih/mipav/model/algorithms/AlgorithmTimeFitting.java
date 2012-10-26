@@ -101,13 +101,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * 
      */
     public AlgorithmTimeFitting(final ModelImage destImage, final ModelImage srcImage, final ModelImage exitStatusImage, final boolean useLog,
-            final int functionFit, final int numVariables) {
+            final int functionFit, final int numVariables, double initial[]) {
 
         super(destImage, srcImage);
         this.exitStatusImage = exitStatusImage;
         this.useLog = useLog;
         this.functionFit = functionFit;
         this.numVariables =  numVariables;
+        this.initial = initial;
     }
 
     // ~ Methods
@@ -127,6 +128,15 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
+        boolean  selfTest = false;
+        int functionArray[] = null;
+        int numVariablesArray[] = null;
+        double initialArray[][] = null;
+        double a0;
+        double a1;
+        double a2;
+        double a3;
+        double a4;
         ViewVOIVector VOIs;
         short mask[];
         int t;
@@ -142,11 +152,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         FitMultiExponential multiExponentialModel;
         FitRayleigh rayleighModel;
         double[] params = null;
-        double[] oldParams;
         double chi_squared = 0.0;
-        double old_chi_squared;
         int status = 0;
-        int oldStatus;
         int j;
         long normalTerminations = 0;
         long abnormalTerminations = 0;
@@ -256,50 +263,64 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         exitStatus = new int[12356];
         
-        initial = new double[numVariables];
-        switch(functionFit) {
-            case LINEAR_FIT:
-                initial[0] = 0.0; // y intercept
-                initial[1] = -1.0; // slope
-                break;
-            case EXPONENTIAL_FIT:
-                // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
-                // signs and take the one with the lowest chi-squared value. 
-                initial[0] = 0.0;
-                initial[1] = 1.0;
-                initial[2] = -1.0;
-                break;
-            case GAUSSIAN_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case LAPLACE_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case LORENTZ_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case MULTIEXPONENTIAL_FIT:
-                initial[0] = 0.0;
-                for (i = 0; i < (numVariables-1)/2; i++) {
-                    initial[2*i+1] = 1.0;
-                    initial[2*i+2] = -i;
-                }
-                break;
-            case RAYLEIGH_FIT:
-                initial[0] = 0.0;
-                initial[1] = 1.0;
-                initial[2] = 1.0;
-        }
-        
         for (i = 0; i < numVariables; i++) {
             paramMin[i] = Double.MAX_VALUE;
             paramMax[i] = -Double.MAX_VALUE;
+        }
+        
+        if (selfTest) {
+            volSize = 4;
+            tDim = 100;
+            srcArray = new double[tDim * volSize];
+            y_array = new double[tDim];
+            functionArray = new int[volSize];
+            numVariablesArray = new int[volSize];
+            initialArray = new double[volSize][9];
+            timeVals = new double[tDim];
+            for (t = 0; t < tDim; t++) {
+                timeVals[t] = t;
+            }
+            // linear a0 + a1*t
+            functionArray[0] = LINEAR_FIT;
+            numVariablesArray[0] = 2;
+            initialArray[0][0] = 0.0; // intercept
+            initialArray[0][1] = -1.0; // slope;
+            a0 = 100.0;
+            a1 = -10.0;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize] = a0 + a1 * t;
+            }
+            functionArray[1] = LINEAR_FIT;
+            numVariablesArray[1] = 2;
+            initialArray[1][0] = 0.0; // intercept
+            initialArray[1][1] = -1.0; // slope;
+            a0 = -50.0;
+            a1 = 2.5;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 1] = a0 + a1 * t;
+            }
+            functionArray[2] = EXPONENTIAL_FIT;
+            numVariablesArray[2] = 3;
+            initialArray[2][0] = 50.0;
+            initialArray[2][1] = 50.0;
+            initialArray[2][2] = 1.0E-2;
+            a0 = 100.0;
+            a1 = 10.0;
+            a2 = 1.0E-3;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 2] = a0 + a1 * Math.exp(a2 * t);
+            }
+            functionArray[3] = EXPONENTIAL_FIT;
+            numVariablesArray[3] = 3;
+            initialArray[3][0] = -50.0;
+            initialArray[3][1] = -5.0;
+            initialArray[3][2] = -5.0E-3;
+            a0 = -85.0;
+            a1 = -10.0;
+            a2 = -1.0E-3;
+            for (t = 0; t < tDim; t++) {
+                srcArray[t * volSize + 3] = a0 + a1 * Math.exp(a2 * t);
+            }       
         }
         
         //if (processors > 1) {
@@ -316,76 +337,97 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                 if (wholeImage || bitMask.get(i)) {
                     for (t = 0; t < tDim; t++) {
                         y_array[t] = srcArray[t * volSize + i];
-                    } 
+                    }
+                    if (selfTest) {
+                        functionFit = functionArray[i];
+                        numVariables = numVariablesArray[i];
+                        for (j = 0; j < numVariables; j++) {
+                            initial[j] = initialArray[i][j];
+                        }
+                    }
                     switch(functionFit) {
                         case LINEAR_FIT:
-                            lineModel = new FitLine(y_array, initial);
+                            lineModel = new FitLine(y_array);
                             lineModel.driver();
                             params = lineModel.getParameters();
                             chi_squared = lineModel.getChiSquared();
                             status = lineModel.getExitStatus();
                             break;
                         case EXPONENTIAL_FIT:
-                            // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
-                            // signs and take the one with the lowest chi-squared value.
-                            initial[0] = y_array[tDim-1];
-                            initial[2] = -1.0;
-                            expModel = new FitExponential(y_array, initial);
-                            expModel.driver();
-                            oldParams = expModel.getParameters();
-                            old_chi_squared = expModel.getChiSquared();
-                            oldStatus = expModel.getExitStatus();
-                            initial[2] = 1.0;
-                            expModel = new FitExponential(y_array, initial);
+                            expModel = new FitExponential(y_array);
                             expModel.driver();
                             params = expModel.getParameters();
                             chi_squared = expModel.getChiSquared();
                             status = expModel.getExitStatus();
-                            if (old_chi_squared < chi_squared) {
-                                for (j = 0; j < numVariables; j++) {
-                                    params[j] = oldParams[j];
-                                }
-                                chi_squared = old_chi_squared;
-                                status = oldStatus;
-                            }
                             break;
                         case GAUSSIAN_FIT:
-                            gaussianModel = new FitGaussian(y_array, initial);
+                            gaussianModel = new FitGaussian(y_array);
                             gaussianModel.driver();
                             params = gaussianModel.getParameters();
                             chi_squared = gaussianModel.getChiSquared();
                             status = gaussianModel.getExitStatus();
                             break;
                         case LAPLACE_FIT:
-                            laplaceModel = new FitLaplace(y_array, initial);
+                            laplaceModel = new FitLaplace(y_array);
                             laplaceModel.driver();
                             params = laplaceModel.getParameters();
                             chi_squared = laplaceModel.getChiSquared();
                             status = laplaceModel.getExitStatus();
                             break;
                         case LORENTZ_FIT:
-                            lorentzModel = new FitLorentz(y_array, initial);
+                            lorentzModel = new FitLorentz(y_array);
                             lorentzModel.driver();
                             params = lorentzModel.getParameters();
                             chi_squared = lorentzModel.getChiSquared();
                             status = lorentzModel.getExitStatus();
                             break;
                         case MULTIEXPONENTIAL_FIT:
-                            initial[0] = y_array[tDim-1];
-                            multiExponentialModel = new FitMultiExponential(y_array, initial);
+                            multiExponentialModel = new FitMultiExponential(y_array);
                             multiExponentialModel.driver();
                             params = multiExponentialModel.getParameters();
                             chi_squared = multiExponentialModel.getChiSquared();
                             status = multiExponentialModel.getExitStatus();
                             break;
                         case RAYLEIGH_FIT:
-                            rayleighModel = new FitRayleigh(y_array, initial);
+                            rayleighModel = new FitRayleigh(y_array);
                             rayleighModel.driver();
                             params = rayleighModel.getParameters();
                             chi_squared = rayleighModel.getChiSquared();
                             status = rayleighModel.getExitStatus();
                             break;
                     } // switch(functionFit)
+                    if (selfTest) {
+                        Preferences.debug("i = " + i + "\n", Preferences.DEBUG_ALGORITHM);
+                        switch (functionFit) {
+                            case LINEAR_FIT:
+                                Preferences.debug("LINEAR\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case EXPONENTIAL_FIT:
+                                Preferences.debug("EXPONENTIAL\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case GAUSSIAN_FIT:
+                                Preferences.debug("GAUSSIAN\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case LAPLACE_FIT:
+                                Preferences.debug("LAPLACE\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case LORENTZ_FIT:
+                                Preferences.debug("LORENTZ\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case MULTIEXPONENTIAL_FIT:
+                                Preferences.debug("MULTIEXPONENTIAL\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                            case RAYLEIGH_FIT:
+                                Preferences.debug("RAYLEIGH\n", Preferences.DEBUG_ALGORITHM);
+                                break;
+                        }
+                        for (j = 0; j < numVariables; j++) {
+                            Preferences.debug("a["+j+"] = " + params[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        }
+                        Preferences.debug("chi_squared = " + chi_squared + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("status = " + status + "\n", Preferences.DEBUG_ALGORITHM);
+                        continue;
+                    } // if (selfTest)
                     for (j = 0; j < numVariables; j++) {
                         destArray[j*volSize +i] = params[j];
                         if (Double.isNaN(params[j])) {
@@ -415,6 +457,11 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                 } // if (wholeImage || bitMask.get(i))
             } // for (i = 0; i < volSize; i++)
         //} // else processors == 1
+            
+        if (selfTest) {
+            setCompleted(true);
+            return;
+        }
         
         for (i = 0; i < numVariables; i++) {
             if (paramNaN[i] > 0) {
@@ -1301,13 +1348,56 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
 
         setCompleted(true);
     }
+    
+    private void setInitial(int functionFit, int numVariables) {
+        initial = new double[numVariables];
+        switch(functionFit) {
+            case LINEAR_FIT:
+                initial[0] = 0.0; // y intercept
+                initial[1] = -1.0; // slope
+                break;
+            case EXPONENTIAL_FIT:
+                // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
+                // signs and take the one with the lowest chi-squared value. 
+                initial[0] = 0.0;
+                initial[1] = 1.0;
+                initial[2] = -1.0;
+                break;
+            case GAUSSIAN_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
+            case LAPLACE_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
+            case LORENTZ_FIT:
+                initial[0] = 1.0;
+                initial[1] = 0.0;
+                initial[2] = 1.0;
+                break;
+            case MULTIEXPONENTIAL_FIT:
+                initial[0] = 0.0;
+                for (i = 0; i < (numVariables-1)/2; i++) {
+                    initial[2*i+1] = 1.0;
+                    initial[2*i+2] = -i;
+                }
+                break;
+            case RAYLEIGH_FIT:
+                initial[0] = 0.0;
+                initial[1] = 1.0;
+                initial[2] = 1.0;
+        }    
+    }
 
     
     
     class FitLine extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLine(final double ydata[], final double intial[]) {
+        public FitLine(final double ydata[]) {
          // tDim data points, 2 coefficients, and linear fitting
             super(tDim, 2);
             this.ydata = ydata;
@@ -1395,7 +1485,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitExponential extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitExponential(final double ydata[], final double intial[]) {
+        public FitExponential(final double ydata[]) {
          // tDim data points, 3 coefficients, and exponential fitting
             super(tDim, 3);
             this.ydata = ydata;
@@ -1488,7 +1578,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitGaussian extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitGaussian(final double ydata[], final double intial[]) {
+        public FitGaussian(final double ydata[]) {
             // tDim data points, 3 coefficients, and Gaussian fitting
             super(tDim, 3);
             this.ydata = ydata;
@@ -1588,7 +1678,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitLaplace extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLaplace(final double ydata[], final double intial[]) {
+        public FitLaplace(final double ydata[]) {
             // tDim data points, 3 coefficients, and Laplace fitting
             super(tDim, 3);
             this.ydata = ydata;
@@ -1684,7 +1774,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitLorentz extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLorentz(final double ydata[], final double intial[]) {
+        public FitLorentz(final double ydata[]) {
             // tDim data points, 3 coefficients, and Lorentz fitting
             super(tDim, 3);
             this.ydata = ydata;
@@ -1801,7 +1891,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitMultiExponential extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitMultiExponential(final double ydata[], final double intial[]) {
+        public FitMultiExponential(final double ydata[]) {
             // tDim data points, numVariable coefficients, and multiexponential fitting
             super(tDim, 3);
             this.ydata = ydata;
@@ -1919,7 +2009,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitRayleigh extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitRayleigh(final double ydata[], final double intial[]) {
+        public FitRayleigh(final double ydata[]) {
             // tDim data points, 3 coefficients, and Rayleigh fitting
             super(tDim, 3);
             this.ydata = ydata;
