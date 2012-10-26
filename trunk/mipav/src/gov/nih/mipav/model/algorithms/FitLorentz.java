@@ -27,10 +27,10 @@ public class FitLorentz extends NLFittedFunction {
     /**Amplitude parameter*/
     private double amp;
     
-    /**Center parameter*/
+    /** Statistical median */
     private double xMedian;
     
-    /**Gamma parameter*/
+    /** half width at half maximum*/
     private double gamma;
     
     /** Iterations performed */
@@ -46,11 +46,20 @@ public class FitLorentz extends NLFittedFunction {
         // nPoints data points, 3 coefficients, and exponential fitting
         super(5, 3);
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
         
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -75,11 +84,20 @@ public class FitLorentz extends NLFittedFunction {
         this.xSeries = xData;
         this.ySeries = yData;
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
 
         // Suppress diagnostic messages
         outputMes = false;    
@@ -112,11 +130,20 @@ public class FitLorentz extends NLFittedFunction {
         	ySeries[i] = yData[i];
         }
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
 
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
