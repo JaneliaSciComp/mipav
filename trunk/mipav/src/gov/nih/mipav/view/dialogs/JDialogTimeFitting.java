@@ -15,6 +15,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewFileChooserBase;
 import gov.nih.mipav.view.ViewImageFileFilter;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.BorderLayout;
@@ -342,7 +343,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		
 	    if (algorithm instanceof AlgorithmTimeFitting) {
-            Preferences.debug("Time fitting elapsed: " + algorithm.getElapsedTime());
+            Preferences.debug("Time fitting elapsed: " + algorithm.getElapsedTime() + "\n");
             image.clearMask();
 
             if ((tfAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -350,8 +351,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 resultImage.clearMask();
 
                 try {
-                    openNewFrame(resultImage);
-                 //   openNewFrame(resultImage);
+                    new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame for resultImage");
@@ -359,8 +359,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 
                 if (exitStatusImage != null) {
                     try {
-                        openNewFrame(exitStatusImage);
-                     //   openNewFrame(resultImage);
+                        new ViewJFrameImage(exitStatusImage);
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: unable to open new frame for exitStatusImage");
@@ -469,7 +468,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         });
         mainPanel.add(imageList.getParent(), gbc);
 
-        textImage = new JTextField();
+        textImage = new JTextField(30);
         textImage.setFont(serif12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
@@ -557,6 +556,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         numVariablesLabel.setForeground(Color.black);
         numVariablesLabel.setEnabled(false);
         gbc.gridx = 0;
+        gbc.gridy++;
         mainPanel.add(numVariablesLabel, gbc);
         
         numVariablesField = new JTextField(5);
@@ -565,7 +565,6 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         numVariablesField.setForeground(Color.black);
         numVariablesField.setEnabled(false);
         gbc.gridx = 1;
-        gbc.gridy++;
         mainPanel.add(numVariablesField, gbc);
         
         rayleighFit = new JRadioButton("Fit Rayleigh Distribution a2 * (2/a1)*(x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0)", false);
@@ -585,7 +584,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(labelVOI, gbc);
         
-        buttonVOIFile = new JButton("Open an optioanl VOI file");
+        buttonVOIFile = new JButton("Open an optional VOI file");
         buttonVOIFile.setForeground(Color.black);
         buttonVOIFile.setFont(serif12B);
         buttonVOIFile.addActionListener(this);
@@ -593,13 +592,13 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         buttonVOIFile.setPreferredSize(new Dimension(205, 30));
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
+        gbc.gridy++;
         mainPanel.add(buttonVOIFile, gbc);
         
-        textVOIFile = new JTextField();
+        textVOIFile = new JTextField(30);
         textVOIFile.setFont(serif12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        gbc.gridy++;
         mainPanel.add(textVOIFile, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -715,7 +714,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 
     
     /**
-     *  windoe closing
+     *  window closing
      */
     public void windowClosing(WindowEvent event) {
         if (image != null) {
