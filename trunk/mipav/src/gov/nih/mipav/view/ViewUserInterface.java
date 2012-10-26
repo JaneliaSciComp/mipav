@@ -981,6 +981,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        } else if (command.equals("TimeFitting")) {
+            new JDialogTimeFitting();
         } else if (command.equals("KMeans")) {
             new JDialogKMeans();
         }
