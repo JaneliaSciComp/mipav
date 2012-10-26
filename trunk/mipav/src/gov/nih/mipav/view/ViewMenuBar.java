@@ -518,7 +518,8 @@ public class ViewMenuBar {
                                 0, null, false)}),
                         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("S2M2", "s2m2", 0, null, false),
-                                menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})})});
+                                menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})}),
+                menuBuilder.buildMenuItem("Time fitting", "TimeFitting", 0, null, false)});
     }
 
     /**
