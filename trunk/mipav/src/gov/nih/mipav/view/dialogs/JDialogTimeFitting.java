@@ -351,7 +351,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 resultImage.clearMask();
 
                 try {
-                    new ViewJFrameImage(resultImage);
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame for resultImage");
@@ -359,7 +359,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 
                 if (exitStatusImage != null) {
                     try {
-                        new ViewJFrameImage(exitStatusImage);
+                        new ViewJFrameImage(exitStatusImage, null, new Dimension(610, 220));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: unable to open new frame for exitStatusImage");
