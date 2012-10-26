@@ -122,6 +122,32 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     private VOI[] voi;
     
     private AlgorithmTimeFitting tfAlgo;
+    
+    private JLabel labela2;
+    
+    private JLabel labela3;
+    
+    private JLabel labela4;
+    
+    private JLabel labela5;
+    
+    private JLabel labela6;
+    
+    private JTextField texta0;
+    
+    private JTextField texta1;
+    
+    private JTextField texta2;
+    
+    private JTextField texta3;
+    
+    private JTextField texta4;
+    
+    private JTextField texta5;
+    
+    private JTextField texta6;
+    
+    private double initial[] = new double[9];
 	
 	
 	public JDialogTimeFitting() {
@@ -156,10 +182,34 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	    	if (multiExponentialFit.isSelected()) {
 	    	    numVariablesLabel.setEnabled(true);
 	    	    numVariablesField.setEnabled(true);
+	    	    labela3.setEnabled(true);
+	    	    texta3.setEnabled(true);
+	    	    labela4.setEnabled(true);
+	    	    texta4.setEnabled(true);
+	    	    labela5.setEnabled(true);
+                texta5.setEnabled(true);
+                labela6.setEnabled(true);
+                texta6.setEnabled(true);
 	    	}
 	    	else {
 	    	    numVariablesLabel.setEnabled(false);
-                numVariablesField.setEnabled(false);    
+                numVariablesField.setEnabled(false);
+                labela3.setEnabled(false);
+                texta3.setEnabled(false);
+                labela4.setEnabled(false);
+                texta4.setEnabled(false);
+                labela5.setEnabled(false);
+                texta5.setEnabled(false);
+                labela6.setEnabled(false);
+                texta6.setEnabled(false);
+	    	}
+	    	if (source == linearFit) {
+	    	    labela2.setEnabled(false);
+	    	    texta2.setEnabled(false);
+	    	}
+	    	else {
+	    	    labela2.setEnabled(true);
+                texta2.setEnabled(true);
 	    	}
 	     
 	     } else if (command.equals("VOIFile")) {
@@ -264,7 +314,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     		}
     		exitStatusImage = new ModelImage(ModelStorageBase.INTEGER, statusExtents, image.getImageName() + "_exit_status");
     		
-    		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables);
+    		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables, initial);
     
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -600,6 +650,114 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         mainPanel.add(textVOIFile, gbc);
+        
+        JLabel labela0 = new JLabel("Initial a0 value");
+        labela0.setForeground(Color.black);
+        labela0.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela0, gbc);
+        
+        texta0 = new JTextField(20);
+        texta0.setFont(serif12);
+        texta0.setText("0.0");
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta0, gbc);
+        
+        JLabel labela1 = new JLabel("Initial a1 value");
+        labela1.setForeground(Color.black);
+        labela1.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela1, gbc);
+        
+        texta1 = new JTextField(20);
+        texta1.setFont(serif12);
+        texta1.setText("1.0");
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta1, gbc);
+        
+        labela2 = new JLabel("Initial a2 value");
+        labela2.setForeground(Color.black);
+        labela2.setFont(serif12);
+        labela2.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela2, gbc);
+        
+        texta2 = new JTextField(20);
+        texta2.setFont(serif12);
+        texta2.setText("1.0");
+        texta2.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta2, gbc);
+        
+        labela3 = new JLabel("Initial a3 value");
+        labela3.setForeground(Color.black);
+        labela3.setFont(serif12);
+        labela3.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela3, gbc);
+        
+        texta3 = new JTextField(20);
+        texta3.setFont(serif12);
+        texta3.setText("1.0");
+        texta3.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta3, gbc);
+        
+        labela4 = new JLabel("Initial a4 value");
+        labela4.setForeground(Color.black);
+        labela4.setFont(serif12);
+        labela4.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela4, gbc);
+        
+        texta4 = new JTextField(20);
+        texta4.setFont(serif12);
+        texta4.setText("1.0");
+        texta4.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta4, gbc);
+        
+        labela5 = new JLabel("Initial a5 value");
+        labela5.setForeground(Color.black);
+        labela5.setFont(serif12);
+        labela5.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela5, gbc);
+        
+        texta5 = new JTextField(20);
+        texta5.setFont(serif12);
+        texta5.setText("1.0");
+        texta5.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta5, gbc);
+        
+        labela6 = new JLabel("Initial a6 value");
+        labela6.setForeground(Color.black);
+        labela6.setFont(serif12);
+        labela6.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(labela6, gbc);
+        
+        texta6 = new JTextField(20);
+        texta6.setFont(serif12);
+        texta6.setText("1.0");
+        texta6.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        mainPanel.add(texta6, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -610,6 +768,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     }
     
     private boolean setVariables() {
+        String tmpStr;
 		
     	image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
     	
@@ -654,7 +813,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         }
         else if (multiExponentialFit.isSelected()) {
             functionFit = MULTIEXPONENTIAL_FIT;
-            String tmpStr = numVariablesField.getText();
+            tmpStr = numVariablesField.getText();
             numVariables = Integer.valueOf(tmpStr).intValue();
             if ((numVariables % 2) == 0) {
                 MipavUtil.displayError("Number of variables must be odd");
@@ -664,6 +823,37 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         else if (rayleighFit.isSelected()) {
             functionFit = RAYLEIGH_FIT;
             numVariables = 3;
+        }
+        
+        tmpStr = texta0.getText();
+        initial[0] = Double.valueOf(tmpStr).doubleValue();
+        
+        tmpStr = texta1.getText();
+        initial[1] = Double.valueOf(tmpStr).doubleValue();
+        
+        if (numVariables >= 3) {
+            tmpStr = texta2.getText();
+            initial[2] = Double.valueOf(tmpStr).doubleValue();    
+        }
+        
+        if (numVariables >= 4) {
+            tmpStr = texta3.getText();
+            initial[3] = Double.valueOf(tmpStr).doubleValue();    
+        }
+        
+        if (numVariables >= 5) {
+            tmpStr = texta4.getText();
+            initial[4] = Double.valueOf(tmpStr).doubleValue();    
+        }
+        
+        if (numVariables >= 6) {
+            tmpStr = texta5.getText();
+            initial[5] = Double.valueOf(tmpStr).doubleValue();    
+        }
+        
+        if (numVariables >= 7) {
+            tmpStr = texta6.getText();
+            initial[6] = Double.valueOf(tmpStr).doubleValue();    
         }
     	
     	return true;
