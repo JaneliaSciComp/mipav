@@ -1,14 +1,11 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
-import gov.nih.mipav.view.CustomUIBuilder;
-import gov.nih.mipav.model.structures.ModelLUT;
-
 import java.io.IOException;
+import java.io.Serializable;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Effects.TextureEffect;
-import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
@@ -23,389 +20,652 @@ import WildMagic.LibGraphics.Shaders.VertexShader;
  * 
  * This class sets up the histogram tool GLSL shader programs for rendering the widgets directly.
  */
-public class ClassificationWidgetEffect extends TextureEffect
+public class ClassificationWidgetEffect extends TextureEffect implements Serializable
 {
-    /**  */
-    private static final long serialVersionUID = -7141385452679118672L;
-    /** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
-    private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
+	private static final long serialVersionUID = 3379141203039832123L;
+	/** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
+	private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
+	private Texture m_kTexture;
+
+	private String m_kLUTName;
+
+	private Texture m_kLUTMap;
+
+	private String mainPixelShader1 = "" + 
+			"uniform vec4 LevColor;" + "\n" +
+			"uniform vec2 Shift;" + "\n" +
+			"uniform vec4 LevMidLine;" + "\n" +
+			"uniform vec4 LevLeftLine;" + "\n" +
+			"uniform vec4 LevRightLine;" + "\n" +
+			"uniform vec4 Center;" + "\n" +
+			"uniform vec4 Radius;" + "\n" +
+			"uniform sampler2D BaseSampler;" + "\n" +
+			"uniform sampler1D ColorMap;" + "\n" +
+			"void main()" + "\n" +
+			"{" + "\n" +
+			"    vec4 kBase = texture2D(BaseSampler,gl_TexCoord[0].xy);" + "\n";
+
+	private String mainPixelShaderTriangle = "" + 
+			"    float fAlpha = computeAlphaTriangle( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
+			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
+			"    vec4 widgetColor = LevColor;" + "\n";
+
+	private String mainPixelShaderSquare = "" + 
+			"    float fAlpha = computeAlphaSquare( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
+			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
+			"    vec4 widgetColor = LevColor;" + "\n";
+
+	private String mainPixelShaderCircle = "" + 
+			"    float fAlpha = computeAlphaCircle( gl_TexCoord[0].x, gl_TexCoord[0].y," + "\n" +
+			"                                 Center, LevMidLine, Radius );" + "\n" +
+			"    vec4 widgetColor = LevColor;" + "\n";
+
+	private String mainPixelShader2 = "" + 
+			"    fAlpha *= widgetColor.a;" + "\n" +
+			"    gl_FragColor.r = widgetColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;" + "\n" +
+			"    gl_FragColor.g = widgetColor.g*fAlpha + (1.0 - fAlpha)*kBase.g;" + "\n" +
+			"    gl_FragColor.b = widgetColor.b*fAlpha + (1.0 - fAlpha)*kBase.b;" + "\n" +
+			"    gl_FragColor.a = 1.0;" + "\n" +
+			"}" + "\n";
 
 
-    /** Creates a new ClassificationWidgetEffect with the texture specified.
-     * @param rkBaseName the name of the 2D Histogram texture image.
-     */
-    public ClassificationWidgetEffect (final String rkBaseName)
-    {
-        SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
-        m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
+	private static String computeAlphaTriangle = "" +
+			"float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {" + "\n" +
+			"return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));" + "\n" +
+			"}" + "\n" +
+			"float computeAlphaTriangle( float fX," + "\n" +
+			"                float fY," + "\n" +
+			"                vec2  fShift," + "\n" +
+			"                vec4  LevMidLine," + "\n" +
+			"                vec4  LevLeftLine," + "\n" +
+			"                vec4  LevRightLine )" + "\n" +
+			"{" + "\n" +
+			"float area1 = areaTwice( LevRightLine.x, LevRightLine.y, LevRightLine.z, LevRightLine.w, fX, fY);" + "\n" +
+			"float area2 = areaTwice( LevRightLine.z, LevRightLine.w, LevLeftLine.z, LevLeftLine.w, fX, fY);" + "\n" +
+			"float area3 = areaTwice( LevLeftLine.z, LevLeftLine.w, LevLeftLine.x, LevLeftLine.y, fX, fY);" + "\n" +
+			"int inside = 0;" + "\n" +
+			"if ( (area1 >= 0) && (area2 >= 0) && (area3 >= 0) ) { inside = 1; }" + "\n" +
+			"if ( (area1 <= 0) && (area2 <= 0) && (area3 <= 0) ) { inside = 1; }" + "\n" +
+			"if ( inside == 0 ) { return 0; }" + "\n" +
+			"" + "\n" +
+			"" + "\n" +
+			"float fShiftL = fShift.x;" + "\n" +
+			"float fShiftR = fShift.y;" + "\n" +
+			"vec3 closestPt = computeClosestPoint( fX, fY, LevMidLine );" + "\n" +
+			"vec3 perpendicDir = vec3( fX - closestPt.x, fY - closestPt.y, 0 );" + "\n" +
+			"vec3 leftStart = vec3( LevLeftLine.x, LevLeftLine.y, 0);" + "\n" +
+			"vec3 leftDir = vec3( LevLeftLine.z - LevLeftLine.x, LevLeftLine.w - LevLeftLine.y, 0);" + "\n" +
+			"vec3 leftPt = computeIntersect( closestPt, perpendicDir, leftStart, leftDir);" + "\n" +
+			"vec3 rightStart = vec3( LevRightLine.x, LevRightLine.y, 0);" + "\n" +
+			"vec3 rightDir = vec3( LevRightLine.z - LevRightLine.x, LevRightLine.w - LevRightLine.y, 0);" + "\n" +
+			"vec3 rightPt = computeIntersect( closestPt, perpendicDir, rightStart, rightDir);" + "\n" +
+			"float distMidR = (closestPt.x - rightPt.x) * (closestPt.x - rightPt.x) +  (closestPt.y - rightPt.y) * (closestPt.y - rightPt.y);" + "\n" +
+			"float distMidL = (closestPt.x - leftPt.x)  * (closestPt.x - leftPt.x)  +  (closestPt.y - leftPt.y)  * (closestPt.y - leftPt.y);" + "\n" +
+			"float distMidPt = (closestPt.x - fX)  * (closestPt.x - fX)  +  (closestPt.y - fY)  * (closestPt.y - fY);" + "\n" +
+			"float distPtR =  (fX - rightPt.x) * (fX - rightPt.x) +  (fY - rightPt.y) * (fY - rightPt.y);" + "\n" +
+			"float distPtL = (fX - leftPt.x)  * (fX - leftPt.x)  +  (fY - leftPt.y)  * (fY - leftPt.y);" + "\n" +
+			"" + "\n" +
+			"float length = (LevMidLine.z - LevMidLine.x) * (LevMidLine.z - LevMidLine.x) + (LevMidLine.w - LevMidLine.y) * (LevMidLine.w - LevMidLine.y);" + "\n" +
+			"float fAlpha = 1.0;" + "\n" +
+			"if ( (fX > closestPt.x) && (fX < rightPt.x) )" + "\n" +
+			"{" + "\n" +
+			"   fAlpha = (1 + length) * (distPtR) / (distMidR);" + "\n" +
+			"}" + "\n" +
+			"else if ( (fX > closestPt.x) && (fX < leftPt.x) )" + "\n" +
+			"{" + "\n" +
+			"   fAlpha = (1 + length) * (distPtL) / (distMidL);" + "\n" +
+			"}" + "\n" +
+			"else if ( (fX < closestPt.x) && (fX > leftPt.x) )" + "\n" +
+			"{" + "\n" +
+			"   fAlpha = (1 + length) * (distPtL) / (distMidL);" + "\n" +
+			"}" + "\n" +
+			"else if ( (fX < closestPt.x) && (fX > rightPt.x) )" + "\n" +
+			"{" + "\n" +
+			"   fAlpha = (1 + length) * (distPtR) / (distMidR);" + "\n" +
+			"}" + "\n" +
+			"return fAlpha;" + "\n" +
+			"}" + "\n";
 
-        m_kPShader.get(0).SetTextureQuantity(2);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
-        m_kWidgetState.UseWidget[0] = 1.0f;
-
-        m_kWidgetState.UseColorMap[0] = -1.0f;
-    }
-
-    /** Creates a new ClassificationWidgetEffect with the texture specified.
-     * @param rkBaseName the name of the 2D Histogram texture image.
-     */
-    public ClassificationWidgetEffect (final String rkBaseName,boolean bCircle)
-    {
-        SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
-        if ( bCircle )
-        {
-        	m_kPShader.set(0, new PixelShader("CircleClassificationWidgetEffect", true));
-        }
-        else
-        {
-        	m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
-        }
-
-        m_kPShader.get(0).SetTextureQuantity(2);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
-        m_kWidgetState.UseWidget[0] = 1.0f;
-
-        m_kWidgetState.UseColorMap[0] = -1.0f;
-    }
-
-
-    /**
-     * Creates a new ClassificationWidgetEffect based on the input ClassificationWidgetEffect
-     * @param kEffect ClassificationWidgetEffect, used to provide the name of the 2D Histogram texture,
-     * as well as the current state of the Widget parameters.
-     */
-    public ClassificationWidgetEffect (ClassificationWidgetEffect kEffect)
-    {
-        SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
-        m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
-
-        m_kPShader.get(0).SetTextureQuantity(1);
-        m_kPShader.get(0).SetImageName(0, kEffect.m_kPShader.get(0).GetImageName(0) );
-        m_kWidgetState = new ClassificationWidgetState();
-        m_kWidgetState.Copy(kEffect.m_kWidgetState);
-    }
-    
-    /* (non-Javadoc)
-     * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
-     */
-    public void dispose()
-    {
-        m_kWidgetState.dispose();
-        m_kWidgetState = null;
-        super.dispose();
-    }
-    
-    /**
-     * Returns the current ClassificationWidgetState GLSL Shader program parameters.
-     * @return the current ClassificationWidgetState GLSL Shader program parameters.
-     */
-    public ClassificationWidgetState getState()
-    {
-        return m_kWidgetState;
-    }
-    
-    /**
-     * Sets the ClassificationWidgetState, representing the GLSL shader program parameters.
-     * @param kState ClassificationWidgetState, representing the GLSL shader program parameters.
-     */
-    public void setState(ClassificationWidgetState kState)
-    {
-        m_kWidgetState = kState;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevColor") != null) ) 
-        {
-            pkCProgram.GetUC("LevColor").SetDataSource(m_kWidgetState.Color);
-        }
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevMidLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine);
-        }
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
-        }
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
-        }
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("BoundaryEmphasis") != null) ) 
-        {
-            pkCProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
-        }
-        computeUniformVariables();
-    }
-
-    /**
-     * Returns the color of the widget color transfer function.
-     * @return the color of the widget color transfer function.
-     */
-    public ColorRGBA GetColor( ) 
-    {
-        return new ColorRGBA (
-                m_kWidgetState.Color[0],
-                m_kWidgetState.Color[1],
-                m_kWidgetState.Color[2],
-                m_kWidgetState.Color[3] );
-    }
-
-    public void SetAlpha( float fA ) 
-    {
-    	m_kWidgetState.Color[3] = fA;
-    	if ( fA == 0 )
-    	{
-    		m_kWidgetState.UseWidget[0] = 0;
-    	}
-    	else
-    	{
-    		m_kWidgetState.UseWidget[0] = 1;
-    	}
-    	UpdateColor();
-    }
-    
-
-    /**
-     * Sets the color of the widget color transfer function.
-     * @param the color of the widget color transfer function.
-     */
-    public void SetColor( float fR, float fG, float fB, float fA ) 
-    {
-    	m_kWidgetState.Color[0] = fR;
-    	m_kWidgetState.Color[1] = fG;
-    	m_kWidgetState.Color[2] = fB;
-    	m_kWidgetState.Color[3] = fA;
-    	if ( fA == 0 )
-    	{
-    		m_kWidgetState.UseWidget[0] = 0;
-    	}
-    	else
-    	{
-    		m_kWidgetState.UseWidget[0] = 1;
-    	}
-    	m_kWidgetState.UseColorMap[0] = -1.0f;
-    	UpdateColor();
-    }
+	private static String computeAlphaSquare = "" +
+			"float computeAlphaSquare( float fX," + "\n" +
+			"                float fY," + "\n" +
+			"                vec2  fShift," + "\n" +
+			"                vec4  LevMidLine," + "\n" +
+			"                vec4  LevLeftLine," + "\n" +
+			"                vec4  LevRightLine )" + "\n" +
+			"{" + "\n" +
+			"int inside = 1;" + "\n" +
+			"if ( (fX < LevLeftLine.x) || (fX > LevRightLine.x) || (fY < LevRightLine.y) || (fY > LevRightLine.w) ) { inside = 0; }" + "\n" +
+			"if ( inside == 0 ) { return 0; }" + "\n" +
+			"float fShiftL = fShift.x;" + "\n" +
+			"float fShiftR = fShift.y;" + "\n" +
+			"vec3 closestPt = computeClosestPoint( fX, fY, LevMidLine );" + "\n" +
+			"vec3 perpendicDir = vec3( fX - closestPt.x, fY - closestPt.y, 0 );" + "\n" +
+			"vec3 leftStart = vec3( LevLeftLine.x, LevLeftLine.y, 0);" + "\n" +
+			"vec3 leftDir = vec3( LevLeftLine.z - LevLeftLine.x, LevLeftLine.w - LevLeftLine.y, 0);" + "\n" +
+			"vec3 leftPt = computeIntersect( closestPt, perpendicDir, leftStart, leftDir);" + "\n" +
+			"vec3 rightStart = vec3( LevRightLine.x, LevRightLine.y, 0);" + "\n" +
+			"vec3 rightDir = vec3( LevRightLine.z - LevRightLine.x, LevRightLine.w - LevRightLine.y, 0);" + "\n" +
+			"vec3 rightPt = computeIntersect( closestPt, perpendicDir, rightStart, rightDir);" + "\n" +
+			"float distMidR = (closestPt.x - rightPt.x) * (closestPt.x - rightPt.x) +  (closestPt.y - rightPt.y) * (closestPt.y - rightPt.y);" + "\n" +
+			"float distMidL = (closestPt.x - leftPt.x)  * (closestPt.x - leftPt.x)  +  (closestPt.y - leftPt.y)  * (closestPt.y - leftPt.y);" + "\n" +
+			"float distMidPt = (closestPt.x - fX)  * (closestPt.x - fX)  +  (closestPt.y - fY)  * (closestPt.y - fY);" + "\n" +
+			"float distPtR =  (fX - rightPt.x) * (fX - rightPt.x) +  (fY - rightPt.y) * (fY - rightPt.y);" + "\n" +
+			"float distPtL = (fX - leftPt.x)  * (fX - leftPt.x)  +  (fY - leftPt.y)  * (fY - leftPt.y);" + "\n" +
+			"" + "\n" +
+			"float fAlpha = 0.0;" + "\n" +
+			"if ( (fX > (closestPt.x - fShiftL)) && (fX < (closestPt.x + fShiftR)) )" + "\n" +
+			"{" + "\n" +
+			"    fAlpha = 1.0;" + "\n" +
+			"}" + "\n" +
+			"if ( (fX <= (closestPt.x-fShiftL)) && (fX >= leftPt.x) )" + "\n" +
+			"{" + "\n" +
+			"    fAlpha = (fX - leftPt.x) / ((closestPt.x-fShiftL) - leftPt.x);" + "\n" +
+			"}" + "\n" +
+			"if ( (fX >= (closestPt.x+fShiftR)) && (fX <= rightPt.x) )" + "\n" +
+			"{" + "\n" +
+			"    fAlpha = (fX - rightPt.x) / ((closestPt.x+fShiftR) - rightPt.x);" + "\n" +
+			"}" + "\n" +
+			"return fAlpha;" + "\n" +
+			"}" + "\n";
+	private static String computeClosestPoint = "" +
+			"vec3 computeClosestPoint( float fX, float fY," + "\n" +
+			"vec4 LevLine )" + "\n" +
+			"{" + "\n" +
+			"   vec3 dir = vec3( LevLine.z - LevLine.x, LevLine.w - LevLine.y, 0);" + "\n" +
+			"   dir = normalize(dir);" + "\n" +
+			"   vec3 diff = vec3( fX - LevLine.x, fY - LevLine.y, 0);" + "\n" +
+			"   float dot = dot(dir, diff);" + "\n" +
+			"   vec3 closest = vec3( dir.x * dot + LevLine.x, dir.y * dot + LevLine.y, 0);" + "\n" +
+			"   return closest;" + "\n" +
+			"}" + "\n";
+	private static String intersect = "" +
+			"vec3 computeIntersect( vec3 p0, vec3 v0, vec3 p1, vec3 v1 )" + "\n" +
+			"{" + "\n" +
+			"   float fDet = (v1.x * v0.y - v1.y * v0.x);" + "\n" +
+			"   float len0 = v0.x * v0.x + v0.y * v0.y;" + "\n" +
+			"   float len1 = v1.x * v1.x + v1.y * v1.y;" + "\n" +
+			"   if ( (fDet * fDet) < (0.00000012 * len0 * len1)) {" + "\n" +
+			"       return p0;" + "\n" +
+			"    }" + "\n" +
+			"   float fInvDet = 1.0 / fDet;" + "\n" +
+			"   vec3 diff = vec3( p1.x - p0.x, p1.y - p0.y, 0);" + "\n" +
+			"   float s = (v1.x * diff.y - v1.y * diff.x) * fInvDet;" + "\n" +
+			"   vec3 intersectPoint = vec3( v0.x * s + p0.x, v0.y * s + p0.y, 0);" + "\n" +
+			"   return intersectPoint;" + "\n" +
+			"}" + "\n";
 
 
-    public void SetLUT( Texture kMap, int index, boolean bReverse )
-    {
-		m_kPShader.get(0).SetImageName(1,kMap.GetName());
-		m_kPShader.get(0).SetTexture(1,kMap);
-		
-    	m_kWidgetState.UseColorMap[0] = index;
-    	m_kWidgetState.InvertLUT = bReverse;
-    	UpdateLUT();
-    }
+	private static String computeAlphaCircle = ""+ 
+			"float computeAlphaCircle( float fX," + "\n"
+			+ "                    float fY," + "\n"
+			+ "                    vec4  Center," + "\n"
+			+ "                    vec4  MidLine," + "\n"
+			+ "                    vec4  Radius )" + "\n"
+			+ "{" + "\n"
+			+ "    vec2 p0, p1;" + "\n"
+			+ "    p0.x = MidLine.x - Center.x;" + "\n"
+			+ "    p0.y = MidLine.y - Center.y;" + "\n"
+			+ "    p1.x = fX - Center.x;" + "\n"
+			+ "    p1.y = fY - Center.y;" + "\n"
+			+ "    float b = Radius.y;" + "\n"
+			+ "    float a = Radius.x;" + "\n"
+			+ "    float slope = (p1.y - p0.y) / (p1.x - p0.x);" + "\n"
+			+ "    float intercept = p1.y - slope * p1.x;" + "\n"
+			+ "    float A = b*b + a*a*slope*slope;" + "\n"
+			+ "    float B = 2*a*a*intercept*slope;" + "\n"
+			+ "    float C = a*a*intercept*intercept - b*b*a*a;" + "\n"
+			+ "    float r = B*B - 4*A*C;" + "\n"
+			+ "    vec2 intersect0;" + "\n"
+			+ "    vec2 intersect1;" + "\n"
+			+ "    if ( r >= 0 )" + "\n"
+			+ "    {" + "\n"
+			+ "        // solve for x values - using the quadratic equation" + "\n"
+			+ "        float x3 = (float)(-B-sqrt(r))/(2*A);" + "\n"
+			+ "        float x4 = (float)(-B+sqrt(r))/(2*A);" + "\n"
+			+ "        // calculate y, since we know it's on the line at that point (otherwise there would be no intersection)" + "\n"
+			+ "        float y3 = slope*x3+intercept;" + "\n"
+			+ "        float y4 = slope*x4+intercept;				" + "\n"
+			+ "        intersect0.x = Center.x + x3;" + "\n"
+			+ "        intersect0.y = Center.y + y3;" + "\n"
+			+ "        intersect1.x = Center.x + x4;" + "\n"
+			+ "        intersect1.y = Center.y + y4;" + "\n"
+			+ "        vec2 shade;" + "\n"
+			+ "        shade.x = fX - MidLine.x;" + "\n"
+			+ "        shade.y = fY - MidLine.y;" + "\n"
+			+ "        vec2 edge;" + "\n"
+			+ "        edge.x = intersect0.x - MidLine.x;" + "\n"
+			+ "        edge.y = intersect0.y - MidLine.y;" + "\n"
+			+ "        if ( dot( edge, shade ) <= 0 )" + "\n"
+			+ "        {" + "\n"
+			+ "            intersect0 = intersect1;" + "\n"
+			+ "        }" + "\n"
+			+ "    }" + "\n"
+			+ "    else" + "\n"
+			+ "    {" + "\n"
+			+ "        float x3 = (float)(-B-sqrt(r))/(2*A);	" + "\n"
+			+ "        float y3 = slope*x3+intercept;" + "\n"  
+			+ "        intersect0.x = Center.x + x3;" + "\n"
+			+ "        intersect0.y = Center.y + y3;" + "\n"
+			+ "    }" + "\n"
+			+ "    vec2 direction;" + "\n"
+			+ "    direction.x = fX - MidLine.x;" + "\n"
+			+ "    direction.y = fY - MidLine.y; " + "\n"
+			+ "    float lengthShade = sqrt(direction.x*direction.x + direction.y*direction.y);" + "\n"
+			+ "    float diffX = intersect0.x - MidLine.x;" + "\n"
+			+ "    float diffY = intersect0.y - MidLine.y;" + "\n"
+			+ "    float length =  sqrt(diffX * diffX + diffY * diffY );" + "\n"
+			+ "    float fAlpha = max( 0.0, 1.0 - (lengthShade / length) );" + "\n"
+			+ "    return fAlpha;" + "\n"
+			+ "}" + "\n";
+
+	private static String multiHistogramFunctions = computeClosestPoint + intersect + computeAlphaTriangle + computeAlphaSquare + computeAlphaCircle;
+
+
+	public static String getMultiHistogramFunctions()
+	{
+		return new String(multiHistogramFunctions);
+	}
+	private String m_kCurrentText;
+	/**
+	 * Creates a new ClassificationWidgetEffect based on the input ClassificationWidgetEffect
+	 * @param kEffect ClassificationWidgetEffect, used to provide the name of the 2D Histogram texture,
+	 * as well as the current state of the Widget parameters.
+	 */
+	public ClassificationWidgetEffect (ClassificationWidgetEffect kEffect)
+	{
+		SetPassQuantity(1);
+		m_kVShader.set(0, new VertexShader("TextureV"));
+		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
+
+		m_kPShader.get(0).SetTextureQuantity(2);
+		m_kPShader.get(0).SetImageName(0, kEffect.m_kPShader.get(0).GetImageName(0) );
+		m_kWidgetState = new ClassificationWidgetState();
+		m_kWidgetState.Copy(kEffect.m_kWidgetState);
+	}
+
+	/** Creates a new ClassificationWidgetEffect with the texture specified.
+	 * @param rkBaseName the name of the 2D Histogram texture image.
+	 */
+	public ClassificationWidgetEffect (Texture kTexture, int type)
+	{
+		SetPassQuantity(1);
+		m_kVShader.set(0, new VertexShader("TextureV"));
+		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
+
+		m_kPShader.get(0).SetTextureQuantity(2);
+		m_kPShader.get(0).SetImageName(0,kTexture.GetName());
+		m_kWidgetState.UseWidget[0] = 1.0f;
+
+		m_kWidgetState.UseColorMap[0] = -1.0f;
+
+		m_kTexture = kTexture;
+		m_kWidgetState.Type = type;
+	}
+
+	/* (non-Javadoc)
+	 * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
+	 */
+	public void dispose()
+	{
+		m_kWidgetState.dispose();
+		m_kWidgetState = null;
+		super.dispose();
+	}
+
+
+	/**
+	 * Returns the color of the widget color transfer function.
+	 * @return the color of the widget color transfer function.
+	 */
+	public ColorRGBA GetColor( ) 
+	{
+		return new ColorRGBA (
+				m_kWidgetState.Color[0],
+				m_kWidgetState.Color[1],
+				m_kWidgetState.Color[2],
+				m_kWidgetState.Color[3] );
+	}
 
 
 	public int GetLUTIndex( )
 	{
 		return (int)m_kWidgetState.UseColorMap[0];
 	}
-	
-    /**
-     * Updates the color in the GLSL shader program used to render the ClassificationWidget. 
-     */
-    public void UpdateColor( ) 
-    {
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevColor") != null) ) 
-        {
-            pkCProgram.GetUC("LevColor").SetDataSource(m_kWidgetState.Color);
-        }
-    }
 
-    public void UpdateLUT( ) 
-    {
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("UseColorMap") != null) ) 
-        {
-            pkCProgram.GetUC("UseColorMap").SetDataSource(m_kWidgetState.UseColorMap);
-        }
-    }
-    
+	/**
+	 * Returns the current ClassificationWidgetState GLSL Shader program parameters.
+	 * @return the current ClassificationWidgetState GLSL Shader program parameters.
+	 */
+	public ClassificationWidgetState getState()
+	{
+		return m_kWidgetState;
+	}
 
-    /**
-     * Sets the mid-line parameter to the GLSL Shader Program.
-     * @param fX1 bottom x-coordinate in Texture Coordinates.
-     * @param fY1 bottom y-coordinate in Texture Coordinates.
-     * @param fX2 top x-coordinate in Texture Coordinates.
-     * @param fY2 top y-coordinate in Texture Coordinates.
-     */
-    public void SetMidLine( float fX1, float fY1, float fX2, float fY2 ) 
-    {
-        m_kWidgetState.MidLine[0] = fX1;
-        m_kWidgetState.MidLine[1] = fY1;
-        m_kWidgetState.MidLine[2] = fX2;
-        m_kWidgetState.MidLine[3] = fY2;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevMidLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine); 
-            //System.err.println( "EFFECT : LevMidLine " + m_kWidgetState.MidLine[0] +
-            //		" "  + m_kWidgetState.MidLine[1] +
-            //		" "  + m_kWidgetState.MidLine[2] +
-            //		" "  + m_kWidgetState.MidLine[3] );
-            
-        }
-    }
-    public void SetCenter( float fX, float fY ) 
-    {
-        m_kWidgetState.Center[0] = fX;
-        m_kWidgetState.Center[1] = fY;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("Center") != null) ) 
-        {
-            pkCProgram.GetUC("Center").SetDataSource(m_kWidgetState.Center); 
-            //System.err.println( "Center " + fX + " " + fY );
-        }
-    }
-    public void SetRadius( float fRX, float fRY ) 
-    {
-        m_kWidgetState.Radius[0] = fRX;
-        m_kWidgetState.Radius[1] = fRY;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("Radius") != null) ) 
-        {
-            pkCProgram.GetUC("Radius").SetDataSource(m_kWidgetState.Radius); 
-            //System.err.println( "Radius " + fR );
-        }
-    }
-    
 
-    /**
-     * Sets the left-line parameter to the GLSL Shader Program.
-     * @param fX1 bottom x-coordinate in Texture Coordinates.
-     * @param fY1 bottom y-coordinate in Texture Coordinates.
-     * @param fX2 top x-coordinate in Texture Coordinates.
-     * @param fY2 top y-coordinate in Texture Coordinates.
-     */
-    public void SetLeftLine( float fX1, float fY1, float fX2, float fY2 ) 
-    {
-        m_kWidgetState.LeftLine[0] = fX1;
-        m_kWidgetState.LeftLine[1] = fY1;
-        m_kWidgetState.LeftLine[2] = fX2;
-        m_kWidgetState.LeftLine[3] = fY2;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
-            //System.err.println( "EFFECT : LevLeftLine " + m_kWidgetState.LeftLine[0] +
-            //		" "  + m_kWidgetState.LeftLine[1] +
-            //		" "  + m_kWidgetState.LeftLine[2] +
-            //		" "  + m_kWidgetState.LeftLine[3] );
-        }
-    }
-    
+	/**
+	 * Read this object from disk.
+	 * @param in
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
+	public void readObject(java.io.ObjectInputStream in)
+			throws IOException, ClassNotFoundException
+			{
+		String rkBaseName = (String)in.readObject();
+		SetPassQuantity(1);
+		m_kVShader.set(0, new VertexShader("TextureV"));
+		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
 
-    /**
-     * Sets the right-line parameter to the GLSL Shader Program.
-     * @param fX1 bottom x-coordinate in Texture Coordinates.
-     * @param fY1 bottom y-coordinate in Texture Coordinates.
-     * @param fX2 top x-coordinate in Texture Coordinates.
-     * @param fY2 top y-coordinate in Texture Coordinates.
-     */
-    public void SetRightLine( float fX1, float fY1, float fX2, float fY2 ) 
-    {
-        m_kWidgetState.RightLine[0] = fX1;
-        m_kWidgetState.RightLine[1] = fY1;
-        m_kWidgetState.RightLine[2] = fX2;
-        m_kWidgetState.RightLine[3] = fY2;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
-        {
-            pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
-            //System.err.println( "EFFECT : LevRightLine " + m_kWidgetState.RightLine[0] +
-            //		" "  + m_kWidgetState.RightLine[1] +
-            //		" "  + m_kWidgetState.RightLine[2] +
-            //		" "  + m_kWidgetState.RightLine[3] );
-        }
-    }
-    
-    
-    /**
-     * Sets the contribution of the 2nd derivative to the volume rendering.
-     * @param fAlpha the contribution of the 2nd derivative to the volume rendering.
-     */
-    public void setBoundary( float fAlpha )
-    {
-        m_kWidgetState.BoundaryEmphasis[0] = fAlpha;
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("BoundaryEmphasis") != null) ) 
-        {
-            pkCProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
-        }
-    }
-    
-    /**
-     * Computes the input parameters to the GLSL shader program based on the ClassificationWidgetState and passes
-     * them to the program to render the widget in the multi-histogram panel.
-     */
-    protected void computeUniformVariables()
-    {
-    	m_kWidgetState.Shift[0] = 0;
-    	m_kWidgetState.Shift[1] = 0;
-        if ( m_kWidgetState.MidLine[1] == m_kWidgetState.MidLine[3] )
-        {
-            float fIncr = (m_kWidgetState.MidLine[1] - m_kWidgetState.LeftLine[1]) /
-            (m_kWidgetState.LeftLine[3] - m_kWidgetState.LeftLine[1]);
+		m_kPShader.get(0).SetTextureQuantity(2);
+		m_kPShader.get(0).SetImageName(0,rkBaseName);
 
-            fIncr = fIncr * (m_kWidgetState.RightLine[0] - m_kWidgetState.LeftLine[0]);
+		m_kWidgetState = (ClassificationWidgetState)in.readObject();
+			}
 
-            float fShiftX = (m_kWidgetState.MidLine[0] - m_kWidgetState.LeftLine[0]) /
-            (m_kWidgetState.RightLine[0] - m_kWidgetState.LeftLine[0]);
-            m_kWidgetState.Shift[0] = (fShiftX)*fIncr;
-            m_kWidgetState.Shift[1] = (1.0f-fShiftX)*fIncr;
-        }
-        Program pkCProgram = GetCProgram(0);
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("Shift") != null) ) 
-        {
-            pkCProgram.GetUC("Shift").SetDataSource(m_kWidgetState.Shift);
-            //System.err.println( "EFFECT : Shift " + pkCProgram.GetUC("Shift").GetData()[0] + " " + pkCProgram.GetUC("Shift").GetData()[1] );
-        }
-        if ( (pkCProgram != null) && (pkCProgram.GetUC("InvY0MY1") != null) ) 
-        {            
-        	m_kWidgetState.YRatio[0] = 1.0f / (m_kWidgetState.LeftLine[1] - m_kWidgetState.LeftLine[3]);
-        	m_kWidgetState.YRatio[1] = 1.0f / (m_kWidgetState.MidLine[1] - m_kWidgetState.MidLine[3]);
-        	m_kWidgetState.YRatio[2] = 1.0f / (m_kWidgetState.RightLine[1] - m_kWidgetState.RightLine[3]);
-            pkCProgram.GetUC("InvY0MY1").SetDataSource(m_kWidgetState.YRatio);
-            //System.err.println( "EFFECT : InvY0MY1 " + pkCProgram.GetUC("InvY0MY1").GetData()[0] + " " + pkCProgram.GetUC("InvY0MY1").GetData()[1] + " " + pkCProgram.GetUC("InvY0MY1").GetData()[2]);
-            //System.err.println( "" );
-        }
-    }
+	public void SetAlpha( float fA ) 
+	{
+		m_kWidgetState.Color[3] = fA;
+		if ( fA == 0 )
+		{
+			m_kWidgetState.UseWidget[0] = 0;
+		}
+		else
+		{
+			m_kWidgetState.UseWidget[0] = 1;
+		}
+		UpdateColor();
+	}
 
-    /**
-     * Stream this object to disk.
-     * @param out
-     * @throws IOException
-     */
-    public void writeObject(java.io.ObjectOutputStream out)
-    throws IOException 
-    {
-        out.writeObject( m_kPShader.get(0).GetImageName(0) );
-        out.writeObject(m_kWidgetState);
-    }
-    
 
-    /**
-     * Read this object from disk.
-     * @param in
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    public void readObject(java.io.ObjectInputStream in)
-    throws IOException, ClassNotFoundException
-    {
-        String rkBaseName = (String)in.readObject();
-        SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
-        m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
+	/**
+	 * Sets the contribution of the 2nd derivative to the volume rendering.
+	 * @param fAlpha the contribution of the 2nd derivative to the volume rendering.
+	 */
+	public void setBoundary( float fAlpha )
+	{
+		m_kWidgetState.BoundaryEmphasis[0] = fAlpha;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("BoundaryEmphasis") != null) ) 
+		{
+			pkCProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
+		}
+	}
 
-        m_kPShader.get(0).SetTextureQuantity(1);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
-        m_kWidgetState = (ClassificationWidgetState)in.readObject();
-    }
-    
+
+	public void SetCenter( float fX, float fY ) 
+	{
+		m_kWidgetState.Center[0] = fX;
+		m_kWidgetState.Center[1] = fY;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("Center") != null) ) 
+		{
+			pkCProgram.GetUC("Center").SetDataSource(m_kWidgetState.Center); 
+			//System.err.println( "Center " + fX + " " + fY );
+		}
+	}
+
+	/**
+	 * Sets the color of the widget color transfer function.
+	 * @param the color of the widget color transfer function.
+	 */
+	public void SetColor( float fR, float fG, float fB, float fA ) 
+	{
+		m_kWidgetState.Color[0] = fR;
+		m_kWidgetState.Color[1] = fG;
+		m_kWidgetState.Color[2] = fB;
+		m_kWidgetState.Color[3] = fA;
+		if ( fA == 0 )
+		{
+			m_kWidgetState.UseWidget[0] = 0;
+		}
+		else
+		{
+			m_kWidgetState.UseWidget[0] = 1;
+		}
+		m_kWidgetState.UseColorMap[0] = -1.0f;
+		UpdateColor();
+	}
+
+	/**
+	 * Sets the left-line parameter to the GLSL Shader Program.
+	 * @param fX1 bottom x-coordinate in Texture Coordinates.
+	 * @param fY1 bottom y-coordinate in Texture Coordinates.
+	 * @param fX2 top x-coordinate in Texture Coordinates.
+	 * @param fY2 top y-coordinate in Texture Coordinates.
+	 */
+	public void SetLeftLine( float fX1, float fY1, float fX2, float fY2 ) 
+	{
+		m_kWidgetState.LeftLine[0] = fX1;
+		m_kWidgetState.LeftLine[1] = fY1;
+		m_kWidgetState.LeftLine[2] = fX2;
+		m_kWidgetState.LeftLine[3] = fY2;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
+			//System.err.println( "EFFECT : LevLeftLine " + m_kWidgetState.LeftLine[0] +
+			//		" "  + m_kWidgetState.LeftLine[1] +
+			//		" "  + m_kWidgetState.LeftLine[2] +
+			//		" "  + m_kWidgetState.LeftLine[3] );
+		}
+		checkProgramText();
+	}
+
+	public void SetLUT( Texture kMap, int index, boolean bReverse )
+	{
+		m_kLUTName = kMap.GetName();
+		m_kLUTMap = kMap;
+
+		m_kPShader.get(0).SetImageName(1,m_kLUTName);
+		m_kPShader.get(0).SetTexture(1,m_kLUTMap);
+
+		m_kWidgetState.UseColorMap[0] = index;
+		m_kWidgetState.InvertLUT = bReverse;
+		checkProgramText();
+	}
+
+	/**
+	 * Sets the mid-line parameter to the GLSL Shader Program.
+	 * @param fX1 bottom x-coordinate in Texture Coordinates.
+	 * @param fY1 bottom y-coordinate in Texture Coordinates.
+	 * @param fX2 top x-coordinate in Texture Coordinates.
+	 * @param fY2 top y-coordinate in Texture Coordinates.
+	 */
+	public void SetMidLine( float fX1, float fY1, float fX2, float fY2 ) 
+	{
+		m_kWidgetState.MidLine[0] = fX1;
+		m_kWidgetState.MidLine[1] = fY1;
+		m_kWidgetState.MidLine[2] = fX2;
+		m_kWidgetState.MidLine[3] = fY2;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevMidLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine); 
+			//System.err.println( "EFFECT : LevMidLine " + m_kWidgetState.MidLine[0] +
+			//		" "  + m_kWidgetState.MidLine[1] +
+			//		" "  + m_kWidgetState.MidLine[2] +
+			//		" "  + m_kWidgetState.MidLine[3] );            
+		}
+		checkProgramText();
+	}
+
+	public void SetRadius( float fRX, float fRY ) 
+	{
+		m_kWidgetState.Radius[0] = fRX;
+		m_kWidgetState.Radius[1] = fRY;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("Radius") != null) ) 
+		{
+			pkCProgram.GetUC("Radius").SetDataSource(m_kWidgetState.Radius); 
+			//System.err.println( "Radius " + fR );
+		}
+	}
+
+	/**
+	 * Sets the right-line parameter to the GLSL Shader Program.
+	 * @param fX1 bottom x-coordinate in Texture Coordinates.
+	 * @param fY1 bottom y-coordinate in Texture Coordinates.
+	 * @param fX2 top x-coordinate in Texture Coordinates.
+	 * @param fY2 top y-coordinate in Texture Coordinates.
+	 */
+	public void SetRightLine( float fX1, float fY1, float fX2, float fY2 ) 
+	{
+		m_kWidgetState.RightLine[0] = fX1;
+		m_kWidgetState.RightLine[1] = fY1;
+		m_kWidgetState.RightLine[2] = fX2;
+		m_kWidgetState.RightLine[3] = fY2;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
+			//System.err.println( "EFFECT : LevRightLine " + m_kWidgetState.RightLine[0] +
+			//		" "  + m_kWidgetState.RightLine[1] +
+			//		" "  + m_kWidgetState.RightLine[2] +
+			//		" "  + m_kWidgetState.RightLine[3] );
+		}
+		checkProgramText();
+	}
+
+
+	public void SetShift( float fX, float fY ) 
+	{
+		m_kWidgetState.Shift[0] = fX;
+		m_kWidgetState.Shift[1] = fY;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("Shift") != null) ) 
+		{
+			pkCProgram.GetUC("Shift").SetDataSource(m_kWidgetState.Shift);
+		}
+	}
+
+	/**
+	 * Sets the ClassificationWidgetState, representing the GLSL shader program parameters.
+	 * @param kState ClassificationWidgetState, representing the GLSL shader program parameters.
+	 */
+	public void setState(ClassificationWidgetState kState)
+	{
+		m_kWidgetState = kState;
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevColor") != null) ) 
+		{
+			pkCProgram.GetUC("LevColor").SetDataSource(m_kWidgetState.Color);
+		}
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevMidLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine);
+		}
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
+		}
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
+		{
+			pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
+		}
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("BoundaryEmphasis") != null) ) 
+		{
+			pkCProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
+		}
+		computeUniformVariables();
+	}
+
+	/**
+	 * Updates the color in the GLSL shader program used to render the ClassificationWidget. 
+	 */
+	public void UpdateColor( ) 
+	{
+		Program pkCProgram = GetCProgram(0);
+		if ( (pkCProgram != null) && (pkCProgram.GetUC("LevColor") != null) ) 
+		{
+			pkCProgram.GetUC("LevColor").SetDataSource(m_kWidgetState.Color);
+		}
+		checkProgramText();
+	}
+
+
+
+	/**
+	 * Stream this object to disk.
+	 * @param out
+	 * @throws IOException
+	 */
+	public void writeObject(java.io.ObjectOutputStream out)
+			throws IOException 
+			{
+		//out.writeObject( m_kPShader.get(0).GetImageName(0) );
+		//out.writeObject(m_kWidgetState);
+			}
+
+	/**
+	 * Computes the input parameters to the GLSL shader program based on the ClassificationWidgetState and passes
+	 * them to the program to render the widget in the multi-histogram panel.
+	 */
+	protected void computeUniformVariables( )
+	{
+		checkProgramText();
+	}
+
+	private void checkProgramText()
+	{    	
+		String programText = createProgramText();
+		if ( !m_kCurrentText.equals( programText ) )
+		{
+			//System.err.println( programText );
+			m_kCurrentText = new String(programText);
+			m_kPShader.get(0).GetProgram().SetProgramText( m_kCurrentText );
+			if ( GetCProgram(0) != null )
+			{
+				GetCProgram(0).Release();
+			}
+		}
+	}
+	private String createProgramText()
+	{   	
+
+		boolean bUseColorTexture = false;
+		String mainPixelShader = "" + mainPixelShader1;
+		if ( m_kWidgetState.Type == ClassificationWidgetState.Circle )
+		{
+			mainPixelShader += mainPixelShaderCircle;
+		}
+		else if ( m_kWidgetState.Type == ClassificationWidgetState.Square )
+		{
+			mainPixelShader += mainPixelShaderSquare;
+		}
+		else if ( m_kWidgetState.Type == ClassificationWidgetState.Triangle )
+		{
+			mainPixelShader += mainPixelShaderTriangle;
+		}
+
+		if ( m_kWidgetState.UseColorMap[0] != -1 )
+		{
+			mainPixelShader += "" +
+					"  widgetColor = texture1D(ColorMap, fAlpha );" + "\n" +
+					"  widgetColor.a = LevColor.a;" + "\n";
+			bUseColorTexture = true;
+		}
+		mainPixelShader += mainPixelShader2;
+
+		String programText = new String( multiHistogramFunctions +  mainPixelShader);
+		if ( m_kCurrentText == null )
+		{
+			m_kCurrentText = new String(programText);
+		}
+
+		int iTex = 0;    	
+		PixelShader pShader = m_kPShader.get(0);
+		if ( pShader != null )
+		{
+			pShader.SetImageName(iTex, m_kTexture.GetName());
+			pShader.SetTexture(iTex++, m_kTexture);
+			if ( bUseColorTexture )
+			{		
+				pShader.SetImageName(iTex,m_kLUTName);
+				pShader.SetTexture(iTex++,m_kLUTMap);	
+			}
+		}
+		return programText;
+	}
+
 }

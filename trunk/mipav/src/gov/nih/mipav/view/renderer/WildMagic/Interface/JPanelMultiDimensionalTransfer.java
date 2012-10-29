@@ -6,8 +6,10 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentGraphAxes;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 
 import java.awt.BorderLayout;
@@ -19,12 +21,17 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -34,6 +41,8 @@ import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
@@ -52,6 +61,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 	/** Color button for changing color. */
 	protected JButton colorButton;
+	/** Save the current multi-histogram widgets to file. */
+	protected JButton saveButton;
+	/** Read new multi-histogram widgets from file. */
+	protected JButton loadButton;
 	/** Alpha blend slider. */
 	protected JSlider alphaSlider;
 	/** Boundary emphasis slider slider. */
@@ -102,6 +115,22 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		{
 			colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(colorButton),
 					new CancelListener());
+		}
+		else if ( source == saveButton )
+		{
+			String fileName = getMultiHistogramFile(true);
+			if ( fileName != null )
+			{
+				saveMultiHistograms(fileName);
+			}
+		}
+		else if ( source == loadButton )
+		{
+			String fileName = getMultiHistogramFile(false);
+			if ( fileName != null )
+			{
+				loadMultiHistograms(fileName);
+			}
 		}
 		else if ( event.getActionCommand().equals("CircleWidget") )
 		{
@@ -337,16 +366,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 		JToolBar lutToolBar = toolBarObj.buildLUTToolBarTop();
 		colorButton = toolBarObj.buildButton( "", "Change histogram color", CustomUIBuilder.PARAM_PAINT_COLOR.getIconBase() );
-		/*
-		colorButton = new JButton();
-		colorButton.setToolTipText("Change histogram color");
-		colorButton.addActionListener(this);
-		colorButton.setBackground(Color.white);
-		colorButton.setEnabled(true);   
-		colorButton.setBorderPainted(false);
-		colorButton.setFocusPainted(true);
-		colorButton.setMargin(new Insets(0, 0, 0, 0)); */
+		saveButton = toolBarObj.buildButton( "save", "Save histograms", "save" );
+		loadButton = toolBarObj.buildButton( "load", "Change histogram color", "open" );
 		lutToolBar.add( colorButton );
+		lutToolBar.add( saveButton );
+		lutToolBar.add( loadButton );
 
 		Box contentBox = new Box(BoxLayout.Y_AXIS);
 		contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -402,4 +426,57 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			}
 		}
 	}
+
+    private String getMultiHistogramFile(boolean bSave) {
+        final JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(false);
+
+        // TODO: Use FileNameExtensionFilter introduced in 1.6
+        FileNameExtensionFilter kFileExtFilter = new FileNameExtensionFilter( "multi-histogram", "mh" );
+        chooser.addChoosableFileFilter(kFileExtFilter);
+
+        final FileFilter kFileFilter = new FileFilter() {
+            public boolean accept(File f) {
+                if (f.getName().toLowerCase().endsWith(".mh")) {
+                    return true;
+                }
+				return false;
+            }
+
+            public String getDescription() {
+                return "multi-histogram";
+            }
+        };
+        chooser.addChoosableFileFilter(kFileFilter);
+
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+
+        if (bSave && JFileChooser.APPROVE_OPTION != chooser.showSaveDialog(null)) {
+            return null;
+        }
+        else if (!bSave && JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
+            return null;
+        }
+        String kFile = chooser.getSelectedFile().getName();
+        final String kDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+        chooser.setVisible(false);
+        if ( !kFile.endsWith(".mh")) {
+            kFile = kFile.concat(".mh");
+        }
+        return new String(kDir + kFile);
+    }
+    
+    private void loadMultiHistograms(String fileName)
+    {
+    	m_kMultiHistogram.load(fileName);    	
+    }
+    
+    private void saveMultiHistograms(String fileName)
+    {
+    	m_kMultiHistogram.save(fileName);
+    }
 }

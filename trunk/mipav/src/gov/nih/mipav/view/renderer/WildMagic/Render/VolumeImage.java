@@ -727,11 +727,11 @@ public class VolumeImage implements Serializable {
 	}
 
 	/**
-	 * Returns the name of the multi-histogram histogram GraphicsImage.
-	 * @return the name of the multi-histogram histogram GraphicsImage.
+	 * Returns the multi-histogram histogram Texture.
+	 * @return the multi-histogram histogram Texture.
 	 */
-	public String GetHistoName() {
-		return m_kHisto[m_iTimeSlice].GetName();
+	public Texture GetHistoTarget() {
+		return m_kHistoTarget;
 	}
 
 
