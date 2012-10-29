@@ -21,6 +21,7 @@ import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -72,6 +73,7 @@ public class VolumeImageViewer extends JavaApplication3D
         animator.start();
     }    
     protected Node m_spkScene;
+    protected CullState m_kCull;
     protected Culler m_kCuller = new Culler(0,0,null);
     protected VolumeImage m_kVolumeImage;
     protected ShaderEffect m_spkEffect;

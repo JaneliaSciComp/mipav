@@ -1,11 +1,7 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
-import gov.nih.mipav.model.structures.ModelLUT;
-
 import java.io.Serializable;
-
-import WildMagic.LibGraphics.Rendering.Texture;
 
 /**
  * This class stores the information needed for calculating how the multi-histogram is applied to the volume
@@ -19,6 +15,10 @@ public class ClassificationWidgetState implements Serializable
 {
     /**  */
     private static final long serialVersionUID = 711728604033191355L;
+
+    public static int Circle = 0;
+    public static int Square = 1;
+    public static int Triangle = 2;
 
     public static int m_iTextureID = 0;
     
@@ -37,6 +37,8 @@ public class ClassificationWidgetState implements Serializable
     /** Transfer function shift: */
     public float[] Shift = new float[4];
     /** Transfer function y-ratios: */
+    public float[] XRatio = new float[4];
+    /** Transfer function y-ratios: */
     public float[] YRatio = new float[4];
     /** Transfer function radius: */
     public float[] Radius = new float[4];
@@ -48,6 +50,7 @@ public class ClassificationWidgetState implements Serializable
     /** turns the widget color map on/off in the GLSL shader code. */
     public float[] UseColorMap = new float[4];
     public boolean InvertLUT = false;
+    public int Type = Square;
 
     /**
      * Default Constructor:
@@ -57,10 +60,11 @@ public class ClassificationWidgetState implements Serializable
         for ( int i = 0; i < 4; i++ )
         {
             Center[i] = 0f;
-            MidLine[i] = 0f;
-            LeftLine[i] = 0f;
-            RightLine[i] = 0f;
+            MidLine[i] = i;
+            LeftLine[i] = i;
+            RightLine[i] = i;
             Shift[i] = 0f;
+            XRatio[i] = 0f;
             YRatio[i] = 0f;
             BoundaryEmphasis[i] = 0f;
             UseWidget[i] = 0;
@@ -86,6 +90,7 @@ public class ClassificationWidgetState implements Serializable
             LeftLine[i] = kIn.LeftLine[i];
             RightLine[i] = kIn.RightLine[i];
             Shift[i] = kIn.Shift[i];
+            XRatio[i] = kIn.XRatio[i];
             YRatio[i] = kIn.YRatio[i];
             Radius[i] = kIn.Radius[i];
             BoundaryEmphasis[i] = kIn.BoundaryEmphasis[i];
@@ -93,6 +98,7 @@ public class ClassificationWidgetState implements Serializable
             UseColorMap[i] = kIn.UseColorMap[i];
         }
         InvertLUT = kIn.InvertLUT;
+        Type = kIn.Type;
     }
     
     /**
@@ -110,6 +116,7 @@ public class ClassificationWidgetState implements Serializable
         UseColorMap = null;
         Radius = null;
         Shift = null;
+        XRatio = null;
         YRatio = null;
     }
     
@@ -124,11 +131,13 @@ public class ClassificationWidgetState implements Serializable
         			(LeftLine[i] != kIn.LeftLine[i] ) ||
         			(RightLine[i] != kIn.RightLine[i]) ||
                     (Shift[i] != kIn.Shift[i]) ||
+                    (XRatio[i] != kIn.XRatio[i])	||
                     (YRatio[i] != kIn.YRatio[i])	||
                     (BoundaryEmphasis[i] != kIn.BoundaryEmphasis[i]) ||
                     (UseWidget[i] != kIn.UseWidget[i]) ||
                     (UseColorMap[i] != kIn.UseColorMap[i]) ||
-                    (InvertLUT != kIn.InvertLUT) )
+                    (InvertLUT != kIn.InvertLUT) ||
+                    (Type != kIn.Type) )
         		return false;
         }
         return true;
