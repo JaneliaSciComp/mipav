@@ -49,28 +49,6 @@ public class SquareClassificationWidget extends ClassificationWidget
         CreateSquare( iX, iY, kTexture );
     }
 
-    /**
-     * Copy constructor.
-     * @param kWidget
-     */
-    public SquareClassificationWidget ( SquareClassificationWidget kWidget )
-    {
-        super(kWidget);
-
-        m_kWidgetMesh = new TriMesh(new VertexBuffer(kWidget.m_kWidgetMesh.VBuffer),
-                new IndexBuffer(kWidget.m_kWidgetMesh.IBuffer));
-        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
-        
-        m_kWidgetEfect = new ClassificationWidgetEffect( kWidget.m_kWidgetEfect ); 
-
-        m_kUpperSphere = new TriMesh(new VertexBuffer(kWidget.m_kUpperSphere.VBuffer),
-                new IndexBuffer(kWidget.m_kUpperSphere.IBuffer));
-        m_kMiddleSphere = new TriMesh(new VertexBuffer(kWidget.m_kMiddleSphere.VBuffer),
-                new IndexBuffer(kWidget.m_kMiddleSphere.IBuffer));
-        m_kMiddleSphere.Local.SetTranslate( new Vector3f( kWidget.m_kMiddleSphere.Local.GetTranslate()) );
-        m_kLowerSphere = new TriMesh(new VertexBuffer(kWidget.m_kLowerSphere.VBuffer),
-                new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
-    }
     
 	/* (non-Javadoc)
 	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#Pick(int, int)
@@ -118,6 +96,9 @@ public class SquareClassificationWidget extends ClassificationWidget
     }
 	
 
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#setTexture(WildMagic.LibGraphics.Rendering.Texture)
+	 */
 	public void setTexture( Texture kTexture )
 	{
 		if ( m_kWidgetMesh != null )

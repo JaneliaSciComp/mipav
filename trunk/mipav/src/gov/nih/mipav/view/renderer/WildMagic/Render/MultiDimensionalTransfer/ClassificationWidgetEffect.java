@@ -25,12 +25,14 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	private static final long serialVersionUID = 3379141203039832123L;
 	/** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
 	private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
+	/** Texture used in the histogram. */
 	private Texture m_kTexture;
-
+	/** color look-up table name. */
 	private String m_kLUTName;
-
+	/** color look-up table Texture: */
 	private Texture m_kLUTMap;
 
+	/** First part of the GLSL code for the pixel shader program for all widgets: */
 	private String mainPixelShader1 = "" + 
 			"uniform vec4 LevColor;" + "\n" +
 			"uniform vec2 Shift;" + "\n" +
@@ -45,21 +47,25 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"{" + "\n" +
 			"    vec4 kBase = texture2D(BaseSampler,gl_TexCoord[0].xy);" + "\n";
 
+	/** GLSL function call for the triangle widget: */
 	private String mainPixelShaderTriangle = "" + 
 			"    float fAlpha = computeAlphaTriangle( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
 			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
+	/** GLSL function call for the square widget: */
 	private String mainPixelShaderSquare = "" + 
 			"    float fAlpha = computeAlphaSquare( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
 			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
+	/** GLSL function call for the circle widget: */
 	private String mainPixelShaderCircle = "" + 
 			"    float fAlpha = computeAlphaCircle( gl_TexCoord[0].x, gl_TexCoord[0].y," + "\n" +
 			"                                 Center, LevMidLine, Radius );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
+	/** GLSL main code part 2 for all widget types. */
 	private String mainPixelShader2 = "" + 
 			"    fAlpha *= widgetColor.a;" + "\n" +
 			"    gl_FragColor.r = widgetColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;" + "\n" +
@@ -68,7 +74,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"    gl_FragColor.a = 1.0;" + "\n" +
 			"}" + "\n";
 
-
+	/** GLSL computeAlpha function definition for the triangle widgets: */
 	private static String computeAlphaTriangle = "" +
 			"float areaTwice(float ptAx, float ptAy, float ptBx, float ptBy, float ptCx, float ptCy) {" + "\n" +
 			"return (((ptAx - ptCx) * (ptBy - ptCy)) - ((ptAy - ptCy) * (ptBx - ptCx)));" + "\n" +
@@ -126,6 +132,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"return fAlpha;" + "\n" +
 			"}" + "\n";
 
+	/** GLSL computeAlpha function definition for the square widgets: */
 	private static String computeAlphaSquare = "" +
 			"float computeAlphaSquare( float fX," + "\n" +
 			"                float fY," + "\n" +
@@ -168,6 +175,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"}" + "\n" +
 			"return fAlpha;" + "\n" +
 			"}" + "\n";
+	
+	/** GLSL support function definition for the triangle widgets: */
 	private static String computeClosestPoint = "" +
 			"vec3 computeClosestPoint( float fX, float fY," + "\n" +
 			"vec4 LevLine )" + "\n" +
@@ -179,6 +188,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"   vec3 closest = vec3( dir.x * dot + LevLine.x, dir.y * dot + LevLine.y, 0);" + "\n" +
 			"   return closest;" + "\n" +
 			"}" + "\n";
+	
+	/** GLSL support function definition for the triangle widgets: */
 	private static String intersect = "" +
 			"vec3 computeIntersect( vec3 p0, vec3 v0, vec3 p1, vec3 v1 )" + "\n" +
 			"{" + "\n" +
@@ -196,6 +207,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"}" + "\n";
 
 
+	/** GLSL computeAlpha function definition for the circle widgets: */
 	private static String computeAlphaCircle = ""+ 
 			"float computeAlphaCircle( float fX," + "\n"
 			+ "                    float fY," + "\n"
@@ -259,33 +271,26 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			+ "    return fAlpha;" + "\n"
 			+ "}" + "\n";
 
+	/** combined GLSL code for the histogram widgets: */
 	private static String multiHistogramFunctions = computeClosestPoint + intersect + computeAlphaTriangle + computeAlphaSquare + computeAlphaCircle;
 
-
+	/**
+	 * Returns the combined GLSL code and support functions for the histogram widgets. 
+	 * This code is also used in the GLSL programs for the volume renderer.
+	 * @return
+	 */
 	public static String getMultiHistogramFunctions()
 	{
 		return new String(multiHistogramFunctions);
 	}
+	
+	/** Current GLSL code for the widget program. */
 	private String m_kCurrentText;
-	/**
-	 * Creates a new ClassificationWidgetEffect based on the input ClassificationWidgetEffect
-	 * @param kEffect ClassificationWidgetEffect, used to provide the name of the 2D Histogram texture,
-	 * as well as the current state of the Widget parameters.
-	 */
-	public ClassificationWidgetEffect (ClassificationWidgetEffect kEffect)
-	{
-		SetPassQuantity(1);
-		m_kVShader.set(0, new VertexShader("TextureV"));
-		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
-
-		m_kPShader.get(0).SetTextureQuantity(2);
-		m_kPShader.get(0).SetImageName(0, kEffect.m_kPShader.get(0).GetImageName(0) );
-		m_kWidgetState = new ClassificationWidgetState();
-		m_kWidgetState.Copy(kEffect.m_kWidgetState);
-	}
+	
 
 	/** Creates a new ClassificationWidgetEffect with the texture specified.
-	 * @param rkBaseName the name of the 2D Histogram texture image.
+	 * @param kTexture input histogram Texture.
+	 * @param type Classification widget type.
 	 */
 	public ClassificationWidgetEffect (Texture kTexture, int type)
 	{
@@ -327,7 +332,10 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 				m_kWidgetState.Color[3] );
 	}
 
-
+	/**
+	 * Returns the index of the color look-up table color map.
+	 * @return the index of the color look-up table color map.
+	 */
 	public int GetLUTIndex( )
 	{
 		return (int)m_kWidgetState.UseColorMap[0];
@@ -350,8 +358,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	 * @throws ClassNotFoundException
 	 */
 	public void readObject(java.io.ObjectInputStream in)
-			throws IOException, ClassNotFoundException
-			{
+	throws IOException, ClassNotFoundException
+	{
 		String rkBaseName = (String)in.readObject();
 		SetPassQuantity(1);
 		m_kVShader.set(0, new VertexShader("TextureV"));
@@ -361,8 +369,12 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		m_kPShader.get(0).SetImageName(0,rkBaseName);
 
 		m_kWidgetState = (ClassificationWidgetState)in.readObject();
-			}
-
+	}
+	
+	/**
+	 * Sets the alpha value of the widget.
+	 * @param fAlpha
+	 */
 	public void SetAlpha( float fA ) 
 	{
 		m_kWidgetState.Color[3] = fA;
@@ -377,7 +389,6 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		UpdateColor();
 	}
 
-
 	/**
 	 * Sets the contribution of the 2nd derivative to the volume rendering.
 	 * @param fAlpha the contribution of the 2nd derivative to the volume rendering.
@@ -385,14 +396,14 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	public void setBoundary( float fAlpha )
 	{
 		m_kWidgetState.BoundaryEmphasis[0] = fAlpha;
-		Program pkCProgram = GetCProgram(0);
-		if ( (pkCProgram != null) && (pkCProgram.GetUC("BoundaryEmphasis") != null) ) 
-		{
-			pkCProgram.GetUC("BoundaryEmphasis").SetDataSource(m_kWidgetState.BoundaryEmphasis);
-		}
 	}
 
 
+	/**
+	 * Sets the Center of the widget for the GLSL program.
+	 * @param fX
+	 * @param fY
+	 */
 	public void SetCenter( float fX, float fY ) 
 	{
 		m_kWidgetState.Center[0] = fX;

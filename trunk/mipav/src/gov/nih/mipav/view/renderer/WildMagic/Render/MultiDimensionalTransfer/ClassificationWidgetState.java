@@ -16,6 +16,7 @@ public class ClassificationWidgetState implements Serializable
     /**  */
     private static final long serialVersionUID = 711728604033191355L;
 
+    /** Current three types of widget: */
     public static int Circle = 0;
     public static int Square = 1;
     public static int Triangle = 2;

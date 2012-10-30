@@ -145,6 +145,10 @@ public abstract class ClassificationWidget implements Serializable
 		return kColor;
 	}
 
+	/**
+	 * Returns the index of the color look-up table color map.
+	 * @return the index of the color look-up table color map.
+	 */
 	public int getLUTIndex( )
 	{
 		if ( m_kWidgetEfect != null )
@@ -154,6 +158,10 @@ public abstract class ClassificationWidget implements Serializable
 		return -1;
 	}
 
+	/**
+	 * Returns the widget state read from file, so it can initialize a new shader effect.
+	 * @return
+	 */
 	public ClassificationWidgetState getSavedWidgetState()
 	{
 		return m_kWidgetState;
@@ -168,6 +176,10 @@ public abstract class ClassificationWidget implements Serializable
 		return m_kWidgetEfect.getState();
 	}
 
+	/**
+	 * Returns the type of widget (Circle, Triangle, Square).
+	 * @return the type of widget (Circle, Triangle, Square).
+	 */
 	public int getType()
 	{
 		return m_kWidgetEfect.getState().Type;
@@ -280,6 +292,10 @@ public abstract class ClassificationWidget implements Serializable
 	 */
 	public abstract void processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e );
 
+	/**
+	 * Sets the alpha value of the widget.
+	 * @param fAlpha
+	 */
 	public void setAlpha( float fAlpha )
 	{
 		if ( m_kWidgetEfect != null )
@@ -312,6 +328,12 @@ public abstract class ClassificationWidget implements Serializable
 		}
 	}
 
+	/**
+	 * Set the color look-up table for the widget.
+	 * @param kMap Texture map look-up table.
+	 * @param index index of the look-up table.
+	 * @param bReverse inverts the table when true.
+	 */
 	public void setLUT( Texture kMap, int index, boolean bReverse )
 	{
 		if ( m_kWidgetEfect != null )
@@ -341,12 +363,20 @@ public abstract class ClassificationWidget implements Serializable
 		m_kWidgetMesh.VBuffer.Release();
 	}
 
+	/**
+	 * Sets the ClassificationWidgetState of the widget.
+	 * @param state
+	 */
 	public void setState(ClassificationWidgetState state)
 	{
 		m_kWidgetEfect.setState(state);
 	}
 	
 	
+	/**
+	 * Sets the histogram Texture map for the widget shader effect.
+	 * @param kTexture
+	 */
 	public abstract void setTexture( Texture kTexture );
 
 
@@ -354,6 +384,7 @@ public abstract class ClassificationWidget implements Serializable
 	 * Updates the ShaderEffect parameters for this widget.
 	 */
 	public abstract void updateDisplay();
+	
 	/**
 	 * Calculate the world X coordinates from input MouseEvent coordinates.
 	 * @param val input MouseEvent Coordinates.
