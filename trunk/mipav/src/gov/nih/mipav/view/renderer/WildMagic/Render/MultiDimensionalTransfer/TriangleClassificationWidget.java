@@ -140,19 +140,78 @@ public class TriangleClassificationWidget extends ClassificationWidget
 	        // update the scene graph:
 	        m_kWidget.UpdateGS();
 	        
-	        // calculate the parameterized position on the edge based on the current width:
-	        Vector3f v1 = new Vector3f( fX - m_kWidgetMesh.VBuffer.GetPosition3fX(0), fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
-	        Vector3f v2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(2), 
-	        		m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
-	        Vector3f p1 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(0), m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
-	        Vector3f p2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(2), m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
-	        Vector3f pos = computeIntersect( p1, v1, p2, v2 );
-	        fX = pos.X;
-	        
-	        m_fCenterX = (fX - m_kWidgetMesh.VBuffer.GetPosition3fX(2)) / (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(2)); 
-	        float fY2 = m_kWidgetMesh.VBuffer.GetPosition3fY(2) + m_fCenterX * (m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(2));
-	        m_fCenterY = (fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0)) / (fY2 - m_kWidgetMesh.VBuffer.GetPosition3fY(0)); 
+	        updateCenterXY( fX, fY );
 		}
+		else
+		{
+			// Find the intersection of the mouse with the triangle edge and move the control point:
+			Vector2f temp = getCenter();
+			// triangle center position:
+			Vector3f p1 = new Vector3f( temp.X, temp.Y, 0 );
+			// vector is mouse - triangle center
+			Vector3f v1 = new Vector3f( fX - p1.X, fY - p1.Y, 0 );
+			
+			// Test first edge:
+	        Vector3f p2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(0), m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
+	        Vector3f v2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(0), 
+	        		m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
+	        Vector3f pos = computeIntersect( p1, v1, p2, v2, true );
+	        if ( pos != null )
+	        {
+		        // move the center sphere:
+		        m_kMiddleSphere.Local.SetTranslate( pos.X, pos.Y, 0.11f );
+		        // update the scene graph:
+		        m_kWidget.UpdateGS();	        	
+		        updateCenterXY( pos.X, pos.Y );
+		        return;
+	        }
+
+			// Test second edge:
+	        p2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(1), m_kWidgetMesh.VBuffer.GetPosition3fY(1), 0);
+	        v2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(2) - m_kWidgetMesh.VBuffer.GetPosition3fX(1), 
+	        		m_kWidgetMesh.VBuffer.GetPosition3fY(2) - m_kWidgetMesh.VBuffer.GetPosition3fY(1), 0);
+	        pos = computeIntersect( p1, v1, p2, v2, true );
+	        if ( pos != null )
+	        {
+		        // move the center sphere:
+		        m_kMiddleSphere.Local.SetTranslate( pos.X, pos.Y, 0.11f );
+		        // update the scene graph:
+		        m_kWidget.UpdateGS();	        	
+		        updateCenterXY( pos.X, pos.Y );
+		        return;
+	        }
+
+			// Test third edge:
+	        p2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(2), m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
+	        v2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(0) - m_kWidgetMesh.VBuffer.GetPosition3fX(2), 
+	        		m_kWidgetMesh.VBuffer.GetPosition3fY(0) - m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
+	        pos = computeIntersect( p1, v1, p2, v2, true );
+	        if ( pos != null )
+	        {
+		        // move the center sphere:
+		        m_kMiddleSphere.Local.SetTranslate( pos.X, pos.Y, 0.11f );
+		        // update the scene graph:
+		        m_kWidget.UpdateGS();	        	
+		        updateCenterXY( pos.X, pos.Y );
+		        return;
+	        }        					
+		}
+    }
+    
+    private void updateCenterXY( float fX, float fY )
+    {        
+        // calculate the parameterized position on the edge based on the current width:
+        Vector3f v1 = new Vector3f( fX - m_kWidgetMesh.VBuffer.GetPosition3fX(0), fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
+        Vector3f v2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(2), 
+        		m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
+        Vector3f p1 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(0), m_kWidgetMesh.VBuffer.GetPosition3fY(0), 0);
+        Vector3f p2 = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3fX(2), m_kWidgetMesh.VBuffer.GetPosition3fY(2), 0);
+        Vector3f pos = computeIntersect( p1, v1, p2, v2, false );
+        fX = pos.X;
+        
+        m_fCenterX = (fX - m_kWidgetMesh.VBuffer.GetPosition3fX(2)) / (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(2)); 
+        float fY2 = m_kWidgetMesh.VBuffer.GetPosition3fY(2) + m_fCenterX * (m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(2));
+        m_fCenterY = (fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0)) / (fY2 - m_kWidgetMesh.VBuffer.GetPosition3fY(0)); 
     }
 
 	/* (non-Javadoc)
@@ -448,7 +507,7 @@ public class TriangleClassificationWidget extends ClassificationWidget
      * @param v1 line 1 direction vector.
      * @return intersection point.
      */
-    private Vector3f computeIntersect( Vector3f p0, Vector3f v0, Vector3f p1, Vector3f v1 )
+    private Vector3f computeIntersect( Vector3f p0, Vector3f v0, Vector3f p1, Vector3f v1, boolean onLine )
     {
     	float fDet = (v1.X * v0.Y - v1.Y * v0.X);
     	float len0 = v0.X * v0.X + v0.Y * v0.Y;
@@ -459,8 +518,13 @@ public class TriangleClassificationWidget extends ClassificationWidget
     	float fInvDet = (float) (1.0 / fDet);
     	Vector3f diff = new Vector3f( p1.X - p0.X, p1.Y - p0.Y, 0);
     	float s = (v1.X * diff.Y - v1.Y * diff.X) * fInvDet;
+    	float t = (v0.X * diff.Y - v0.Y * diff.X) * fInvDet;
     	Vector3f intersectPoint = new Vector3f( v0.X * s + p0.X, v0.Y * s + p0.Y, 0);
-    	return intersectPoint;
+    	if ( !onLine || ((s >= 0) && (s <= 1) && (t >= 0) && (t <= 1)) )
+    	{
+    		return intersectPoint;
+    	}
+    	return null;
     }
 
     /**
