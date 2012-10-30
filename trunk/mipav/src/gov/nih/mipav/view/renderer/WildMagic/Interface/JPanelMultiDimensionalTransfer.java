@@ -2,14 +2,12 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
 import gov.nih.mipav.view.CustomUIBuilder;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentGraphAxes;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 
 import java.awt.BorderLayout;
@@ -22,9 +20,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -418,11 +413,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			if ( components.length > 5 )
 			{
 				((JLabel)helpPanel.getComponent(0)).setText( "- To insert a new widget, right-mouse click in the 2D Histogram ");
-				((JLabel)helpPanel.getComponent(1)).setText( "- To move the triangle, drag the bottom blue control point ");
-				((JLabel)helpPanel.getComponent(2)).setText( "- To resize the triangle, drag the top blue control point ");
-				((JLabel)helpPanel.getComponent(3)).setText( "- To shear the triangle, drag inside the triangle ");
-				((JLabel)helpPanel.getComponent(4)).setText( "- To control intensity distribution, drag the green control point");
-				((JLabel)helpPanel.getComponent(5)).setText( "- To delete a widget, select it and then press the delete key");
+				((JLabel)helpPanel.getComponent(1)).setText( "- To move the triangle, drag the interior of the widget ");
+				((JLabel)helpPanel.getComponent(2)).setText( "- To resize the triangle, drag any of the blue control points ");
+				((JLabel)helpPanel.getComponent(3)).setText( "- To control intensity distribution, drag the green control point");
+				((JLabel)helpPanel.getComponent(4)).setText( "- To delete a widget, select it and then press the delete key");
+				((JLabel)helpPanel.getComponent(5)).setText( "");
 			}
 		}
 	}
