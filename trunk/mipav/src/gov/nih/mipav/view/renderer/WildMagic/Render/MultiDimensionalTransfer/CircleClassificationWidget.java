@@ -10,50 +10,39 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
-import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /**
+ * Creates the circle widget for the multi-histogram interface.
+ * The circle consists of two control points. One controls the radius and eccentricity of the circle/ellipse.
+ * The second control point centers the maximum color value within the circle/ellipse.
  */
 public class CircleClassificationWidget extends ClassificationWidget
 {
 
 	private static final long serialVersionUID = -4180814068815939724L;
 
+	/** Direction used to position the center sphere control-point out from the
+	 * center of the circle/ellipse. */
 	private Vector2f m_kCenterDir = new Vector2f(0,0);
+	/** Distance scale used to position the center sphere control-point out from the
+	 * center of the circle/ellipse. */
 	private float m_fCenterScale = 0f;
 
+	/** The radius of the circle in the x-direction. */
     private float m_fRadiusX = 0.5f;
+	/** The radius of the circle in the y-direction. */
     private float m_fRadiusY = 0.5f;
 
-	/**
-     * Copy constructor.
-     * @param kWidget
-     */
-    public CircleClassificationWidget ( CircleClassificationWidget kWidget )
-    {
-        super(kWidget);
-
-        m_kWidgetMesh = new TriMesh(new VertexBuffer(kWidget.m_kWidgetMesh.VBuffer),
-                new IndexBuffer(kWidget.m_kWidgetMesh.IBuffer));
-        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
-        
-        m_kWidgetEfect = new ClassificationWidgetEffect( kWidget.m_kWidgetEfect ); 
-
-        m_kMiddleSphere = new TriMesh(new VertexBuffer(kWidget.m_kMiddleSphere.VBuffer),
-                new IndexBuffer(kWidget.m_kMiddleSphere.IBuffer));
-        m_kMiddleSphere.Local.SetTranslate( new Vector3f( kWidget.m_kMiddleSphere.Local.GetTranslate()) );
-    }
 
     /**
 	 * @param iX location in MouseEvent Coordinates.
 	 * @param iY location in MouseEvent Coordinates.
 	 * @param kTMin minimum texture coordinates for the 2D histogram, used for the image background. (Defaults 0-1)
 	 * @param kTMax maximum texture coordinates for the 2D histogram, used for the image background. (Defaults 0-1)
-	 * @param kTexName 2D Histogram texture name.
+	 * @param kTexture 2D Histogram Texture.
 	 * @param iWidth canvas width (default 256)
 	 * @param iHeight canvas height (default 256)
 	 */
@@ -74,10 +63,11 @@ public class CircleClassificationWidget extends ClassificationWidget
 		float fX = calcObjX(iX);
 		float fY = calcObjY(iY);
 		
+		// get the center of the circle:
 		float fCenterX = m_kWidgetMesh.VBuffer.GetPosition3fX(0);
 		float fCenterY = m_kWidgetMesh.VBuffer.GetPosition3fY(0);
 		
-
+		// test if the pick point is inside the circle:
     	float diffX = fX - fCenterX;
     	float diffY = fY - fCenterY;
     	float fLength = (float)Math.sqrt( diffX*diffX + diffY*diffY );
@@ -102,17 +92,17 @@ public class CircleClassificationWidget extends ClassificationWidget
         {
             if ( m_kPicked == m_kWidgetMesh )
             {
-            	// If the square is picked, translate it:
+            	// If the circle is picked, translate it:
                 ShiftCircle( e );
             }
             else if ( (m_kPicked == m_kUpperSphere) )
             {
-            	// if one of the corner control-points is picked, scale the square:
+            	// if one of the control-point is picked, scale the circle:
             	ScaleCircle( e );
             }
             else if ( m_kPicked == m_kMiddleSphere )
             {
-            	// the middle control-point was picked, so shift the mid-line:
+            	// the middle control-point was picked, so shift the center control-point:
                 ShiftMid(e);
             }
         }
@@ -149,10 +139,14 @@ public class CircleClassificationWidget extends ClassificationWidget
 	}
 	
 
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#setTexture(WildMagic.LibGraphics.Rendering.Texture)
+	 */
 	public void setTexture( Texture kTexture )
 	{
 		if ( m_kWidgetMesh != null )
 		{
+			// creates and attaches a new shader-effect for the widget.
 			m_kWidgetEfect = new ClassificationWidgetEffect( kTexture, ClassificationWidgetState.Circle );
 			m_kWidgetMesh.AttachEffect( m_kWidgetEfect );
 		}
@@ -163,7 +157,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 	 */
 	public void updateDisplay()
     {
-		// Update the ClassificationWidgetEffect based on the position of the square and the mid-line control-point.
+		// Update the ClassificationWidgetEffect based on the position of the circle and the mid-line control-point.
         if ( m_kWidgetEfect != null )
         {
             Vector3f kMidLine = m_kMiddleSphere.Local.GetTranslate();
@@ -224,7 +218,7 @@ public class CircleClassificationWidget extends ClassificationWidget
         m_kWidgetMesh.SetName("BottomTri");
         m_kWidget.AttachChild(m_kWidgetMesh);
         
-        // Outline for the square, uses the same VertexBuffer as the square:
+        // Outline for the circle, is different from the circle VertexBuffer (doesn't contain the center point)
         m_kOutline = new Polyline( kVBuffer, true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
@@ -262,6 +256,9 @@ public class CircleClassificationWidget extends ClassificationWidget
         m_kWidget.UpdateGS();
     }
     
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#getCenter()
+     */
     protected Vector2f getCenter()
 	{
 		float fX = m_kWidgetMesh.VBuffer.GetPosition3fX(0);
@@ -269,6 +266,10 @@ public class CircleClassificationWidget extends ClassificationWidget
 		return new Vector2f( fX, fY );
 	}
     
+    /**
+     * scale the circle based on the mouse position.
+     * @param e
+     */
     protected void ScaleCircle(MouseEvent e)
     {
     	// Calculate the position in world-coordinates:
@@ -279,17 +280,16 @@ public class CircleClassificationWidget extends ClassificationWidget
     	fX = Math.min( fX, RIGHT_EDGE );
     	fY = Math.min( fY, TOP_EDGE );
     	fY = Math.max( fY, BOTTOM_EDGE );
-    	// get the current center of the square:
+    	// get the current center of the circle:
     	Vector2f kCurrentCenter = getCenter();
         float diffX = fX - kCurrentCenter.X;
         float diffY = fY - kCurrentCenter.Y;
         
-
+        // set the new radius of the circle:
 		m_fRadiusX = Math.abs(diffX);
 		m_fRadiusY = Math.abs(diffY);
-		
-		scaleCircle( kCurrentCenter, diffX, diffY );
-		
+		// scale the circle object:
+		scaleCircle( kCurrentCenter, diffX, diffY );		
     }
     
     /**
@@ -298,7 +298,7 @@ public class CircleClassificationWidget extends ClassificationWidget
      */
     protected void ShiftCircle( MouseEvent e )
     {
-    	// get the current center of the square:
+    	// get the current center of the circle:
     	Vector2f kCurrentCenter = getCenter();
 
     	// get the mouse relative position:
@@ -310,15 +310,20 @@ public class CircleClassificationWidget extends ClassificationWidget
         // calculate the difference in the current center and the mouse position:
         float fDiffX = fNewGCX - kCurrentCenter.X;
         float fDiffY = fNewGCY - kCurrentCenter.Y;
-
+        // translate the circle:
         shiftCircle( kCurrentCenter, fDiffX, fDiffY );
     }
     
 
+	/**
+	 * Read a new CircleClassificationWidget from the input stream.
+	 * @param in input stream
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {
-
 		// create the TriMesh Attributes: position, color, texture:
 		Attributes kAttributes = new Attributes();
 		kAttributes.SetPChannels(3);
@@ -327,6 +332,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 
 		float x, y, z;
 		// Set up the VertexBuffer positions, colors, texture coordinates:
+		// This is the VertexBuffer for the outline, not the mesh:
 		VertexBuffer kVBuffer = new VertexBuffer(kAttributes, m_kWidgetMesh.VBuffer.GetVertexQuantity() -1 ); 
 		int index = 0;
 		for ( int i = 0; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
@@ -342,15 +348,16 @@ public class CircleClassificationWidget extends ClassificationWidget
 				index++;
 			}
 		}      
-
+		// Re-create the outline of the circle:
 		m_kWidget.DetachChild(m_kOutline);
-		// Outline for the square, uses the same VertexBuffer as the square:
+		// Outline for the circle:
 		m_kOutline = new Polyline( kVBuffer, true, true );
 		m_kOutline.AttachEffect( new VertexColor3Effect() );
 		m_kWidget.AttachChild(m_kOutline);
 
-
-        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
+		// initialize the upper-sphere position:
+		m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
+		// initialize the middle-sphere position:
         m_kMiddleSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(0) );
 		        
 		Vector2f kNewCenter = (Vector2f)in.readObject();
@@ -361,22 +368,34 @@ public class CircleClassificationWidget extends ClassificationWidget
 		m_fRadiusY = in.readFloat();		
 		
 		Vector2f kCurrentCenter = getCenter();
+		// shift the circle the the last position:
 		shiftCircle( kCurrentCenter, kNewCenter.X - kCurrentCenter.X, kNewCenter.Y - kCurrentCenter.Y);
+		// scale the circle:
 		scaleCircle( kCurrentCenter, 0, 0 );
 
+		// reposition the upper sphere based on last position in the file:
 		Vector3f upperTranslate = (Vector3f)in.readObject( );
 		m_kUpperSphere.Local.SetTranslate(upperTranslate);
+		// reposition the middle sphere based on last position in the file:
 		Vector3f middleTranslate = (Vector3f)in.readObject( );
 		m_kMiddleSphere.Local.SetTranslate(middleTranslate);
-       
+		// update the widget graphics state:
 		m_kWidget.UpdateGS();
     }
 
+    /**
+     * Scale the circle based on the current center and the difference between
+     * the current center and the mouse position.
+     * @param kCurrentCenter circle current center.
+     * @param diffX difference between center and mouse position.
+     * @param diffY difference between center and mouse position.
+     */
     private void scaleCircle(Vector2f kCurrentCenter, float diffX, float diffY )
     {
-
         float fInvRS = 1.0f/64f;
         float x,y,z;
+        // Test that the circle will be contained within the area of the histogram.
+        // If not adjust the radius values.
 		for ( int i = 1; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
 		{
 			float fAngle = Mathf.TWO_PI*fInvRS*i;
@@ -409,6 +428,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 
 		z = 0.1f;
         int index = 0;
+        // scale the positions of the circle, based on the x, y radius:
 		for ( int i = 1; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
 		{
             float fAngle = Mathf.TWO_PI*fInvRS*i;
@@ -429,9 +449,10 @@ public class CircleClassificationWidget extends ClassificationWidget
 		m_kWidgetMesh.VBuffer.Release();
 		m_kOutline.VBuffer.Release();
 
+		// Translate the upper sphere:
         m_kUpperSphere.Local.SetTranslate( kCurrentCenter.X + newX, kCurrentCenter.Y + newY, z );
 		
-
+        // Translate the middle sphere:
         diffX = m_kCenterDir.X;
         diffY = m_kCenterDir.Y;    	
         if ( diffX != 0 && diffY != 0 )
@@ -450,6 +471,13 @@ public class CircleClassificationWidget extends ClassificationWidget
         m_kWidget.UpdateGS();
     }
         
+    /**
+     * Translate the circle based on the current center and the difference between
+     * the current center and the mouse position.
+     * @param kCurrentCenter
+     * @param fDiffX
+     * @param fDiffY
+     */
     private void shiftCircle( Vector2f kCurrentCenter, float fDiffX, float fDiffY )
     {
         if ( kCurrentCenter.X + m_fRadiusX + fDiffX > RIGHT_EDGE )
@@ -461,7 +489,7 @@ public class CircleClassificationWidget extends ClassificationWidget
         	fDiffX = LEFT_EDGE - (kCurrentCenter.X - m_fRadiusX);
         }
 
-        // Y check that moving the square doesn't move it out of bounds,
+        // Y check that moving the circle doesn't move it out of bounds,
         // clamp if necessary:
         if ( kCurrentCenter.Y - m_fRadiusY + fDiffY  < BOTTOM_EDGE )
         {
@@ -494,11 +522,11 @@ public class CircleClassificationWidget extends ClassificationWidget
         m_kWidgetMesh.VBuffer.Release();
         m_kOutline.VBuffer.Release();
 
-        // Move the center sphere by translating it the same amount as the square:
+        // Move the center sphere by translating it the same amount as the circle:
         Vector3f kTranslate = m_kMiddleSphere.Local.GetTranslate(); 
         m_kMiddleSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
 
-        // Move the upper sphere by translating it the same amount as the square:
+        // Move the upper sphere by translating it the same amount as the circle:
         kTranslate = m_kUpperSphere.Local.GetTranslate(); 
         m_kUpperSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
         
@@ -544,14 +572,21 @@ public class CircleClassificationWidget extends ClassificationWidget
     		kCenter.Y = fY;
     	}
 
+    	// update the direction axis for positioning the center sphere:
     	m_kCenterDir.X = diffX / length;
     	m_kCenterDir.Y = diffY / length;
+    	// update the scale along the direction for positioning the center sphere:
     	m_fCenterScale = length / edgeLength;
 
     	// update the scene graph:
         m_kWidget.UpdateGS();
     }
 	
+    /**
+     * Stream this object to disk.
+     * @param out output stream.
+     * @throws IOException
+     */
     private void writeObject(java.io.ObjectOutputStream out)
 	throws IOException 
 	{		        

@@ -222,25 +222,12 @@ implements GLEventListener, KeyListener
 	}
 
 	/**
-	 * Returns a Copy of the current Widgets.
-	 * @return a Copy of the current Widgets.
+	 * Returns the current Widgets.
+	 * @return the current Widgets.
 	 */
 	public Vector<ClassificationWidget> getWidgets()
 	{
-		Vector<ClassificationWidget> kWidgetList = new Vector<ClassificationWidget>();
-		for ( int i = 0; i < m_akWidgets.size(); i++ )
-		{
-			ClassificationWidget kWidget = m_akWidgets.get(i);
-			if ( kWidget instanceof SquareClassificationWidget )
-			{
-				kWidgetList.add( new SquareClassificationWidget((SquareClassificationWidget)kWidget) );
-			}
-			else if ( kWidget instanceof TriangleClassificationWidget )
-			{
-				kWidgetList.add( new TriangleClassificationWidget((TriangleClassificationWidget)kWidget) );
-			}
-		}
-		return kWidgetList;
+		return m_akWidgets;
 	}
 
 	/* (non-Javadoc)
