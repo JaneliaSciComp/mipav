@@ -363,7 +363,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             a1 = 30.0;
             a2 = 10.0;
             for (t = 0; t < tDim; t++) {
-                srcArray[t * volSize + 6] = ((a0/Math.PI) * a2)/((t-a1)*(t-a1) + a2*a2);
+                srcArray[t * volSize + 6] = a0/((t-a1)*(t-a1) + a2*a2);
             }
             functionArray[7] = MULTIEXPONENTIAL_FIT;
             numVariablesArray[7] = 5;
@@ -382,15 +382,15 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             } 
             functionArray[8] = RAYLEIGH_FIT; 
             numVariablesArray[8] = 3;
-            initialArray[8][0] = 45.0;
-            initialArray[8][1] = 35.0;
-            initialArray[8][2] = 20.0;
+            initialArray[8][0] = 48.0;
+            initialArray[8][1] = 32.0;
+            initialArray[8][2] = 15.0;
             a0 = 50.5;
             a1 = 30.0;
             a2 = 10.0;
             for (t = 0; t < tDim; t++) {
                 if (t >= 50.5) {
-                    srcArray[t * volSize + 8] = a2 * (2/a1)*(t-a0)*Math.exp(-(t-a0)*(t-a0)/a1);
+                    srcArray[t * volSize + 8] = a2 * (t-a0)*Math.exp(-(t-a0)*(t-a0)/a1);
                 }
                 else {
                     srcArray[t * volSize + 8] = 0.0;
@@ -530,6 +530,47 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = gaussianModel.getExitStatus();
                             break;
                         case LAPLACE_FIT:
+                            if (findInitialFromData) {
+                                // Laplace (a0*exp(-|x-a1|/a2))
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                initial[0] = y_array[tMid];
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (beenHalved) {
+                                    initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
+                                }
+                                else {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }    
+                                }
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
+                            } // if (findInitialFromData)
                             laplaceModel = new FitLaplace(y_array);
                             laplaceModel.driver();
                             params = laplaceModel.getParameters();
@@ -537,6 +578,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = laplaceModel.getExitStatus();
                             break;
                         case LORENTZ_FIT:
+                            if (findInitialFromData) {
+                                
+                            } // if (findInitialFromData)
                             lorentzModel = new FitLorentz(y_array);
                             lorentzModel.driver();
                             params = lorentzModel.getParameters();
@@ -1944,7 +1988,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - ((a0/PI) * a2)/((x-a1)*(x-a1) + a2*a2)
+         * Fit to function - a0/((x-a1)*(x-a1) + a2*a2)
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
          * @param covarMat The derivative values of y with respect to fitting parameters.
@@ -1970,7 +2014,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                         diff = timeVals[j] - a[1];
                         diffSq = diff * diff;
                         a2Sq = a[2]*a[2];
-                        ymod = ((a[0]/Math.PI) * a[2])/(diffSq + a2Sq);
+                        ymod = a[0]/(diffSq + a2Sq);
                         residuals[j] = ymod - ydata[j];
                         // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
@@ -1981,11 +2025,11 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                         diff = timeVals[j] - a[1];
                         diffSq = diff * diff;
                         a2Sq = a[2]*a[2];
-                        covarMat[j][0] = (a[2]/Math.PI)/(diffSq + a2Sq); // a0 partial derivative
-                        num = 2.0 * a[0] * a[2] * diff/Math.PI;
+                        covarMat[j][0] = 1.0/(diffSq + a2Sq); // a0 partial derivative
+                        num = 2.0 * a[0] * diff;
                         denom = a2Sq + diffSq;
                         covarMat[j][1] = num/(denom * denom); // a1 partial derivative
-                        num = (a[0]/Math.PI)*(diffSq - a2Sq);
+                        num = -2.0 * a[0] * a[2];
                         covarMat[j][2] = num/(denom * denom); // a2 partial derivative
                     }
                 }
@@ -2179,7 +2223,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - a2 * (2/a1)*(x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0) with a1 > 0
+         * Fit to function - a2 * (x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0) with a1 > 0
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
          * @param covarMat The derivative values of y with respect to fitting parameters.
@@ -2200,7 +2244,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                     for (j = 0; j < nPts; j++) {
                         if (timeVals[j] >= a[0]) {
                             diff = timeVals[j] - a[0];
-                            ymod = a[2]*(2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
+                            ymod = a[2]*diff*Math.exp(-diff*diff/a[1]); 
                         }
                         else {
                             ymod = 0.0;
@@ -2216,9 +2260,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             diff = timeVals[j] - a[0];
                             diffSquared = diff * diff;
                             expon = Math.exp(-diffSquared/a[1]);
-                            covarMat[j][0] = a[2]*(2.0/a[1])*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
-                            covarMat[j][1] = a[2]*(2.0*diff/(a[1]*a[1]))*expon*((diffSquared/a[1]) - 1.0); // a1 partial derivative
-                            covarMat[j][2] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
+                            covarMat[j][0] = a[2]*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
+                            covarMat[j][1] = a[2]*((diff * diffSquared)/(a[1]*a[1]))*expon; // a1 partial derivative
+                            covarMat[j][2] = diff*expon; 
                         }
                         else {
                             covarMat[j][0] = 0.0;
