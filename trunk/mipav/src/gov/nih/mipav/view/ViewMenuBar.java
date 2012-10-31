@@ -265,7 +265,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Open", null, 0, null, false),
                         menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Skeletonize3D pot field", "Skeletonize3D", 0, null, false),
                         menuBuilder.buildMenuItem("Top hat", "topHat", 0, null, false),
                         menuBuilder.buildMenuItem("Ultimate erode", null, 0, null, false),}),
 
@@ -1008,7 +1007,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Principal component", false);
             menuBuilder.setMenuItemEnabled("Independent component", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
             
 
@@ -1133,7 +1131,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemSelected("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("4D tools", false);
@@ -1181,7 +1178,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Correct image spacing", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
@@ -1255,7 +1251,6 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Independent component", true);
         menuBuilder.setMenuItemEnabled("Quantify using mask", true);
         menuBuilder.setMenuItemEnabled("Shading correction", true);
-        menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", true);
         menuBuilder.setMenuItemEnabled("Skeletonize", true);
 
         // menuBuilder.setMenuItemEnabled("AFNI - Shear", true);
