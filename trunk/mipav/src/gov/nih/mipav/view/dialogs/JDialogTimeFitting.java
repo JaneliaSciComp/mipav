@@ -624,7 +624,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(laplaceFit, gbc);
         
-        lorentzFit = new JRadioButton("Fit Lorentz ((a0/PI) * a2)/((x-a1)*(x-a1) + a2*a2)", false);
+        lorentzFit = new JRadioButton("Fit Lorentz (a0/((x-a1)*(x-a1) + a2*a2)", false);
         lorentzFit.setFont(serif12);
         lorentzFit.setForeground(Color.black);
         lorentzFit.addActionListener(this);
@@ -660,7 +660,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 1;
         mainPanel.add(numVariablesField, gbc);
         
-        rayleighFit = new JRadioButton("Fit Rayleigh Distribution a2 * (2/a1)*(x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0)", false);
+        rayleighFit = new JRadioButton("Fit Rayleigh Distribution a2 *(x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0)", false);
         rayleighFit.setFont(serif12);
         rayleighFit.setForeground(Color.black);
         rayleighFit.addActionListener(this);
