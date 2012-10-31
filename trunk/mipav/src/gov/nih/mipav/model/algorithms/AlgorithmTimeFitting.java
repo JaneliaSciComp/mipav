@@ -50,6 +50,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     private int tDim;
 
     private int volSize;
+    
+    private boolean findInitialFromData = true;
 
     private double initial[];
 
@@ -101,13 +103,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * 
      */
     public AlgorithmTimeFitting(final ModelImage destImage, final ModelImage srcImage, final ModelImage exitStatusImage, final boolean useLog,
-            final int functionFit, final int numVariables, double initial[]) {
+            final int functionFit, final int numVariables, boolean findInitialFromData, double initial[]) {
 
         super(destImage, srcImage);
         this.exitStatusImage = exitStatusImage;
         this.useLog = useLog;
         this.functionFit = functionFit;
         this.numVariables =  numVariables;
+        this.findInitialFromData = findInitialFromData;
         this.initial = initial;
     }
 
@@ -164,7 +167,15 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         String hourString;
         String minuteString;
         String secondString;
-        
+        double delt;
+        double minDiff;
+        double diff;
+        int tMid;
+        double m;
+        double val;
+        double maxVal;
+        boolean beenHalved;
+        int tHalved = 0;
 
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n", Preferences.DEBUG_ALGORITHM);
@@ -411,6 +422,13 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                     }
                     switch(functionFit) {
                         case LINEAR_FIT:
+                            if (findInitialFromData) {
+                                // a0 + a1 * timeVals[tDim-1] = y_array[tDim-1]
+                                // a0 + a1 * timeVals[0] = y_array[0]
+                                // a1 * (timeVals[tDim-1] - timeVals[0]) = (y_array[tDim-1] - y_array[0])
+                                initial[1] = (y_array[tDim-1]- y_array[0])/(timeVals[tDim-1] - timeVals[0]);
+                                initial[0] = y_array[0] - initial[1] * timeVals[0];
+                            }
                             lineModel = new FitLine(y_array);
                             lineModel.driver();
                             params = lineModel.getParameters();
@@ -418,6 +436,43 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = lineModel.getExitStatus();
                             break;
                         case EXPONENTIAL_FIT:
+                            if (findInitialFromData) {
+                                // a0 + a1 * exp(a2 * timeVals[tDim-1]) = y_array[tDim-1]
+                                // Let timeVals[tDim-1] - timeVals[0] = delt
+                                // Find tMid such that timesVals[tMid] - timeVals[0] is closest to delt/2.
+                                // a0 + a1 * exp(a2 * timeVals[tMid]) = y_array[tMid]
+                                // a0 + a1 * exp(a2 * timeVals[0]) = y_array[0]
+                                // a1*(exp(a2 * timeVals[tDim-1]) - exp(a2 * timeVals[0]) = (y_array[tDim-1] - y_array[0])
+                                // a1*(exp(a2 * timeVals[tMid]) - exp(a2 * timeVals[0]) = (y_array[tMid] - y_array[0])
+                                //
+                                // ((exp(a2 * timeVals[tDim-1]) - exp(a2 * timeVals[0]))/(exp(a2 * timeVals[tMid]) - exp(a2 * timeVals[0])) =
+                                // (y_array[tDim-1] - y_array[0])/(y_array[tMid] - y_array[0]) = m
+                                
+                                // Dividing numerator and denominator by exp(a2 * timeVals[0]):
+                                // ((exp(a2 * delt) - 1)/(exp(0.5 * a2 * delt) - 1) = m
+                                // exp(a2 * delt) - 1 = m*exp(0.5 * a2 * delt)  - m
+                                // exp(a2 * delt) - m*exp(0.5 * a2 * delt) + (m - 1) = 0
+                                // exp(0.5 * a2 * delt) = (m +- sqrt(m*m - 4*(m-1))/2 = m-1, 1
+                                // m - 1 is the correct answer
+                                // exp(a2 * delt) = (m-1)**2
+                                // a2 = ln((m-1)**2)/delt
+                                delt = timeVals[tDim-1] - timeVals[0];
+                                minDiff = Double.MAX_VALUE;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim-1; j++) {
+                                    diff = Math.abs(timeVals[j] - timeVals[0] - delt/2.0);
+                                    if (diff < minDiff) {
+                                        minDiff = diff;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim-1; j++)
+                                m = (y_array[tDim-1] - y_array[0])/(y_array[tMid] - y_array[0]);
+                                diff = m - 1.0;
+                                initial[2] = Math.log(diff*diff)/delt;
+                                initial[1] = (y_array[tDim-1] - y_array[0])/
+                                        (Math.exp(initial[2] * timeVals[tDim-1]) - Math.exp(initial[2] * timeVals[0]));
+                                initial[0] = y_array[tDim-1] - initial[1] - Math.exp(initial[2] * timeVals[tDim-1]);
+                            } // if (findInitialFromData)
                             expModel = new FitExponential(y_array);
                             expModel.driver();
                             params = expModel.getParameters();
@@ -425,6 +480,49 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = expModel.getExitStatus();
                             break;
                         case GAUSSIAN_FIT:
+                            if (findInitialFromData) {
+                                // Gaussian (a0*exp(-(t-a1)^2/(2*(a2)^2))
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                initial[0] = y_array[tMid];
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (beenHalved) {
+                                    initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
+                                                 Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));      
+                                }
+                                else {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }    
+                                }
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
+                                        Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));     
+                            } // if (findInitialFromData)
                             gaussianModel = new FitGaussian(y_array);
                             gaussianModel.driver();
                             params = gaussianModel.getParameters();
@@ -1412,51 +1510,6 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
 
         setCompleted(true);
     }
-    
-    private void setInitial(int functionFit, int numVariables) {
-        initial = new double[numVariables];
-        switch(functionFit) {
-            case LINEAR_FIT:
-                initial[0] = 0.0; // y intercept
-                initial[1] = -1.0; // slope
-                break;
-            case EXPONENTIAL_FIT:
-                // For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
-                // signs and take the one with the lowest chi-squared value. 
-                initial[0] = 0.0;
-                initial[1] = 1.0;
-                initial[2] = -1.0;
-                break;
-            case GAUSSIAN_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case LAPLACE_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case LORENTZ_FIT:
-                initial[0] = 1.0;
-                initial[1] = 0.0;
-                initial[2] = 1.0;
-                break;
-            case MULTIEXPONENTIAL_FIT:
-                initial[0] = 0.0;
-                for (i = 0; i < (numVariables-1)/2; i++) {
-                    initial[2*i+1] = 1.0;
-                    initial[2*i+2] = -i;
-                }
-                break;
-            case RAYLEIGH_FIT:
-                initial[0] = 0.0;
-                initial[1] = 1.0;
-                initial[2] = 1.0;
-        }    
-    }
-
-    
     
     class FitLine extends NLConstrainedEngine {
         final double ydata[];
