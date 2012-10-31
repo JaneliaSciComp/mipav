@@ -123,6 +123,16 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     private AlgorithmTimeFitting tfAlgo;
     
+    private JCheckBox initialCheckBox;
+    
+    private boolean previousFindInitial = true;
+    
+    private boolean findInitialFromData = true;
+    
+    private JLabel labela0;
+    
+    private JLabel labela1;
+    
     private JLabel labela2;
     
     private JLabel labela3;
@@ -180,8 +190,17 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	                (source == laplaceFit) || (source == lorentzFit) || (source == multiExponentialFit) ||
 	                (source == rayleighFit)) {
 	    	if (multiExponentialFit.isSelected()) {
+	    	    previousFindInitial = initialCheckBox.isSelected();
+	    	    initialCheckBox.setEnabled(false);
+	    	    initialCheckBox.setSelected(false);
 	    	    numVariablesLabel.setEnabled(true);
 	    	    numVariablesField.setEnabled(true);
+	    	    labela0.setEnabled(true);
+	    	    texta0.setEnabled(true);
+	    	    labela1.setEnabled(true);
+	    	    texta1.setEnabled(true);
+	    	    labela2.setEnabled(true);
+	    	    texta2.setEnabled(true);
 	    	    labela3.setEnabled(true);
 	    	    texta3.setEnabled(true);
 	    	    labela4.setEnabled(true);
@@ -190,28 +209,51 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 texta5.setEnabled(true);
                 labela6.setEnabled(true);
                 texta6.setEnabled(true);
+                return;
 	    	}
-	    	else {
-	    	    numVariablesLabel.setEnabled(false);
-                numVariablesField.setEnabled(false);
-                labela3.setEnabled(false);
-                texta3.setEnabled(false);
-                labela4.setEnabled(false);
-                texta4.setEnabled(false);
-                labela5.setEnabled(false);
-                texta5.setEnabled(false);
-                labela6.setEnabled(false);
-                texta6.setEnabled(false);
-	    	}
+    	    initialCheckBox.setEnabled(true);
+    	    initialCheckBox.setSelected(previousFindInitial);
+    	    numVariablesLabel.setEnabled(false);
+            numVariablesField.setEnabled(false);
+            labela3.setEnabled(false);
+            texta3.setEnabled(false);
+            labela4.setEnabled(false);
+            texta4.setEnabled(false);
+            labela5.setEnabled(false);
+            texta5.setEnabled(false);
+            labela6.setEnabled(false);
+            texta6.setEnabled(false);
 	    	if (source == linearFit) {
 	    	    labela2.setEnabled(false);
 	    	    texta2.setEnabled(false);
 	    	}
 	    	else {
-	    	    labela2.setEnabled(true);
-                texta2.setEnabled(true);
+	    	    labela2.setEnabled(!previousFindInitial);
+                texta2.setEnabled(!previousFindInitial);
 	    	}
-	     
+	    	labela0.setEnabled(!previousFindInitial);
+	    	texta0.setEnabled(!previousFindInitial);
+	    	labela1.setEnabled(!previousFindInitial);
+            texta1.setEnabled(!previousFindInitial);
+	     } else if (source == initialCheckBox) {
+	         if (!initialCheckBox.isSelected()) {
+	             labela0.setEnabled(true);
+	             texta0.setEnabled(true);
+	             labela1.setEnabled(true);
+	             texta1.setEnabled(true);
+	             if (!linearFit.isSelected()) {
+	                 labela2.setEnabled(true);
+	                 texta2.setEnabled(true);
+	             }
+	         }
+	         else {
+	             labela0.setEnabled(false);
+                 texta0.setEnabled(false);
+                 labela1.setEnabled(false);
+                 texta1.setEnabled(false);
+                 labela2.setEnabled(false);
+                 texta2.setEnabled(false);
+	         }
 	     } else if (command.equals("VOIFile")) {
 
 	            try {
@@ -314,7 +356,8 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     		}
     		exitStatusImage = new ModelImage(ModelStorageBase.INTEGER, statusExtents, image.getImageName() + "_exit_status");
     		
-    		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables, initial);
+    		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables, 
+    		                                  findInitialFromData, initial);
     
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -651,9 +694,19 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 1;
         mainPanel.add(textVOIFile, gbc);
         
-        JLabel labela0 = new JLabel("Initial a0 value");
+        initialCheckBox = new JCheckBox("Find initial from data", true);
+        initialCheckBox.setFont(serif12);
+        initialCheckBox.setForeground(Color.black);
+        initialCheckBox.addActionListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(initialCheckBox, gbc);
+        
+        labela0 = new JLabel("Initial a0 value");
         labela0.setForeground(Color.black);
         labela0.setFont(serif12);
+        labela0.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(labela0, gbc);
@@ -661,13 +714,15 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta0 = new JTextField(20);
         texta0.setFont(serif12);
         texta0.setText("0.0");
+        texta0.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         mainPanel.add(texta0, gbc);
         
-        JLabel labela1 = new JLabel("Initial a1 value");
+        labela1 = new JLabel("Initial a1 value");
         labela1.setForeground(Color.black);
         labela1.setFont(serif12);
+        labela1.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
         mainPanel.add(labela1, gbc);
@@ -675,6 +730,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta1 = new JTextField(20);
         texta1.setFont(serif12);
         texta1.setText("1.0");
+        texta1.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         mainPanel.add(texta1, gbc);
@@ -825,36 +881,41 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
             numVariables = 3;
         }
         
-        tmpStr = texta0.getText();
-        initial[0] = Double.valueOf(tmpStr).doubleValue();
+        findInitialFromData = initialCheckBox.isSelected();
         
-        tmpStr = texta1.getText();
-        initial[1] = Double.valueOf(tmpStr).doubleValue();
+        if (!findInitialFromData) {
         
-        if (numVariables >= 3) {
-            tmpStr = texta2.getText();
-            initial[2] = Double.valueOf(tmpStr).doubleValue();    
-        }
-        
-        if (numVariables >= 4) {
-            tmpStr = texta3.getText();
-            initial[3] = Double.valueOf(tmpStr).doubleValue();    
-        }
-        
-        if (numVariables >= 5) {
-            tmpStr = texta4.getText();
-            initial[4] = Double.valueOf(tmpStr).doubleValue();    
-        }
-        
-        if (numVariables >= 6) {
-            tmpStr = texta5.getText();
-            initial[5] = Double.valueOf(tmpStr).doubleValue();    
-        }
-        
-        if (numVariables >= 7) {
-            tmpStr = texta6.getText();
-            initial[6] = Double.valueOf(tmpStr).doubleValue();    
-        }
+            tmpStr = texta0.getText();
+            initial[0] = Double.valueOf(tmpStr).doubleValue();
+            
+            tmpStr = texta1.getText();
+            initial[1] = Double.valueOf(tmpStr).doubleValue();
+            
+            if (numVariables >= 3) {
+                tmpStr = texta2.getText();
+                initial[2] = Double.valueOf(tmpStr).doubleValue();    
+            }
+            
+            if (numVariables >= 4) {
+                tmpStr = texta3.getText();
+                initial[3] = Double.valueOf(tmpStr).doubleValue();    
+            }
+            
+            if (numVariables >= 5) {
+                tmpStr = texta4.getText();
+                initial[4] = Double.valueOf(tmpStr).doubleValue();    
+            }
+            
+            if (numVariables >= 6) {
+                tmpStr = texta5.getText();
+                initial[5] = Double.valueOf(tmpStr).doubleValue();    
+            }
+            
+            if (numVariables >= 7) {
+                tmpStr = texta6.getText();
+                initial[6] = Double.valueOf(tmpStr).doubleValue();    
+            }
+        } // if (!findInitialFromData)
     	
     	return true;
     }
