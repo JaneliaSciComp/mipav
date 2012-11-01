@@ -374,6 +374,30 @@ public class PlugInDialogCreateTumorMap544b extends JDialogScriptableBase implem
     public double getRadiusField() {
         return Double.valueOf(initRadiusText.getText()).doubleValue();
     }
+    
+    public void setTumor1Field(double intensity1) {
+        intensity1Text.setText(String.valueOf(intensity1));
+    }
+    
+    public double getTumor1Field() {
+        return Double.valueOf(intensity1Text.getText()).doubleValue();
+    }
+    
+    public void setTumor2Field(double intensity2) {
+        intensity2Text.setText(String.valueOf(intensity2));
+    }
+    
+    public double getTumor2Field() {
+        return Double.valueOf(intensity2Text.getText()).doubleValue();
+    }
+    
+    public void setNormalField(double normalTissue) {
+        normalTissueText.setText(String.valueOf(normalTissue));
+    }
+    
+    public double getNormalField() {
+        return Double.valueOf(normalTissueText.getText()).doubleValue();
+    }
 
     public PlugInAlgorithmCreateTumorMap544b getTumorSimAlgo() {
         return tumorSimAlgo;
