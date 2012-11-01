@@ -85,7 +85,7 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
     private PlugInDialogCreateTumorMap544b.TumorSimMode simMode;
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
-    private double intensity1, intensity2;
+    private double tumorIntensity1, tumorIntensity2;
     private int[][] sphere;
     /** Amount of subsampling to occur */
     private int subsampleAmount;
@@ -100,7 +100,7 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
     /** Normal tissue value, assummed same for image 1 and 2 */
     private double normalTissue;
     /** Standard deviation of normal tissue intensity and tumor intensities*/
-    private double stdDevIntensity1, stdDevIntensity2, stdDevNormal;
+    private double stdDevTumorIntensity1, stdDevTumorIntensity2, stdDevNormal;
     /** Noise mode */
     private NoiseMode noise;
     /** Alg iteration number */
@@ -112,9 +112,9 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
     
     /**
      * Constructor.
-     * @param intensity1 
-     * @param intensity2 
-     * @param stdDevIntensity2 
+     * @param tumorIntensity1 
+     * @param tumorIntensity2 
+     * @param stdDevTumorIntensity2 
      * @param noise 
      * @param intensity22 
      * @param noiseParam either rician or gaussian noise parameter
@@ -126,7 +126,7 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
 	public PlugInAlgorithmCreateTumorMap544b(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
             PlugInDialogCreateTumorMap544b.TumorSimMode simMode, 
-            double intensity1, double stdDevIntensity1, double intensity2, double stdDevIntensity2, 
+            double tumorIntensity1, double stdDevTumorIntensity1, double tumorIntensity2, double stdDevTumorIntensity2, 
             int subsampleAmount, boolean doCenter, NoiseMode noise, double noiseParam, double normalTissue, double stdDevNormal) {
         this.xyDim = xyDim;
         this.zDim = zDim;
@@ -144,10 +144,10 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
         }
         this.tumorChange = tumorChange;
         this.simMode = simMode;
-        this.intensity1 = intensity1;
-        this.stdDevIntensity1 = stdDevIntensity1;
-        this.intensity2 = intensity2;
-        this.stdDevIntensity2 = stdDevIntensity2;
+        this.tumorIntensity1 = tumorIntensity1;
+        this.stdDevTumorIntensity1 = stdDevTumorIntensity1;
+        this.tumorIntensity2 = tumorIntensity2;
+        this.stdDevTumorIntensity2 = stdDevTumorIntensity2;
         
         this.subsampleAmount = subsampleAmount;
         
@@ -207,8 +207,8 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
             image2aTumor.setImageName(image2aTumor.getImageName()+"_iter"+iter);
         }
         
-        setNormalTissue(image1a, stdDevIntensity1);
-        setNormalTissue(image2a, stdDevIntensity2);
+        setNormalTissue(image1a, stdDevNormal);
+        setNormalTissue(image2a, stdDevNormal);
         
         int xyLargerRadius = (int)Math.ceil(defineLargerRadius()/xyRes);
         
@@ -238,17 +238,17 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
         Preferences.debug("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         Preferences.data("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         
-        Preferences.data(INTENSITY1+intensity1+"\t"+STD_DEV+stdDevIntensity1+";\n");
-        Preferences.data(INTENSITY2+intensity2+"\t"+STD_DEV+stdDevIntensity2+";\n");
+        Preferences.data(INTENSITY1+tumorIntensity1+"\t"+STD_DEV+stdDevTumorIntensity1+";\n");
+        Preferences.data(INTENSITY2+tumorIntensity2+"\t"+STD_DEV+stdDevTumorIntensity2+";\n");
         Preferences.data(NORMAL_TISSUE+normalTissue+"\t"+STD_DEV+stdDevNormal+";\n");
         
         fireProgressStateChanged("Populating spheres");
         
-        populateSphere(initRadius, intensity1, stdDevIntensity1, image1a);      
-        populateSphere(getChangedRadius(), intensity2, stdDevIntensity2, image2a);
+        populateSphere(initRadius, tumorIntensity1, stdDevTumorIntensity1, image1a);      
+        populateSphere(getChangedRadius(), tumorIntensity2, stdDevTumorIntensity2, image2a);
                 
-        populateSphere(initRadius, intensity1, 0, image1aTumor); //use to find subsampling effect     
-        populateSphere(getChangedRadius(), intensity2, 0, image2aTumor); //use to find subsampling effect
+        populateSphere(initRadius, tumorIntensity1, 0, image1aTumor); //use to find subsampling effect     
+        populateSphere(getChangedRadius(), tumorIntensity2, 0, image2aTumor); //use to find subsampling effect
         
         addPartialVoluming(initRadius, image1a, image1aTumor);
         addPartialVoluming(getChangedRadius(), image2a, image2aTumor);
@@ -269,8 +269,8 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
         createVOI(image1aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
         createVOI(image2aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
         
-        countPixels(image1aTumor, intensity1);
-        countPixels(image2aTumor, intensity2);
+        countPixels(image1aTumor, tumorIntensity1);
+        countPixels(image2aTumor, tumorIntensity2);
         
         image1a.setImageName("image1a");
         for(int i=0; i<image1a.getFileInfo().length; i++) {
