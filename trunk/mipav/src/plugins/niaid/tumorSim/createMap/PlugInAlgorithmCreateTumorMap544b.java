@@ -305,6 +305,13 @@ public class PlugInAlgorithmCreateTumorMap544b extends AlgorithmBase {
         image1aTumor.calcMinMax();
         image2aTumor.calcMinMax();
         
+        if(subsampleAmount == 0) {
+            ViewJFrameImage frame1a = new ViewJFrameImage(image1a);
+            ViewJFrameImage frame2a = new ViewJFrameImage(image2a);
+            ViewJFrameImage frame1aTumor = new ViewJFrameImage(image1aTumor);
+            ViewJFrameImage frame2aTumor = new ViewJFrameImage(image2aTumor);
+        }
+        
         if (isRunningInSeparateThread()) {
             image1a.getParentFrame().setVisible(true);
             image2a.getParentFrame().setVisible(true);
