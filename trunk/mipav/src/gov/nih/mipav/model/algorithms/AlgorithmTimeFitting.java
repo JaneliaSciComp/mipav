@@ -3,6 +3,8 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.util.DoubleDouble;
 
+import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitSM2ConstrainedModelC;
+import gov.nih.mipav.model.algorithms.AlgorithmSM2.sm2Task;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -38,6 +40,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
 
     /** A vector of center times for each volume */
     private double timeVals[] = null;
+    
+    private double srcArray[] = null;
 
     private int i;
 
@@ -143,7 +147,6 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         ViewVOIVector VOIs;
         short mask[];
         int t;
-        double srcArray[];
         double y_array[];
         int srcSize4D;
         int destSize4D;
@@ -404,9 +407,32 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             }
         }
         
-        //if (processors > 1) {
-            
-        //} else { // processors == 1
+        if (processors > 1) {
+            int start;
+            int end;
+            final ExecutorService application = Executors.newCachedThreadPool();
+            for (i = 0; i < processors; i++) {
+                start = (i * volSize) / processors;
+                end = ( (i + 1) * volSize) / processors;
+                application.execute(new fittingTask(start, end, tDim, initial, timeVals));
+            }
+            application.shutdown();
+            try {
+                boolean tasksEnded = application.awaitTermination(24, TimeUnit.HOURS);
+                if ( !tasksEnded) {
+                    System.err.println("Timed out while waiting for tasks to finish");
+                    Preferences.debug("Timed out while waiting for tasks to finish\n", Preferences.DEBUG_ALGORITHM);
+                    setCompleted(false);
+                    return;
+                }
+
+            } catch (final InterruptedException ex) {
+                System.err.println("Interrupted while waiting for tasks to finish");
+                Preferences.debug("Interrupted while waiting for tasks to finish\n", Preferences.DEBUG_ALGORITHM);
+                setCompleted(false);
+                return;
+            }    
+        } else { // processors == 1
             for (i = 0; i < volSize; i++) {
                 voxelsProcessed++;
                 final long vt100 = voxelsProcessed * 100L;
@@ -756,7 +782,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                     exitStatus[status + 11]++;
                 } // if (wholeImage || bitMask.get(i))
             } // for (i = 0; i < volSize; i++)
-        //} // else processors == 1
+        } // else processors == 1
             
         if (selfTest) {
             setCompleted(true);
@@ -1647,6 +1673,385 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
 
         setCompleted(true);
+    }
+    
+    public class fittingTask implements Runnable {
+        private final int start;
+
+        private final int end;
+
+        private final int tDim;
+
+        private final double initial[];
+
+        private final double timeVals[];
+
+        public fittingTask(final int start, final int end, final int tDim, final double initial[], final double timeVals[]) {
+            this.start = start;
+            this.end = end;
+            this.tDim = tDim;
+            this.initial = initial.clone();
+            this.timeVals = timeVals.clone();
+        }
+
+        public void run() {
+            int i;
+            int j;
+            final double y_array[] = new double[tDim];
+            double params[] = null;
+            double chi_squared = 0.0;
+            FitLine lineModel;
+            FitExponential expModel;
+            FitGaussian gaussianModel;
+            FitLaplace laplaceModel;
+            FitLorentz lorentzModel;
+            FitMultiExponential multiExponentialModel;
+            FitRayleigh rayleighModel;
+            int status = 0;
+            double delt;
+            double minDiff;
+            int tMid;
+            double diff;
+            double m;
+            double maxVal;
+            double val;
+            boolean beenHalved;
+            int tHalved = 0;
+            double deltSquared;
+            double a2Squared;
+            double ratio;
+            double mlower;
+            double mupper;
+            double sqrta2;
+            for (i = start; i < end; i++) {
+                // fireProgressStateChanged(i * 100/volSize);
+                if (wholeImage || bitMask.get(i)) {
+                    input(y_array, i);
+                    switch(functionFit) {
+                        case LINEAR_FIT:
+                            if (findInitialFromData) {
+                                // a0 + a1 * timeVals[tDim-1] = y_array[tDim-1]
+                                // a0 + a1 * timeVals[0] = y_array[0]
+                                // a1 * (timeVals[tDim-1] - timeVals[0]) = (y_array[tDim-1] - y_array[0])
+                                initial[1] = (y_array[tDim-1]- y_array[0])/(timeVals[tDim-1] - timeVals[0]);
+                                initial[0] = y_array[0] - initial[1] * timeVals[0];
+                            }
+                            lineModel = new FitLine(y_array);
+                            lineModel.driver();
+                            params = lineModel.getParameters();
+                            chi_squared = lineModel.getChiSquared();
+                            status = lineModel.getExitStatus();
+                            break;
+                        case EXPONENTIAL_FIT:
+                            if (findInitialFromData) {
+                                // a0 + a1 * exp(a2 * timeVals[tDim-1]) = y_array[tDim-1]
+                                // Let timeVals[tDim-1] - timeVals[0] = delt
+                                // Find tMid such that timesVals[tMid] - timeVals[0] is closest to delt/2.
+                                // a0 + a1 * exp(a2 * timeVals[tMid]) = y_array[tMid]
+                                // a0 + a1 * exp(a2 * timeVals[0]) = y_array[0]
+                                // a1*(exp(a2 * timeVals[tDim-1]) - exp(a2 * timeVals[0]) = (y_array[tDim-1] - y_array[0])
+                                // a1*(exp(a2 * timeVals[tMid]) - exp(a2 * timeVals[0]) = (y_array[tMid] - y_array[0])
+                                //
+                                // ((exp(a2 * timeVals[tDim-1]) - exp(a2 * timeVals[0]))/(exp(a2 * timeVals[tMid]) - exp(a2 * timeVals[0])) =
+                                // (y_array[tDim-1] - y_array[0])/(y_array[tMid] - y_array[0]) = m
+                                
+                                // Dividing numerator and denominator by exp(a2 * timeVals[0]):
+                                // ((exp(a2 * delt) - 1)/(exp(0.5 * a2 * delt) - 1) = m
+                                // exp(a2 * delt) - 1 = m*exp(0.5 * a2 * delt)  - m
+                                // exp(a2 * delt) - m*exp(0.5 * a2 * delt) + (m - 1) = 0
+                                // exp(0.5 * a2 * delt) = (m +- sqrt(m*m - 4*(m-1))/2 = m-1, 1
+                                // m - 1 is the correct answer
+                                // exp(a2 * delt) = (m-1)**2
+                                // a2 = ln((m-1)**2)/delt
+                                delt = timeVals[tDim-1] - timeVals[0];
+                                minDiff = Double.MAX_VALUE;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim-1; j++) {
+                                    diff = Math.abs(timeVals[j] - timeVals[0] - delt/2.0);
+                                    if (diff < minDiff) {
+                                        minDiff = diff;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim-1; j++)
+                                m = (y_array[tDim-1] - y_array[0])/(y_array[tMid] - y_array[0]);
+                                diff = m - 1.0;
+                                initial[2] = Math.log(diff*diff)/delt;
+                                initial[1] = (y_array[tDim-1] - y_array[0])/
+                                        (Math.exp(initial[2] * timeVals[tDim-1]) - Math.exp(initial[2] * timeVals[0]));
+                                initial[0] = y_array[tDim-1] - initial[1] - Math.exp(initial[2] * timeVals[tDim-1]);
+                            } // if (findInitialFromData)
+                            expModel = new FitExponential(y_array);
+                            expModel.driver();
+                            params = expModel.getParameters();
+                            chi_squared = expModel.getChiSquared();
+                            status = expModel.getExitStatus();
+                            break;
+                        case GAUSSIAN_FIT:
+                            if (findInitialFromData) {
+                                // Gaussian (a0*exp(-(t-a1)^2/(2*(a2)^2))
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                initial[0] = y_array[tMid];
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }
+                                } // if (!beenHalved)
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
+                                        Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));     
+                            } // if (findInitialFromData)
+                            gaussianModel = new FitGaussian(y_array);
+                            gaussianModel.driver();
+                            params = gaussianModel.getParameters();
+                            chi_squared = gaussianModel.getChiSquared();
+                            status = gaussianModel.getExitStatus();
+                            break;
+                        case LAPLACE_FIT:
+                            if (findInitialFromData) {
+                                // Laplace (a0*exp(-|t-a1|/a2))
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                initial[0] = y_array[tMid];
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }
+                                } // if (!beenHalved)
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
+                            } // if (findInitialFromData)
+                            laplaceModel = new FitLaplace(y_array);
+                            laplaceModel.driver();
+                            params = laplaceModel.getParameters();
+                            chi_squared = laplaceModel.getChiSquared();
+                            status = laplaceModel.getExitStatus();
+                            break;
+                        case LORENTZ_FIT:
+                            if (findInitialFromData) {
+                                // Lorentz (a0/((t-a1)*(t-a1) + a2*a2)
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                // a0/a2**2 = y_array[tMid]
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }
+                                } // if (!beenHalved)
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                delt = (timeVals[tHalved] - initial[1]);
+                                deltSquared = delt * delt;
+                                // a0/(deltSquared + a2**2) = y_array[tHalved]
+                                // (deltSquared + a2**2)/(a2**2) = y_array[tMid]/y_array[tHalved] = m
+                                m = y_array[tMid]/y_array[tHalved];
+                                // a2 = sqrt(deltSquared/(m-1))
+                                a2Squared = deltSquared/(m - 1.0);
+                                initial[2] = Math.sqrt(a2Squared);
+                                // a0 = (a2**2) * y_array[tMid]
+                                initial[0] = a2Squared * y_array[tMid];
+                            } // if (findInitialFromData)
+                            lorentzModel = new FitLorentz(y_array);
+                            lorentzModel.driver();
+                            params = lorentzModel.getParameters();
+                            chi_squared = lorentzModel.getChiSquared();
+                            status = lorentzModel.getExitStatus();
+                            break;
+                        case MULTIEXPONENTIAL_FIT:
+                            multiExponentialModel = new FitMultiExponential(y_array);
+                            multiExponentialModel.driver();
+                            params = multiExponentialModel.getParameters();
+                            chi_squared = multiExponentialModel.getChiSquared();
+                            status = multiExponentialModel.getExitStatus();
+                            break;
+                        case RAYLEIGH_FIT:
+                            if (findInitialFromData) {
+                                // Rayleigh Distribution a0 *(t-a1)*exp(-(t-a1)*(t-a1)/a2)*u(t-a1) 
+                                // Derivative with respect to t = a0 * exp(-(t-a1)*(t-a1)/a2) * (1 - 2*(t-a1)*(t-a1)/a2)
+                                // Maximum where derivative = 0 or maximum at t = a1 + sqrt(a2/2).
+                                // Here ymax = a0 * sqrt(a2/2) * exp(-0.5)
+                                // At th = a1 + sqrt(a2), yh = a0 * sqrt(a2) * exp(-1)
+                                // ymax/yh = sqrt(1/2) * exp(0.5) = 0.7071067811865475 * 1.6487 = 1.1658
+                                // yh/ymax = 0.85777
+                                // In general at t = a1 + m*sqrt(a2), for m > sqrt(1/2), y/ymax = sqrt(2) * exp(0.5) * m * exp(-m**2)
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                beenHalved = false;
+                                for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) { 
+                                    tHalved = tDim-1;
+                                } // if (!beenHalved)
+                                ratio = y_array[tHalved]/(y_array[tMid] * Math.sqrt(2.0) * Math.exp(0.5));
+                                // ratio = m * exp(-m**2)
+                                mlower = Math.sqrt(0.5);
+                                mupper = 5.0;
+                                m = (mlower + mupper)/2.0;
+                                diff = mupper - mlower;
+                                while (Math.abs(diff) > 1.0E-5) {
+                                    m = (mlower + mupper)/2.0;
+                                    diff = ratio - (m * Math.exp(-m*m));
+                                    if (diff > 0.0) {
+                                         mupper = m;    
+                                    }
+                                    else if (diff < 0.0) {
+                                        mlower = m;
+                                    }
+                                } // while (diff > 1.0E-5)
+                                // timeVals[tHalved] - timeVals[tMid] = a1 + m * sqrt(a2) - (a1 + sqrt(0.5)*sqrt(a2)) = 
+                                //                                    (m - sqrt(0.5)) * sqrt(a2)
+                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - Math.sqrt(0.5));
+                                initial[2] = sqrta2 * sqrta2;
+                                initial[0] = y_array[tMid]/(sqrta2 * Math.sqrt(0.5) * Math.exp(-0.5));
+                                initial[1] = timeVals[tHalved] - m * sqrta2;
+                            } // if (findInitialFromData)
+                            rayleighModel = new FitRayleigh(y_array);
+                            rayleighModel.driver();
+                            params = rayleighModel.getParameters();
+                            chi_squared = rayleighModel.getChiSquared();
+                            status = rayleighModel.getExitStatus();
+                            break;
+                    } // switch(functionFit)
+                    
+                    output(params, i, status, chi_squared);
+                } // if (bitMask.get(i)
+                else {
+                    output(null, -1, 0, 0.0);
+                }
+            } // for (i = start; i < end; i++)
+        }
+
+    } // class sm2Task implements Runnable
+    
+    public synchronized void input(final double y_array[], final int i) {
+        int t;
+        for (t = 0; t < tDim; t++) {
+            y_array[t] = srcArray[t * volSize + i];
+        }
+    }
+
+    public synchronized void output(final double params[], final int i, final int status, final double chi_squared) {
+        int j;
+        voxelsProcessed++;
+        final long vt100 = voxelsProcessed * 100L;
+        barMarker = (int) (vt100 / volSize);
+        if (barMarker > oldBarMarker) {
+            oldBarMarker = barMarker;
+            fireProgressStateChanged(barMarker);
+        }
+        if (i >= 0) {
+            for (j = 0; j < numVariables; j++) {
+                destArray[j*volSize +i] = params[j];
+                if (Double.isNaN(params[j])) {
+                    paramNaN[j]++;
+                } else if (Double.isInfinite(params[j])) {
+                    paramInf[j]++;
+                } else {
+                    if (params[j] < paramMin[j]) {
+                        paramMin[j] = params[j];
+                    }
+                    if (params[j] > paramMax[j]) {
+                        paramMax[j] = params[j];
+                    }
+                }
+            }
+            if (status > 0) {
+                validVoxels++;
+                for (j = 0; j < numVariables; j++) {
+                    paramTotal[j] += params[j];
+                }
+            } else {
+                bitMask.clear(i);
+            }
+            destArray[(numVariables * volSize) + i] = chi_squared;
+            destExitStatusArray[i] = status;
+            exitStatus[status + 11]++;
+        } // if (i >= 0)
     }
     
     class FitLine extends NLConstrainedEngine {
