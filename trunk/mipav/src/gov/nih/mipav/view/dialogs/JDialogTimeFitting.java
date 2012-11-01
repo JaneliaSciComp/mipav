@@ -614,7 +614,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(gaussianFit, gbc);
         
-        laplaceFit = new JRadioButton("Fit Laplace (a0*exp(-|x-a1|/a2))", false);
+        laplaceFit = new JRadioButton("Fit Laplace (a0*exp(-|t-a1|/a2))", false);
         laplaceFit.setFont(serif12);
         laplaceFit.setForeground(Color.black);
         laplaceFit.addActionListener(this);
@@ -624,7 +624,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(laplaceFit, gbc);
         
-        lorentzFit = new JRadioButton("Fit Lorentz (a0/((x-a1)*(x-a1) + a2*a2)", false);
+        lorentzFit = new JRadioButton("Fit Lorentz (a0/((t-a1)*(t-a1) + a2*a2)", false);
         lorentzFit.setFont(serif12);
         lorentzFit.setForeground(Color.black);
         lorentzFit.addActionListener(this);
@@ -634,7 +634,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridy++;
         mainPanel.add(lorentzFit, gbc);
         
-        multiExponentialFit = new JRadioButton("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)", false);
+        multiExponentialFit = new JRadioButton("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*t)", false);
         multiExponentialFit.setFont(serif12);
         multiExponentialFit.setForeground(Color.black);
         multiExponentialFit.addActionListener(this);
@@ -660,7 +660,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 1;
         mainPanel.add(numVariablesField, gbc);
         
-        rayleighFit = new JRadioButton("Fit Rayleigh Distribution a2 *(x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0)", false);
+        rayleighFit = new JRadioButton("Fit Rayleigh Distribution a0 *(t-a1)*exp(-(t-a1)*(t-a1)/a2)*u(t-a1)", false);
         rayleighFit.setFont(serif12);
         rayleighFit.setForeground(Color.black);
         rayleighFit.addActionListener(this);
