@@ -131,7 +131,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
-        boolean  selfTest = true;
+        boolean  selfTest = false;
         int functionArray[] = null;
         int numVariablesArray[] = null;
         double initialArray[][] = null;
