@@ -5646,17 +5646,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = kVOIs.size()-1; i >=0; i-- )
 		{
 			VOI kVOI = kVOIs.elementAt(i);
-			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+			if(kVOI.getCurves() != null) 
 			{
-				VOIBase kVOI3D = kVOI.getCurves().get(j);
-				if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-						(m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
-						contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
-				{
-					m_iNearStatus = NearNone;
-					m_kParent.setCursor(MipavUtil.moveCursor);
-					return;
-				}
+    			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+    			{
+    				VOIBase kVOI3D = kVOI.getCurves().get(j);
+    				if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+    						(m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
+    						contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
+    				{
+    					m_iNearStatus = NearNone;
+    					m_kParent.setCursor(MipavUtil.moveCursor);
+    					return;
+    				}
+    			}
 			}
 		}
 		m_iNearStatus = NearNone;
