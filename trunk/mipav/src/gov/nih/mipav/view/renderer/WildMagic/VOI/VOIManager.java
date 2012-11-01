@@ -5416,6 +5416,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = kVOIs.size()-1; i >=0; i-- )
 		{
 			VOI kVOI = kVOIs.get(i);
+			if(kVOI.getCurves() == null) 
+			{
+			    continue;
+			}
 			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
 			{
 				VOIBase kVOI3D = kVOI.getCurves().get(j);
