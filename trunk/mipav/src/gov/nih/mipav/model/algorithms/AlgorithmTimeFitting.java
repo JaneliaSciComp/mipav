@@ -131,7 +131,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * starts the algorithm.
      */
     public void runAlgorithm() {
-        boolean  selfTest = false;
+        boolean  selfTest = true;
         int functionArray[] = null;
         int numVariablesArray[] = null;
         double initialArray[][] = null;
@@ -176,6 +176,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         double maxVal;
         boolean beenHalved;
         int tHalved = 0;
+        double deltSquared;
+        double a2Squared;
+        double ratio;
+        double mlower;
+        double mupper;
+        double sqrta2;
 
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n", Preferences.DEBUG_ALGORITHM);
@@ -382,15 +388,15 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             } 
             functionArray[8] = RAYLEIGH_FIT; 
             numVariablesArray[8] = 3;
-            initialArray[8][0] = 48.0;
-            initialArray[8][1] = 32.0;
-            initialArray[8][2] = 15.0;
-            a0 = 50.5;
-            a1 = 30.0;
-            a2 = 10.0;
+            initialArray[8][0] = 15.0;
+            initialArray[8][1] = 48.0;
+            initialArray[8][2] = 32.0;
+            a0 = 10.0;
+            a1 = 50.5;
+            a2 = 30.0;
             for (t = 0; t < tDim; t++) {
                 if (t >= 50.5) {
-                    srcArray[t * volSize + 8] = a2 * (t-a0)*Math.exp(-(t-a0)*(t-a0)/a1);
+                    srcArray[t * volSize + 8] = a0 * (t-a1)*Math.exp(-(t-a1)*(t-a1)/a2);
                 }
                 else {
                     srcArray[t * volSize + 8] = 0.0;
@@ -500,18 +506,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         tHalved = j;
                                     }
                                 }
-                                if (beenHalved) {
-                                    initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
-                                                 Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));      
-                                }
-                                else {
+                                if (!beenHalved) {
                                     for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
                                         if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
                                             beenHalved = true;
                                             tHalved = j;
                                         }
-                                    }    
-                                }
+                                    }
+                                } // if (!beenHalved)
                                 if (!beenHalved) {
                                     if (y_array[0] < y_array[tDim-1]) {
                                         tHalved = 0;
@@ -531,7 +533,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             break;
                         case LAPLACE_FIT:
                             if (findInitialFromData) {
-                                // Laplace (a0*exp(-|x-a1|/a2))
+                                // Laplace (a0*exp(-|t-a1|/a2))
                                 maxVal = 0.0;
                                 tMid = tDim/2;
                                 for (j = 0; j < tDim; j++) {
@@ -550,17 +552,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         tHalved = j;
                                     }
                                 }
-                                if (beenHalved) {
-                                    initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
-                                }
-                                else {
+                                if (!beenHalved) {
                                     for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
                                         if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
                                             beenHalved = true;
                                             tHalved = j;
                                         }
-                                    }    
-                                }
+                                    }
+                                } // if (!beenHalved)
                                 if (!beenHalved) {
                                     if (y_array[0] < y_array[tDim-1]) {
                                         tHalved = 0;
@@ -579,7 +578,51 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             break;
                         case LORENTZ_FIT:
                             if (findInitialFromData) {
-                                
+                                // Lorentz (a0/((t-a1)*(t-a1) + a2*a2)
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                initial[1] = timeVals[tMid];
+                                // a0/a2**2 = y_array[tMid]
+                                beenHalved = false;
+                                for (j = tMid -1; (j >= 0) && (!beenHalved); j--) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) {
+                                    for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                        if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                            beenHalved = true;
+                                            tHalved = j;
+                                        }
+                                    }
+                                } // if (!beenHalved)
+                                if (!beenHalved) {
+                                    if (y_array[0] < y_array[tDim-1]) {
+                                        tHalved = 0;
+                                    }
+                                    else {
+                                        tHalved = tDim-1;
+                                    }
+                                } // if (!beenHalved)
+                                delt = (timeVals[tHalved] - initial[1]);
+                                deltSquared = delt * delt;
+                                // a0/(deltSquared + a2**2) = y_array[tHalved]
+                                // (deltSquared + a2**2)/(a2**2) = y_array[tMid]/y_array[tHalved] = m
+                                m = y_array[tMid]/y_array[tHalved];
+                                // a2 = sqrt(deltSquared/(m-1))
+                                a2Squared = deltSquared/(m - 1.0);
+                                initial[2] = Math.sqrt(a2Squared);
+                                // a0 = (a2**2) * y_array[tMid]
+                                initial[0] = a2Squared * y_array[tMid];
                             } // if (findInitialFromData)
                             lorentzModel = new FitLorentz(y_array);
                             lorentzModel.driver();
@@ -595,6 +638,57 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = multiExponentialModel.getExitStatus();
                             break;
                         case RAYLEIGH_FIT:
+                            if (findInitialFromData) {
+                                // Rayleigh Distribution a0 *(t-a1)*exp(-(t-a1)*(t-a1)/a2)*u(t-a1) 
+                                // Derivative with respect to t = a0 * exp(-(t-a1)*(t-a1)/a2) * (1 - 2*(t-a1)*(t-a1)/a2)
+                                // Maximum where derivative = 0 or maximum at t = a1 + sqrt(a2/2).
+                                // Here ymax = a0 * sqrt(a2/2) * exp(-0.5)
+                                // At th = a1 + sqrt(a2), yh = a0 * sqrt(a2) * exp(-1)
+                                // ymax/yh = sqrt(1/2) * exp(0.5) = 0.7071067811865475 * 1.6487 = 1.1658
+                                // yh/ymax = 0.85777
+                                // In general at t = a1 + m*sqrt(a2), for m > sqrt(1/2), y/ymax = sqrt(2) * exp(0.5) * m * exp(-m**2)
+                                maxVal = 0.0;
+                                tMid = tDim/2;
+                                for (j = 0; j < tDim; j++) {
+                                    val = Math.abs(y_array[j]);
+                                    if (val > maxVal) {
+                                        maxVal = val;
+                                        tMid = j;
+                                    }
+                                } // for (j = 0; j < tDim; j++)
+                                beenHalved = false;
+                                for (j = tMid + 1; (j <= tDim-1) && (!beenHalved); j++) {
+                                    if (Math.abs(y_array[j]) <= 0.5*Math.abs(y_array[tMid])) {
+                                        beenHalved = true;
+                                        tHalved = j;
+                                    }
+                                }
+                                if (!beenHalved) { 
+                                    tHalved = tDim-1;
+                                } // if (!beenHalved)
+                                ratio = y_array[tHalved]/(y_array[tMid] * Math.sqrt(2.0) * Math.exp(0.5));
+                                // ratio = m * exp(-m**2)
+                                mlower = Math.sqrt(0.5);
+                                mupper = 5.0;
+                                m = (mlower + mupper)/2.0;
+                                diff = mupper - mlower;
+                                while (Math.abs(diff) > 1.0E-5) {
+                                    m = (mlower + mupper)/2.0;
+                                    diff = ratio - (m * Math.exp(-m*m));
+                                    if (diff > 0.0) {
+                                         mupper = m;    
+                                    }
+                                    else if (diff < 0.0) {
+                                        mlower = m;
+                                    }
+                                } // while (diff > 1.0E-5)
+                                // timeVals[tHalved] - timeVals[tMid] = a1 + m * sqrt(a2) - (a1 + sqrt(0.5)*sqrt(a2)) = 
+                                //                                    (m - sqrt(0.5)) * sqrt(a2)
+                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - Math.sqrt(0.5));
+                                initial[2] = sqrta2 * sqrta2;
+                                initial[0] = y_array[tMid]/(sqrta2 * Math.sqrt(0.5) * Math.exp(-0.5));
+                                initial[1] = timeVals[tHalved] - m * sqrta2;
+                            } // if (findInitialFromData)
                             rayleighModel = new FitRayleigh(y_array);
                             rayleighModel.driver();
                             params = rayleighModel.getParameters();
@@ -1883,7 +1977,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - a0*exp(-|x-a1|/a2)
+         * Fit to function - a0*exp(-|t-a1|/a2)
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
          * @param covarMat The derivative values of y with respect to fitting parameters.
@@ -1988,7 +2082,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - a0/((x-a1)*(x-a1) + a2*a2)
+         * Fit to function - a0/((t-a1)*(t-a1) + a2*a2)
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
          * @param covarMat The derivative values of y with respect to fitting parameters.
@@ -2112,7 +2206,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - a0 + a1*exp(a2*x) + a3*exp(a4*x) + ...
+         * Fit to function - a0 + a1*exp(a2*t) + a3*exp(a4*t) + ...
          * where all the exponentials are negative decaying exponentials.
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
@@ -2185,10 +2279,10 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             bu = new double[3];
             bl[0] = -Double.MAX_VALUE;
             bu[0] = Double.MAX_VALUE;
-            // a1 must be positive
-            bl[1] = Double.MIN_VALUE;
+            bl[1] = -Double.MAX_VALUE;
             bu[1] = Double.MAX_VALUE;
-            bl[2] = -Double.MAX_VALUE;
+            // a2 must be positive
+            bl[2] = Double.MIN_VALUE;
             bu[2] = Double.MAX_VALUE;
             
             // The default is internalScaling = false
@@ -2223,7 +2317,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         }
         
         /** 
-         * Fit to function - a2 * (x-a0)*exp(-(x-a0)*(x-a0)/a1)*u(x-a0) with a1 > 0
+         * Fit to function - a0 * (t-a1)*exp(-(t-a1)*(t-a1)/a2)*u(t - a1) with a2 > 0
          * @param a The best guess parameter values.
          * @param residuals ymodel - yData.
          * @param covarMat The derivative values of y with respect to fitting parameters.
@@ -2242,9 +2336,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
                     for (j = 0; j < nPts; j++) {
-                        if (timeVals[j] >= a[0]) {
-                            diff = timeVals[j] - a[0];
-                            ymod = a[2]*diff*Math.exp(-diff*diff/a[1]); 
+                        if (timeVals[j] >= a[1]) {
+                            diff = timeVals[j] - a[1];
+                            ymod = a[0]*diff*Math.exp(-diff*diff/a[2]); 
                         }
                         else {
                             ymod = 0.0;
@@ -2256,13 +2350,13 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                 else if (ctrl == 2) {
                     // Calculate the Jacobian analytically
                     for (j = 0; j < nPts; j++) {
-                        if (timeVals[j] >= a[0]) {
-                            diff = timeVals[j] - a[0];
+                        if (timeVals[j] >= a[1]) {
+                            diff = timeVals[j] - a[1];
                             diffSquared = diff * diff;
-                            expon = Math.exp(-diffSquared/a[1]);
-                            covarMat[j][0] = a[2]*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
-                            covarMat[j][1] = a[2]*((diff * diffSquared)/(a[1]*a[1]))*expon; // a1 partial derivative
-                            covarMat[j][2] = diff*expon; 
+                            expon = Math.exp(-diffSquared/a[2]);
+                            covarMat[j][0] = diff * expon;
+                            covarMat[j][1] = a[0]*expon*((2.0*diffSquared/a[2]) - 1.0);
+                            covarMat[j][2] = a[0]*((diff * diffSquared)/(a[2]*a[2]))*expon;
                         }
                         else {
                             covarMat[j][0] = 0.0;
