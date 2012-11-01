@@ -85,6 +85,12 @@ public class PlugInDialogSimulateParams544b extends JDialogScriptableBase implem
 
     private PlugInDialogCreateTumorMap544b createTumorDialogTemplate;
 
+    /** Text fields for intensity value deviations. */
+    private JTextField normalTissueText, tumor1Text, tumor2Text;
+
+    /** Intensity value deviations. */
+    private double tumor1Dev, tumor2Dev, normalTissueDev;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -189,17 +195,47 @@ public class PlugInDialogSimulateParams544b extends JDialogScriptableBase implem
         mainPanel.add(createTumorPanel, gbc);
         
         gbc.gridx++;
+        
+        JPanel stdDevPanel = new JPanel();
+        stdDevPanel.setForeground(Color.black);
+        stdDevPanel.setLayout(new GridBagLayout());
+        stdDevPanel.setBorder(MipavUtil.buildTitledBorder("Simulation standard deviations"));
+        GridBagConstraints stdGbc = new GridBagConstraints();
+        stdGbc.gridwidth = 1;
+        stdGbc.gridheight = 1;
+        stdGbc.anchor = GridBagConstraints.WEST;
+        stdGbc.weightx = 1;
+        stdGbc.insets = new Insets(3, 3, 3, 3);
+        stdGbc.fill = GridBagConstraints.HORIZONTAL;
+        stdGbc.gridx = 0;
+        stdGbc.gridy = 0;
+        
+        normalTissueText = gui.buildIntegerField("Normal tissue standard deviation: ", 10);              
+        stdDevPanel.add(normalTissueText.getParent(), stdGbc);
+        
+        stdGbc.gridy++;
+        tumor1Text = gui.buildDecimalField("Tumor 1 intensity standard deviation: ", 10);
+        stdDevPanel.add(tumor1Text.getParent(), stdGbc);
+        
+        stdGbc.gridy++;
+        tumor2Text = gui.buildDecimalField("Tumor 2 intensity standard deviation: ", 10);
+        stdDevPanel.add(tumor2Text.getParent(), stdGbc);
+        
+        stdGbc.gridy++;
         tumorSizeDevText = gui.buildDecimalField("Tumor radius standard deviation: ", 1);
-        mainPanel.add(tumorSizeDevText.getParent(), gbc);
+        stdDevPanel.add(tumorSizeDevText.getParent(), stdGbc);
         
 //        gbc.gridx = 0;
 //        gbc.gridy++;
 //        JPanel generatePostPanel = generatePostTreatmentDialog.buildMainPanel(false, gui);
 //        mainPanel.add(generatePostPanel, gbc);
         
-        gbc.gridx++;
+        stdGbc.gridy++;
+        stdGbc.insets = new Insets(15, 0, 10, 0);
         iterNumText = gui.buildIntegerField("Number of iterations: ", 10);              
-        mainPanel.add(iterNumText.getParent(), gbc);
+        stdDevPanel.add(iterNumText.getParent(), stdGbc);
+        
+        mainPanel.add(stdDevPanel, gbc);
         
         gbc.gridx = 0;
         gbc.gridwidth = 2;
@@ -225,6 +261,9 @@ public class PlugInDialogSimulateParams544b extends JDialogScriptableBase implem
      */
     private boolean setVariables() {
         try {
+            tumor1Dev = Double.valueOf(tumor1Text.getText());
+            tumor2Dev = Double.valueOf(tumor2Text.getText());
+            normalTissueDev = Double.valueOf(normalTissueText.getText());
             tumorSizeDev = Double.valueOf(tumorSizeDevText.getText());
             iterNum = Integer.valueOf(iterNumText.getText());
             
@@ -251,25 +290,53 @@ public class PlugInDialogSimulateParams544b extends JDialogScriptableBase implem
         }
         
         private void performAlgComp() {
-            Random r = new Random();
+            Random rRad = new Random(), rInt1 = new Random(), rInt2 = new Random(), rIntNorm = new Random();
 
             for(int i=0; i<iterNum; i++) {
                 Preferences.data("************Begin Iteration "+(i+1)+"*****************\n");
                 
-                double radius = 0;
+                double radius = 0, intensity1 = 0, intensity2 = 0, normalIntensity = 0;
                 while(radius <= 0) {
-                    radius = createTumorDialogTemplate.getRadiusField() + r.nextGaussian()*tumorSizeDev;
+                    radius = createTumorDialogTemplate.getRadiusField() + rRad.nextGaussian()*tumorSizeDev;
+                }
+                while(intensity1 <= 0) {
+                    intensity1 = createTumorDialogTemplate.getTumor1Field() + rInt1.nextGaussian()*tumor1Dev;
+                }
+                while(intensity2 <=0) {
+                    intensity2 = createTumorDialogTemplate.getTumor2Field() + rInt2.nextGaussian()*tumor2Dev;
+                }
+                while(normalIntensity <=0) {
+                    normalIntensity = createTumorDialogTemplate.getNormalField() + rIntNorm.nextGaussian()*normalTissueDev;
+                } 
+               
+                Preferences.data("Unique simulation fields:\n");
+                
+                if(tumorSizeDev != 0.0) {
+                    Preferences.data("\t\tRadius: "+radius+"\n");
+                }
+                if(tumor1Dev != 0.0) {
+                    Preferences.data("\t\tTumor 1 intensity: "+intensity1+"\n");
+                }
+                if(tumor2Dev != 0.0) {
+                    Preferences.data("\t\tTumor 2 intensity: "+intensity2+"\n");
+                }
+                if(normalTissueDev != 0.0) {
+                    Preferences.data("\t\tNormal tissue intensity: "+normalIntensity+"\n");
                 }
                 
-                Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
-                
                 createTumorDialogTemplate.setRadiusField(radius);
+                createTumorDialogTemplate.setTumor1Field(intensity1);
+                createTumorDialogTemplate.setTumor2Field(intensity2);
+                createTumorDialogTemplate.setNormalField(normalIntensity);
                 createTumorDialogTemplate.setIter((i+1));
                 createTumorDialogTemplate.setSeparateThread(false);
                 createTumorDialogTemplate.actionPerformed(new ActionEvent(this, 0, "OK"));
                 createTumorDialogTemplate.destroy();
                 
-                System.out.println("Value: "+createTumorDialogTemplate.getRadiusField());
+                System.out.println("Value Radius: "+createTumorDialogTemplate.getRadiusField());
+                System.out.println("Value Tumor 1: "+createTumorDialogTemplate.getTumor1Field());
+                System.out.println("Value Tumor 2: "+createTumorDialogTemplate.getTumor2Field());
+                System.out.println("Value Normal Tissue: "+createTumorDialogTemplate.getNormalField());
                 
                 ViewUserInterface ui = ViewUserInterface.getReference();
                 
