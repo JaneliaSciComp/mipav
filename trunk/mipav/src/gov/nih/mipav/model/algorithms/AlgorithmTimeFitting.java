@@ -58,6 +58,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     private boolean findInitialFromData = true;
 
     private double initial[];
+    
+    private boolean useBounds[];
+    
+    private double lowBounds[];
+    
+    private double highBounds[];
 
     private int[] exitStatus;
 
@@ -107,7 +113,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
      * 
      */
     public AlgorithmTimeFitting(final ModelImage destImage, final ModelImage srcImage, final ModelImage exitStatusImage, final boolean useLog,
-            final int functionFit, final int numVariables, boolean findInitialFromData, double initial[]) {
+            final int functionFit, final int numVariables, boolean findInitialFromData, double initial[], boolean useBounds[],
+            double lowBounds[], double highBounds[]) {
 
         super(destImage, srcImage);
         this.exitStatusImage = exitStatusImage;
@@ -116,6 +123,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         this.numVariables =  numVariables;
         this.findInitialFromData = findInitialFromData;
         this.initial = initial;
+        this.useBounds = useBounds;
+        this.lowBounds = lowBounds;
+        this.highBounds = highBounds;
     }
 
     // ~ Methods
@@ -185,6 +195,10 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         double mlower;
         double mupper;
         double sqrta2;
+        double sqrt2 = Math.sqrt(2.0);
+        double sqrtpoint5 = Math.sqrt(0.5);
+        double exppoint5 = Math.exp(0.5);
+        double expminuspoint5 = Math.exp(-0.5);
 
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n", Preferences.DEBUG_ALGORITHM);
@@ -414,7 +428,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             for (i = 0; i < processors; i++) {
                 start = (i * volSize) / processors;
                 end = ( (i + 1) * volSize) / processors;
-                application.execute(new fittingTask(start, end, tDim, initial, timeVals));
+                application.execute(new fittingTask(start, end, tDim, initial, timeVals, useBounds, lowBounds, highBounds));
             }
             application.shutdown();
             try {
@@ -461,7 +475,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 initial[1] = (y_array[tDim-1]- y_array[0])/(timeVals[tDim-1] - timeVals[0]);
                                 initial[0] = y_array[0] - initial[1] * timeVals[0];
                             }
-                            lineModel = new FitLine(y_array);
+                            lineModel = new FitLine(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             lineModel.driver();
                             params = lineModel.getParameters();
                             chi_squared = lineModel.getChiSquared();
@@ -505,7 +519,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         (Math.exp(initial[2] * timeVals[tDim-1]) - Math.exp(initial[2] * timeVals[0]));
                                 initial[0] = y_array[tDim-1] - initial[1] - Math.exp(initial[2] * timeVals[tDim-1]);
                             } // if (findInitialFromData)
-                            expModel = new FitExponential(y_array);
+                            expModel = new FitExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             expModel.driver();
                             params = expModel.getParameters();
                             chi_squared = expModel.getChiSquared();
@@ -551,7 +565,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
                                         Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));     
                             } // if (findInitialFromData)
-                            gaussianModel = new FitGaussian(y_array);
+                            gaussianModel = new FitGaussian(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             gaussianModel.driver();
                             params = gaussianModel.getParameters();
                             chi_squared = gaussianModel.getChiSquared();
@@ -596,7 +610,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 } // if (!beenHalved)
                                 initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
                             } // if (findInitialFromData)
-                            laplaceModel = new FitLaplace(y_array);
+                            laplaceModel = new FitLaplace(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             laplaceModel.driver();
                             params = laplaceModel.getParameters();
                             chi_squared = laplaceModel.getChiSquared();
@@ -650,14 +664,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 // a0 = (a2**2) * y_array[tMid]
                                 initial[0] = a2Squared * y_array[tMid];
                             } // if (findInitialFromData)
-                            lorentzModel = new FitLorentz(y_array);
+                            lorentzModel = new FitLorentz(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             lorentzModel.driver();
                             params = lorentzModel.getParameters();
                             chi_squared = lorentzModel.getChiSquared();
                             status = lorentzModel.getExitStatus();
                             break;
                         case MULTIEXPONENTIAL_FIT:
-                            multiExponentialModel = new FitMultiExponential(y_array);
+                            multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             multiExponentialModel.driver();
                             params = multiExponentialModel.getParameters();
                             chi_squared = multiExponentialModel.getChiSquared();
@@ -692,9 +706,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 if (!beenHalved) { 
                                     tHalved = tDim-1;
                                 } // if (!beenHalved)
-                                ratio = y_array[tHalved]/(y_array[tMid] * Math.sqrt(2.0) * Math.exp(0.5));
+                                ratio = y_array[tHalved]/(y_array[tMid] * sqrt2 * exppoint5);
                                 // ratio = m * exp(-m**2)
-                                mlower = Math.sqrt(0.5);
+                                mlower = sqrtpoint5;
                                 mupper = 5.0;
                                 m = (mlower + mupper)/2.0;
                                 diff = mupper - mlower;
@@ -710,12 +724,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 } // while (diff > 1.0E-5)
                                 // timeVals[tHalved] - timeVals[tMid] = a1 + m * sqrt(a2) - (a1 + sqrt(0.5)*sqrt(a2)) = 
                                 //                                    (m - sqrt(0.5)) * sqrt(a2)
-                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - Math.sqrt(0.5));
+                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - sqrtpoint5);
                                 initial[2] = sqrta2 * sqrta2;
-                                initial[0] = y_array[tMid]/(sqrta2 * Math.sqrt(0.5) * Math.exp(-0.5));
+                                initial[0] = y_array[tMid]/(sqrta2 * sqrtpoint5 * expminuspoint5);
                                 initial[1] = timeVals[tHalved] - m * sqrta2;
                             } // if (findInitialFromData)
-                            rayleighModel = new FitRayleigh(y_array);
+                            rayleighModel = new FitRayleigh(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             rayleighModel.driver();
                             params = rayleighModel.getParameters();
                             chi_squared = rayleighModel.getChiSquared();
@@ -1685,13 +1699,23 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         private final double initial[];
 
         private final double timeVals[];
+        
+        private final boolean useBounds[];
+        
+        private final double lowBounds[];
+        
+        private final double highBounds[];
 
-        public fittingTask(final int start, final int end, final int tDim, final double initial[], final double timeVals[]) {
+        public fittingTask(final int start, final int end, final int tDim, final double initial[], final double timeVals[],
+                           final boolean useBounds[], final double lowBounds[], final double highBounds[]) {
             this.start = start;
             this.end = end;
             this.tDim = tDim;
             this.initial = initial.clone();
             this.timeVals = timeVals.clone();
+            this.useBounds = useBounds.clone();
+            this.lowBounds = lowBounds.clone();
+            this.highBounds = highBounds.clone();
         }
 
         public void run() {
@@ -1723,6 +1747,10 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             double mlower;
             double mupper;
             double sqrta2;
+            double sqrt2 = Math.sqrt(2.0);
+            double sqrtpoint5 = Math.sqrt(0.5);
+            double exppoint5 = Math.exp(0.5);
+            double expminuspoint5 = Math.exp(-0.5);
             for (i = start; i < end; i++) {
                 // fireProgressStateChanged(i * 100/volSize);
                 if (wholeImage || bitMask.get(i)) {
@@ -1736,7 +1764,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 initial[1] = (y_array[tDim-1]- y_array[0])/(timeVals[tDim-1] - timeVals[0]);
                                 initial[0] = y_array[0] - initial[1] * timeVals[0];
                             }
-                            lineModel = new FitLine(y_array);
+                            lineModel = new FitLine(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             lineModel.driver();
                             params = lineModel.getParameters();
                             chi_squared = lineModel.getChiSquared();
@@ -1780,7 +1808,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         (Math.exp(initial[2] * timeVals[tDim-1]) - Math.exp(initial[2] * timeVals[0]));
                                 initial[0] = y_array[tDim-1] - initial[1] - Math.exp(initial[2] * timeVals[tDim-1]);
                             } // if (findInitialFromData)
-                            expModel = new FitExponential(y_array);
+                            expModel = new FitExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             expModel.driver();
                             params = expModel.getParameters();
                             chi_squared = expModel.getChiSquared();
@@ -1826,7 +1854,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 initial[2] = Math.abs((timeVals[tHalved] - timeVals[tMid]) * 
                                         Math.sqrt(0.5 / Math.log(initial[0]/y_array[tHalved])));     
                             } // if (findInitialFromData)
-                            gaussianModel = new FitGaussian(y_array);
+                            gaussianModel = new FitGaussian(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             gaussianModel.driver();
                             params = gaussianModel.getParameters();
                             chi_squared = gaussianModel.getChiSquared();
@@ -1871,7 +1899,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 } // if (!beenHalved)
                                 initial[2] = Math.abs(timeVals[tHalved] - timeVals[tMid]) / Math.log(initial[0]/y_array[tHalved]);      
                             } // if (findInitialFromData)
-                            laplaceModel = new FitLaplace(y_array);
+                            laplaceModel = new FitLaplace(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             laplaceModel.driver();
                             params = laplaceModel.getParameters();
                             chi_squared = laplaceModel.getChiSquared();
@@ -1925,14 +1953,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 // a0 = (a2**2) * y_array[tMid]
                                 initial[0] = a2Squared * y_array[tMid];
                             } // if (findInitialFromData)
-                            lorentzModel = new FitLorentz(y_array);
+                            lorentzModel = new FitLorentz(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             lorentzModel.driver();
                             params = lorentzModel.getParameters();
                             chi_squared = lorentzModel.getChiSquared();
                             status = lorentzModel.getExitStatus();
                             break;
                         case MULTIEXPONENTIAL_FIT:
-                            multiExponentialModel = new FitMultiExponential(y_array);
+                            multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             multiExponentialModel.driver();
                             params = multiExponentialModel.getParameters();
                             chi_squared = multiExponentialModel.getChiSquared();
@@ -1967,9 +1995,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 if (!beenHalved) { 
                                     tHalved = tDim-1;
                                 } // if (!beenHalved)
-                                ratio = y_array[tHalved]/(y_array[tMid] * Math.sqrt(2.0) * Math.exp(0.5));
+                                ratio = y_array[tHalved]/(y_array[tMid] * sqrt2 * exppoint5);
                                 // ratio = m * exp(-m**2)
-                                mlower = Math.sqrt(0.5);
+                                mlower = sqrtpoint5;
                                 mupper = 5.0;
                                 m = (mlower + mupper)/2.0;
                                 diff = mupper - mlower;
@@ -1985,12 +2013,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 } // while (diff > 1.0E-5)
                                 // timeVals[tHalved] - timeVals[tMid] = a1 + m * sqrt(a2) - (a1 + sqrt(0.5)*sqrt(a2)) = 
                                 //                                    (m - sqrt(0.5)) * sqrt(a2)
-                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - Math.sqrt(0.5));
+                                sqrta2 = (timeVals[tHalved] - timeVals[tMid])/(m - sqrtpoint5);
                                 initial[2] = sqrta2 * sqrta2;
-                                initial[0] = y_array[tMid]/(sqrta2 * Math.sqrt(0.5) * Math.exp(-0.5));
+                                initial[0] = y_array[tMid]/(sqrta2 * sqrtpoint5 * expminuspoint5);
                                 initial[1] = timeVals[tHalved] - m * sqrta2;
                             } // if (findInitialFromData)
-                            rayleighModel = new FitRayleigh(y_array);
+                            rayleighModel = new FitRayleigh(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             rayleighModel.driver();
                             params = rayleighModel.getParameters();
                             chi_squared = rayleighModel.getChiSquared();
@@ -2057,13 +2085,32 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitLine extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLine(final double ydata[]) {
-         // tDim data points, 2 coefficients, and linear fitting
+        public FitLine(final int tDim, final double ydata[], final double initial[], final boolean useBounds[], final double lowBounds[],
+                       final double highBounds[]) {
+            // tDim data points, 2 coefficients, and linear fitting
             super(tDim, 2);
             this.ydata = ydata;
             
-            bounds = 0; // bounds = 0 means unconstrained
+            if ((useBounds[0] == false) && (useBounds[1] == false)) {
+                bounds = 0; 
+            }
+            else {
+                bounds = 2;
+                bl = new double[2];
+                bu = new double[2];
+                for (int i = 0; i < 2; i++) {
+                    if (!useBounds[i]) {
+                        bl[i] = -Double.MAX_VALUE;
+                        bu[i] = Double.MAX_VALUE;
+                    }
+                    else {
+                        bl[i] = lowBounds[i];
+                        bu[i] = highBounds[i];
+                    }
+                }
+            }
 
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
@@ -2145,13 +2192,32 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitExponential extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitExponential(final double ydata[]) {
+        public FitExponential(final int tDim, final double ydata[], final double initial[], final boolean useBounds[],
+                              final double lowBounds[], final double highBounds[]) {
          // tDim data points, 3 coefficients, and exponential fitting
             super(tDim, 3);
             this.ydata = ydata;
             
-            bounds = 0; // bounds = 0 means unconstrained
-
+            if ((useBounds[0] == false) && (useBounds[1] == false) && (useBounds[2] == false)) {
+                bounds = 0; 
+            }
+            else {
+                bounds = 2;
+                bl = new double[3];
+                bu = new double[3];
+                for (int i = 0; i < 3; i++) {
+                    if (!useBounds[i]) {
+                        bl[i] = -Double.MAX_VALUE;
+                        bu[i] = Double.MAX_VALUE;
+                    }
+                    else {
+                        bl[i] = lowBounds[i];
+                        bu[i] = highBounds[i];
+                    }
+                }
+            }
+            
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
@@ -2238,13 +2304,31 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitGaussian extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitGaussian(final double ydata[]) {
+        public FitGaussian(final int tDim, final double ydata[], final double initial[], final boolean useBounds[],
+                           final double lowBounds[], final double highBounds[]) {
             // tDim data points, 3 coefficients, and Gaussian fitting
             super(tDim, 3);
             this.ydata = ydata;
             
-            bounds = 0; // bounds = 0 means unconstrained
-
+            bounds = 2;
+            bl = new double[3];
+            bu = new double[3];
+            for (int i = 0; i < 3; i++) {
+                if (!useBounds[i]) {
+                    bl[i] = -Double.MAX_VALUE;
+                    bu[i] = Double.MAX_VALUE;
+                }
+                else {
+                    bl[i] = lowBounds[i];
+                    bu[i] = highBounds[i];
+                }
+                if (i == 2) {
+                    // a2 must be positive
+                    bl[2] = Math.max(bl[2], Double.MIN_VALUE);
+                }
+            }
+            
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
@@ -2338,13 +2422,32 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitLaplace extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLaplace(final double ydata[]) {
+        public FitLaplace(final int tDim, final double ydata[], final double intial[], final boolean useBounds[],
+                          final double lowBounds[], final double highBounds[]) {
             // tDim data points, 3 coefficients, and Laplace fitting
             super(tDim, 3);
-            this.ydata = ydata;
+            this.ydata = ydata; 
             
-            bounds = 0; // bounds = 0 means unconstrained
-
+            bounds = 2;
+            bl = new double[3];
+            bu = new double[3];
+            for (int i = 0; i < 3; i++) {
+                if (!useBounds[i]) {
+                    bl[i] = -Double.MAX_VALUE;
+                    bu[i] = Double.MAX_VALUE;
+                }
+                else {
+                    bl[i] = lowBounds[i];
+                    bu[i] = highBounds[i];
+                }
+                
+                if (i == 2) {
+                    // a2 must be positive
+                    bl[2] = Math.max(bl[2], Double.MIN_VALUE);
+                }
+            }
+            
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
@@ -2434,26 +2537,35 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitLorentz extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitLorentz(final double ydata[]) {
+        public FitLorentz(final int tDim, final double ydata[], final double initial[], final boolean useBounds[],
+                          final double lowBounds[], final double highBounds[]) {
             // tDim data points, 3 coefficients, and Lorentz fitting
             super(tDim, 3);
             this.ydata = ydata;
             
-            bounds = 2; // bounds = 0 means unconstrained
-
+            bounds = 2; 
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
             // for all parameters
             bl = new double[3];
             bu = new double[3];
-            bl[0] = -Double.MAX_VALUE;
-            bu[0] = Double.MAX_VALUE;
-            bl[1] = -Double.MAX_VALUE;
-            bu[1] = Double.MAX_VALUE;
-            // gamma = half-width at half-maximum must be positive
-            bl[2] = Double.MIN_VALUE;
-            bu[2] = Double.MAX_VALUE;
+            for (int i = 0; i < 3; i++) {
+                if (!useBounds[i]) {
+                    bl[i] = -Double.MAX_VALUE;
+                    bu[i] = Double.MAX_VALUE;
+                }
+                else {
+                    bl[i] = lowBounds[i];
+                    bu[i] = highBounds[i];
+                }
+                
+                if (i == 2) {
+                    // a2, half-width at half-maximum must be positive
+                    bl[2] = Math.max(bl[2], Double.MIN_VALUE);
+                }
+            }
             
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
@@ -2551,13 +2663,14 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitMultiExponential extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitMultiExponential(final double ydata[]) {
+        public FitMultiExponential(final int tDim, final double ydata[], final double initial[], final boolean useBounds[],
+                                   final double lowBounds[], final double highBounds[]) {
             // tDim data points, numVariable coefficients, and multiexponential fitting
             super(tDim, numVariables);
             this.ydata = ydata;
             
-            bounds = 2; // bounds = 0 means unconstrained
-
+            bounds = 2; 
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
@@ -2565,14 +2678,32 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             bl = new double[numVariables];
             bu = new double[numVariables];
             
-            bl[0] = -Double.MAX_VALUE;
-            bu[0] = Double.MAX_VALUE;
-            // All exponentials are decaying negative exponentials
+            if (useBounds[0]) {
+                bl[0] = lowBounds[0];
+                bu[0] = highBounds[0];
+            }
+            else {
+                bl[0] = -Double.MAX_VALUE;
+                bu[0] = Double.MAX_VALUE;
+            }
+            // All exponentials are decaying negative exponentials by default
             for (int k = 0; k < (numVariables - 1)/2; k++) {
-                bl[2*k+1] = -Double.MAX_VALUE;
-                bu[2*k+1] = Double.MAX_VALUE;
-                bl[2*k+2] = -Double.MAX_VALUE;
-                bu[2*k+2] = 0.0;
+                if (useBounds[2*k+1]) {
+                    bl[2*k+1] = lowBounds[2*k+1];
+                    bu[2*k+1] = highBounds[2*k+1];
+                }
+                else {
+                    bl[2*k+1] = -Double.MAX_VALUE;
+                    bu[2*k+1] = Double.MAX_VALUE;
+                }
+                if (useBounds[2*k+2]) {
+                    bl[2*k+2] = lowBounds[2*k+2];
+                    bu[2*k+2] = highBounds[2*k+2];
+                }
+                else {
+                    bl[2*k+2] = -Double.MAX_VALUE;
+                    bu[2*k+2] = 0.0;
+                }
             }
             
             // The default is internalScaling = false
@@ -2669,26 +2800,35 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     class FitRayleigh extends NLConstrainedEngine {
         final double ydata[];
         
-        public FitRayleigh(final double ydata[]) {
+        public FitRayleigh(final int tDim, final double ydata[], final double initial[], final boolean useBounds[],
+                           final double lowBounds[], final double highBounds[]) {
             // tDim data points, 3 coefficients, and Rayleigh fitting
             super(tDim, 3);
             this.ydata = ydata;
             
-            bounds = 2; // bounds = 0 means unconstrained
-
+            bounds = 2; 
+            // bounds = 0 means unconstrained
             // bounds = 1 means same lower and upper bounds for
             // all parameters
             // bounds = 2 means different lower and upper bounds
             // for all parameters
             bl = new double[3];
             bu = new double[3];
-            bl[0] = -Double.MAX_VALUE;
-            bu[0] = Double.MAX_VALUE;
-            bl[1] = -Double.MAX_VALUE;
-            bu[1] = Double.MAX_VALUE;
-            // a2 must be positive
-            bl[2] = Double.MIN_VALUE;
-            bu[2] = Double.MAX_VALUE;
+            for (int i = 0; i < 3; i++) {
+                if (!useBounds[i]) {
+                    bl[i] = -Double.MAX_VALUE;
+                    bu[i] = Double.MAX_VALUE;
+                }
+                else {
+                    bl[i] = lowBounds[i];
+                    bu[i] = highBounds[i];
+                }
+                
+                if (i == 2) {
+                    // a2 must be positive
+                    bl[2] = Math.max(bl[2], Double.MIN_VALUE);
+                }
+            }
             
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
