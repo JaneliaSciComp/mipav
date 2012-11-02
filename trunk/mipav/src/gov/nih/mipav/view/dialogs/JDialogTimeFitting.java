@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.AlgorithmSM2;
 import gov.nih.mipav.model.algorithms.AlgorithmTimeFitting;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
@@ -41,6 +40,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 public class JDialogTimeFitting extends JDialogScriptableBase implements AlgorithmInterface {
@@ -129,6 +129,8 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     private boolean findInitialFromData = true;
     
+    private JTabbedPane tabbedPane;
+    
     private JLabel labela0;
     
     private JLabel labela1;
@@ -157,7 +159,83 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     private JTextField texta6;
     
+    private JCheckBox b0CheckBox;
+    
+    private JCheckBox b1CheckBox;
+    
+    private JCheckBox b2CheckBox;
+    
+    private JCheckBox b3CheckBox;
+    
+    private JCheckBox b4CheckBox;
+    
+    private JCheckBox b5CheckBox;
+    
+    private JCheckBox b6CheckBox;
+    
+    private JLabel low0Label;
+    
+    private JTextField low0TextField;
+    
+    private JLabel high0Label;
+    
+    private JTextField high0TextField;
+    
+    private JLabel low1Label;
+    
+    private JTextField low1TextField;
+    
+    private JLabel high1Label;
+    
+    private JTextField high1TextField;
+    
+    private JLabel low2Label;
+    
+    private JTextField low2TextField;
+    
+    private JLabel high2Label;
+    
+    private JTextField high2TextField;
+    
+    private JLabel low3Label;
+    
+    private JTextField low3TextField;
+    
+    private JLabel high3Label;
+    
+    private JTextField high3TextField;
+    
+    private JLabel low4Label;
+    
+    private JTextField low4TextField;
+    
+    private JLabel high4Label;
+    
+    private JTextField high4TextField;
+    
+    private JLabel low5Label;
+    
+    private JTextField low5TextField;
+    
+    private JLabel high5Label;
+    
+    private JTextField high5TextField;
+    
+    private JLabel low6Label;
+    
+    private JTextField low6TextField;
+    
+    private JLabel high6Label;
+    
+    private JTextField high6TextField; 
+    
     private double initial[] = new double[9];
+    
+    private boolean useBounds[] = new boolean[9];
+    
+    private double lowBounds[] = new double[9];
+    
+    private double highBounds[] = new double[9];
 	
 	
 	public JDialogTimeFitting() {
@@ -209,6 +287,11 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 texta5.setEnabled(true);
                 labela6.setEnabled(true);
                 texta6.setEnabled(true);
+                b2CheckBox.setEnabled(true);
+                b3CheckBox.setEnabled(true);
+                b4CheckBox.setEnabled(true);
+                b5CheckBox.setEnabled(true);
+                b6CheckBox.setEnabled(true);
                 return;
 	    	}
     	    initialCheckBox.setEnabled(true);
@@ -223,13 +306,44 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
             texta5.setEnabled(false);
             labela6.setEnabled(false);
             texta6.setEnabled(false);
+            b3CheckBox.setEnabled(false);
+            b4CheckBox.setEnabled(false);
+            b5CheckBox.setEnabled(false);
+            b6CheckBox.setEnabled(false);
+            b3CheckBox.setSelected(false);
+            b4CheckBox.setSelected(false);
+            b5CheckBox.setSelected(false);
+            b6CheckBox.setSelected(false);
+            low3Label.setEnabled(false);
+            low3TextField.setEnabled(false);
+            high3Label.setEnabled(false);
+            high3TextField.setEnabled(false);
+            low4Label.setEnabled(false);
+            low4TextField.setEnabled(false);
+            high4Label.setEnabled(false);
+            high4TextField.setEnabled(false);
+            low5Label.setEnabled(false);
+            low5TextField.setEnabled(false);
+            high5Label.setEnabled(false);
+            high5TextField.setEnabled(false);
+            low6Label.setEnabled(false);
+            low6TextField.setEnabled(false);
+            high6Label.setEnabled(false);
+            high6TextField.setEnabled(false);
 	    	if (source == linearFit) {
 	    	    labela2.setEnabled(false);
 	    	    texta2.setEnabled(false);
+	    	    b2CheckBox.setEnabled(false);
+	    	    b2CheckBox.setSelected(false);
+	    	    low2Label.setEnabled(false);
+	            low2TextField.setEnabled(false);
+	            high2Label.setEnabled(false);
+	            high2TextField.setEnabled(false);
 	    	}
 	    	else {
 	    	    labela2.setEnabled(!previousFindInitial);
                 texta2.setEnabled(!previousFindInitial);
+                b3CheckBox.setEnabled(true);
 	    	}
 	    	labela0.setEnabled(!previousFindInitial);
 	    	texta0.setEnabled(!previousFindInitial);
@@ -254,6 +368,98 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                  labela2.setEnabled(false);
                  texta2.setEnabled(false);
 	         }
+	         
+	     } else if (source == b0CheckBox) {
+	         if (b0CheckBox.isSelected()) {
+	             low0Label.setEnabled(true);
+	             low0TextField.setEnabled(true);
+	             high0Label.setEnabled(true);
+	             high0TextField.setEnabled(true);    
+	         }
+	         else {
+	             low0Label.setEnabled(false);
+	             low0TextField.setEnabled(false);
+	             high0Label.setEnabled(false);
+	             high0TextField.setEnabled(false);
+	         }
+	     } else if (source == b1CheckBox) {
+             if (b1CheckBox.isSelected()) {
+                 low1Label.setEnabled(true);
+                 low1TextField.setEnabled(true);
+                 high1Label.setEnabled(true);
+                 high1TextField.setEnabled(true);    
+             }
+             else {
+                 low1Label.setEnabled(false);
+                 low1TextField.setEnabled(false);
+                 high1Label.setEnabled(false);
+                 high1TextField.setEnabled(false);
+             }
+	     } else if (source == b2CheckBox) {
+             if (b2CheckBox.isSelected()) {
+                 low2Label.setEnabled(true);
+                 low2TextField.setEnabled(true);
+                 high2Label.setEnabled(true);
+                 high2TextField.setEnabled(true);    
+             }
+             else {
+                 low2Label.setEnabled(false);
+                 low2TextField.setEnabled(false);
+                 high2Label.setEnabled(false);
+                 high2TextField.setEnabled(false);
+             }
+	     } else if (source == b3CheckBox) {
+             if (b3CheckBox.isSelected()) {
+                 low3Label.setEnabled(true);
+                 low3TextField.setEnabled(true);
+                 high3Label.setEnabled(true);
+                 high3TextField.setEnabled(true);    
+             }
+             else {
+                 low3Label.setEnabled(false);
+                 low3TextField.setEnabled(false);
+                 high3Label.setEnabled(false);
+                 high3TextField.setEnabled(false);
+             }
+	     } else if (source == b4CheckBox) {
+             if (b4CheckBox.isSelected()) {
+                 low4Label.setEnabled(true);
+                 low4TextField.setEnabled(true);
+                 high4Label.setEnabled(true);
+                 high4TextField.setEnabled(true);    
+             }
+             else {
+                 low4Label.setEnabled(false);
+                 low4TextField.setEnabled(false);
+                 high4Label.setEnabled(false);
+                 high4TextField.setEnabled(false);
+             }
+	     } else if (source == b5CheckBox) {
+             if (b5CheckBox.isSelected()) {
+                 low5Label.setEnabled(true);
+                 low5TextField.setEnabled(true);
+                 high5Label.setEnabled(true);
+                 high5TextField.setEnabled(true);    
+             }
+             else {
+                 low5Label.setEnabled(false);
+                 low5TextField.setEnabled(false);
+                 high5Label.setEnabled(false);
+                 high5TextField.setEnabled(false);
+             }
+	     } else if (source == b6CheckBox) {
+             if (b6CheckBox.isSelected()) {
+                 low6Label.setEnabled(true);
+                 low6TextField.setEnabled(true);
+                 high6Label.setEnabled(true);
+                 high6TextField.setEnabled(true);    
+             }
+             else {
+                 low6Label.setEnabled(false);
+                 low6TextField.setEnabled(false);
+                 high6Label.setEnabled(false);
+                 high6TextField.setEnabled(false);
+             }
 	     } else if (command.equals("VOIFile")) {
 
 	            try {
@@ -357,7 +563,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     		exitStatusImage = new ModelImage(ModelStorageBase.INTEGER, statusExtents, image.getImageName() + "_exit_status");
     		
     		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables, 
-    		                                  findInitialFromData, initial);
+    		                                  findInitialFromData, initial, useBounds, lowBounds, highBounds);
     
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -480,17 +686,42 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         }
 	}
 	
-	
-	
-	/**
-	 * init
-     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
-     */
-    private void init() {
+	private void init() {
+	   setForeground(Color.black);
+	   setTitle("Time Fitting");
+	   
+	   final JPanel fittingPanel = buildFittingPanel();
+       final JPanel boundsPanel = buildBoundsPanel();
+       
+       tabbedPane = new JTabbedPane();
+       tabbedPane.setFont(MipavUtil.font12B);
+       tabbedPane.addTab("Fitting", fittingPanel);
 
-    	GuiBuilder gui = new GuiBuilder(this);
-    	
-        JPanel mainPanel = new JPanel(new GridBagLayout());
+       tabbedPane.addTab("Bounds", boundsPanel);
+
+       final GridBagConstraints gbc = new GridBagConstraints();
+       gbc.gridx = 0;
+       gbc.gridy = 0;
+       gbc.weightx = 1.0;
+       gbc.weighty = 1.0;
+
+       final JPanel buttonPanel = new JPanel();
+       buttonPanel.add(buildButtons());
+
+       getContentPane().add(tabbedPane);
+       getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+       pack();
+       setVisible(true);
+       setResizable(false);
+
+	}
+	
+	private JPanel buildFittingPanel() {
+	    GuiBuilder gui = new GuiBuilder(this);
+	    final JPanel fittingPanel = new JPanel(new GridBagLayout());
+	    fittingPanel.setBorder(buildTitledBorder("Fitting"));
+	    fittingPanel.setForeground(Color.black);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -501,37 +732,35 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridx = 0;
-    	setForeground(Color.black);
-        setTitle("Time Fitting");
         
         JLabel choiceLabel = new JLabel("Choose a 4D black and white image file");
         choiceLabel.setForeground(Color.black);
         choiceLabel.setFont(serif12);
-        mainPanel.add(choiceLabel, gbc);
+        fittingPanel.add(choiceLabel, gbc);
         
         JLabel choiceLabel2 = new JLabel("At each volume point a function will be fitted to the time series");
         choiceLabel2.setForeground(Color.black);
         choiceLabel2.setFont(serif12);
         gbc.gridy++;
-        mainPanel.add(choiceLabel2, gbc);
+        fittingPanel.add(choiceLabel2, gbc);
         
         JLabel choiceLabel3 = new JLabel("Parameter a0 fitting is in the first output volume");
         choiceLabel3.setForeground(Color.black);
         choiceLabel3.setFont(serif12);
         gbc.gridy++;
-        mainPanel.add(choiceLabel3, gbc);
+        fittingPanel.add(choiceLabel3, gbc);
         
         JLabel choiceLabel4 = new JLabel("a1 fitting is in the second output volume and so on");
         choiceLabel4.setForeground(Color.black);
         choiceLabel4.setFont(serif12);
         gbc.gridy++;
-        mainPanel.add(choiceLabel4, gbc);
+        fittingPanel.add(choiceLabel4, gbc);
         
         JLabel choiceLabel5 = new JLabel("a chi-squared volume is the last volume");
         choiceLabel5.setForeground(Color.black);
         choiceLabel5.setFont(serif12);
         gbc.gridy++;
-        mainPanel.add(choiceLabel5, gbc);
+        fittingPanel.add(choiceLabel5, gbc);
         
         buttonImage = new JButton("Choose an image");
         buttonImage.setForeground(Color.black);
@@ -547,25 +776,25 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         imgList[0] = "Load image...";
         Enumeration<String> strEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         for(int i=1; i<imgList.length; i++) {
-        	imgList[i] = strEnum.nextElement();
+            imgList[i] = strEnum.nextElement();
         }
         imageList = gui.buildComboBox("Choose an image: ", imgList, 0);
         imageList.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-	            if(imageList.getSelectedIndex() == 0) {
-	            	loadImage();
-	            } else {
-	            	textImage.setText(imageList.getSelectedItem().toString());
-	            }
+                if(imageList.getSelectedIndex() == 0) {
+                    loadImage();
+                } else {
+                    textImage.setText(imageList.getSelectedItem().toString());
+                }
             }
         });
-        mainPanel.add(imageList.getParent(), gbc);
+        fittingPanel.add(imageList.getParent(), gbc);
 
         textImage = new JTextField(30);
         textImage.setFont(serif12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(textImage, gbc);
+        fittingPanel.add(textImage, gbc);
         
         logCheckBox = new JCheckBox("Fit the log10 of intensity values", false);
         logCheckBox.setFont(serif12);
@@ -573,7 +802,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(logCheckBox, gbc);
+        fittingPanel.add(logCheckBox, gbc);
         
         JLabel functionLabel = new JLabel("Choose a fitting function");
         functionLabel.setForeground(Color.black);
@@ -581,7 +810,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(functionLabel, gbc);
+        fittingPanel.add(functionLabel, gbc);
         
         functionGroup = new ButtonGroup();
         linearFit = new JRadioButton("Fit linear (a0 + a1 * t)", true);
@@ -592,7 +821,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(linearFit, gbc);
+        fittingPanel.add(linearFit, gbc);
         
         exponentialFit = new JRadioButton("Fit exponential (a0+a1*exp(a2*t))", false);
         exponentialFit.setFont(serif12);
@@ -602,7 +831,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(exponentialFit, gbc);
+        fittingPanel.add(exponentialFit, gbc);
         
         gaussianFit = new JRadioButton("Fit Gaussian (a0*exp(-(t-a1)^2/(2*(a2)^2)))", false);
         gaussianFit.setFont(serif12);
@@ -612,7 +841,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(gaussianFit, gbc);
+        fittingPanel.add(gaussianFit, gbc);
         
         laplaceFit = new JRadioButton("Fit Laplace (a0*exp(-|t-a1|/a2))", false);
         laplaceFit.setFont(serif12);
@@ -622,7 +851,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(laplaceFit, gbc);
+        fittingPanel.add(laplaceFit, gbc);
         
         lorentzFit = new JRadioButton("Fit Lorentz (a0/((t-a1)*(t-a1) + a2*a2)", false);
         lorentzFit.setFont(serif12);
@@ -632,7 +861,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(lorentzFit, gbc);
+        fittingPanel.add(lorentzFit, gbc);
         
         multiExponentialFit = new JRadioButton("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*t)", false);
         multiExponentialFit.setFont(serif12);
@@ -642,7 +871,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(multiExponentialFit, gbc);
+        fittingPanel.add(multiExponentialFit, gbc);
         
         numVariablesLabel = new JLabel("Number of variables (Only for Multiexponential)");
         numVariablesLabel.setFont(serif12);
@@ -650,7 +879,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         numVariablesLabel.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(numVariablesLabel, gbc);
+        fittingPanel.add(numVariablesLabel, gbc);
         
         numVariablesField = new JTextField(5);
         numVariablesField.setText("5");
@@ -658,7 +887,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         numVariablesField.setForeground(Color.black);
         numVariablesField.setEnabled(false);
         gbc.gridx = 1;
-        mainPanel.add(numVariablesField, gbc);
+        fittingPanel.add(numVariablesField, gbc);
         
         rayleighFit = new JRadioButton("Fit Rayleigh Distribution a0 *(t-a1)*exp(-(t-a1)*(t-a1)/a2)*u(t-a1)", false);
         rayleighFit.setFont(serif12);
@@ -668,14 +897,14 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(rayleighFit, gbc);
+        fittingPanel.add(rayleighFit, gbc);
         
         labelVOI = new JLabel("Optionally open a VOI file or draw a VOI");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labelVOI, gbc);
+        fittingPanel.add(labelVOI, gbc);
         
         buttonVOIFile = new JButton("Open an optional VOI file");
         buttonVOIFile.setForeground(Color.black);
@@ -686,13 +915,13 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(buttonVOIFile, gbc);
+        fittingPanel.add(buttonVOIFile, gbc);
         
         textVOIFile = new JTextField(30);
         textVOIFile.setFont(serif12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(textVOIFile, gbc);
+        fittingPanel.add(textVOIFile, gbc);
         
         initialCheckBox = new JCheckBox("Find initial from data", true);
         initialCheckBox.setFont(serif12);
@@ -701,7 +930,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(initialCheckBox, gbc);
+        fittingPanel.add(initialCheckBox, gbc);
         
         labela0 = new JLabel("Initial a0 value");
         labela0.setForeground(Color.black);
@@ -709,7 +938,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela0.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela0, gbc);
+        fittingPanel.add(labela0, gbc);
         
         texta0 = new JTextField(20);
         texta0.setFont(serif12);
@@ -717,7 +946,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta0.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta0, gbc);
+        fittingPanel.add(texta0, gbc);
         
         labela1 = new JLabel("Initial a1 value");
         labela1.setForeground(Color.black);
@@ -725,7 +954,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela1.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela1, gbc);
+        fittingPanel.add(labela1, gbc);
         
         texta1 = new JTextField(20);
         texta1.setFont(serif12);
@@ -733,7 +962,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta1.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta1, gbc);
+        fittingPanel.add(texta1, gbc);
         
         labela2 = new JLabel("Initial a2 value");
         labela2.setForeground(Color.black);
@@ -741,7 +970,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela2.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela2, gbc);
+        fittingPanel.add(labela2, gbc);
         
         texta2 = new JTextField(20);
         texta2.setFont(serif12);
@@ -749,7 +978,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta2.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta2, gbc);
+        fittingPanel.add(texta2, gbc);
         
         labela3 = new JLabel("Initial a3 value");
         labela3.setForeground(Color.black);
@@ -757,7 +986,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela3.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela3, gbc);
+        fittingPanel.add(labela3, gbc);
         
         texta3 = new JTextField(20);
         texta3.setFont(serif12);
@@ -765,7 +994,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta3.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta3, gbc);
+        fittingPanel.add(texta3, gbc);
         
         labela4 = new JLabel("Initial a4 value");
         labela4.setForeground(Color.black);
@@ -773,7 +1002,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela4.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela4, gbc);
+        fittingPanel.add(labela4, gbc);
         
         texta4 = new JTextField(20);
         texta4.setFont(serif12);
@@ -781,7 +1010,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta4.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta4, gbc);
+        fittingPanel.add(texta4, gbc);
         
         labela5 = new JLabel("Initial a5 value");
         labela5.setForeground(Color.black);
@@ -789,7 +1018,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela5.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela5, gbc);
+        fittingPanel.add(labela5, gbc);
         
         texta5 = new JTextField(20);
         texta5.setFont(serif12);
@@ -797,7 +1026,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta5.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta5, gbc);
+        fittingPanel.add(texta5, gbc);
         
         labela6 = new JLabel("Initial a6 value");
         labela6.setForeground(Color.black);
@@ -805,7 +1034,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         labela6.setEnabled(false);
         gbc.gridx = 0;
         gbc.gridy++;
-        mainPanel.add(labela6, gbc);
+        fittingPanel.add(labela6, gbc);
         
         texta6 = new JTextField(20);
         texta6.setFont(serif12);
@@ -813,15 +1042,323 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         texta6.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
-        mainPanel.add(texta6, gbc);
-    
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
-
-        pack();
-        setVisible(true);
+        fittingPanel.add(texta6, gbc);
+	    return fittingPanel;
+	}
+	
+	private JPanel buildBoundsPanel() {
+	    final JPanel boundsPanel = new JPanel(new GridBagLayout());
+	    boundsPanel.setBorder(buildTitledBorder("Bounds"));
+        boundsPanel.setForeground(Color.black);
+	    GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridx = 0;
         
-    }
+        b0CheckBox = new JCheckBox("Use lower and upper bounds on a0", false);
+        b0CheckBox.setFont(serif12);
+        b0CheckBox.setForeground(Color.black);
+        b0CheckBox.addActionListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b0CheckBox, gbc);
+        
+        low0Label = new JLabel("a0 lower bound");
+        low0Label.setFont(serif12);
+        low0Label.setForeground(Color.black);
+        low0Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low0Label, gbc);
+        
+        low0TextField = new JTextField(20);
+        low0TextField.setText(" ");
+        low0TextField.setFont(serif12);
+        low0TextField.setForeground(Color.black);
+        low0TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low0TextField, gbc);
+        
+        high0Label = new JLabel("a0 upper bound");
+        high0Label.setFont(serif12);
+        high0Label.setForeground(Color.black);
+        high0Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high0Label, gbc);
+        
+        high0TextField = new JTextField(20);
+        high0TextField.setText(" ");
+        high0TextField.setFont(serif12);
+        high0TextField.setForeground(Color.black);
+        high0TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high0TextField, gbc);
+        
+        b1CheckBox = new JCheckBox("Use lower and upper bounds on a1", false);
+        b1CheckBox.setFont(serif12);
+        b1CheckBox.setForeground(Color.black);
+        b1CheckBox.addActionListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b1CheckBox, gbc);
+        
+        low1Label = new JLabel("a1 lower bound");
+        low1Label.setFont(serif12);
+        low1Label.setForeground(Color.black);
+        low1Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low1Label, gbc);
+        
+        low1TextField = new JTextField(20);
+        low1TextField.setText(" ");
+        low1TextField.setFont(serif12);
+        low1TextField.setForeground(Color.black);
+        low1TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low1TextField, gbc);
+        
+        high1Label = new JLabel("a1 upper bound");
+        high1Label.setFont(serif12);
+        high1Label.setForeground(Color.black);
+        high1Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high1Label, gbc);
+        
+        high1TextField = new JTextField(20);
+        high1TextField.setText(" ");
+        high1TextField.setFont(serif12);
+        high1TextField.setForeground(Color.black);
+        high1TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high1TextField, gbc);
+        
+        b2CheckBox = new JCheckBox("Use lower and upper bounds on a2", false);
+        b2CheckBox.setFont(serif12);
+        b2CheckBox.setForeground(Color.black);
+        b2CheckBox.addActionListener(this);
+        b2CheckBox.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b2CheckBox, gbc);
+        
+        low2Label = new JLabel("a2 lower bound");
+        low2Label.setFont(serif12);
+        low2Label.setForeground(Color.black);
+        low2Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low2Label, gbc);
+        
+        low2TextField = new JTextField(20);
+        low2TextField.setText(" ");
+        low2TextField.setFont(serif12);
+        low2TextField.setForeground(Color.black);
+        low2TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low2TextField, gbc);
+        
+        high2Label = new JLabel("a2 upper bound");
+        high2Label.setFont(serif12);
+        high2Label.setForeground(Color.black);
+        high2Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high2Label, gbc);
+        
+        high2TextField = new JTextField(20);
+        high2TextField.setText(" ");
+        high2TextField.setFont(serif12);
+        high2TextField.setForeground(Color.black);
+        high2TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high2TextField, gbc);
+        
+        b3CheckBox = new JCheckBox("Use lower and upper bounds on a3", false);
+        b3CheckBox.setFont(serif12);
+        b3CheckBox.setForeground(Color.black);
+        b3CheckBox.addActionListener(this);
+        b3CheckBox.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b3CheckBox, gbc);
+        
+        low3Label = new JLabel("a3 lower bound");
+        low3Label.setFont(serif12);
+        low3Label.setForeground(Color.black);
+        low3Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low3Label, gbc);
+        
+        low3TextField = new JTextField(20);
+        low3TextField.setText(" ");
+        low3TextField.setFont(serif12);
+        low3TextField.setForeground(Color.black);
+        low3TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low3TextField, gbc);
+        
+        high3Label = new JLabel("a3 upper bound");
+        high3Label.setFont(serif12);
+        high3Label.setForeground(Color.black);
+        high3Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high3Label, gbc);
+        
+        high3TextField = new JTextField(20);
+        high3TextField.setText(" ");
+        high3TextField.setFont(serif12);
+        high3TextField.setForeground(Color.black);
+        high3TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high3TextField, gbc);
+        
+        b4CheckBox = new JCheckBox("Use lower and upper bounds on a4", false);
+        b4CheckBox.setFont(serif12);
+        b4CheckBox.setForeground(Color.black);
+        b4CheckBox.addActionListener(this);
+        b4CheckBox.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b4CheckBox, gbc);
+        
+        low4Label = new JLabel("a4 lower bound");
+        low4Label.setFont(serif12);
+        low4Label.setForeground(Color.black);
+        low4Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low4Label, gbc);
+        
+        low4TextField = new JTextField(20);
+        low4TextField.setText(" ");
+        low4TextField.setFont(serif12);
+        low4TextField.setForeground(Color.black);
+        low4TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low4TextField, gbc);
+        
+        high4Label = new JLabel("a4 upper bound");
+        high4Label.setFont(serif12);
+        high4Label.setForeground(Color.black);
+        high4Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high4Label, gbc);
+        
+        high4TextField = new JTextField(20);
+        high4TextField.setText(" ");
+        high4TextField.setFont(serif12);
+        high4TextField.setForeground(Color.black);
+        high4TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high4TextField, gbc);
+        
+        b5CheckBox = new JCheckBox("Use lower and upper bounds on a5", false);
+        b5CheckBox.setFont(serif12);
+        b5CheckBox.setForeground(Color.black);
+        b5CheckBox.addActionListener(this);
+        b5CheckBox.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b5CheckBox, gbc);
+        
+        low5Label = new JLabel("a5 lower bound");
+        low5Label.setFont(serif12);
+        low5Label.setForeground(Color.black);
+        low5Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low5Label, gbc);
+        
+        low5TextField = new JTextField(20);
+        low5TextField.setText(" ");
+        low5TextField.setFont(serif12);
+        low5TextField.setForeground(Color.black);
+        low5TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low5TextField, gbc);
+        
+        high5Label = new JLabel("a5 upper bound");
+        high5Label.setFont(serif12);
+        high5Label.setForeground(Color.black);
+        high5Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high5Label, gbc);
+        
+        high5TextField = new JTextField(20);
+        high5TextField.setText(" ");
+        high5TextField.setFont(serif12);
+        high5TextField.setForeground(Color.black);
+        high5TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high5TextField, gbc);
+        
+        b6CheckBox = new JCheckBox("Use lower and upper bounds on a6", false);
+        b6CheckBox.setFont(serif12);
+        b6CheckBox.setForeground(Color.black);
+        b6CheckBox.addActionListener(this);
+        b6CheckBox.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(b6CheckBox, gbc);
+        
+        low6Label = new JLabel("a6 lower bound");
+        low6Label.setFont(serif12);
+        low6Label.setForeground(Color.black);
+        low6Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(low6Label, gbc);
+        
+        low6TextField = new JTextField(20);
+        low6TextField.setText(" ");
+        low6TextField.setFont(serif12);
+        low6TextField.setForeground(Color.black);
+        low6TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(low6TextField, gbc);
+        
+        high6Label = new JLabel("a6 upper bound");
+        high6Label.setFont(serif12);
+        high6Label.setForeground(Color.black);
+        high6Label.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        boundsPanel.add(high6Label, gbc);
+        
+        high6TextField = new JTextField(20);
+        high6TextField.setText(" ");
+        high6TextField.setFont(serif12);
+        high6TextField.setForeground(Color.black);
+        high6TextField.setEnabled(false);
+        gbc.gridx = 1;
+        boundsPanel.add(high6TextField, gbc);
+    
+	    return boundsPanel;
+	}
+	
+	
+	
+	
     
     private boolean setVariables() {
         String tmpStr;
@@ -916,6 +1453,160 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 initial[6] = Double.valueOf(tmpStr).doubleValue();    
             }
         } // if (!findInitialFromData)
+        
+        useBounds[0] = b0CheckBox.isSelected();
+        if (useBounds[0]) {
+            tmpStr = low0TextField.getText();
+            lowBounds[0] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[0] > initial[0]) {
+                MipavUtil.displayError("The a0 low bound cannot be greater than the a0 initial value");
+                return false;
+            }
+            
+            tmpStr = high0TextField.getText();
+            highBounds[0] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[0] < initial[0]) {
+                MipavUtil.displayError("The a0 high bound cannot be less than the a0 initial value");
+                return false;
+            }
+            
+            if (highBounds[0] < lowBounds[0]) {
+                MipavUtil.displayError("The a0 high bound cannot be less than the a0 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[1] = b1CheckBox.isSelected();
+        if (useBounds[1]) {
+            tmpStr = low1TextField.getText();
+            lowBounds[1] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[1] > initial[1]) {
+                MipavUtil.displayError("The a1 low bound cannot be greater than the a1 initial value");
+                return false;
+            }
+            
+            tmpStr = high1TextField.getText();
+            highBounds[1] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[1] < initial[1]) {
+                MipavUtil.displayError("The a1 high bound cannot be less than the a1 initial value");
+                return false;
+            }
+            
+            if (highBounds[1] < lowBounds[1]) {
+                MipavUtil.displayError("The a1 high bound cannot be less than the a1 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[2] = b2CheckBox.isSelected();
+        if (useBounds[2]) {
+            tmpStr = low2TextField.getText();
+            lowBounds[2] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[2] > initial[2]) {
+                MipavUtil.displayError("The a2 low bound cannot be greater than the a2 initial value");
+                return false;
+            }
+            
+            tmpStr = high2TextField.getText();
+            highBounds[2] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[2] < initial[2]) {
+                MipavUtil.displayError("The a2 high bound cannot be less than the a2 initial value");
+                return false;
+            }
+            
+            if (highBounds[2] < lowBounds[2]) {
+                MipavUtil.displayError("The a2 high bound cannot be less than the a2 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[3] = b3CheckBox.isSelected();
+        if (useBounds[3]) {
+            tmpStr = low3TextField.getText();
+            lowBounds[3] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[3] > initial[3]) {
+                MipavUtil.displayError("The a3 low bound cannot be greater than the a3 initial value");
+                return false;
+            }
+            
+            tmpStr = high3TextField.getText();
+            highBounds[3] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[3] < initial[3]) {
+                MipavUtil.displayError("The a3 high bound cannot be less than the a3 initial value");
+                return false;
+            }
+            
+            if (highBounds[3] < lowBounds[3]) {
+                MipavUtil.displayError("The a3 high bound cannot be less than the a3 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[4] = b4CheckBox.isSelected();
+        if (useBounds[4]) {
+            tmpStr = low4TextField.getText();
+            lowBounds[4] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[4] > initial[4]) {
+                MipavUtil.displayError("The a4 low bound cannot be greater than the a4 initial value");
+                return false;
+            }
+            
+            tmpStr = high4TextField.getText();
+            highBounds[4] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[4] < initial[4]) {
+                MipavUtil.displayError("The a4 high bound cannot be less than the a4 initial value");
+                return false;
+            }
+            
+            if (highBounds[4] < lowBounds[4]) {
+                MipavUtil.displayError("The a4 high bound cannot be less than the a4 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[5] = b5CheckBox.isSelected();
+        if (useBounds[5]) {
+            tmpStr = low5TextField.getText();
+            lowBounds[5] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[5] > initial[5]) {
+                MipavUtil.displayError("The a5 low bound cannot be greater than the a5 initial value");
+                return false;
+            }
+            
+            tmpStr = high5TextField.getText();
+            highBounds[5] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[5] < initial[5]) {
+                MipavUtil.displayError("The a5 high bound cannot be less than the a5 initial value");
+                return false;
+            }
+            
+            if (highBounds[5] < lowBounds[5]) {
+                MipavUtil.displayError("The a5 high bound cannot be less than the a5 low bound");
+                return false;
+            }
+        }
+        
+        useBounds[6] = b6CheckBox.isSelected();
+        if (useBounds[6]) {
+            tmpStr = low6TextField.getText();
+            lowBounds[6] = Double.valueOf(tmpStr).doubleValue();
+            if (lowBounds[6] > initial[6]) {
+                MipavUtil.displayError("The a6 low bound cannot be greater than the a6 initial value");
+                return false;
+            }
+            
+            tmpStr = high6TextField.getText();
+            highBounds[6] = Double.valueOf(tmpStr).doubleValue();
+            if (highBounds[6] < initial[6]) {
+                MipavUtil.displayError("The a6 high bound cannot be less than the a6 initial value");
+                return false;
+            }
+            
+            if (highBounds[6] < lowBounds[6]) {
+                MipavUtil.displayError("The a6 high bound cannot be less than the a6 low bound");
+                return false;
+            }
+        }
     	
     	return true;
     }
