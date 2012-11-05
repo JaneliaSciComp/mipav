@@ -142,6 +142,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			m_kMultiHistogram.setWidget( "Triangle" );
 			updateHelp(Triangle);
 		}
+		else if ( event.getActionCommand().equals("ClearAll") )
+		{
+			m_kMultiHistogram.clearAllWidgets();
+		}
 		else
 		{
 			m_kMultiHistogram.update( event.getActionCommand() );
@@ -312,6 +316,12 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		kGBC.gridx++;
 		kGBC.gridwidth = 2;
 		buttonPanel.add( boundaryEmphasisSlider, kGBC );
+		kGBC.gridx = 0;
+		kGBC.gridy++;
+		JButton clearAll = new JButton("Clear All");
+		clearAll.addActionListener(this);
+		clearAll.setActionCommand("ClearAll");
+		buttonPanel.add( clearAll, kGBC );
 
 		histogramPanel = new JPanel(new BorderLayout());
 		histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));

@@ -94,6 +94,19 @@ implements GLEventListener, KeyListener
 		m_bDisplay = true;
 	}
 	
+	public void clearAllWidgets()
+	{
+		m_iCurrent = -1;
+		for ( int i = m_akWidgets.size() - 1; i >= 0; i-- )
+		{
+			ClassificationWidget kDeleted = m_akWidgets.remove(i);
+			m_spkScene.DetachChild( kDeleted.getWidget() );
+			kDeleted.dispose();
+		}
+		m_spkScene.UpdateGS();
+		display();
+	}
+	
 	/**
 	 * Set the display to true and call GLCanvas.display;
 	 */
