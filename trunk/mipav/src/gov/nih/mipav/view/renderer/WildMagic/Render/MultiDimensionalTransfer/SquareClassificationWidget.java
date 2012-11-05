@@ -4,9 +4,12 @@ package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -94,7 +97,24 @@ public class SquareClassificationWidget extends ClassificationWidget
             }
         }
     }
-	
+
+	/**
+	 * Clears or sets the current picked object, sets the outline color to red when picked, blue when not selected.
+	 * @param bPicked when true the widget is selected.
+	 */
+	public void setPicked( boolean bPicked )
+	{
+		super.setPicked(bPicked);
+        m_kWidget.DetachChild( m_kUpperSphere );
+        m_kWidget.DetachChild( m_kLowerSphere );
+        m_kWidget.DetachChild( m_kMiddleSphere );
+		if ( bPicked )
+		{
+	        m_kWidget.AttachChild( m_kUpperSphere );
+	        m_kWidget.AttachChild( m_kLowerSphere );
+	        m_kWidget.AttachChild( m_kMiddleSphere );
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#setTexture(WildMagic.LibGraphics.Rendering.Texture)
@@ -205,21 +225,39 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
+
+        Light pointLight = new Light(Light.LightType.LT_POINT);
+        float fValue = .90f;
+        pointLight.Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 40f;
+        pointLight.Position = new Vector3f(+fValue,+fValue,+fValue);
+        pointLight.Diffuse = new ColorRGB(ColorRGB.WHITE);
+        pointLight.Specular = new ColorRGB(ColorRGB.WHITE);
+        m_kWidget.AttachLight(pointLight);
         
+
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
         
         // Attributes for the sphere control points:
         kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
+        kAttributes.SetNChannels(3);
         StandardMesh kSM = new StandardMesh(kAttributes);
         // Sphere with radius set in parent class:
         m_kUpperSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kUpperSphere.VBuffer.GetVertexQuantity(); i++ )
         {
         	// set the color:
-            m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
+        	m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
         }
-        m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
+        m_kUpperSphere.AttachGlobalState(kMaterial);
+        //m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         // move the sphere to the upper-right corner of the square widget:
@@ -231,7 +269,8 @@ public class SquareClassificationWidget extends ClassificationWidget
         {
             m_kLowerSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
         }
-        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLowerSphere.AttachGlobalState(kMaterial);
+        //m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
         // move the sphere to the lower-right corner of the square widget:
@@ -242,7 +281,15 @@ public class SquareClassificationWidget extends ClassificationWidget
         {
             m_kMiddleSphere.VBuffer.SetColor3(0, i, 0f, 1f, 0f);
         }
-        m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
+
+        kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,1f,0f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        m_kMiddleSphere.AttachGlobalState(kMaterial);
+        //m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );
 
@@ -251,7 +298,8 @@ public class SquareClassificationWidget extends ClassificationWidget
         float fYPos = (m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_kWidgetMesh.VBuffer.GetPosition3fY(2))/2.0f;
         float fZPos = m_kWidgetMesh.VBuffer.GetPosition3fZ(0);
         m_kMiddleSphere.Local.SetTranslate( fXPos, fYPos, fZPos );
-        
+
+        m_kWidget.UpdateRS();
         m_kWidget.UpdateGS();
     }
     

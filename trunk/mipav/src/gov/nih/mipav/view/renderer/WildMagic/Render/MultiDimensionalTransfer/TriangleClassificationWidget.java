@@ -113,6 +113,26 @@ public class TriangleClassificationWidget extends ClassificationWidget
         }
     }
 	
+	/**
+	 * Clears or sets the current picked object, sets the outline color to red when picked, blue when not selected.
+	 * @param bPicked when true the widget is selected.
+	 */
+	public void setPicked( boolean bPicked )
+	{
+		super.setPicked(bPicked);
+        m_kWidget.DetachChild( m_kUpperSphere );
+        m_kWidget.DetachChild( m_kLowerSphere );
+        m_kWidget.DetachChild( m_kMiddleSphere );
+        m_kWidget.DetachChild( m_kLeftSphere );
+		if ( bPicked )
+		{
+	        m_kWidget.AttachChild( m_kUpperSphere );
+	        m_kWidget.AttachChild( m_kLowerSphere );
+	        m_kWidget.AttachChild( m_kMiddleSphere );
+	        m_kWidget.DetachChild( m_kLeftSphere );
+		}
+	}
+	
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#setTexture(WildMagic.LibGraphics.Rendering.Texture)
      */

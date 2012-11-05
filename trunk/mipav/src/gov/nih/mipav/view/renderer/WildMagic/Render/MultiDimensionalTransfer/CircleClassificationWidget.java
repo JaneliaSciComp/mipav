@@ -136,6 +136,14 @@ public class CircleClassificationWidget extends ClassificationWidget
 		}
 		m_kWidgetMesh.VBuffer.Release();
 		m_kOutline.VBuffer.Release();
+		
+        m_kWidget.DetachChild( m_kUpperSphere );
+        m_kWidget.DetachChild( m_kMiddleSphere );
+		if ( bPicked )
+		{
+	        m_kWidget.AttachChild( m_kUpperSphere );
+	        m_kWidget.AttachChild( m_kMiddleSphere );
+		}
 	}
 	
 
