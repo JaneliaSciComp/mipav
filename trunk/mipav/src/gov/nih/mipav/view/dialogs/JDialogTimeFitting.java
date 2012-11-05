@@ -44,6 +44,18 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 public class JDialogTimeFitting extends JDialogScriptableBase implements AlgorithmInterface {
+    
+    /** This dialog only allows 1 constant and 3 exponentials in the MULTIEXPONENTIAL_FIT at the present.  From "Pade-Laplace 
+     * Analysis in the Fitting of Multi-exponential Nuclear Magnetic Resonance Decay Curves" by N. J. Clayden:
+     * "The problem of the correct number of exponentials required to describe a decay has a long history, for 25 years ago
+     * Lanczos demonstrated that various three-exponential functions with similar time constants could be accurately reproduced
+     * by two-exponential expressions with markedly different amplitudes and time constants.  Experimentally, the consequence of
+     * this is that the signal-to-noise ratio must be excellent, perhaps unachievably so, if a true three-exponential decay is
+     * not to be confused with a spurious two-exponential fit.  More recently, this conclusion has been tested for a non-linear 
+     * least squares analytical method over a wide range of three-exponential functions with varying levels of experimental noise.
+     * At practical signal-to-noise ratios, for example 1000:1, the time constants of three exponentials must differ by a factor 
+     * of > two if a two-exponential fit is not to be statistically significant using non-linear least squares fitting."
+     */
 	
 	private static final int LINEAR_FIT = 0;
 	
