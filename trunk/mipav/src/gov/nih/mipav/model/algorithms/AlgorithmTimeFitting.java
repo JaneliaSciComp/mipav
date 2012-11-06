@@ -199,9 +199,13 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         double sqrtpoint5 = Math.sqrt(0.5);
         double exppoint5 = Math.exp(0.5);
         double expminuspoint5 = Math.exp(-0.5);
+        double B = 0.0;
 
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n", Preferences.DEBUG_ALGORITHM);
+        if (selfTest) {
+            processors = 1;
+        }
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -421,7 +425,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             }
         }
         
-        if (processors > 1) {
+        if ((processors > 1) && (Preferences.isMultiThreadingEnabled())) {
             int start;
             int end;
             final ExecutorService application = Executors.newCachedThreadPool();
@@ -446,7 +450,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                 setCompleted(false);
                 return;
             }    
-        } else { // processors == 1
+        } else { // processors == 1 || !Preferences.isMultiThreadingEnabled()
             for (i = 0; i < volSize; i++) {
                 voxelsProcessed++;
                 final long vt100 = voxelsProcessed * 100L;
@@ -518,6 +522,15 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 initial[1] = (y_array[tDim-1] - y_array[0])/
                                         (Math.exp(initial[2] * timeVals[tDim-1]) - Math.exp(initial[2] * timeVals[0]));
                                 initial[0] = y_array[tDim-1] - initial[1] - Math.exp(initial[2] * timeVals[tDim-1]);
+                                // Note that Exponential analysis in physical phenomena by Andrei A. Istratov and
+                                // Oleg F. Vyvenko lists the baseline obtained from 3 points as 
+                                // B = (Y1Y3 - Y2**2)/(Y1 + Y3 - 2Y2)
+                                // where Y1 corresponds to y_array[0], Y2 corresponds to y_array[tMid], and 
+                                // Y3 corresponds to y_array[tDim-1]
+                                if (selfTest) {
+                                    B = (y_array[0]*y_array[tDim-1] - y_array[tMid]*y_array[tMid])/
+                                            (y_array[0] + y_array[tDim-1] - 2.0 * y_array[tMid]);
+                                }
                             } // if (findInitialFromData)
                             expModel = new FitExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
                             expModel.driver();
@@ -744,6 +757,10 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                 break;
                             case EXPONENTIAL_FIT:
                                 Preferences.debug("EXPONENTIAL\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("B = " + B + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                // Gave B = -78.435 and initial[0] = -78.436
+                                // Gave B = 103.04 and initial[0] = 102.93
                                 break;
                             case GAUSSIAN_FIT:
                                 Preferences.debug("GAUSSIAN\n", Preferences.DEBUG_ALGORITHM);
