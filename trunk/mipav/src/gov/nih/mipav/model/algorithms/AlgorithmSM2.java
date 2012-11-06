@@ -867,7 +867,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
             paramMax[i] = -Double.MAX_VALUE;
         }
 
-        if (processors > 1) {
+        if ((processors > 1) && (Preferences.isMultiThreadingEnabled())) {
             int start;
             int end;
             final ExecutorService application = Executors.newCachedThreadPool();
@@ -893,7 +893,7 @@ public class AlgorithmSM2 extends AlgorithmBase {
                 setCompleted(false);
                 return;
             }
-        } else { // processors == 1
+        } else { // processors == 1 || !Preferences.isMultiThreadingEnabled()
             for (i = 0; i < volSize; i++) {
                 voxelsProcessed++;
                 final long vt100 = voxelsProcessed * 100L;
