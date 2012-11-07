@@ -55,6 +55,18 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
      * least squares analytical method over a wide range of three-exponential functions with varying levels of experimental noise.
      * At practical signal-to-noise ratios, for example 1000:1, the time constants of three exponentials must differ by a factor 
      * of > two if a two-exponential fit is not to be statistically significant using non-linear least squares fitting."
+     * 
+     * From "Exponential analysis in physical phenomena" by Andrei A. Istratov and Oleg F. Vyvenko:
+     * "The nonlinear least squares (NLS) method was successfully used for analysis of decays that consisted of one to three
+     * exponential decays.  Grinvald, Morimoto et al., and Tahira et al. found that for a SNR better than 10E3 a double-exponential
+     * decay could be resolved if the ratio of time constants was tau1/tau2 > 2.  However, in the case of three exponents the 
+     * method was found to be very sensitive to even a small amount of noise.  Bromage concluded that for a decay-time-constant
+     * ratio of 2:1, the retrieved values of parameters are about 200 times more uncertain on going from two to three
+     * exponentials.  Clayden et al. concluded that in the case of a double-exponential decay, NLS fit is robust if tau1/tau2 > 2.4
+     * and SNR is about 1E3.  If a decay consists of three exponentials and SNR equals about 1E3, the components can be resolved
+     * if tau1/tau2 = tau2/tau3 > 3.5.  If the SNR is about 100, three components can be resolved if the decay-time-constant
+     * ratio is above 10.  It was also noted that the least squares method is not robust with respect to nonrandom errors
+     * in the transient."
      */
 	
 	private static final int LINEAR_FIT = 0;
