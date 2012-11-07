@@ -31,6 +31,45 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     
     private static final int LORENTZ_FIT = 4;
     
+    /**
+     * From Exponential analysis in physical phenomena by Andrei A. Istratov and Oleg F. Vyvenko:
+     * Note that for a multiexponential fit nonlinear least squares analysis as used here can handle nonzero baseline offsets.
+     * However, for nonlinear least squares initial guesses are needed for the values of unknown decay parameters and, if
+     * these initial guesses are poor, the iteration may converge to a local minimum rather than to the absolute minimum.
+     * 
+     * With Prony's method the baseline offset should be removed first.  
+     * 
+     * The differentiation of transients only allows the exponent time constants to be determined.  It does not allow the
+     * amplitudes by which the exponents are multiplied to be determined. Also experimental transients are noisy, and large
+     * errors would result from their numerical differentiation. 
+     * 
+     * The method of modulating functions does not enable one to determine the amplitude of the transients and is not tolerant
+     * to nonzero baseline offsets. 
+     * 
+     * The integration method allows one to determine the baseline.  However, the solution is more stable and exact if the
+     * baseline is subtracted from the raw signal before the analysis.  For the integration method, on computed two-component
+     * decays with tau1/tau2 = 2.5 the reliable separation of components is impossible if the SNR is less than 30.  For 
+     * tau1/tau2, two components can be separated for a SNR of about 10.  When two-component analysis is performed with a baseline
+     * determination the mean error of the calculated time constants increases by a factor of about 3-10.
+     * 
+     * Before the method of moments can be applied, the baseline offset must be removed from the data.
+     * 
+     * The Laplace-Pade approximation is not applicable to decays containing baseline offset.
+     * 
+     * Tolerance of the method to baseline offsets may be very important, depending on whether a baseline offset can be
+     * encountered in the experiment.  Few of the discussed techniques are tolerable of nonzero baseline offsets.  Such
+     * commonly used methods as Prony's or method of moments will provide wrong results or even crash if a decay contains
+     * an offset.  Unfortunately, algorithms for extrapolation of baseline offsets are poorly developed and are not
+     * always sufficiently exact.  Therefore, we would recommend algorithms that do not require baseline corrections
+     * and can accommodate transients with a baseline.
+     * 
+     * Taking into account stability for wide range changes in parameters and insensitivity to baseline offsets, the 
+     * authors select nonlinear least squares as the best fitting method for multiexponential fits.
+     * 
+     * Fitting routines are only accurate if the number of components is correct and the initial approximation is close
+     * to the true solution.  A way to obtain this initial approximation is to extract it from a spectroscopic method, 
+     * as was done by Provencher and Mazzola et al.
+     */
     private static final int MULTIEXPONENTIAL_FIT = 5;
     
     private static final int RAYLEIGH_FIT = 6;
