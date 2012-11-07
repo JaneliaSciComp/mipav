@@ -3252,7 +3252,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * </p>
      */
     public void showLicense() {
-        showLicense("MIPAV license", "license.html");
+        showLicense("MIPAV license", "license/license.html");
     }
 
     /**
