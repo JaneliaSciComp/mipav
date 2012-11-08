@@ -1,22 +1,15 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.util.DoubleDouble;
 
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitSM2ConstrainedModelC;
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.sm2Task;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Color;
 import java.io.*;
 import java.util.BitSet;
 import java.util.concurrent.*;
-
-import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
-import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
 
 
