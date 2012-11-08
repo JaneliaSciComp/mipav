@@ -590,13 +590,13 @@ public class FileSiemensText extends FileBase {
                                        zdim];
             
             if (fileInfo.getDataType() == ModelImage.UBYTE) {
-                rawFile.readImage(buffer, 0, ModelImage.UBYTE);
+                rawFile.readImage(buffer, 0L, ModelImage.UBYTE);
             } else if (fileInfo.getDataType() == ModelImage.SHORT) {
-                rawFile.readImage(buffer, 0, ModelImage.SHORT);
+                rawFile.readImage(buffer, 0L, ModelImage.SHORT);
             } else if (fileInfo.getDataType() == ModelImage.FLOAT) {
-                rawFile.readImage(buffer, 0, ModelImage.FLOAT);
+                rawFile.readImage(buffer, 0L, ModelImage.FLOAT);
             } else if (fileInfo.getDataType() == ModelImage.INTEGER) {
-                rawFile.readImage(buffer, 0, ModelImage.INTEGER);
+                rawFile.readImage(buffer, 0L, ModelImage.INTEGER);
             }
 
             image.importData(0, buffer, true);
@@ -661,7 +661,7 @@ public class FileSiemensText extends FileBase {
                 rawFile.setShiftToDivide(3);
             }
 
-            int offset = 0;
+            long offset = 0L;
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
             rawFile.raFile.close();
 
