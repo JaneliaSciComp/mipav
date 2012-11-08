@@ -256,7 +256,7 @@ public class PlugInAlgorithmDTIOpenListFile extends AlgorithmBase {
 					fileInfo.setEndianess(endianness);
 					fileInfo.setOffset(0);
 					fileRaw = new FileRaw(filename, dir, fileInfo, FileBase.READ);
-					fileRaw.readImage(buffer, 0, ModelStorageBase.FLOAT);
+					fileRaw.readImage(buffer, 0L, ModelStorageBase.FLOAT);
 					if(j == 0) {
 						destImage = new ModelImage(ModelStorageBase.FLOAT, extents, studyName);
 					}
