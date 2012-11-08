@@ -777,19 +777,19 @@ public class FileMinc extends FileBase {
                 if (one) {
 
                     if (fileInfo.getExtents().length == 3) {
-                        rawFile.readImage(buffer, fileInfo.getOffset()
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset()
                                 + (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac), fileInfo.getDataType());
                     } else if (fileInfo.getExtents().length == 4) {
                         rawFile
                                 .readImage(buffer,
-                                        fileInfo.getOffset()
+                                        (long)fileInfo.getOffset()
                                                 + (fileInfo.getExtents()[2] * fileInfo.getExtents()[3] / 2
                                                         * buffer.length * imgTypeFac), fileInfo.getDataType());
                     } else {
-                        rawFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset(), fileInfo.getDataType());
                     }
                 } else {
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (n * buffer.length * imgTypeFac), fileInfo
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (n * buffer.length * imgTypeFac), fileInfo
                             .getDataType());
                 }
 
