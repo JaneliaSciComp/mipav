@@ -455,7 +455,7 @@ public class FileMicroCat extends FileBase {
             for (int m = 0; m < nImages; m++) {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
                 fireProgressStateChanged((int) (((float) m / (float) nImages) * 100.0f));
-                imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
+                imageFile.readImage(buffer, (long)fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
             }
 
