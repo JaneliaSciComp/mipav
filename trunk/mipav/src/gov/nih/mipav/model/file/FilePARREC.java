@@ -400,7 +400,7 @@ public class FilePARREC extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            int offset = (int) Math.abs(vox_offset); //?? used to read one slice?
+            long offset = (long) Math.abs(vox_offset); //?? used to read one slice?
 
             rawFile.readImage(image, offset);
 
@@ -1354,7 +1354,7 @@ public class FilePARREC extends FileBase {
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
 
             if (one) {
 
@@ -1615,7 +1615,7 @@ public class FilePARREC extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
             rawFile.raFile.close();
 
