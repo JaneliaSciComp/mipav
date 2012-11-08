@@ -730,7 +730,7 @@ public class FileMGH extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        int offset;
+        long offset;
 
         fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
 
@@ -767,7 +767,7 @@ public class FileMGH extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            offset = 284;
+            offset = 284L;
 
             if (one) {
 
@@ -803,8 +803,7 @@ public class FileMGH extends FileBase {
      * @see        FileRaw
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
-    	System.out.println("I am in here");
-        int offset;
+        long offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
@@ -819,7 +818,7 @@ public class FileMGH extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            offset = 284;
+            offset = 284L;
 
             rawFile.readImage(buffer, offset, dataType);
             rawFile.raFile.close();
