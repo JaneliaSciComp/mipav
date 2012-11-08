@@ -283,7 +283,7 @@ public class FileRawChunk extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public void readImage(int type, int start, int length) throws IOException {
+    public void readImage(int type, long start, int length) throws IOException {
         int i;
         int index;
         int b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, b7 = 0, b8 = 0;
