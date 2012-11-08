@@ -1081,7 +1081,7 @@ public class FileAnalyze extends FileBase {
             }
             linkProgress(rawFile);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
 
             if (one) {
 
@@ -1160,7 +1160,7 @@ public class FileAnalyze extends FileBase {
                 rawFile.setShiftToDivide(3);
             }
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
             rawFile.raFile.close();
 
