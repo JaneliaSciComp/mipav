@@ -269,9 +269,6 @@ public class PlugInAlgorithmCreateTumorMap544c extends AlgorithmBase {
         createVOI(image1aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
         createVOI(image2aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
         
-        countPixels(image1aTumor, tumorIntensity1);
-        countPixels(image2aTumor, tumorIntensity2);
-        
         image1a.setImageName("image1a");
         for(int i=0; i<image1a.getFileInfo().length; i++) {
             image1a.getFileInfo(i).setFileDirectory(Preferences.getPreferencesDir());
@@ -295,6 +292,9 @@ public class PlugInAlgorithmCreateTumorMap544c extends AlgorithmBase {
             generateNoise(image1a);
             generateNoise(image2a);
         }
+        
+        countPixels(image1aTumor, tumorIntensity1, image1a);
+        countPixels(image2aTumor, tumorIntensity2, image2a);
         
         Preferences.data(RADIUS1+initRadius+"\n");
         Preferences.data(RADIUS2+getChangedRadius()+"\n");
@@ -399,20 +399,29 @@ public class PlugInAlgorithmCreateTumorMap544c extends AlgorithmBase {
         ViewUserInterface.getReference().unRegisterImage(imageBin);
     }
 
-    private void countPixels(ModelImage image, double intensity) {
+    private void countPixels(ModelImage imageTumor, double intensity, ModelImage imageFull) {
         int numPixelsTumor = 0;
-        int numPixelsSubsampled = 0;
-        for(int i=0; i<image.getDataSize(); i++) {
-            if(image.getDouble(i) != 0) {
-                if(image.getDouble(i) != intensity) {
-                    numPixelsSubsampled++;
+        int numPixelsPartial = 0;
+        double averageInTotalTumor = 0.0, averageInPartialTumor = 0.0;
+        for(int i=0; i<imageTumor.getDataSize(); i++) {
+            if(imageTumor.getDouble(i) != 0) {
+                if(imageTumor.getDouble(i) != intensity) {
+                    numPixelsPartial++;
+                    averageInPartialTumor += imageFull.getDouble(i);
                 } 
                 numPixelsTumor++;
+                averageInTotalTumor += imageFull.getDouble(i);
             }
         }
         
-        Preferences.data("For "+image.getImageName()+" "+TOTAL+" "+numPixelsTumor+"\n");
-        Preferences.data("For "+image.getImageName()+" "+PARTIAL+" "+numPixelsSubsampled+"\n");
+        averageInTotalTumor = averageInTotalTumor / numPixelsTumor;
+        averageInPartialTumor = averageInPartialTumor / numPixelsPartial;
+        
+        Preferences.data("For "+imageTumor.getImageName()+", "+TOTAL+" : "+numPixelsTumor+"\n");
+        Preferences.data("For "+imageFull.getImageName()+", Average tumor intensity : "+averageInTotalTumor+"\n");
+        Preferences.data("For "+imageTumor.getImageName()+", "+PARTIAL+": "+numPixelsPartial+"\n");
+        Preferences.data("For "+imageFull.getImageName()+", Average partial volume pixels intensity : "+averageInPartialTumor+"\n");
+        
     }
 
     private void setNormalTissue(ModelImage image, double stdDevIntensity) {
