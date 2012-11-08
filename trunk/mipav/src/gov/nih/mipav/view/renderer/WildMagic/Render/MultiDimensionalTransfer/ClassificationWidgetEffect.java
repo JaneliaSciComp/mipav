@@ -86,6 +86,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"                vec4  LevLeftLine," + "\n" +
 			"                vec4  LevRightLine )" + "\n" +
 			"{" + "\n" +
+			// test that the point falls within the data bounds specified by the triangle:
 			"float area1 = areaTwice( LevRightLine.x, LevRightLine.y, LevRightLine.z, LevRightLine.w, fX, fY);" + "\n" +
 			"float area2 = areaTwice( LevRightLine.z, LevRightLine.w, LevLeftLine.z, LevLeftLine.w, fX, fY);" + "\n" +
 			"float area3 = areaTwice( LevLeftLine.z, LevLeftLine.w, LevLeftLine.x, LevLeftLine.y, fX, fY);" + "\n" +
@@ -97,39 +98,50 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"" + "\n" +
 			"float fShiftL = fShift.x;" + "\n" +
 			"float fShiftR = fShift.y;" + "\n" +
-			"vec3 closestPt = computeClosestPoint( fX, fY, LevMidLine );" + "\n" +
-			"vec3 perpendicDir = vec3( fX - closestPt.x, fY - closestPt.y, 0 );" + "\n" +
+			// Calculate where the point intersects the mid-line, using the opposite edge as the direction vector:
+			"vec3 perpendicDir = vec3( LevLeftLine.z - LevRightLine.z, LevLeftLine.w - LevRightLine.w, 0 );" + "\n" +
+			"vec3 midStart = vec3( LevMidLine.x, LevMidLine.y, 0);" + "\n" +
+			"vec3 midDir = vec3( LevMidLine.z - LevMidLine.x, LevMidLine.w - LevMidLine.y, 0);" + "\n" +
+			"vec3 currentPt = vec3( fX, fY, 0 );" + "\n" +
+			"vec3 closestPt = computeIntersect( currentPt, perpendicDir, midStart, midDir);" + "\n" +
+
+			// Compute the direction vector from the current point to the mid-line intersection point:
+			"perpendicDir = vec3( fX - closestPt.x, fY - closestPt.y, 0 );" + "\n" +
 			"vec3 leftStart = vec3( LevLeftLine.x, LevLeftLine.y, 0);" + "\n" +
 			"vec3 leftDir = vec3( LevLeftLine.z - LevLeftLine.x, LevLeftLine.w - LevLeftLine.y, 0);" + "\n" +
+			// compute intersection with left edge:
 			"vec3 leftPt = computeIntersect( closestPt, perpendicDir, leftStart, leftDir);" + "\n" +
 			"vec3 rightStart = vec3( LevRightLine.x, LevRightLine.y, 0);" + "\n" +
 			"vec3 rightDir = vec3( LevRightLine.z - LevRightLine.x, LevRightLine.w - LevRightLine.y, 0);" + "\n" +
+			// compute intersection with right edge:
 			"vec3 rightPt = computeIntersect( closestPt, perpendicDir, rightStart, rightDir);" + "\n" +
+			// compute distances to the edges from the mid-line intersection point and the current point:
 			"float distMidR = (closestPt.x - rightPt.x) * (closestPt.x - rightPt.x) +  (closestPt.y - rightPt.y) * (closestPt.y - rightPt.y);" + "\n" +
 			"float distMidL = (closestPt.x - leftPt.x)  * (closestPt.x - leftPt.x)  +  (closestPt.y - leftPt.y)  * (closestPt.y - leftPt.y);" + "\n" +
 			"float distMidPt = (closestPt.x - fX)  * (closestPt.x - fX)  +  (closestPt.y - fY)  * (closestPt.y - fY);" + "\n" +
 			"float distPtR =  (fX - rightPt.x) * (fX - rightPt.x) +  (fY - rightPt.y) * (fY - rightPt.y);" + "\n" +
 			"float distPtL = (fX - leftPt.x)  * (fX - leftPt.x)  +  (fY - leftPt.y)  * (fY - leftPt.y);" + "\n" +
 			"" + "\n" +
-			"float length = (LevMidLine.z - LevMidLine.x) * (LevMidLine.z - LevMidLine.x) + (LevMidLine.w - LevMidLine.y) * (LevMidLine.w - LevMidLine.y);" + "\n" +
-			"float fAlpha = 1.0;" + "\n" +
+			// compute alpha:
+			"float length = fShift.x;" + "\n" +
+			"float fAlpha = 0.0;" + "\n" +
 			"if ( (fX > closestPt.x) && (fX < rightPt.x) )" + "\n" +
 			"{" + "\n" +
-			"   fAlpha = (1 + length) * (distPtR) / (distMidR);" + "\n" +
+			"   fAlpha = length + (distPtR) / (distMidR);" + "\n" +
 			"}" + "\n" +
 			"else if ( (fX > closestPt.x) && (fX < leftPt.x) )" + "\n" +
 			"{" + "\n" +
-			"   fAlpha = (1 + length) * (distPtL) / (distMidL);" + "\n" +
+			"   fAlpha = length + (distPtL) / (distMidL);" + "\n" +
 			"}" + "\n" +
 			"else if ( (fX < closestPt.x) && (fX > leftPt.x) )" + "\n" +
 			"{" + "\n" +
-			"   fAlpha = (1 + length) * (distPtL) / (distMidL);" + "\n" +
+			"   fAlpha = length + (distPtL) / (distMidL);" + "\n" +
 			"}" + "\n" +
 			"else if ( (fX < closestPt.x) && (fX > rightPt.x) )" + "\n" +
 			"{" + "\n" +
-			"   fAlpha = (1 + length) * (distPtR) / (distMidR);" + "\n" +
+			"   fAlpha = length + (distPtR) / (distMidR);" + "\n" +
 			"}" + "\n" +
-			"return fAlpha;" + "\n" +
+			"return min( 1, fAlpha );" + "\n" +
 			"}" + "\n";
 
 	/** GLSL computeAlpha function definition for the square widgets: */
@@ -154,11 +166,6 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"vec3 rightStart = vec3( LevRightLine.x, LevRightLine.y, 0);" + "\n" +
 			"vec3 rightDir = vec3( LevRightLine.z - LevRightLine.x, LevRightLine.w - LevRightLine.y, 0);" + "\n" +
 			"vec3 rightPt = computeIntersect( closestPt, perpendicDir, rightStart, rightDir);" + "\n" +
-			"float distMidR = (closestPt.x - rightPt.x) * (closestPt.x - rightPt.x) +  (closestPt.y - rightPt.y) * (closestPt.y - rightPt.y);" + "\n" +
-			"float distMidL = (closestPt.x - leftPt.x)  * (closestPt.x - leftPt.x)  +  (closestPt.y - leftPt.y)  * (closestPt.y - leftPt.y);" + "\n" +
-			"float distMidPt = (closestPt.x - fX)  * (closestPt.x - fX)  +  (closestPt.y - fY)  * (closestPt.y - fY);" + "\n" +
-			"float distPtR =  (fX - rightPt.x) * (fX - rightPt.x) +  (fY - rightPt.y) * (fY - rightPt.y);" + "\n" +
-			"float distPtL = (fX - leftPt.x)  * (fX - leftPt.x)  +  (fY - leftPt.y)  * (fY - leftPt.y);" + "\n" +
 			"" + "\n" +
 			"float fAlpha = 0.0;" + "\n" +
 			"if ( (fX > (closestPt.x - fShiftL)) && (fX < (closestPt.x + fShiftR)) )" + "\n" +

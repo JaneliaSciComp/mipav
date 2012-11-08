@@ -131,7 +131,7 @@ public class ViewJComponentGraphAxes extends JComponent {
                 int halfHeight = fontSize * label.length() / 2;
 
                 for (int i = 0; i < label.length(); i++) {
-                    g.drawString(String.valueOf(label.charAt(i)), bounds.width - fontSize - g.getFontMetrics().charWidth(label.charAt(i))/2, ((bounds.height / 2) - halfHeight + i*fontSize));
+                    g.drawString(String.valueOf(label.charAt(i)), (int)(0.75 * bounds.width) - fontSize - g.getFontMetrics().charWidth(label.charAt(i))/2, ((bounds.height / 2) - halfHeight + i*fontSize));
                 }
             }
 

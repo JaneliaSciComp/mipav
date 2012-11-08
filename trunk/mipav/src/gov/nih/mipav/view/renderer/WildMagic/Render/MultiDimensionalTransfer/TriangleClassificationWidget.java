@@ -4,9 +4,12 @@ package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -32,7 +35,7 @@ public class TriangleClassificationWidget extends ClassificationWidget
 	private float m_fCenterX = 0.5f;
 	/** Current parameterized coordinates for the center control point in Y 
 	 * (used to maintain relative position when resizing the widget). */
-	private float m_fCenterY = 1.0f;
+	private float m_fCenterY = 0.5f;
 	protected TriMesh m_kLeftSphere;
 
 	/**
@@ -129,7 +132,7 @@ public class TriangleClassificationWidget extends ClassificationWidget
 	        m_kWidget.AttachChild( m_kUpperSphere );
 	        m_kWidget.AttachChild( m_kLowerSphere );
 	        m_kWidget.AttachChild( m_kMiddleSphere );
-	        m_kWidget.DetachChild( m_kLeftSphere );
+	        m_kWidget.AttachChild( m_kLeftSphere );
 		}
 	}
 	
@@ -259,6 +262,19 @@ public class TriangleClassificationWidget extends ClassificationWidget
             m_kWidgetEfect.SetRightLine( m_kWidgetMesh.VBuffer.GetTCoord2fX(0,0), m_kWidgetMesh.VBuffer.GetTCoord2fY(0,0),
                     fRightTexX1, fRightTexY1);
 
+            float fX = m_kWidgetMesh.VBuffer.GetPosition3fX(2) + m_fCenterX * (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(2));
+            float fY = m_kWidgetMesh.VBuffer.GetPosition3fY(2) + m_fCenterX * (m_kWidgetMesh.VBuffer.GetPosition3fY(1) - m_kWidgetMesh.VBuffer.GetPosition3fY(2));
+            fX = calcTCoordX(fX);
+            fY = calcTCoordY(fY);
+            float fMidX = calcTCoordX(midLine.X);
+            float fMidY = calcTCoordX(midLine.Y);
+            float fX0 = m_kWidgetMesh.VBuffer.GetTCoord2fX(0,0);
+            float fY0 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,0);
+            float distMid = (float) Math.sqrt( (fMidX - fX0) * (fMidX - fX0) + (fMidY - fY0) * (fMidY - fY0))/2f;
+            float distEdge = (float) Math.sqrt( (fX - fX0) * (fX - fX0) + (fY - fY0) * (fY - fY0))/2f;
+            float fIncr = (float) ( distMid / distEdge );
+            m_kWidgetEfect.SetShift( fIncr, fIncr );
+            
             m_kWidgetEfect.UpdateColor();
             m_kWidgetEfect.computeUniformVariables();
         }
@@ -328,30 +344,67 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kWidget.AttachChild(m_kOutline);
 
 
+        // Create light and attach it to the Widget, it will
+        // be applied to all the spheres attached to the widget:
+        Light pointLight = new Light(Light.LightType.LT_POINT);
+        float fValue = .90f;
+        pointLight.Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 40f;
+        pointLight.Position = new Vector3f(+fValue,+fValue,+fValue);
+        pointLight.Diffuse = new ColorRGB(ColorRGB.WHITE);
+        pointLight.Specular = new ColorRGB(ColorRGB.WHITE);
+        m_kWidget.AttachLight(pointLight);
+        
+
+        // Create the material to describe the shading for the sphere:
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
+        
         // Attributes for the sphere control points:
         kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
+        kAttributes.SetNChannels(3);
         StandardMesh kSM = new StandardMesh(kAttributes);
         // Sphere with radius set in parent class:
         m_kUpperSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kUpperSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
-        }
-        m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
+        m_kUpperSphere.AttachGlobalState(kMaterial);
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         // move the sphere to the upper-right corner of the triangle widget:
         m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
 
 
+        m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
+        m_kLowerSphere.AttachGlobalState(kMaterial);
+        // move the sphere to the lower-right corner of the triangle widget:
+        m_kLowerSphere.Local.SetTranslate(m_kWidgetMesh.VBuffer.GetPosition3(0));
+        m_kLowerSphere.SetName("LowerSphere");
+        m_kWidget.AttachChild( m_kLowerSphere );               
+
+        m_kLeftSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
+        m_kLeftSphere.AttachGlobalState(kMaterial);
+        m_kLeftSphere.SetName("LeftSphere");
+        m_kWidget.AttachChild( m_kLeftSphere );
+        // move the sphere to the upper-right corner of the triangle widget:
+        m_kLeftSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
+        
+
+        // Create the material to describe the shading for the green sphere:
+        kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,1f,0f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
         m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kMiddleSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kMiddleSphere.VBuffer.SetColor3(0, i, 0f, 1f, 0f);
-        }
-        m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
+        m_kMiddleSphere.AttachGlobalState(kMaterial);
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );
         
@@ -364,34 +417,9 @@ public class TriangleClassificationWidget extends ClassificationWidget
         float fX2 = m_kWidgetMesh.VBuffer.GetPosition3fX(0) + m_fCenterY * (fX - m_kWidgetMesh.VBuffer.GetPosition3fX(0));
         float fY2 = m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_fCenterY * (fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0));
         m_kMiddleSphere.Local.SetTranslate( fX2, fY2, 0.11f );
-        
-
-
-        m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kLowerSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kLowerSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
-        }
-        // move the sphere to the lower-right corner of the triangle widget:
-        m_kLowerSphere.Local.SetTranslate(m_kWidgetMesh.VBuffer.GetPosition3(0));
-        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
-        m_kLowerSphere.SetName("LowerSphere");
-        m_kWidget.AttachChild( m_kLowerSphere );
-        
-        
-
-        m_kLeftSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kLeftSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-        	m_kLeftSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
-        }
-        m_kLeftSphere.AttachEffect( new VertexColor3Effect() );
-        m_kLeftSphere.SetName("LeftSphere");
-        m_kWidget.AttachChild( m_kLeftSphere );
-        // move the sphere to the upper-right corner of the triangle widget:
-        m_kLeftSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
-        
-        
+                
+        // Update RS updates the lighting effects:
+        m_kWidget.UpdateRS();
         // update scene-graph
         m_kWidget.UpdateGS();
     }
@@ -590,18 +618,28 @@ public class TriangleClassificationWidget extends ClassificationWidget
     private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {        
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
+        
+        // Create the material to describe the shading for the sphere:
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
 		IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
 		VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
         m_kLowerSphere = new TriMesh( kVBuffer, kIBuffer );
-        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLowerSphere.AttachGlobalState( kMaterial );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
-        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
+        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(0));
         
     	kIBuffer = (IndexBuffer)in.readObject();
     	kVBuffer = (VertexBuffer)in.readObject();
         m_kLeftSphere = new TriMesh( kVBuffer, kIBuffer );
-        m_kLeftSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLeftSphere.AttachGlobalState( kMaterial );
         m_kLeftSphere.SetName("LeftSphere");
         m_kWidget.AttachChild( m_kLeftSphere );     
         // move the sphere to the upper-right corner of the triangle widget:
@@ -617,6 +655,8 @@ public class TriangleClassificationWidget extends ClassificationWidget
         float fY2 = m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_fCenterY * (fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0));
         m_kMiddleSphere.Local.SetTranslate( fX2, fY2, 0.11f );
 
+        // Update RS updates the lighting effects:
+        m_kWidget.UpdateRS();
         m_kWidget.UpdateGS();
     }
     
