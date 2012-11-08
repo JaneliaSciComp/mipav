@@ -1521,14 +1521,14 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * buffer.length), imageType); // *****
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * buffer.length), imageType); // *****
                     // Read
                     // image
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
+                            (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
                     // Read
                     // image
                     rawFile.raFile.close();
@@ -1703,18 +1703,18 @@ public class FileDicom extends FileDicomBase {
 
                 if (imageType == ModelStorageBase.ARGB) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 }
                 else if (imageType == ModelStorageBase.ARGB_USHORT) {
                         rawFile.setPlanarConfig(fileInfo.planarConfig);
-                        rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 6)), imageType);
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 6)), imageType);
                         rawFile.raFile.close();
                         rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                            (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 }
@@ -1900,7 +1900,7 @@ public class FileDicom extends FileDicomBase {
             try { // rafile (type RandomAccessFile) for header, rawfile (type FileRaw) for image data.
                 rawFile.setImageFile(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ); 
                 rawFile.readImage(buffer,
-                        fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                        (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                 rawFile.raFile.close();
                 rawFile.raFile = null;
             } catch (final IOException error) {
