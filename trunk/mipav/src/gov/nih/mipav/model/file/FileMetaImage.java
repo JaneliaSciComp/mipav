@@ -820,7 +820,7 @@ public class FileMetaImage extends FileBase {
             }
             linkProgress(rawFile);
             
-            rawFile.readImage(image, (int)raFile.getFilePointer());
+            rawFile.readImage(image, raFile.getFilePointer());
             
             if (compressedData) {
                 file.delete();
