@@ -188,7 +188,7 @@ public class FileOME extends FileBase {
             // imageFileName was parsed from the "image".xml file.
             rawFile = new FileRaw(fileDir + imageFileName, fileInfo, FileBase.READ);
 
-            int offset = 0;
+            long offset = 0L;
 
             rawFile.readImage(image, offset);
 
