@@ -11215,7 +11215,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         try {
             imageFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
 
-            imageFile.readImage(image, fileInfo.getOffset());
+            imageFile.readImage(image, (long)fileInfo.getOffset());
         } catch (final IOException error) {
 
             if (image != null) {
@@ -11380,7 +11380,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             try {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
                 progressBar.updateValue((int) ( ((float) m / (float) nImages) * 100.0f), false);
-                imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
+                imageFile.readImage(buffer, (long)fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
                 imageFile.finalize();
                 imageFile = null;
