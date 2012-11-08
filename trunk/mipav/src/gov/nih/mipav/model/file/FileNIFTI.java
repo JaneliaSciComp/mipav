@@ -2524,7 +2524,7 @@ public class FileNIFTI extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one, boolean niftiCompressed) throws IOException, OutOfMemoryError {
-        int offset;
+        long offset;
         double m1, m2;
         boolean needFloat;
         int newType;
@@ -2713,13 +2713,13 @@ public class FileNIFTI extends FileBase {
             
 
             if (oneFile) {
-                offset = (int) Math.abs(vox_offset);
+                offset = (long) Math.abs(vox_offset);
 
                 if (offset < headerSize) { // header length
                     offset = headerSize;
                 }
             } else {
-                offset = 0;
+                offset = 0L;
             }
 
             if (one) {
@@ -3316,7 +3316,7 @@ public class FileNIFTI extends FileBase {
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
         int i;
-        int offset;
+        long offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
@@ -3333,13 +3333,13 @@ public class FileNIFTI extends FileBase {
             linkProgress(rawFile);
 
             if (oneFile) {
-                offset = (int) Math.abs(vox_offset);
+                offset = (long) Math.abs(vox_offset);
 
                 if (offset < headerSize) { // header length
                     offset = headerSize;
                 }
             } else {
-                offset = 0;
+                offset = 0L;
             }
 
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
