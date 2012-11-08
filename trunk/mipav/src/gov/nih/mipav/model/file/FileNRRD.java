@@ -2409,7 +2409,7 @@ public class FileNRRD extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one, boolean doHeader) throws IOException, OutOfMemoryError {
-        int offset;
+        long offset;
         int linesFound;
         int i;
         byte[] buf = new byte[1];
@@ -2653,9 +2653,9 @@ public class FileNRRD extends FileBase {
 
                 // Do byte skipping after decompression
                 if (skippedBytes >= 0) {
-                    offset = (int) (offset1 + skippedBytes);
+                    offset = (offset1 + skippedBytes);
                 } else { // skippedBytes < 0
-                    offset = (int) (fileLength - dataSize);
+                    offset = (fileLength - dataSize);
                 } // else skippedBytes < 0
 
                 try { // Construct a FileRaw to actually read the image.
@@ -2748,7 +2748,7 @@ public class FileNRRD extends FileBase {
 
             // Do byte skipping after decompression
             if (skippedBytes >= 0) {
-                offset = (int) (offset1 + skippedBytes);
+                offset = (offset1 + skippedBytes);
             } else { // skippedBytes < 0
                 dataSize = imgExtents[0] * imgExtents[1];
 
@@ -2796,7 +2796,7 @@ public class FileNRRD extends FileBase {
                     dataSize *= 2;
                 }
 
-                offset = (int) (fileLength - dataSize);
+                offset = (fileLength - dataSize);
             } // else skippedBytes < 0
 
             try {
