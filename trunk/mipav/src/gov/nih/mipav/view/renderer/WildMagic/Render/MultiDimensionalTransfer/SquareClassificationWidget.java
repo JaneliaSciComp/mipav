@@ -226,6 +226,8 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
 
+        // Create light and attach it to the Widget, it will
+        // be applied to all the spheres attached to the widget:
         Light pointLight = new Light(Light.LightType.LT_POINT);
         float fValue = .90f;
         pointLight.Ambient = new ColorRGB(fValue,fValue,fValue);
@@ -236,6 +238,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kWidget.AttachLight(pointLight);
         
 
+        // Create the material to describe the shading for the sphere:
         MaterialState kMaterial = new MaterialState();
         kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
@@ -251,13 +254,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         StandardMesh kSM = new StandardMesh(kAttributes);
         // Sphere with radius set in parent class:
         m_kUpperSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kUpperSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-        	// set the color:
-        	m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
-        }
         m_kUpperSphere.AttachGlobalState(kMaterial);
-        //m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         // move the sphere to the upper-right corner of the square widget:
@@ -265,31 +262,22 @@ public class SquareClassificationWidget extends ClassificationWidget
         
 
         m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kLowerSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kLowerSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
-        }
         m_kLowerSphere.AttachGlobalState(kMaterial);
-        //m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
         // move the sphere to the lower-right corner of the square widget:
         m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
 
-        m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
-        for ( int i = 0; i < m_kMiddleSphere.VBuffer.GetVertexQuantity(); i++ )
-        {
-            m_kMiddleSphere.VBuffer.SetColor3(0, i, 0f, 1f, 0f);
-        }
-
+        
+        // Create the material to describe the shading for the green sphere:
         kMaterial = new MaterialState();
         kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
         kMaterial.Diffuse = new ColorRGB(0f,1f,0f);
         kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
         kMaterial.Shininess = 83.2f;
+        m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         m_kMiddleSphere.AttachGlobalState(kMaterial);
-        //m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );
 
@@ -299,6 +287,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         float fZPos = m_kWidgetMesh.VBuffer.GetPosition3fZ(0);
         m_kMiddleSphere.Local.SetTranslate( fXPos, fYPos, fZPos );
 
+        // Update RS updates the lighting effects:
         m_kWidget.UpdateRS();
         m_kWidget.UpdateGS();
     }
@@ -475,11 +464,19 @@ public class SquareClassificationWidget extends ClassificationWidget
      */
 	private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
-    {
+    {       
+        // Create the material to describe the shading for the sphere:
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
 		IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
 		VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
         m_kLowerSphere = new TriMesh( kVBuffer, kIBuffer );
-        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLowerSphere.AttachGlobalState( kMaterial );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
         m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));		
@@ -497,7 +494,9 @@ public class SquareClassificationWidget extends ClassificationWidget
         kCenter.X = fX;
         kCenter.Y = fY;
         kCenter.Z = 0.1f;
-        
+
+        // Update RS updates the lighting effects:
+        m_kWidget.UpdateRS();
         // update the scene graph:
         m_kWidget.UpdateGS();
     }

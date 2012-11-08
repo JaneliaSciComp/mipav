@@ -1,12 +1,15 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -21,6 +24,7 @@ import java.util.Vector;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JPanel;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -52,6 +56,9 @@ implements GLEventListener, KeyListener
 	/** The maximum number of widgets that can be added to the display. 
 	 * More can be added, but then the Volume Renderer GLSL program should be changed to add the new widgets. */
 	public int MAX_WIDGETS = 6;
+	
+	/** main container for this object: */
+	private JPanel container;
 	/** Stores which button was pressed during mouse drag. */
 	private int m_iMouseButton;
 	/** Stores the mouse position for picking. */
@@ -90,7 +97,8 @@ implements GLEventListener, KeyListener
 	{
 		super( canvas, kParentFrame, kVolumeImage );
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );
+		createContainer(GetCanvas());
 		m_bDisplay = true;
 	}
 	
@@ -120,6 +128,10 @@ implements GLEventListener, KeyListener
 	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#display(javax.media.opengl.GLAutoDrawable)
 	 */
 	public void display(GLAutoDrawable arg0) {
+		if ( !m_bInit )
+		{
+			init(arg0);
+		}
 		// return early if not displaying:
 		if ( !m_bDisplay )
 		{
@@ -208,6 +220,8 @@ implements GLEventListener, KeyListener
 		for ( int i = m_akWidgets.size(); i > 0; i-- )
 		{
 			ClassificationWidget kWidget = m_akWidgets.remove(0);
+			kWidget.getWidget().DetachAllLights();
+			kWidget.getWidget().UpdateRS();
 			// Releases the GPU resources:
 			m_pkRenderer.ReleaseAllResources( kWidget.getWidget() );
 			kWidget.dispose();
@@ -220,6 +234,16 @@ implements GLEventListener, KeyListener
 		m_kWidgetType = null;
 		super.dispose(arg0);
 	}
+	
+	/**
+	 * Returns the container for this object. The container has a scroll pane and slider for the depth.
+	 * @return
+	 */
+	public JPanel getContainingPanel()
+	{
+		return container;
+	}
+
 
 	public synchronized Vector<ClassificationWidget> getM_akLev() {
 		return m_akWidgets;
@@ -354,10 +378,11 @@ implements GLEventListener, KeyListener
 		        }
 				
 			}
-			if ( (m_iCurrent != iCurrentPrev) && (m_iCurrent >=0 ) )
+			if ( m_iCurrent >= 0 )
 			{
 				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
 						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );
+				m_akWidgets.get(m_iCurrent).setPicked(true);
 			}
 		}
 		m_bDisplay = true;
@@ -673,6 +698,34 @@ implements GLEventListener, KeyListener
 		m_bAdded = true;     
 		m_bDisplay = true;
 		GetCanvas().display();
+	} 
+	
+	/**
+	 * Creates the containing JPanel that will display this object.
+	 * The JPanel contains a scroll pane with both horizontal and vertical scroll bars 
+	 * and a horizontal slider for changing where the slice plane intersects the volume
+	 * in depth.
+	 * @param imageComponent
+	 */
+	private void createContainer( GLCanvas canvas ) 
+	{
+		container = new JPanel(new BorderLayout()) {
+
+		    public Dimension getPreferredSize() {
+		        Dimension dim;
+
+		        try {
+		            dim = new Dimension(256, 256);
+		        } catch (OutOfMemoryError error) {
+		            MipavUtil.displayError("Out of memory: ViewJComponentGraph.getPreferredSize");
+
+		            return null;
+		        }
+
+		        return dim;
+		    }
+		};
+		container.add(canvas, BorderLayout.CENTER);
 	}
 
 	/* (non-Javadoc)

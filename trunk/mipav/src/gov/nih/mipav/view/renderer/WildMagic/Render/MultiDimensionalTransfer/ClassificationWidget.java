@@ -5,10 +5,13 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.Serializable;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -280,6 +283,7 @@ public abstract class ClassificationWidget implements Serializable
 			// Set the mouse offset as the current position of the mouse - the current center of the widget.
 			// used to translate the widget with the mouse during mouse drag events.
 			m_kMouseOffset.Set ( fX - iX, fY - iY );
+			setPicked(true);
 		}
 		return bPicked;
 	}
@@ -487,6 +491,7 @@ public abstract class ClassificationWidget implements Serializable
 	private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {
+        
 		m_kWidgetState = (ClassificationWidgetState)in.readObject();
 		
 		m_kTMin = (Vector2f)in.readObject();
@@ -507,18 +512,43 @@ public abstract class ClassificationWidget implements Serializable
         m_kWidget.AttachChild(m_kOutline);
         
 
+        // Create light and attach it to the Widget, it will
+        // be applied to all the spheres attached to the widget:
+        Light pointLight = new Light(Light.LightType.LT_POINT);
+        float fValue = .90f;
+        pointLight.Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 40f;
+        pointLight.Position = new Vector3f(+fValue,+fValue,+fValue);
+        pointLight.Diffuse = new ColorRGB(ColorRGB.WHITE);
+        pointLight.Specular = new ColorRGB(ColorRGB.WHITE);
+        m_kWidget.AttachLight(pointLight);
+        // Create the material to describe the shading for the sphere:
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
         kIBuffer = (IndexBuffer)in.readObject();
         kVBuffer = (VertexBuffer)in.readObject();
         m_kUpperSphere = new TriMesh( kVBuffer, kIBuffer );
-        m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
+        m_kUpperSphere.AttachGlobalState( kMaterial );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
         
+        
+        kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,1f,0f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
         kIBuffer = (IndexBuffer)in.readObject();
         kVBuffer = (VertexBuffer)in.readObject();
         m_kMiddleSphere = new TriMesh( kVBuffer, kIBuffer );
-        m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
+        m_kMiddleSphere.AttachGlobalState( kMaterial );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );     
 

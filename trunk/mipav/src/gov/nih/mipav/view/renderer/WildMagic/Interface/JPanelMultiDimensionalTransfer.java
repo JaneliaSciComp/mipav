@@ -202,15 +202,16 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * @param  frameHeight  int height
 	 */
 	public void resizePanel(int panelWidth, int frameHeight) {
-		if ( m_kMultiHistogram != null )
-		{
-			int iWidth = Math.max( panelWidth, m_kMultiHistogram.GetWidth() );
-			int iHeight = Math.max( frameHeight - 40, m_kMultiHistogram.GetHeight() );
-			scroller.setPreferredSize(new Dimension(iWidth, iHeight));
-			scroller.setSize(new Dimension(iWidth, iHeight));
-			scroller.revalidate();
-			histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
-		}
+		
+		int iWidth = Math.max( panelWidth, 256 );
+		int iHeight = Math.max( frameHeight - 40, 256 );
+		scroller.setPreferredSize(new Dimension(iWidth, iHeight));
+		scroller.setSize(new Dimension(iWidth, iHeight));
+		scroller.revalidate();
+
+		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
+				iWidth - 256 - 105, 256, "Gradient Magnitude", 0 );
+		histogramPanel.add( gmAxis, BorderLayout.EAST );
 	}
 
 	/* (non-Javadoc)
@@ -268,12 +269,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * Initializes GUI components.
 	 */
 	private void init( boolean useBoundaryEmphasis ) {
-		GridBagConstraints kGBC = new GridBagConstraints();
 		GridBagLayout kGrid = new GridBagLayout();
+		GridBagConstraints kGBC = new GridBagConstraints();
 		kGBC.gridx = 0;
 		kGBC.gridy = 0;
 		kGBC.insets = new Insets(5,5,5,5);
 		kGBC.anchor = GridBagConstraints.WEST;
+		kGBC.weightx = .8;
 		JPanel buttonPanel = new JPanel( kGrid );
 		buttonPanel.setBorder(buildTitledBorder("Options"));
 		buttonPanel.add( new JLabel( "Select Widget Type: "), kGBC );
@@ -296,7 +298,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kGroup.add(kSquare);
 		m_kGroup.add(kTriangle);
 		kSquare.setSelected(true);
-
+		
+		
+		kGBC = new GridBagConstraints();
+		kGBC.gridx = 0;
+		kGBC.gridy = 0;
+		kGBC.insets = new Insets(5,5,5,5);
+		kGBC.anchor = GridBagConstraints.WEST;
 		kGBC.gridx = 0;
 		kGBC.gridy++;
 		alphaSlider = new JSlider();
@@ -323,22 +331,43 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		clearAll.setActionCommand("ClearAll");
 		buttonPanel.add( clearAll, kGBC );
 
+		
 		histogramPanel = new JPanel(new BorderLayout());
 		histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));
-		JPanel canvasPanel = new JPanel(new BorderLayout());
-		canvasPanel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);
-		canvasPanel.setPreferredSize(new Dimension(256, 256));
-		canvasPanel.setBackground(Color.white);
-		histogramPanel.add( canvasPanel, BorderLayout.CENTER );
+		histogramPanel.add( m_kMultiHistogram.getContainingPanel(), BorderLayout.CENTER );
 		imageAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.X_AXIS, ViewJComponentGraphAxes.TOP, 
 				256 + 160, 50, "Image Intensities", 80 );
 		histogramPanel.add( imageAxis, BorderLayout.SOUTH );
 		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
 				80, 256, "Gradient Magnitude", 0 );
-		histogramPanel.add( gmAxis, BorderLayout.EAST );
+		//histogramPanel.add( gmAxis, BorderLayout.EAST );
 		histogramPanel.add( new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS, ViewJComponentGraphAxes.RIGHT, 
 				80, 256, null, 0 ), BorderLayout.WEST);
-
+				
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		/*
+		gbc.gridx = 0; gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		//gbc.anchor = GridBagConstraints.EAST;
+		histogramPanel = new JPanel(new GridBagLayout());
+		histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));
+		histogramPanel.add( m_kMultiHistogram.getContainingPanel(), gbc );
+		imageAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.X_AXIS, ViewJComponentGraphAxes.TOP, 
+				256 + 20, 50, "Image Intensities", 10 );
+		gbc.gridx = 0; gbc.gridy = 1;
+		histogramPanel.add( imageAxis, gbc );
+		
+		gbc = new GridBagConstraints();
+		gbc.gridx = 1; gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
+				80, 256, "Gradient Magnitude", 0 );
+		gbc.gridx = 1;
+		histogramPanel.add( gmAxis, gbc );
+		*/
+		
 		// Scroll panel that hold the control panel layout in order to use JScrollPane
 		scrollPanel = new JPanel(new BorderLayout());
 
@@ -347,7 +376,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		mainPanel = new JPanel(new BorderLayout());
 
 		helpPanel.setBorder(buildTitledBorder("Help"));
-		GridBagConstraints gbc = new GridBagConstraints();
+		gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.insets = new Insets(5,5,5,5);
@@ -368,7 +397,6 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 
 		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
-
 		JToolBar lutToolBar = toolBarObj.buildLUTToolBarTop();
 		colorButton = toolBarObj.buildButton( "", "Change histogram color", CustomUIBuilder.PARAM_PAINT_COLOR.getIconBase() );
 		saveButton = toolBarObj.buildButton( "save", "Save histograms", "save" );
@@ -376,9 +404,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		lutToolBar.add( colorButton );
 		lutToolBar.add( saveButton );
 		lutToolBar.add( loadButton );
+		lutToolBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		Box contentBox = new Box(BoxLayout.Y_AXIS);
-		contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		contentBox.add(lutToolBar);
 		contentBox.add(histogramPanel);
 		contentBox.add(buttonPanel);
@@ -387,7 +415,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		scrollPanel.add(contentBox, BorderLayout.NORTH);
 
 
-		mainPanel.add(scroller, BorderLayout.NORTH);
+		mainPanel.add(scroller, BorderLayout.CENTER);
 	}
 	private void updateHelp( int iType )
 	{
