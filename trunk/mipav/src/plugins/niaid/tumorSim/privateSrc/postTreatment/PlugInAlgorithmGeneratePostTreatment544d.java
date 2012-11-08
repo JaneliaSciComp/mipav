@@ -25,7 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import java.util.Random;
 
-import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateTumorMap544c;
+import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateTumorMap544d;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
@@ -43,7 +43,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGeneratePostTreatment544c extends AlgorithmBase {
+public class PlugInAlgorithmGeneratePostTreatment544d extends AlgorithmBase {
 
 	/** Whether to perform a gaussian blur */
     private double image1Intensity, image2Intensity;
@@ -103,7 +103,7 @@ public class PlugInAlgorithmGeneratePostTreatment544c extends AlgorithmBase {
      * @param postVOI 
      * @param normalTissue 
      */
-    public PlugInAlgorithmGeneratePostTreatment544c(ModelImage image1, ModelImage image1aTumor, double image1Intensity, double image1IntensityStd, double image1Scale, double image1Noise, 
+    public PlugInAlgorithmGeneratePostTreatment544d(ModelImage image1, ModelImage image1aTumor, double image1Intensity, double image1IntensityStd, double image1Scale, double image1Noise, 
                                                     double image1ThresholdLower, double image1ThresholdUpper, 
                                                     boolean image1cVOI, ModelImage image2, ModelImage image2aTumor, double image2Intensity, double image2IntensityStd, double image2Scale, double image2Noise, 
                                                     double image2ThresholdLower, double image2ThresholdUpper, 
@@ -177,7 +177,7 @@ public class PlugInAlgorithmGeneratePostTreatment544c extends AlgorithmBase {
         threshold(image1c, image1ThresholdLower, image1ThresholdUpper);
         
         if(image1cVOI) {
-            PlugInAlgorithmCreateTumorMap544c.createVOI(image1c, image1Intensity-stdDevNum*image1IntensityStd, image1Intensity+stdDevNum*image1IntensityStd);
+            PlugInAlgorithmCreateTumorMap544d.createVOI(image1c, image1Intensity-stdDevNum*image1IntensityStd, image1Intensity+stdDevNum*image1IntensityStd);
         }
         
         image2c = (ModelImage) image2b.clone();
@@ -185,7 +185,7 @@ public class PlugInAlgorithmGeneratePostTreatment544c extends AlgorithmBase {
         image2c = subtractImages(image2c, image2a, image2b);
         
         if(image2cVOI) {
-            PlugInAlgorithmCreateTumorMap544c.createVOI(image2c, image2Intensity-stdDevNum*image2IntensityStd, image2Intensity+stdDevNum*image2IntensityStd);
+            PlugInAlgorithmCreateTumorMap544d.createVOI(image2c, image2Intensity-stdDevNum*image2IntensityStd, image2Intensity+stdDevNum*image2IntensityStd);
         }
         
         threshold(image2c, image2ThresholdLower, image2ThresholdUpper);
@@ -200,7 +200,7 @@ public class PlugInAlgorithmGeneratePostTreatment544c extends AlgorithmBase {
             //calculate propagation of error
             double postStdDev = Math.sqrt(image1IntensityStd*image1IntensityStd + image2IntensityStd*image2IntensityStd);
             double postIntensity = image2Intensity - image1Intensity;
-            PlugInAlgorithmCreateTumorMap544c.createVOI(postTreatment, postIntensity-stdDevNum*postStdDev, postIntensity+stdDevNum*postStdDev);
+            PlugInAlgorithmCreateTumorMap544d.createVOI(postTreatment, postIntensity-stdDevNum*postStdDev, postIntensity+stdDevNum*postStdDev);
         }
         
         reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 
