@@ -38,19 +38,19 @@ public class FileCheshire extends FileBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private int nBytesPerVoxel;
+    private long nBytesPerVoxel;
 
     /** DOCUMENT ME! */
     private float[] scaleFactor;
 
     /** DOCUMENT ME! */
-    private int startFirstImage;
+    private long startFirstImage;
 
     /** DOCUMENT ME! */
-    private int startSecondImage;
+    private long startSecondImage;
 
     /** DOCUMENT ME! */
-    private int subLength;
+    private long subLength;
 
     /** DOCUMENT ME! */
     private int xDim, yDim, zDim, tDim;
@@ -331,7 +331,7 @@ public class FileCheshire extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            int offset;
+            long offset;
             float[] buffer = new float[imageLength];
             rawFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
 
