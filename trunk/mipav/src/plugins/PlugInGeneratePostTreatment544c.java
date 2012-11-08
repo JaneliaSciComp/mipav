@@ -30,7 +30,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment544c;
+import niaid.tumorSim.privateSrc.postTreatment.PlugInDialogGeneratePostTreatment544c;
 
 /**
  * 

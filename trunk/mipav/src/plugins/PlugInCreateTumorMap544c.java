@@ -30,7 +30,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap544c;
+import niaid.tumorSim.privateSrc.createMap.PlugInDialogCreateTumorMap544c;
 
 /**
  * 

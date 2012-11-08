@@ -1,4 +1,4 @@
-package niaid.tumorSim.simParams;
+package niaid.tumorSim.privateSrc.simParams;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -42,8 +42,8 @@ import java.util.Random;
 
 import javax.swing.*;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap544c;
-import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment544c;
+import niaid.tumorSim.privateSrc.createMap.PlugInDialogCreateTumorMap544c;
+import niaid.tumorSim.privateSrc.postTreatment.PlugInDialogGeneratePostTreatment544c;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 

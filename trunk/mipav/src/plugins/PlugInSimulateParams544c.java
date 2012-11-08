@@ -30,7 +30,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import niaid.tumorSim.simParams.PlugInDialogSimulateParams544c;
+import niaid.tumorSim.privateSrc.simParams.PlugInDialogSimulateParams544c;
 
 /**
  * 

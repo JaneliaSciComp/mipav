@@ -1,4 +1,4 @@
-package niaid.tumorSim.createMap;
+package niaid.tumorSim.privateSrc.createMap;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -32,7 +32,7 @@ import java.util.Random;
 
 import WildMagic.LibFoundation.Mathematics.Vector3d;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap544c.NoiseMode;
+import niaid.tumorSim.privateSrc.createMap.PlugInDialogCreateTumorMap544c.NoiseMode;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
