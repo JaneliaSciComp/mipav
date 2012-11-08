@@ -1,4 +1,4 @@
-package niaid.tumorSim.postTreatment;
+package niaid.tumorSim.privateSrc.postTreatment;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -25,7 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import java.util.Random;
 
-import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap544c;
+import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateTumorMap544c;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;

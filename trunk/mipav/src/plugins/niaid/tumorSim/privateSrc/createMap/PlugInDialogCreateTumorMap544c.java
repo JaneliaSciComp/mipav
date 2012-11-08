@@ -1,4 +1,4 @@
-package niaid.tumorSim.createMap;
+package niaid.tumorSim.privateSrc.createMap;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
