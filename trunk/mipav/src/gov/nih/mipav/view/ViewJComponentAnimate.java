@@ -521,7 +521,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                     Arrays.fill(paintImageBuffer, 0); // ensure erasure of old image, otherwise ghosting occurs
                 }
                 // build the paint image that will be blended on-screen
-                makePaintImage(paintImageBuffer, paintBitmap, slice, frame, (imageA.getNDims() < 3));
+                makePaintImage(paintImageBuffer, paintBitmap, null, slice, frame, (imageA.getNDims() < 3));
                 if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
                     makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
                 }
