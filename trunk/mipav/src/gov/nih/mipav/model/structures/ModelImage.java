@@ -86,6 +86,8 @@ public class ModelImage extends ModelStorageBase {
 
     /** Backup of mask for undoing. */
     private BitSet maskBU;
+    
+    private short paintNumberMap[] = null;
 
     private boolean useMask = false;
 
@@ -197,6 +199,7 @@ public class ModelImage extends ModelStorageBase {
 
         mask = new BitSet(length);
         maskBU = new BitSet(length);
+        paintNumberMap = new short[length];
 
         // create Matrix Holder to store matrices
         this.matrixHolder = new MatrixHolder(dimExtents.length);
@@ -486,6 +489,7 @@ public class ModelImage extends ModelStorageBase {
 
         mask = new BitSet(length);
         maskBU = new BitSet(length);
+        paintNumberMap = new short[length];
         setExtents(dimExtents);
 
         final float[] resolutions = fileInfo[0].getResolutions();
@@ -532,6 +536,12 @@ public class ModelImage extends ModelStorageBase {
 
             for (int i = 0; i < size; i++) {
                 mask.clear(i);
+            }
+        }
+        
+        if (paintNumberMap != null) {
+            for (int i = 0; i < paintNumberMap.length; i++) {
+                paintNumberMap[i] = 0;
             }
         }
     }
@@ -689,6 +699,7 @@ public class ModelImage extends ModelStorageBase {
     public void createMask(final int length) {
         mask = new BitSet(length);
         maskBU = new BitSet(length);
+        paintNumberMap = new short[length];
     }
 
     /**
@@ -1572,6 +1583,10 @@ public class ModelImage extends ModelStorageBase {
      */
     public BitSet getMaskBU() {
         return maskBU;
+    }
+    
+    public short[] getPaintNumberMap() {
+        return paintNumberMap;
     }
 
     public void useMask(final boolean bOn) {
@@ -3776,6 +3791,10 @@ public class ModelImage extends ModelStorageBase {
     public void setMaskBU(final BitSet mask) {
         maskBU = mask;
     }
+    
+    public void setPaintNumberMap(final short[] _paintNumberMap) {
+        paintNumberMap = _paintNumberMap;
+    }
 
     /**
      * Accessor that adds a matrix to the matrix holder.
@@ -4859,6 +4878,7 @@ public class ModelImage extends ModelStorageBase {
         matrixHolder = null;
         mask = null;
         maskBU = null;
+        paintNumberMap = null;
         imageName = null;
         UI = null;
 
