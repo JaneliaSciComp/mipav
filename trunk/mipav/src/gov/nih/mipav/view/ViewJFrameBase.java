@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmHistogram;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -10,7 +9,6 @@ import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
-import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -2764,8 +2762,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
-            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
-            
+
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
@@ -4083,133 +4080,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 max = (float) img.getMax();
             }
 
-            float imgMin = (float) img.getMin();
-            float imgMax = (float) img.getMax();
-            
-            float[] x = new float[4];
-            float[] y = new float[4];
-            
-            switch(Preferences.getDefaultDisplay()) {
-            
-            case LUT:
-                try {
-                    ModelLUT subLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-                    FileHistoLUT fileLUT = new FileHistoLUT("userdefine.lut", Preferences.getPreferencesDir(), subLUT);
-                    fileLUT.setImg(img);
-                    fileLUT.readLUTandTransferFunction(true);
-                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
-                    float[] xSub = new float[subLUT.getTransferFunction().size()];
-                    float[] ySub = new float[subLUT.getTransferFunction().size()];
-                    subLUT.getTransferFunction().exportArrays(xSub, ySub);
-                    newLUT.getTransferFunction().importArrays(xSub, ySub, subLUT.getTransferFunction().size());
-                    System.out.println("done3");
-                    break;
-                } catch(Exception e) {
-                    Preferences.debug("Default LUT could not be loaded", Preferences.DEBUG_FILEIO);
-                    //fall through to default if exception occurs
-                }
-                
-            
-            case Default:
-                int bins = 1024;
-                
-                int[] dimExtents = new int[]{bins};
-    
-                ModelHistogram histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
-    
-                AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, img, true);
-    
-                histoAlgo.setRunningInSeparateThread(false);
-                histoAlgo.run();
-                
-                int[] histoBuffer = histoAlgo.getHistoBuffer();
-                int totalPix = histogram.getTotalPixels();
-                double pixCache = 0;
-                for(int i=0; i<histoBuffer.length; i++) {
-                    pixCache += histoBuffer[i];
-                    if(pixCache/totalPix > .05) {
-                        imgMin = imgMin + i*((imgMax-imgMin)/bins);
-                        break;
-                    }
-                }
-                
-                pixCache = 0;
-                for(int i=histoBuffer.length-1; i>=0; i--) {
-                    pixCache += histoBuffer[i];
-                    if(pixCache/totalPix > .05) {
-                        imgMax = imgMax - (bins-i)*((imgMax-imgMin)/bins);
-                        break;
-                    }
-                }
-                
-                newLUT.resetTransferLine(min, imgMin, max, imgMax);
-                break;
-                
-            case MinMax:
-                float minPref = min;
-                float maxPref = max;
-                
-                try {
-                    final String minString = Preferences.getProperty(Preferences.PREF_MIN);
-                    final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
-                    
-                    minPref = Float.valueOf(minString);
-                    maxPref = Float.valueOf(maxString);
-                } catch(Exception e) {
-                    Preferences.debug("Default min/max could not be loaded", Preferences.DEBUG_FILEIO);
-                }
+            final float imgMin = (float) img.getMin();
+            final float imgMax = (float) img.getMax();
 
-                y[1] = 255.0f;
-                x[1] = minPref;
-
-                y[2] = 0;
-                x[2] = maxPref;
-
-                newLUT.getTransferFunction().importArrays(x, y, 4);
-                
-                break;
-                
-            case WindowLevel:
-                float level = min;
-                float window = 1;
-                
-                try {
-                    final String levelText = Preferences.getProperty(Preferences.PREF_LEVEL);
-                    final String windowText = Preferences.getProperty(Preferences.PREF_WINDOW);
-                   
-                    level = Float.valueOf(levelText);
-                    window = Float.valueOf(windowText);
-                } catch(Exception e) {
-                    Preferences.debug("Default win/level could not be loaded", Preferences.DEBUG_FILEIO);
-                }
-                
-                
-
-                if (window == 0) {
-                    window = 1;
-                }
-                
-                x[2] = level + (window / 2);
-
-                if (x[2] > imgMax) {
-                    y[2] = 255.0f * (x[2] - imgMax) / window;
-                    x[2] = imgMax;
-                } else {
-                    y[2] = 0.0f;
-                }
-
-                x[1] = level - (window / 2);
-
-                if (x[1] < imgMin) {
-                    y[1] = 255.0f - (255.0f * (imgMin - x[1]) / window);
-                    x[1] = imgMin;
-                } else {
-                    y[1] = 255.0f;
-                }
-
-                newLUT.getTransferFunction().importArrays(x, y, 4);
-                break;
-            }
+            newLUT.resetTransferLine(min, imgMin, max, imgMax);
         }
 
         return newLUT;
