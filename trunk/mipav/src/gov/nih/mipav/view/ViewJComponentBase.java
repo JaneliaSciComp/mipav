@@ -844,15 +844,17 @@ public abstract class ViewJComponentBase extends JComponent {
      * @param paintImageBuffer int[] the buffer to fill that will make the
      * paint image
      * @param paintBitmap the bit map representing the painted pixels
+     * @param paintNumberMap short[] of numbers for different paints
      * @param slice the current slice to paint if this is a 3D image
      * @param frame the ViewJFrameBase containing the painted component.
      * @param b2D when true this is a 2D image component, when false it is
      * greater than 2D
      */
-    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap,
+    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap, short[] paintNumberMap, 
                                   int slice, ViewJFrameBase frame,
                                   boolean b2D )
     {
+        int colorArray[] = null;
         if ( paintBitmap.cardinality() <= 0 )
         {
             // Nothing to paint...
@@ -861,6 +863,13 @@ public abstract class ViewJComponentBase extends JComponent {
         
         // get the color of the paint the user has selected
         int color = getSelectedPaintColor( frame );
+        if (paintNumberMap != null) {
+            colorArray = new int[36];
+            for (int i = 0; i < 36; i++) {
+                float hue = (float)(((i * 35) % 360)/ 360.0);  
+                colorArray[i] = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
+            }
+        }
         float opacity = 0.3f;
 
         try {
@@ -875,13 +884,19 @@ public abstract class ViewJComponentBase extends JComponent {
 
         // this loop converts the paint mask from a BitSet into an image
         // buffer that will be drawn on-screen
+        
         if ( b2D )
         {
             // for 2D images
             for (int j = 0; j < paintBitmap.length(); j++) {
 
                 if (paintBitmap.get(j) == true) {
-                    color = color & 0x00ffffff;
+                    if (paintNumberMap != null) {
+                        color = colorArray[paintNumberMap[j]] & 0x00ffffff;
+                    }
+                    else {
+                        color = color & 0x00ffffff;
+                    }
                     paintImageBuffer[j] = color | opacityInt;
                 }
             }
@@ -896,11 +911,16 @@ public abstract class ViewJComponentBase extends JComponent {
             for (; j < numIterations; j++) {
 
                 if (paintBitmap.get(j) == true) {
-                    color = color & 0x00ffffff;
+                    if (paintNumberMap != null) {
+                        color = colorArray[paintNumberMap[j]] & 0x00ffffff;
+                    }
+                    else {
+                        color = color & 0x00ffffff;
+                    }
                     paintImageBuffer[j - offset] = color | opacityInt;
                 }
             }
-        }
+        }    
     }
 
     /**
