@@ -864,18 +864,33 @@ public abstract class ViewJComponentBase extends JComponent {
         // get the color of the paint the user has selected
         int color = getSelectedPaintColor( frame );
         if (paintNumberMap != null) {
-            colorArray = new int[36];
-            for (int i = 0; i < 36; i++) {
-                float hue = (float)(((i * 35) % 360)/ 360.0);  
-                colorArray[i] = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
+            colorArray = new int[37];
+            colorArray[0] = color;
+            // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
+            // paintNumberMap[j] could be 0 with bitMap set or not set.
+            // To handle this case colorArray[0] has the original color.
+            // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
+            // 36 different colors in 1 thru 36 with selected color in 1.
+            colorArray[1] = color;
+            int index = 2;
+            int colorNumber;
+            int i = 0;
+            while (index <= 36) {
+                float hue = (float)(((i * 35) % 360)/ 360.0);
+                i++;
+                colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
+                if (colorNumber != color) {
+                    colorArray[index++] = colorNumber;  
+                }
             }
+            
         }
         float opacity = 0.3f;
 
         try {
             opacity = frame.getControls().getTools().getOpacity();
         } catch (Exception e) {
-            /* do nothing, opactiy defaults to 0.3f */
+            /* do nothing, opacity defaults to 0.3f */
         } // should be changed later to a more elegant solution, since this always fails when 'frame' is a
           // ViewJFrameLightBox
 
