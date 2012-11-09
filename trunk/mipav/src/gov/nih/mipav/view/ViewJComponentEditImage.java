@@ -239,6 +239,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     /** if true do not getMask on a setActiveImage command so as to keep the mask from the old active image. */
     protected boolean paintBitmapSwitch = false;
+    
+    protected short[] paintNumberMap = null;
 
     /** BitSet used for painting (brushes on/off). */
     protected BitSet paintBrush = null;
@@ -548,6 +550,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         paintBitmap = imageA.getMask();
         paintBitmapBU = imageA.getMaskBU();
+        paintNumberMap = imageA.getPaintNumberMap();
 
         imageBufferActive = imageBufferA;
         this.logMagDisplay = logMagDisplay;
@@ -1752,6 +1755,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         pixBufferB = null;
         paintBitmap = null;
         paintBitmapBU = null;
+        paintNumberMap = null;
         imageActive = null;
         imageBufferActive = null;
         frame = null;
@@ -2191,6 +2195,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      */
     public BitSet getPaintMask() {
         return paintBitmap;
+    }
+    
+    public short[] getPaintNumberMap() {
+        return paintNumberMap;
     }
 
     /**
@@ -3106,7 +3114,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             offscreenGraphics2d.setClip(visibleRect);
 
             // build the paint image that will be blended on-screen
-            makePaintImage(paintImageBuffer, paintBitmap, slice, frame, (imageExtents.length < 3));
+            makePaintImage(paintImageBuffer, paintBitmap, paintNumberMap, slice, frame, (imageExtents.length < 3));
 
             if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
@@ -4180,6 +4188,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( !paintBitmapSwitch) {
                 paintBitmap = imageA.getMask();
+                paintNumberMap = imageA.getPaintNumberMap();
             }
         } else if (active == ViewJComponentBase.IMAGE_B) {
             imageActive = imageB;
