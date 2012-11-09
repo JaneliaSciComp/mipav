@@ -4146,8 +4146,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 break;
                 
             case MinMax:
-                float minPref = imgMin;
-                float maxPref = imgMax;
+                float minPref = min;
+                float maxPref = max;
                 
                 try {
                     final String minString = Preferences.getProperty(Preferences.PREF_MIN);
@@ -4170,7 +4170,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 break;
                 
             case WindowLevel:
-                float level = imgMin;
+                float level = min;
                 float window = 1;
                 
                 try {
