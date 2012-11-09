@@ -3360,8 +3360,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-     * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
-     * that were masked with the intensity value that is currently active.
+     * This method is provided for the user to convert masked areas back to painted area. It only affects those areas
+     * with all mask values.
      * 
      * @param showProgressBar DOCUMENT ME!
      * 
@@ -3393,6 +3393,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // same size as image
             // dimensions
             final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+            final short[] paintNumberMap = componentImage.getPaintNumberMap();
             ViewJProgressBar progressBar = null;
 
             if (showProgressBar) {
@@ -3441,8 +3442,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         for (int i = 0; i < intensityMapRef.length; i++) {
 
-                            if (intensityMapRef[i] == componentImage.intensityDropper) {
+                            if (intensityMapRef[i] > 0) {
                                 bitSet.set( (currentSlice * intensityMapRef.length) + i); // turn the paint bit set
+                                paintNumberMap[(currentSlice * intensityMapRef.length) + i] = (short)Math.round(intensityMapRef[i]);
                                 // index to ON
                                 intensityMapRef[i] = 0; // erase the painted mask from this index
                             }
