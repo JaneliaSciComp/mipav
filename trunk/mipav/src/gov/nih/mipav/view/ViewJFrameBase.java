@@ -4178,6 +4178,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     
                     minPref = Float.valueOf(minString);
                     maxPref = Float.valueOf(maxString);
+                    
+                    if(minPref < min || maxPref > max || minPref > max || maxPref < min) {
+                    	Preferences.debug("Default min/max are not applicable to this dataset", Preferences.DEBUG_FILEIO);
+                    	newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    	break;
+                    }
                 } catch(Exception e) {
                     Preferences.debug("Default min/max could not be loaded", Preferences.DEBUG_FILEIO);
                 }
