@@ -109,7 +109,7 @@ public class Preferences {
         /** Minimum and maximum settings  */
         MinMax("Min & max default"),
         /** MIPAV default setting */
-        Default("MIPAV default setting"),
+        Mipav("MIPAV default setting"),
         /**ImageJ default setting */
         ImageJ("ImageJ default setting");
         
@@ -767,7 +767,7 @@ public class Preferences {
         // location
 
         // look and feel properties
-        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Default.name());
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Mipav.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
