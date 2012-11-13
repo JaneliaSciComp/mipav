@@ -103,13 +103,15 @@ public class Preferences {
      */
     public enum DefaultDisplay {
         /** Lookuptable table and associated transfer function */
-        LUT("LUT & transfer function"),
+        LUT("LUT & transfer function default"),
         /** Window and level settings (will also be reflected as transfer function */
-        WindowLevel("Window & level"),
+        WindowLevel("Window & level default"),
         /** Minimum and maximum settings  */
-        MinMax("Min & max"),
+        MinMax("Min & max default"),
         /** MIPAV default setting */
-        Default("MIPAV setting");
+        Default("MIPAV default setting"),
+        /**ImageJ default setting */
+        ImageJ("ImageJ default setting");
         
         /** The format of default display */
         private String str;
