@@ -2515,7 +2515,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
                 index = yS * imageActive.getExtents()[0] + xS;
-                if ((paintBitmap != null) && (paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
+                if ((paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
                     int colorArray[];
                     // get the color of the paint the user has selected
                     Color originalColor = frame.getControls().getTools().getPaintColor();
@@ -5446,7 +5446,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
                 index = yS * imageActive.getExtents()[0] + xS;
-                if ((paintBitmap != null) && (paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
+                if ((paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
                     int colorArray[];
                     // get the color of the paint the user has selected
                     Color originalColor = frame.getControls().getTools().getPaintColor();
@@ -5585,7 +5585,30 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             final int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
 
                             if (erase == true) {
-                                paintBitmap.clear(offset + st);
+                                Color selectedColor = frame.getControls().getTools().getPaintColor();
+                                int selectedColorNumber = selectedColor.getRGB();
+                                int colorArray[] = new int[37];
+                                colorArray[0] = selectedColorNumber;
+                                // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
+                                // paintNumberMap[j] could be 0 with bitMap set or not set.
+                                // To handle this case colorArray[0] has the original color.
+                                // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
+                                // 36 different colors in 1 thru 36.
+                                int index = 1;
+                                int colorNumber;
+                                int i = 0;
+                                while (index <= 36) {
+                                    float hue = (float)(((i * 35) % 360)/ 360.0);
+                                    i++;
+                                    colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
+                                    colorArray[index++] = colorNumber;  
+                                }
+                                if ((paintNumberMap != null) && (colorArray[paintNumberMap[offset + st]] == selectedColorNumber)) {
+                                    paintBitmap.clear(offset + st);
+                                }
+                                else if (paintNumberMap == null) {
+                                    paintBitmap.clear(offset + st);
+                                }
                             } else {
                                 paintBitmap.set(offset + st);
                             }
