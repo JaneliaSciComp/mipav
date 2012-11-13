@@ -540,9 +540,10 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
 
         if (frame.getControls() != null) {
             OPACITY = frame.getControls().getTools().getOpacity();
-            red = Math.round(frame.getControls().getTools().getPaintColor().getRed() * OPACITY);
-            green = Math.round(frame.getControls().getTools().getPaintColor().getGreen() * OPACITY);
-            blue = Math.round(frame.getControls().getTools().getPaintColor().getBlue() * OPACITY);
+            int paintColorIndex = getPaintColorIndex(frame);
+            red = Math.round(frame.getControls().getTools().getPaintColor()[paintColorIndex].getRed() * OPACITY);
+            green = Math.round(frame.getControls().getTools().getPaintColor()[paintColorIndex].getGreen() * OPACITY);
+            blue = Math.round(frame.getControls().getTools().getPaintColor()[paintColorIndex].getBlue() * OPACITY);
         } else {
             red = 128;
             green = 0;
