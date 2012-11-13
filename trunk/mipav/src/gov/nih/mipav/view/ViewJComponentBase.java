@@ -870,18 +870,15 @@ public abstract class ViewJComponentBase extends JComponent {
             // paintNumberMap[j] could be 0 with bitMap set or not set.
             // To handle this case colorArray[0] has the original color.
             // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
-            // 36 different colors in 1 thru 36 with selected color in 1.
-            colorArray[1] = color;
-            int index = 2;
+            // 36 different colors in 1 thru 36.
+            int index = 1;
             int colorNumber;
             int i = 0;
             while (index <= 36) {
                 float hue = (float)(((i * 35) % 360)/ 360.0);
                 i++;
                 colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
-                if (colorNumber != color) {
-                    colorArray[index++] = colorNumber;  
-                }
+                colorArray[index++] = colorNumber;  
             }
             
         }
