@@ -854,6 +854,7 @@ public abstract class ViewJComponentBase extends JComponent {
                                   int slice, ViewJFrameBase frame,
                                   boolean b2D )
     {
+        int color;
         int colorArray[] = null;
         if ( paintBitmap.cardinality() <= 0 )
         {
@@ -861,20 +862,23 @@ public abstract class ViewJComponentBase extends JComponent {
             return;
         }
         
-        // get the color of the paint the user has selected
-        int color = getSelectedPaintColor( frame );
+        // get the color of the paints the user has selected
+        int selectedPaintColor[] = getSelectedPaintColor( frame );
+        int paintColorIndex = getPaintColorIndex(frame);
         if (paintNumberMap != null) {
-            colorArray = new int[37];
-            colorArray[0] = color;
+            // 36 selected colors followed by 36 fixed colors
+            colorArray = new int[72];
+            for (int i = 0; i <= paintColorIndex; i++) {
+                colorArray[i] = selectedPaintColor[i];
+            }
             // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
             // paintNumberMap[j] could be 0 with bitMap set or not set.
             // To handle this case colorArray[0] has the original color.
-            // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
-            // 36 different colors in 1 thru 36.
-            int index = 1;
+            // 36 different colors in 36 thru 71.
+            int index = 36;
             int colorNumber;
             int i = 0;
-            while (index <= 36) {
+            while (index <= 71) {
                 float hue = (float)(((i * 35) % 360)/ 360.0);
                 i++;
                 colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
@@ -907,7 +911,7 @@ public abstract class ViewJComponentBase extends JComponent {
                         color = colorArray[paintNumberMap[j]] & 0x00ffffff;
                     }
                     else {
-                        color = color & 0x00ffffff;
+                        color = selectedPaintColor[0] & 0x00ffffff;
                     }
                     paintImageBuffer[j] = color | opacityInt;
                 }
@@ -927,7 +931,7 @@ public abstract class ViewJComponentBase extends JComponent {
                         color = colorArray[paintNumberMap[j]] & 0x00ffffff;
                     }
                     else {
-                        color = color & 0x00ffffff;
+                        color = selectedPaintColor[0] & 0x00ffffff;
                     }
                     paintImageBuffer[j - offset] = color | opacityInt;
                 }
@@ -1061,17 +1065,36 @@ public abstract class ViewJComponentBase extends JComponent {
      * @return int the color of the paint selected by the user, represented as
      * a packed integer
      */
-    public int getSelectedPaintColor( ViewJFrameBase vjfb )
+    public int[] getSelectedPaintColor( ViewJFrameBase vjfb )
     {
         try {
             ViewControlsImage vci = vjfb.getControls();
             ViewToolBarBuilder vtbb = vci.getTools();
-            Color rgbColorObj = vtbb.getPaintColor();
+            Color rgbColorObj[] = vtbb.getPaintColor();
+            int paintColorIndex = vtbb.getPaintColorIndex();
+            int selectedPaintColor[] = new int[paintColorIndex+1];
+            for (int i = 0; i <= paintColorIndex; i++) {
+                selectedPaintColor[i] = rgbColorObj[i].getRGB();
+            }
 
-            return rgbColorObj.getRGB();
+            return selectedPaintColor;
         } catch (Throwable t) {
-            return 0xffff0000; // default to red if exception is thrown
+            int selectedPaintColor[] = new int[1];
+            selectedPaintColor[0] = new Color(255,0,0).getRGB();
+            return selectedPaintColor; // default to red if exception is thrown
         }
+    }
+    
+    public int getPaintColorIndex( ViewJFrameBase vjfb) {
+        try {
+            ViewControlsImage vci = vjfb.getControls();
+            ViewToolBarBuilder vtbb = vci.getTools();
+            int paintColorIndex = vtbb.getPaintColorIndex();
+
+            return paintColorIndex;
+        } catch (Throwable t) {
+            return 0; // default to 0 if exception is thrown
+        }    
     }
 
     
