@@ -84,7 +84,9 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     protected JToggleButton paintBrushButton;
 
     /** The paint color to be used when the user paints in the image. */
-    protected Color paintColor = new Color(225, 0, 0);
+    protected Color paintColor[] = new Color[36];
+    
+    protected int paintColorIndex = 0;
 
     /**
      * The button for the &quot;default&quot; mode of the mouse, where clicking in the image shows the intensity of that
@@ -143,6 +145,8 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
      */
     public ViewToolBarBuilder(Object _UI) {
         UI = _UI;
+        paintColor[0] = new Color(255, 0, 0);
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -607,7 +611,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
         paintToolBar.add(makeSeparator());
 
         colorPaintButton = buildButton(CustomUIBuilder.PARAM_PAINT_COLOR);
-        colorPaintButton.setBackground(paintColor);
+        colorPaintButton.setBackground(paintColor[0]);
         paintToolBar.add(colorPaintButton);
 
         JButton rgbCompButton = buildButton(CustomUIBuilder.PARAM_PAINT_RGB_CHOOSER);
@@ -1132,8 +1136,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
      *
      * @return  Current color of the paint.
      */
-    public Color getPaintColor() {
+    public Color[] getPaintColor() {
         return paintColor;
+    }
+    
+    public int getPaintColorIndex() {
+        return paintColorIndex;
     }
     
     public JToggleButton getPointerButton( )
@@ -1301,7 +1309,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
      * @param  color  Color to set paint to.
      */
     public void setPaintColor(Color color) {
-        paintColor = color;
+        paintColor[++paintColorIndex] = color;
 
         if (colorPaintButton != null) {
             colorPaintButton.setBackground(color);
