@@ -142,7 +142,8 @@ public class JDialogAnimate extends JDialogBase {
         }
 
         if ((DIM == 3) && (controlFrame.getControls() != null)) {
-            borderCol = controlFrame.getControls().getTools().getPaintColor();
+            int paintColorIndex = controlFrame.getControls().getTools().getPaintColorIndex();
+            borderCol = controlFrame.getControls().getTools().getPaintColor()[paintColorIndex];
         }
 
         if ((imageB != null) && (imageB.getNDims() == 4)) {
@@ -179,7 +180,8 @@ public class JDialogAnimate extends JDialogBase {
         }
 
         if ((DIM == 3) && (controlFrame.getControls() != null)) {
-            borderCol = controlFrame.getControls().getTools().getPaintColor();
+            int paintColorIndex = controlFrame.getControls().getTools().getPaintColorIndex();
+            borderCol = controlFrame.getControls().getTools().getPaintColor()[paintColorIndex];
         }
 
         if ((imageB != null) && (imageB.getNDims() == 4)) {
