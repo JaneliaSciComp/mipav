@@ -3415,7 +3415,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                     // selected intensity
 
-                    final Color activeColor = getControls().getTools().getPaintColor();
+                    int paintColorIndex = getControls().getTools().getPaintColorIndex();
+                    final Color activeColor = getControls().getTools().getPaintColor()[paintColorIndex];
                     final int activeRed = activeColor.getRed();
                     final int activeGreen = activeColor.getGreen();
                     final int activeBlue = activeColor.getBlue();
@@ -3444,7 +3445,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                             if (intensityMapRef[i] > 0) {
                                 bitSet.set( (currentSlice * intensityMapRef.length) + i); // turn the paint bit set
-                                paintNumberMap[(currentSlice * intensityMapRef.length) + i] = (short)Math.round(intensityMapRef[i]);
+                                // 36 selected colors in 0 to 35 followed by 36 fixed colors in 36 to 71.
+                                paintNumberMap[(currentSlice * intensityMapRef.length) + i] = (short)Math.round(intensityMapRef[i]+35);
                                 // index to ON
                                 intensityMapRef[i] = 0; // erase the painted mask from this index
                             }
