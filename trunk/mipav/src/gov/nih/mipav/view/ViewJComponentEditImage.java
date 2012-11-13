@@ -2468,6 +2468,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
+        int index;
         Color dropperColor;
         int diffX = Math.round((lastMouseX - mouseEvent.getX()) * getZoomX());
         int diffY = Math.round((lastMouseY - mouseEvent.getY()) * getZoomY());
@@ -2513,8 +2514,46 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
-                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
-                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
+                index = yS * imageActive.getExtents()[0] + xS;
+                if ((paintBitmap != null) && (paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
+                    int colorArray[];
+                    // get the color of the paint the user has selected
+                    Color originalColor = frame.getControls().getTools().getPaintColor();
+                    int originalColorNumber = originalColor.getRGB();
+                    if (paintNumberMap[index] <= 1) {
+                        frame.getControls().getTools().setPaintColor(originalColor);  
+                        getActiveImage().notifyImageDisplayListeners(null, false);
+                    }
+                    colorArray = new int[37];
+                    colorArray[0] = originalColorNumber;
+                    // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
+                    // paintNumberMap[j] could be 0 with bitMap set or not set.
+                    // To handle this case colorArray[0] has the original color.
+                    // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
+                    // 36 different colors in 1 thru 36.
+                    int k = 1;
+                    Color presentColor;
+                    int presentColorNumber;
+                    int i = 0;
+                    while (k <= 36) {
+                        float hue = (float)(((i * 35) % 360)/ 360.0);
+                        i++;
+                        presentColor = Color.getHSBColor(hue, 1.0f, 1.0f);
+                        presentColorNumber = presentColor.getRGB();
+                        colorArray[k] = presentColorNumber;
+                        if (k == paintNumberMap[index]) {
+                            frame.getControls().getTools().setPaintColor(presentColor); 
+                            getActiveImage().notifyImageDisplayListeners(null, false);
+                        }
+                        k++;
+                    }
+                        
+                }
+                else {
+                    intensityDropper = imageBufferActive[index];
+                    frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
+                }
+                
             }
         } else if (cursorMode == ViewJComponentBase.ERASER_PAINT) {
             performPaint(mouseEvent, true);
@@ -2681,7 +2720,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             return;
         }
-        if ( cursorMode != ViewJComponentBase.VOI_3D )
+        if (( cursorMode != ViewJComponentBase.VOI_3D ) && (cursorMode != ViewJComponentBase.DROPPER_PAINT))
         {
             setCursorMode(ViewJComponentBase.DEFAULT);
         }
@@ -5386,6 +5425,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param mouseEvent the mouseEvent that triggered this function call.
      */
     protected void mousePressedPaint(final MouseEvent mouseEvent) {
+        int index;
         int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
@@ -5394,7 +5434,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
         if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
-
             if (imageActive.isColorImage()) {
                 final Color dropperColor = new Color(
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
@@ -5406,8 +5445,47 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
-                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
-                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
+                index = yS * imageActive.getExtents()[0] + xS;
+                if ((paintBitmap != null) && (paintBitmap.get(index)) && (paintNumberMap != null) && (paintNumberMap[index] > 0)) {
+                    int colorArray[];
+                    // get the color of the paint the user has selected
+                    Color originalColor = frame.getControls().getTools().getPaintColor();
+                    int originalColorNumber = originalColor.getRGB();
+                    if (paintNumberMap[index] <= 1) {
+                        frame.getControls().getTools().setPaintColor(originalColor);
+                        getActiveImage().notifyImageDisplayListeners(null, false);
+                    }
+                    colorArray = new int[37];
+                    colorArray[0] = originalColorNumber;
+                    // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
+                    // paintNumberMap[j] could be 0 with bitMap set or not set.
+                    // To handle this case colorArray[0] has the original color.
+                    // paintNumberMap[j] >= 1 if bitMap set and paintNumberMap[j] is given a mask value.
+                    // 36 different colors in 1 thru 36.
+                    int k = 1;
+                    Color presentColor;
+                    int presentColorNumber;
+                    int i = 0;
+                    while (k <= 36) {
+                        float hue = (float)(((i * 35) % 360)/ 360.0);
+                        i++;
+                        presentColor = Color.getHSBColor(hue, 1.0f, 1.0f);
+                        presentColorNumber = presentColor.getRGB();
+                        colorArray[k] = presentColorNumber;
+                        if (k == paintNumberMap[index]) {
+                            frame.getControls().getTools().setPaintColor(presentColor); 
+                            getActiveImage().notifyImageDisplayListeners(null, false);
+                        }
+                        k++;
+                    }
+                        
+                }
+                else {
+                    intensityDropper = imageBufferActive[index];
+                    frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
+                }
+                
+                
             }
         }
 
