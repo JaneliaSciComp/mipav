@@ -1727,8 +1727,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
         
         // get the color of the paint the user has selected
-        int paintColorIndex = frame.getControls().getTools().getPaintColorIndex();
-        int color = getSelectedPaintColor(frame)[paintColorIndex];
+        int color = getSelectedPaintColor(frame);
         final float opacity = frame.getControls().getTools().getOpacity();
         int opacityInt = (int) (opacity * 255);
         opacityInt = opacityInt << 24;

@@ -3523,10 +3523,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public void setOpacityInfo(final float _OPACITY, final float _alphaBlend) {
 
         try {
-            int paintColorIndex = getControls().getTools().getPaintColorIndex();
-            red = getControls().getTools().getPaintColor()[paintColorIndex].getRed();
-            green = getControls().getTools().getPaintColor()[paintColorIndex].getGreen();
-            blue = getControls().getTools().getPaintColor()[paintColorIndex].getBlue();
+            red = getControls().getTools().getPaintColor().getRed();
+            green = getControls().getTools().getPaintColor().getGreen();
+            blue = getControls().getTools().getPaintColor().getBlue();
         } catch (final Exception e) {
             e.printStackTrace();
         }

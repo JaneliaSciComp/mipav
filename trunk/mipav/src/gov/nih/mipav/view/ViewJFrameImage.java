@@ -3360,8 +3360,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-     * This method is provided for the user to convert masked areas back to painted area. It only affects those areas
-     * with all mask values.
+     * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
+     * that were masked with the intensity value that is currently active.
      * 
      * @param showProgressBar DOCUMENT ME!
      * 
@@ -3393,7 +3393,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // same size as image
             // dimensions
             final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-            final short[] paintNumberMap = componentImage.getPaintNumberMap();
             ViewJProgressBar progressBar = null;
 
             if (showProgressBar) {
@@ -3415,8 +3414,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                     // selected intensity
 
-                    int paintColorIndex = getControls().getTools().getPaintColorIndex();
-                    final Color activeColor = getControls().getTools().getPaintColor()[paintColorIndex];
+                    final Color activeColor = getControls().getTools().getPaintColor();
                     final int activeRed = activeColor.getRed();
                     final int activeGreen = activeColor.getGreen();
                     final int activeBlue = activeColor.getBlue();
@@ -3443,10 +3441,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         for (int i = 0; i < intensityMapRef.length; i++) {
 
-                            if (intensityMapRef[i] > 0) {
+                            if (intensityMapRef[i] == componentImage.intensityDropper) {
                                 bitSet.set( (currentSlice * intensityMapRef.length) + i); // turn the paint bit set
-                                // 36 selected colors in 0 to 35 followed by 36 fixed colors in 36 to 71.
-                                paintNumberMap[(currentSlice * intensityMapRef.length) + i] = (short)Math.round(intensityMapRef[i]+35);
                                 // index to ON
                                 intensityMapRef[i] = 0; // erase the painted mask from this index
                             }

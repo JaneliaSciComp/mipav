@@ -4505,8 +4505,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         if (controls != null) {
             OPACITY = controls.getTools().getOpacity();
-            int paintColorIndex = controls.getTools().getPaintColorIndex();
-            color = controls.getTools().getPaintColor()[paintColorIndex];
+            color = controls.getTools().getPaintColor();
         }
 
         imageA.setImageOrder(ModelImage.IMAGE_A);
