@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="graph">
+        <xs:complexType>
+
+        <xs:sequence>
+        <xs:element name="node" maxOccurs="unbounded">
+                <xs:complexType>
+                <xs:sequence>
+                <xs:element name="name" type="xs:string"/>
+                <xs:element name="color" type="xs:string"/>
+                <xs:element name="label" type="xs:string"/>
+                </xs:sequence>
+                </xs:complexType>
+        </xs:element>
+        </xs:sequence>
+
+        <xs:sequence>
+        <xs:element name="edge" maxOccurs="unbounded">
+                <xs:complexType>
+                <xs:sequence>
+                <xs:element name="name" type="xs:string"/>
+                <xs:element name="source" type="xs:string"/>
+                <xs:element name="target" type="xs:string"/>
+                </xs:sequence>
+                </xs:complexType>
+        </xs:element>
+        </xs:sequence>
+        </xs:complexType>
+        </xs:element>
+</xs:schema>
