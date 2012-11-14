@@ -4107,7 +4107,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     break;
                 } catch(Exception e) {
                     Preferences.debug("Default LUT could not be loaded", Preferences.DEBUG_FILEIO);
-                    //fall through to default if exception occurs
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
                 }
                 
             
@@ -4186,6 +4188,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     }
                 } catch(Exception e) {
                     Preferences.debug("Default min/max could not be loaded", Preferences.DEBUG_FILEIO);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
                 }
 
                 y[1] = 255.0f;
@@ -4210,6 +4215,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     window = Float.valueOf(windowText);
                 } catch(Exception e) {
                     Preferences.debug("Default win/level could not be loaded", Preferences.DEBUG_FILEIO);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
                 }
                 
                 
