@@ -1423,7 +1423,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 m_akImageMinMax[0].Min( kVolumePt );
                 m_akImageMinMax[1].Max( kVolumePt );
             }
-            if (voiGroup.getCurveType() == VOI.PROTRACTOR) {
+            if (voiGroup != null && voiGroup.getCurveType() == VOI.PROTRACTOR) {
 	        	if (m_akImageMinMax[0].X == m_akImageMinMax[1].X) {
 	        		m_akImageMinMax[0].X -= 2.0f;
 	        		m_akImageMinMax[1].X += 2.0f;
