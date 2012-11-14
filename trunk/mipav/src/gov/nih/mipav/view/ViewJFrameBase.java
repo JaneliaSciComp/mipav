@@ -4103,7 +4103,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     float[] ySub = new float[subLUT.getTransferFunction().size()];
                     subLUT.getTransferFunction().exportArrays(xSub, ySub);
                     newLUT.getTransferFunction().importArrays(xSub, ySub, subLUT.getTransferFunction().size());
-                    System.out.println("done3");
                     break;
                 } catch(Exception e) {
                     Preferences.debug("Default LUT could not be loaded", Preferences.DEBUG_FILEIO);
