@@ -35,7 +35,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      *                                  A new set of transforms with high information content. Math. Biosci. 50, 251 (1980).
      *    S.W. Provencher & R.H. Vogel: Regularization techniques for inverse problems in molecular biology in: 
      *                                  Numerical Treatment of Inverse Problems in Differential and Integral Equations, 
-     *                                  eds. P. Deuflhard & E. Hairer (Birkhäuser, Boston, 1983), pp. 304-319.
+     *                                  eds. P. Deuflhard & E. Hairer (Birkhauser, Boston, 1983), pp. 304-319.
      *                                  
      * This program is used for the automatic analysis of multicomponent exponential decay for up to 9 components.
      * 
