@@ -844,54 +844,29 @@ public abstract class ViewJComponentBase extends JComponent {
      * @param paintImageBuffer int[] the buffer to fill that will make the
      * paint image
      * @param paintBitmap the bit map representing the painted pixels
-     * @param paintNumberMap short[] of numbers for different paints
      * @param slice the current slice to paint if this is a 3D image
      * @param frame the ViewJFrameBase containing the painted component.
      * @param b2D when true this is a 2D image component, when false it is
      * greater than 2D
      */
-    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap, short[] paintNumberMap, 
+    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap,
                                   int slice, ViewJFrameBase frame,
                                   boolean b2D )
     {
-        int color;
-        int colorArray[] = null;
         if ( paintBitmap.cardinality() <= 0 )
         {
             // Nothing to paint...
             return;
         }
         
-        // get the color of the paints the user has selected
-        int selectedPaintColor[] = getSelectedPaintColor( frame );
-        int paintColorIndex = getPaintColorIndex(frame);
-        if (paintNumberMap != null) {
-            // 36 selected colors followed by 36 fixed colors
-            colorArray = new int[72];
-            for (int i = 0; i <= paintColorIndex; i++) {
-                colorArray[i] = selectedPaintColor[i];
-            }
-            // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
-            // paintNumberMap[j] could be 0 with bitMap set or not set.
-            // To handle this case colorArray[0] has the original color.
-            // 36 different colors in 36 thru 71.
-            int index = 36;
-            int colorNumber;
-            int i = 0;
-            while (index <= 71) {
-                float hue = (float)(((i * 35) % 360)/ 360.0);
-                i++;
-                colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
-                colorArray[index++] = colorNumber;  
-            }
-            
-        }
+        // get the color of the paint the user has selected
+        int color = getSelectedPaintColor( frame );
         float opacity = 0.3f;
 
         try {
             opacity = frame.getControls().getTools().getOpacity();
         } catch (Exception e) {
-            /* do nothing, opacity defaults to 0.3f */
+            /* do nothing, opactiy defaults to 0.3f */
         } // should be changed later to a more elegant solution, since this always fails when 'frame' is a
           // ViewJFrameLightBox
 
@@ -900,19 +875,13 @@ public abstract class ViewJComponentBase extends JComponent {
 
         // this loop converts the paint mask from a BitSet into an image
         // buffer that will be drawn on-screen
-        
         if ( b2D )
         {
             // for 2D images
             for (int j = 0; j < paintBitmap.length(); j++) {
 
                 if (paintBitmap.get(j) == true) {
-                    if (paintNumberMap != null) {
-                        color = colorArray[paintNumberMap[j]] & 0x00ffffff;
-                    }
-                    else {
-                        color = selectedPaintColor[0] & 0x00ffffff;
-                    }
+                    color = color & 0x00ffffff;
                     paintImageBuffer[j] = color | opacityInt;
                 }
             }
@@ -927,16 +896,11 @@ public abstract class ViewJComponentBase extends JComponent {
             for (; j < numIterations; j++) {
 
                 if (paintBitmap.get(j) == true) {
-                    if (paintNumberMap != null) {
-                        color = colorArray[paintNumberMap[j]] & 0x00ffffff;
-                    }
-                    else {
-                        color = selectedPaintColor[0] & 0x00ffffff;
-                    }
+                    color = color & 0x00ffffff;
                     paintImageBuffer[j - offset] = color | opacityInt;
                 }
             }
-        }    
+        }
     }
 
     /**
@@ -1065,36 +1029,17 @@ public abstract class ViewJComponentBase extends JComponent {
      * @return int the color of the paint selected by the user, represented as
      * a packed integer
      */
-    public int[] getSelectedPaintColor( ViewJFrameBase vjfb )
+    public int getSelectedPaintColor( ViewJFrameBase vjfb )
     {
         try {
             ViewControlsImage vci = vjfb.getControls();
             ViewToolBarBuilder vtbb = vci.getTools();
-            Color rgbColorObj[] = vtbb.getPaintColor();
-            int paintColorIndex = vtbb.getPaintColorIndex();
-            int selectedPaintColor[] = new int[paintColorIndex+1];
-            for (int i = 0; i <= paintColorIndex; i++) {
-                selectedPaintColor[i] = rgbColorObj[i].getRGB();
-            }
+            Color rgbColorObj = vtbb.getPaintColor();
 
-            return selectedPaintColor;
+            return rgbColorObj.getRGB();
         } catch (Throwable t) {
-            int selectedPaintColor[] = new int[1];
-            selectedPaintColor[0] = new Color(255,0,0).getRGB();
-            return selectedPaintColor; // default to red if exception is thrown
+            return 0xffff0000; // default to red if exception is thrown
         }
-    }
-    
-    public int getPaintColorIndex( ViewJFrameBase vjfb) {
-        try {
-            ViewControlsImage vci = vjfb.getControls();
-            ViewToolBarBuilder vtbb = vci.getTools();
-            int paintColorIndex = vtbb.getPaintColorIndex();
-
-            return paintColorIndex;
-        } catch (Throwable t) {
-            return 0; // default to 0 if exception is thrown
-        }    
     }
 
     

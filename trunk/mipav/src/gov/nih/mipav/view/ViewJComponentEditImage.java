@@ -239,8 +239,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     /** if true do not getMask on a setActiveImage command so as to keep the mask from the old active image. */
     protected boolean paintBitmapSwitch = false;
-    
-    protected short[] paintNumberMap = null;
 
     /** BitSet used for painting (brushes on/off). */
     protected BitSet paintBrush = null;
@@ -550,7 +548,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         paintBitmap = imageA.getMask();
         paintBitmapBU = imageA.getMaskBU();
-        paintNumberMap = imageA.getPaintNumberMap();
 
         imageBufferActive = imageBufferA;
         this.logMagDisplay = logMagDisplay;
@@ -964,11 +961,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if (imageA.isColorImage() == true) {
 
             if (frame.getControls() != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frame.getControls().getTools().getPaintColor();
             } else if (frameControls != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frameControls.getTools().getPaintColor();
             } else {
                 fillColor = new Color(128, 0, 0);
             }
@@ -1130,11 +1125,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if (imageA.isColorImage() == true) {
 
             if (frame.getControls() != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frame.getControls().getTools().getPaintColor();
             } else if (frameControls != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frameControls.getTools().getPaintColor();
             } else {
                 fillColor = new Color(128, 0, 0);
             }
@@ -1434,11 +1427,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if (imageA.isColorImage() == true) {
 
             if (frame.getControls() != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frame.getControls().getTools().getPaintColor();
             } else if (frameControls != null) {
-                int paintColorIndex = getPaintColorIndex(frame);
-                fillColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+                fillColor = frameControls.getTools().getPaintColor();
             } else {
                 fillColor = new Color(128, 0, 0);
             }
@@ -1761,7 +1752,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         pixBufferB = null;
         paintBitmap = null;
         paintBitmapBU = null;
-        paintNumberMap = null;
         imageActive = null;
         imageBufferActive = null;
         frame = null;
@@ -2202,10 +2192,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public BitSet getPaintMask() {
         return paintBitmap;
     }
-    
-    public short[] getPaintNumberMap() {
-        return paintNumberMap;
-    }
 
     /**
      * Gets the buffer used to store ARGB images of the image presently being displayed.
@@ -2474,7 +2460,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         final int mouseMods = mouseEvent.getModifiers();
 
         int xS, yS;
-        int index;
         Color dropperColor;
         int diffX = Math.round((lastMouseX - mouseEvent.getX()) * getZoomX());
         int diffY = Math.round((lastMouseY - mouseEvent.getY()) * getZoomY());
@@ -2520,37 +2505,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
-                index = yS * imageActive.getExtents()[0] + xS;
-                if ((paintBitmap.get(index)) && (paintNumberMap != null)) {
-                    // get the color of the paint the user has selected
-                    int paintColorIndex = getPaintColorIndex(frame);
-                    Color originalColor[] = frame.getControls().getTools().getPaintColor();
-                    if (paintNumberMap[index] <= paintColorIndex) {
-                        frame.getControls().getTools().setPaintColor(originalColor[paintNumberMap[index]]); 
-                        getActiveImage().notifyImageDisplayListeners(null, false);        
-                    }
-                    else {
-                        int k = 36;
-                        Color presentColor;
-                        int i = 0;
-                        while (k <=71) {
-                            float hue = (float)(((i * 35) % 360)/ 360.0);
-                            i++;
-                            presentColor = Color.getHSBColor(hue, 1.0f, 1.0f);
-                            if (k == paintNumberMap[index]) {
-                                frame.getControls().getTools().setPaintColor(presentColor); 
-                                getActiveImage().notifyImageDisplayListeners(null, false);
-                                break;
-                            }
-                            k++;
-                        }
-                    }    
-                }
-                else {
-                    intensityDropper = imageBufferActive[index];
-                    frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
-                }
-                
+                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
         } else if (cursorMode == ViewJComponentBase.ERASER_PAINT) {
             performPaint(mouseEvent, true);
@@ -2717,7 +2673,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             return;
         }
-        if (( cursorMode != ViewJComponentBase.VOI_3D ) && (cursorMode != ViewJComponentBase.DROPPER_PAINT))
+        if ((cursorMode != ViewJComponentBase.VOI_3D) && (cursorMode != ViewJComponentBase.DROPPER_PAINT))
         {
             setCursorMode(ViewJComponentBase.DEFAULT);
         }
@@ -3150,7 +3106,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             offscreenGraphics2d.setClip(visibleRect);
 
             // build the paint image that will be blended on-screen
-            makePaintImage(paintImageBuffer, paintBitmap, paintNumberMap, slice, frame, (imageExtents.length < 3));
+            makePaintImage(paintImageBuffer, paintBitmap, slice, frame, (imageExtents.length < 3));
 
             if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
@@ -4224,7 +4180,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( !paintBitmapSwitch) {
                 paintBitmap = imageA.getMask();
-                paintNumberMap = imageA.getPaintNumberMap();
             }
         } else if (active == ViewJComponentBase.IMAGE_B) {
             imageActive = imageB;
@@ -5269,8 +5224,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         Color paintColor = Color.red;
         try {
             opacity = (int) (frame.getControls().getTools().getOpacity() * 255);
-            int paintColorIndex = getPaintColorIndex(frame);
-            paintColor = frame.getControls().getTools().getPaintColor()[paintColorIndex];
+            paintColor = frame.getControls().getTools().getPaintColor();
         } catch (final Exception e) {}
 
         final Color brushColor = new Color(paintColor.getRed(), paintColor.getGreen(), paintColor.getBlue(), opacity);
@@ -5423,7 +5377,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param mouseEvent the mouseEvent that triggered this function call.
      */
     protected void mousePressedPaint(final MouseEvent mouseEvent) {
-        int index;
         int xS = getScaledX(mouseEvent.getX()); // zoomed x. Used as cursor
         int yS = getScaledY(mouseEvent.getY()); // zoomed y. Used as cursor
 
@@ -5432,6 +5385,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         }
 
         if (cursorMode == ViewJComponentBase.DROPPER_PAINT) {
+
             if (imageActive.isColorImage()) {
                 final Color dropperColor = new Color(
                         (int) imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1],
@@ -5443,36 +5397,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 intensityDropper = (float) Math.sqrt(imageBufferActive[loc]*imageBufferActive[loc] + imageBufferActive[loc+1]*imageBufferActive[loc+1]);
                 frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             } else {
-                index = yS * imageActive.getExtents()[0] + xS;
-                if ((paintBitmap.get(index)) && (paintNumberMap != null)) {
-                    // get the color of the paint the user has selected
-                    int paintColorIndex = getPaintColorIndex(frame);
-                    Color originalColor[] = frame.getControls().getTools().getPaintColor();
-                    if (paintNumberMap[index] <= paintColorIndex) {
-                        frame.getControls().getTools().setPaintColor(originalColor[paintNumberMap[index]]); 
-                        getActiveImage().notifyImageDisplayListeners(null, false);        
-                    }
-                    else {
-                        int k = 36;
-                        Color presentColor;
-                        int i = 0;
-                        while (k <=71) {
-                            float hue = (float)(((i * 35) % 360)/ 360.0);
-                            i++;
-                            presentColor = Color.getHSBColor(hue, 1.0f, 1.0f);
-                            if (k == paintNumberMap[index]) {
-                                frame.getControls().getTools().setPaintColor(presentColor); 
-                                getActiveImage().notifyImageDisplayListeners(null, false);
-                                break;
-                            }
-                            k++;
-                        }
-                    }    
-                }
-                else {
-                    intensityDropper = imageBufferActive[index];
-                    frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
-                }
+                intensityDropper = imageBufferActive[ (yS * imageActive.getExtents()[0]) + xS];
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
         }
 
@@ -5540,31 +5466,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         final int brushSize = getBrushSize();
         final int hBrushSize = getHBrushSize();
-        // get the color of the paints the user has selected
-        int colorArray[] = null;
-        int selectedPaintColor[] = getSelectedPaintColor( frame );
-        int paintColorIndex = getPaintColorIndex(frame);
-        if (paintNumberMap != null) {
-            // 36 selected colors followed by 36 fixed colors
-            colorArray = new int[72];
-            for (int i = 0; i <= paintColorIndex; i++) {
-                colorArray[i] = selectedPaintColor[i];
-            }
-            // paintNumberMap[j] = 0 if paintNumberMap is not given a mask value.
-            // paintNumberMap[j] could be 0 with bitMap set or not set.
-            // To handle this case colorArray[0] has the original color.
-            // 36 different colors in 36 thru 71.
-            int index = 36;
-            int colorNumber;
-            int i = 0;
-            while (index <= 71) {
-                float hue = (float)(((i * 35) % 360)/ 360.0);
-                i++;
-                colorNumber = Color.getHSBColor(hue, 1.0f, 1.0f).getRGB();
-                colorArray[index++] = colorNumber;  
-            }
-            
-        }
 
         if (paintBrush != null) {
 
@@ -5597,18 +5498,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                             final int st = ( (yS + height) * imageActive.getExtents()[0]) + (xS + width);
 
                             if (erase == true) {
-                                
-                               
-                                if ((paintNumberMap != null) && (colorArray[paintNumberMap[offset + st]] == colorArray[paintColorIndex])) {
-                                    paintBitmap.clear(offset + st);
-                                }
-                                else if (paintNumberMap == null) {
-                                    paintBitmap.clear(offset + st);
-                                }
+                                paintBitmap.clear(offset + st);
                             } else {
-                                if (paintNumberMap != null) {
-                                    paintNumberMap[offset +st] = (short)paintColorIndex;
-                                }
                                 paintBitmap.set(offset + st);
                             }
                         }
