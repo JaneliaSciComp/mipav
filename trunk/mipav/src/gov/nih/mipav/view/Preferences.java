@@ -110,6 +110,7 @@ public class Preferences {
         MinMax("Min & max default"),
         /** MIPAV default setting */
         Mipav("MIPAV default setting"),
+        Default("Default"), //for backwards compatibility
         /**ImageJ default setting */
         ImageJ("ImageJ default setting");
         

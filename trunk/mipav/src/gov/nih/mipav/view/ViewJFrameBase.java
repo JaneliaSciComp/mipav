@@ -4245,6 +4245,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 newLUT.getTransferFunction().importArrays(x, y, 4);
                 break;
                 
+            case Default:
             case Mipav:
 
                 newLUT.resetTransferLine(min, imgMin, max, imgMax);
