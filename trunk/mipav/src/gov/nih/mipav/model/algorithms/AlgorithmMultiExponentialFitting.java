@@ -48,15 +48,10 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      * evar, varf, etheor, pivot, pivot1, anlerr, fisher, residu, plpres. 
      */
     
-    private double dbloka[] = new double[5933];
-    private double rbloka[] = new double[471];
-    private int ibloka[] = new int[301];
     // nmax must be greater than or equal to the maximum number of data points you will ever use
     private int nmax = 200;
     // nintmx must be greater than or equal to the maximum value of nint you will ever use wiht regint == true
     private int nintmx = 10;
-    private int iblokb[] = new int[12];
-    private boolean lbloka[] = new boolean[45];
     private int mlammx = 9;
     private double convrg = 5.0E-5;
     private int ngrid2[] = new int[]{0, 20, 12, 10, 10, 10, 10, 10, 12};
@@ -107,15 +102,58 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private int ndime;
     private double deltat[] = new double[nintmx];
     private int ndimg;
-    private int iwtsgn;
     private int routineCalled;
     private int evarCalled = 1;
     private int varfCalled = 2;
-    private boolean failed = false;
-    private double var = 0.0;
-    private double lamnmx[][] = new double[2][2];
-    private double fhatmx = 0.0;
+    private double trbase[] = new double[19];
+    private double gf[][] = new double[19][126];
+    private double dgfl[][] = new double[19][126];
+    private double dgridf;
+    private double gfstl;
+    private double fhat[] = new double[19];
+    private double varmin;
+    private double sumwty;
+    private double sumwt;
+    private double zero[] = new double[10];
+    private double dgride = 1.0;
+    private double gestl;
+    private double var[] = new double []{0.0};
+    private double palpha[] = new double[10];
+    private double plam[] = new double[10];
+    private double se[][] = new double[10][10];
+    private double plmtry[] = new double[10];
+    private double deltap[] = new double[19];
+    private double dfcapl[][] = new double[10][9];
+    private double sfde[] = new double[9];
+    private double adub[][] = new double[19][19];
+    private double ddse[][] = new double[9][9];
+    private double dtoler[] = new double[19];
+    private double f[][] = new double[19][10];
+    private double df[][] = new double[19][10];
     private double delta = 0.0;
+    private double fhatmx = 0.0;
+    private double lamst[] = new double[9];
+    private double lamf[][][] = new double[9][9][2];
+    private double lamnmx[][] = new double[2][2];
+    private double sigyy;
+    private double enphi;
+    private double pcerr[] = new double[19];
+    private double vgrid2[] = new double[252];
+    private int jgeadd;
+    private int nbinom[][] = new int[20][9];
+    private int nvgrid[] = new int[9];
+    private int nperg2[] = new int[9];
+    private int mdima;
+    private int ibase = 0;
+    private int iwtsgn;
+    private int nf;
+    private int iter;
+    private int jlamp1;
+    private int nftry[] = new int[9];
+    private boolean failed = false;
+    private boolean wted;
+    private boolean ffail[][] = new boolean[9][2]; 
+    private boolean pivalp[] = new boolean[19];
     
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -250,10 +288,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         
         // Calls routines lstsqr, etheor
         // which in turn call evar, pivot, pivot1, anlerr
-        int mdima;
         int k;
         int j;
-        double zero[] = new double[10];
         double tn;
         double ddum;
         double dum = 0.0;
@@ -265,60 +301,37 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double t1lamx = 2.08;
         double tnlamn[] = new double[]{0.2, 0.02};
         int nparmx = 1;
-        int ibase = 0;
-        double fhat[] = new double[19];
         double num;
         double xrange = 1.0;
-        double sumwt;
-        double sumwty;
-        double varmin;
-        boolean wted;
         double varbes;
         double ratiol;
         int jlam;
-        int nf;
-        boolean ffail[][] = new boolean[9][2];
-        double lamst[] = new double[9];
-        double lamf[][][] = new double[9][9][2];
         int nlinwt = 0;
         double wtalp[] = new double[10];
-        double palpha[] = new double[10];
         double wtlam[] = new double[10];
-        double plam[] = new double[10];
         double s;
         int L = 0;
         int i;
         double term;
         double errfit;
-        double dgride = 1.0;
         double rgride = 1.0;
-        int jgeadd;
         double gest = 0.0;
-        double gestl;
         int nge1 = 1;
-        int nperg2[] = new int[9];
         int ngrid1 = 240;
         double gamma[] = new double[21];
         int ng2max = 20;
-        int nbinom[][] = new int[20][9];
-        int nvgrid[] = new int[9];
         int ngf;
-        double dgridf;
         double rgridf;
         double gfst;
-        double gfstl;
         double dub;
         double ddub;
         double dddub[] = new double[1];
         double mu[] = new double[19];
-        double trbase[] = new double[19];
         double ds[] = new double[1];
         double dss[] = new double[1];
         double dsss[] = new double[1];
         int ii;
         int jj;
-        double gf[][] = new double[19][126];
-        double dgfl[][] = new double[19][126];
         boolean ldum;
         
         if (!finalVar) {
@@ -431,10 +444,10 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         } // for (j = 1; j <= jlam; j++)
                     } // else finalVar == true
                     lstsqr(lamst, jlam, true, n, (jlam + ibase), evarCalled, 1, ffail[jlam-1][0], false, prprel);
-                    if (failed || var >= varbes) {
+                    if (failed || var[0] >= varbes) {
                         break;
                     }
-                    varbes = var;
+                    varbes = var[0];
                     nlinwt = jlam + ibase;
                     for (j = 0; j < nlinwt; j++) {
                         wtalp[j] = palpha[j];
@@ -698,28 +711,36 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double rlammn[] = new double[]{1.1, 2.0};
         double dflat = -1.0E-2;
         int isplit;
-        int jlamp1;
         int nconv;
         int nvarup;
         int nflat;
         boolean allpiv[] = new boolean[2];
-        double palpha[] = new double[10];
-        double plam[] = new double[10];
-        double plmtry[] = new double[10];
-        boolean pivalp[] = new boolean[19];
         int j;
         boolean pivlam[] = new boolean[9];
-        double deltap[] = new double[19];
         double dum;
         int k;
         int L = 1;
         double varold;
-        double varg;
-        int iter;
-        double q;
+        double varg[] = new double[1];
+        double q[] = new double[1];
+        double qg[] = new double[1];
         int ntry;
         boolean ldum[] = new boolean[1];
         int ierror[] = new int[1];
+        double r[] = new double[10];
+        double dub[] = new double[1];
+        int nu;
+        double ddum;
+        double tmp;
+        boolean go800 = false;
+        double dalpl[][] = new double[10][9];
+        int i;
+        double ddub = 0.0;
+        double array[][];
+        double qmax[] = new double[1];
+        double qt[] = new double[3];
+        double vt[] = new double[3];
+        boolean go630 = false;
         
         isplit = 1;
         if (split) {
@@ -760,31 +781,340 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
             }
         } // for (j = 1; j <= jlam; j++)
         varold = 1.0E20;
-        varg = 1.0E20;
+        varg[0] = 1.0E20;
         iter = -1;
-        q = 0.0;
+        q[0] = 0.0;
         if (prlsq) {
             
         } // if (prlsq)
         
         // Start of main loop for least squares fit
-        ntry = 1;
-        iter++;
-        if (routineCalled == evarCalled) {
-            evar(q, jlam, true, ldum, ylyfit, nlin, varg, ntry, inter, ierror);
-        }
-        else if (routineCalled == varfCalled) {
-            varf(q, jlam, true, ldum, ylyfit, nlin, varg, ntry, inter, ierror);    
-        }
+        while (true) {
+            ntry = 1;
+            while (true) {
+                iter++;
+                while (true) {
+                    if (routineCalled == evarCalled) {
+                        evar(q, jlam, var, true, ldum, ylyfit, nlin, varg[0], ntry, inter, ierror);
+                    }
+                    else if (routineCalled == varfCalled) {
+                        varf(q, jlam, var, true, ldum, ylyfit, nlin, varg[0], ntry, inter, ierror);    
+                    }
+                    if (ierror[0] == 5) {
+                        go800 = true;
+                        break;
+                    }
+                    allpiv[0] = ldum[0];
+                    if ((var[0] <= varg[0]) || (ntry == 2)) {
+                        break;
+                    }
+                    ntry = 2;
+                    q[0] = qg[0];
+                } // while (true)
+                if (!go800) {
+                    for (j = 0; j < jlam; j++) {
+                        r[j] = palpha[j];
+                        if (!rawdat) {
+                          r[j] = palpha[j]*Math.exp(-plmtry[j]*delta);  
+                        } 
+                        plam[j] = plmtry[j];
+                    } // for (j = 0; j < jlam; j++)
+                    dub[0] = var[0] - varold;
+                    if (prlsq) {
+                        nu = Math.min(5, jlam);
+                        ddum = 1.0;
+                        if (dub[0] > 0.0) {
+                            ddum = 2.0;
+                        }
+                        for (j = 0; j < jlam; j++) {
+                            pcerr[j] = 1.0;
+                            if (!pivlam[j]) {
+                                pcerr[j] = 2.0;
+                            }
+                        } // for (j = 0; j < jlam; j++)
+                        Preferences.debug("iter = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("var[0] = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("ddum = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("ntry = " + ntry + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                        for (j = 0; j < nu; j++) {
+                            Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        } // for (j = 0; j < nu; j++)
+                        if (jlam > 5) {
+                            for (j = 5; j < jlam; j++) {
+                                Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);    
+                            } // for (j = 5; j < jlam; j++)
+                        } // if (jlam > 5)
+                    } // if (prlsq)
+                    
+                    // Tests for convergence and divergence
+                    tmp = convrg * fhatmx;
+                    if (!((Math.abs(dub[0]) > Math.max(varmin, varold*convrg) && rawdat) || 
+                            (var[0] > nf*tmp*tmp && !rawdat))) {
+                        nconv++;
+                        if (nconv >= mconv || !rawdat) {
+                            go800 = true;
+                        }
+                        else {
+                            nvarup = 0;
+                        }
+                    }
+                    else {
+                        nconv = 0;
+                        if (dub[0] <= 0.0) {
+                            nvarup = 0;
+                        }
+                        else {
+                            nvarup++;
+                            if ((nvarup >= nabort) && (iter >= jlam)) {
+                                ierror[0] = 1;
+                                go800 = true;
+                            }
+                        }
+                        if (!go800) {
+                            if (iter >= mxiter[itype-1]) {
+                                ierror[0] = 2;
+                                go800 = true;
+                            }
+                        }
+                        if (!go800) {
+                            if (dub[0]/varold < dflat || rawdat) {
+                                nflat = 0;
+                            }
+                            else {
+                                nflat++;
+                                if (nflat >= nabort) {
+                                    ierror[0] = 3;
+                                    go800 = true;
+                                }
+                            }
+                        } // if (!go800)
+                    }
+                    if (!go800) {
+                        // Finish computation of dfcapl (partial of fcap with respect to lambda)
+                        for (k = 0; k < jlam; k++) {
+                            for (j = 0; j < nlin; j++) {
+                                dfcapl[j][k] = dfcapl[j][k] * palpha[k];
+                            } // for (j = 0; j < nlin; j++)
+                            dfcapl[k][k] = dfcapl[k][k] + sfde[k];
+                        } // for (k = 0; k < jlam; k++)
+                        
+                        // Calculate dalpl (partial of palpha with respect to lambda) from matrix
+                        // product adub * dfcapl
+                        
+                        for (j = 0; j < nlin; j++) {
+                            for (k = 0; k < jlam; k++) {
+                                dalpl[j][k] = 0.0;
+                            }
+                        } 
+                        
+                        for (k = 0; k < jlam; k++) {
+                            if (!pivalp[k]) {
+                                continue;
+                            }
+                            for (j = 0; j < nlin; j++) {
+                                if (!pivalp[j]) {
+                                    continue;
+                                }
+                                dub[0] = 0.0;
+                                for (i = 0; i < nlin; i++) {
+                                    if (pivalp[i]) {
+                                        dub[0] = dub[0] + adub[j][i] * dfcapl[i][k];
+                                    }
+                                } // for (i = 0; i < nlin; i++)
+                                dalpl[j][k] = dub[0];
+                            } // for (j = 0; j < nlin; j++)
+                        } // for (k = 0; k < jlam; k++)
+                        
+                        // Calculate adub (normal equation matrix for nonlinear least squares)
+                        // and invert it
+                        
+                        if (rawdat) {
+                            for (k = 1; k <= jlam; k++) {
+                                for (j = 1; j <= k; j++) {
+                                    dub[0] = 0.0;
+                                    for (L = 1; L <= nlin; L++) {
+                                        dub[0] = dub[0] - dalpl[L-1][j-1] * dfcapl[L-1][k-1];
+                                    } // for (L = 1; L <= nlin; L++)
+                                    if (Math.abs(palpha[k-1]) <= Math.abs(palpha[j-1])) {
+                                        dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
+                                        dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
+                                    }
+                                    else {
+                                        dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
+                                        dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
+                                    }
+                                    ddub = palpha[k-1] * palpha[j-1] * ddse[j-1][k-1];
+                                    adub[j-1][k-1] = dub[0] + ddub;
+                                } // for (j = 1; j <= k; j++)
+                                dtoler[k-1] = ddub;
+                                adub[k-1][jlamp1-1] = palpha[k-1]*sfde[k-1];
+                            } // for (k = 1; k <= jlam; k++)
+                        } // if (rawdat)
+                        else { //!rawdat
+                            for (j = 1; j <= jlam; j++) {
+                                dtoler[j-1] = 0.0;
+                                r[j-1] = 0.0;
+                                for (k = j; k <= jlamp1; k++) {
+                                    adub[j-1][k-1] = 0.0;
+                                } // for (k = j; k <= jlamp1; k++)
+                            } // for (j = 1; j <= jlam; j++)
+                            
+                            for (nu = 1; nu <= n; nu++) {
+                                for (k = 1; k <= jlam; k++) {
+                                    if (!pivalp[k-1]) {
+                                        continue;
+                                    }
+                                    dub[0] = 0.0;
+                                    for (j = 1; j <= nlin; j++) {
+                                        dub[0] = dub[0] + f[nu-1][j-1] * dalpl[j-1][k-1];
+                                    } // for (j = 1; j <= nlin; j++)
+                                    ddub = df[nu-1][k-1]*palpha[k-1];
+                                    dtoler[k-1] = dtoler[k-1] + ddub*ddub;
+                                    r[k-1] = dub[0] + ddub;
+                                } // for (k = 1; k <= jlam; k++)
+                                ddub = ylyfit[nu-1];
+                                for (k = 1; k <= jlam; k++) {
+                                    if (!pivalp[k-1]) {
+                                        continue;
+                                    }
+                                    dub[0] = r[k-1];
+                                    for (j = 1; j <= k; j++) {
+                                        adub[j-1][k-1] = adub[j-1][k-1] + r[j-1]*dub[0];
+                                    } // for (j = 1; j <= k; j++)
+                                    adub[k-1][jlamp1-1] = adub[k-1][jlamp1-1] + r[k-1] * ddub;
+                                } // for (k = 1; k <= jlam; k++)
+                            } // for (nu = 1; nu <= n; nu++)
+                        } // else !rawdat
+                        for (j = 0; j < jlam; j++) {
+                            dtoler[j] = precis * Math.max(dtoler[j], adub[j][j]);
+                            r[j] = adub[j][jlamp1-1];
+                        } // for (j = 0; j < jlam; j++)
+                        adub[jlamp1-1][jlamp1-1] = 0.0;
+                        array = new double[mdima][mdima];
+                        for (i = 0; i < mdima; i++) {
+                            for (j = 0; j < mdima; j++) {
+                                array[i][j] = adub[i][j];
+                            }
+                        }
+                        pivot(array, mdima, jlam, false, false, true, lamnmx[0][0], lamnmx[1][0], plam, dtoler, deltap, ldum, qg, 
+                              pivlam, jlam, qmax, ierror);
+                        for (i = 0; i < mdima; i++) {
+                            for (j = 0; j < mdima; j++) {
+                                adub[i][j] = array[i][j];
+                            }
+                        }
+                        if (ierror[0] == 5) {
+                            go800 = true;
+                        }
+                        if (!go800) {
+                            allpiv[1] = ldum[0];
+                            
+                            // Use modification-A of G. E. P. box to estimate best Q (fractional step size)
+                            
+                            varold = var[0];
+                            ddum  = 0.0;
+                            for (j = 0; j < jlam; j++) {
+                                ddum = ddum + deltap[j] * r[j];
+                            }
+                            if (ddum <= 0.0) {
+                                if (prlsq) {
+                                    Preferences.debug("Gauss vector pointing in wrong direction\n", Preferences.DEBUG_ALGORITHM);
+                                }
+                                ntry = 2;
+                                q[0] = Math.min(qmin, qmax[0]);
+                            } // if (ddum <= 0.0)
+                            else {
+                                break;
+                            }
+                        } // if (!go800)
+                    } // if (!go800)
+                } // if (!go800)
+            } // while (true)
+            
+            if (!go800) {
+                if (routineCalled == evarCalled) {
+                    evar(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);
+                }
+                else if (routineCalled == varfCalled) {
+                    varf(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
+                }
+                if (ierror[0] == 5) {
+                    go800 = true;
+                }
+                if (!go800) {
+                    allpiv[0] = ldum[0];
+                    dum = varg[0] - varold + 2.0 * ddum * qg[0];
+                    if (dum <= 0.0) {
+                        dum = 0.25 * ddum * qg[0] * qg[0];
+                    }
+                    q[0] = Math.min(ddum * qg[0] * qg[0]/dum, Math.min(4.0, qmax[0]));
+                    if (!(varg[0] <= varold || (q[0] >= 0.125*qg[0] && rawdat))) {
+                        break;
+                    }
+                } // if (!go800)
+            } // if (!go800)
+        } // while (true)
+        
+        if (!go800) {
+            // Put quadratic parabola thru actual variance surface when a 
+            // strong nonlinearity is indicated by a small q[0]
+            qt[0] = Math.min(0.125 * qg[0], Math.max(q[0], 0.02));
+            if (q[0] > 0.125 * qg[0]) {
+                qt[0] = q[0];
+            }
+            if (routineCalled == evarCalled) {
+                evar(qt, jlam, dub, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);
+            }
+            else if (routineCalled == varfCalled) {
+                varf(qt, jlam, dub, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
+            }
+            if (ierror[0] == 5) {
+                go800 = true;
+            }
+            if (!go800) {
+                vt[0] = dub[0];
+                if (vt[0] >= varold) {
+                    qt[1] = 0.5 * qt[0];
+                    qt[1] = Math.min(qt[1], 0.05);
+                } // if (vt[0] >= varold)
+                else {
+                    qt[1] = 4.0 * qt[0];
+                    if (qt[0] > 0.125 * qg[0]) {
+                        qt[1] = 0.0;
+                        vt[1] = varold;
+                        qt[2] = qg[0];
+                        vt[2] = varg[0];
+                        go630 = true;
+                    }
+                }
+                
+                if (!go630) {
+                    
+                } // if (!go630)
+            } // if (!go800)
+        } // if (!go800)
+        
     } // lstsqr
     
-    private void evar(double q, int jlam, boolean invert, boolean allpiv[], double ylydum[], int nlin, double varg, int ntry,
+    private void pivot(double adub[][], int mdima, int np, boolean onlyin, boolean invert, boolean constr, double pmin,
+                       double pmax, double p[], double dtoler[], double deltap[], boolean allpiv[], double qg[],
+                       boolean piv[], int jlam, double qmax[], int ierror[]) {
+        // adub has dimension [mdima][mdima]
+    } // pivot
+    
+    private void evar(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylydum[], int nlin, double varg, int ntry,
                       boolean inter, int ierror[]) {
         double ylyfit;
         
     } // evar
     
-    private void varf(double q, int jlam, boolean invert, boolean allpiv[], double ylyfit[], int nlin, double varg, int ntry,
+    private void varf(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylyfit[], int nlin, double varg, int ntry,
                       boolean intdum, int ierror[]) {
         
     } // varf
