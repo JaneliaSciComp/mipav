@@ -462,10 +462,8 @@ public class VolumeClip extends VolumeObject
         m_spkEyeCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
-        Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.Scale(-4.0f);
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+        Vector3f kCLoc = Vector3f.scale(-4.0f, kCDir);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         for ( int i = 0; i < 4; i++ )

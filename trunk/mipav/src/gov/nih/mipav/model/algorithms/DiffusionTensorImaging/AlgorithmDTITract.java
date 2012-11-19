@@ -180,15 +180,14 @@ public class AlgorithmDTITract extends AlgorithmBase
                         }
                         
                         //System.out.println("point: iX = " + iX +  " iY = " + iY + " iZ = " + iZ  );
-                        kPos.Set( iX, iY, iZ );
+                        kPos.set( iX, iY, iZ );
                         kTract.add(i);
 
-                        kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-                        kV2.Copy(kV1);
-                        kV2.Neg();
+                        kV1.set( afVectorData[0], afVectorData[1], afVectorData[2] );
+                        kV2.copy(kV1).neg();
 
-                        kV1.Normalize();
-                        kV2.Normalize();
+                        kV1.normalize();
+                        kV2.normalize();
 
                         traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV1), m_kEigenVectorImage, m_kEigenValueImage, m_kFAImage, true );
                         m_abVisited[i] = true;
@@ -330,7 +329,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         float fFA;
         while ( !bDone )
         {
-            kNext.Add( kStart, kDir );
+            kNext.copy( kStart ).add( kDir );
             iX = Math.round(kNext.X);
             iY = Math.round(kNext.Y);
             iZ = Math.round(kNext.Z);
@@ -388,13 +387,13 @@ public class AlgorithmDTITract extends AlgorithmBase
             }
             else if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
             {
-                kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-                fDot = kDir.Dot( kOut );
+                kOut.set( afVectorData[0], afVectorData[1], afVectorData[2] );
+                fDot = kDir.dot( kOut );
                 if ( fDot < 0 )
                 {
-                    kOut.Neg();
+                    kOut.neg();
                 }
-                fAngle = Vector3f.Angle(kDir,kOut);
+                fAngle = Vector3f.angle(kDir,kOut);
                 if ( fAngle > m_fAngleMax )
                 {
                     bDone = true;
@@ -416,8 +415,8 @@ public class AlgorithmDTITract extends AlgorithmBase
                 {
                     kTract.add( 0, i );
                 }
-                kStart.Copy(kNext);
-                kDir.Copy(kOut);
+                kStart.copy(kNext);
+                kDir.copy(kOut);
             }
             else
             {

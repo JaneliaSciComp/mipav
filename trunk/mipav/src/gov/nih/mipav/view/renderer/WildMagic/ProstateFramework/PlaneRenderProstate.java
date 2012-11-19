@@ -28,7 +28,6 @@ import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
@@ -88,7 +87,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         }
 
         public void move(final Vector3f kDiff) {
-            kDiff.Sub(m_kLocalCenter);
+            kDiff.sub(m_kLocalCenter);
 
             final VertexBuffer kLocalVBuffer = Local.get(0).VBuffer;
             final VertexBuffer kVolumeVBuffer = Volume.get(0).VBuffer;
@@ -96,7 +95,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             if (iNumPoints > 0) {
                 for (int i = 0; i < iNumPoints; i++) {
                     Vector3f kPos = kLocalVBuffer.GetPosition3(i);
-                    kPos.Add(kDiff);
+                    kPos.add(kDiff);
                     kLocalVBuffer.SetPosition3(i, kPos);
 
                     kPos = VOIToFileCoordinates(kPos, true);
@@ -114,12 +113,12 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         }
 
         public void setCenter(final float fX, final float fY, final float fZ) {
-            m_kLocalCenter.Set(fX, fY, fZ);
+            m_kLocalCenter.set(fX, fY, fZ);
         }
 
         public void SetPosition(final int iPos, final float fX, final float fY, final float fZ) {
             if (iPos < Local.get(m_iCurrent).VBuffer.GetVertexQuantity()) {
-                m_kLocalPt.Set(fX, fY, fZ);
+                m_kLocalPt.set(fX, fY, fZ);
                 Local.get(m_iCurrent).VBuffer.SetPosition3(iPos, m_kLocalPt);
                 m_kVolumePt = VOIToFileCoordinates(m_kLocalPt, true);
                 Volume.get(m_iCurrent).VBuffer.SetPosition3(iPos, m_kVolumePt);
@@ -318,8 +317,6 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     private float m_fMouseY;
 
     private boolean m_bShowSurface = false;
-
-    private Camera m_spkVOICamera;
 
     private boolean m_bDrawVOI = false;
 
@@ -814,17 +811,17 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         final Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
         final Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
         if (m_abAxisFlip[2]) {
-            kCLoc.Scale( -1);
-            kCDir.Scale( -1);
+            kCLoc.scale( -1);
+            kCDir.scale( -1);
         }
         if (m_abAxisFlip[1]) {
-            kCUp.Scale( -1);
+            kCUp.scale( -1);
         }
         if (m_abAxisFlip[0]) {
-            kCRight.Scale( -1);
+            kCRight.scale( -1);
         }
         // invert y-axis
-        kCUp.Scale( -1);
+        kCUp.scale( -1);
         m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
         CreateScene();
 
@@ -847,7 +844,6 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
      */
     public void keyPressed(final KeyEvent kKey) {
         final char ucKey = kKey.getKeyChar();
-        final int iKey = kKey.getKeyCode();
         if (ucKey == KeyEvent.VK_DELETE) {
             deleteVOI();
         }
@@ -1094,7 +1090,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         MipavCoordinateSystems.fileToPatient(center, m_kPatientPt, kImage, m_iPlaneOrientation);
         setSlice(m_kPatientPt.Z);
         GetCanvas().display();
-        m_kCenter.Mult(m_kPatientPt, m_kVolumeScale);
+        m_kCenter.copy(m_kPatientPt).mult(m_kVolumeScale);
     }
 
     /**
@@ -1122,21 +1118,21 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         final Vector3f kCUp = new Vector3f(m_akCoords[m_aiAxisOrder[1]]);
         final Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
         if (m_abAxisFlip[2]) {
-            kCLoc.Scale( -1);
-            kCDir.Scale( -1);
+            kCLoc.scale( -1);
+            kCDir.scale( -1);
         }
         if (m_abAxisFlip[1]) {
-            kCUp.Scale( -1);
+            kCUp.scale( -1);
         }
         if (m_abAxisFlip[0]) {
-            kCRight.Scale( -1);
+            kCRight.scale( -1);
         }
         // invert y-axis
-        kCUp.Scale( -1);
+        kCUp.scale( -1);
         if ( !bOn) {
-            kCLoc.Scale( -1);
-            kCDir.Scale( -1);
-            kCRight.Scale( -1);
+            kCLoc.scale( -1);
+            kCDir.scale( -1);
+            kCRight.scale( -1);
         }
         m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
     }
@@ -1230,7 +1226,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                      * The current pixel is inside the sculpt region. Get the image color from the canvas image and
                      * alpha-blend the sculpt color ontop, storing the result in the canvas image.
                      */
-                    kLocalPt.Set(iX, iY, iZ);
+                    kLocalPt.set(iX, iY, iZ);
                     kVolumePt = VOIToFileCoordinates(kLocalPt, false);
                     if (bIntersection) {
                         final int iTemp = kVolume.getInt((int) kVolumePt.X, (int) kVolumePt.Y, (int) kVolumePt.Z);
@@ -1409,12 +1405,11 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         final ModelImage kImageA = m_kVolumeImageA.GetImage();
         // System.err.println( m_iPlaneOrientation + " " + m_fX + " " + m_fY + " " + m_fZ + " " + fMax );
 
-        m_kVolumeScale.Set(m_kVolumeImageA.GetScaleX() / (kImageA.getExtents()[0] - 1), m_kVolumeImageA.GetScaleY()
+        m_kVolumeScale.set(m_kVolumeImageA.GetScaleX() / (kImageA.getExtents()[0] - 1), m_kVolumeImageA.GetScaleY()
                 / (kImageA.getExtents()[1] - 1), m_kVolumeImageA.GetScaleZ() / (kImageA.getExtents()[2] - 1));
-        m_kVolumeScaleInv.Copy(m_kVolumeScale);
-        m_kVolumeScaleInv.Invert();
+        m_kVolumeScaleInv.copy(m_kVolumeScale).invert();
 
-        m_kCenter.Mult(m_kVolumeScale);
+        m_kCenter.mult(m_kVolumeScale);
 
         initDataBuffer();
     }
@@ -1625,12 +1620,12 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             final Vector3f kDiff = new Vector3f(0f, 0.9f, 0f);
             for (int j = 0; j < 4; j++) {
                 m_kXArrow[0].VBuffer.GetPosition3(j, kPosition);
-                kPosition.Add(kDiff);
+                kPosition.add(kDiff);
                 m_kXArrow[0].VBuffer.SetPosition3(j, kPosition);
             }
             for (int j = 0; j < 3; j++) {
                 m_kXArrow[1].VBuffer.GetPosition3(j, kPosition);
-                kPosition.Add(kDiff);
+                kPosition.add(kDiff);
                 m_kXArrow[1].VBuffer.SetPosition3(j, kPosition);
             }
             for (int i = 0; i < 2; i++) {
@@ -1902,8 +1897,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                     if (m_iSlice == m_kCurrentVOI.slice(i)) {
                         final Vector3f kTranslate = new Vector3f();
                         for (int j = 0; j < iNumPoints; j++) {
-                            kTranslate.Copy(m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j));
-                            kTranslate.Add(m_kTranslate);
+                            kTranslate.copy(m_kCurrentVOI.getVolume(i).VBuffer.GetPosition3(j)).add(m_kTranslate);
                             m_kBallPoint.Local.SetTranslate(kTranslate);
                             m_kBallPoint.UpdateGS();
                             m_pkRenderer.Draw(m_kBallPoint);
@@ -2009,8 +2003,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         if (iNumPoints > 0) {
             for (int i = 0; i < iNumPoints; i++) {
                 final Vector3f kPos = kVBuffer.GetPosition3(i);
-                final Vector3f kDiff = new Vector3f();
-                kDiff.Sub(kPos, kVOIPoint);
+                final Vector3f kDiff = Vector3f.sub(kPos, kVOIPoint);
                 if ( (Math.abs(kDiff.X) < 3) && (Math.abs(kDiff.Y) < 3) && (Math.abs(kDiff.Z) < 3)) {
                     m_iCurrentVOIPoint = i;
                     return true;
@@ -2209,7 +2202,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         final float fHalfHeight = ((float) m_iHeight - 1) / 2.0f;
         final float fX = kScreen.X * fHalfWidth + fHalfWidth;
         final float fY = kScreen.Y * fHalfWidth + fHalfHeight;
-        kScreen.Set(fX, fY, m_iSlice);
+        kScreen.set(fX, fY, m_iSlice);
     }
 
     private void selectVOI(final int iX, final int iY) {
@@ -2286,7 +2279,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         final Vector3f volumePt = new Vector3f();
         MipavCoordinateSystems.patientToFile(patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation);
         if (bScale) {
-            volumePt.Mult(m_kVolumeScale);
+            volumePt.mult(m_kVolumeScale);
             // System.err.println( volumePt.ToString() );
         }
         return volumePt;
@@ -2295,14 +2288,13 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
     private Vector3f FileCoordinatesToVOI(final Vector3f volumePt, final boolean bScale) {
         final Vector3f kVOIPt = new Vector3f();
         if (bScale) {
-            kVOIPt.Mult(volumePt, m_kVolumeScaleInv);
+            kVOIPt.copy(volumePt).mult(m_kVolumeScaleInv);
             // System.err.println( volumePt.ToString() );
         }
         final Vector3f patientPt = new Vector3f();
         MipavCoordinateSystems.fileToPatient(kVOIPt, patientPt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation);
 
-        final Vector3f localPt = new Vector3f();
-        localPt.Mult(patientPt, m_kVolumeScale);
+        final Vector3f localPt = Vector3f.mult(patientPt, m_kVolumeScale);
         return localPt;
     }
 
@@ -2641,7 +2633,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             for (int i = 0; i < levelSetStack.size(); i++) {
                 // System.err.print( levelSetStack.getPointX(i) + " " + levelSetStack.getPointY(i) );
 
-                kPatientPt.Set(levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice);
+                kPatientPt.set(levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_iSlice);
                 PatientToLocal(kPatientPt, kLocalPt);
                 LocalToScreen(kLocalPt, kScreenPt);
                 kScreenPt.Y = m_iHeight - kScreenPt.Y;
@@ -2651,7 +2643,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                 kVBuffer.SetPosition3(i, kScreenPt);
                 kVBuffer.SetColor3(0, i, m_aakColors[m_iPlaneOrientation][2]);
             }
-            kPatientPt.Set(levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice);
+            kPatientPt.set(levelSetStack.getPointX(0), levelSetStack.getPointY(0), m_iSlice);
             PatientToLocal(kPatientPt, kLocalPt);
             LocalToScreen(kLocalPt, kScreenPt);
             kScreenPt.Y = m_iHeight - kScreenPt.Y;
@@ -2720,7 +2712,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
 
         for (int i = 0; i < 7; i++) {
             for (int j = 0; j < 7; j++) {
-                kPatientPt.Set(m_akSteps[i][j].X, m_akSteps[i][j].Y, iZ);
+                kPatientPt.set(m_akSteps[i][j].X, m_akSteps[i][j].Y, iZ);
                 MipavCoordinateSystems.patientToFile(kPatientPt, kVolumePt, m_kVolumeImageA.GetImage(),
                         m_iPlaneOrientation);
                 m_aiIndexValues[i][j] = (int) (kVolumePt.Z * extents[0] * extents[1] + kVolumePt.Y * extents[0] + kVolumePt.X);

@@ -158,8 +158,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterfac
 			Vector3f kNormalG = new Vector3f();
 			for ( int i = 0; i < grads.length; i++ )
 			{
-				kNormalG.Set( grads[i][0], grads[i][1], grads[i][2] );
-				kNormalG.Normalize();
+				kNormalG.set( grads[i][0], grads[i][1], grads[i][2] );
+				kNormalG.normalize();
 				grads[i][0] = kNormalG.X;
 				grads[i][1] = kNormalG.Y;
 				grads[i][2] = kNormalG.Z;

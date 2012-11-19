@@ -332,7 +332,7 @@ public class Skeleton3D {
                 // along the path as an estimate of the total length of
                 // this branch.
                 if (iPath > 0) {
-                    fPathLength += akPathPoint[iPath].Distance(akPathPoint[iPath - 1]);
+                    fPathLength += akPathPoint[iPath].distance(akPathPoint[iPath - 1]);
                 }
             }
 
@@ -470,7 +470,7 @@ public class Skeleton3D {
                 // along the path as an estimate of the total length of
                 // this branch.
                 if (iPath > 0) {
-                    fPathLength += akPathPoint[iPath].Distance(akPathPoint[iPath - 1]);
+                    fPathLength += akPathPoint[iPath].distance(akPathPoint[iPath - 1]);
                 }
             }
 
@@ -819,7 +819,7 @@ public class Skeleton3D {
                                 int iIndexNeighborB = aiIndexNeighborsVoxel[iIndexB];
                                 Vector3f kGradientB = akVolumeBoundaryDistGradient[iIndexNeighborB];
 
-                                if (kGradientA.Dot(kGradientB) <= 0.0f) {
+                                if (kGradientA.dot(kGradientB) <= 0.0f) {
                                     bNonUniform = true;
                                 }
                             }
@@ -839,13 +839,13 @@ public class Skeleton3D {
 
                         // Compute the average gradient for the samples
                         // the comprise the voxel.
-                        kAvgGradient.Set(0.0f, 0.0f, 0.0f);
+                        kAvgGradient.set(0.0f, 0.0f, 0.0f);
 
                         for (int iIndex = 0; iIndex < 8; ++iIndex) {
-                            kAvgGradient.Add(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]);
+                            kAvgGradient.add(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]);
                         }
 
-                        kAvgGradient.Normalize();
+                        kAvgGradient.normalize();
 
                         // Check to see if any sample in the voxel set of
                         // samples has a nonuniform gradient relative to
@@ -854,7 +854,7 @@ public class Skeleton3D {
 
                         for (int iIndex = 0; iIndex < 8; ++iIndex) {
 
-                            if (kAvgGradient.Dot(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]) <= 0.0f) {
+                            if (kAvgGradient.dot(akVolumeBoundaryDistGradient[aiIndexNeighborsVoxel[iIndex]]) <= 0.0f) {
                                 bNonUniform = true;
 
                                 break;
@@ -927,7 +927,7 @@ public class Skeleton3D {
                 // The gradient is not unit length, but if we are to
                 // follow the gradient as we walk through the samples,
                 // then we need a unit length version of the gradient.
-                kUnitGradient.Normalize(kGradient);
+                kUnitGradient.copy(kGradient).normalize();
 
                 // Proceed to the next sample by following the gradient.
                 // Use rounding because unless the gradient is aligned

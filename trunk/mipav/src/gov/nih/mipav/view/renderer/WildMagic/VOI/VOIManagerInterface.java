@@ -2097,11 +2097,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                         if ( bFirst )
                         {
                             bFirst = false;
-                            m_akBounds[0].Copy(kBounds[0]);
-                            m_akBounds[1].Copy(kBounds[1]);
+                            m_akBounds[0].copy(kBounds[0]);
+                            m_akBounds[1].copy(kBounds[1]);
                         }
-                        m_akBounds[0].Min(kBounds[0]);
-                        m_akBounds[1].Max(kBounds[1]);
+                        m_akBounds[0].min(kBounds[0]);
+                        m_akBounds[1].max(kBounds[1]);
                     }
                 }
             }
@@ -2242,8 +2242,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	}
         kLUT.update();
         Vector3f[] kBounds = kLUT.getImageBoundingBox();
-        m_akBounds[0].Copy(kBounds[0]);
-        m_akBounds[1].Copy(kBounds[1]);        
+        m_akBounds[0].copy(kBounds[0]);
+        m_akBounds[1].copy(kBounds[1]);        
         deleteVOI( kLUT );
         if (getActiveImage().isColorImage() == false) {
             quickLUT( m_akBounds, getActiveImage(), m_kParent.getActiveLUT() );
@@ -3253,7 +3253,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     		{
     			kVOIState.currentVOI = -1;
     		}        
-    		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+    		kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
             return kVOIState;
     	} catch ( OutOfMemoryError e )
     	{
@@ -3276,7 +3276,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         		{
         			kVOIState.currentVOI = -1;
         		}        
-        		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+        		kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
                 return kVOIState;
         	} catch ( OutOfMemoryError e2 )
         	{

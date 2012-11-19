@@ -1550,11 +1550,11 @@ public class VOI extends ModelSerialCloneable {
 			if ( bFirst )
 			{
 				bFirst = false;
-				akBounds[0].Copy(kBounds[0]);
-				akBounds[1].Copy(kBounds[1]);
+				akBounds[0].copy(kBounds[0]);
+				akBounds[1].copy(kBounds[1]);
 			}
-			akBounds[0].Min(kBounds[0]);
-			akBounds[1].Max(kBounds[1]);
+			akBounds[0].min(kBounds[0]);
+			akBounds[1].max(kBounds[1]);
 		}
 
 		x[0] = akBounds[0].X;

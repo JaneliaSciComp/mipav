@@ -199,7 +199,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             }
             if ( !bAllZero )
             {                
-                kMatrix.Set( afTensorData[0], afTensorData[1], afTensorData[2],
+                kMatrix.set( afTensorData[0], afTensorData[1], afTensorData[2],
                         afTensorData[1], afTensorData[3], afTensorData[4], 
                         afTensorData[2], afTensorData[4], afTensorData[5] );
 
@@ -207,7 +207,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afTraceData[i] = kMatrix.M00 + kMatrix.M11 + kMatrix.M22;
                 afADCData[i] = afTraceData[i]/3.0f;
                 
-                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
+                if ( Matrix3f.eigenDecomposition( kMatrix, kEigenValues ) )
                 {
                     float fLambda1 = kEigenValues.M22;
                     float fLambda2 = kEigenValues.M11;
@@ -250,9 +250,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                     	afEigenValues[i*4 + 1] = fLambda1;
                     	afEigenValues[i*4 + 2] = fLambda2;
                     	afEigenValues[i*4 + 3] = fLambda3;
-                    	kMatrix.GetColumn(2,kV1);
-                    	kMatrix.GetColumn(1,kV2);
-                    	kMatrix.GetColumn(0,kV3);
+                    	kMatrix.getColumn(2,kV1);
+                    	kMatrix.getColumn(1,kV2);
+                    	kMatrix.getColumn(0,kV3);
 
 
                     	afData[i] = (float)(Math.sqrt(1.0/2.0) *
@@ -281,7 +281,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                     	afDataCM[i + 8*iLen] = kV3.Z;
 
                     	
-                    	kV1.Normalize();
+                    	kV1.normalize();
                     	afColorImageData[i* 4 + 0] = 255;
                     	
                     	afColorImageData[i* 4 + 1] = Math.abs(kV1.X) * afData[i];

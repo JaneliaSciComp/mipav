@@ -1345,7 +1345,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				else if ( selectVOI( kEvent ) != null )
 				{
 					Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
-					m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
+					m_kMouseOffset.set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
 					m_kParent.updateDisplay();
 				}
 			}
@@ -1577,15 +1577,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				{
 					Vector3f kPos = kVOI.elementAt( i );
 					Vector3f kLocal = m_kDrawingContext.fileToScreenVOI( kPos );
-					kLocal.Add( kDiff );
+					kLocal.add( kDiff );
 					Vector3f kVolumePt = new Vector3f();
 					m_kDrawingContext.screenToFileVOI( kLocal, kVolumePt );
-					kVolumeDiff.Sub( kVolumePt, kPos );
+					kVolumeDiff.copy( kVolumePt ).sub( kPos );
 					kVOI.set( i, kVolumePt );
 				}
 				else
 				{
-					kVOI.elementAt(i).Add(kVolumeDiff);
+					kVOI.elementAt(i).add(kVolumeDiff);
 				}
 			}
 			kVOI.update(kVolumeDiff);
@@ -1594,8 +1594,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 			Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 			Vector3f kTemp = new Vector3f( kScreenMin );
-			kScreenMin.Min( kScreenMax );
-			kScreenMax.Max( kTemp );
+			kScreenMin.min( kScreenMax );
+			kScreenMax.max( kTemp );
 
 			if ( kVOI.getGroup().getContourGraph() != null )
 			{
@@ -1667,10 +1667,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		VOIBase backupVOI = kVOI.clone();
 
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(backupVOI) ).add( getBoundingBoxLowerLeft(backupVOI) ).add( getBoundingBoxLowerRight(backupVOI) ).scale( 0.25f );
 
 		Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
 
@@ -1678,9 +1675,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < backupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -1710,10 +1705,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		VOIBase backupVOI = kVOI.clone();
 
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(backupVOI) ).add( getBoundingBoxLowerLeft(backupVOI) ).add( getBoundingBoxLowerRight(backupVOI) ).scale( 0.25f );
 
 		Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
 
@@ -1721,9 +1713,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < backupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -1816,13 +1806,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax, boolean bUseMouse )
 	{            
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( akMinMax[0] );
-		kScreenMin.Add(kDiff);
+		kScreenMin.add(kDiff);
 
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( akMinMax[1] );
-		kScreenMax.Add(kDiff);
+		kScreenMax.add(kDiff);
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		if ( bUseMouse && !kScreenMin.equals(kScreenMax) && 
 				(m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
@@ -1837,8 +1827,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			return false;
 		}         
-		akMinMax[0].Copy( kTestMin );
-		akMinMax[1].Copy( kTestMax );
+		akMinMax[0].copy( kTestMin );
+		akMinMax[1].copy( kTestMax );
 		return true;
 	}
 
@@ -2437,10 +2427,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 				Vector3f kStart = new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice());
 				Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice());
-				Vector3f kMiddle = new Vector3f();
-				kMiddle.Sub( kEnd, kStart );
-				kMiddle.Scale( .4f );
-				kMiddle.Add(kStart);
+				Vector3f kMiddle = Vector3f.sub( kEnd, kStart );
+				kMiddle.scale( .4f );
+				kMiddle.add(kStart);
 
 
 				Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -2454,10 +2443,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				Vector3f kStart = m_kDrawingContext.fileToScreenVOI(m_kCurrentVOI.get(1));
 				Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
-				Vector3f kMiddle = new Vector3f();
-				kMiddle.Sub( kEnd, kStart );
-				kMiddle.Scale( .4f );
-				kMiddle.Add(kStart);
+				Vector3f kMiddle = Vector3f.sub( kEnd, kStart );
+				kMiddle.scale( .4f );
+				kMiddle.add(kStart);
 
 				setPosition( m_kCurrentVOI, 0, kMiddle );
 				setPosition( m_kCurrentVOI, 2, kEnd );
@@ -2773,10 +2761,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		boolean drawAngle = Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE);
 
 		if (drawAngle) {
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kFileEnd, kFileStart );
-			kDiff.Normalize();
-			double theta = (float)(Math.acos(kDiff.Dot(Vector3f.UNIT_X)) * 180f/Math.PI);
+			Vector3f kDiff = Vector3f.sub( kFileEnd, kFileStart );
+			kDiff.normalize();
+			double theta = (float)(Math.acos(kDiff.dot(Vector3f.UNIT_X)) * 180f/Math.PI);
 
 			String tmpString2 = String.valueOf(theta);
 			int i = tmpString2.indexOf('.');
@@ -3313,8 +3300,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 				Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 				Vector3f kTemp = new Vector3f( kScreenMin );
-				kScreenMin.Min( kScreenMax );
-				kScreenMax.Max( kTemp );
+				kScreenMin.min( kScreenMax );
+				kScreenMax.max( kTemp );
 
 				x0 = (int) (kScreenMin.X + 0.5);
 				x1 = (int) (kScreenMax.X + 0.5);
@@ -4069,9 +4056,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
 		Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
-		Vector3f kLeftMid = new Vector3f();
-		kLeftMid.Add( kUpperLeft, kLowerLeft );
-		kLeftMid.Scale( 0.5f );
+		Vector3f kLeftMid = Vector3f.add( kUpperLeft, kLowerLeft );
+		kLeftMid.scale( 0.5f );
 		return kLeftMid;
 	}
 	/**
@@ -4084,8 +4070,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
 	}
@@ -4099,9 +4085,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
 		Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-		Vector3f kLowerMid = new Vector3f();
-		kLowerMid.Add( kLowerLeft, kLowerRight );
-		kLowerMid.Scale( 0.5f );
+		Vector3f kLowerMid = Vector3f.add( kLowerLeft, kLowerRight );
+		kLowerMid.scale( 0.5f );
 		return kLowerMid;
 	}
 	/**
@@ -4114,8 +4099,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMax );
 	}
@@ -4129,9 +4114,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
 		Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-		Vector3f kRightMid = new Vector3f();
-		kRightMid.Add( kUpperRight, kLowerRight );
-		kRightMid.Scale( 0.5f );
+		Vector3f kRightMid = Vector3f.add( kUpperRight, kLowerRight );
+		kRightMid.scale( 0.5f );
 		return kRightMid;
 	}
 
@@ -4145,8 +4129,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMin );
 	}
@@ -4160,9 +4144,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
 		Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
-		Vector3f kUpperMid = new Vector3f();
-		kUpperMid.Add( kUpperLeft, kUpperRight );
-		kUpperMid.Scale( 0.5f );
+		Vector3f kUpperMid = Vector3f.add( kUpperLeft, kUpperRight );
+		kUpperMid.scale( 0.5f );
 		return kUpperMid;
 	}
 
@@ -4176,8 +4159,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
 	}
@@ -4614,50 +4597,49 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			Vector3f kTopMid = getBoundingBoxUpperMiddle( kVOI );
 			Vector3f kLeftMid = getBoundingBoxLeftMiddle( kVOI );
 
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kUpperLeft, kVOIPoint );
+			Vector3f kDiff = Vector3f.sub( kUpperLeft, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_LEFT);
 				return true;
 			}
-			kDiff.Sub( kUpperRight, kVOIPoint );
+			kDiff = Vector3f.sub( kUpperRight, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_RIGHT);
 				return true;
 			}
-			kDiff.Sub( kLowerLeft, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerLeft, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_LEFT);
 				return true;
 			}
-			kDiff.Sub( kLowerRight, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerRight, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_RIGHT);
 				return true;
 			}
-			kDiff.Sub( kLowerMid, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kRightMid, kVOIPoint );
+			kDiff = Vector3f.sub( kRightMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.RIGHT_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kTopMid, kVOIPoint );
+			kDiff = Vector3f.sub( kTopMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kLeftMid, kVOIPoint );
+			kDiff = Vector3f.sub( kLeftMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LEFT_MIDDLE);
@@ -4713,8 +4695,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			Vector3f kFilePos = kVOI.get(i);
 			Vector3f kPos = m_kDrawingContext.fileToScreenVOI(kFilePos);
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kPos, kVOIPoint );
+			Vector3f kDiff = Vector3f.sub( kPos, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearPoint(i);
@@ -4842,8 +4823,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 				Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
 				Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
-				Vector3f kDiff = new Vector3f();
-				kDiff.Sub( kNewGC, kGC );
+				Vector3f kDiff = Vector3f.sub( kNewGC, kGC );
 				m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag, true );
 				m_fMouseX = kEvent.getX();
 				m_fMouseY = kEvent.getY();
@@ -5133,10 +5113,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			return;
 		}
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(m_kBackupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(m_kBackupVOI) ).add( getBoundingBoxLowerLeft(m_kBackupVOI) ).add( getBoundingBoxLowerRight(m_kBackupVOI) ).scale( 0.25f );
 
 		float xScale = (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X);
 		float yScale = (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y);
@@ -5174,9 +5151,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < m_kBackupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( m_kBackupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -5905,7 +5880,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			//Vector<Vector3f> kPositions = new Vector<Vector3f>();
 			for ( int i = 0; i < levelSetStack.size(); i++ )
 			{
-				kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_kDrawingContext.getSlice() );
+				kPatientPt.set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_kDrawingContext.getSlice() );
 				kScreenPt = m_kDrawingContext.patientToScreenVOI( kPatientPt );
 				//kPositions.add( kScreenPt );
 				kVolumePt = new Vector3f();

@@ -198,7 +198,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             	float floatIndex = (float)index + 2;
             	Vector3f tanVector = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
             	//normalizing tangent
-                tanVector.Normalize();
+                tanVector.normalize();
                 
                 //tanVectors[i] = tanVector;
                 
@@ -685,7 +685,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         for(int k=1;k<nPoints;k++) {
         	Vector3f point1 = ((VOIPoint)contours.get(k-1)).exportPoint();
         	Vector3f point2 = ((VOIPoint)contours.get(k)).exportPoint();
-        	float distance = point1.Distance(point2);
+        	float distance = point1.distance(point2);
         	totalLength = totalLength + distance;
         }
         
@@ -704,7 +704,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         	Vector3f point1 = ((VOIPoint)contours.get(k-1)).exportPoint();
         	Vector3f point2 = ((VOIPoint)contours.get(k)).exportPoint();
         	
-        	float distance = point1.Distance(point2);
+        	float distance = point1.distance(point2);
         	totalLength = totalLength + distance;
         	
         	int yCoord = Math.round(yStart + totalLength);

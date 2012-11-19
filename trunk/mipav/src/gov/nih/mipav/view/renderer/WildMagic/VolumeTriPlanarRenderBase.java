@@ -208,7 +208,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 }
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = new VolumeImage();
-		 m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
 		 createContainer( GetCanvas() );
 		 m_kAnimator.setRunAsFastAsPossible(true);
 		 m_kAnimator.start();
@@ -242,7 +242,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 }
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = kVolumeImageB;
-		 m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
 	 }
 
 	 /**
@@ -276,7 +276,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 }
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = kVolumeImageB;
-		 m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
 		 enableSculpt(false);
 	 }
 
@@ -1321,10 +1321,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
 		  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
 		  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-		  Vector3f kCRight = new Vector3f();
-		  kCRight.Cross( kCDir, kCUp );
-		  Vector3f kCLoc = new Vector3f(kCDir);
-		  kCLoc.Scale(-2.4f);
+		  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+		  Vector3f kCLoc = Vector3f.scale(-2.4f, kCDir);
 		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		  if ( !m_bStandAlone )
@@ -2798,22 +2796,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  // Rotate normal vector:
 			  Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
 			  Vector3f kNormal = new Vector3f( 1,0,0 );
-			  kClipRotate.Mult(kNormal, kNormal);
-			  kNormal.Normalize();
+			  kNormal = kClipRotate.mult(kNormal);
+			  kNormal.normalize();
 
 			  // Scale kNormal based on the scaled volume:
-			  kNormal.Set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
-			  float fLength = kNormal.Length();
-			  kNormal.Normalize();
+			  kNormal.set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
+			  float fLength = kNormal.length();
+			  kNormal.normalize();
 			  m_afArbEquation[0] = kNormal.X;
 			  m_afArbEquation[1] = kNormal.Y;
 			  m_afArbEquation[2] = kNormal.Z;
 
 			  // Calculate the distance to the plane, scaled based on the scaled kNormal:
-			  Vector3f kPos = new Vector3f();
-			  kPos.Scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
-			  kPos.Add( new Vector3f( .5f, .5f, .5f ));
-			  m_afArbEquation[3] = kNormal.Dot(kPos);   
+			  Vector3f kPos = Vector3f.scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
+			  kPos.add( new Vector3f( .5f, .5f, .5f ));
+			  m_afArbEquation[3] = kNormal.dot(kPos);   
 
 			  // Update shader with rotated normal and distance:
 			  if ( m_kVolumeRayCast != null )

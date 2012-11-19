@@ -145,8 +145,7 @@ public class BspNodes extends DemoBase
         Vector3f kCLoc = new Vector3f(0.0f,-3.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -202,14 +201,14 @@ public class BspNodes extends DemoBase
         Vector2f kDir = new Vector2f();
         kDir.Sub( rkV1, rkV0 );
         Vector3f kNormal = new Vector3f(kDir.Y,-kDir.X,0.0f);
-        kNormal.Normalize();
-        float fConstant = kNormal.Dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
+        kNormal.normalize();
+        float fConstant = kNormal.dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
         float fXExtent = 0.5f*kDir.Length();
         float fYExtent = 0.125f;
         Vector3f kTrn = new Vector3f(0.5f*(rkV0.X+rkV1.X),0.5f*(rkV0.Y+rkV1.Y),
                                      fYExtent+1e-03f);
         Matrix3f kRot = new Matrix3f(Vector3f.UNIT_Z, (float)Math.atan2(kDir.Y,kDir.X));
-        kRot.Mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
+        kRot.mult( new Matrix3f(Vector3f.UNIT_X,Mathf.HALF_PI) );
 
         BspNode pkBsp = new BspNode(new Plane3f(kNormal,fConstant));
 

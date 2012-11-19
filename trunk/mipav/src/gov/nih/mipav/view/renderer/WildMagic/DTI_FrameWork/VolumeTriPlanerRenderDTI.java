@@ -158,25 +158,24 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
                             TriMesh kMesh = (TriMesh)(pick.Intersected);
 
                             Vector3f kP0 = kMesh.VBuffer.GetPosition3( pick.iV0 ); 
-                            kP0.Scale( pick.B0 );
+                            kP0.scale( pick.B0 );
                             Vector3f kP1 = kMesh.VBuffer.GetPosition3( pick.iV1 ); 
-                            kP1.Scale( pick.B1 );
+                            kP1.scale( pick.B1 );
                             Vector3f kP2 = kMesh.VBuffer.GetPosition3( pick.iV2 );
-                            kP2.Scale( pick.B2 );
+                            kP2.scale( pick.B2 );
 
-                            Vector3f pickPoint = new Vector3f();
-                            pickPoint.Add( kP0, kP1 );
-                            pickPoint.Add( kP2 );
+                            Vector3f pickPoint = Vector3f.add( kP0, kP1 );
+                            pickPoint.add( kP2 );
 
                             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
                             {
-                            	pickPoint.Sub(m_kDisplayList.get(i).GetTranslate());
+                            	pickPoint.sub(m_kDisplayList.get(i).GetTranslate());
                             }
                             
-                            pickPoint.Mult( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+                            pickPoint.scale( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ );
                             
                             int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
-                            pickPoint.Mult( new Vector3f( iExtents[0]-1, iExtents[1]-1, iExtents[2]-1 ));
+                            pickPoint.scale( iExtents[0]-1, iExtents[1]-1, iExtents[2]-1 );
 
                             //System.err.println( "Picked " + pickPoint );
                             ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X, (int)pickPoint.Y, (int)pickPoint.Z);

@@ -691,52 +691,50 @@ public class FlyPathBehavior_WM implements KeyListener {
 
         if (command.equals("lookup")) {
             // pitch - look up
-            Vector3f kRight = new Vector3f();
-            kRight.UnitCross( m_kViewDirection, m_kViewUp );
+            Vector3f kRight = Vector3f.unitCross( m_kViewDirection, m_kViewUp );
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( kRight, (float)Math.toRadians(1) );
-            kRotate.Mult( m_kViewDirection, m_kViewDirection );
-            kRotate.Mult( m_kViewUp, m_kViewUp );
+            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(1) );
+            kRotate.mult( m_kViewDirection, m_kViewDirection );
+            kRotate.mult( m_kViewUp, m_kViewUp );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("lookdown")) {
             // pitch - look down
-            Vector3f kRight = new Vector3f();
-            kRight.UnitCross( m_kViewDirection, m_kViewUp );
+            Vector3f kRight = Vector3f.unitCross( m_kViewDirection, m_kViewUp );
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( kRight, (float)Math.toRadians(-1) );
-            kRotate.Mult( m_kViewDirection, m_kViewDirection );
-            kRotate.Mult( m_kViewUp, m_kViewUp );
+            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-1) );
+            kRotate.mult( m_kViewDirection, m_kViewDirection );
+            kRotate.mult( m_kViewUp, m_kViewUp );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("lookleft")) {
             // yaw - look left
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( m_kViewUp, (float)Math.toRadians(1) );
-            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            kRotate.fromAxisAngle( m_kViewUp, (float)Math.toRadians(1) );
+            kRotate.mult( m_kViewDirection, m_kViewDirection );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("lookright")) {
             // case KeyEvent.VK_RIGHT:
             // yaw - look right
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( m_kViewUp, (float)Math.toRadians(-1) );
-            kRotate.Mult( m_kViewDirection, m_kViewDirection );
+            kRotate.fromAxisAngle( m_kViewUp, (float)Math.toRadians(-1) );
+            kRotate.mult( m_kViewDirection, m_kViewDirection );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("counterclockwise")) {
             // case KeyEvent.VK_F3:
             // roll - counterclockwise
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( m_kViewDirection, (float)Math.toRadians(-1) );
-            kRotate.Mult( m_kViewUp,  m_kViewUp );
+            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-1) );
+            kRotate.mult( m_kViewUp,  m_kViewUp );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("clockwise")) {
             // roll - clockwise
             Matrix3f kRotate = new Matrix3f();
-            kRotate.FromAxisAngle( m_kViewDirection, (float)Math.toRadians(1) );
-            kRotate.Mult( m_kViewUp,  m_kViewUp );
+            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(1) );
+            kRotate.mult( m_kViewUp,  m_kViewUp );
             // Notify listener that we are updated.
             notifyCallback(EVENT_CHANGE_POSITION);
         } else if (command.equals("escape")) {
@@ -1061,13 +1059,11 @@ public class FlyPathBehavior_WM implements KeyListener {
 
             // Get vector from current view point to point down branch path.
             BranchState kBranch = m_akBranchChoice[iBranch];
-            Vector3f kV = new Vector3f();
-
-            kV.Sub(kBranch.getForwardNormalizedPosition(fPointDist), kP0);
-            kV.Normalize();
+            Vector3f kV = Vector3f.sub(kBranch.getForwardNormalizedPosition(fPointDist), kP0);
+            kV.normalize();
 
             // Only accept the best aligned branches we can supposedly see.
-            float fAlign = kV.Dot(kViewDirection);
+            float fAlign = kV.dot(kViewDirection);
 
             if ((fAlign > 0.0f) && (fAlign > fBestAlign)) {
                 fBestAlign = fAlign;
@@ -1102,9 +1098,9 @@ public class FlyPathBehavior_WM implements KeyListener {
         m_kBranchState.m_bMoveForward = kItem.isPathMoveForward();
         setBranch(kItem.getBranchIndex());
 
-        m_kViewPoint.Copy(kItem.getCameraLocation());
-        m_kViewDirection.Copy(kItem.getCameraDirection());
-        m_kViewUp.Copy(kItem.getCameraUp());
+        m_kViewPoint.copy(kItem.getCameraLocation());
+        m_kViewDirection.copy(kItem.getCameraDirection());
+        m_kViewUp.copy(kItem.getCameraUp());
 
         notifyCallback(EVENT_CHANGE_POSITION);
 
@@ -1152,8 +1148,8 @@ public class FlyPathBehavior_WM implements KeyListener {
 
             if (fTime != fTimeGazeDist) {
                 Vector3f kVec = kCurve.GetPosition(fTimeGazeDist);
-                kLookatVector.Sub(kVec, kViewPoint);
-                kLookatVector.Normalize();
+                kLookatVector = Vector3f.sub(kVec, kViewPoint);
+                kLookatVector.normalize();
                 bLookatVectorUseTangent = false;
             }
         }
@@ -1162,7 +1158,7 @@ public class FlyPathBehavior_WM implements KeyListener {
             kLookatVector = kCurve.GetTangent(fTime);
 
             if (!m_kBranchState.m_bMoveForward) {
-                kLookatVector.Neg();
+                kLookatVector.neg();
             }
         }
 
@@ -1228,32 +1224,25 @@ public class FlyPathBehavior_WM implements KeyListener {
         // vector to create a combined view up vector to use.
         Vector3f kV = new Vector3f(kViewdirVector);
 
-        kV.Set( Math.abs(kV.X), Math.abs(kV.Y), Math.abs(kV.Z) );
-        kV.Sub(Vector3f.ONE, kV);
+        kV.set( 1 - Math.abs(kV.X), 1 - Math.abs(kV.Y), 1 - Math.abs(kV.Z) );
 
         Vector3f kViewupVector = new Vector3f(0.0f, 0.0f, 0.0f);
 
-        kViewupVector.ScaleAdd(m_kViewup1.Dot(kV), m_kViewup1, kViewupVector);
-        kViewupVector.ScaleAdd(m_kViewup2.Dot(kV), m_kViewup2, kViewupVector);
-        kViewupVector.Normalize();
+        kViewupVector.scaleAdd(m_kViewup1.dot(kV), m_kViewup1, kViewupVector);
+        kViewupVector.scaleAdd(m_kViewup2.dot(kV), m_kViewup2, kViewupVector);
+        kViewupVector.normalize();
 
         // Project the view-up vector onto the plane which is
         // perpendicular to the view direction vector.  By getting to
         // this point, we know that the view-up vector and the view
         // direction vectors are not aligned.  This projected vector is
         // normalized and becomes the new view-up vector.
-        Vector3f kViewdirProjection = new Vector3f();
-
-        kViewdirProjection.Scale(kViewdirVector.Dot(kViewupVector), kViewdirVector);
-        kViewupVector.Sub(kViewdirProjection);
-        kViewupVector.Normalize();
-
-        Vector3f kViewleftVector = new Vector3f();
-
-        kViewleftVector.Cross(kViewupVector, kViewdirVector);
+        Vector3f kViewdirProjection = Vector3f.scale(kViewdirVector.dot(kViewupVector), kViewdirVector);
+        kViewupVector.sub(kViewdirProjection);
+        kViewupVector.normalize();
         
-        m_kViewPoint.Copy(kViewPoint);
-        m_kViewDirection.Copy(kViewdirVector);
-        m_kViewUp.Copy(kViewupVector);
+        m_kViewPoint.copy(kViewPoint);
+        m_kViewDirection.copy(kViewdirVector);
+        m_kViewUp.copy(kViewupVector);
     }
 }

@@ -268,8 +268,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Ambient.Set(1f, 1f, 1f);
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Diffuse.Set(1f, 1f, 1f);
             m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Specular.Set(1f, 1f, 1f);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Position.Set(fX, fY, fZ);
-            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].DVector.Set(-fX, -fY, fZ);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].Position.set(fX, fY, fZ);
+            m_akLights[LIGHT_INDEX_MODEL_X0Y0Z0 + i].DVector.set(-fX, -fY, fZ);
             m_aiLightScale[LIGHT_INDEX_MODEL_X0Y0Z0 + i] = 1;
         }
 
@@ -279,8 +279,8 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         m_akLights[LIGHT_INDEX_STATIC].Ambient.Set(1f, 1f, 1f);
         m_akLights[LIGHT_INDEX_STATIC].Diffuse.Set(1f, 1f, 1f);
         m_akLights[LIGHT_INDEX_STATIC].Specular.Set(1f, 1f, 1f);
-        m_akLights[LIGHT_INDEX_STATIC].Position.Set(0f,0f,3f);
-        m_akLights[LIGHT_INDEX_STATIC].DVector.Set( 0f, 0f, 1f );
+        m_akLights[LIGHT_INDEX_STATIC].Position.set(0f,0f,3f);
+        m_akLights[LIGHT_INDEX_STATIC].DVector.set( 0f, 0f, 1f );
         m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
 
 

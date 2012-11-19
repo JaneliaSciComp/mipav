@@ -406,8 +406,8 @@ public class JPanelClip extends JPanelRendererJ3D
             float[] values = new float[ext[0] * ext[1]];
             try {
             	WildMagic.LibFoundation.Mathematics.Vector3f temp = new WildMagic.LibFoundation.Mathematics.Vector3f( pts[2] );
-            	pts[2].Copy( pts[3] );
-            	pts[3].Copy( temp );
+            	pts[2].copy( pts[3] );
+            	pts[3].copy( temp );
 				img.exportDiagonal(0, 0, ext, pts, values, true);
 			} catch (IOException e) { }
             ModelImage resultImage = new ModelImage(img.getType(), ext, "Image plane");

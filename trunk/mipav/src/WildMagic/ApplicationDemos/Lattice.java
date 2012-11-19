@@ -192,8 +192,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 		Vector3f kCLoc = new Vector3f(0.0f, 0.0f, -8.0f);
 		Vector3f kCDir = new Vector3f(0.0f, 0.0f, 1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, 1.0f, 0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross(kCDir, kCUp);
+		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
 		m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
 		if ( !m_bShared )

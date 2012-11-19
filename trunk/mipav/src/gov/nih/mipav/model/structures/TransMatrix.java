@@ -327,7 +327,7 @@ public class TransMatrix extends Matrix4f
         if (shear == null) shear = new Vector3f();
 
         // Next take care of translation (easy).
-        trans.Set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
+        trans.set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
         for (i = 0; i < 3; i++) {
             locmat.Set(i, 3, 0);
         }
@@ -340,39 +340,39 @@ public class TransMatrix extends Matrix4f
         }
 
         // Compute X scale factor and normalize first row.
-        scale.X = row[0].Length();
+        scale.X = row[0].length();
 
         // row[0] = *V3Scale(&row[0], 1.0);
-        row[0].Scale(1.0f);
+        row[0].scale(1.0f);
         // XXX Should this be row[0].Normalize()??
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
         // shear.X is XY, shear.Y is XZ, shear.Z is YZ
-        shear.X = row[0].Dot(row[1]);
+        shear.X = row[0].dot(row[1]);
         // row[1] += -shear.X * row[0]
-        pdum3.Scale(-shear.X, row[0]);
-        row[1].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.X, row[0]);
+        row[1].add(pdum3);
 
         // Now, compute Y scale and normalize 2nd row.
-        scale.Y = row[1].Length();
-        row[1].Scale(1.0f);
+        scale.Y = row[1].length();
+        row[1].scale(1.0f);
         // XXX Should this be row[1].Normalize()??
         shear.X /= scale.Y;
 
         // Compute XZ and YZ shears, orthogonalize 3rd row.
-        shear.Y = row[0].Dot(row[2]);
+        shear.Y = row[0].dot(row[2]);
         // row[2] += -shear.Y * row[0]
-        pdum3.Scale(-shear.Y, row[0]);
-        row[2].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.Y, row[0]);
+        row[2].add(pdum3);
 
-        shear.Z = row[1].Dot(row[2]);
+        shear.Z = row[1].dot(row[2]);
         // row[2] += -shear.Z * row[1]
-        pdum3.Scale(-shear.Z, row[1]);
-        row[2].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.Z, row[1]);
+        row[2].add(pdum3);
 
         // Next, get Z scale and normalize 3rd row.
-        scale.Z = row[2].Length();
-        row[2].Scale(1.0f);
+        scale.Z = row[2].length();
+        row[2].scale(1.0f);
         // XXX Should this be row[2].Normalize()??
         shear.Y /= scale.Z;
         shear.Z /= scale.Z;
@@ -380,10 +380,10 @@ public class TransMatrix extends Matrix4f
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
         // is -1, then negate the matrix and the scaling factors.
-        pdum3.Cross( row[1], row[2] );
-        if (row[0].Dot(pdum3) < 0) {
+        pdum3 = Vector3f.cross( row[1], row[2] );
+        if (row[0].dot(pdum3) < 0) {
 
-            scale.Neg();
+            scale.neg();
             for (i = 0; i < 3; i++) {
                 row[i].X *= -1;
                 row[i].Y *= -1;

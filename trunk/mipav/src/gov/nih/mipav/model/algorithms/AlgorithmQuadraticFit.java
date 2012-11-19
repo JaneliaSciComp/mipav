@@ -215,11 +215,10 @@ public class AlgorithmQuadraticFit {
                                    m_afCoeff[5], 0.5f * m_afCoeff[9], 0.5f * m_afCoeff[8], 0.5f * m_afCoeff[9],
                                    m_afCoeff[6]);
         Vector3f kB = new Vector3f(m_afCoeff[1], m_afCoeff[2], m_afCoeff[3]);
-        Matrix3f kInvA = new Matrix3f();
-        kInvA.Inverse(kA);
-        kInvA.Mult(kB, m_kCenter);
-        m_kCenter.Scale(-0.5f);
-        kA.Mult(m_kCenter, kB);
+        Matrix3f kInvA = Matrix3f.inverse(kA);
+        kInvA.mult(kB, m_kCenter);
+        m_kCenter.scale(-0.5f);
+        kA.mult(m_kCenter, kB);
         m_fConstant = (m_kCenter.X * kB.X) + (m_kCenter.Y * kB.Y) + (m_kCenter.Z * kB.Z) - m_afCoeff[0];
 
         // factor A = R*D*R^T where R is a rotation and D is diagonal

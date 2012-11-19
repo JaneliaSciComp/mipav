@@ -303,7 +303,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			float floatIndex = (float)index + 2;
 			Vector3f tanVector = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
 			//normalizing tangent
-			tanVector.Normalize();
+			tanVector.normalize();
 
 			//get coordinate of control point of b-spline
 			point = ((VOIPoint)contours.get(index)).exportPoint();
@@ -317,7 +317,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				lpsPositionPrev = new Vector3f( lpsPosition );
 				MipavCoordinateSystems.fileToScanner( point, lpsPosition, wormImage );
 
-				lineLength += lpsPositionPrev.Distance( lpsPosition );
+				lineLength += lpsPositionPrev.distance( lpsPosition );
 				//System.err.println( lpsPositionPrev.Distance( lpsPosition ) + "       " + lineLength  + "          " + lineLength / (float)i);
 				count++;
 			}
@@ -328,15 +328,14 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			}
 
 			// Angle between the tangent and the 'default' z-direction:
-			angle = tanVector.Angle(kNormal);       
+			angle = tanVector.angle(kNormal);       
 
-			Vector3f rotationAxis = new Vector3f();
-			rotationAxis.Cross( kNormal, tanVector );
-			rotationAxis.Normalize();
+			Vector3f rotationAxis = Vector3f.cross( kNormal, tanVector );
+			rotationAxis.normalize();
 
 			// Create a rotation angle-degrees about the rotation axis:
 			Matrix3f transformTotal = new Matrix3f();
-			transformTotal.FromAxisAngle( rotationAxis, angle );
+			transformTotal.fromAxisAngle( rotationAxis, angle );
 			transformBoxSlices(transformTotal, point, tanVector);
 
 			kNormal = new Vector3f( tanVector );
@@ -481,7 +480,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			float floatIndex = (float)index + 2;
 			Vector3f tanVector = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
 			//normalizing tangent
-			tanVector.Normalize();
+			tanVector.normalize();
 
 			//get coordinate of control point of b-spline
 			point = ((VOIPoint)contours.get(index)).exportPoint();
@@ -495,7 +494,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				lpsPositionPrev = new Vector3f( lpsPosition );
 				MipavCoordinateSystems.fileToScanner( point, lpsPosition, wormImage );
 
-				lineLength += lpsPositionPrev.Distance( lpsPosition );
+				lineLength += lpsPositionPrev.distance( lpsPosition );
 				//System.err.println( lpsPositionPrev.Distance( lpsPosition ) + "       " + lineLength  + "          " + lineLength / (float)i);
 				count++;
 			}
@@ -506,15 +505,14 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			}
 
 			// Angle between the tangent and the 'default' z-direction:
-			angle = tanVector.Angle(kNormal);       
+			angle = tanVector.angle(kNormal);       
 
-			Vector3f rotationAxis = new Vector3f();
-			rotationAxis.Cross( kNormal, tanVector );
-			rotationAxis.Normalize();
+			Vector3f rotationAxis = Vector3f.cross( kNormal, tanVector );
+			rotationAxis.normalize();
 
 			// Create a rotation angle-degrees about the rotation axis:
 			Matrix3f transformTotal = new Matrix3f();
-			transformTotal.FromAxisAngle( rotationAxis, angle );
+			transformTotal.fromAxisAngle( rotationAxis, angle );
 			transformBoxSlices(transformTotal, point, tanVector);
 
 			kNormal = new Vector3f( tanVector );
@@ -697,7 +695,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			float floatIndex = (float)index + 2;
 			Vector3f tanVector = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
 			//normalizing tangent
-			tanVector.Normalize();
+			tanVector.normalize();
 
 			//get coordinate of control point of b-spline
 			point = contours.elementAt(index).elementAt(0);
@@ -712,7 +710,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				lpsPositionPrev = new Vector3f( lpsPosition );
 				MipavCoordinateSystems.fileToScanner( point, lpsPosition, wormImage );
 
-				lineLength += lpsPositionPrev.Distance( lpsPosition );
+				lineLength += lpsPositionPrev.distance( lpsPosition );
 				//System.err.println( lpsPositionPrev.Distance( lpsPosition ) + "       " + lineLength  + "          " + lineLength / (float)i);
 				count++;
 			}
@@ -723,15 +721,14 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			}
 
 			// Angle between the tangent and the 'default' z-direction:
-			angle = tanVector.Angle(kNormal);       
+			angle = tanVector.angle(kNormal);       
 
-			Vector3f rotationAxis = new Vector3f();
-			rotationAxis.Cross( kNormal, tanVector );
-			rotationAxis.Normalize();
+			Vector3f rotationAxis = Vector3f.cross( kNormal, tanVector );
+			rotationAxis.normalize();
 
 			// Create a rotation angle-degrees about the rotation axis:
 			Matrix3f transformTotal = new Matrix3f();
-			transformTotal.FromAxisAngle( rotationAxis, angle );
+			transformTotal.fromAxisAngle( rotationAxis, angle );
 			transformBoxSlices(transformTotal, point, tanVector, upPoint );
 
 			kNormal = new Vector3f( tanVector );
@@ -856,7 +853,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// Rotate the points in the bounding box:
 			// verts is a 'unit' cube centered at (0,0,0) with
 			// corners from (-1,-1,-1) -> (1,1,1)
-			kTransform.Mult(verts[i], outVertices[i]);
+			kTransform.mult(verts[i], outVertices[i]);
 
 			verts[i].X = outVertices[i].X;
 			verts[i].Y = outVertices[i].Y;
@@ -916,7 +913,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// Rotate the points in the bounding box:
 			// verts is a 'unit' cube centered at (0,0,0) with
 			// corners from (-1,-1,-1) -> (1,1,1)
-			kTransform.Mult(verts[i], outVertices[i]);
+			kTransform.mult(verts[i], outVertices[i]);
 		}
 		
 		for (int i = 0; i < 4; i++) {			
@@ -952,12 +949,10 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			boxSliceVertices[i].Z += (kPosition.Z - centerModel.Z);
 		}
 
-		Vector3f mid = new Vector3f();
-		mid.Add( boxSliceVertices[1], boxSliceVertices[0] );
-		mid.Scale( 0.5f );
-		Vector3f boxUp = new Vector3f();
-		boxUp.Sub( mid, kPosition );
-		boxUp.Normalize();
+		Vector3f mid = Vector3f.add( boxSliceVertices[1], boxSliceVertices[0] );
+		mid.scale( 0.5f );
+		Vector3f boxUp = Vector3f.sub( mid, kPosition );
+		boxUp.normalize();
 
 
 		Plane3f kPlane = new Plane3f( tangentVect, kPosition );
@@ -971,29 +966,27 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		{
 			kNearest = kDist.GetClosestPoint1();    
 		}
-		upVect.Copy(kNearest);
-		Vector3f targetUp = new Vector3f();
-		targetUp.Sub( upVect, kPosition );
-		targetUp.Normalize();
+		upVect.copy(kNearest);
+		Vector3f targetUp = Vector3f.sub( upVect, kPosition );
+		targetUp.normalize();
 		
 
 
 		// Angle between the tangent and the 'default' z-direction:
-		float fangle = boxUp.Angle(targetUp);   
+		float fangle = boxUp.angle(targetUp);   
 
-		Vector3f rotationAxis = new Vector3f();
-		rotationAxis.Cross( targetUp, boxUp );
-		rotationAxis.Normalize();
+		Vector3f rotationAxis = Vector3f.cross( targetUp, boxUp );
+		rotationAxis.normalize();
 
 		// Create a rotation angle-degrees about the rotation axis:
 		Matrix3f kSpinTransform = new Matrix3f(false);
-		if ( tangentVect.Dot( rotationAxis ) > 0 )
+		if ( tangentVect.dot( rotationAxis ) > 0 )
 		{
 			fangle *= -1;
 		}
 		if ( fangle != 0 )
 		{
-			kSpinTransform.FromAxisAngle( tangentVect, fangle );
+			kSpinTransform.fromAxisAngle( tangentVect, fangle );
 		}
 
 		centerModel.X = 0;
@@ -1007,8 +1000,8 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// Rotate the points in the bounding box:
 			// verts is a 'unit' cube centered at (0,0,0) with
 			// corners from (-1,-1,-1) -> (1,1,1)
-			kTransform.Mult(verts[i], outVertices[i]);
-			kSpinTransform.Mult( outVertices[i], outVertices[i] );
+			kTransform.mult(verts[i], outVertices[i]);
+			kSpinTransform.mult( outVertices[i], outVertices[i] );
 			
 			verts[i].X = outVertices[i].X;
 			verts[i].Y = outVertices[i].Y;
@@ -1058,42 +1051,42 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 	 */
 	private Vector3f findClosestNormal( Vector3f kNormal, Vector3f kTangent )
 	{
-		float angle = kTangent.Angle(kNormal);      
+		float angle = kTangent.angle(kNormal);      
 
 		float minAngle = angle;
 		Vector3f minVec = new Vector3f(kNormal);
 
-		float temp = kTangent.Angle( Vector3f.UNIT_X );
+		float temp = kTangent.angle( Vector3f.UNIT_X );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
 			minVec = new Vector3f(Vector3f.UNIT_X);
 		}
-		temp = kTangent.Angle( Vector3f.UNIT_X_NEG );
+		temp = kTangent.angle( Vector3f.UNIT_X_NEG );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
 			minVec = new Vector3f(Vector3f.UNIT_X_NEG);
 		}
-		temp = kTangent.Angle( Vector3f.UNIT_Y );
+		temp = kTangent.angle( Vector3f.UNIT_Y );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
 			minVec = new Vector3f(Vector3f.UNIT_Y);
 		}
-		temp = kTangent.Angle( Vector3f.UNIT_Y_NEG );
+		temp = kTangent.angle( Vector3f.UNIT_Y_NEG );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
 			minVec = new Vector3f(Vector3f.UNIT_Y_NEG);
 		}
-		temp = kTangent.Angle( Vector3f.UNIT_Z );
+		temp = kTangent.angle( Vector3f.UNIT_Z );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
 			minVec = new Vector3f(Vector3f.UNIT_Z);
 		}
-		temp = kTangent.Angle( Vector3f.UNIT_Z_NEG );
+		temp = kTangent.angle( Vector3f.UNIT_Z_NEG );
 		if ( temp < minAngle )
 		{
 			minAngle = temp;
@@ -1190,7 +1183,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		fAngle = (float)((Math.PI * fAngle) / 180f);
 		// Create a rotation angle-degrees about the rotation axis:
 		Matrix3f kSpinTransform = new Matrix3f(false);
-		kSpinTransform.FromAxisAngle( tangentVect, fAngle );
+		kSpinTransform.fromAxisAngle( tangentVect, fAngle );
 
 		centerModel.X = 0;
 		centerModel.Y = 0;
@@ -1204,7 +1197,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// Rotate the points in the bounding box:
 			// verts is a 'unit' cube centered at (0,0,0) with
 			// corners from (-1,-1,-1) -> (1,1,1)
-			kSpinTransform.Mult(verts[i], outVertices[i]);
+			kSpinTransform.mult(verts[i], outVertices[i]);
 			
 			verts[i].X = outVertices[i].X;
 			verts[i].Y = outVertices[i].Y;

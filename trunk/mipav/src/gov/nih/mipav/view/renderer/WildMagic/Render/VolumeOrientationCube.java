@@ -161,7 +161,7 @@ public class VolumeOrientationCube extends VolumeObject
             for ( int j = 0; j < 4; j++ )
             {
                 akOutlineSquare[i].GetPosition3( j, kPos );
-                kPos.Sub(kHalf);
+                kPos.sub(kHalf);
                 akOutlineSquare[i].SetPosition3( j, kPos );
             }
             m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );

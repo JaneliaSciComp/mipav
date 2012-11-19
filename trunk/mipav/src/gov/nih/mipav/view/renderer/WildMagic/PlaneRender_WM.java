@@ -592,19 +592,19 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
         if ( m_abAxisFlip[2] )
         {
-            kCLoc.Scale(-1);
-            kCDir.Scale(-1);
+            kCLoc.scale(-1);
+            kCDir.scale(-1);
         }
         if ( m_abAxisFlip[1] )
         {
-            kCUp.Scale(-1);
+            kCUp.scale(-1);
         }
         if ( m_abAxisFlip[0] )
         {
-            kCRight.Scale(-1);
+            kCRight.scale(-1);
         }
         //invert y-axis
-        kCUp.Scale(-1);
+        kCUp.scale(-1);
         m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
         CreateScene();
 
@@ -645,7 +645,7 @@ public class PlaneRender_WM extends GPURenderBase
         float fHalfHeight = ((float) m_iHeight-1) / 2.0f;
         float fX = kScreen.X * fHalfWidth + fHalfWidth;
         float fY = kScreen.Y * fHalfWidth + fHalfHeight;
-        kScreen.Set( Math.round(fX), Math.round(fY), Math.round(kScreen.Z) );
+        kScreen.set( Math.round(fX), Math.round(fY), Math.round(kScreen.Z) );
     }
 
     /* (non-Javadoc)
@@ -982,7 +982,7 @@ public class PlaneRender_WM extends GPURenderBase
         m_bModified = true;
         MipavCoordinateSystems.fileToPatient( center, m_kPatientPt, kImage, m_iPlaneOrientation );
         setSlice( m_kPatientPt.Z );
-        m_kCenter.Mult( center, m_kVolumeScale );
+        m_kCenter.copy( center ).mult( m_kVolumeScale );
         GetCanvas().display();
     }
 
@@ -1009,24 +1009,24 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f kCRight = new Vector3f(m_akCoords[m_aiAxisOrder[0]]);
         if ( m_abAxisFlip[2] )
         {
-            kCLoc.Scale(-1);
-            kCDir.Scale(-1);
+            kCLoc.scale(-1);
+            kCDir.scale(-1);
         }
         if ( m_abAxisFlip[1] )
         {
-            kCUp.Scale(-1);
+            kCUp.scale(-1);
         }
         if ( m_abAxisFlip[0] )
         {
-            kCRight.Scale(-1);
+            kCRight.scale(-1);
         }
         //invert y-axis
-        kCUp.Scale(-1);
+        kCUp.scale(-1);
         if ( !bOn )
         {
-            kCLoc.Scale(-1);
-            kCDir.Scale(-1);
-            kCRight.Scale(-1);
+            kCLoc.scale(-1);
+            kCDir.scale(-1);
+            kCRight.scale(-1);
         }
         m_spkCamera.SetFrame( kCLoc, kCDir, kCUp, kCRight );
     }
@@ -1220,13 +1220,13 @@ public class PlaneRender_WM extends GPURenderBase
             for ( int j = 0; j < 4; j++ )
             {
                 m_kXArrow[0].VBuffer.GetPosition3(j, kPosition);
-                kPosition.Add(kDiff);
+                kPosition.add(kDiff);
                 m_kXArrow[0].VBuffer.SetPosition3(j, kPosition );
             }
             for ( int j = 0; j < 3; j++ )
             {
                 m_kXArrow[1].VBuffer.GetPosition3(j, kPosition);
-                kPosition.Add(kDiff);
+                kPosition.add(kDiff);
                 m_kXArrow[1].VBuffer.SetPosition3(j, kPosition );
             }
             for ( int i = 0; i < 2; i++ )
@@ -1397,9 +1397,7 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f kLocalTranslate = new Vector3f();
         for ( int j = 0; j < kVOI.size(); j++ )
         {
-            kLocalTranslate.Copy( kVOI.get(j) );
-            kLocalTranslate.Mult( kVolumeScale );
-            kLocalTranslate.Add( kTranslate );
+            kLocalTranslate.copy( kVOI.get(j) ).mult( kVolumeScale ).add( kTranslate );
             m_kBallPoint.Local.SetTranslate( kLocalTranslate );
             m_kBallPoint.UpdateGS();
 
@@ -1451,9 +1449,7 @@ public class PlaneRender_WM extends GPURenderBase
         Vector3f kLocalTranslate = new Vector3f();
         for ( int j = 0; j < kVOI.size(); j++ )
         {
-            kLocalTranslate.Copy( kVOI.get(j) );
-            kLocalTranslate.Mult( kVolumeScale );
-            kLocalTranslate.Add( kTranslate );
+            kLocalTranslate.copy( kVOI.get(j) ).mult( kVolumeScale ).add( kTranslate );
             m_kBallPoint.Local.SetTranslate( kLocalTranslate );
             m_kBallPoint.UpdateGS();
 
@@ -1823,8 +1819,7 @@ public class PlaneRender_WM extends GPURenderBase
         boolean close = (((y[0] <= (iHeight / 2)) && (slope < 1) && (slope > -1)) || (x[0] >= (iWidth / 2)));
 
         Vector3f kCenter = fileToScreen( kVOI.get(1) );
-        kCenter.Add( fileToScreen( kVOI.get(0) ) );
-        kCenter.Scale(0.5f);
+        kCenter.add( fileToScreen( kVOI.get(0) ) ).scale(0.5f);
         int stringX = (int) kCenter.X;
         int stringY = (int) kCenter.Y;
         String degreeString = String.valueOf(fAngle); // since y decreases going down
@@ -1892,8 +1887,7 @@ public class PlaneRender_WM extends GPURenderBase
         tmpString = tmpString + " " + FileInfoBase.getUnitsOfMeasureAbbrevStr(aiUnits[0]);
 
         Vector3f kCenter = fileToScreen( kVOI.get(1) );
-        kCenter.Add( fileToScreen( kVOI.get(2) ) );
-        kCenter.Scale(0.5f);
+        kCenter.add( fileToScreen( kVOI.get(2) ) ).scale(0.5f);
         int stringX = (int) kCenter.X;
         int stringY = (int) kCenter.Y;
 
@@ -2266,13 +2260,12 @@ public class PlaneRender_WM extends GPURenderBase
         //System.err.println( m_iPlaneOrientation + " " + m_fX + " " + m_fY + " " + m_fZ + " " + fMax );
         
         
-        m_kVolumeScale.Set(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
+        m_kVolumeScale.set(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
                 m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
                 m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
-        m_kVolumeScaleInv.Copy( m_kVolumeScale );
-        m_kVolumeScaleInv.Invert();
+        m_kVolumeScaleInv.copy( m_kVolumeScale ).invert();
 
-        m_kCenter.Mult( m_kVolumeScale );
+        m_kCenter.mult( m_kVolumeScale );
         
     }
 }

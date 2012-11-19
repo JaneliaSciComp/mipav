@@ -187,8 +187,8 @@ implements GLEventListener, KeyListener
 		m_spkCamera.SetFrustum(60.0f,1.0f,0.1f,100.0f);
 		Vector3f kCLoc = new Vector3f(8.0f,0.0f,4.0f);
 		Vector3f kCDir = new Vector3f(kCLoc);
-		kCDir.Neg();  // lookat origin
-		kCDir.Normalize();
+		kCDir.neg();  // lookat origin
+		kCDir.normalize();
 		Vector3f kCUp = new Vector3f(kCDir.Z,0,-kCDir.X);
 		Vector3f kCRight = new Vector3f(Vector3f.UNIT_Y);
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);

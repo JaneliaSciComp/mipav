@@ -130,7 +130,7 @@ public class VolumeRayCast extends VolumeObject
         
         m_kScene.UpdateGS();
         m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
-        m_kTranslate.Neg();
+        m_kTranslate.neg();
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
     }
 
@@ -295,7 +295,7 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
         Vector3f kLength = new Vector3f( m_fX, m_fY, m_fZ );
-        m_kVolumeShaderEffect.setMaxLength( kLength.Length() );
+        m_kVolumeShaderEffect.setMaxLength( kLength.length() );
     }
     
     /**

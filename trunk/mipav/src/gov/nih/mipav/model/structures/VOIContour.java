@@ -188,8 +188,8 @@ public class VOIContour extends VOIBase {
 					// Form two vectors
 					vec1 = elementAt(i + (k / 2));
 					vec2 = elementAt(i + (k - 1));
-					cross.Cross(vec1,vec2);
-					crossProd = cross.Length();
+					cross = Vector3f.cross(vec1,vec2);
+					crossProd = cross.length();
 
 					/*				    
 					vAx = ((Vector3f) (elementAt(i + (k / 2)))).X
@@ -864,7 +864,7 @@ public class VOIContour extends VOIBase {
         for ( int i = 0; i < size(); i++ )
         {
             Vector3f kLPS = new Vector3f(elementAt(i));
-            kLPS.Scale( xRes, yRes, zRes );
+            kLPS.scale( xRes, yRes, zRes );
             kLPSPoints.add( kLPS );
         }
 
@@ -909,14 +909,13 @@ public class VOIContour extends VOIBase {
         .sqrt(1.0 - ((afScale[iMid] * afScale[iMid]) / (afScale[iMax] * afScale[iMax])));
 
 
-        Vector3f kX = new Vector3f( kMat.M00, kMat.M01, kMat.M02 );  kX.Normalize();
-        Vector3f kY = new Vector3f( kMat.M10, kMat.M11, kMat.M12 );  kY.Normalize();
-        Vector3f kZ = new Vector3f( kMat.M20, kMat.M21, kMat.M22 );  kZ.Normalize();
+        Vector3f kX = new Vector3f( kMat.M00, kMat.M01, kMat.M02 );  kX.normalize();
+        Vector3f kY = new Vector3f( kMat.M10, kMat.M11, kMat.M12 );  kY.normalize();
+        Vector3f kZ = new Vector3f( kMat.M20, kMat.M21, kMat.M22 );  kZ.normalize();
         Vector3f[] kBasis = new Vector3f[]{ kX, kY, kZ };
         kMat = new Matrix3f( kX, kY, kZ, false );
-        Vector3f kRot = new Vector3f();
-        kMat.Mult( Vector3f.UNIT_Z_NEG, kRot );              
-        float p = (float)(Math.acos(kRot.Dot(kBasis[iMax])) * 180f/Math.PI);
+        Vector3f kRot = kMat.mult( Vector3f.UNIT_Z_NEG );              
+        float p = (float)(Math.acos(kRot.dot(kBasis[iMax])) * 180f/Math.PI);
         
 		/*
         Transformation kTransform = new Transformation();

@@ -2942,7 +2942,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         kState.ShowOrientationCube = displayGUI.getShowOrientationCube();
         kState.Perspective = displayGUI.getPerspective();
         kState.Camera = getCameraParameters();
-        kState.CameraLocation.Copy(getCameraLocation());
+        kState.CameraLocation.copy(getCameraLocation());
         kState.ObjectLocation = getObjectParameters();
         kState.ObjectRotation = raycastRenderWM.GetSceneRotation();
 
