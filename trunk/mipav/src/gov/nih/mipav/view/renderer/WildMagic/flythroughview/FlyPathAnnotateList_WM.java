@@ -136,7 +136,7 @@ public class FlyPathAnnotateList_WM {
          * @param  kPointNormal  Vector3f Filled in with the normal vector upon return.
          */
         public void getPointNormal(Vector3f kPointNormal) {
-            kPointNormal.Copy(m_kPointNormal);
+            kPointNormal.copy(m_kPointNormal);
         }
         
         /**
@@ -144,7 +144,7 @@ public class FlyPathAnnotateList_WM {
          * @param  kPointPosition  Point3f Filled in with the 3D coordinates upon return.
          */
         public void getPointPosition(Vector3f kPointPosition) {
-            kPointPosition.Copy(m_kPointPosition);
+            kPointPosition.copy(m_kPointPosition);
         }
 
         /**

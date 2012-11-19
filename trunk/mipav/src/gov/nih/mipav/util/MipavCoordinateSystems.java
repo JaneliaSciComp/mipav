@@ -251,7 +251,7 @@ public class MipavCoordinateSystems {
         }
 
         // Returned point represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis space)
-        kOutput.Add(kOriginLPS);
+        kOutput.add(kOriginLPS);
     }
 
     /**
@@ -718,8 +718,7 @@ public class MipavCoordinateSystems {
         // The input point kInput represents the current position in coronal, sagittal, axial order (L/R, A/P, I/S axis
         // space)
 
-        final Vector3f kTemp = new Vector3f();
-        kTemp.Sub(kInput, kOriginLPS);
+        final Vector3f kTemp = Vector3f.sub(kInput, kOriginLPS);
 
         if ( (kImage.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL))
                 || (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {

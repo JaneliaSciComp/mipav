@@ -305,12 +305,11 @@ public class VolumeVOI extends VolumeObject
 		else if ( kVOI.getType() == VOI.POINT )
 		{
 			Vector3f kDiff = new Vector3f(m_kVOI.get(0));
-			kDiff.Mult(m_kVolumeScale);
-			kDiff.Sub( m_kVOILine.VBuffer.GetPosition3(0) );
+			kDiff.mult(m_kVolumeScale).sub( m_kVOILine.VBuffer.GetPosition3(0) );
 			for ( int i = 0; i < m_kVOILine.VBuffer.GetVertexQuantity(); i++ )
 			{
 				Vector3f kPos = m_kVOILine.VBuffer.GetPosition3(i);
-				kPos.Add(kDiff);
+				kPos.add(kDiff);
 				m_kVOILine.VBuffer.SetPosition3(i, kPos );
 			}
 			m_kVOILine.VBuffer.Release();
@@ -319,9 +318,7 @@ public class VolumeVOI extends VolumeObject
 		{
 			for ( int i = 0; i < m_kVOILine.VBuffer.GetVertexQuantity(); i++ )
 			{
-				Vector3f kPos = new Vector3f( m_kVOI.get(i) );
-				kPos.Mult(m_kVolumeScale);
-				Vector3f kPos2 = m_kVOILine.VBuffer.GetPosition3(i);
+				Vector3f kPos = Vector3f.mult( m_kVOI.get(i), m_kVolumeScale);
 				m_kVOILine.VBuffer.SetPosition3(i, kPos );
 			}
 			m_kVOILine.VBuffer.Release();
@@ -415,47 +412,38 @@ public class VolumeVOI extends VolumeObject
 	 * @return
 	 */
 	private int getCoords(Vector3f kStart, Vector3f kEnd, float fraction, VertexBuffer kVBuffer, int iPos) {
-		Vector3f kStartTemp = new Vector3f(kStart);
-		Vector3f kEndTemp = new Vector3f(kEnd);
-		kStartTemp.Mult(m_kVolumeScale);
-		kEndTemp.Mult(m_kVolumeScale);
+		Vector3f kStartTemp = Vector3f.mult(kStart, m_kVolumeScale);
+		Vector3f kEndTemp = Vector3f.mult(kEnd, m_kVolumeScale);
 
 		Vector3f kMidPoint = new Vector3f((kStartTemp.X + kEndTemp.X) / 2, (kStartTemp.Y + kEndTemp.Y) / 2, (kStartTemp.Z + kEndTemp.Z) / 2 );
 		if (fraction == .25)
 		{
-			kMidPoint.Add(kStartTemp);
-			kMidPoint.Scale(0.5f);
+			kMidPoint.add(kStartTemp).scale(0.5f);
 		} 
 		else if (fraction == .75)
 		{
-			kMidPoint.Add(kEndTemp);
-			kMidPoint.Scale(0.5f);
+			kMidPoint.add(kEndTemp).scale(0.5f);
 		}
 
-		Vector3f kW = new Vector3f();
-		kW.Sub( kEndTemp, kStartTemp );
-		kW.Normalize();
+		Vector3f kW = Vector3f.sub( kEndTemp, kStartTemp );
+		kW.normalize();
 
 		Vector3f kU = new Vector3f();
 		Vector3f kV = new Vector3f();
-		Vector3f.GenerateComplementBasis( kU, kV, kW );
+		Vector3f.generateComplementBasis( kU, kV, kW );
 
 
-		kU.Scale(m_fAnnotationScale);      
-		Vector3f kNewStart = new Vector3f();
-		kNewStart.Add( kMidPoint, kU );
-		Vector3f kNewEnd = new Vector3f();
-		kNewEnd.Sub( kMidPoint, kU );
+		kU.scale(m_fAnnotationScale);      
+		Vector3f kNewStart = Vector3f.add( kMidPoint, kU );
+		Vector3f kNewEnd = Vector3f.sub( kMidPoint, kU );
 
 		kVBuffer.SetPosition3( iPos++, kNewStart );
 		kVBuffer.SetPosition3( iPos++, kNewEnd );
 
 
-		kV.Scale(m_fAnnotationScale);      
-		kNewStart = new Vector3f();
-		kNewStart.Add( kMidPoint, kV );
-		kNewEnd = new Vector3f();
-		kNewEnd.Sub( kMidPoint, kV );
+		kV.scale(m_fAnnotationScale);      
+		kNewStart = Vector3f.add( kMidPoint, kV );
+		kNewEnd = Vector3f.sub( kMidPoint, kV );
 
 		kVBuffer.SetPosition3( iPos++, kNewStart );
 		kVBuffer.SetPosition3( iPos++, kNewEnd );
@@ -470,95 +458,81 @@ public class VolumeVOI extends VolumeObject
 	 */
 	private int getEndLines(Vector3f kStart, Vector3f kEnd, VertexBuffer kVBuffer, int iPos) {
 
-		Vector3f kStartTemp = new Vector3f(kStart);
-		Vector3f kEndTemp = new Vector3f(kEnd);
+		Vector3f kStartTemp = Vector3f.mult(kStart, m_kVolumeScale);
+		Vector3f kEndTemp = Vector3f.mult(kEnd, m_kVolumeScale);
 
-		kStartTemp.Mult(m_kVolumeScale);
-		kEndTemp.Mult(m_kVolumeScale);
-
-		Vector3f kW = new Vector3f();
-		kW.Sub( kEndTemp, kStartTemp );
-		kW.Normalize();
+		Vector3f kW = Vector3f.sub( kEndTemp, kStartTemp );
+		kW.normalize();
 
 		Vector3f kU = new Vector3f();
 		Vector3f kV = new Vector3f();
-		Vector3f.GenerateComplementBasis( kU, kV, kW );
+		Vector3f.generateComplementBasis( kU, kV, kW );
 
 
-		Vector3f kTail1 = new Vector3f();
-		kTail1.Add( kW, kU );
-		kTail1.Scale(0.5f);
-		Vector3f kTail3 = new Vector3f();
-		kTail3.Neg(kTail1);      
+		Vector3f kTail1 = Vector3f.add( kW, kU );
+		kTail1.scale(0.5f);
+		Vector3f kTail3 = Vector3f.neg(kTail1);      
 
-		Vector3f kTail2 = new Vector3f();
-		kTail2.Sub( kW, kU );
-		kTail2.Scale(0.5f);
-		Vector3f kTail4 = new Vector3f();
-		kTail4.Neg( kTail2);
+		Vector3f kTail2 = Vector3f.sub( kW, kU );
+		kTail2.scale(0.5f);
+		Vector3f kTail4 = Vector3f.neg( kTail2);
 
 
-		kTail1.Scale(2*m_fAnnotationScale);
-		kTail2.Scale(2*m_fAnnotationScale);
+		kTail1.scale(2*m_fAnnotationScale);
+		kTail2.scale(2*m_fAnnotationScale);
 
-		Vector3f kTemp = new Vector3f();
-		kTemp.Add( kEndTemp, kTail1 );        
+		Vector3f kTemp = Vector3f.add( kEndTemp, kTail1 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
-		kTemp.Add( kEndTemp, kTail2 );        
+		kTemp = Vector3f.add( kEndTemp, kTail2 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
 
 
-		kTail3.Scale(2*m_fAnnotationScale);
-		kTail4.Scale(2*m_fAnnotationScale);
+		kTail3.scale(2*m_fAnnotationScale);
+		kTail4.scale(2*m_fAnnotationScale);
 
 		//System.err.println( kTail1.ToString() + " " + kTail2.ToString() + " " + kTail3.ToString() + " " + kTail4.ToString() );
 
-		kTemp.Add( kStartTemp, kTail3 );        
+		kTemp = Vector3f.add( kStartTemp, kTail3 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kStartTemp );
-		kTemp.Add( kStartTemp, kTail4 );        
+		kTemp = Vector3f.add( kStartTemp, kTail4 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kStartTemp );
 
 
 
 
-		kTail1 = new Vector3f();
-		kTail1.Add( kW, kV );
-		kTail1.Scale(0.5f);
-		kTail3 = new Vector3f();
-		kTail3.Neg(kTail1);      
+		kTail1 = Vector3f.add( kW, kV );
+		kTail1.scale(0.5f);
+		kTail3 = Vector3f.neg(kTail1);      
 
-		kTail2 = new Vector3f();
-		kTail2.Sub( kW, kV );
-		kTail2.Scale(0.5f);
-		kTail4 = new Vector3f();
-		kTail4.Neg( kTail2);
+		kTail2 = Vector3f.sub( kW, kV );
+		kTail2.scale(0.5f);
+		kTail4 = Vector3f.neg( kTail2);
 
 
-		kTail1.Scale(2*m_fAnnotationScale);
-		kTail2.Scale(2*m_fAnnotationScale);
+		kTail1.scale(2*m_fAnnotationScale);
+		kTail2.scale(2*m_fAnnotationScale);
 
-		kTemp = new Vector3f();
-		kTemp.Add( kEndTemp, kTail1 );        
+		kTemp = Vector3f.add( kEndTemp, kTail1 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
-		kTemp.Add( kEndTemp, kTail2 );        
+		kTemp = Vector3f.add( kEndTemp, kTail2 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
 
 
-		kTail3.Scale(2*m_fAnnotationScale);
-		kTail4.Scale(2*m_fAnnotationScale);
+		kTail3.scale(2*m_fAnnotationScale);
+		kTail4.scale(2*m_fAnnotationScale);
 
 		//System.err.println( kTail1.ToString() + " " + kTail2.ToString() + " " + kTail3.ToString() + " " + kTail4.ToString() );
 
-		kTemp.Add( kStartTemp, kTail3 );        
+		kTemp = Vector3f.add( kStartTemp, kTail3 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kStartTemp );
-		kTemp.Add( kStartTemp, kTail4 );        
+		kTemp = Vector3f.add( kStartTemp, kTail4 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kStartTemp );
 
@@ -570,60 +544,52 @@ public class VolumeVOI extends VolumeObject
 	 * @param kEnd
 	 */
 	private int getEndLines2(Vector3f kStart, Vector3f kEnd, VertexBuffer kVBuffer, int iPos) {
-		Vector3f kStartTemp = new Vector3f(kStart);
-		Vector3f kEndTemp = new Vector3f(kEnd);
-		kStartTemp.Mult(m_kVolumeScale);
-		kEndTemp.Mult(m_kVolumeScale);
+		Vector3f kStartTemp = Vector3f.mult(kStart, m_kVolumeScale);
+		Vector3f kEndTemp = Vector3f.mult(kEnd, m_kVolumeScale);
 
-		Vector3f kW = new Vector3f();
-		kW.Sub( kEndTemp, kStartTemp );
-		kW.Normalize();
+		Vector3f kW = Vector3f.sub( kEndTemp, kStartTemp );
+		kW.normalize();
 
 		Vector3f kU = new Vector3f();
 		Vector3f kV = new Vector3f();
-		Vector3f.GenerateComplementBasis( kU, kV, kW );
+		Vector3f.generateComplementBasis( kU, kV, kW );
 
 
-		Vector3f kTail1 = new Vector3f();
-		kTail1.Add( kW, kU );
-		kTail1.Scale(0.5f);
-		Vector3f kTail3 = new Vector3f();
-		kTail3.Neg(kTail1);      
+		Vector3f kTail1 = Vector3f.add( kW, kU );
+		kTail1.scale(0.5f);
+		Vector3f kTail3 = Vector3f.neg(kTail1);      
 
-		Vector3f kTail2 = new Vector3f();
-		kTail2.Sub( kW, kU );
-		kTail2.Scale(0.5f);
-		Vector3f kTail4 = new Vector3f();
-		kTail4.Neg( kTail2);
+		Vector3f kTail2 = Vector3f.sub( kW, kU );
+		kTail2.scale(0.5f);
+		Vector3f kTail4 = Vector3f.neg( kTail2);
 
 
-		kTail3.Scale(2*m_fAnnotationScale);
-		kTail4.Scale(2*m_fAnnotationScale);
+		kTail3.scale(2*m_fAnnotationScale);
+		kTail4.scale(2*m_fAnnotationScale);
 
-		Vector3f kTemp = new Vector3f();
-		kTemp.Add( kEndTemp, kTail3 );        
+		Vector3f kTemp = Vector3f.add( kEndTemp, kTail3 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
-		kTemp.Add( kEndTemp, kTail4 );        
+		kTemp = Vector3f.add( kEndTemp, kTail4 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
 
 
-		kTail1.Add( kW, kV );
-		kTail1.Scale(0.5f);
-		kTail3.Neg(kTail1);      
+		kTail1 = Vector3f.add( kW, kV );
+		kTail1.scale(0.5f);
+		kTail3 = Vector3f.neg(kTail1);      
 
-		kTail2.Sub( kW, kV );
-		kTail2.Scale(0.5f);
-		kTail4.Neg( kTail2);        
+		kTail2 = Vector3f.sub( kW, kV );
+		kTail2.scale(0.5f);
+		kTail4 = Vector3f.neg( kTail2);        
 
-		kTail3.Scale(2*m_fAnnotationScale);
-		kTail4.Scale(2*m_fAnnotationScale);
+		kTail3.scale(2*m_fAnnotationScale);
+		kTail4.scale(2*m_fAnnotationScale);
 
-		kTemp.Add( kEndTemp, kTail3 );        
+		kTemp = Vector3f.add( kEndTemp, kTail3 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
-		kTemp.Add( kEndTemp, kTail4 );        
+		kTemp = Vector3f.add( kEndTemp, kTail4 );        
 		kVBuffer.SetPosition3( iPos++, kTemp );
 		kVBuffer.SetPosition3( iPos++, kEndTemp );
 
@@ -776,8 +742,7 @@ public class VolumeVOI extends VolumeObject
 		if ( m_kVOI.getType() == VOI.POINT )
 		{
 			kVBuffer = new VertexBuffer(kAttributes, 12 );
-			Vector3f kPos = new Vector3f( m_kVOI.get(0) );
-			kPos.Mult(m_kVolumeScale);
+			Vector3f kPos = Vector3f.mult( m_kVOI.get(0), m_kVolumeScale);
 
 			kVBuffer.SetPosition3(0, kPos );
 			kVBuffer.SetPosition3(1, kPos.X + m_fAnnotationScale, kPos.Y, kPos.Z );            
@@ -804,12 +769,10 @@ public class VolumeVOI extends VolumeObject
 			kVBuffer = new VertexBuffer(kAttributes, m_kVOI.size() );
 			for ( int i = 0; i < kVBuffer.GetVertexQuantity(); i++ )
 			{
-				kPos.Copy( m_kVOI.get(i) );
-	            kPos.Mult(kExtentsScale);
+				kPos.copy( m_kVOI.get(i) ).mult(kExtentsScale);
 	            kVBuffer.SetTCoord3(0, i, kPos);
 
-				kPos.Copy( m_kVOI.get(i) );
-	            kPos.Mult(m_kVolumeScale);
+				kPos.copy( m_kVOI.get(i) ).mult(m_kVolumeScale);
 	            
 				kVBuffer.SetPosition3(i, kPos );
 				kVBuffer.SetColor3(0, i, m_kColor );

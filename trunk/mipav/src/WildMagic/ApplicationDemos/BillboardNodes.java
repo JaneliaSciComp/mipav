@@ -226,8 +226,7 @@ public class BillboardNodes extends DemoBase
         Vector3f kCLoc = new Vector3f(0.0f,-1.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
         
         
@@ -434,7 +433,7 @@ public class BillboardNodes extends DemoBase
         // billboard so it's up-vector matches the world's.
         m_spkBillboard0.Local.SetTranslate( -0.25f,0.0f,0.1f);
         Matrix3f kMatrix = new Matrix3f();
-        kMatrix.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
+        kMatrix.fromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard0.Local.SetRotate( kMatrix );
 
         // Create a billboard node that causes an object to always be oriented
@@ -459,7 +458,7 @@ public class BillboardNodes extends DemoBase
         // billboard so it's up-vector matches the world's.
         m_spkBillboard1.Local.SetTranslate( 0.25f,0.0f,0.1f);
         Matrix3f kMatrix2 = new Matrix3f();
-        kMatrix2.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
+        kMatrix2.fromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard1.Local.SetRotate(kMatrix2);
     }    
 }

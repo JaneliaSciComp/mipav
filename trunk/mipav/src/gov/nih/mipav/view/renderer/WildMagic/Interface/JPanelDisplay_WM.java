@@ -231,7 +231,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         	cameraLocation.Z = raFile.readFloat();
         	
         	for ( int i = 0; i < data.length; i++ ) {
-        		objectRotation.Set(i, raFile.readFloat());
+        		objectRotation.set(i, raFile.readFloat());
         	}
         	
         	m_kVolumeViewer.setCameraLocation(cameraLocation);
@@ -299,7 +299,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         	raFile.writeFloat(cameraLocation.Y);
         	raFile.writeFloat(cameraLocation.Z);
         	
-        	objectRotation.GetData(data);
+        	objectRotation.getData(data);
         	for ( int i = 0; i < data.length; i++ ) {
         		raFile.writeFloat(data[i]);
         	}

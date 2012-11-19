@@ -113,18 +113,15 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	    Matrix3f toPosStitch = createSpacingMatrix(infoDicomStitch);
     	    Matrix3f toImageOrig = createSpacingMatrix(infoDicomOrig);
     	    
-    	    toImageOrig.Inverse();
-    	    
-    	    toImageOrig.Mult(toPosStitch);
+    	    toImageOrig.inverse().mult(toPosStitch);
     	    
     	    for(int i=0; i<xDim; i++) {
     	        for(int j=0; j<yDim; j++) {
     	            //if(stitchImage.getShort(i, j, z) != 0) {
     	                Vector3f posMove = new Vector3f();
-                        posMove.Set(i, j, 1);
+                        posMove.set(i, j, 1);
                         
-                        Vector3f posResult = new Vector3f();
-                        toImageOrig.MultRight(posMove, posResult);
+                        Vector3f posResult = toImageOrig.multRight(posMove);
                         
                         if(posResult.X < xMin) {
                             xMin = posResult.X;
@@ -167,9 +164,7 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             
             //System.out.println("origImage");
             Matrix3f toImage = createSpacingMatrix(infoDicomOrig);
-            toImage.Inverse();
-            
-            toImage.Mult(toPos);
+            toImage.inverse().mult(toPos);
             
             //doTransformationWithAlgo(toImage, finalImage);
 
@@ -221,18 +216,15 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         Matrix3f toPosStitch = createSpacingMatrix(infoDicomStitch);
         Matrix3f toImageOrig = createSpacingMatrix(infoDicomOrig);
         
-        toImageOrig.Inverse();
-        
-        toImageOrig.Mult(toPosStitch);
+        toImageOrig.inverse().mult(toPosStitch);
         
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
                 //if(stitchImage.getShort(i, j, z) != 0) {
                     Vector3f posMove = new Vector3f();
-                    posMove.Set(i, j, 1);
+                    posMove.set(i, j, 1);
                     
-                    Vector3f posResult = new Vector3f();
-                    toImageOrig.MultRight(posMove, posResult);
+                    Vector3f posResult = toImageOrig.multRight(posMove);
                     
                     if(posResult.X < xMin) {
                         xMin = posResult.X;
@@ -264,10 +256,9 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             for(int j=0; j<yDim; j++) {
                 if((imageVal = stitchImage.getShort(i, j, z)) != 0) {
                     Vector3f posMove = new Vector3f();
-                    posMove.Set(i, j, 1);
+                    posMove.set(i, j, 1);
                     
-                    Vector3f posResult = new Vector3f();
-                    toImage.MultRight(posMove, posResult);
+                    Vector3f posResult = toImage.multRight(posMove);
                     
                     if(i == 160 && j == 61) {
                     	System.out.println(i+", "+j+" became "+posResult);
@@ -290,16 +281,16 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         finalImage.setFileInfo(stitchImage.getFileInfo().clone());
         finalImage.calcMinMax();
         
-        toImage.Transpose(); //transpose for use as a TransMatrix only
+        toImage.transpose(); //transpose for use as a TransMatrix only
         TransMatrix transform = new TransMatrix(4, 0);
         for(int i=0; i<3; i++) {
             for(int j=0; j<2; j++) {
-                transform.set(i, j, toImage.Get(i, j));
+                transform.set(i, j, toImage.get(i, j));
             }
         }
         
         for(int i=0; i<3; i++) {
-            transform.set(i, 3, toImage.Get(i, 2));
+            transform.set(i, 3, toImage.get(i, 2));
         }
         
         transform.set(2, 2, 0);
@@ -317,17 +308,17 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         Double[] position = fromObjectToDouble(infoDicom.getTagTable().get("0020,0032").getValueList());
         
         Matrix3f mat = new Matrix3f();
-        mat.Set(0, 0, (float)(xyCos[0].doubleValue()*spacing[0].doubleValue()));
-        mat.Set(1, 0, (float)(xyCos[1].doubleValue()*spacing[0].doubleValue()));
-        mat.Set(2, 0, (float)(xyCos[2].doubleValue()*spacing[0].doubleValue()));
+        mat.set(0, 0, (float)(xyCos[0].doubleValue()*spacing[0].doubleValue()));
+        mat.set(1, 0, (float)(xyCos[1].doubleValue()*spacing[0].doubleValue()));
+        mat.set(2, 0, (float)(xyCos[2].doubleValue()*spacing[0].doubleValue()));
         
-        mat.Set(0, 1, (float)(xyCos[3].doubleValue()*spacing[1].doubleValue()));
-        mat.Set(1, 1, (float)(xyCos[4].doubleValue()*spacing[1].doubleValue()));
-        mat.Set(2, 1, (float)(xyCos[5].doubleValue()*spacing[1].doubleValue()));
+        mat.set(0, 1, (float)(xyCos[3].doubleValue()*spacing[1].doubleValue()));
+        mat.set(1, 1, (float)(xyCos[4].doubleValue()*spacing[1].doubleValue()));
+        mat.set(2, 1, (float)(xyCos[5].doubleValue()*spacing[1].doubleValue()));
        
-        mat.Set(0, 2, position[1].floatValue()); //should be 1
-        mat.Set(1, 2, position[0].floatValue());
-        mat.Set(2, 2, position[2].floatValue());
+        mat.set(0, 2, position[1].floatValue()); //should be 1
+        mat.set(1, 2, position[0].floatValue());
+        mat.set(2, 2, position[2].floatValue());
         
         return mat;
     }

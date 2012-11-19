@@ -211,8 +211,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
         Vector3f kCLoc = new Vector3f(0.0f,0.0f,2.5f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,-1.0f);
         Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
         
 

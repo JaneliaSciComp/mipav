@@ -1264,7 +1264,7 @@ implements ListSelectionListener, ChangeListener {
 			return null;
 		}
 
-		kPos.Set( iX, iY, iZ );
+		kPos.set( iX, iY, iZ );
 		if ( !testTrack( kPos ) )
 		{
 			return null;
@@ -1272,12 +1272,11 @@ implements ListSelectionListener, ChangeListener {
 
 		kTract.add( new Vector3f( kPos ) );
 
-		kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-		kV2.Copy(kV1);
-		kV2.Neg();
+		kV1.set( afVectorData[0], afVectorData[1], afVectorData[2] );
+		kV2.copy(kV1).neg();
 
-		kV1.Normalize();
-		kV2.Normalize();
+		kV1.normalize();
+		kV2.normalize();
 
 		traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV1 ), 
 				parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), true );
@@ -1527,7 +1526,7 @@ implements ListSelectionListener, ChangeListener {
 
 		while ( !bDone )
 		{
-			kNext.ScaleAdd( m_fFraction, kDir, kStart ); // next = start + stepSize*dir
+			kNext.scaleAdd( m_fFraction, kDir, kStart ); // next = start + stepSize*dir
 			iX = Math.round(kNext.X);
 			iY = Math.round(kNext.Y);
 			iZ = Math.round(kNext.Z);
@@ -1543,7 +1542,7 @@ implements ListSelectionListener, ChangeListener {
 				else
 				{
 					count = 0;
-					currentPoint.Copy( voxel );
+					currentPoint.copy( voxel );
 				}
 				if ( count >= maxInVoxel )
 				{
@@ -1583,16 +1582,16 @@ implements ListSelectionListener, ChangeListener {
 					bAllZero = false;
 				}
 			}
-            kMatrix.Set( afVectorData[0], afVectorData[1], afVectorData[2],
+            kMatrix.set( afVectorData[0], afVectorData[1], afVectorData[2],
             		afVectorData[1], afVectorData[3], afVectorData[4], 
             		afVectorData[2], afVectorData[4], afVectorData[5] );
             
 			if ( !bAllZero )
 			{
-				kMatrix.Mult( kDir, kOut );
-				kOut.Normalize();
+				kMatrix.mult( kDir, kOut );
+				kOut.normalize();
 
-				fAngle = Vector3f.Angle(kDir,kOut);
+				fAngle = Vector3f.angle(kDir,kOut);
 				if ( fAngle > m_fMaxAngle )
 				{
 					bDone = true;
@@ -1629,8 +1628,8 @@ implements ListSelectionListener, ChangeListener {
 					break;
 				}
 
-				kStart.Copy(kNext);
-				kDir.Copy(kOut);
+				kStart.copy(kNext);
+				kDir.copy(kOut);
 			}
 			else
 			{

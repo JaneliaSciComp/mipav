@@ -468,12 +468,12 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
 
             for (i = 0; i < end; i++) {
 
-                v1.Sub( pts.elementAt(i), pts.elementAt(i+1) );
-                v2.Sub( pts.elementAt(i+2), pts.elementAt(i+1) );
+                v1.copy( pts.elementAt(i) ).sub( pts.elementAt(i+1) );
+                v2.copy( pts.elementAt(i+2) ).sub( pts.elementAt(i+1) );
 
-                v1.Normalize();
-                v2.Normalize();
-                angle = Vector3f.Angle(v1,v2);
+                v1.normalize();
+                v2.normalize();
+                angle = Vector3f.angle(v1,v2);
 
                 // Smooth points
                 if (angle < smoothness) {

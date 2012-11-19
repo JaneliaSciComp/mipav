@@ -176,7 +176,7 @@ public class BSplineLattice3Df {
                 (iControlY < m_kBasisY.GetNumCtrlPoints()) && (0 <= iControlZ) &&
                 (iControlZ < m_kBasisZ.GetNumCtrlPoints())) {
 
-            kPoint.Copy(m_aaakControlPoint[iControlZ][iControlY][iControlX]);
+            kPoint.copy(m_aaakControlPoint[iControlZ][iControlY][iControlX]);
         }
     }
 
@@ -206,8 +206,7 @@ public class BSplineLattice3Df {
         int iControlMaxZ = m_kBasisZ.GetKnotIndex(fZ);
         int iControlMinZ = iControlMaxZ - m_kBasisZ.GetDegree();
 
-        kPos.Set(0.0f, 0.0f, 0.0f);
-        Vector3f kTemp = new Vector3f();
+        kPos.set(0.0f, 0.0f, 0.0f);
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
@@ -215,8 +214,7 @@ public class BSplineLattice3Df {
                 for (int iControlZ = iControlMinZ; iControlZ <= iControlMaxZ; iControlZ++) {
                     float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY) *
                                      m_kBasisZ.GetD0(iControlZ, iSampleZ);
-                    kTemp.Scale(fTmp, m_aaakControlPoint[iControlZ][iControlY][iControlX]);
-                    kPos.Add(kTemp);
+                    kPos.scaleAdd( fTmp, m_aaakControlPoint[iControlZ][iControlY][iControlX], kPos );
                 }
             }
         }
@@ -251,16 +249,14 @@ public class BSplineLattice3Df {
         m_kBasisY.Compute(fY, afD0Y, null, null);
         m_kBasisZ.Compute(fZ, afD0Z, null, null);
 
-        kPos.Set(0.0f, 0.0f, 0.0f);
-        Vector3f kTemp = new Vector3f();
+        kPos.set(0.0f, 0.0f, 0.0f);
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
 
                 for (int iControlZ = iControlMinZ; iControlZ <= iControlMaxZ; iControlZ++) {
                     float fTmp = afD0X[iControlX] * afD0Y[iControlY] * afD0Z[iControlZ];
-                    kTemp.Scale(fTmp, m_aaakControlPoint[iControlZ][iControlY][iControlX]);
-                    kPos.Add(kTemp);
+                    kPos.scaleAdd( fTmp, m_aaakControlPoint[iControlZ][iControlY][iControlX], kPos );
                 }
             }
         }
@@ -285,7 +281,7 @@ public class BSplineLattice3Df {
                 (iControlY < m_kBasisY.GetNumCtrlPoints()) && (0 <= iControlZ) &&
                 (iControlZ < m_kBasisZ.GetNumCtrlPoints())) {
 
-            m_aaakControlPoint[iControlZ][iControlY][iControlX].Copy(kPoint);
+            m_aaakControlPoint[iControlZ][iControlY][iControlX].copy(kPoint);
         }
     }
 }

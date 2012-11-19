@@ -144,7 +144,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
         
         //TODO: Try rotations here
-        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
     /**
@@ -382,7 +382,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void resetAxisX()
     {
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
-        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
+        m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
         UpdateSceneRotation();
     }
 
@@ -393,7 +393,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void resetAxisY()
     {
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
-        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
+        m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
         UpdateSceneRotation();
     }
 
@@ -623,8 +623,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         	m_akLights[0].Ambient.Set(1f, 1f, 1f);
         	m_akLights[0].Diffuse.Set(1f, 1f, 1f);
         	m_akLights[0].Specular.Set(1f, 1f, 1f);
-        	m_akLights[0].Position.Set(0f,0f,3f);
-        	m_akLights[0].DVector.Set( 0f, 0f, 1f );
+        	m_akLights[0].Position.set(0f,0f,3f);
+        	m_akLights[0].DVector.set( 0f, 0f, 1f );
 		    		
         	m_akLights[1] = new Light();
         	m_akLights[1].Intensity = 0.5f;
@@ -734,7 +734,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_bTestFrameRate )
         {
             Matrix3f kRotate = m_spkScene.Local.GetRotate();
-            kRotate.Mult(m_kRotate);
+            kRotate.mult(m_kRotate);
             m_spkScene.Local.SetRotate(kRotate);
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);

@@ -284,7 +284,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         mean.Z = (float)((mean.Z + mZ) / total);
 
         // Now make it central (taking off the Center of Mass)
-        meanProduct.MakeTensorProduct(mean, mean);
+        meanProduct.makeTensorProduct(mean, mean);
         mat2.M00 -= meanProduct.M00;
         mat2.M01 -= meanProduct.M01;
         mat2.M02 -= meanProduct.M02;

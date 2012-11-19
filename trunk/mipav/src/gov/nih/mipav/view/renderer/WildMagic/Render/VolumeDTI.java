@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOIContour;
-import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -11,13 +10,9 @@ import java.util.Vector;
 import WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Mathematics.Vector4f;
-import WildMagic.LibGraphics.Effects.ShaderEffect;
-import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.MaterialState;
@@ -30,8 +25,6 @@ import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
-import WildMagic.LibGraphics.Shaders.PixelShader;
-import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Surfaces.TubeSurface;
 
 /** Displays the Diffusion Tensor tracts in the VolumeViewer.
@@ -703,13 +696,13 @@ public class VolumeDTI extends VolumeObject
 						{
 							afVectorData[k] = m_kEigenVector.getFloatTriLinearBoundsTime(kPos.X, kPos.Y, kPos.Z, k);
 						}
-						kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-						kAxis.Cross( Vector3f.UNIT_Z, kV1 );
-						kAxis.Normalize();
+						kV1.set( afVectorData[0], afVectorData[1], afVectorData[2] );
+						kAxis = Vector3f.cross( Vector3f.UNIT_Z, kV1 );
+						kAxis.normalize();
 
-						fAngle = kV1.Angle(Vector3f.UNIT_Z);
+						fAngle = kV1.angle(Vector3f.UNIT_Z);
 						Matrix3f kRotate = new Matrix3f();
-						kRotate.FromAxisAngle( kAxis, fAngle);
+						kRotate.fromAxisAngle( kAxis, fAngle);
 
 
 						fLambda1 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 1);
@@ -720,9 +713,9 @@ public class VolumeDTI extends VolumeObject
 						kTransform.SetRotate( kRotate );
 
 						Vector3f kScale = new Vector3f( fLambda3, fLambda2, fLambda1 );
-						kScale.Normalize();
-						kScale.Set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
-						kScale.Scale(m_fScale);
+						kScale.normalize();
+						kScale.set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
+						kScale.scale(m_fScale);
 						kTransform.SetScale( kScale );
 
 
@@ -761,7 +754,7 @@ public class VolumeDTI extends VolumeObject
 								kGlyph.AttachEffect( kShader[2] );
 								kGlyph.UpdateRS();
 								Vector3f kPosColor = new Vector3f(kPos);
-								kPosColor.Mult(kExtentsScale);
+								kPosColor.mult(kExtentsScale);
 								if ( !kShader[2].SetColor(kPosColor) )
 								{
 									kShader[2].LoadPrograms(kRenderer, 0, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),

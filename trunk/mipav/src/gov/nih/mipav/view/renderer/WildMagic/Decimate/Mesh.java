@@ -114,8 +114,8 @@ public class Mesh {
 			v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
 			v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
 
-			ddnormalv3d.Cross( v1v3d, v2v3d );
-			ddnormalv3d.Normalize();
+			ddnormalv3d = Vector3f.cross( v1v3d, v2v3d );
+			ddnormalv3d.normalize();
 
 			kOut.print(" facet normal  ");
 			kOut.print(ddnormalv3d.X);
@@ -252,8 +252,8 @@ public class Mesh {
 			v2v3d.X = (float)(((point[Face[0]]).X - (point[Face[2]]).X) * scaler);
 			v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
 			v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
-			ddnormalv3d.Cross( v1v3d, v2v3d );
-			ddnormalv3d.Normalize();
+			ddnormalv3d = Vector3f.cross( v1v3d, v2v3d );
+			ddnormalv3d.normalize();
 
 			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.X, false,buff2));
 			kOut.write(FileBase.floatToBytes((float) ddnormalv3d.Y, false,buff2));
@@ -291,8 +291,8 @@ public class Mesh {
 		v2v3d.X = (float)(((point[Face[0]]).X - (point[Face[2]]).X) * scaler);
 		v2v3d.Y = (float)(((point[Face[0]]).Y - (point[Face[2]]).Y) * scaler);
 		v2v3d.Z = (float)(((point[Face[0]]).Z - (point[Face[2]]).Z) * scaler);
-		ddnormalv3d.Cross( v1v3d, v2v3d );
-		ddnormalv3d.Normalize();
+		ddnormalv3d = Vector3f.cross( v1v3d, v2v3d );
+		ddnormalv3d.normalize();
 		int j = 0;
 
 		for (j = 0; j < 3; j++) {

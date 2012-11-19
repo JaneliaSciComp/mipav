@@ -98,7 +98,7 @@ LoopBranchSearch:
             float fBranchPointDist = 0.0f;
 
             for (int iPoint = 1; iPoint < akBranchPosition.length; iPoint++) {
-                float fLength = akBranchPosition[iPoint].Distance(akBranchPosition[iPoint - 1]);
+                float fLength = akBranchPosition[iPoint].distance(akBranchPosition[iPoint - 1]);
                 fBranchLength += fLength;
 
                 if (iPoint <= iBranchPoint) {

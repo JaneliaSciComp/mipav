@@ -317,7 +317,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             kQFit = new AlgorithmQuadraticFit(kLess);
 
             // rescale from [-1,1]^3 to voxel coordinates
-            centerPt.Scale(fBMax, kQFit.getCenter());
+            centerPt.copy(kQFit.getCenter()).scale(fBMax);
 
             if (centerPt.X >= img.getExtents()[0]) {
                 centerPt.X = img.getExtents()[0] / 2;

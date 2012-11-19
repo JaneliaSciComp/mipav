@@ -166,8 +166,7 @@ implements GLEventListener, KeyListener
 			kCLoc = new Vector3f(0.0f,0.0f,3.0f);
 		}
 		Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -293,7 +292,7 @@ implements GLEventListener, KeyListener
 		if (m_bUseBumpMap)
 		{
 			Vector3f kLightDirection = new Vector3f(-1.0f,-1.0f,-1.0f);
-			kLightDirection.Normalize();
+			kLightDirection.normalize();
 			SimpleBumpMapEffect pkEffect = new SimpleBumpMapEffect("Bricks",
 					"BricksNormal",kLightDirection);
 			pkEffect.ComputeLightVectors(pkMesh);

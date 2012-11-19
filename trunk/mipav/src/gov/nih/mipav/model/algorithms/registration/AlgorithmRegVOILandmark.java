@@ -399,13 +399,13 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             for (i = 0; i < VOIlength; i++) {
                 matchVOIposition[i] = new Vector3f();
                 VOIpositionTemp[i] = new Vector3f(VOIposition.elementAt(i));
-                VOIpositionTemp[i].Sub(gcPt);
+                VOIpositionTemp[i].sub(gcPt);
             }
             // Transform VOI based on new transform
             xfrm.transformAsVector3Df(VOIpositionTemp, matchVOIposition);
             // Translate from image center:
             for (i = 0; i < VOIlength; i++) {
-                matchVOIposition[i].Add(gcPt);
+                matchVOIposition[i].add(gcPt);
                 // The Z should be the current slice 
                 matchVOIposition[i].Z = slice;
             }

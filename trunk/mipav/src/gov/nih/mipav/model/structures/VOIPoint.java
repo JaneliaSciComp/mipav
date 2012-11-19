@@ -203,7 +203,7 @@ public class VOIPoint extends VOIBase {
      */
     @Override
 	public Vector3f getGeometricCenter() {     
-        gcPt.Copy( getPosition() );
+        gcPt.copy( getPosition() );
         return new Vector3f(gcPt);
     }
     
@@ -325,8 +325,7 @@ public class VOIPoint extends VOIBase {
         for ( int i = 0; i < size(); i++ )
         {
             Vector3f kPos = get(i);
-            Vector3f kDiff = new Vector3f();
-            kDiff.Sub( kPos, kVOIPoint );
+            Vector3f kDiff = Vector3f.sub( kPos, kVOIPoint );
             if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
             {
                 setNearPoint(i);

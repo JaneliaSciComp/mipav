@@ -586,9 +586,9 @@ public class VolumeSurface extends VolumeObject
     public void Dropper(PickRecord kRecord, ColorRGBA rkDropperColor, Vector3f rkPickPoint )
     {
         m_kMesh.VBuffer.GetPosition3(kRecord.iV0, rkPickPoint );
-        rkPickPoint.Mult( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
+        rkPickPoint.scale( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ );
         int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
-        rkPickPoint.Mult( new Vector3f( iExtents[0], iExtents[1], iExtents[2] ));
+        rkPickPoint.scale( iExtents[0], iExtents[1], iExtents[2] );
         
         m_kMesh.VBuffer.GetColor4(0, kRecord.iV0, rkDropperColor );
         if ( m_bTextureOn )
@@ -624,8 +624,8 @@ public class VolumeSurface extends VolumeObject
             for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
             {
                 m_kMesh.VBuffer.GetPosition3(i, kPos2 );
-                kDiff.Sub( kPos1, kPos2 );
-                if ( kDiff.Length() < (iBrushSize/500.0f) )
+                kDiff.copy( kPos1 ).sub( kPos2 );
+                if ( kDiff.length() < (iBrushSize/500.0f) )
                 {
                     m_kMesh.VBuffer.SetColor4(0, i, m_akBackupColor[i] );
                     if ( iMin == -1 )
@@ -830,8 +830,8 @@ public class VolumeSurface extends VolumeObject
             for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
             {
                 m_kMesh.VBuffer.GetPosition3(i, kPos2 );
-                kDiff.Sub( kPos1, kPos2);
-                if ( kDiff.Length() < (iBrushSize/500.0f) )
+                kDiff.copy( kPos1 ).sub( kPos2);
+                if ( kDiff.length() < (iBrushSize/500.0f) )
                 {
                     m_kMesh.VBuffer.SetColor4(0, i, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
                     if ( iMin == -1 )
@@ -1414,7 +1414,7 @@ public class VolumeSurface extends VolumeObject
     	directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
     	for ( int i = 0; i < directions.length; i++ )
     	{
-    		directions[i].Normalize();
+    		directions[i].normalize();
     	}
         long startTime = System.currentTimeMillis();
     	
@@ -1522,7 +1522,7 @@ public class VolumeSurface extends VolumeObject
     		{
     			for ( int x = xMin; x <= xMax; x++ )
     			{
-    				kTest.Set(x,y,z);
+    				kTest.set(x,y,z);
     				// convert to 'mesh' coords...
     				volumeToMeshCoords(kTest);
 
@@ -1561,8 +1561,8 @@ public class VolumeSurface extends VolumeObject
     	for ( int i = 0; i < kBoxCorners.length; i++ )
     	{
         	meshToVolumeCoords(kBoxCorners[i]);
-    		m_kMaxBB.Max( kBoxCorners[i] );
-    		m_kMinBB.Min( kBoxCorners[i] );
+    		m_kMaxBB.max( kBoxCorners[i] );
+    		m_kMinBB.min( kBoxCorners[i] );
     	}
 	}
 	
@@ -1611,7 +1611,7 @@ public class VolumeSurface extends VolumeObject
     		Line3f[] akLines = new Line3f[directions.length];
     		for ( int i = 0; i < directions.length; i++ )
     		{
-    			directions[i].Normalize();
+    			directions[i].normalize();
             	akLines[i] = new Line3f(kP0Mesh,directions[i]);
     		}
     		if ( testIntersections( kP0Mesh, akLines ) )
@@ -1691,9 +1691,7 @@ public class VolumeSurface extends VolumeObject
      */
     private void volumeToMeshCoords(Vector3f kVolume)
     {
-    	kVolume.Mult( m_kVolumeScale );
-    	kVolume.Sub( m_kVolumeTrans );	
-    	kVolume.Scale( m_fVolumeDiv );			
+    	kVolume.mult( m_kVolumeScale ).sub( m_kVolumeTrans ).scale( m_fVolumeDiv );			
     }
 
     /**
@@ -1703,9 +1701,7 @@ public class VolumeSurface extends VolumeObject
      */
     private void meshToVolumeCoordsA(Vector3f kMesh)
     {
-    	kMesh.Scale( m_fVolumeMult );	
-    	kMesh.Add( m_kVolumeTrans );			
-    	kMesh.Scale( .5f );
+    	kMesh.scale( m_fVolumeMult ).add( m_kVolumeTrans ).scale( .5f );
     }
 
     /**
@@ -1715,9 +1711,7 @@ public class VolumeSurface extends VolumeObject
      */
     private void meshToVolumeCoords(Vector3f kMesh)
     {
-    	kMesh.Scale( m_fVolumeMult );	
-    	kMesh.Add( m_kVolumeTrans );			
-    	kMesh.Mult( m_kMeshScale );
+    	kMesh.scale( m_fVolumeMult ).add( m_kVolumeTrans ).mult( m_kMeshScale );
     }
 
 
@@ -1731,7 +1725,7 @@ public class VolumeSurface extends VolumeObject
     	meshToVolumeCoords(kMesh);    	
     	Vector3f kScanner = new Vector3f();
     	MipavCoordinateSystems.fileToScanner( kMesh, kScanner, m_kVolumeImageA.GetImage() );
-    	kMesh.Copy(kScanner);
+    	kMesh.copy(kScanner);
     }
     
     /**
@@ -1849,12 +1843,12 @@ public class VolumeSurface extends VolumeObject
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
             m_kMesh.VBuffer.GetPosition3( i, kPos );
-            m_kCenter.Add( kPos );
+            m_kCenter.add( kPos );
             meshToScannerCoords(kPos);
-            m_kCenterScanner.Add( kPos );
+            m_kCenterScanner.add( kPos );
         }
-        m_kCenter.Scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
-        m_kCenterScanner.Scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
+        m_kCenter.scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
+        m_kCenterScanner.scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
     }
     /**
      * Compute the average length of all the edges in the triangle mesh.
@@ -1873,8 +1867,8 @@ public class VolumeSurface extends VolumeObject
 
             Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(kE.m_iV0);
             Vector3f kV1 = m_kMesh.VBuffer.GetPosition3(kE.m_iV1);
-            kEdge.Sub( kV1, kV0 );
-            fMeanEdgeLength += kEdge.Length();
+            kEdge.copy( kV1 ).sub( kV0 );
+            fMeanEdgeLength += kEdge.length();
         }
 
         fMeanEdgeLength /= kEMap.size();
@@ -1897,7 +1891,7 @@ public class VolumeSurface extends VolumeObject
 
         int iVertexQuantitaty = m_kMesh.VBuffer.GetVertexQuantity();
         for (int i = 0; i < iVertexQuantitaty; i++) {
-            akVMean[i].Set(0.0f, 0.0f, 0.0f);
+            akVMean[i].set(0.0f, 0.0f, 0.0f);
         }
 
         Vector3f kS = new Vector3f();
@@ -1910,19 +1904,19 @@ public class VolumeSurface extends VolumeObject
 
             for (int j = 0; j < kAdj.getQuantity(); j++) {
                 Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(kAdj.get(j));
-                akVMean[i].Add(kV0);
+                akVMean[i].add(kV0);
             }
 
-            akVMean[i].Scale(1.0f / kAdj.getQuantity());
+            akVMean[i].scale(1.0f / kAdj.getQuantity());
 
             // compute the normal and tangential components of mean-vertex
             Vector3f kV0 = m_kMesh.VBuffer.GetPosition3(i);
-            kS.Sub( akVMean[i], kV0 );
-            akSNormal[i].Scale( kS.Dot(akVNormal[i]), akVNormal[i] );
-            akSTangent[i].Sub( kS, akSNormal[i] );
+            kS.copy( akVMean[i] ).sub( kV0 );
+            akSNormal[i].copy( akVNormal[i] ).scale( kS.dot(akVNormal[i]) );
+            akSTangent[i].copy( kS ).sub( akSNormal[i] );
 
             // compute the curvature
-            float fLength = akSNormal[i].Length();
+            float fLength = akSNormal[i].length();
 
             afCurvature[i] = ((2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
 
@@ -1949,12 +1943,8 @@ public class VolumeSurface extends VolumeObject
         int iVertexQuantity = m_kMesh.VBuffer.GetVertexQuantity();
         // maintain a running sum of triangle normals at each vertex
         for (int i = 0; i < iVertexQuantity; i++) {
-            akVNormal[i].Set(0.0f, 0.0f, 0.0f);
+            akVNormal[i].set(0.0f, 0.0f, 0.0f);
         }
-
-        Vector3f kEdge1 = new Vector3f();
-        Vector3f kEdge2 = new Vector3f();
-        Vector3f kNormal = new Vector3f();
 
         int iTQuantity = m_kMesh.GetTriangleQuantity();
         for (int i = 0; i < iTQuantity; i++)
@@ -1972,18 +1962,18 @@ public class VolumeSurface extends VolumeObject
             Vector3f kV2 = m_kMesh.VBuffer.GetPosition3(iV2);
 
             // compute the triangle normal
-            kEdge1.Sub( kV1, kV0 );
-            kEdge2.Sub( kV2, kV0 );
-            kNormal.Cross( kEdge1, kEdge2 );
+            Vector3f kEdge1 = Vector3f.sub( kV1, kV0 );
+            Vector3f kEdge2 = Vector3f.sub( kV2, kV0 );
+            Vector3f kNormal = Vector3f.cross( kEdge1, kEdge2 );
 
             // the triangle normal partially contributes to each vertex normal
-            akVNormal[iV0].Add(kNormal);
-            akVNormal[iV1].Add(kNormal);
-            akVNormal[iV2].Add(kNormal);
+            akVNormal[iV0].add(kNormal);
+            akVNormal[iV1].add(kNormal);
+            akVNormal[iV2].add(kNormal);
         }
 
         for (int i = 0; i < iVertexQuantity; i++) {
-            akVNormal[i].Normalize();
+            akVNormal[i].normalize();
         }
     }
     /** Creates the scene graph. */
@@ -2017,7 +2007,7 @@ public class VolumeSurface extends VolumeObject
         // for each coordinate vertex
         for (int i = 0; i < iVQuantity; i++) {
 
-            kSum.Set(0f,0f,0f);
+            kSum.set(0f,0f,0f);
             num = 0;
             m_kMesh.VBuffer.GetPosition3(i, kOriginalPos);
 
@@ -2029,18 +2019,18 @@ public class VolumeSurface extends VolumeObject
 
                 // Sum of (xj - xi) where j ranges over all the points connected to xi
                 // xj = m_kV2; xi = m_kV3
-                kConnectionPos.Sub( kOriginalPos );
-                kSum.Add( kConnectionPos );
+                kConnectionPos.sub( kOriginalPos );
+                kSum.add( kConnectionPos );
                 num++;
             }
             // xi+1 = xi + (alpha)*(sum of(points xi is connected to - xi))
 
             if (num > 1) {
-                kSum.Scale( 1.0f / num );
+                kSum.scale( 1.0f / num );
             }
 
-            kSum.Scale( fValue );
-            kOriginalPos.Add( kSum );
+            kSum.scale( fValue );
+            kOriginalPos.add( kSum );
             kVBuffer.SetPosition3(i, kOriginalPos);
         }
 
@@ -2089,20 +2079,16 @@ public class VolumeSurface extends VolumeObject
 
         int iVertexQuantity = m_kMesh.VBuffer.GetVertexQuantity();
         // update the vertices
-        Vector3f kT = new Vector3f();
-        Vector3f kS = new Vector3f();
         for (int i = 0; i < iVertexQuantity; i++) {
             Vector3f kV = m_kMesh.VBuffer.GetPosition3(i);
 
             // tangential update
-            kT.Scale( 0.5f, akSTangent[i] );
-            kV.Add( kT );
+            kV.scaleAdd( 0.5f, akSTangent[i], kV );
 
             // normal update
             float fUpdate2 = update2(i, afCurvature, fStiffness, afParams);
 
-            kS.Scale(  fUpdate2, akSNormal[i] );
-            kV.Add( kS );
+            kV.scaleAdd( fUpdate2, akSNormal[i], kV );
             m_kMesh.VBuffer.SetPosition3(i, kV);
         }
     }   
