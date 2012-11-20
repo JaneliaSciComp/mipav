@@ -730,9 +730,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double r[] = new double[10];
         double dub[] = new double[1];
         int nu;
-        double ddum;
+        double ddum = 0.0;
         double tmp;
-        boolean go800 = false;
         double dalpl[][] = new double[10][9];
         int i;
         double ddub = 0.0;
@@ -741,6 +740,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double qt[] = new double[3];
         double vt[] = new double[3];
         boolean go630 = false;
+        double qtvar[];
+        int jk;
         
         isplit = 1;
         if (split) {
@@ -789,6 +790,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         } // if (prlsq)
         
         // Start of main loop for least squares fit
+        bigloop:
         while (true) {
             ntry = 1;
             while (true) {
@@ -801,8 +803,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         varf(q, jlam, var, true, ldum, ylyfit, nlin, varg[0], ntry, inter, ierror);    
                     }
                     if (ierror[0] == 5) {
-                        go800 = true;
-                        break;
+                        break bigloop;
                     }
                     allpiv[0] = ldum[0];
                     if ((var[0] <= varg[0]) || (ntry == 2)) {
@@ -811,257 +812,243 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     ntry = 2;
                     q[0] = qg[0];
                 } // while (true)
-                if (!go800) {
+                for (j = 0; j < jlam; j++) {
+                    r[j] = palpha[j];
+                    if (!rawdat) {
+                      r[j] = palpha[j]*Math.exp(-plmtry[j]*delta);  
+                    } 
+                    plam[j] = plmtry[j];
+                } // for (j = 0; j < jlam; j++)
+                dub[0] = var[0] - varold;
+                if (prlsq) {
+                    nu = Math.min(5, jlam);
+                    ddum = 1.0;
+                    if (dub[0] > 0.0) {
+                        ddum = 2.0;
+                    }
                     for (j = 0; j < jlam; j++) {
-                        r[j] = palpha[j];
-                        if (!rawdat) {
-                          r[j] = palpha[j]*Math.exp(-plmtry[j]*delta);  
-                        } 
-                        plam[j] = plmtry[j];
-                    } // for (j = 0; j < jlam; j++)
-                    dub[0] = var[0] - varold;
-                    if (prlsq) {
-                        nu = Math.min(5, jlam);
-                        ddum = 1.0;
-                        if (dub[0] > 0.0) {
-                            ddum = 2.0;
+                        pcerr[j] = 1.0;
+                        if (!pivlam[j]) {
+                            pcerr[j] = 2.0;
                         }
-                        for (j = 0; j < jlam; j++) {
-                            pcerr[j] = 1.0;
-                            if (!pivlam[j]) {
-                                pcerr[j] = 2.0;
-                            }
-                        } // for (j = 0; j < jlam; j++)
-                        Preferences.debug("iter = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("var[0] = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("ddum = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("ntry = " + ntry + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
-                        for (j = 0; j < nu; j++) {
+                    } // for (j = 0; j < jlam; j++)
+                    Preferences.debug("iter = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("var[0] = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ddum = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("ntry = " + ntry + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    for (j = 0; j < nu; j++) {
+                        Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                    } // for (j = 0; j < nu; j++)
+                    if (jlam > 5) {
+                        for (j = 5; j < jlam; j++) {
                             Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                            Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                        } // for (j = 0; j < nu; j++)
-                        if (jlam > 5) {
-                            for (j = 5; j < jlam; j++) {
-                                Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                                Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                                Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);    
-                            } // for (j = 5; j < jlam; j++)
-                        } // if (jlam > 5)
-                    } // if (prlsq)
-                    
-                    // Tests for convergence and divergence
-                    tmp = convrg * fhatmx;
-                    if (!((Math.abs(dub[0]) > Math.max(varmin, varold*convrg) && rawdat) || 
-                            (var[0] > nf*tmp*tmp && !rawdat))) {
-                        nconv++;
-                        if (nconv >= mconv || !rawdat) {
-                            go800 = true;
-                        }
-                        else {
-                            nvarup = 0;
-                        }
+                            Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);    
+                        } // for (j = 5; j < jlam; j++)
+                    } // if (jlam > 5)
+                } // if (prlsq)
+                
+                // Tests for convergence and divergence
+                tmp = convrg * fhatmx;
+                if (!((Math.abs(dub[0]) > Math.max(varmin, varold*convrg) && rawdat) || 
+                        (var[0] > nf*tmp*tmp && !rawdat))) {
+                    nconv++;
+                    if (nconv >= mconv || !rawdat) {
+                        break bigloop;
                     }
                     else {
-                        nconv = 0;
-                        if (dub[0] <= 0.0) {
-                            nvarup = 0;
+                        nvarup = 0;
+                    }
+                }
+                else {
+                    nconv = 0;
+                    if (dub[0] <= 0.0) {
+                        nvarup = 0;
+                    }
+                    else {
+                        nvarup++;
+                        if ((nvarup >= nabort) && (iter >= jlam)) {
+                            ierror[0] = 1;
+                            break bigloop;
                         }
-                        else {
-                            nvarup++;
-                            if ((nvarup >= nabort) && (iter >= jlam)) {
-                                ierror[0] = 1;
-                                go800 = true;
+                    }
+                    
+                    if (iter >= mxiter[itype-1]) {
+                        ierror[0] = 2;
+                        break bigloop;
+                    }
+                    if (dub[0]/varold < dflat || rawdat) {
+                        nflat = 0;
+                    }
+                    else {
+                        nflat++;
+                        if (nflat >= nabort) {
+                            ierror[0] = 3;
+                            break bigloop;
+                        }
+                    }
+                }
+                // Finish computation of dfcapl (partial of fcap with respect to lambda)
+                for (k = 0; k < jlam; k++) {
+                    for (j = 0; j < nlin; j++) {
+                        dfcapl[j][k] = dfcapl[j][k] * palpha[k];
+                    } // for (j = 0; j < nlin; j++)
+                    dfcapl[k][k] = dfcapl[k][k] + sfde[k];
+                } // for (k = 0; k < jlam; k++)
+                
+                // Calculate dalpl (partial of palpha with respect to lambda) from matrix
+                // product adub * dfcapl
+                
+                for (j = 0; j < nlin; j++) {
+                    for (k = 0; k < jlam; k++) {
+                        dalpl[j][k] = 0.0;
+                    }
+                } 
+                
+                for (k = 0; k < jlam; k++) {
+                    if (!pivalp[k]) {
+                        continue;
+                    }
+                    for (j = 0; j < nlin; j++) {
+                        if (!pivalp[j]) {
+                            continue;
+                        }
+                        dub[0] = 0.0;
+                        for (i = 0; i < nlin; i++) {
+                            if (pivalp[i]) {
+                                dub[0] = dub[0] + adub[j][i] * dfcapl[i][k];
                             }
-                        }
-                        if (!go800) {
-                            if (iter >= mxiter[itype-1]) {
-                                ierror[0] = 2;
-                                go800 = true;
-                            }
-                        }
-                        if (!go800) {
-                            if (dub[0]/varold < dflat || rawdat) {
-                                nflat = 0;
+                        } // for (i = 0; i < nlin; i++)
+                        dalpl[j][k] = dub[0];
+                    } // for (j = 0; j < nlin; j++)
+                } // for (k = 0; k < jlam; k++)
+                
+                // Calculate adub (normal equation matrix for nonlinear least squares)
+                // and invert it
+                
+                if (rawdat) {
+                    for (k = 1; k <= jlam; k++) {
+                        for (j = 1; j <= k; j++) {
+                            dub[0] = 0.0;
+                            for (L = 1; L <= nlin; L++) {
+                                dub[0] = dub[0] - dalpl[L-1][j-1] * dfcapl[L-1][k-1];
+                            } // for (L = 1; L <= nlin; L++)
+                            if (Math.abs(palpha[k-1]) <= Math.abs(palpha[j-1])) {
+                                dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
+                                dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
                             }
                             else {
-                                nflat++;
-                                if (nflat >= nabort) {
-                                    ierror[0] = 3;
-                                    go800 = true;
-                                }
+                                dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
+                                dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
                             }
-                        } // if (!go800)
-                    }
-                    if (!go800) {
-                        // Finish computation of dfcapl (partial of fcap with respect to lambda)
-                        for (k = 0; k < jlam; k++) {
-                            for (j = 0; j < nlin; j++) {
-                                dfcapl[j][k] = dfcapl[j][k] * palpha[k];
-                            } // for (j = 0; j < nlin; j++)
-                            dfcapl[k][k] = dfcapl[k][k] + sfde[k];
-                        } // for (k = 0; k < jlam; k++)
-                        
-                        // Calculate dalpl (partial of palpha with respect to lambda) from matrix
-                        // product adub * dfcapl
-                        
-                        for (j = 0; j < nlin; j++) {
-                            for (k = 0; k < jlam; k++) {
-                                dalpl[j][k] = 0.0;
-                            }
-                        } 
-                        
-                        for (k = 0; k < jlam; k++) {
-                            if (!pivalp[k]) {
+                            ddub = palpha[k-1] * palpha[j-1] * ddse[j-1][k-1];
+                            adub[j-1][k-1] = dub[0] + ddub;
+                        } // for (j = 1; j <= k; j++)
+                        dtoler[k-1] = ddub;
+                        adub[k-1][jlamp1-1] = palpha[k-1]*sfde[k-1];
+                    } // for (k = 1; k <= jlam; k++)
+                } // if (rawdat)
+                else { //!rawdat
+                    for (j = 1; j <= jlam; j++) {
+                        dtoler[j-1] = 0.0;
+                        r[j-1] = 0.0;
+                        for (k = j; k <= jlamp1; k++) {
+                            adub[j-1][k-1] = 0.0;
+                        } // for (k = j; k <= jlamp1; k++)
+                    } // for (j = 1; j <= jlam; j++)
+                    
+                    for (nu = 1; nu <= n; nu++) {
+                        for (k = 1; k <= jlam; k++) {
+                            if (!pivalp[k-1]) {
                                 continue;
                             }
-                            for (j = 0; j < nlin; j++) {
-                                if (!pivalp[j]) {
-                                    continue;
-                                }
-                                dub[0] = 0.0;
-                                for (i = 0; i < nlin; i++) {
-                                    if (pivalp[i]) {
-                                        dub[0] = dub[0] + adub[j][i] * dfcapl[i][k];
-                                    }
-                                } // for (i = 0; i < nlin; i++)
-                                dalpl[j][k] = dub[0];
-                            } // for (j = 0; j < nlin; j++)
-                        } // for (k = 0; k < jlam; k++)
-                        
-                        // Calculate adub (normal equation matrix for nonlinear least squares)
-                        // and invert it
-                        
-                        if (rawdat) {
-                            for (k = 1; k <= jlam; k++) {
-                                for (j = 1; j <= k; j++) {
-                                    dub[0] = 0.0;
-                                    for (L = 1; L <= nlin; L++) {
-                                        dub[0] = dub[0] - dalpl[L-1][j-1] * dfcapl[L-1][k-1];
-                                    } // for (L = 1; L <= nlin; L++)
-                                    if (Math.abs(palpha[k-1]) <= Math.abs(palpha[j-1])) {
-                                        dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
-                                        dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
-                                    }
-                                    else {
-                                        dub[0] = dub[0] + dalpl[k-1][j-1] * sfde[k-1];
-                                        dub[0] = dub[0] + dalpl[j-1][k-1] * sfde[j-1];
-                                    }
-                                    ddub = palpha[k-1] * palpha[j-1] * ddse[j-1][k-1];
-                                    adub[j-1][k-1] = dub[0] + ddub;
-                                } // for (j = 1; j <= k; j++)
-                                dtoler[k-1] = ddub;
-                                adub[k-1][jlamp1-1] = palpha[k-1]*sfde[k-1];
-                            } // for (k = 1; k <= jlam; k++)
-                        } // if (rawdat)
-                        else { //!rawdat
-                            for (j = 1; j <= jlam; j++) {
-                                dtoler[j-1] = 0.0;
-                                r[j-1] = 0.0;
-                                for (k = j; k <= jlamp1; k++) {
-                                    adub[j-1][k-1] = 0.0;
-                                } // for (k = j; k <= jlamp1; k++)
-                            } // for (j = 1; j <= jlam; j++)
-                            
-                            for (nu = 1; nu <= n; nu++) {
-                                for (k = 1; k <= jlam; k++) {
-                                    if (!pivalp[k-1]) {
-                                        continue;
-                                    }
-                                    dub[0] = 0.0;
-                                    for (j = 1; j <= nlin; j++) {
-                                        dub[0] = dub[0] + f[nu-1][j-1] * dalpl[j-1][k-1];
-                                    } // for (j = 1; j <= nlin; j++)
-                                    ddub = df[nu-1][k-1]*palpha[k-1];
-                                    dtoler[k-1] = dtoler[k-1] + ddub*ddub;
-                                    r[k-1] = dub[0] + ddub;
-                                } // for (k = 1; k <= jlam; k++)
-                                ddub = ylyfit[nu-1];
-                                for (k = 1; k <= jlam; k++) {
-                                    if (!pivalp[k-1]) {
-                                        continue;
-                                    }
-                                    dub[0] = r[k-1];
-                                    for (j = 1; j <= k; j++) {
-                                        adub[j-1][k-1] = adub[j-1][k-1] + r[j-1]*dub[0];
-                                    } // for (j = 1; j <= k; j++)
-                                    adub[k-1][jlamp1-1] = adub[k-1][jlamp1-1] + r[k-1] * ddub;
-                                } // for (k = 1; k <= jlam; k++)
-                            } // for (nu = 1; nu <= n; nu++)
-                        } // else !rawdat
-                        for (j = 0; j < jlam; j++) {
-                            dtoler[j] = precis * Math.max(dtoler[j], adub[j][j]);
-                            r[j] = adub[j][jlamp1-1];
-                        } // for (j = 0; j < jlam; j++)
-                        adub[jlamp1-1][jlamp1-1] = 0.0;
-                        array = new double[mdima][mdima];
-                        for (i = 0; i < mdima; i++) {
-                            for (j = 0; j < mdima; j++) {
-                                array[i][j] = adub[i][j];
+                            dub[0] = 0.0;
+                            for (j = 1; j <= nlin; j++) {
+                                dub[0] = dub[0] + f[nu-1][j-1] * dalpl[j-1][k-1];
+                            } // for (j = 1; j <= nlin; j++)
+                            ddub = df[nu-1][k-1]*palpha[k-1];
+                            dtoler[k-1] = dtoler[k-1] + ddub*ddub;
+                            r[k-1] = dub[0] + ddub;
+                        } // for (k = 1; k <= jlam; k++)
+                        ddub = ylyfit[nu-1];
+                        for (k = 1; k <= jlam; k++) {
+                            if (!pivalp[k-1]) {
+                                continue;
                             }
-                        }
-                        pivot(array, mdima, jlam, false, false, true, lamnmx[0][0], lamnmx[1][0], plam, dtoler, deltap, ldum, qg, 
-                              pivlam, jlam, qmax, ierror);
-                        for (i = 0; i < mdima; i++) {
-                            for (j = 0; j < mdima; j++) {
-                                adub[i][j] = array[i][j];
-                            }
-                        }
-                        if (ierror[0] == 5) {
-                            go800 = true;
-                        }
-                        if (!go800) {
-                            allpiv[1] = ldum[0];
-                            
-                            // Use modification-A of G. E. P. box to estimate best Q (fractional step size)
-                            
-                            varold = var[0];
-                            ddum  = 0.0;
-                            for (j = 0; j < jlam; j++) {
-                                ddum = ddum + deltap[j] * r[j];
-                            }
-                            if (ddum <= 0.0) {
-                                if (prlsq) {
-                                    Preferences.debug("Gauss vector pointing in wrong direction\n", Preferences.DEBUG_ALGORITHM);
-                                }
-                                ntry = 2;
-                                q[0] = Math.min(qmin, qmax[0]);
-                            } // if (ddum <= 0.0)
-                            else {
-                                break;
-                            }
-                        } // if (!go800)
-                    } // if (!go800)
-                } // if (!go800)
-            } // while (true)
-            
-            if (!go800) {
-                if (routineCalled == evarCalled) {
-                    evar(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);
+                            dub[0] = r[k-1];
+                            for (j = 1; j <= k; j++) {
+                                adub[j-1][k-1] = adub[j-1][k-1] + r[j-1]*dub[0];
+                            } // for (j = 1; j <= k; j++)
+                            adub[k-1][jlamp1-1] = adub[k-1][jlamp1-1] + r[k-1] * ddub;
+                        } // for (k = 1; k <= jlam; k++)
+                    } // for (nu = 1; nu <= n; nu++)
+                } // else !rawdat
+                for (j = 0; j < jlam; j++) {
+                    dtoler[j] = precis * Math.max(dtoler[j], adub[j][j]);
+                    r[j] = adub[j][jlamp1-1];
+                } // for (j = 0; j < jlam; j++)
+                adub[jlamp1-1][jlamp1-1] = 0.0;
+                array = new double[mdima][mdima];
+                for (i = 0; i < mdima; i++) {
+                    for (j = 0; j < mdima; j++) {
+                        array[i][j] = adub[i][j];
+                    }
                 }
-                else if (routineCalled == varfCalled) {
-                    varf(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
+                pivot(array, mdima, jlam, false, false, true, lamnmx[0][0], lamnmx[1][0], plam, dtoler, deltap, ldum, qg, 
+                      pivlam, jlam, qmax, ierror);
+                for (i = 0; i < mdima; i++) {
+                    for (j = 0; j < mdima; j++) {
+                        adub[i][j] = array[i][j];
+                    }
                 }
                 if (ierror[0] == 5) {
-                    go800 = true;
+                    break bigloop;
                 }
-                if (!go800) {
-                    allpiv[0] = ldum[0];
-                    dum = varg[0] - varold + 2.0 * ddum * qg[0];
-                    if (dum <= 0.0) {
-                        dum = 0.25 * ddum * qg[0] * qg[0];
+                allpiv[1] = ldum[0];
+                
+                // Use modification-A of G. E. P. box to estimate best Q (fractional step size)
+                
+                varold = var[0];
+                ddum  = 0.0;
+                for (j = 0; j < jlam; j++) {
+                    ddum = ddum + deltap[j] * r[j];
+                }
+                if (ddum <= 0.0) {
+                    if (prlsq) {
+                        Preferences.debug("Gauss vector pointing in wrong direction\n", Preferences.DEBUG_ALGORITHM);
                     }
-                    q[0] = Math.min(ddum * qg[0] * qg[0]/dum, Math.min(4.0, qmax[0]));
-                    if (!(varg[0] <= varold || (q[0] >= 0.125*qg[0] && rawdat))) {
-                        break;
-                    }
-                } // if (!go800)
-            } // if (!go800)
-        } // while (true)
+                    ntry = 2;
+                    q[0] = Math.min(qmin, qmax[0]);
+                } // if (ddum <= 0.0)
+                else {
+                    break;
+                }
+            } // while (true)
+            
+            if (routineCalled == evarCalled) {
+                evar(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);
+            }
+            else if (routineCalled == varfCalled) {
+                varf(qg, jlam, varg, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
+            }
+            if (ierror[0] == 5) {
+                break bigloop;
+            }
+            allpiv[0] = ldum[0];
+            dum = varg[0] - varold + 2.0 * ddum * qg[0];
+            if (dum <= 0.0) {
+                dum = 0.25 * ddum * qg[0] * qg[0];
+            }
+            q[0] = Math.min(ddum * qg[0] * qg[0]/dum, Math.min(4.0, qmax[0]));
+            if (varg[0] <= varold || (q[0] >= 0.125*qg[0] && rawdat)) {
+                continue;
+            }
         
-        if (!go800) {
+        
             // Put quadratic parabola thru actual variance surface when a 
             // strong nonlinearity is indicated by a small q[0]
             qt[0] = Math.min(0.125 * qg[0], Math.max(q[0], 0.02));
@@ -1075,31 +1062,125 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 varf(qt, jlam, dub, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
             }
             if (ierror[0] == 5) {
-                go800 = true;
+                break bigloop;
             }
-            if (!go800) {
-                vt[0] = dub[0];
-                if (vt[0] >= varold) {
-                    qt[1] = 0.5 * qt[0];
-                    qt[1] = Math.min(qt[1], 0.05);
-                } // if (vt[0] >= varold)
-                else {
-                    qt[1] = 4.0 * qt[0];
-                    if (qt[0] > 0.125 * qg[0]) {
-                        qt[1] = 0.0;
-                        vt[1] = varold;
-                        qt[2] = qg[0];
-                        vt[2] = varg[0];
-                        go630 = true;
-                    }
+            vt[0] = dub[0];
+            if (vt[0] >= varold) {
+                qt[1] = 0.5 * qt[0];
+                qt[1] = Math.min(qt[1], 0.05);
+            } // if (vt[0] >= varold)
+            else {
+                qt[1] = 4.0 * qt[0];
+                if (qt[0] > 0.125 * qg[0]) {
+                    qt[1] = 0.0;
+                    vt[1] = varold;
+                    qt[2] = qg[0];
+                    vt[2] = varg[0];
+                    go630 = true;
                 }
-                
-                if (!go630) {
-                    
-                } // if (!go630)
-            } // if (!go800)
-        } // if (!go800)
+            }
+            
+            if (!go630) {
+                qtvar = new double[1];
+                qtvar[0] = qt[1];
+                if (routineCalled == evarCalled) {
+                    evar(qtvar, jlam, dub, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);
+                }
+                else if (routineCalled == varfCalled) {
+                    varf(qtvar, jlam, dub, false, ldum, ylyfit, nlin, var[0], ntry, inter, ierror);    
+                }
+                qt[1] = qtvar[0];
+                if (ierror[0] == 5) {
+                    break bigloop;
+                }
+                vt[1] = dub[0];
+                if ((vt[0] < varold)  && (vt[1] < vt[0])) {
+                    qt[2] = qg[0];
+                    vt[2] = varg[0];
+                }
+                else {
+                    qt[2] = 0.0;
+                    vt[2] = varold;
+                }
+            } // if (!go630)
+            go630 = false;
+            varg[0] = Math.min(vt[0], Math.min(vt[1], varg[0]));
+            if (vt[0] <= varg[0]) {
+                qg[0] = qt[0];
+            }
+            if (vt[1] <= varg[0]) {
+                qg[0] = qt[1];
+            }
+            dum = (vt[0] - vt[2])/(qt[0] - qt[2]);
+            ddum = (dum - (vt[1] - vt[2])/(qt[1] - qt[2]))/(qt[0] - qt[1]);
+            if (ddum > 0.0) {
+                dum = 0.5 * ((qt[0] + qt[2])- dum/ddum);
+                if (dum <= 0.0) {
+                    q[0] = Math.min(q[0], Math.min(0.125*qt[1], 0.01));
+                    continue;
+                }
+                q[0] = Math.min(dum, Math.min(8.0, qmax[0]));
+                continue;
+            } // if (ddum > 0.0)
+            q[0] = Math.min(q[0], Math.min(0.125*qt[1], 0.01));
+        } // while (true)
         
+        // Check for abnormal exit and call anlerr
+        failed = ierror[0] != 0 || !allpiv[0];
+        if (rawdat) {
+            failed = failed || !allpiv[1];
+            if (!failed || itype == 4) {
+                anlerr(jlam, nlin, itype, inter, prlsq);    
+            }
+        } // if (rawdat)
+        if (prlsq && failed) {
+            if (ierror[0] == 3) {
+                Preferences.debug("Variance did not significantly decrease the last " + nabort + " times\n",
+                        Preferences.DEBUG_ALGORITHM);
+            }
+            else if (ierror[0] == 2) {
+                Preferences.debug("Maximum iterations without convergence\n", Preferences.DEBUG_ALGORITHM);
+            }
+            else if (ierror[0] == 1) {
+                Preferences.debug("Variance increased the last " + nvarup + " times\n", Preferences.DEBUG_ALGORITHM);    
+            }
+            else if (ierror[0] == 5) {
+                Preferences.debug("Nearly singular normal equations matrix\n", Preferences.DEBUG_ALGORITHM);
+            }
+        } // if (prlsq && failed)
+        
+        // Put plam in ascending order
+        for (j = 1; j <= jlam; j++) {
+            dub[0] = 1.0E20;
+            for (k = j; k <= jlam; k++) {
+                if (plam[k-1] > dub[0]) {
+                    continue;
+                }
+                L= k;
+                dub[0] = plam[k-1];
+            } // for (k = j; k <= jlam; k++)
+            plam[L-1] = plam[j-1];
+            plam[j-1] = dub[0];
+            dub[0] = palpha[L-1];
+            palpha[L-1] = palpha[j-1];
+            palpha[j-1] = dub[0];
+            if (!rawdat) {
+                continue;
+            }
+            dum = sigmap[L-1];
+            sigmap[L-1] = sigmap[j-1];
+            sigmap[j-1] = dum;
+            k = L + jlam;
+            jk = j + jlam;
+            dum = sigmap[k-1];
+            sigmap[k-1] = sigmap[jk-1];
+            sigmap[jk-1] = dum;
+            pcerr[j-1] = 100.0 * sigmap[j-1]/plam[j-1];
+            if (Math.abs(palpha[j-1]) > 0.0) {
+                pcerr[jk-1] = 100.0 * sigmap[jk-1]/Math.abs(palpha[j-1]);
+            }
+        } // for (j = 1; j <= jlam; j++)
+        return;
     } // lstsqr
     
     private void pivot(double adub[][], int mdima, int np, boolean onlyin, boolean invert, boolean constr, double pmin,
@@ -1119,13 +1200,261 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         
     } // varf
     
+    private void anlerr(int jlam, int nlin, int itype, boolean inter, boolean prlsq) {
+        
+    } // anlerr
+    
     private void etheor(double plambd, boolean invert, boolean wted, double se[], double dse[], double ddse[], double sye[],
                         boolean doe, boolean doye) {
         
     } // etheor
     
     private void fanlyz() {
+        // Does constrained stepwise least squares analysis fo raw data (using grid search if necessary) to
+        // get starting values for analysis of transforms, which yield lamf (starting values for final analysis
+        // of raw data in yanlyz).
         
+        // Calls routines lstsqr, evar
+        // which in turn call pivot, pivot1, etheor, varf
+        int llpeak = 1;
+        int jlam;
+        double vare;
+        double vartry;
+        int lvgrid = 1;
+        int j;
+        int jlaml1;
+        int jtry;
+        // Must have lpeak >= 1 
+        int lpeak = 1;
+        int L;
+        int lendeq[] = new int[9];
+        int jcentr[] = new int[20];
+        boolean search;
+        double vgmax = 0.0;
+        int maxdif = 0;
+        double vgbest = 0.0;
+        int loc;
+        int leq[] = new int[9];
+        int lst2;
+        int lst3;
+        int lst4;
+        int lst5;
+        int lst6;
+        int lst7;
+        int lst8;
+        int lst9;
+        int mindif;
+        int i = 0;
+        int k;
+        int lstart[][] = new int[9][45];
+        boolean go493 = false;
+        boolean go494 = false;
+        int dif;
+        double qdum[];
+        double dub[] = new double[1];
+        boolean ldum[] = new boolean[1];
+        int ierror[] = new int[1];
+        
+        wted = iwt != 1;
+        lamst[0] = Math.sqrt(lamnmx[1][1] * lamnmx[0][1]);
+        
+        // Start of main loop for stepwise analysis
+        for (jlam = 1; jlam <= nlammx; jlam++) {
+            // Initialize for fits assuming jlam components
+            vare = 1.0E20;
+            vartry = 1.0E20;
+            nf = 2 * jlam + ibase;
+            if (jlam != 1) {
+                lvgrid = nvgrid[jlam-1];
+                for (j = 0; j < lvgrid; j++) {
+                    vgrid2[j] = 0.0;
+                }
+            } // if (jlam != 1)
+            jlaml1 = jlam - 1;
+            jlamp1 = jlam + 1;
+            if (prprel) {
+                Preferences.debug("Initial analysis of the raw data and then the transforms - assuming " + jlam + " components\n",
+                        Preferences.DEBUG_ALGORITHM);
+            } // if (prprel)
+            
+            // Start of loop for up to mtry jlam-component fits
+            
+            for (jtry = 1; jtry <= mtry; jtry++) {
+                if (prprel) {
+                    Preferences.debug("Fit using starting set " + jtry + "\n", Preferences.DEBUG_ALGORITHM);
+                }
+                if (jlam != 1) {
+                if (jtry == 1) {
+                    // Select first set of starting values
+                    for (j = 0; j < jlaml1; j++) {
+                        lamst[j] = lamf[j][jlaml1-1][1];
+                    }
+                    if (lpeak == 1) {
+                        lamst[jlam-1] = Math.sqrt(lamnmx[0][1] * lamf[0][jlaml1-1][1]);
+                    }
+                    else if (lpeak == jlam) {
+                        lamst[jlam-1] = Math.sqrt(lamf[jlaml1-1][jlaml1-1][1] * lamnmx[1][1]);
+                    }
+                    else {
+                        lamst[jlam-1] = Math.sqrt(lamf[lpeak-2][jlaml1-1][1] * lamf[lpeak-1][jlaml1-1][1]);
+                    }
+                } // if (jtry == 1)
+                else { // jtry >= 2
+                    if (jtry == 2) {
+                        // Do coarse grid search
+                        L = ngrid2[jlam-1] - jlam;
+                        for (j = 0; j < jlam; j++) {
+                            L++;
+                            lendeq[j] = L;
+                        } // for (j = 0; j < jlam; j++)
+                        if (jlam != mlammx) {
+                            for (j = jlamp1; j <= mlammx; j++) {
+                                lendeq[j-1] = lendeq[jlam-1];
+                            }
+                        } // if (jlam != mlammx)
+                        jcentr[0] = jgeadd - 1 + (nperg2[jlam-1] + 1)/2;
+                        L = ngrid2[jlam-1];
+                        for (j = 1; j <= L-1; j++) {
+                            jcentr[j] = jcentr[j-1] + nperg2[jlam-1];
+                        }
+                        search = true;
+                    } // if (jtry == 2)
+                    else { // jtry >= 3
+                        // Find lowest variance on coarse grid
+                        vgmax = 1.0E20;
+                        for (j = 0; j < lvgrid; j++) {
+                            vgmax = Math.min(vgmax, vgrid2[j]);
+                        }
+                        if (jtry > 2) {
+                            vgmax = 10.0 * vgmax;
+                        }
+                        maxdif = -1;
+                        search = false;
+                        vgbest = 1.0E20;
+                    } // else jtry >= 3
+                    whileloop:
+                    while (true) {
+                        // Entry point to find starting lambda values from grid
+                        loc = 0;
+                        for (leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++) {
+                            lst2 = leq[0]+1;
+                            for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++) {
+                                lst3 = leq[1] + 1;
+                                if (jlam < 3) {
+                                    lst3 = lendeq[2];
+                                }
+                                for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++) {
+                                    lst4 = leq[2] + 1;
+                                    if (jlam < 4) {
+                                        lst4 = lendeq[3];
+                                    }
+                                    for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++) {
+                                        lst5 = leq[3] + 1;
+                                        if (jlam < 5) {
+                                            lst5 = lendeq[4];
+                                        }
+                                        for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++) {
+                                            lst6 = leq[4] + 1;
+                                            if (jlam < 6) {
+                                                lst6 = lendeq[5];
+                                            }
+                                            for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++) {
+                                                lst7 = leq[5] + 1;
+                                                if (jlam < 7) {
+                                                    lst7 = lendeq[6];
+                                                }
+                                                for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++) {
+                                                    lst8 = leq[6] + 1;
+                                                    if (jlam < 8) {
+                                                        lst8 = lendeq[7];
+                                                    }
+                                                    for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++) {
+                                                        lst9 = leq[7] + 1;
+                                                        if (jlam < 9) {
+                                                            lst9 = lendeq[8];
+                                                        }
+                                                        loop9:
+                                                        for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++) {
+                                                            loc++;
+                                                            if (!search) {
+                                                                if (vgrid2[loc-1] <= vgmax) {
+                                                                    mindif = 1000;
+                                                                    if (jtry <= 2) {
+                                                                        go493 = true;
+                                                                    }
+                                                                    else { // jtry > 2
+                                                                        L = jtry - 1;
+                                                                        for (j = 2; j <= L; j++) {
+                                                                            i = 0;  
+                                                                            for (k = 1; k <= jlam; k++) {
+                                                                                i = i + Math.abs(leq[k-1] - lstart[k-1][j-1]);    
+                                                                            } // for (k = 1; k <= jlam; k++)
+                                                                        } // for (j = 2; j <= L; j++)
+                                                                        mindif = Math.min(mindif,  i);
+                                                                        dif = mindif - maxdif;
+                                                                        if (dif == 0) {
+                                                                            go493 = true;    
+                                                                        }
+                                                                        else if (dif > 0) {
+                                                                            go494 = true;
+                                                                        }
+                                                                    } // else jtry > 2
+                                                                    if (go493) {
+                                                                        go493 = false;
+                                                                        if (vgrid2[loc-1] < vgbest) {
+                                                                            go494 = true;
+                                                                        }
+                                                                    } // if (go493)
+                                                                    if (go494) {
+                                                                        go494 = false;
+                                                                        vgbest = vgrid2[loc-1];
+                                                                        maxdif = mindif;
+                                                                        for (j = 1; j <= jlam; j++) {
+                                                                            lstart[j-1][jtry-1] = leq[j-1];
+                                                                        }
+                                                                    } // if (go494)
+                                                                } // if (vgrid2[loc-1] <= vgmax)
+                                                                if (loc < lvgrid) {
+                                                                    continue loop9;
+                                                                }
+                                                                for (j = 0; j < jlam; j++) {
+                                                                    L = lstart[j][jtry-1];
+                                                                    lamst[j] = Math.exp(gestl + jcentr[L-1] * dgride);
+                                                                } // for (j = 0; j < jlam; j++)
+                                                                break whileloop;
+                                                            } // if (!search)
+                                                            for (j = 0; j < jlam; j++) {
+                                                                L = leq[j];
+                                                                plam[j] = Math.exp(gestl + jcentr[L-1] * dgride);
+                                                            } // for (j = 0; j < jlam; j++)
+                                                            qdum = new double[1];
+                                                            ierror[0] = j;
+                                                            evar(qdum, jlam, dub, false, ldum, ylyfit, jlam+ibase, 1.0E20, 0, true, ierror);
+                                                        } // for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++)
+                                                    } // for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++)
+                                                } // for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++)
+                                            } // for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++)
+                                        } // for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++)
+                                    } // for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++)
+                                } // for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++)
+                            } // for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++)
+                        } // (for leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++)
+                        // Find the lowest variance on the coarse grid
+                        vgmax = 1.0E20;
+                        for (j = 0; j < lvgrid; j++) {
+                            vgmax = Math.min(vgmax, vgrid2[j]);
+                        }
+                        if (jtry > 2) {
+                            vgmax = 10.0 * vgmax;
+                        }
+                        maxdif = -1;
+                        search = false;
+                        vgbest = 1.0E20;
+                    } // while (true)
+                } // else jtry >= 2
+                } // if (jlam != 1)
+            } // for (jtry = 1; jtry <= mtry; jtry++)
+        } // for (jlam = 1; jlam <= nlammx; jlam++)
     } // fanlyz
     
     private void yanlyz() {
