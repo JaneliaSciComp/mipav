@@ -146,7 +146,7 @@ public class DTIGradTableCorrectionAfterTrans extends AlgorithmBase {
         float[][] C = new float[4][B[0].length];
         for (int i = 0; i < C.length; i++) {
             for (int j = 0; j < C[0].length; j++) {
-                C[i][j] = (A.Get(i, 0)* B[0][j]) + (A.Get(i, 1) * B[1][j]) + (A.Get(i, 2) * B[2][j]);
+                C[i][j] = (A.get(i, 0)* B[0][j]) + (A.get(i, 1) * B[1][j]) + (A.get(i, 2) * B[2][j]);
             }
         }
         return C;

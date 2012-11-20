@@ -345,7 +345,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
 
         tmpTransMat.Copy(orientB_inv);
         
-        tmpTransMat.Mult(matAx2A);
+        tmpTransMat.mult(matAx2A);
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 orderB2A[i][j] = tmpTransMat.get(i, j);
@@ -434,15 +434,15 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         		Preferences.DEBUG_ALGORITHM);
 
         // Figure out the transformation to reorient Image B.
-        alignmentXfrm.MakeIdentity();
+        alignmentXfrm.identity();
         orientA.copyMatrix(orientMatrixA);  
         orientA_inv.Copy(orientA);
         orientA_inv.Inverse();
-        alignmentXfrm.Mult(orientA);
+        alignmentXfrm.mult(orientA);
         orientB.copyMatrix(orientMatrixB);
         orientB_inv.Copy(orientB);
         orientB_inv.Inverse();
-        alignmentXfrm.Mult(orientB_inv);
+        alignmentXfrm.mult(orientB_inv);
 
         Preferences.debug("Transformation Matrix = \n",Preferences.DEBUG_ALGORITHM);
         Preferences.debug(alignmentXfrm.toString(),Preferences.DEBUG_ALGORITHM);

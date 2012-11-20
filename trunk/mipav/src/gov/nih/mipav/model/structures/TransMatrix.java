@@ -213,17 +213,6 @@ public class TransMatrix extends Matrix4f
         return 4;
     }
 
-    /** method alias, @see Get */
-    public final float get(int i, int j) {
-        return Get(i, j);
-    }
-
-    /** method alias, but accepts double value. @see Set */
-    public final void set( int i, int j, double fValue )
-    {
-        Set(i, j, (float)fValue);
-    }
-
     /** 
      * @note this doesn't conform to the Cloneable interface, because it returns
      * TransMatrix instead of Object. 
@@ -243,7 +232,7 @@ public class TransMatrix extends Matrix4f
         m_TransformID = rkTM.m_TransformID;
     	m_IsNIFTI = rkTM.m_IsNIFTI;
         m_IsQform = rkTM.m_IsQform;
-        super.Copy(rkTM);
+        super.copy(rkTM);
     }
 
 
@@ -258,7 +247,7 @@ public class TransMatrix extends Matrix4f
         for (int i = 0; i < dim; i++) {
 
             for (int j = 0; j < dim; j++) {
-                Set(i, j, Float.valueOf((String) tok.nextElement()).floatValue());
+            	set(i, j, Float.valueOf((String) tok.nextElement()).floatValue());
             }
         }
     }
@@ -302,7 +291,7 @@ public class TransMatrix extends Matrix4f
 
             for (j = 0; j < 4; j++) {
                 float val = locmat.get(i, j) / locmat.get(3, 3);
-                locmat.Set(i, j, val);
+                locmat.set(i, j, val);
             }
         }
 
@@ -312,12 +301,12 @@ public class TransMatrix extends Matrix4f
 
         // zero out translation.
         for (i = 0; i < 3; i++) {
-            pmat.Set(i, 3, 0);
+            pmat.set(i, 3, 0);
         }
 
-        pmat.Set(3, 3, 1);
+        pmat.set(3, 3, 1);
 
-        if (pmat.Determinant() == 0.0) {
+        if (pmat.determinant() == 0.0) {
             return false;
         }
         // allocate args, if they haven't been:
@@ -329,14 +318,14 @@ public class TransMatrix extends Matrix4f
         // Next take care of translation (easy).
         trans.set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
         for (i = 0; i < 3; i++) {
-            locmat.Set(i, 3, 0);
+            locmat.set(i, 3, 0);
         }
 
         // Now get scale and shear.
         for (i = 0; i < 3; i++) {
-            row[i].X = locmat.Get(i, 0);
-            row[i].Y = locmat.Get(i, 1);
-            row[i].Z = locmat.Get(i, 2);
+            row[i].X = locmat.get(i, 0);
+            row[i].Y = locmat.get(i, 1);
+            row[i].Z = locmat.get(i, 2);
         }
 
         // Compute X scale factor and normalize first row.
@@ -588,7 +577,7 @@ public class TransMatrix extends Matrix4f
             }
 
             if (composite) {
-                Mult(mat);
+                mult(mat);
             }
         } catch (IOException error) {
             MipavUtil.displayError("Matrix save error " + error);
@@ -695,7 +684,7 @@ public class TransMatrix extends Matrix4f
             }
 
             if (composite) {
-                Mult(mat);
+                mult(mat);
             }
             str = raFile.readLine();
             str = raFile.readLine();
@@ -881,7 +870,7 @@ public class TransMatrix extends Matrix4f
             int dim = getDim();
             for (r = 0; r < dim; r++) {
                 for (c = 0; c < dim; c++) {
-                    raFile.writeBytes(Float.toString(Get(r, c)) + " ");
+                    raFile.writeBytes(Float.toString(get(r, c)) + " ");
                 }
                     
                 raFile.writeBytes("\n");
@@ -947,7 +936,7 @@ public class TransMatrix extends Matrix4f
             int dim = getDim();
             for (r = 0; r < dim; r++) {
                 for (c = 0; c < dim; c++) {
-                    raFile.writeBytes(Float.toString(Get(r, c)) + " ");
+                    raFile.writeBytes(Float.toString(get(r, c)) + " ");
                 }
                     
                 raFile.writeBytes("\n");
@@ -1011,7 +1000,7 @@ public class TransMatrix extends Matrix4f
             for (int r = 0; r < 3; r++) {
                 
                 for (int c = 0; c < 4; c++) {
-                    raFile.writeBytes(Float.toString(Get(r, c)));
+                    raFile.writeBytes(Float.toString(get(r, c)));
                     if (r == 2 && c == 3) {
                         raFile.writeBytes(";");
                     } else {
@@ -1041,7 +1030,7 @@ public class TransMatrix extends Matrix4f
          int dim = getDim();
          for (int r = 0; r < dim; r++) {
              for (int c = 0; c < dim; c++) {
-                 Set(r, c, (float)newMatrix[r][c]);
+            	 set(r, c, (float)newMatrix[r][c]);
              }
          }
      }
@@ -1052,8 +1041,14 @@ public class TransMatrix extends Matrix4f
      */
      public void getColumn(int r, double[] column) {
          for (int c = 0; c < getDim(); c++) {
-             column[c] = Get(r, c);
+             column[c] = get(r, c);
          }
+     }
+     
+     public TransMatrix set(int r, int c, double val)
+     {
+    	 set(r, c, (float)val);
+    	 return this;
      }
 
 
@@ -1071,7 +1066,7 @@ public class TransMatrix extends Matrix4f
         try {
             for (int r = i0; r <= i1; r++) {
                 for (int c = j0; c <= j1; c++) {
-                    Set(r, c, (float)X[r-i0][c-j0]);
+                	set(r, c, (float)X[r-i0][c-j0]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -1090,7 +1085,7 @@ public class TransMatrix extends Matrix4f
         try {
             for (int r = 0; r < X.length; r++) {
                 for (int c = 0; c < X[0].length; c++) {
-                    Set(r, c, (float)X[r][c]);
+                	set(r, c, (float)X[r][c]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -1116,14 +1111,14 @@ public class TransMatrix extends Matrix4f
         cosTheta = (float)Math.cos((theta / 180.0) * Math.PI);
         sinTheta = (float)Math.sin((theta / 180.0) * Math.PI);
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -1136,19 +1131,19 @@ public class TransMatrix extends Matrix4f
     public void setRotate(Vector3f alpha, Vector3f beta, Vector3f gamma) {
         TransMatrix axis_rot = new TransMatrix(4);
 
-        axis_rot.Set(0, 0, alpha.X);
-        axis_rot.Set(0, 1, alpha.Y);
-        axis_rot.Set(0, 2, alpha.Z);
-        axis_rot.Set(1, 0, beta.X);
-        axis_rot.Set(1, 1, beta.Y);
-        axis_rot.Set(1, 2, beta.Z);
-        axis_rot.Set(2, 0, gamma.X);
-        axis_rot.Set(2, 1, gamma.Y);
-        axis_rot.Set(2, 2, gamma.Z);
-        axis_rot.Set(3, 3, 1);
+        axis_rot.set(0, 0, alpha.X);
+        axis_rot.set(0, 1, alpha.Y);
+        axis_rot.set(0, 2, alpha.Z);
+        axis_rot.set(1, 0, beta.X);
+        axis_rot.set(1, 1, beta.Y);
+        axis_rot.set(1, 2, beta.Z);
+        axis_rot.set(2, 0, gamma.X);
+        axis_rot.set(2, 1, gamma.Y);
+        axis_rot.set(2, 2, gamma.Z);
+        axis_rot.set(3, 3, 1);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -1173,16 +1168,16 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaZ);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         tmpMatrix.Copy(axis_rot);
 
-        axis_rot.MakeZero();
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = (float)Math.cos((thetaY / 180.0) * Math.PI);
@@ -1192,15 +1187,15 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaY);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, 1);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 2, sinTheta);
-        axis_rot.Set(2, 0, -sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, 1);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 2, sinTheta);
+        axis_rot.set(2, 0, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
-        axis_rot.MakeZero();
+        tmpMatrix.mult(axis_rot);
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = (float)Math.cos((thetaX / 180.0) * Math.PI);
@@ -1210,16 +1205,16 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaX);
         }
 
-        axis_rot.Set(0, 0, 1);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(2, 1, sinTheta);
-        axis_rot.Set(1, 2, -sinTheta);
+        axis_rot.set(0, 0, 1);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(2, 1, sinTheta);
+        axis_rot.set(1, 2, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
+        tmpMatrix.mult(axis_rot);
         // compose with our current matrix.
-        Mult(tmpMatrix);
+        mult(tmpMatrix);
     }
 
     /**
@@ -1499,7 +1494,7 @@ public class TransMatrix extends Matrix4f
             s += "  ";
 
             for (int j = 0; j < getDim(); j++) {
-                s += format.format(Get(i, j)); // format the number
+                s += format.format(get(i, j)); // format the number
                 s = s + "  ";
             }
 
@@ -1921,9 +1916,9 @@ public class TransMatrix extends Matrix4f
                     index = nextIndex;
                 }
                 if (tmpStr.indexOf(".") != -1) {
-                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Float.valueOf(tmpStr).floatValue());
                 } else {
-                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Integer.valueOf(tmpStr).floatValue());
                 }
             }
 
@@ -1977,9 +1972,9 @@ public class TransMatrix extends Matrix4f
                     index = nextIndex;
                 }
                 if (tmpStr.indexOf(".") != -1) {
-                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Float.valueOf(tmpStr).floatValue());
                 } else {
-                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Integer.valueOf(tmpStr).floatValue());
                 }
             }
 
@@ -2025,7 +2020,7 @@ public class TransMatrix extends Matrix4f
 
         if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
         {
-            Copy(Matrix4f.ZERO);
+            copy(Matrix4f.ZERO);
         }
 
         float fInvDet = 1.0f/fDet;
@@ -2039,12 +2034,12 @@ public class TransMatrix extends Matrix4f
         inverse_M21 *= fInvDet;
         inverse_M22 *= fInvDet;
         // Set 4x4, even though we're only using a 3x3
-        Set( inverse_M00, inverse_M01, inverse_M02, 0.0f,
+        set( inverse_M00, inverse_M01, inverse_M02, 0.0f,
              inverse_M10, inverse_M11, inverse_M12, 0.0f,
              inverse_M20, inverse_M21, inverse_M22, 0.0f, 
              0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            super.Inverse();
+            super.inverse();
         }
     }    
 
@@ -2069,7 +2064,7 @@ public class TransMatrix extends Matrix4f
             s += "  ";
 
             for (j = 0; j < getDim(); j++) {
-                s += format.format(Get(i,j)); // format the number
+                s += format.format(get(i,j)); // format the number
                 s += "  ";
             }
 

@@ -150,10 +150,9 @@ final int iBound = 256;
 		Vector3f kCLoc = new Vector3f(0.0f,0.0f,4.0f);
 		Vector3f kCDir = new Vector3f(0.0f,0.0f,-1.0f);
 		Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-		kCDir.Normalize();
-		kCUp.Normalize();
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
+		kCDir.normalize();
+		kCUp.normalize();
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 		
 		
@@ -264,22 +263,22 @@ final int iBound = 256;
 				for (int iX = 0; iX < iBound; iX++)
 				{
 					kPoint.X = -fExtreme + 2.0f*fExtreme*iX/(iBound-1);
-					kDiff.Sub( kPoint, kRCenter );
-					float fRSqr = kDiff.SquaredLength();
+					kDiff.copy( kPoint ).sub( kRCenter );
+					float fRSqr = kDiff.squaredLength();
 					float fRGauss = 1.0f - fRParam*fRSqr;
 					if (fRGauss < 0.0f)
 					{
 						fRGauss = 0.0f;
 					}
-					kDiff.Sub( kPoint, kGCenter );
-					fRSqr = kDiff.SquaredLength();
+					kDiff.copy( kPoint ).sub( kGCenter );
+					fRSqr = kDiff.squaredLength();
 					float fGGauss = 1.0f - fGParam*fRSqr;
 					if (fGGauss < 0.0f)
 					{
 						fGGauss = 0.0f;
 					}
-					kDiff.Sub( kPoint, kBCenter );
-					fRSqr = kDiff.SquaredLength();
+					kDiff.copy( kPoint ).sub( kBCenter );
+					fRSqr = kDiff.squaredLength();
 					float fBGauss = 1.0f - fBParam*fRSqr;
 					if (fBGauss < 0.0f)
 					{

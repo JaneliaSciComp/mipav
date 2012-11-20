@@ -582,7 +582,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         WildMagic.LibFoundation.Mathematics.Vector3f center = m_kVolumeImageA.GetImage().getImageCentermm(false);
 
         xfrm.setTranslate(center.X, center.Y, center.Z);
-        xfrm.Mult(transMtx);
+        xfrm.mult(transMtx);
         xfrm.setTranslate(-center.X, -center.Y, -center.Z);
 
         // Step.4

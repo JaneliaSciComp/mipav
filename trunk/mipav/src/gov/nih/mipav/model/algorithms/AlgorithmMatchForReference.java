@@ -287,13 +287,13 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
         TransMatrix xfrmAdj = null;
         //Vector3f centerAdj = adjImage.getImageCentermm(false);
         xfrmAdj = new TransMatrix(res.length + 1);
-        xfrmAdj.MakeIdentity();
+        xfrmAdj.identity();
         //xfrmAdj.setTranslate(centerAdj.X, centerAdj.Y);
         //xfrmAdj.setTranslate(-centerAdj.X, -centerAdj.Y);
 
         TransMatrix xfrmRef;
         xfrmRef = new TransMatrix(res.length + 1);
-        xfrmRef.MakeIdentity();
+        xfrmRef.identity();
         //xfrmRef.setTranslate(centerRef.X, centerRef.Y);
         //xfrmRef.setTranslate(-centerRef.X, -centerRef.Y);
 

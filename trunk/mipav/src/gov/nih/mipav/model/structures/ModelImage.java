@@ -3487,7 +3487,7 @@ public class ModelImage extends ModelStorageBase {
                 final TransMatrix rh_lhMatrix = new TransMatrix(4);
 
                 // right handed to left handed or left handed to right handed coordinate systems
-                rh_lhMatrix.Set(2, 2, -1);
+                rh_lhMatrix.set(2, 2, -1);
 
                 // p.223 Foley, Van Dam ...
                 // Flipping only z axis
@@ -3496,9 +3496,7 @@ public class ModelImage extends ModelStorageBase {
                 // 0 0 -1 0
                 // 0 0 0 1
 
-                mat.Mult(rh_lhMatrix);
-                mat.Mult(matrix);
-                mat.Mult(rh_lhMatrix);
+                mat.mult(rh_lhMatrix).mult(matrix).mult(rh_lhMatrix);
 
                 mat.saveXFMMatrix(raFile);
             } else {
@@ -4490,8 +4488,8 @@ public class ModelImage extends ModelStorageBase {
 
         DecimalFormat nf = new DecimalFormat("##0.0000000");
 
-        strMatrix = nf.format(matrix.Get(0, 0)) + "\\" + nf.format(matrix.Get(0, 1)) + "\\" + nf.format(matrix.Get(0, 2)) +
-                    "\\" + nf.format(matrix.Get(1, 0)) + "\\" + nf.format(matrix.Get(1, 1)) + "\\" + nf.format(matrix.Get(1, 2));
+        strMatrix = nf.format(matrix.get(0, 0)) + "\\" + nf.format(matrix.get(0, 1)) + "\\" + nf.format(matrix.get(0, 2)) +
+                    "\\" + nf.format(matrix.get(1, 0)) + "\\" + nf.format(matrix.get(1, 1)) + "\\" + nf.format(matrix.get(1, 2));
 
         return strMatrix;
     }

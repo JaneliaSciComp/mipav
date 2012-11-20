@@ -558,13 +558,13 @@ public class FileMetaImage extends FileBase {
         
             if ((matrix != null) && (origin !=  null)) {
                 if (nDims == 2) {
-                    matrix.Set(0, 2, origin[0]);
-                    matrix.Set(1, 2, origin[1]);
+                    matrix.set(0, 2, origin[0]);
+                    matrix.set(1, 2, origin[1]);
                 }
                 if (nDims >= 3) {
-                    matrix.Set(0, 3, origin[0]);
-                    matrix.Set(1, 3, origin[1]);
-                    matrix.Set(2, 3, origin[2]);
+                    matrix.set(0, 3, origin[0]);
+                    matrix.set(1, 3, origin[1]);
+                    matrix.set(2, 3, origin[2]);
                 }
                 if (haveAnatomicalOrientation) {
                     matrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);    

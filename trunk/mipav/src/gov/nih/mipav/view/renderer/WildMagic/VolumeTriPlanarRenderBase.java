@@ -366,11 +366,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 }
 
 		 float[] afData = new float[16];
-		 Matrix4f kWorld = new Matrix4f();
 
 		 m_pkRenderer.SetConstantVPMatrix (0, afData);
 		 Matrix4f kVP = new Matrix4f( afData, true );
-		 kWorld.Mult(m_kSceneToWorld, kVP);
+		 Matrix4f kWorld = Matrix4f.mult(m_kSceneToWorld, kVP);
 		 m_kSculptor.setWVPMatrix(kWorld);   
 		 boolean bSculptTrue = false;
 		 int iTSize = (m_kVolumeImageA.GetImage().is4DImage()&&bAll) ? m_kVolumeImageA.GetImage().getExtents()[3] : 1;
@@ -3338,7 +3337,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	   protected void UpdateSceneRotation()
 	   {
 		   super.UpdateSceneRotation();
-		   m_kSceneToWorld.Copy(m_kVolumeRayCast.GetWorld());
+		   m_kSceneToWorld.copy(m_kVolumeRayCast.GetWorld());
 	   }
 	   
 		void NormalKernel(  float[] a, float[] b, int width, int height, int depth, int color, int numElements) {

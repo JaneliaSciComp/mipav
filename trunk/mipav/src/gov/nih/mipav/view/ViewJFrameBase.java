@@ -5506,12 +5506,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             // Remember this is an output to input mapping so find the translation needed
             // to map the transformed Talairach center to the original dicom ordered functional
             // image rr
-            final double Tr03 = rr.X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1))
-                    - (TalairachCenter.Z * xfrm.Get(0, 2));
-            final double Tr13 = rr.Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1))
-                    - (TalairachCenter.Z * xfrm.Get(1, 2));
-            final double Tr23 = rr.Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1))
-                    - (TalairachCenter.Z * xfrm.Get(2, 2));
+            final double Tr03 = rr.X - (TalairachCenter.X * xfrm.get(0, 0)) - (TalairachCenter.Y * xfrm.get(0, 1))
+                    - (TalairachCenter.Z * xfrm.get(0, 2));
+            final double Tr13 = rr.Y - (TalairachCenter.X * xfrm.get(1, 0)) - (TalairachCenter.Y * xfrm.get(1, 1))
+                    - (TalairachCenter.Z * xfrm.get(1, 2));
+            final double Tr23 = rr.Z - (TalairachCenter.X * xfrm.get(2, 0)) - (TalairachCenter.Y * xfrm.get(2, 1))
+                    - (TalairachCenter.Z * xfrm.get(2, 2));
 
             /*
              * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
@@ -5520,21 +5520,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
              */
             final JamaMatrix A = new JamaMatrix(3, 3);
 
-            A.set(0, 0, xfrm.Get(0, 0));
-            A.set(0, 1, xfrm.Get(0, 1));
-            A.set(0, 2, xfrm.Get(0, 2));
-            A.set(1, 0, xfrm.Get(1, 0));
-            A.set(1, 1, xfrm.Get(1, 1));
-            A.set(1, 2, xfrm.Get(1, 2));
-            A.set(2, 0, xfrm.Get(2, 0));
-            A.set(2, 1, xfrm.Get(2, 1));
-            A.set(2, 2, xfrm.Get(2, 2));
+            A.set(0, 0, xfrm.get(0, 0));
+            A.set(0, 1, xfrm.get(0, 1));
+            A.set(0, 2, xfrm.get(0, 2));
+            A.set(1, 0, xfrm.get(1, 0));
+            A.set(1, 1, xfrm.get(1, 1));
+            A.set(1, 2, xfrm.get(1, 2));
+            A.set(2, 0, xfrm.get(2, 0));
+            A.set(2, 1, xfrm.get(2, 1));
+            A.set(2, 2, xfrm.get(2, 2));
 
             final JamaMatrix b = new JamaMatrix(3, 1);
 
-            b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-            b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-            b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+            b.set(0, 0, Tr03 - xfrm.get(0, 3));
+            b.set(1, 0, Tr13 - xfrm.get(1, 3));
+            b.set(2, 0, Tr23 - xfrm.get(2, 3));
 
             final JamaMatrix X = A.solve(b);
             final double Tx = X.get(0, 0);
@@ -5739,16 +5739,16 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
                 afniProgressBar.setMessage("Talairach transformation pass #" + j);
 
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
-                final double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.Get(0, 0))
-                        - (TalairachCenter.Y * xfrm.Get(0, 1)) - (TalairachCenter.Z * xfrm.Get(0, 2));
-                final double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.Get(1, 0))
-                        - (TalairachCenter.Y * xfrm.Get(1, 1)) - (TalairachCenter.Z * xfrm.Get(1, 2));
-                final double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.Get(2, 0))
-                        - (TalairachCenter.Y * xfrm.Get(2, 1)) - (TalairachCenter.Z * xfrm.Get(2, 2));
+                final double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.get(0, 0))
+                        - (TalairachCenter.Y * xfrm.get(0, 1)) - (TalairachCenter.Z * xfrm.get(0, 2));
+                final double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.get(1, 0))
+                        - (TalairachCenter.Y * xfrm.get(1, 1)) - (TalairachCenter.Z * xfrm.get(1, 2));
+                final double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.get(2, 0))
+                        - (TalairachCenter.Y * xfrm.get(2, 1)) - (TalairachCenter.Z * xfrm.get(2, 2));
 
                 /*
                  * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
@@ -5757,21 +5757,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                  */
                 final JamaMatrix A = new JamaMatrix(3, 3);
 
-                A.set(0, 0, xfrm.Get(0, 0));
-                A.set(0, 1, xfrm.Get(0, 1));
-                A.set(0, 2, xfrm.Get(0, 2));
-                A.set(1, 0, xfrm.Get(1, 0));
-                A.set(1, 1, xfrm.Get(1, 1));
-                A.set(1, 2, xfrm.Get(1, 2));
-                A.set(2, 0, xfrm.Get(2, 0));
-                A.set(2, 1, xfrm.Get(2, 1));
-                A.set(2, 2, xfrm.Get(2, 2));
+                A.set(0, 0, xfrm.get(0, 0));
+                A.set(0, 1, xfrm.get(0, 1));
+                A.set(0, 2, xfrm.get(0, 2));
+                A.set(1, 0, xfrm.get(1, 0));
+                A.set(1, 1, xfrm.get(1, 1));
+                A.set(1, 2, xfrm.get(1, 2));
+                A.set(2, 0, xfrm.get(2, 0));
+                A.set(2, 1, xfrm.get(2, 1));
+                A.set(2, 2, xfrm.get(2, 2));
 
                 final JamaMatrix b = new JamaMatrix(3, 1);
 
-                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+                b.set(0, 0, Tr03 - xfrm.get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.get(2, 3));
 
                 final JamaMatrix X = A.solve(b);
                 final double Tx = X.get(0, 0);
@@ -5927,18 +5927,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         final int mod = oXdim / 50;
         int tLast;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         tLast = Math.max(1, iTdim);
 
@@ -6766,18 +6766,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         final int mod = oXdim / 50;
         int tLast;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         tLast = Math.max(1, iTdim);
 

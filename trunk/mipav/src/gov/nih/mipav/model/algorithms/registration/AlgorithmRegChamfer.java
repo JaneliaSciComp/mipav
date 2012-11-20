@@ -250,7 +250,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
                         Preferences.debug("Transform for slice " + matchSlice + " after concatenation =\n",
                         		Preferences.DEBUG_ALGORITHM);
 
-                        tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[matchSlice - 1]);
+                        tMatrixMatchtoBase[matchSlice].mult(tMatrixMatchtoBase[matchSlice - 1]);
                         //System.out.println(tMatrixMatchtoBase[matchSlice]);
                     }
 
@@ -288,7 +288,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
 
         for (int i = matchSlice - 1; i > 0; i--) {
 
-            tMatrixMatchtoBase[matchSlice].Mult(tMatrixMatchtoBase[i]);
+            tMatrixMatchtoBase[matchSlice].mult(tMatrixMatchtoBase[i]);
         }
     }
 

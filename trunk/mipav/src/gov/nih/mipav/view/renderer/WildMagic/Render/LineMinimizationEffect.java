@@ -216,19 +216,19 @@ public class LineMinimizationEffect extends ShaderEffect
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("toOrigin") != null ) 
         {
-            m_kToOrigin.GetData(pkCProgram.GetUC("toOrigin").GetData());
+            m_kToOrigin.getData(pkCProgram.GetUC("toOrigin").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("fromOrigin") != null ) 
         {
-            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
+            m_kFromOrigin.getData(pkCProgram.GetUC("fromOrigin").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("toOriginMatrix") != null ) 
         {
-            m_kToOrigin.GetData(pkCProgram.GetUC("toOriginMatrix").GetData());
+            m_kToOrigin.getData(pkCProgram.GetUC("toOriginMatrix").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("fromOriginMatrix") != null ) 
         {
-            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOriginMatrix").GetData());
+            m_kFromOrigin.getData(pkCProgram.GetUC("fromOriginMatrix").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("rigid") != null ) 
         {
@@ -327,11 +327,11 @@ public class LineMinimizationEffect extends ShaderEffect
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("toOrigin") != null ) 
         {
-            m_kToOrigin.GetData(pkCProgram.GetUC("toOrigin").GetData());
+            m_kToOrigin.getData(pkCProgram.GetUC("toOrigin").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("fromOrigin") != null ) 
         {
-            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
+            m_kFromOrigin.getData(pkCProgram.GetUC("fromOrigin").GetData());
         }
     }
 
@@ -403,19 +403,19 @@ public class LineMinimizationEffect extends ShaderEffect
         }
         if ( pkCProgram.GetUC("toOrigin") != null ) 
         {
-            m_kToOrigin.GetData(pkCProgram.GetUC("toOrigin").GetData());
+            m_kToOrigin.getData(pkCProgram.GetUC("toOrigin").GetData());
         }
         if ( pkCProgram.GetUC("fromOrigin") != null ) 
         {
-            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOrigin").GetData());
+            m_kFromOrigin.getData(pkCProgram.GetUC("fromOrigin").GetData());
         }
         if ( pkCProgram.GetUC("toOriginMatrix") != null ) 
         {
-            m_kToOrigin.GetData(pkCProgram.GetUC("toOriginMatrix").GetData());
+            m_kToOrigin.getData(pkCProgram.GetUC("toOriginMatrix").GetData());
         }
         if ( pkCProgram.GetUC("fromOriginMatrix") != null ) 
         {
-            m_kFromOrigin.GetData(pkCProgram.GetUC("fromOriginMatrix").GetData());
+            m_kFromOrigin.getData(pkCProgram.GetUC("fromOriginMatrix").GetData());
         }
         if ( pkCProgram.GetUC("rigid") != null ) 
         {

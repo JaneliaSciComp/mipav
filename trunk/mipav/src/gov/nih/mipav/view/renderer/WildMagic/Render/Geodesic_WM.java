@@ -795,7 +795,7 @@ public class Geodesic_WM {
             iPrevSide = iSide;
         }
 
-        kNewPoint4.Set( kMesh.VBuffer.GetPosition3fX(iStart),
+        kNewPoint4.set( kMesh.VBuffer.GetPosition3fX(iStart),
                 kMesh.VBuffer.GetPosition3fY(iStart),
                 kMesh.VBuffer.GetPosition3fZ(iStart),
                             iStart );
@@ -830,7 +830,7 @@ public class Geodesic_WM {
                     findMin(kMesh, 
                             new Vector3f(kStart.X, kStart.Y, kStart.Z), iMiddle, iSide,
                             new Vector3f(kEnd.X, kEnd.Y, kEnd.Z), newPoint1);
-                    kNewVert.get(i).Copy( newPoint1 );
+                    kNewVert.get(i).copy( newPoint1 );
 
                     newPoint1 = null;
                 }
@@ -2459,17 +2459,17 @@ public class Geodesic_WM {
         }
 
         if (iMin == -1) {
-            kNewPoint4.Set( kMiddle.X, 
+            kNewPoint4.set( kMiddle.X, 
                                 kMiddle.Y,
                                 kMiddle.Z,
                                 iMiddle );
         } else if (iMin == 9) {
-            kNewPoint4.Set( kSide.X,
+            kNewPoint4.set( kSide.X,
                                 kSide.Y,
                                 kSide.Z,
                                 iSide );
         } else {
-            kNewPoint4.Set( kNewPoint.X,
+            kNewPoint4.set( kNewPoint.X,
                                 kNewPoint.Y,
                                 kNewPoint.Z,
                                 -1 );
@@ -2671,7 +2671,7 @@ public class Geodesic_WM {
 
         /* Last vert in the last list: */
         /* If it's a closed loop: */
-        if (kGeodesic.getFirst().IsEqual(kGeodesic.getLast())) {
+        if (kGeodesic.getFirst().isEqual(kGeodesic.getLast())) {
             bOpen = false;
         }
 

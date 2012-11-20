@@ -59,13 +59,13 @@ public class MjCorticalMesh_WM {
         Vector2f kDiff = new Vector2f();
 
         for (int i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-        	kV1mV0.Sub( akVertex[i1], akVertex[i0] );
-            kInnerNormal.Perp(kV1mV0);
-            kDiff.Sub( kP, akVertex[i0] );
-            kInnerNormal.Normalize();
-            kDiff.Normalize();
+        	kV1mV0 = Vector2f.sub( akVertex[i1], akVertex[i0] );
+            kInnerNormal.perp(kV1mV0);
+            kDiff = Vector2f.sub( kP, akVertex[i0] );
+            kInnerNormal.normalize();
+            kDiff.normalize();
 
-            float fCos = kInnerNormal.Dot(kDiff);
+            float fCos = kInnerNormal.dot(kDiff);
 
             if (fCos < -fEpsilon) {
                 return false;
@@ -506,7 +506,7 @@ public class MjCorticalMesh_WM {
         /* latitude circles are uniformly spaced on the stereographic sphere in */
         /* the z-direction. */
         Circle2f kLatitude = new Circle2f();
-        kLatitude.Center.Copy(Vector2f.ZERO);
+        kLatitude.Center.copy(Vector2f.ZERO);
         kLatitude.Radius = (float) Math.sqrt((1.0f + fZNormal) / (1.0f - fZNormal)) * getStereographicRadius();
         /* sorted t-values for intersections of circle */
         /* with triangle mesh edges */
@@ -530,8 +530,8 @@ public class MjCorticalMesh_WM {
             int iV1 = m_akEdge[i].V[1];
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
-            kEdge.Origin.Copy(kV0);
-            kEdge.Direction.Sub( kV1, kV0 );
+            kEdge.Origin.copy(kV0);
+            kEdge.Direction.copy( kV1 ).sub( kV0 );
 
             /* compute intersection of ray and segment */
             Vector2f[] akP = new Vector2f[]{ new Vector2f(), new Vector2f() };
@@ -566,10 +566,10 @@ public class MjCorticalMesh_WM {
                     float fAngle = (float) Math.atan2(akP[j].Y, akP[j].X);
 
                     /* determine the edge parameter at the intersection */
-                    kDiff.Sub( akP[j], kV0 );
+                    kDiff.copy( akP[j] ).sub( kV0 );
 
-                    float fNumer = kDiff.Dot(kEdge.Direction);
-                    float fDenom = kEdge.Direction.SquaredLength();
+                    float fNumer = kDiff.dot(kEdge.Direction);
+                    float fDenom = kEdge.Direction.squaredLength();
                     float fS = fNumer / fDenom;
 
                     m_kMesh.VBuffer.GetPosition3( iV0, kPos0 );
@@ -648,7 +648,7 @@ public class MjCorticalMesh_WM {
 
         /* longitude ray in the complex plane */
         Ray2f kLongitude = new Ray2f();
-        kLongitude.Origin.Copy(kPoint2fZero);
+        kLongitude.Origin.copy(kPoint2fZero);
         kLongitude.Direction.X = (float) Math.cos(fAngle);
         kLongitude.Direction.Y = (float) Math.sin(fAngle);
 
@@ -747,8 +747,8 @@ public class MjCorticalMesh_WM {
             Vector2f kV0 = m_akPlane[iV0];
             Vector2f kV1 = m_akPlane[iV1];
             Segment2f kEdge = new Segment2f();
-            kEdge.Origin.Copy(kV0);
-            kEdge.Direction.Sub( kV1, kV0 );
+            kEdge.Origin.copy(kV0);
+            kEdge.Direction.copy( kV1 ).sub( kV0 );
 
             /* compute intersection of ray and segment */
             int iCount = IntrRay2Segment2f.FindIntersection(kLongitude, kEdge, afT);
@@ -782,12 +782,12 @@ public class MjCorticalMesh_WM {
 
                     /* afT[j] is the ray parameter, need to compute the edge */
                     /* parameter */
-                    kDiff.Copy(kLongitude.Direction);
-                    kDiff.Scale(afT[j]);
-                    kDiff.Sub(kV0);
+                    kDiff.copy(kLongitude.Direction);
+                    kDiff.scale(afT[j]);
+                    kDiff.sub(kV0);
 
-                    float fNumer = kDiff.Dot(kEdge.Direction);
-                    float fDenom = kEdge.Direction.SquaredLength();
+                    float fNumer = kDiff.dot(kEdge.Direction);
+                    float fDenom = kEdge.Direction.squaredLength();
                     float fS = fNumer / fDenom;
 
                     m_kMesh.VBuffer.GetPosition3( iV0, kPos0 );
@@ -1274,21 +1274,18 @@ public class MjCorticalMesh_WM {
         Vector2f kV0 = m_akPlane[kT.V[0]];
         Vector2f kV1 = m_akPlane[kT.V[1]];
         Vector2f kV2 = m_akPlane[kT.V[2]];
-        Vector2f kE10 = new Vector2f();
-        kE10.Sub( kV1, kV0 );
+        Vector2f kE10 = Vector2f.sub( kV1, kV0 );
 
-        Vector2f kE20 = new Vector2f();
-        kE20.Sub( kV2, kV0 );
+        Vector2f kE20 = Vector2f.sub( kV2, kV0 );
 
-        Vector2f kDiff = new Vector2f();
-        kDiff.Sub( kP, kV0 );
+        Vector2f kDiff = Vector2f.sub( kP, kV0 );
 
-        float fA00 = kE10.Dot(kE10);
-        float fA01 = kE10.Dot(kE20);
-        float fA11 = kE20.Dot(kE20);
+        float fA00 = kE10.dot(kE10);
+        float fA01 = kE10.dot(kE20);
+        float fA11 = kE20.dot(kE20);
         float fInvDet = 1.0f / ((fA00 * fA11) - (fA01 * fA01));
-        float fB0 = kE10.Dot(kDiff);
-        float fB1 = kE20.Dot(kDiff);
+        float fB0 = kE10.dot(kDiff);
+        float fB1 = kE20.dot(kDiff);
 
         Vector3f kBary = new Vector3f();
         kBary.Y = ((fA11 * fB0) - (fA01 * fB1)) * fInvDet;
@@ -1335,19 +1332,19 @@ public class MjCorticalMesh_WM {
             /* P is outside the triangle.  Search an adjacent triangle through a */
             /* shared edge that is intersected by C+t*D where C is the current */
             /* triangle center and D is the direction (P-C)/|P-C|. */
-            kRay.Origin.Set(0.0f, 0.0f);
-            kRay.Origin.Add(akVertex[0]);
-            kRay.Origin.Add(akVertex[1]);
-            kRay.Origin.Add(akVertex[2]);
-            kRay.Origin.Scale(1.0f / 3.0f);
-            kRay.Direction.Sub( kP, kRay.Origin );
-            kRay.Direction.Normalize();
+            kRay.Origin.set(0.0f, 0.0f);
+            kRay.Origin.add(akVertex[0]);
+            kRay.Origin.add(akVertex[1]);
+            kRay.Origin.add(akVertex[2]);
+            kRay.Origin.scale(1.0f / 3.0f);
+            kRay.Direction.copy( kP ).sub( kRay.Origin );
+            kRay.Direction.normalize();
 
             int i0, i1;
 
             for (i0 = 2, i1 = 0; i1 < 3; i0 = i1++) {
-                kSeg.Origin.Copy(akVertex[i0]);
-                kSeg.Direction.Sub( akVertex[i1], akVertex[i0] );
+                kSeg.Origin.copy(akVertex[i0]);
+                kSeg.Direction.copy( akVertex[i1] ).sub( akVertex[i0] );
 
                 float[] afT = new float[2]; /* T[0] = ray, T[1] = segment */
                 int iQuantity = IntrRay2Segment2f.FindIntersection(kRay, kSeg, afT);

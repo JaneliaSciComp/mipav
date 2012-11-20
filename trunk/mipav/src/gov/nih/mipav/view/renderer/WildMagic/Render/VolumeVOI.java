@@ -211,12 +211,10 @@ public class VolumeVOI extends VolumeObject
 				float[] afData = new float[16];
 				kRenderer.SetConstantVPMatrix( 0, afData );
 				Matrix4f kMat = new Matrix4f(afData, true);
-				Matrix4f kWVP = new Matrix4f();
-				kWVP.Mult( kWorld, kMat );
+				Matrix4f kWVP = Matrix4f.mult( kWorld, kMat );
 
-				Vector4f kTextPos = new Vector4f();
-				kWVP.MultLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ), kTextPos );
-				kTextPos.Scale( 1f/kTextPos.W );
+				Vector4f kTextPos = kWVP.multLeft( new Vector4f( m_kBillboardPos.X, m_kBillboardPos.Y, m_kBillboardPos.Z, 1 ) );
+				kTextPos.scale( 1f/kTextPos.W );
 
 				String kLabel = ((VOIText)m_kVOI).getText();
 				char[] acText = kLabel.toCharArray();

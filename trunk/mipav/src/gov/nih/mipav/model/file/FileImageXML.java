@@ -1697,11 +1697,11 @@ public class FileImageXML extends FileXML {
 
                     if (orient == FileInfoBase.SAGITTAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
+                        tMatrix.set(0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
 
                     } else if (orient == FileInfoBase.CORONAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+                        tMatrix.set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 
                     }
                 }
@@ -1709,7 +1709,7 @@ public class FileImageXML extends FileXML {
                 for (i = 0; i < tMatrix.getDim(); i++) {
 
                     for (j = 0; j < tMatrix.getDim(); j++) {
-                        closedTag("Data", new Double(tMatrix.Get(i, j)).toString());
+                        closedTag("Data", new Double(tMatrix.get(i, j)).toString());
                     }
                 }
 

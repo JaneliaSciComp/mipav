@@ -1692,8 +1692,8 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 //OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = answer.matrix.Get(0, 2);
-                trans[1][iNumber] = answer.matrix.Get(1, 2);
+                trans[0][iNumber] = answer.matrix.get(0, 2);
+                trans[1][iNumber] = answer.matrix.get(1, 2);
             } // if (doGraph)
 
             answer.matrix.Inverse();

@@ -661,9 +661,8 @@ public class PlaneRender_WM extends GPURenderBase
         
         //Vector4f kMouseVec = new Vector4f( kEvent.getX()-m_iWidth/2, kEvent.getY()-m_iHeight/2, m_iSlice, 0 );
         Vector4f kMouseVec = new Vector4f( kEvent.getX(), kEvent.getY(), m_iSlice, 1 );
-        Vector4f kMouseWorld = new Vector4f();
-        m_kPVWMatrix.Mult( kMouseVec, kMouseWorld );
-        kMouseWorld.Scale( 1.0f/kMouseWorld.W );
+        Vector4f kMouseWorld = m_kPVWMatrix.mult( kMouseVec );
+        kMouseWorld.scale( 1.0f/kMouseWorld.W );
         //System.err.println( kMouseVec.ToString() + " " + kMouseWorld.ToString() );
 
         if ( !m_bIsMouseActive )
@@ -835,7 +834,7 @@ public class PlaneRender_WM extends GPURenderBase
 
             float[] afData = new float[16];
             m_pkRenderer.SetConstantWVPMatrix(2, afData);
-            m_kPVWMatrix.Set( afData[0], afData[1], afData[2], afData[3],
+            m_kPVWMatrix.set( afData[0], afData[1], afData[2], afData[3],
                     afData[4], afData[5], afData[6], afData[7], 
                     afData[8], afData[9], afData[10], afData[11], 
                     afData[12], afData[13], afData[14], afData[15] );
@@ -2096,7 +2095,7 @@ public class PlaneRender_WM extends GPURenderBase
         m_pkRenderer.OnFrustumChange();
         float[] afData = new float[16];
         m_pkRenderer.SetConstantWVPMatrix(2, afData);
-        m_kPVWMatrix.Set( afData[0], afData[1], afData[2], afData[3],
+        m_kPVWMatrix.set( afData[0], afData[1], afData[2], afData[3],
                 afData[4], afData[5], afData[6], afData[7], 
                 afData[8], afData[9], afData[10], afData[11], 
                 afData[12], afData[13], afData[14], afData[15] );

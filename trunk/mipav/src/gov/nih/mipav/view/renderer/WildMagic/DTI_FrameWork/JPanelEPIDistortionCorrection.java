@@ -425,7 +425,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
         {
             for(int k=0; k<4; k++)
             {   
-            	b0.set( j, k, b0toStructMatrix.Get(j, k) );     
+            	b0.set( j, k, b0toStructMatrix.get(j, k) );     
             }                   
         }
 		
@@ -459,7 +459,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 				{
 					for (int k=0; k<4; k++)
 					{   
-						combinedMatrix[i].set(j, k, arrayTransMatrix[i].Get(j, k));
+						combinedMatrix[i].set(j, k, arrayTransMatrix[i].get(j, k));
 					}                   
 				}	
 			}

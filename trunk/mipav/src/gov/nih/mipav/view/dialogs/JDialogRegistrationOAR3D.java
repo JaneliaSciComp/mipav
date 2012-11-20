@@ -525,7 +525,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
                     // System.err.println("LS Matrix: " + lsMatrix);
 
-                    finalMatrix.Mult(lsMatrix);
+                    finalMatrix.mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
@@ -573,12 +573,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 finalMatrix.Inverse();
-                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
-                        + finalMatrix.Get(0, 3);
-                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
-                        + finalMatrix.Get(1, 3);
-                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
-                        + finalMatrix.Get(2, 3);
+                xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
+                        + finalMatrix.get(0, 3);
+                yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
+                        + finalMatrix.get(1, 3);
+                zCenNew = xCen * finalMatrix.get(2, 0) + yCen * finalMatrix.get(2, 1) + zCen * finalMatrix.get(2, 2)
+                        + finalMatrix.get(2, 3);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
                         + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -656,7 +656,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
                     // System.err.println("LS Matrix: " + lsMatrix);
 
-                    finalMatrix.Mult(lsMatrix);
+                    finalMatrix.mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
@@ -703,12 +703,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 finalMatrix.Inverse();
-                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
-                        + finalMatrix.Get(0, 3);
-                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
-                        + finalMatrix.Get(1, 3);
-                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
-                        + finalMatrix.Get(2, 3);
+                xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
+                        + finalMatrix.get(0, 3);
+                yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
+                        + finalMatrix.get(1, 3);
+                zCenNew = xCen * finalMatrix.get(2, 0) + yCen * finalMatrix.get(2, 1) + zCen * finalMatrix.get(2, 2)
+                        + finalMatrix.get(2, 3);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
                         + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {

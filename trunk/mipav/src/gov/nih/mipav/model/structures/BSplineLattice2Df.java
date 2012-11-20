@@ -139,7 +139,7 @@ public class BSplineLattice2Df {
         if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
                 (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
-            kPoint.Copy(m_aakControlPoint[iControlY][iControlX]);
+            kPoint.copy(m_aakControlPoint[iControlY][iControlX]);
         }
     }
 
@@ -162,14 +162,13 @@ public class BSplineLattice2Df {
         int iControlMaxY = m_kBasisY.GetKnotIndex(fY);
         int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
-        kPos.Set(0.0f, 0.0f);
+        kPos.set(0.0f, 0.0f);
         Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY);
-                kTemp.Scale(fTmp, m_aakControlPoint[iControlY][iControlX]);
-                kPos.Add(kTemp);
+                kTemp.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kTemp);
             }
         }
     }
@@ -197,14 +196,13 @@ public class BSplineLattice2Df {
         m_kBasisX.Compute(fX, afD0X, null, null);
         m_kBasisY.Compute(fY, afD0Y, null, null);
 
-        kPos.Set(0.0f, 0.0f);
+        kPos.set(0.0f, 0.0f);
         Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = afD0X[iControlX] * afD0Y[iControlY];
-                kTemp.Scale(fTmp, m_aakControlPoint[iControlY][iControlX]);
-                kPos.Add(kTemp);
+                kTemp.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kTemp);
             }
         }
 
@@ -225,7 +223,7 @@ public class BSplineLattice2Df {
         if ((0 <= iControlX) && (iControlX < m_kBasisX.GetNumCtrlPoints()) && (0 <= iControlY) &&
                 (iControlY < m_kBasisY.GetNumCtrlPoints())) {
 
-            m_aakControlPoint[iControlY][iControlX].Copy(kPoint);
+            m_aakControlPoint[iControlY][iControlX].copy(kPoint);
         }
     }
 }

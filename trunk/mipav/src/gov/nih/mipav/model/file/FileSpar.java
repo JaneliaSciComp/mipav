@@ -330,7 +330,7 @@ public class FileSpar extends FileBase {
         double[] offCentre = fileInfo.getOffCentre();
         TransMatrix trans = FilePARREC.makeTranslationMatrix(offCentre);
         TransMatrix rot = FilePARREC.makeRotationMatrix(image.getExtents(), sliceAng);
-        rot.Mult(trans);
+        rot.mult(trans);
         
         TransMatrix imageBMat = rot;
         
@@ -340,7 +340,7 @@ public class FileSpar extends FileBase {
             TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
             //imageBMat.Inverse();
             aTrans.Inverse();
-            aTrans.Mult(imageBMat);
+            aTrans.mult(imageBMat);
             aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);

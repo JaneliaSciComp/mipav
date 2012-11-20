@@ -1800,7 +1800,7 @@ public class SurfaceView extends SurfaceRender {
         final WildMagic.LibFoundation.Mathematics.Vector3f center = imageA.getImageCentermm(false);
 
         xfrm.setTranslate(center.X, center.Y, center.Z);
-        xfrm.Mult(transMtx);
+        xfrm.mult(transMtx);
         xfrm.setTranslate( -center.X, -center.Y, -center.Z);
 
         // Step.4

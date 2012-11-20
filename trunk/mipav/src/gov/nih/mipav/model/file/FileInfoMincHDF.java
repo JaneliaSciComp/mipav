@@ -331,7 +331,7 @@ public class FileInfoMincHDF extends FileInfoBase {
         	matrix = new TransMatrix(getExtents().length + 1);
         }
         
-        matrix.MakeIdentity();
+        matrix.identity();
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < cosines[i].length; j++) {

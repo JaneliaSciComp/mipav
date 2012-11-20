@@ -142,7 +142,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         if ((fDx == 0) && (fDy == 0)) {
             m_bUseVelocity = false;
         } else {
-            m_kVelocity.Normalize();
+            m_kVelocity.normalize();
         }
     }
 
@@ -393,8 +393,8 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
             if (m_bDilate) {
                 kVec.X = (float) kX.get(i, 0) - fXBar;
                 kVec.Y = (float) kY.get(i, 0) - fYBar;
-                fLength = kVec.Length();
-                kVec.Normalize();
+                fLength = kVec.length();
+                kVec.normalize();
 
                 m_afX[i] = fXBar + (kVec.X * fLength * m_fDilationFactor);
                 m_afY[i] = fYBar + (kVec.Y * fLength * m_fDilationFactor);
@@ -407,7 +407,7 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         /* update velocity: */
         m_kVelocity.X = fXBar - kCenter.X;
         m_kVelocity.Y = fYBar - kCenter.Y;
-        m_kVelocity.Normalize();
+        m_kVelocity.normalize();
 
         return;
     }

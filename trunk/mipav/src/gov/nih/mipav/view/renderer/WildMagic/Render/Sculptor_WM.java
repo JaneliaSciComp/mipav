@@ -238,8 +238,8 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                     kIn.Y = ((float)iY/(float)iYBound)*fY;
                     kIn.Z = ((float)iZ/(float)iZBound)*fZ;
 
-                    m_kWVPMatrix.MultLeft( kIn, kOut);
-                    kOut.Scale(1.0f/kOut.W);
+                    m_kWVPMatrix.multLeft( kIn, kOut);
+                    kOut.scale(1.0f/kOut.W);
 
                     int iXIndex = (int)((m_iSculptImageWidth-1) * (1 + kOut.X)/2.0f);
                     int iYIndex = (int)((m_iSculptImageHeight-1) * (1 - kOut.Y)/2.0f);

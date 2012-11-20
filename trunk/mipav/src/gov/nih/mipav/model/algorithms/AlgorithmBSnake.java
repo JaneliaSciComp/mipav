@@ -829,7 +829,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 // possible
                 index = arcLength.invlen(pct);
                 interpPt3D = bSpline.bSplineJetXYZ(0, index, xPoints, yPoints, zPoints);
-                interpPt.Set( interpPt3D.X, interpPt3D.Y );
+                interpPt.set( interpPt3D.X, interpPt3D.Y );
                 tangentDir = bSpline.bSplineJetXY(1, index, xPoints, yPoints);
 
                 normLength = (float) Math.sqrt((tangentDir.X * tangentDir.X) + (tangentDir.Y * tangentDir.Y));
