@@ -1944,9 +1944,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 rot[1][iNumber] = (float) (answer.initial[1]);
                 rot[2][iNumber] = (float) (answer.initial[2]);
                 //OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = answer.matrix.Get(0, 3);
-                trans[1][iNumber] = answer.matrix.Get(1, 3);
-                trans[2][iNumber] = answer.matrix.Get(2, 3);
+                trans[0][iNumber] = answer.matrix.get(0, 3);
+                trans[1][iNumber] = answer.matrix.get(1, 3);
+                trans[2][iNumber] = answer.matrix.get(2, 3);
             } // if (doGraph)
 
             answer.matrix.Inverse();

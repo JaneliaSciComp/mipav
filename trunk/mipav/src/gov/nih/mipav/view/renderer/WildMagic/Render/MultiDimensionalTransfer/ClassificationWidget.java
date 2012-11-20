@@ -282,7 +282,7 @@ public abstract class ClassificationWidget implements Serializable
 			fY = calcScreenY(fY);
 			// Set the mouse offset as the current position of the mouse - the current center of the widget.
 			// used to translate the widget with the mouse during mouse drag events.
-			m_kMouseOffset.Set ( fX - iX, fY - iY );
+			m_kMouseOffset.set ( fX - iX, fY - iY );
 			setPicked(true);
 		}
 		return bPicked;

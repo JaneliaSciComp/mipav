@@ -1055,7 +1055,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 		float scale = width / graphPanel.getWidth();
 		TransMatrix xfrm = new TransMatrix(3);
-		xfrm.MakeIdentity();
+		xfrm.identity();
 
 		Vector3f center = testImage.getImageCentermm(false);
 		int[] units = new int[testImage.getUnitsOfMeasure().length];

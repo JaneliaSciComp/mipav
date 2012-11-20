@@ -686,8 +686,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 xfrm.Inverse();
-                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
-                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
+                yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                    + xCen + ", " + yCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -792,8 +792,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 xfrm.Inverse();
-                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
-                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
+                yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                    + xCen + ", " + yCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {

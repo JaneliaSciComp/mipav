@@ -776,7 +776,7 @@ public class JDialogTalairach extends JDialogBase {
             AFNIOrigResols = afniInfo.getAFNIOrigResolutions();
 
             // Create the transformation that goes from +acpc to +orig
-            xfrm.MakeIdentity();
+            xfrm.identity();
             xfrm.setTranslate(translation.X, translation.Y, translation.Z);
             xfrm.setRotate(alpha, beta, gamma);
             //Mat = xfrm.getMatrix();
@@ -788,12 +788,12 @@ public class JDialogTalairach extends JDialogBase {
             BTCenter.X = TCenter.X;
             BTCenter.Y = pcie.Y - ((ViewJFrameTriImage.ATLAS_AC_TO_PC) / scale_P);
             BTCenter.Z = TCenter.Z;
-            posrr.X = (float) ((BTCenter.X * vlength * xfrm.Get(0, 0)) + (BTCenter.Y * vlength * xfrm.Get(0, 1)) +
-                               (BTCenter.Z * vlength * xfrm.Get(0, 2)) + xfrm.Get(0, 3)) / AFNIOrigResols[0];
-            posrr.Y = (float) ((BTCenter.X * vlength * xfrm.Get(1, 0)) + (BTCenter.Y * vlength * xfrm.Get(1, 1)) +
-                               (BTCenter.Z * vlength * xfrm.Get(1, 2)) + xfrm.Get(1, 3)) / AFNIOrigResols[1];
-            posrr.Z = (float) ((BTCenter.X * vlength * xfrm.Get(2, 0)) + (BTCenter.Y * vlength * xfrm.Get(2, 1)) +
-                               (BTCenter.Z * vlength * xfrm.Get(2, 2)) + xfrm.Get(2, 3)) / AFNIOrigResols[2];
+            posrr.X = (float) ((BTCenter.X * vlength * xfrm.get(0, 0)) + (BTCenter.Y * vlength * xfrm.get(0, 1)) +
+                               (BTCenter.Z * vlength * xfrm.get(0, 2)) + xfrm.get(0, 3)) / AFNIOrigResols[0];
+            posrr.Y = (float) ((BTCenter.X * vlength * xfrm.get(1, 0)) + (BTCenter.Y * vlength * xfrm.get(1, 1)) +
+                               (BTCenter.Z * vlength * xfrm.get(1, 2)) + xfrm.get(1, 3)) / AFNIOrigResols[1];
+            posrr.Z = (float) ((BTCenter.X * vlength * xfrm.get(2, 0)) + (BTCenter.Y * vlength * xfrm.get(2, 1)) +
+                               (BTCenter.Z * vlength * xfrm.get(2, 2)) + xfrm.get(2, 3)) / AFNIOrigResols[2];
             Preferences.debug("posrr = " + posrr.X + " " + posrr.Y + " " + posrr.Z + "\n");
 
             progressBar = new ViewJProgressBar(afniInfo.getFileName(), "Transformation pass #" + 1, 0, 100, false, null,
@@ -803,7 +803,7 @@ public class JDialogTalairach extends JDialogBase {
 
             for (int i = 0; i < 12; i++) {
                 progressBar.setMessage("Transformation pass #" + (i + 1));
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 switch (i) {
@@ -1376,18 +1376,18 @@ public class JDialogTalairach extends JDialogBase {
         boolean doTransform;
 
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
 
         for (i = oXlow; i <= oXhigh; i++) {

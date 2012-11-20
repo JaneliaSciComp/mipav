@@ -246,7 +246,7 @@ public class JDialogAnimate extends JDialogBase {
         int boxIndex = 0;
         int interp = 0;
 
-        xfrm.MakeIdentity();
+        xfrm.identity();
 
         // Hide dialog
         setVisible(false);

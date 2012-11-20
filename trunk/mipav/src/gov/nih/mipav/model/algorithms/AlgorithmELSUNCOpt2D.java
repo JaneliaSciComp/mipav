@@ -793,8 +793,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 		matrix.setZoom(vector[3], vector[4]);
 
         //System.err.println( matrix.ToString() );
-        matrix.MultLeft(toOrigin);
-        matrix.Mult(fromOrigin);
+        matrix.multLeft(toOrigin).mult(fromOrigin);
 
         //System.err.println( matrix.ToString() );
         return matrix;

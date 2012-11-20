@@ -1308,7 +1308,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (img2LPS.Get(i, j) != 0) {
+                if (img2LPS.get(i, j) != 0) {
                     origLPS[i] = origImg[j];
                 }
             }
@@ -1334,7 +1334,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (int j = 0; j < 3; j++) { // j's are the columns
 
-                if (LPS2img.Get(i, j) != 0) {
+                if (LPS2img.get(i, j) != 0) {
                     origImg[i] = origLPS[j];
                 }
             }

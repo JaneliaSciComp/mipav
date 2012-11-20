@@ -198,13 +198,13 @@ implements StreamInterface
             {
                 for ( int j = 0; j < 4; j++ )
                 {
-                    pkCProgram.GetUC("InverseTransformMatrix").GetData()[i*4+j] = m_kImageTransform.Get(i,j);
+                    pkCProgram.GetUC("InverseTransformMatrix").GetData()[i*4+j] = m_kImageTransform.get(i,j);
                 }
             }
         } 
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransform") != null ) 
         {
-            m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransform").GetData());
+            m_kImageTransform.getData(pkCProgram.GetUC("InverseTransform").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("UseZSlice") != null ) 
         {
@@ -248,11 +248,11 @@ implements StreamInterface
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransform") != null ) 
         {
-            m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransform").GetData());
+            m_kImageTransform.getData(pkCProgram.GetUC("InverseTransform").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
         {
-            m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
+            m_kImageTransform.getData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
             /*
             for ( int i = 0; i < 4; i++ )
             {
@@ -271,11 +271,11 @@ implements StreamInterface
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransform") != null ) 
         {
-            m_kImageTransformd.GetData(pkCProgram.GetUC("InverseTransform").GetData());
+            m_kImageTransformd.getData(pkCProgram.GetUC("InverseTransform").GetData());
         }
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
         {
-            m_kImageTransformd.GetData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
+            m_kImageTransformd.getData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
             /*
             for ( int i = 0; i < 4; i++ )
             {

@@ -1856,7 +1856,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 49; // 1
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(0, Math.min(image.getNDims(), 3)));
+        resString = Double.toString(image_TM.get(0, Math.min(image.getNDims(), 3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1919,7 +1919,7 @@ public class FileFits extends FileBase {
         cardImage[5] = 50; // 2
         cardImage[8] = 61; // =
 
-        resString = Double.toString(image_TM.Get(1, Math.min(image.getNDims(), 3)));
+        resString = Double.toString(image_TM.get(1, Math.min(image.getNDims(), 3)));
         resBytes = resString.getBytes();
 
         for (i = 0; i < resString.length(); i++) {
@@ -1993,7 +1993,7 @@ public class FileFits extends FileBase {
             cardImage[5] = 51; // 3
             cardImage[8] = 61; // =
 
-            resString = Double.toString(image_TM.Get(2, Math.min(image.getNDims(), 3)));
+            resString = Double.toString(image_TM.get(2, Math.min(image.getNDims(), 3)));
             resBytes = resString.getBytes();
 
             for (i = 0; i < resString.length(); i++) {

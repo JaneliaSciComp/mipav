@@ -469,8 +469,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 							float[] grad = result35RegImage.getDTIParameters().getGradients()[i];
 							Vector4f gradVec = new Vector4f( grad[0], grad[1], grad[2], 0 );
-							Vector4f newGradVec = new Vector4f();
-							arrayTransMatrix[i].Mult( gradVec, newGradVec );
+							Vector4f newGradVec = arrayTransMatrix[i].mult( gradVec );
 							grad[0] = newGradVec.X;
 							grad[1] = newGradVec.Y;
 							grad[2] = newGradVec.Z;
@@ -1148,7 +1147,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 		//Parameters for algoTrans
 		TransMatrix xfrm = new TransMatrix(4);
-		xfrm.MakeIdentity();
+		xfrm.identity();
 		int[] units = matchB0.getUnitsOfMeasure();
 		float fovX = oldT2.getResolutions(0)[0] * (oldT2.getExtents()[0] - 1);
 		float fovY = oldT2.getResolutions(0)[1] * (oldT2.getExtents()[1] - 1);

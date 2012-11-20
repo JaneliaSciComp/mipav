@@ -671,7 +671,7 @@ public class FileInfoMinc extends FileInfoBase {
 
         // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
         final TransMatrix matrix = new TransMatrix(Math.min(4, getExtents().length + 1));
-        matrix.MakeIdentity();
+        matrix.identity();
 
         for (final FileMincVarElem element : varArray) {
 
@@ -1418,15 +1418,15 @@ public class FileInfoMinc extends FileInfoBase {
         int i, j, k, p, q, r;
         double detP;
 
-        xi = mat.Get(0, 0);
-        xj = mat.Get(0, 1);
-        xk = mat.Get(0, 2);
-        yi = mat.Get(1, 0);
-        yj = mat.Get(1, 1);
-        yk = mat.Get(1, 2);
-        zi = mat.Get(2, 0);
-        zj = mat.Get(2, 1);
-        zk = mat.Get(2, 2);
+        xi = mat.get(0, 0);
+        xj = mat.get(0, 1);
+        xk = mat.get(0, 2);
+        yi = mat.get(1, 0);
+        yj = mat.get(1, 1);
+        yk = mat.get(1, 2);
+        zi = mat.get(2, 0);
+        zj = mat.get(2, 1);
+        zk = mat.get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1728,7 +1728,7 @@ public class FileInfoMinc extends FileInfoBase {
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
         final TransMatrix Q = new TransMatrix(mat);
-        detQ = Q.Determinant();
+        detQ = Q.determinant();
         final TransMatrix P = new TransMatrix(mat.getDim());
         final TransMatrix M = new TransMatrix(mat.getDim());
 
@@ -1766,7 +1766,7 @@ public class FileInfoMinc extends FileInfoBase {
                         continue;
                     }
 
-                    P.MakeZero();
+                    P.makeZero();
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
 
@@ -1776,7 +1776,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 P.set(0, i - 1, p);
                                 P.set(1, j - 1, q);
                                 P.set(2, k - 1, r);
-                                detP = P.Determinant();
+                                detP = P.determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ( (detP * detQ) <= 0.0) {
@@ -1784,7 +1784,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 }
 
                                 M.Copy(P);
-                                M.Mult(Q);
+                                M.mult(Q);
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I

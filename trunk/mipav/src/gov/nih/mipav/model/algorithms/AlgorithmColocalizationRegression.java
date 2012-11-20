@@ -3991,10 +3991,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 reg2.disposeLocal();
                 reg2 = null;
                 
-                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                 
                 float xresA = baseImage.getFileInfo(0).getResolutions()[0];
                 float yresA = baseImage.getFileInfo(0).getResolutions()[1];
@@ -4020,10 +4020,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 reg2.disposeLocal();
                 reg2 = null;
                 
-                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                 
                 xresA = srcImage.getFileInfo(0).getResolutions()[0];
                 yresA = srcImage.getFileInfo(0).getResolutions()[1];
@@ -6262,10 +6262,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     reg2.disposeLocal();
                     reg2 = null;
                     
-                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                    xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                    xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                    xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                     
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
@@ -6291,10 +6291,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     reg2.disposeLocal();
                     reg2 = null;
                     
-                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                    xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                    xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                    xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                            
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresB, yresB, xDim,
                                                        yDim, transformVOI, clip, false);
@@ -8643,10 +8643,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 reg2.disposeLocal();
                 reg2 = null;
                 
-                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                 
                 float xresA = srcImage.getFileInfo(0).getResolutions()[0];
                 float yresA = srcImage.getFileInfo(0).getResolutions()[1];
@@ -8668,10 +8668,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 reg2.disposeLocal();
                 reg2 = null;
                 
-                xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                 
                 transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, transformVOI, clip, false);
@@ -11157,10 +11157,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     reg2.disposeLocal();
                     reg2 = null;
                     
-                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                    xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                    xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                    xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                            
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
@@ -11176,10 +11176,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     reg2.disposeLocal();
                     reg2 = null;
                     
-                    xfrm.Set(0, 1, xfrm.Get(0, 1) * 0.5f);
-                    xfrm.Set(0, 2, xfrm.Get(0, 2) * 0.5f);
-                    xfrm.Set(1, 0, xfrm.Get(1, 0) * 0.5f);
-                    xfrm.Set(1, 2, xfrm.Get(1, 2) * 0.5f);
+                    xfrm.set(0, 1, xfrm.get(0, 1) * 0.5f);
+                    xfrm.set(0, 2, xfrm.get(0, 2) * 0.5f);
+                    xfrm.set(1, 0, xfrm.get(1, 0) * 0.5f);
+                    xfrm.set(1, 2, xfrm.get(1, 2) * 0.5f);
                     
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                        yDim, transformVOI, clip, false);

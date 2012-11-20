@@ -30,19 +30,9 @@ import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-//import com.mentorgen.tools.profile.runtime.Profile;
-
-
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.GLCanvas;
-import com.jogamp.opengl.util.Animator;
 
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
@@ -234,10 +224,10 @@ public class ImageRegistrationGPU extends JavaApplication3D
             kMat.M11 = kTransform.M11;
             kMat.M12 = 0;
             kMat.M13 = kTransform.M12;
-            kMat.Transpose();
+            kMat.transpose();
             return kMat;            
         }
-        kTransform.Transpose();
+        kTransform.transpose();
         return kTransform;
     }
     
@@ -512,21 +502,21 @@ public class ImageRegistrationGPU extends JavaApplication3D
     public void setFromOrigin( TransMatrix kFromOrigin )
     {
         m_kFromOrigin = convertTo4D(kFromOrigin);
-        m_kFromOriginInv.Inverse(m_kFromOrigin);
+        m_kFromOriginInv.copy(m_kFromOrigin).inverse();
         
     }
     
     public void setToOrigin( TransMatrix kToOrigin ) 
     {
         m_kToOrigin = convertTo4D(kToOrigin);
-        m_kToOriginInv.Inverse(m_kToOrigin);
+        m_kToOriginInv.copy(m_kToOrigin).inverse();
     }
 
     public void setTransform( TransMatrix kTransform )
     {
         if ( kTransform.getDim() == 3 )
         {
-            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.identity();
             m_kImageTransform.M00 = kTransform.M00;
             m_kImageTransform.M01 = kTransform.M01;
             m_kImageTransform.M02 = 0;
@@ -540,7 +530,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
         else
         {
-            m_kImageTransform.Copy(kTransform);
+            m_kImageTransform.copy(kTransform);
         }
         if ( m_kImageEffectDual != null )
         {
@@ -602,7 +592,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     {
         if ( kTransform.getDim() == 3 )
         {
-            m_kImageTransformd.MakeIdentity();
+            m_kImageTransformd.identity();
             m_kImageTransformd.M00 = kTransform.M00;
             m_kImageTransformd.M01 = kTransform.M01;
             m_kImageTransformd.M02 = 0;
@@ -616,7 +606,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
         else
         {
-            m_kImageTransformd.Copy(kTransform);
+            m_kImageTransformd.copy(kTransform);
         }
         if ( m_kImageEffectDual != null )
         {

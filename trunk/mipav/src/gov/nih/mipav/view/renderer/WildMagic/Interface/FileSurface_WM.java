@@ -1761,7 +1761,7 @@ public class FileSurface_WM {
 		        if (inverseDicomMatrix != null) {
 		            for (int i = 0; i <= 3; i++) {
 		                for (int j = 0; j <= 3; j++) {
-		                	kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+		                	kOut.writeDouble(inverseDicomMatrix.get(i, j));
 		                }
 		            }
 		        }
@@ -3053,7 +3053,7 @@ public class FileSurface_WM {
             for (int i = 0; i <= 3; i++) {
 
                 for (int j = 0; j <= 3; j++) {
-                    tmpLong = Double.doubleToLongBits(inverseDicomMatrix.Get(i, j));
+                    tmpLong = Double.doubleToLongBits(inverseDicomMatrix.get(i, j));
                     buffer[index++] = (byte) (tmpLong >>> 56);
                     buffer[index++] = (byte) (tmpLong >>> 48);
                     buffer[index++] = (byte) (tmpLong >>> 40);

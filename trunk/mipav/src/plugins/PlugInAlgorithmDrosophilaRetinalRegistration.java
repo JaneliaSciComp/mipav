@@ -279,7 +279,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         	intermMatrix1.Inverse();
         }else {
         	intermMatrix1 = new TransMatrix(4);
-            intermMatrix1.Mult(matrixAffine, matrixGreen); // pretty sure this is correct
+            intermMatrix1.copy(matrixAffine).mult(matrixGreen); // pretty sure this is correct
             intermMatrix1.Inverse();
         }
 
@@ -1021,7 +1021,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         outputTextArea.append("creating red and green channel images..." + "\n");
         outputTextArea.append("\n");
         TransMatrix xfrm = new TransMatrix(4);
-        xfrm.MakeIdentity();
+        xfrm.identity();
         int interp = 0; // trilinear interp
         float oXres = imageXRegistered.getResolutions(0)[0];
         float oYres = imageXRegistered.getResolutions(0)[1];
@@ -1205,7 +1205,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         }
 
         xfrm = new TransMatrix(4);
-        xfrm.MakeIdentity();
+        xfrm.identity();
         interp = 0; // trilinear interp
         oXres = imageY.getResolutions(0)[0];
         oYres = imageY.getResolutions(0)[1];

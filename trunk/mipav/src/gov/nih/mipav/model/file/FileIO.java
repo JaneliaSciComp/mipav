@@ -1404,7 +1404,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 // image.getFileInfo(m).setTransformID(FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL);
                 // }
             } catch (final RuntimeException rte) {
-                invMatrix.MakeIdentity();
+                invMatrix.identity();
                 // MipavUtil.displayError("Error = " + rte);
             }
         }

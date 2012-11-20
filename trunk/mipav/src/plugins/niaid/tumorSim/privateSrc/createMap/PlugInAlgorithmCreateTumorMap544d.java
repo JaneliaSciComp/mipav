@@ -339,7 +339,7 @@ public class PlugInAlgorithmCreateTumorMap544d extends AlgorithmBase {
                 for(int z=0; z<image.getExtents()[2]; z++) {
                     point.Z = z*zRes;
                     if(tumorImage.getDouble(x, y, z) != 0) {
-                        distance = center.Distance(point);
+                        distance = center.distance(point);
                         if(distance > radius) {
                             relevantRes = xyRes;
                             if(zCenter - z > xCenter - x || 

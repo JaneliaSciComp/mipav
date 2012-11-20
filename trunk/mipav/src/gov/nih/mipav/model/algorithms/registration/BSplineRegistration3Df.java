@@ -724,41 +724,41 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
             // plane defined by the three vertices.  This axis is identified
             // by the axis of the plane normal vector with the largest magnitude.
             if ((Math.abs(kN.X) > Math.abs(kN.Y)) && (Math.abs(kN.X) > Math.abs(kN.Z))) {
-                kPP0.Set(kP0.Y, kP0.Z);
-                kPP1.Set(kP1.Y, kP1.Z);
-                kPP2.Set(kP2.Y, kP2.Z);
-                kPP.Set(kPT.Y, kPT.Z);
+                kPP0.set(kP0.Y, kP0.Z);
+                kPP1.set(kP1.Y, kP1.Z);
+                kPP2.set(kP2.Y, kP2.Z);
+                kPP.set(kPT.Y, kPT.Z);
             } else if (Math.abs(kN.Y) > Math.abs(kN.Z)) {
-                kPP0.Set(kP0.X, kP0.Z);
-                kPP1.Set(kP1.X, kP1.Z);
-                kPP2.Set(kP2.X, kP2.Z);
-                kPP.Set(kPT.X, kPT.Z);
+                kPP0.set(kP0.X, kP0.Z);
+                kPP1.set(kP1.X, kP1.Z);
+                kPP2.set(kP2.X, kP2.Z);
+                kPP.set(kPT.X, kPT.Z);
             } else {
-                kPP0.Set(kP0.X, kP0.Y);
-                kPP1.Set(kP1.X, kP1.Y);
-                kPP2.Set(kP2.X, kP2.Y);
-                kPP.Set(kPT.X, kPT.Y);
+                kPP0.set(kP0.X, kP0.Y);
+                kPP1.set(kP1.X, kP1.Y);
+                kPP2.set(kP2.X, kP2.Y);
+                kPP.set(kPT.X, kPT.Y);
             }
 
             // Determine if this point is inside the triangle.
-            kPV.Sub(kPP1, kPP0);
+            kPV = Vector2f.sub(kPP1, kPP0);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP0);
+            kPV = Vector2f.sub(kPP, kPP0);
 
-            float fC0 = kPVPerp.Dot(kPV);
-            kPV.Sub(kPP2, kPP1);
+            float fC0 = kPVPerp.dot(kPV);
+            kPV = Vector2f.sub(kPP2, kPP1);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP1);
+            kPV = Vector2f.sub(kPP, kPP1);
 
-            float fC1 = kPVPerp.Dot(kPV);
-            kPV.Sub(kPP0, kPP2);
+            float fC1 = kPVPerp.dot(kPV);
+            kPV = Vector2f.sub(kPP0, kPP2);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP2);
+            kPV = Vector2f.sub(kPP, kPP2);
 
-            float fC2 = kPVPerp.Dot(kPV);
+            float fC2 = kPVPerp.dot(kPV);
 
             if (((fC0 * fC1) >= 0.0f) && ((fC0 * fC2) >= 0.0f)) {
 

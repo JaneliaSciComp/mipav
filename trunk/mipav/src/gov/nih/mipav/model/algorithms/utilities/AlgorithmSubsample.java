@@ -1635,12 +1635,12 @@ public class AlgorithmSubsample extends AlgorithmBase {
         ModelImage tmpMask;
         ModelImage maskImage;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
 
         maskImage = image.generateShortImage(1);
         tmpMask = new ModelImage(ModelImage.SHORT, resultExtents, null);
@@ -1740,18 +1740,18 @@ public class AlgorithmSubsample extends AlgorithmBase {
         ModelImage tmpMask;
         ModelImage maskImage;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         
         maskImage = image.generateShortImage(1);

@@ -198,12 +198,11 @@ public class BspNodes extends DemoBase
 	private BspNode CreateNode (final Vector2f rkV0, final Vector2f rkV1,
                                 final ColorRGB rkColor)
     {
-        Vector2f kDir = new Vector2f();
-        kDir.Sub( rkV1, rkV0 );
+        Vector2f kDir = Vector2f.sub( rkV1, rkV0 );
         Vector3f kNormal = new Vector3f(kDir.Y,-kDir.X,0.0f);
         kNormal.normalize();
         float fConstant = kNormal.dot( new Vector3f(rkV0.X,rkV0.Y,0.0f));
-        float fXExtent = 0.5f*kDir.Length();
+        float fXExtent = 0.5f*kDir.length();
         float fYExtent = 0.125f;
         Vector3f kTrn = new Vector3f(0.5f*(rkV0.X+rkV1.X),0.5f*(rkV0.Y+rkV1.Y),
                                      fYExtent+1e-03f);
@@ -295,7 +294,6 @@ public class BspNodes extends DemoBase
         // is nonconvex, z-buffering must be enabled for that object.  However,
         // only z-writes need to occur for the convex objects.
         float fHeight = 0.1f;
-        Vector2f kCenter = new Vector2f();
         TriMesh pkMesh;
 
         // (R0) Create a torus mesh.  The torus is not convex, so z-buffering is
@@ -305,9 +303,9 @@ public class BspNodes extends DemoBase
         pkEffect = new TextureEffect("Flower");
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter.Add(kV2,kV6);
-        kCenter.Add(kV7);
-        kCenter.Scale(1.0f/3.0f);
+        Vector2f kCenter = Vector2f.add(kV2,kV6);
+        kCenter.add(kV7);
+        kCenter.scale(1.0f/3.0f);
         pkMesh.Local.SetTranslate(new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp3.AttachPositiveChild(pkMesh);
 
@@ -323,10 +321,10 @@ public class BspNodes extends DemoBase
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter.Add(kV0,kV3);
-        kCenter.Add(kV6);
-        kCenter.Add(kV7);
-        kCenter.Scale(1.0f/4.0f);
+        kCenter = Vector2f.add(kV0,kV3);
+        kCenter.add(kV6);
+        kCenter.add(kV7);
+        kCenter.scale(1.0f/4.0f);
         pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp3.AttachNegativeChild(pkMesh);
 
@@ -335,9 +333,9 @@ public class BspNodes extends DemoBase
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter.Add(kV1,kV2);
-        kCenter.Add(kV3);
-        kCenter.Scale(1.0f/3.0f);
+        kCenter = Vector2f.add(kV1,kV2);
+        kCenter.add(kV3);
+        kCenter.scale(1.0f/3.0f);
         pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp1.AttachNegativeChild(pkMesh);
 
@@ -346,9 +344,9 @@ public class BspNodes extends DemoBase
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter.Add(kV1,kV4);
-        kCenter.Add(kV5);
-        kCenter.Scale(1.0f/3.0f);
+        kCenter = Vector2f.add(kV1,kV4);
+        kCenter.add(kV5);
+        kCenter.scale(1.0f/3.0f);
         pkMesh.Local.SetTranslate(new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp2.AttachPositiveChild(pkMesh);
 
@@ -357,10 +355,10 @@ public class BspNodes extends DemoBase
         pkMesh.AttachGlobalState(pkZBuffer);
         pkMesh.AttachEffect(pkEffect);
         pkMesh.Local.SetUniformScale(0.1f);
-        kCenter.Add(kV0,kV4);
-        kCenter.Add(kV5);
-        kCenter.Add(kV8);
-        kCenter.Scale(1.0f/4.0f);
+        kCenter = Vector2f.add(kV0,kV4);
+        kCenter.add(kV5);
+        kCenter.add(kV8);
+        kCenter.scale(1.0f/4.0f);
         pkMesh.Local.SetTranslate( new Vector3f(kCenter.X,kCenter.Y,fHeight));
         pkBsp2.AttachNegativeChild(pkMesh);
 

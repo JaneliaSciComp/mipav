@@ -139,8 +139,7 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
 
         
         
-        matrix.MultLeft(toOrigin);
-        matrix.Mult(fromOrigin);
+        matrix.multLeft(toOrigin).mult(fromOrigin);
         //System.err.println( "Matrix = " + matrix.ToString() );
         
         return matrix;

@@ -628,7 +628,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         if (origImage.is2DImage()) {
             // Creating a blank TransMatrix for resampling
             final TransMatrix percentSizer = new TransMatrix(4);
-            percentSizer.Set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            percentSizer.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
             // Resample image size based on percent inputted
             final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,

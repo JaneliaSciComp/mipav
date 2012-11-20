@@ -2701,7 +2701,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                 if (m_akSteps[i][j] == null) {
                     m_akSteps[i][j] = new Vector2f(iX + j - 3, iY + i - 3);
                 } else {
-                    m_akSteps[i][j].Set(iX + j - 3, iY + i - 3);
+                    m_akSteps[i][j].set(iX + j - 3, iY + i - 3);
                 }
             }
         }

@@ -428,7 +428,7 @@ public class FilePARREC extends FileBase {
         double[] offCentre = fileInfo.getOffCentre();
         TransMatrix trans = makeTranslationMatrix(offCentre);
         TransMatrix rot = makeRotationMatrix(image.getExtents(), sliceAng);
-        rot.Mult(trans);
+        rot.mult(trans);
         
         image.setMatrix(ConvertToMIPAVConvention(rot));
     }
@@ -439,10 +439,10 @@ public class FilePARREC extends FileBase {
     public static TransMatrix ConvertToMIPAVConvention(TransMatrix mat){
         //float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
         TransMatrix mipavMat = new TransMatrix(4);
-        mipavMat.Set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        mipavMat.set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         //mat.Transpose();
-        mipavMat.Mult(mat);
-        mipavMat.Mult(mipavMat);
+        mipavMat.mult(mat);
+        mipavMat.mult(mipavMat);
         return mipavMat;
     }
     
@@ -503,10 +503,10 @@ public class FilePARREC extends FileBase {
         rotZ.set(2,0,0);                        rotZ.set(2,1,0);                    rotZ.set(2,2,1);    rotZ.set(2,3,0);
         rotZ.set(3,0,0);                        rotZ.set(3,1,0);                    rotZ.set(3,2,0);    rotZ.set(3,3,1);
 
-        transCenter.Mult(rotX);
-        transCenter.Mult(rotY);
-        transCenter.Mult(rotZ);
-        transCenter.Mult(transHome);
+        transCenter.mult(rotX);
+        transCenter.mult(rotY);
+        transCenter.mult(rotZ);
+        transCenter.mult(transHome);
         
         return transCenter;
     }

@@ -75,7 +75,7 @@ public class LightboxGenerator  extends AlgorithmBase{
     	
     	//Creating a blank TransMatrix for resampling
 		TransMatrix percentSizer = new TransMatrix(4);
-		percentSizer.Set((float)1, (float)0, (float)0, (float)0, (float)0,
+		percentSizer.set((float)1, (float)0, (float)0, (float)0, (float)0,
 				(float)1, (float)0, (float)0, (float)0, (float)0, (float)1, (float)0, 
 				(float)0, (float)0, (float)0, (float)1);
     	

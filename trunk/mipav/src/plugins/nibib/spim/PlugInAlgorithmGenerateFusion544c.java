@@ -974,7 +974,7 @@ public class PlugInAlgorithmGenerateFusion544c extends AlgorithmBase {
         private void downsampleUpsampleCombined() {
             
             TransMatrix mat = new TransMatrix(4);
-            mat.MakeIdentity();
+            mat.identity();
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
             
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
@@ -995,7 +995,7 @@ public class PlugInAlgorithmGenerateFusion544c extends AlgorithmBase {
         
         private void upsampleToTransform() {
             TransMatrix mat = new TransMatrix(4);
-            mat.MakeIdentity();
+            mat.identity();
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             

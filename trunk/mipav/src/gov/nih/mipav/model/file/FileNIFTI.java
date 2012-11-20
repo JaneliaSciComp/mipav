@@ -1922,9 +1922,9 @@ public class FileNIFTI extends FileBase {
             axisOrientation[1] = FileInfoBase.ORI_UNKNOWN_TYPE;
             axisOrientation[2] = FileInfoBase.ORI_UNKNOWN_TYPE;
             fileInfo.setAxisOrientation(axisOrientation);
-            matrix.Set(0, 0, resolutions[0]);
-            matrix.Set(1, 1, resolutions[1]);
-            matrix.Set(2, 2, resolutions[2]);
+            matrix.set(0, 0, resolutions[0]);
+            matrix.set(1, 1, resolutions[1]);
+            matrix.set(2, 2, resolutions[2]);
         }
 
         // Both methods 2 and 3 could be present
@@ -2661,19 +2661,19 @@ public class FileNIFTI extends FileBase {
                 }
             fileInfo.setOrigin(LPSOrigin);
             
-            matrix.Set(0, 1, -matrix.Get(0, 1));
-            matrix.Set(1, 1, -matrix.Get(1, 1));
-            matrix.Set(2, 1, -matrix.Get(2, 1)); 
+            matrix.set(0, 1, -matrix.get(0, 1));
+            matrix.set(1, 1, -matrix.get(1, 1));
+            matrix.set(2, 1, -matrix.get(2, 1)); 
             matrix.set(0, 3, LPSOrigin[0]);
-            matrix.Set(1, 3, LPSOrigin[1]);
+            matrix.set(1, 3, LPSOrigin[1]);
             matrix.set(2, 3, LPSOrigin[2]);
                           
             if (matrix2 != null) {
-                matrix2.Set(0, 1, -matrix2.Get(0, 1));
-                matrix2.Set(1, 1, -matrix2.Get(1, 1));
-                matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
+                matrix2.set(0, 1, -matrix2.get(0, 1));
+                matrix2.set(1, 1, -matrix2.get(1, 1));
+                matrix2.set(2, 1, -matrix2.get(2, 1)); 
                 matrix2.set(0, 3, LPSOrigin[0]);
-                matrix2.Set(1, 3, LPSOrigin[1]); 
+                matrix2.set(1, 3, LPSOrigin[1]); 
                 matrix2.set(2, 3, LPSOrigin[2]);
             } // if (matrix2 != null)
                     
@@ -3380,19 +3380,19 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setOrigin(LPSOrigin);
                 
                 
-                matrix.Set(0, 1, -matrix.Get(0, 1));
-                matrix.Set(1, 1, -matrix.Get(1, 1));
-                matrix.Set(2, 1, -matrix.Get(2, 1)); 
+                matrix.set(0, 1, -matrix.get(0, 1));
+                matrix.set(1, 1, -matrix.get(1, 1));
+                matrix.set(2, 1, -matrix.get(2, 1)); 
                 matrix.set(0, 3, LPSOrigin[0]);
-                matrix.Set(1, 3, LPSOrigin[1]);
+                matrix.set(1, 3, LPSOrigin[1]);
                 matrix.set(2, 3, LPSOrigin[2]);
                               
                 if (matrix2 != null) {
-                    matrix2.Set(0, 1, -matrix2.Get(0, 1));
-                    matrix2.Set(1, 1, -matrix2.Get(1, 1));
-                    matrix2.Set(2, 1, -matrix2.Get(2, 1)); 
+                    matrix2.set(0, 1, -matrix2.get(0, 1));
+                    matrix2.set(1, 1, -matrix2.get(1, 1));
+                    matrix2.set(2, 1, -matrix2.get(2, 1)); 
                     matrix2.set(0, 3, LPSOrigin[0]);
-                    matrix2.Set(1, 3, LPSOrigin[1]); 
+                    matrix2.set(1, 3, LPSOrigin[1]); 
                     matrix2.set(2, 3, LPSOrigin[2]);
                 } // if (matrix2 != null)
 
@@ -3645,15 +3645,15 @@ public class FileNIFTI extends FileBase {
         /*-- j axis --*/
         /*-- k axis --*/
         //array = mat.getMatrix(0, 2, 0, 2).getArray();
-        xi = mat.Get(0, 0);
-        xj = mat.Get(0, 1);
-        xk = mat.Get(0, 2);
-        yi = mat.Get(1, 0);
-        yj = mat.Get(1, 1);
-        yk = mat.Get(1, 2);
-        zi = mat.Get(2, 0);
-        zj = mat.Get(2, 1);
-        zk = mat.Get(2, 2);
+        xi = mat.get(0, 0);
+        xj = mat.get(0, 1);
+        xk = mat.get(0, 2);
+        yi = mat.get(1, 0);
+        yj = mat.get(1, 1);
+        yk = mat.get(1, 2);
+        zi = mat.get(2, 0);
+        zj = mat.get(2, 1);
+        zk = mat.get(2, 2);
 
         /* normalize column vectors to get unit vectors along each ijk-axis */
 

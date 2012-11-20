@@ -417,7 +417,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 xfrmC = new TransMatrix(3);
                 // xfrmC.identity();
                 xfrmC.setTranslate(center.X, center.Y);
-                xfrm.MultLeft(xfrmC);
+                xfrm.multLeft(xfrmC);
                 xfrm.setTranslate( -center.X, -center.Y);
                 haveCentered = true;
             }
@@ -780,7 +780,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 xfrmC = new TransMatrix(4);
                 // xfrmC.identity();
                 xfrmC.setTranslate(center.X, center.Y, center.Z);
-                xfrm.MultLeft(xfrmC);
+                xfrm.multLeft(xfrmC);
                 xfrm.setTranslate( -center.X, -center.Y, -center.Z);
                 haveCentered = true;
             }
@@ -4688,7 +4688,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 if (transMatrix.getDim() == 4) {
                     newMatrix = new TransMatrix(srcImage.getMatrix());
-                    newMatrix.Mult(transMatrix);
+                    newMatrix.mult(transMatrix);
                 } else { // 2.5D processing
                     newMatrix = new TransMatrix(srcImage.getMatrix());
 
@@ -4705,7 +4705,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     mat3D.set(2, 1, transMatrix.M21);
                     mat3D.set(2, 2, transMatrix.M22);
                     mat3D.set(3, 3, 1.0);
-                    newMatrix.Mult(mat3D);
+                    newMatrix.mult(mat3D);
                 }
 
             } else { // srcImage.getNDims() == 2
@@ -4717,7 +4717,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     newMatrix.Copy(srcImage.getMatrix());
                 }
 
-                newMatrix.Mult(transMatrix);
+                newMatrix.mult(transMatrix);
             }
 
             // System.err.println("NEW MATRIX: " + newTMatrix);
@@ -5145,7 +5145,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 trans.Copy(xfrmC);
-                trans.Mult(transMatrix);
+                trans.mult(transMatrix);
 
                 if ( (DIM >= 3) && ( !do25D)) {
                     trans.setTranslate( -center.X, -center.Y, -center.Z);
@@ -5222,7 +5222,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 trans.Copy(xfrmC);
-                trans.Mult(transMatrix);
+                trans.mult(transMatrix);
 
                 if ( (DIM >= 3) && ( !do25D)) {
                     trans.setTranslate( -center.X, -center.Y, -center.Z);
