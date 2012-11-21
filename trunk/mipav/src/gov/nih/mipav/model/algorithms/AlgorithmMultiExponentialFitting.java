@@ -1225,6 +1225,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         int jlaml1;
         int jtry;
         // Must have lpeak >= 1 
+        // Original code should but does not initialize lpeak
         int lpeak = 1;
         int L;
         int lendeq[] = new int[9];
@@ -1254,6 +1255,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double dub[] = new double[1];
         boolean ldum[] = new boolean[1];
         int ierror[] = new int[1];
+        boolean savepk;
+        boolean go690 = false;
+        double ddub;
         
         wted = iwt != 1;
         lamst[0] = Math.sqrt(lamnmx[1][1] * lamnmx[0][1]);
@@ -1453,13 +1457,354 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     } // while (true)
                 } // else jtry >= 2
                 } // if (jlam != 1)
+                // Do least squares fits
+                ldum[0] = jtry == 1;
+                lstsqr(lamst, jlam, true, n, jlam+ibase, evarCalled, 2, ldum[0], true, prprel);
+                failed = failed || var[0] > vare;
+                if (var[0] > vare) {
+                    continue;
+                }
+                vare = var[0];
+                for (j = 0; j < jlam; j++) {
+                    lamst[j] = plam[j];
+                    lamf[j][jlam-1][0] = lamst[j];
+                } // for (j = 0; j < jlam; j++)
+                savepk = vartry >= 1.0E20;
+                if (!failed) {
+                    if (prprel) {
+                        Preferences.debug("End of fit to raw data, start of fit to transforms\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    lstsqr(lamst, jlam, false, nf, jlam+ibase, varfCalled, 3, false, true, prprel);
+                    if (failed && var[0] >= vartry) {
+                        continue;
+                    }
+                    savepk = true;
+                    vartry = var[0];
+                    for (j = 0; j < jlam; j++) {
+                        lamf[j][jlam-1][1] = plam[j];
+                    } // for (j = 0; j < jlam; j++)
+                } // if (!failed)
+                if (!savepk && jlam != 1) {
+                    continue;
+                }
+                if (jlam != nlammx) {
+                    // Finds max sum of absolute adjacent amplitudes for later determination of starting value
+                    // for lamst[jlamp1-1]
+                    dub[0] = Math.abs(palpha[0]) + Math.abs(palpha[jlamp1-1]);
+                    llpeak = 1;
+                    if (dub[0] <= Math.abs(palpha[jlam-1])) {
+                        llpeak = jlamp1;
+                        dub[0] = Math.abs(palpha[jlam-1]);
+                    } // if (dub[0] <= Math.abs(palpha[jlam-1]))
+                    if (jlam == 1) {
+                        go690 = true;
+                        break;
+                    } // if (jlam == 1)
+                    for (j = 2; j <= jlam; j++) {
+                        ddub = Math.abs(palpha[j-2]) + Math.abs(palpha[j-1]);
+                        if (ddub > dub[0]) {
+                            dub[0] = ddub;
+                            llpeak = j;
+                        } // if (ddub > dub[0])
+                    } // for (j = 2; j <= jlam; j++)
+                } // if (jlam != nlammx)
+                if (!failed || jlam == 1) {
+                    go690 = true;
+                    break;
+                }
             } // for (jtry = 1; jtry <= mtry; jtry++)
+            if (!go690) {
+                jtry = mtry;
+            }
+            go690 = false;
+            lpeak = llpeak;
+            nftry[jlam-1] = jtry;
+            ffail[jlam-1][1] = failed;
+            ffail[jlam-1][0] = vartry >= 1.0E20;
+            if (!ffail[jlam-1][0]) {
+                continue;
+            }
+            for (j = 0; j < jlam; j++) {
+                lamf[j][jlam-1][1] = lamf[j][jlam-1][0];
+            } // for (j = 0; j < jlam; j++)
         } // for (jlam = 1; jlam <= nlammx; jlam++)
+        return;
     } // fanlyz
     
     private void yanlyz() {
+        // For constrained stepwise least squares analysis of raw data using lamf (starting values obtained from fanlyz).
+        
+        // Calls routines lstsqr, fisher, residu
+        // which in turn call evar, etheor, pivot, pivot1, plpres
+        int jlambs;
+        double varbes;
+        double absymx;
+        int j;
+        int jlam;
+        boolean yfail[] = new boolean[9];
+        double sigysv[] = new double[9];
+        double varsv[] = new double[9];
+        int itersv[] = new int[9];
+        double enphsv[] = new double[9];
+        int i = 0;
+        int k;
+        double asave[][][] = new double[10][9][6];
+        double dum;
+        // L in bigloop is line number, so the L in bigloop can be omitted.
+        int L;
+        double pnxbes;
+        int jlamnx;
+        double probsv[] = new double[9];
+        double ddum;
+        double dddum;
+        double probln[] = new double[9];
+        double pnxlin;
+        double puncor[] = new double[6];
+        boolean done[] = new boolean[9];
+        
+        wted = iwt != 1;
+        jlambs = 1;
+        varbes = 1.0E20;
+        varmin = 1.0E20;
+        absymx = 0.0;
+        for (j = 0; j < n; j++) {
+            absymx = Math.max(absymx,  Math.abs(y[j]));
+        }
+        
+        // Start of main loop for stepwise analysis
+        for (jlam = 1; jlam <= nlammx; jlam++) {
+            jlamp1 = jlam + 1;
+            nf = 2 * jlam + ibase;
+            if (prfinl) {
+                Preferences.debug("Final analysis assuming " + jlam + " components\n", Preferences.DEBUG_ALGORITHM);
+            } // if (prfinl)
+            for (j = 0; j < jlam; j++) {
+                lamst[j] = lamf[j][jlam-1][1];
+            } // for (j = 0; j < jlam; j++)
+            lstsqr(lamst, jlam, true, n, jlam+ibase, evarCalled, 4, ffail[jlam-1][1], false, prfinl);
+            yfail[jlam-1] = failed;
+            if (failed) {
+                if (ffail[jlam-1][0]) {
+                    varmin = Math.min(varmin, var[0]);
+                    continue;
+                }
+                if (prfinl) {
+                    Preferences.debug("Second attempt using starting lambdas from initial analysis of raw data\n",
+                                      Preferences.DEBUG_ALGORITHM);    
+                } // if (prfinl)
+                for (j = 0; j < jlam; j++) {
+                    lamst[j] = lamf[j][jlam-1][0];
+                } // for (j = 0; j < jlam; j++)
+                lstsqr(lamst, jlam, true, n, jlam+ibase, evarCalled, 4, false, false, prfinl);
+                yfail[jlam-1] = failed;
+                if (failed) {
+                    varmin = Math.min(varmin, var[0]);
+                    continue;
+                }
+            } // if (failed)
+            
+            // Save values for later use and for final output
+            sigysv[jlam-1] = sigyy;
+            varsv[jlam-1] = var[0];
+            itersv[jlam-1] = iter;
+            enphsv[jlam-1] = enphi;
+            i = jlam;
+            for (k = 0; k < jlam; k++) {
+                asave[k][jlam-1][0] = palpha[k];
+                asave[k][jlam-1][1] = plam[k];
+                asave[k][jlam-1][2] = sigmap[k];
+                i++;
+                asave[k][jlam-1][3] = sigmap[i-1];
+                asave[k][jlam-1][4] = pcerr[k];
+                asave[k][jlam-1][5] = pcerr[i-1];
+            } // for (k = 0; k < jlam; k++)
+            if (!nobase) {
+                asave[jlamp1-1][jlam-1][1] = 0.0;
+                asave[jlamp1-1][jlam-1][2] = 0.0;
+                asave[jlamp1-1][jlam-1][4] = 0.0;
+                asave[jlamp1-1][jlam-1][0] = palpha[jlamp1-1];
+                asave[jlamp1-1][jlam-1][3] = sigmap[nf-1];
+                asave[jlamp1-1][jlam-1][5] = pcerr[nf-1];
+            } // if (!nobase)
+            
+            // Test if this solution is the best so far
+            if (varbes < 1.0E20) {
+                if (var[0] >= varmin) {
+                    continue;
+                }
+                k = n - nf;
+                dum = varbes/var[0] - 1.0;
+                L = 2 * (jlam - jlambs);
+                if (fisher(k*dum/(L * (1.0 + enphi*((nf + 2.0) * n)/(nf * k))), L, k) <= 0.5) {
+                    varmin = Math.min(varmin, var[0]);
+                    continue;
+                }
+            } // if (varbes < 1.0E20)
+            jlambs = jlam;
+            varbes = var[0];
+            varmin = Math.min(varmin, var[0]);
+        } // for (jlam = 1; jlam <= nlammx; jlam++)
+        
+        // End of main loop for stepwise analysis 
+        if (varbes > 1.0E20) {
+            Preferences.debug("All analyses of the raw data failed - check input data for gross errors\n", Preferences.DEBUG_ALGORITHM);
+            return;
+        }
+        
+        // Calculate probsv and probln (probability and uncorrelated probability (i.e., using enphi = 0.0)
+        // that the best solution is actually better than the others.
+        pnxbes = 1.0E20;
+        jlamnx = jlambs;
+        for (j = 1; j <= nlammx; j++) {
+            probsv[j-1] = 2.0;
+            if (j == jlambs || yfail[j-1]) {
+                continue;
+            }
+            i = 2 * Math.max(jlambs, j) + ibase;
+            k = n - i;
+            L = 2 * (jlambs - j);
+            dum = varsv[j-1]/varbes;
+            if (L >= 0) {
+                ddum = k * (dum - 1.0)/L;
+                dddum = 1.0 + enphsv[jlambs-1] * ((i + 2.0) * n)/(i * k);
+                probsv[j-1] = fisher(ddum/dddum, L, k);
+                probln[j-1] = fisher(ddum, L, k);
+            } // if (L >= 0)
+            else { // L < 0
+                if (dum >= 1.0) {
+                    probsv[j-1] = 1.0;
+                    probln[j-1] = 1.0;
+                } // if (dum >= 1.0)
+                else { // dum < 1.0
+                    ddum = k * (1.0 - 1.0/dum)/L;
+                    dddum = 1.0 + enphsv[j-1] * ((i + 2.0) * n)/(i * k);
+                    probln[j-1] = 1.0 - fisher(ddum, -L, k);
+                    probsv[j-1] = 1.0 - fisher(ddum/dddum, -L, k);
+                } // else dum < 1.0
+            } // else L < 0
+            if (probsv[j-1] >= pnxbes) {
+                continue;
+            }
+            pnxbes = probsv[j-1];
+            pnxlin = probln[j-1];
+            jlamnx = j;
+        } // for (j = 1; j <= nlammx; j++)
+        probsv[jlambs-1] = 0.0;
+        if (pnxbes >= 1.0E20) {
+            pnxbes = 1.0;
+            pnxlin = 1.0;
+        } // if (pnxbes >= 1.0E20)
+        
+        // Final summary of results - summarizes up to best 5 solutions
+        residu(jlambs, plotrs, puncor, asave);
+        bigloop:
+        while (true) {
+            Preferences.debug("DISCRETE - Version 2B (December, 1990)\n", Preferences.DEBUG_ALGORITHM);
+            for (j = 0; j < nlammx; j++) {
+                done[j] = yfail[j];
+            } // for (j = 0; j < nlammx; j++)
+            Preferences.debug("The best solution " + jlambs + " components\n", Preferences.DEBUG_ALGORITHM);
+            if (pnxbes <= 0.95) {
+                Preferences.debug("The approximate probability that this solution is actually best is only " + pnxbes + "\n",
+                                   Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Look at the second best solution also\n", Preferences.DEBUG_ALGORITHM);
+            } // if (pnxbes <= 0.95)
+            for (j = 1; j <= nlammx; j++) {
+                if (j == 1) {
+                    done[jlambs-1] = true;
+                    i = jlambs;
+                } // if (j == 1)
+                else { // j > 1
+                    dum = 1.0E20;
+                    for (k = 1; k <= nlammx; k++) {
+                        if (probsv[k-1] > dum || done[k-1]) {
+                            continue;
+                        }
+                        dum = probsv[k-1];
+                        i = k;
+                    } // for (k = 1; k <= nlammx; k++)
+                    if (dum >= 1.0E20 || j > 5) {
+                        if (!repeat) {
+                            return;
+                        }
+                        repeat = false;
+                        residu(jlambs, false, puncor, asave);
+                        continue bigloop;
+                    } // if (dum >= 1.0E20 || j > 5)
+                    done[i-1] = true;
+                    residu(i, false, puncor, asave);
+                    if (j == 2) {
+                        Preferences.debug("The second best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    else if (j == 3) {
+                        Preferences.debug("The third best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);    
+                    }
+                    else if (j == 4) {
+                        Preferences.debug("The fourth best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    else if (j == 5) {
+                        Preferences.debug("The fifth best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    if (dum <= 0.95) {
+                        Preferences.debug("A significant possibility\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // else j > 1
+                Preferences.debug("alpha +- std err precent lambda +- std err percent\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Starting lambda from fit to transforms " + nftry[i-1] + " tries\n", Preferences.DEBUG_ALGORITHM);
+                for (k = 1; k <= i; k++) {
+                    Preferences.debug("alpha["+k+"]  = " + asave[k-1][i-1][0] + "\n", Preferences.DEBUG_ALGORITHM);;
+                    Preferences.debug("standard error["+k+"] = " + asave[k-1][i-1][3] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("percent["+k+"] = " + asave[k-1][i-1][5] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("lambda["+k+"]  = " + asave[k-1][i-1][1] + "\n", Preferences.DEBUG_ALGORITHM);;
+                    Preferences.debug("standard error["+k+"] = " + asave[k-1][i-1][2] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("percent["+k+"] = " + asave[k-1][i-1][4] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("starting lambda = " + lamf[k-1][i-1][1] + "\n", Preferences.DEBUG_ALGORITHM);
+                } // for (k = 1; k <= i; k++)
+                if (ffail[i-1][1]) {
+                    Preferences.debug("No exact fit to the transforms found\n", Preferences.DEBUG_ALGORITHM);
+                }
+                if (!nobase) {
+                    k = i + 1;
+                    Preferences.debug("alpha["+k+"]  = " + asave[k-1][i-1][0] + "\n", Preferences.DEBUG_ALGORITHM);;
+                    Preferences.debug("standard error["+k+"] = " + asave[k-1][i-1][3] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("percent["+k+"] = " + asave[k-1][i-1][5] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("lambda["+k+"]  = " + asave[k-1][i-1][1] + "\n", Preferences.DEBUG_ALGORITHM);;
+                    Preferences.debug("standard error["+k+"] = " + asave[k-1][i-1][2] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("percent["+k+"] = " + asave[k-1][i-1][4] + "\n", Preferences.DEBUG_ALGORITHM);
+                } // if (!nobase)
+                if (j == 1 && pnxbes > 0.95) {
+                    Preferences.debug("Approximate probability that this " + jlamnx + " solution\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("is reallly better than the second best solution " + jlambs + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug(" = " + pnxbes + "\n", Preferences.DEBUG_ALGORITHM);		 
+                } // if (j == 1 && pnxbes > 0.95)
+                if (j > 1) {
+                    Preferences.debug("PNG(" + i + "/" + jlambs + ") = " + probsv[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("NPHI = " + enphsv[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Uncorrected PNG would be = " + probln[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                }
+                ddum = absymx/sigysv[i-1];
+                Preferences.debug("Iterations in fit = " + itersv[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Standard deviation of fit = " + sigysv[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                if (!wted) {
+                    Preferences.debug("Signal/noise ratio of fit = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
+                }
+                if (j == 1) {
+                    Preferences.debug("lambda held between " + lamnmx[0][0] + " and " + lamnmx[1][0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("NPHI = " + enphsv[jlambs-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                } // if (j == 1)
+            } // for (j = 1; j <= nlammx; j++)
+        } // while (true)
         
     } // yanlyz
+    
+    private double fisher(double fs, int nu1, int nu2) {
+        double result = 0.0;
+        return result;
+    } // fisher
+    
+    private void residu(int jlam, boolean plot, double puncor[], double asave[][][]) {
+        
+    } // residu
     
 
 }
