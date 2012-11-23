@@ -70,7 +70,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // Calculates t values from tstart, tend, and nt if regint == true
     private boolean regint;
     private boolean nobase;
-    private boolean noneg;
+    private boolean nonneg;
     private boolean pry;
     private boolean prprel;
     private boolean prfinl;
@@ -159,7 +159,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // ---------------------------------------------------------------------------------------------------
     
     public AlgorithmMultiExponentialFitting(int nlammx, int iwt, int mtry, boolean regint,
-            boolean nobase, boolean noneg, boolean pry, boolean prprel, boolean prfinl, boolean plotrs,
+            boolean nobase, boolean nonneg, boolean pry, boolean prprel, boolean prfinl, boolean plotrs,
             boolean repeat, int n, double t[], int nint, double tstart[], double tend, int nt[],
             double y[], double sqrtw[]) {
         this.nlammx = nlammx;
@@ -167,7 +167,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         this.mtry = mtry;
         this.regint = regint;
         this.nobase = nobase;
-        this.noneg = noneg;
+        this.nonneg = nonneg;
         this.pry = pry;
         this.prprel = prprel;
         this.prfinl = prfinl;
@@ -1191,8 +1191,326 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     private void evar(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylydum[], int nlin, double varg, int ntry,
                       boolean inter, int ierror[]) {
-        double ylyfit;
+        // For fractional step size q, evaluates palpha (linear least squares parameters), var (weighted variance), and
+        // accumulates it in vgrid2 (coarse grid sum), and, if invert == true, evaluates arrays sfde, dfcapl, and full
+        // upper triangles of ddse and se for later use in nonlinear least squares.
         
+        // Calls routines etheor, pivot
+        // which in turn call pivot1
+        // double ylydum[] has length 1
+        double ylyfit;
+        int j;
+        int nlinp;
+        int k;
+        boolean notinv;
+        double dum[] = new double[1];
+        double adum[] = new double[10];
+        double ddum[] = new double[1];
+        boolean lddum;
+        int L;
+        double dddum[] = new double[1];
+        double xlam;
+        int jz;
+        double hz;
+        int jm;
+        int jp;
+        double h;
+        double hh;
+        double dx;
+        double ddx;
+        double s[] = new double[1];
+        double sp[] = new double[1];
+        double factor[] = new double[9];
+        double xexp[] = new double[9];
+        int kk;
+        int LL;
+        int j2max;
+        int jg2[] = new int[9];
+        int lmax = 1;
+        int loc;
+        int j2next;
+        int lnext = 1;
+        int idiff;
+        
+        for (j = 0; j < jlam; j++) {
+            plmtry[j] = Math.max(lamnmx[0][0], Math.min(lamnmx[1][0], plam[j] + q[0] * deltap[j]));    
+        } // for (j = 0; j < jlam; j++)
+        nlinp = nlin + 1;
+        for (k = 0; k < nlinp; k++) {
+            adub[k][nlinp-1] = 0.0;    
+        } // for (I = 0; k < nlinp; k++)
+        if (!nobase) {
+            plmtry[nlin-1] = 0.0;
+            adub[nlin-1][nlin-1] = sumwt;
+            adub[nlin-1][nlinp-1] = sumwty;
+        } // if (!nobase)
+        notinv = !invert;
+        if (!regint) {
+            // Ordinary computation of e (exponentials), adub (normal equations matrix for linear least squares),
+            // and, if invert == true, part of dfcapl (partial of fcap with respect to lambda) when regint == false.
+            kloop:
+            for (k = 1; k <= nlin; k++) {
+                for (j = 1; j <= k; j++) {
+                    if (j > jlam) {
+                        continue kloop;
+                    }
+                    adub[j-1][k-1] = 0.0;
+                    dfcapl[k-1][j-1] = 0.0;
+                    if (k <= jlam) {
+                        ddse[j-1][k-1] = 0.0;
+                    }
+                } // for (j = 1; j <= k; j++)
+            } // for (k = 1; k <= nlin; k++)
+            for (j = 1; j <= n; j++) {
+                dum[0] = -t[j-1];
+                for (k = 1; k <= jlam; k++) {
+                    adum[k-1] = sqrtw[j-1] * Math.exp(plmtry[k-1] * dum[0]);
+                    e[j-1][k-1] = adum[k-1];
+                } // for (k = 1; k <= jlam; k++)
+                if (!nobase) {
+                    adum[nlin-1] = sqrtw[j-1];
+                    e[j-1][nlin-1] = adum[nlin-1];
+                } // if (!nobase)
+                kloop2:
+                for (k = 1; k <= nlin; k++) {
+                    ddum[0] = adum[k-1];
+                    lddum = k <= jlam;
+                    for (L = 1; L <= k; L++) {
+                        if (L > jlam) {
+                            continue kloop2;
+                        }
+                        dddum[0] = adum[L-1] * ddum[0];
+                        adub[L-1][k-1] = adub[L-1][k-1] + dddum[0];
+                        if (notinv) {
+                            continue;
+                        }
+                        dddum[0] = dddum[0] * dum[0];
+                        dfcapl[k-1][L-1] = dfcapl[k-1][L-1] - dddum[0];
+                        if (lddum) {
+                            ddse[L-1][k-1] = ddse[L-1][k-1] + dddum[0] * dum[0];
+                        }
+                    } // for (L = 1; L <= k; L++)
+                    adub[k-1][nlinp-1] = adub[k-1][nlinp-1] + ddum[0] * y[j-1];
+                } // for (k = 1; k <= nlin; k++)
+            } // for (j = 1; j <= n; j++)
+        } // if (!regint)
+        else { // regint
+            // Evaluate adub and, if invert == true, part of dfcapl and ddse (second derivatives of exponential sums
+            // with respect to lambda) by hermite and Lagrange interpolation, if regint == inter == true.
+            if (inter) {
+                kloop3:
+                for (k = 1; k <= nlin; k++) {
+                    lddum = k <= jlam;
+                    for (j = 1; j <= k; j++) {
+                        if (j > jlam) {
+                            continue kloop3;
+                        }
+                        xlam = plmtry[k-1] + plmtry[j-1];
+                        dum[0] = (Math.log(xlam) - gestl)/dgride;
+                        jz = (int)(dum[0] + 0.5);
+                        hz = dum[0] - jz;
+                        if (Math.abs(hz) <= 1.0E-5) {
+                            adub[j-1][k-1] = gse[jz-1][0];
+                            if (notinv) {
+                                continue;
+                            }
+                            dfcapl[k-1][j-1] = -gse[jz-1][1]/xlam;
+                            if (lddum) {
+                                ddse[j-1][k-1] = (gse[jz-1][2] - gse[jz-1][1])/(xlam * xlam);
+                            }
+                            continue;
+                        } // if (Math.abs(hz) <= 1.0E-5)
+                        jm = (int)dum[0];
+                        jp = jm+1;
+                        h = dum[0] - jm;
+                        hh = 1.0 - h;
+                        ddum[0] = 1.0E3 * h;
+                        dddum[0] = 1.0E3 * hh;
+                        dx = h * dgride;
+                        ddx = -hh * dgride;
+                        adub[j-1][k-1] = hh*hh*hh*((ddum[0]+6.0*h*h)*gse[jm-1][0]+dx*(ddum[0]*gse[jm-1][1]+ 
+                                  .5*dx*gse[jm-1][2]))+h*h*h*((dddum[0]+6.0*hh*hh)*gse[jp-1][0]+
+                                  ddx*(dddum[0]*gse[jp-1][1]+.5*ddx*gse[jp-1][2]));
+                        if (notinv) {
+                            continue;
+                        }
+                        hh = hz * hz;
+                        dx = (hh - 1.0) * hz * 0.5;
+                        dum[0] = 1.0/(hz + 1.0);
+                        ddum[0] = 1.0/hz;
+                        dddum[0] = 1.0/(hz - 1.0);
+                        h = dx*dx*(((3.0*hz+4.0)*gse[jz-2][1]*dum[0]+dgride*gse[jz-2][2])*dum[0]+
+                                  4.0*ddum[0]*(ddum[0]*gse[jz-1][1]+dgride*gse[jz-1][2])+dddum[0]*((4.0-3.0*
+                                  hz)*gse[jz][1]*dddum[0]+dgride*gse[jz][2]));
+                        dfcapl[k-1][j-1] = -h/xlam;
+                        if (!lddum) {
+                            continue;
+                        }
+                        dum[0] = dx*(hh-4.0)*(hh-9.0)*(gse[jz+2][2]/(hz-3.0)+gse[jz-4][2]/ 
+                                  (hz+3.0)-6.0*(gse[jz+1][2]/(hz-2.0)+gse[jz-3][2]/(hz+2.0))+ 
+                                  15.0*(gse[jz][2]*dddum[0]+gse[jz-2][2]*dum[0])-20.0*gse[jz-1][2]*ddum[0])/360.0;
+                        ddse[j-1][k-1] = (dum[0]-h)/(xlam * xlam);
+                    } // for (j = 1; j <= k; j++)
+                    dum[0] = (Math.log(plmtry[k-1]) - gestl)/dgride;
+                    jz = (int)(dum[0] + 0.5);
+                    hz = dum[0] - jz;
+                    if (Math.abs(hz) <= 1.0E-5) {
+                        adub[k-1][nlinp-1] = gse[jz-1][3];
+                        continue;
+                    } // if (Math.abs(hz) <= 1.0E-5)
+                    hh = hz * hz;
+                    adub[k-1][nlinp-1] = hz*(hh-1.0)*(hh-4.0)*(hh-9.0)*(gse[jz+2][3]/(hz-
+                              3.0)+gse[jz-4][3]/(hz+3.0)-6.0*(gse[jz+1][3]/(hz-2.0)+ 
+                              gse[jz-3][3]/(hz+2.0))+15.0*(gse[jz][3]/(hz-1.0)+gse[jz-2][3]/
+                              (hz+1.0))-20.0*gse[jz-1][3]/hz)/720.0;                            
+                } // for (k = 1; k <= nlin; k++)
+            } // if (inter)
+            else { // !inter
+                // Evaluate adub, part of dfcapl, and ddse by calling etheor if regint == true and inter == false
+                kloop4:
+                for (k = 1; k <= nlin; k++) {
+                    lddum = k <= jlam;
+                    for (j = 1; j <= k; j++) {
+                        if (j > jlam) {
+                            continue kloop4;
+                        }
+                        xlam = plmtry[k-1] + plmtry[j-1];
+                        etheor(xlam, invert, wted, dum, ddum, dddum, s, true, false);
+                        adub[j-1][k-1] = dum[0];
+                        if (!notinv) {
+                            continue;
+                        }
+                        dfcapl[k-1][j-1] = -ddum[0]/xlam;
+                        if (lddum) {
+                            ddse[j-1][k-1] = (dddum[0] - ddum[0])/(xlam * xlam);
+                        }
+                    } // for (j = 1; j <= k; j++)
+                    etheor(plmtry[k-1], false, wted, dum, ddum, dddum, s, false, true);
+                    adub[k-1][nlinp-1] = s[0];
+                } // for (k = 1; k <= nlin; k++)
+            } // else !inter
+        } // else regint
+        for (k = 1; k <= nlin; k++) {
+            dtoler[k-1] = 10.0 * precis * adub[k-1][k-1];
+            for (j = 1; j <= k; j++) {
+                se[j-1][k-1] = adub[j-1][k-1];
+            }
+        } // for (k = 1; k <= nlin; k++)
+        
+        // Solve normal equations for palpha using stepwise regression
+        pivot(adub, mdima, nlin, false, invert, nonneg, 0.0, 1.0E20, zero, dtoler, palpha, allpiv, sp, pivalp, 
+              jlam, sp, ierror);
+        if (ierror[0] == 5) {
+            var[0] = 1.0E20;
+            return;
+        }
+        
+        // Calculate var[0] and, if invert == true, sfde (sums of residuals times derivatives of nonlinear terms)
+        var[0] = 0.0;
+        if (!notinv) {
+             for (k = 1; k <= jlam; k++) {
+                 sfde[k-1] = 0.0;
+                 for (j = 1; j <= k; j++) {
+                     dfcapl[j-1][k-1] = dfcapl[k-1][j-1];
+                 } // for (j = 1; j <= k; j++)
+             } // for (k = 1; k <= jlam; k++)
+        } // if (!notinv)
+        if (regint) {
+            k = 0;
+            for (j = 1; j <= nint; j++) {
+                for (L = 1; L <= jlam; L++) {
+                    factor[L-1] = Math.exp(-plmtry[L-1] * deltat[j-1]);
+                    xexp[L-1] = Math.exp(-plmtry[L-1] * tstart[j-1]);
+                } // for (L = 1; L <= jlam; L++)
+                kk = nt[j-1];
+                for (LL = 1; LL <= kk; LL++) {
+                    k++;
+                    dum[0] = sqrtw[k-1];
+                    ylyfit = y[k-1];
+                    if (!nobase) {
+                        ylyfit = ylyfit - palpha[nlin-1] * dum[0];
+                    }
+                    for (L = 1; L <= jlam; L++) {
+                        adum[L-1] = xexp[L-1] * dum[0];
+                        ylyfit = ylyfit - adum[L-1] * palpha[L-1];
+                        xexp[L-1] = xexp[L-1] * factor[L-1];
+                    } // for (L = 1; L <= jlam; L++)
+                    var[0] = var[0] + ylyfit * ylyfit;
+                    if (notinv) {
+                        continue;
+                    }
+                    ddum[0] = t[k-1];
+                    for (L = 1; L <= jlam; L++) {
+                        sfde[L-1] = sfde[L-1] - ddum[0] * ylyfit * adum[L-1];
+                    } // for (L = 1; L <= jlam; L++)
+                } // for (LL = 1; LL <= kk; LL++)
+            } // for (j = 1; j <= nint; j++)
+        } // if (regint)
+        else { // !regint
+            for (j = 1; j <= n; j++) {
+                ylyfit = y[j-1];
+                for (k = 1; k <= nlin; k++) {
+                    ylyfit = ylyfit - palpha[k-1] * e[j-1][k-1];
+                } // for (k = 1; k <= nlin; k++)
+                var[0] = var[0] + ylyfit * ylyfit;
+                if (notinv) {
+                    continue;
+                }
+                dum[0] = t[j-1];
+                for (k = 1; k <= jlam; k++) {
+                    sfde[k-1] = sfde[k-1] - dum[0] * ylyfit * e[j-1][k-1];
+                } // for (k = 1; k <= jlam; k++)
+            } // for (j = 1; j <= n; j++)
+        } // else !regint
+        if (jlam == 1 || !inter) {
+            return;
+        }
+        // Add var[0] into vgrid2 (coarse grid sum)
+        j2max = 0;
+        for (L = 1; L <= jlam; L++) {
+            if (plmtry[L-1] < lamnmx[0][1] || plmtry[L-1] > lamnmx[1][1]) {
+                return;
+            }
+            jg2[L-1] = ((int)((Math.log(plmtry[L-1]) - gestl)/dgride + 0.5) - jgeadd)/nperg2[jlam-1] + 1;
+            if (jg2[L-1] < j2max) {
+                continue;
+            }
+            j2max = jg2[L-1];
+            lmax = L;
+        } // for (L = 1; L <= jlam; L++)
+        jg2[lmax-1] = 0;
+        loc = 1;
+        for (j = 1; j <= jlam; j++) {
+            j2next = 0;
+            for (L = 1; L <= jlam; L++) {
+                if (jg2[L-1] < j2next) {
+                    continue;
+                }
+                j2next = jg2[L-1];
+                lnext = L;
+            } // for (L = 1; L <= jlam; L++)
+            L = j2next + 1;
+            idiff = j2max - L;
+            if (idiff < 0) {
+                return;
+            }
+            if (idiff > 0) {
+                LL = j2max - 1;
+                for (k = L; k <= LL; k++) {
+                    kk = ngrid2[jlam-1] - k + 1;
+                    loc = loc + nbinom[kk-1][j-1];
+                } // for (k = L; k <= LL; k++)
+            } // if (idiff > 0)
+            j2max = j2next;
+            jg2[lnext-1] = 0;
+        } // for (j = 1; j <= jlam; j++)
+        sp[0] = var[0];
+        loc = Math.min(loc, 252);
+        if (!invert || (var[0] > varg && ntry == 1)) {
+            sp[0] = sp[0] * 1.0E-6;
+        }
+        vgrid2[loc-1] = vgrid2[loc-1] + sp[0];
+        return;
     } // evar
     
     private void varf(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylyfit[], int nlin, double varg, int ntry,
@@ -1792,7 +2110,17 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     Preferences.debug("lambda held between " + lamnmx[0][0] + " and " + lamnmx[1][0] + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("NPHI = " + enphsv[jlambs-1] + "\n", Preferences.DEBUG_ALGORITHM);
                 } // if (j == 1)
+                Preferences.debug("Probability residuals uncorrelated:\n", Preferences.DEBUG_ALGORITHM);
+                for (k = 1; k <= 5; k++) {
+                    Preferences.debug("K = " + k + "  " + puncor[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                }
+                Preferences.debug("Weighted average PUNC = " + puncor[5] + "\n", Preferences.DEBUG_ALGORITHM);
             } // for (j = 1; j <= nlammx; j++)
+            if (!repeat) {
+                return;
+            }
+            repeat = false;
+            residu(jlambs, false, puncor, asave);
         } // while (true)
         
     } // yanlyz
