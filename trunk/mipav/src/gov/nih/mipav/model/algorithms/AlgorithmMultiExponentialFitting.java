@@ -1187,6 +1187,35 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                        double pmax, double p[], double dtoler[], double deltap[], boolean allpiv[], double qg[],
                        boolean piv[], int jlam, double qmax[], int ierror[]) {
         // adub has dimension [mdima][mdima]
+        // Does Gauss-Jordan pivots on all np diagonal elements of augmented matrix adub except those that have
+        // a tolerance less than dtoler or that cause a violation of the constraint pmin <= p <= pmax.
+        // Only needs full upper triangle of matrix on input, and overwrites it with inverse and solution.
+        // Calls pivot1
+        int npp;
+        int j;
+        int L;
+        int k;
+        
+        ierror[0] = 0;
+        qg[0] = 1.0;
+        qmax[0] = 999.0;
+        npp = np + 1;
+        if (onlyin) {
+            npp = np;
+        }
+        for (j = 0; j < np; j++) {
+            piv[j] = false;
+        } // for (j = 0; j < np; j++)
+        if (npp != 1) {
+            for (j = 2; j <= npp; j++) {
+                L = j - 1;
+                for (k = 1; k <= L; k++) {
+                    adub[j-1][k-1] = adub[k-1][j-1];
+                } // for (k = 1; k <= L; k++)
+            } // for (j = 2; j <= npp; j++)
+        } // if (npp != 1)
+        
+        // Main loop for complete pivoting
     } // pivot
     
     private void evar(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylydum[], int nlin, double varg, int ntry,
@@ -1515,7 +1544,130 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     private void varf(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylyfit[], int nlin, double varg, int ntry,
                       boolean intdum, int ierror[]) {
+        // Same as evar, except for transforms instead of exponentials and does no accumulation in a coarse grid.
         
+        // Calls routine pivot
+        // which in turn calls pivot1
+        int nlinp;
+        boolean notinv;
+        int j;
+        double rlam;
+        double dum;
+        int jz;
+        double hz;
+        int k;
+        double adum[] = new double[9];
+        double hh;
+        double ddum;
+        double dddum;
+        int L;
+        double sp[] = new double[1];
+        
+        nlinp = nlin + 1;
+        notinv = !invert;
+        if (!nobase) {
+            plmtry[nlin-1] = 0.0;
+            for (j = 0; j < nf; j++) {
+                f[j][nlin-1] = trbase[j];
+            }
+        } // if (!nobase)
+        // Compute f (nonlinear terms) and, if invert == true, df (their derivatives with respect to lambda) by
+        // hermite and lagrange interpolation
+        for (j = 1; j <= jlam; j++) {
+            plmtry[j-1] = Math.max(lamnmx[0][0], Math.min(lamnmx[1][0], plam[j-1] + q[0] * deltap[j-1])); 
+            rlam = 1.0/plmtry[j-1];
+            dum = (Math.log(plmtry[j-1]) - gfstl)/dgridf;
+            jz = (int)(dum + 0.5);
+            hz = dum - jz;
+            if (Math.abs(hz) <= 1.0E-5) {
+                for (k = 0; k < nf; k++) {
+                    f[k][j-1] = gf[k][jz-1];
+                    if (invert) {
+                        df[k][j-1] = dgfl[k][jz-1] * rlam;
+                    }
+                } // for (k = 0; k < nf; k++)
+                continue;
+            } // if (Math.abs(hz) <= 1.0E-5)
+            adum[6] = 1.0/hz;
+            adum[0] = 4.0 * adum[6] * adum[6];
+            adum[1] = 4.0 * dgridf * adum[6];
+            adum[7] = 1.0/(hz + 1.0);
+            adum[2] = (3.0 * hz + 4.0)* adum[7]*adum[7];
+            adum[3] = dgridf * adum[7];
+            adum[8] = 1.0/(hz - 1.0);
+            adum[4] = (4.0 - 3.0 * hz)*adum[8]*adum[8];
+            adum[5] = dgridf * adum[8];
+            hh = hz * hz;
+            ddum = (hh - 1.0) * hz * 0.5;
+            dddum = ddum * ddum;
+            for (k = 0; k < nf; k++) {
+                f[k][j-1] = dddum * (adum[0] * gf[k][jz-1] + adum[1] * dgfl[k][jz-1] + adum[2] * gf[k][jz-2] + 
+                            adum[3] * dgfl[k][jz-2] + adum[4] * gf[k][jz] + adum[5] * dgfl[k][jz]);
+            } // for (k = 0; k < nf; k++)
+            if (notinv) {
+                continue;
+            }
+            adum[0] = -20.0 * adum[6];
+            adum[1] = 15.0 * adum[7];
+            adum[2] = 15.0 * adum[8];
+            adum[3] = -6.0/(hz + 2.0);
+            adum[4] = -6.0/(hz - 2.0);
+            adum[5] = 1.0/(hz + 3.0);
+            adum[6] = 1.0/(hz - 3.0);
+            dddum = ddum * (hh - 4.0)* (hh - 9.0) * rlam/360.0;
+            for (k = 0; k < nf; k++) {
+                df[k][j-1] = dddum * (adum[0] * dgfl[k][jz-1] + adum[1] * dgfl[k][jz-2] + adum[2] * dgfl[k][jz] +
+                             adum[3] * dgfl[k][jz-3] * adum[4] * dgfl[k][jz+1] + adum[5] * dgfl[k][jz-4] +
+                             adum[6] * dgfl[k][jz+2]);
+            } // for (k = 0; k < nf; k++)
+        } // for (j = 1; j <= jlam; j++)
+        
+        // Compute and invert adub (normal equations matrix for linear least squares)
+        adub[nlinp-1][nlinp-1] = 0.0;
+        for (k = 1; k <= nlin; k++) {
+            for (j = 1; j <= k; j++) {
+                dum = 0.0;
+                for (L = 0; L < nf; L++) {
+                    dum = dum + f[L][j-1] * f[L][k-1];
+                }
+                adub[j-1][k-1] = dum;
+            } // for (j = 1; j <= k; j++)
+            dtoler[k-1] = 10.0 * precis * adub[k-1][k-1];
+            dum = 0.0;
+            for (L = 0; L < nf; L++) {
+                dum = dum + f[L][k-1] * fhat[L];
+            }
+            adub[k-1][nlinp-1] = dum;
+        } // for (k = 1; k <= nlin; k++)
+        pivot(adub, mdima, nlin, false, invert, nonneg, 0.0, 1.0E20, zero, dtoler, palpha, allpiv, sp, pivalp, jlam, sp, ierror);
+        if (ierror[0] == 5) {
+            return;
+        }
+        
+        // Calculate var (weighted variance of fit) and ylyfit (weighted residuals), and, if invert == true, part of dfcapl
+        // for later use in nonlinear least squares.
+        var[0] = 0.0;
+        for (L = 0; L < nf; L++) {
+            dum = fhat[L];
+            for (j = 0; j < nlin; j++) {
+                dum = dum - palpha[j] * f[L][j];
+            }
+            ylyfit[L] = dum;
+            var[0] = var[0] + dum * dum;
+        } // for (L = 0; L < nf; L++)
+        if (notinv || (var[0] > varg && ntry == 1)) {
+            return;
+        }
+        for (k = 0; k < jlam; k++) {
+            for (j = 0; j < nlin; j++) {
+                dum = 0.0;
+                for (L = 0; L < nf; L++) {
+                    dum = dum - f[L][j] * df[L][k];
+                } // for (L = 0; L < nf; L++)
+                dfcapl[j][k] = dum;
+            } // for (j = 0; j < nlin; j++)
+        } // for (k = 0; k < jlam; k++)
+        return;
     } // varf
     
     private void anlerr(int jlam, int nlin, int itype, boolean inter, boolean prlsq) {
@@ -1524,8 +1676,137 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     private void etheor(double plambd, boolean invert, boolean wted, double se[], double dse[], double ddse[], double sye[],
                         boolean doe, boolean doye) {
+        // If doe == true, puts exponential sum and, if invert == true, its first and second derivatives with respect to
+        // log(lambda) in se, dse, and ddse.  If doye == true, puts sum of y times exponentials in sye.  Can be used only
+        // when regint == true.  If wted == true, uses recursion relations, and if wted == false, use geometric sum 
+        // formulas for se, dse, and ddse.
+        double sei = 0.0;
+        double dsei = 0.0;
+        double ddsei = 0.0;
+        boolean notinv;
+        double syei = 0.0;
+        boolean lddum;
+        int j;
+        int L;
+        double ddum;
+        double dddum;
+        int kk;
+        int k;
+        double dum;
+        double dl;
+        double an;
+        double dnl;
+        double rdedl;
+        double dednl;
+        double elts;
+        double s;
+        double b;
+        double edl;
+        double ents;
+        double c;
+        double d;
+        double ss;
         
+        if (doe) {
+            sei = 0.0;
+        }
+        if (invert) {
+            dsei = 0.0;
+            ddsei = 0.0;
+        } // if (invert)
+        notinv = !invert;
+        if (doye || wted) {
+            if (doye) {
+                syei = 0.0;
+            }
+            lddum = !(doye && wted);
+            j = -1;
+            for (L = 0; L < nint; L++) {
+                ddum = Math.exp(-plambd * deltat[L]);
+                dddum = Math.exp(-plambd * tstart[L]);
+                kk = nt[L];
+                for (k = 0; k < kk; k++) {
+                    j++;
+                    dum = dddum * sqrtw[j];
+                    dddum = dddum * ddum;
+                    if (doye) {
+                        syei = syei + dum * y[j];
+                    }
+                    if (lddum) {
+                        continue;
+                    }
+                    dum = dum * sqrtw[j];
+                    sei = sei + dum;
+                    if (notinv) {
+                        continue;
+                    }
+                    dum = dum * t[j];
+                    dsei = dsei - dum;
+                    ddsei = ddsei + dum * t[j];
+                } // for (k = 0; k < kk; k++)
+            } // for (L = 0; L < nint; L++)
+            if (doye) {
+                sye[0] = syei;
+            }
+            if (!doe) {
+                return;
+            }
+            if (wted) {
+                se[0] = sei;
+                if (notinv) {
+                    return;
+                }
+                dse[0] = plambd * dsei;
+                ddse[0] = dse[0] + ddsei * plambd * plambd;
+                return;
+            } // if (wted)
+        } // if (doye || wted)
+        
+        // Use geometric formulas when wted == false
+        for (L = 0; L < nint; L++) {
+            dl = plambd * deltat[L];
+            an = nt[L];
+            dnl = an * dl;
+            if (Math.abs(dl) > 1.0E-3) {
+                rdedl = 1.0/(1.0 - Math.exp(-dl));
+                dednl = 1.0 - Math.exp(-dnl);
+            } // if (Math.abs(dl) > 1.0E-3)
+            else { // Math.abs(dl) <= 1.0E-3
+                rdedl = 1.0/expsma(dl);
+                if (Math.abs(dnl) <= 1.0E-3) {
+                    dednl = expsma(dnl);
+                }
+                else {
+                    dednl = 1.0 - Math.exp(-dnl);
+                }
+            } // else Math.abs(dl) <= 1.0E-3
+            elts = Math.exp(-plambd * tstart[L]);
+            s = elts * dednl * rdedl;
+            sei = sei + s;
+            if (notinv) {
+                continue;
+            }
+            b = deltat[L] * rdedl;
+            edl = Math.exp(-dl);
+            ents = elts * Math.exp(-dnl);
+            c = an  * ents - s * edl;
+            ss = b * c - tstart[L] * s;
+            dsei = dsei + ss;
+            ddsei = ddsei - tstart[L]*ss - b*(edl*(b*c+ss-s*deltat[L]) + an*(an*deltat[L]+tstart[L])*ents);
+        } // for (L = 0; L < nint; L++)
+        se[0] = sei;
+        if (notinv) {
+            return;
+        }
+        dse[0] = plambd * dsei;
+        ddse[0] = dse[0] + ddsei * plambd * plambd;
+        return;
     } // etheor
+    
+    private double expsma(double s) {
+        double result = s * (720.0 - s*(360.0 - s* (120.0 - s * (30.0 - s * (6.0 - s)))))/720.0;
+        return result;
+    }
     
     private void fanlyz() {
         // Does constrained stepwise least squares analysis fo raw data (using grid search if necessary) to
