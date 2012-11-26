@@ -12,6 +12,7 @@ import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
 import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -124,6 +125,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Tells whether the ViewMenuBuilder should allow Close Image(B) after loading image B. */
     private boolean enableCloseImageB = true;
+    
+    private boolean newFrameCreated = false;
 
     /** Green channel value of the paint color. */
     private int green;
@@ -729,6 +732,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public boolean canCloseImageBAfterLoad() {
         return enableCloseImageB;
     }
+    
+    public boolean newFrameBeenCreated() {
+        return newFrameCreated;
+    }
 
     /**
      * Closes both image A and image B (if it exists). It ensures the images are un-registered from the main-frame then
@@ -1212,11 +1219,35 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         if (imageA != imageA_back) {
             // Create new frame with imageA
+            
 
             final ViewJFrameImage newFrame = new ViewJFrameImage(imageA, null, null, false);
             newFrame.setImageB(imageB);
             newFrame.enableImageB(true);
-            enableCloseImageB = true;
+            newFrameCreated = true;
+            ViewControlsImage controls = new ViewControlsImage(newFrame); // Build controls used in this frame
+            ViewMenuBuilder menuBuilder = new ViewMenuBuilder(newFrame);
+            ViewJComponentEditImage componentImage = newFrame.getComponentImage();
+            componentImage.setTimeSlice(0);
+            componentImage.setSlice( (imageB.getExtents()[2] - 1) / 2);
+            ButtonGroup VOIGroup = new ButtonGroup();
+            VOIManagerInterface voiManager = new VOIManagerInterface(newFrame, imageA, imageB, 1, false, VOIGroup);
+            voiManager.getVOIManager(0).init(newFrame, imageA, imageB, componentImage, componentImage,
+                    componentImage.getOrientation());
+            voiManager.getToolBar().setVisible(true);
+            componentImage.setVOIManager(voiManager.getVOIManager(0));
+            boolean showImage = true;
+            boolean showPaint = true;
+            boolean showScript = true;
+            controls.buildToolbar(showImage, voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(),
+                    showPaint, showScript);
+            menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
+            newFrame.updateImages(true);
+            newFrame.setActiveImage(ViewJFrameBase.IMAGE_B); // set image B to active by default, for convenience of user
+            newFrame.controls.setActiveImage(ViewJFrameBase.IMAGE_B); // set the controls to show that image B is active
+            newFrame.setControls();
+            newFrame.setTitle();
         } else {
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
