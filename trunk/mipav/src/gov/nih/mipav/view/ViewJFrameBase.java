@@ -1219,7 +1219,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         if (imageA != imageA_back) {
             // Create new frame with imageA
-            
+            // Put commands for newFrame here since commands in ViewJFrameImage under loadImage work on the
+            // original frame and not the newFrame.
 
             final ViewJFrameImage newFrame = new ViewJFrameImage(imageA, null, null, false);
             newFrame.setImageB(imageB);
