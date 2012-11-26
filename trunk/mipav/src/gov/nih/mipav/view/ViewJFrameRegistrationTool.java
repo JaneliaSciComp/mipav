@@ -27,6 +27,7 @@ import javax.swing.event.*;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -679,7 +680,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (mode == ViewJComponentBase.TRANSLATE) {
                 xfrmH.identity();
                 xfrmH.setTranslate(0, -pixelIncrement * yRes);
-                xfrm.copy(xfrmH).mult(xfrm);
+                xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
                 if (bufferFactor == 1) {
                     transform();
@@ -694,7 +695,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (mode == ViewJComponentBase.TRANSLATE) {
                 xfrmH.identity();
                 xfrmH.setTranslate(0, pixelIncrement * yRes);
-                xfrm.copy(xfrmH).mult(xfrm);
+                xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
                 if (bufferFactor == 1) {
                     transform();
@@ -710,7 +711,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (mode == ViewJComponentBase.TRANSLATE) {
                 xfrmH.identity();
                 xfrmH.setTranslate(pixelIncrement * xRes, 0);
-                xfrm.copy(xfrmH).mult(xfrm);
+                xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
                 if (bufferFactor == 1) {
                     transform();
@@ -725,7 +726,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             if (mode == ViewJComponentBase.TRANSLATE) {
                 xfrmH.identity();
                 xfrmH.setTranslate(-pixelIncrement * xRes, 0);
-                xfrm.copy(xfrmH).mult(xfrm);
+                xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
                 if (bufferFactor == 1) {
                     transform();
@@ -830,7 +831,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(degreeIncrement);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            xfrm.copy(xfrmH).mult(xfrm);
+            xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
             if (bufferFactor == 1) {
                 transform();
@@ -852,7 +853,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(-degreeIncrement);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            xfrm.copy(xfrmH).mult(xfrm);
+            xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
             if (bufferFactor == 1) {
                 transform();
@@ -1325,7 +1326,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             deltaY = yFinish - yStart;
             xfrmH.identity();
             xfrmH.setTranslate(deltaX, deltaY);
-            xfrm.copy(xfrmH).mult(xfrm);
+            xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
             if (bufferFactor == 1) {
                 transform();
@@ -1351,7 +1352,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             xfrmH.setTranslate(xRotation, yRotation);
             xfrmH.setRotate(deltaTheta);
             xfrmH.setTranslate(-xRotation, -yRotation);
-            xfrm.copy(xfrmH).mult(xfrm);
+            xfrm.copy(Matrix4f.mult( xfrmH, xfrm ));
 
             if (bufferFactor == 1) {
                 transform();
