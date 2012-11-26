@@ -163,12 +163,11 @@ public class BSplineLattice2Df {
         int iControlMinY = iControlMaxY - m_kBasisY.GetDegree();
 
         kPos.set(0.0f, 0.0f);
-        Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = m_kBasisX.GetD0(iControlX, iSampleX) * m_kBasisY.GetD0(iControlY, iSampleY);
-                kTemp.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kTemp);
+                kPos.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kPos);
             }
         }
     }
@@ -197,12 +196,11 @@ public class BSplineLattice2Df {
         m_kBasisY.Compute(fY, afD0Y, null, null);
 
         kPos.set(0.0f, 0.0f);
-        Vector2f kTemp = new Vector2f();
         for (int iControlX = iControlMinX; iControlX <= iControlMaxX; iControlX++) {
 
             for (int iControlY = iControlMinY; iControlY <= iControlMaxY; iControlY++) {
                 float fTmp = afD0X[iControlX] * afD0Y[iControlY];
-                kTemp.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kTemp);
+                kPos.scaleAdd(fTmp, m_aakControlPoint[iControlY][iControlX], kPos);
             }
         }
 
