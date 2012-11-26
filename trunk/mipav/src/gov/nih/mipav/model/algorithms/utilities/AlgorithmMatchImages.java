@@ -233,15 +233,16 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             afResB[i] = imageB.getResolutions(0)[i];
             if ( imageA.getUnitsOfMeasure()[i] != imageB.getUnitsOfMeasure()[i] )
             {
-                if ((imageA.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) ||
-                    (imageB.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum())){
+                
+                if (imageA.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
                     // Assume units of measure are the same, so don't apply a conversion factor to afResB[i]
-                    if (imageA.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-                        // Don't change known to unknown units
-                        for (int j = 0; j < imageA.getFileInfo().length; j++) {
-                            imageA.getFileInfo()[j].setUnitsOfMeasure(imageB.getUnitsOfMeasure()[i], i);
-                        }  
-                    }
+                    // Don't change known to unknown units
+                    for (int j = 0; j < imageA.getFileInfo().length; j++) {
+                        imageA.getFileInfo()[j].setUnitsOfMeasure(imageB.getUnitsOfMeasure()[i], i);
+                    }  
+                }
+                else if (imageB.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
+                 // Assume units of measure are the same, so don't apply a conversion factor to afResB[i]    
                 }
                 else {
                     afResB[i] = (float)((Unit.getUnitFromLegacyNum( imageB.getUnitsOfMeasure()[i])).
