@@ -591,7 +591,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             toolBarObj.setSpinnerValues(frame.getImageA().getType());
         }
 
-        if (image == ViewJFrameImage.IMAGE_B) {
+        if ((image == ViewJFrameImage.IMAGE_B) && (frame.getImageB() != null)) {
             radioImageA.setSelected(false);
             radioImageB.setSelected(true);
             toolBarObj.setSpinnerValues(frame.getImageB().getType());
