@@ -1193,8 +1193,13 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // Calls pivot1
         int npp;
         int j;
-        int L;
+        int L = 1;
         int k;
+        int npiv;
+        double dum = 0.0;
+        double ddum;
+        boolean go300 = false;
+        double rdelta;
         
         ierror[0] = 0;
         qg[0] = 1.0;
@@ -1216,7 +1221,116 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         } // if (npp != 1)
         
         // Main loop for complete pivoting
+        for (npiv = 1; npiv <= np; npiv++) {
+            // Find next pivot element
+            dum = 0.0;
+            for (j = 1; j <= np; j++) {
+                if (piv[j-1] || adub[j-1][j-1] <= dtoler[j-1]) {
+                    continue;
+                }
+                ddum = adub[j-1][npp-1] * adub[j-1][npp-1]/adub[j-1][j-1];
+                if (ddum <= dum) {
+                    continue;
+                }
+                dum = ddum;
+                L = j;
+            } // for (j = 1; j <= np; j++)
+            if (dum <= 0.0) {
+                go300 = true;
+                break;
+            }
+            piv[L-1] = true;
+            pivot1(adub, mdima, npp, L);
+        } // for (npiv = 1; npiv <= np; npiv++)
+        if (!go300) {
+            npiv = np + 1;
+        }
+        npiv--;
+        if (onlyin || !constr) {
+            allpiv[0] = npiv == np;
+            if (onlyin) {
+                return;
+            }
+            for (j = 0; j < np; j++) {
+                deltap[j] = 0.0;
+                if (piv[j]) {
+                    deltap[j] = adub[j][npp-1];
+                }
+            } // for (j = 0; j < np; j++)
+            return;
+        } // if (onlyin || !constr)
+        
+        // Enforce constraints by making qg[0] < 1 or by unpivoting
+        for (j = 1; j <= jlam; j++) {
+            dum = 1.0E20;
+            for (k = 1; k <= jlam; k++) {
+                if (!piv[k-1]) {
+                    continue;
+                }
+                rdelta = 1.0/adub[k-1][npp-1];
+                ddum = Math.max((pmin - p[k-1])*rdelta, (pmax - p[k-1]) * rdelta);
+                if (ddum >= dum) {
+                    continue;
+                }
+                dum = ddum;
+                L = k;
+            } // for (k = 1; k <= jlam; k++)
+            if (dum > 1.0E-5) {
+                break;
+            }
+            npiv--;
+            piv[L-1] = false;
+            pivot1(adub, mdima, npp, L);
+        } // for (j = 1; j <= jlam; j++)
+        
+        // If all elements are somehow unpivoted, take error exit
+        if (npiv <= 0) {
+            ierror[0] = 5;
+            return;
+        }
+        qg[0] = Math.min(dum, 1.0);
+        qmax[0] = dum;
+        allpiv[0] = npiv == np;
+        if (onlyin) {
+            return;
+        }
+        for (j = 0; j < np; j++) {
+            deltap[j] = 0.0;
+            if (piv[j]) {
+                deltap[j] = adub[j][npp-1];
+            }
+        } // for (j = 0; j < np; j++)
+        return;
     } // pivot
+    
+    private void pivot1(double adub[][], int mdima, int npp, int lpiv) {
+        // Does a Gauss-Jordan pivot on diagonal element
+        
+        // adub[][] has dimension [mdima][mdima]
+        double dub;
+        double ddub;
+        int j;
+        int k;
+        
+        dub = 1.0/adub[lpiv-1][lpiv-1];
+        for (j = 1; j <= npp; j++) {
+            if (j == lpiv) {
+                continue;
+            }
+            ddub = adub[j-1][lpiv-1] * dub;
+            for (k = 1; k <= npp; k++) {
+                if (k != lpiv) {
+                    adub[j-1][k-1] = adub[j-1][k-1] - adub[lpiv-1][k-1] * ddub;
+                }
+            } // for (k = 1; k <= npp; k++)
+        } // for (j = 1; j <= npp; j++)
+        for (j = 1; j <= npp; j++) {
+            adub[j-1][lpiv-1] = -adub[j-1][lpiv-1] * dub;
+            adub[lpiv-1][j-1] = adub[lpiv-1][j-1] * dub;
+        } // for (j = 1; j <= npp; j++)
+        adub[lpiv-1][lpiv-1] = dub;
+        return;
+    } // pivot1
     
     private void evar(double q[], int jlam, double var[], boolean invert, boolean allpiv[], double ylydum[], int nlin, double varg, int ntry,
                       boolean inter, int ierror[]) {
@@ -1671,7 +1785,328 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     } // varf
     
     private void anlerr(int jlam, int nlin, int itype, boolean inter, boolean prlsq) {
+        // Does final error analysis of fit and calculates nonlinearity term enphi of 
+        // beale for later use.
         
+        // Calls pivot
+        // which in turn calls pivot1
+        int k;
+        int kk;
+        int j[] = new int[1];
+        int jj;
+        boolean ldum[] = new boolean[1];
+        double dum[] = new double[1];
+        double ddum[] = new double[1];
+        double cstar[] = new double[19];
+        int jk = 0;
+        int L = 0;
+        double dub;
+        int nuj;
+        int nuk;
+        double delt[][] = new double[18][18];
+        double sum[] = new double[4];
+        int nu;
+        double cui[] = new double[19];
+        int ii;
+        int i;
+        double tnu;
+        double ss;
+        double dddum;
+        double s;
+        double ccsum[][] = new double[19][18];
+        double sss;
+        double adum[] = new double[10];
+        int nui;
+        
+        // Compute correlation coefficients and standard error estimates using full normal
+        // equations matrix (adub) with all parameters assumed independent
+        for (k = 1; k <= jlam; k++) {
+            kk = k + jlam;
+            for (j[0] = 1; j[0] <= k; j[0]++) {
+                jj = j[0] + jlam;
+                adub[j[0]-1][k-1] = palpha[j[0]-1] * palpha[k-1] * ddse[j[0]-1][k-1];
+                adub[j[0]-1][kk-1] = -dfcapl[k-1][j[0]-1] * palpha[j[0]-1];
+                adub[k-1][jj-1] = -dfcapl[j[0]-1][k-1] * palpha[k-1];
+                adub[jj-1][kk-1] = se[j[0]-1][k-1];
+            } // for (j[0] = 1; j[0] <= k; j[0]++)
+            dtoler[k-1] = adub[k-1][k-1] * precis;
+            dtoler[kk-1] = adub[kk-1][kk-1] * precis;
+            if (nobase) {
+                continue;
+            }
+            adub[k-1][nf-1] = -dfcapl[nlin-1][k-1] * palpha[k-1];
+            adub[kk-1][nf-1] = se[k-1][nlin-1];
+        } // for (k = 1; k <= jlam; k++)
+        if (!nobase) {
+            adub[nf-1][nf-1] = sumwt;
+            dtoler[nf-1] = sumwt * precis;
+        } // if (!nobase)
+        pivot(adub, mdima, nf, true, true, false, 0.0, 0.0, dtoler, dtoler, dtoler, ldum, dum, pivalp, jlam, ddum, j);
+        sigyy = Math.sqrt(var[0]/(n - nf));
+        if (!ldum[0] || j[0] == 5) {
+            failed = true;
+            if (prlsq) {
+                Preferences.debug("Singularity in inverting full least squares matrix, no correlations calculated\n",
+                                  Preferences.DEBUG_ALGORITHM);
+            }
+            return;
+        } // if (!ldum[0] || j[0] == 5)
+        for (j[0] = 0; j[0] < nf; j[0]++) {
+            if (adub[j[0]][j[0]] <= 0.0) {
+                failed = true;
+                if (prlsq) {
+                    Preferences.debug("Singularity in inverting full least squares matrix, no correlations calculated\n",
+                                      Preferences.DEBUG_ALGORITHM);
+                }
+                return;    
+            } // if (adub[j[0]][j[0]] <= 0.0)
+            cstar[j[0]] = 1.0/Math.sqrt(adub[j[0]][j[0]]);
+            sigmap[j[0]] = sigyy/cstar[j[0]];
+        } // for (j[0] = 0; j[0] < nf; j[0]++)
+        if (inter) {
+            return;
+        } // if (inter)
+        k = jlam;
+        for (j[0] = 0; j[0] < jlam; j[0]++) {
+            pcerr[j[0]] = 100.0 * sigmap[j[0]]/plam[j[0]];
+            k++;
+            pcerr[k-1] = 100.0 * sigmap[k-1]/Math.abs(palpha[j[0]]);
+        } // for (j[0] = 0; j[0] < jlam; j[0]++)
+        if (!nobase) {
+            pcerr[nf-1] = 100.0 * sigmap[nf-1]/Math.abs(palpha[jlamp1-1]);
+        } // if (!nobase)
+        if (prlsq) {
+            k = jlam;
+            if (nobase) {
+                k--;
+            } // if (nobase)
+            Preferences.debug("Correlation coefficients\n", Preferences.DEBUG_ALGORITHM);
+            for (j[0] = 2; j[0] <= nf; j[0]++) {
+                dum[0] = cstar[j[0]-1];
+                jk = j[0] - 1;
+                for (k = 1; k <= jk; k++) {
+                    dtoler[k-1] = adub[j[0]-1][k-1] * dum[0] * cstar[k-1];
+                } // for (k = 1; k <= jk; k++)
+                L = (j[0] - 1)/jlam + 1;
+                jj = j[0];
+                if (L == 2) {
+                    jj = jj - jlam;
+                }
+                if (L < 3) {
+                    if (L == 1) {
+                        Preferences.debug("LAMBDA\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    else if (L == 2) {
+                        Preferences.debug("ALPHA\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    Preferences.debug("jj = " + jj + "\n", Preferences.DEBUG_ALGORITHM);
+                    for (k = 0; k < jk; k++) {
+                        Preferences.debug("dtoler["+k+"] = " + dtoler[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                } // if (L < 3)
+            } // for (j[0] = 2; j[0] <= nf; j[0]++)
+            if (L == 3) {
+                Preferences.debug("BASE\n", Preferences.DEBUG_ALGORITHM);
+                for (k = 0; k < jk; k++) {
+                    Preferences.debug("dtoler["+k+"] = " + dtoler[k] + "\n", Preferences.DEBUG_ALGORITHM);    
+                }
+            } // if (L == 3)
+        } // if (prlsq)
+        
+        // To prevent a very small component (effectively a second baseline) that is highly correlated with the 
+        // baseline from interfering with the calculation of the weights
+        if (iwtsgn <= 0 && itype == 1) {
+            dub = 1.0E20;
+            for (j[0] = 1; j[0] <= jlam; j[0]++) {
+                if (plam[j[0]-1] > dub) {
+                    continue;
+                }
+                dub = plam[j[0]-1];
+                L = j[0];
+            } // for (j[0] = 1; j[0] <= jlam; j[0]++)
+            if (pcerr[L-1] >= 1000.0) {
+                failed = true;
+                if (prlsq) {
+                    Preferences.debug("Smallest lambda has too high a standard error\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("This could lead to inaccurate weights - solution rejected\n", Preferences.DEBUG_ALGORITHM);
+                } // if (prlsq)
+            } // if (pcerr[L-1] >= 1000.0)
+        } // if (iwtsgn <= 0 && itype == 1)
+        
+        if (!failed && itype == 4) {
+            // Calculation of enphi (Eq. 3.25 of E. M. L. Beale for F ratio correction factor due to nonlinearity)
+            nuj = jlam;
+            for (j[0] = 1; j[0] <= jlam; j[0]++) {
+                dum[0] = adub[j[0]-1][j[0]-1];
+                nuj++;
+                nuk = jlam;
+                for (k = 1; k <= jlam; k++) {
+                    nuk++;
+                    delt[j[0]-1][k-1] = dum[0] * adub[k-1][k-1] + 2.0 * adub[j[0]-1][k-1] * adub[j[0]-1][k-1];
+                    delt[j[0]-1][nuk-1] = dum[0] *adub[k-1][nuk-1] + 2.0 * adub[j[0]-1][k-1] * adub[j[0]-1][nuk-1];
+                    delt[nuj-1][k-1] = adub[j[0]-1][nuj-1] * adub[k-1][k-1] + 2.0 * adub[j[0]-1][k-1] * adub[nuj-1][k-1];
+                    delt[nuj-1][nuk-1] = adub[j[0]-1][nuj-1] * adub[k-1][nuk-1] + adub[j[0]-1][k-1] * adub[nuj-1][nuk-1]
+                                       + adub[j[0]-1][nuk-1] * adub[nuj-1][k-1];
+                    for (L = 0; L < 4; L++) {
+                        sum[L] = 0.0;
+                    } // for (L = 0; L < 4; L++)
+                    nu = 0;
+                    for (L = 1; L <= nint; L++) {
+                        cui[0] = Math.exp(-plam[j[0]-1] * deltat[L-1]);
+                        cui[1] = Math.exp(-plam[k-1] * deltat[L-1]);
+                        cui[2] = Math.exp(-plam[j[0]-1] * tstart[L-1]);
+                        cui[3] = Math.exp(-plam[k-1] * tstart[L-1]);
+                        ii = nt[L-1];
+                        for (i = 1; i <= ii; i++) {
+                            nu++;
+                            tnu = t[nu-1];
+                            if (!regint) {
+                                ss = e[nu-1][j[0]-1];
+                                dddum = tnu * e[nu-1][k-1];
+                            } // if (!regint)
+                            else { // regint
+                                ss = sqrtw[nu-1] * cui[2];
+                                dddum = tnu * sqrtw[nu-1] * cui[3];
+                                cui[2] = cui[2] * cui[0];
+                                cui[3] = cui[3] * cui[1];
+                            } // else regint
+                            s = palpha[j[0]-1] * tnu * ss;
+                            ddum[0] = palpha[k-1] * tnu * dddum;
+                            sum[0] = sum[0] - s * ddum[0];
+                            sum[1] = sum[1] + s * dddum;
+                            sum[2] = sum[2] + ss * ddum[0];
+                            sum[3] = sum[3] - ss * dddum;
+                        } // for (i = 1; i <= ii; i++)
+                    } // for (L = 1; L <= nint; L++)
+                    ccsum[j[0]-1][k-1] = sum[0];
+                    ccsum[j[0]-1][nuk-1] = sum[1];
+                    ccsum[nuj-1][k-1] = sum[2];
+                    ccsum[nuj-1][nuk-1] = sum[3];
+                } // for (k = 1; k <= jlam; k++)
+                if (nobase) {
+                    continue;
+                } // if (nobase)
+                s = 0.0;
+                ss = 0.0;
+                nu = 0;
+                for (L = 1; L <= nint; L++) {
+                    dum[0] = Math.exp(-plam[j[0]-1] * deltat[L-1]);
+                    ddum[0] = Math.exp(-plam[j[0]-1] * tstart[L-1]);
+                    ii = nt[L-1];
+                    for (i = 1; i <= ii; i++) {
+                        nu++;
+                        tnu = t[nu-1];
+                        if (!regint) {
+                            sss = e[nu-1][j[0]-1];
+                        } // if (!regint)
+                        else { // regint
+                            sss = ddum[0] * sqrtw[nu-1];
+                            ddum[0] = ddum[0] * dum[0];
+                        } // else regint
+                        dddum = tnu * sss * sqrtw[nu-1];
+                        ss = ss - dddum;
+                        s = s + palpha[j[0]-1] * tnu * dddum;
+                    } // for (i = 1; i <= ii; i++)
+                } // for (L = 1; L <= nint; L++)
+                ccsum[nf-1][j[0]-1] = s;
+                ccsum[nf-1][nuj-1] = ss;
+            } // for (j[0] = 1; j[0] <= jlam; j[0]++)
+            ldum[0] = !nobase;
+            enphi = 0.0;
+            for (nu = 1; nu <= n; nu++) {
+                tnu = t[nu-1];
+                for (j[0] = 1; j[0] <= nlin; j[0]++) {
+                    adum[j[0]-1] = sqrtw[nu-1] * Math.exp(-plam[j[0]-1] * tnu);
+                } // for (j[0] = 1; j[0] <= nlin; j[0]++)
+                nuj = jlam;
+                for (j[0] = 1; j[0] <= jlam; j[0]++) {
+                    nuj++;
+                    sum[0] = 0.0;
+                    sum[1] = 0.0;
+                    nuk = jlam;
+                    for (k = 1; k <= jlam; k++) {
+                        s = 0.0;
+                        if (ldum[0]) {
+                            s = sqrtw[nu-1] * adub[k-1][nf-1];
+                        } // if (ldum[0])
+                        nui = jlam;
+                        for (i = 1; i <= jlam; i++) {
+                            nui++;
+                            cui[nui-1] = adum[i-1];
+                            cui[i-1] = -palpha[i-1] * tnu * cui[nui-1];
+                            s = s + adub[k-1][i-1] * cui[i-1] + adub[k-1][nui-1] * cui[nui-1];
+                        } // for (i = 1; i <= jlam; i++)
+                        sum[0] = sum[0] + ccsum[k-1][j[0]-1] * s;
+                        sum[1] = sum[1] + ccsum[k-1][nuj-1] * s;
+                        nuk++;
+                        s= 0.0;
+                        if (ldum[0]) {
+                            s = sqrtw[nu-1] * adub[nuk-1][nf-1];
+                        } // if (ldum[0])
+                        nui = jlam;
+                        for (i = 1; i <= jlam; i++) {
+                            nui++;
+                            s = s + adub[nuk-1][i-1] * cui[i-1] + adub[nuk-1][nui-1] * cui[nui-1];
+                        } // for (i = 1; i <= jlam; i++)
+                        sum[0] = sum[0] + ccsum[nuk-1][j[0]-1] * s;
+                        sum[1] = sum[1] + ccsum[nuk-1][nuj-1] * s;
+                    } // for (k = 1; k <= jlam; k++)
+                    if (!nobase) {
+                        s = 0.0;
+                        if (ldum[0]) {
+                            s = sqrtw[nu-1] * adub[nf-1][nf-1];
+                        } // if (ldum[0])
+                        nui = jlam;
+                        for (i = 1; i <= jlam; i++) {
+                            nui++;
+                            s = s + adub[nf-1][i-1] * cui[i-1] + adub[nf-1][nui-1] * cui[nui-1];
+                        } // for (i = 1; i <= jlam; i++)
+                        sum[0] = sum[0] + ccsum[nf-1][j[0]-1] * s;
+                        sum[1] = sum[1] + ccsum[nf-1][nuj-1] * s;
+                    } // if (!nobase)
+                    dum[0] = tnu * adum[j[0]-1];
+                    cstar[j[0]-1] = palpha[j[0]-1] * tnu * dum[0] - sum[0];
+                    cstar[nuj-1] = -2.0 * (dum[0] + sum[1]);
+                } // for (j[0] = 1; j[0] <= jlam; j[0]++)
+                sum[0] = 0.0;
+                nuj = jlam;
+                for (j[0] = 1; j[0] <= jlam; j[0]++) {
+                    nuj++;
+                    s = 0.0;
+                    ss = 0.0;
+                    nuk = jlam;
+                    for (k = 1; k <= jlam; k++) {
+                        nuk++;
+                        s = s + cstar[k-1] * delt[j[0]-1][k-1] + cstar[nuk-1] * delt[j[0]-1][nuk-1];
+                        ss = ss + cstar[k-1] * delt[nuj-1][k-1] + cstar[nuk-1] * delt[nuj-1][nuk-1];
+                    } // for (k = 1; k <= jlam; k++)
+                    sum[0] = sum[0] + cstar[j[0]-1] * s + cstar[nuj-1] * ss;
+                } // for (j[0] = 1; j[0] <= jlam; j[0]++)
+                enphi = enphi + sum[0];
+            } // for (nu = 1; nu <= n; nu++)
+            enphi = enphi * sigyy * sigyy/(nf + 2.0);
+        } // if (!failed && itype == 4)
+        if (!prlsq) {
+            return;
+        } // if (!prlsq)
+        if (!(failed || itype != 4)) {
+            Preferences.debug("enphi = " + enphi + "\n", Preferences.DEBUG_ALGORITHM);    
+        } // if (!(failed || itype != 4))
+        Preferences.debug("Standard deviation of fit = " + sigyy + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("lambda +- standard error percent        alpha +- standard error percent\n", Preferences.DEBUG_ALGORITHM);
+        k = jlam;
+        for (j[0] = 0; j[0] < jlam; j[0]++) {
+            k++;
+            Preferences.debug("plam["+j[0]+"] = " + plam[j[0]] + " sigmap["+j[0]+"] = " + sigmap[j[0]] +
+                              "pcerr[" + j[0] + "] = " + pcerr[j[0]] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("palpha["+j[0]+"] = " + palpha[j[0]] + " sigmap["+(k-1)+"] = " + sigmap[k-1] +
+                              "pcerr[" + (k-1) + "] = " + pcerr[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
+        } // for (J[0] = 0; j[0] < jlam; j[0]++)
+        if (!nobase) {
+            Preferences.debug("BASELINE palpha["+(jlamp1-1)+ "] = " + palpha[jlamp1-1] + " sigmap["+(nf-1)+"] = " + sigmap[nf-1] +
+                              " pcerr["+(nf-1)+"] = " + pcerr[nf-1] + "\n", Preferences.DEBUG_ALGORITHM);
+        } // if (!nobase)
+        return;
     } // anlerr
     
     private void etheor(double plambd, boolean invert, boolean wted, double se[], double dse[], double ddse[], double sye[],
@@ -2407,12 +2842,183 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     } // yanlyz
     
     private double fisher(double fs, int nu1, int nu2) {
+        // Calculates probability that fs(nu1, nu2) is less than f for fisher f-test.
+        // nu2 must be >= 3
+        // Sum until a term is found less than tol * (current value of sum).
+        // Equation numbers refer to Abramowitz and Stegun, page 946.
+        double tol = 1.0E-9;
+        double rnu1;
+        double rnu2;
+        double x;
         double result = 0.0;
+        double q;
+        double term;
+        double tx;
+        double tn;
+        int k;
+        int j = 0;
+        double th;
+        double cth;
+        double cc;
+        double sth;
+        double ss;
+        double pr;
+        double dum;
+        int L;
+        boolean go220 = false;
+        
+        rnu1 = nu1;
+        rnu2 = nu2;
+        x = rnu2/(rnu2 + rnu1 * fs);
+        if ((x >= 1.0) && (fs >= 0.0)) {
+            result = 0.0;
+            return result;
+        }
+        if ((nu1 % 2) == 0) {
+            // Evaluates equation 26.6.4
+            q = 1.0;
+            if (nu1 != 2) {
+                term = 1.0;
+                tx = 1.0 - x;
+                tn = rnu2 - 2.0;
+                k = nu1 - 2;
+                for (j = 2; j <= k; j += 2) {
+                    tn = tn + 2.0;
+                    term = term * tn * tx/j;
+                    q = q + term;
+                    if (term <= tol * q) {
+                        break;
+                    }
+                } // for (j = 2; j <= k; j += 2)
+            } // if (nu1 != 2) 
+            result = 1.0 - Math.pow(x, 0.5*rnu2) * q;
+            return result;
+        } // if ((nu1 % 2) == 0)
+        if ((nu2 % 2) != 0) {
+            // Evaluates equation 26.6.8
+            th = Math.atan(Math.sqrt(rnu1 * fs/rnu2));
+            cth = Math.cos(th);
+            cc = cth * cth;
+            sth = Math.sin(th);
+            ss = sth * sth;
+            term = 1.0;
+            q = 1.0;
+            k = nu2 - 2;
+            pr = 1.0;
+            tn = 0.0;
+            if (k >= 3) {
+                for (j = 3; j <= k; j += 2) {
+                    tn = tn + 2.0;
+                    dum = tn/j;
+                    pr = pr * dum;
+                    term = term * cc * dum;
+                    q = q + term;
+                    if (term <= tol * q) {
+                        go220 = true;
+                        break;
+                    }
+                } // for (j = 3; j <= k; j += 2)
+                if (!go220) {
+                    j = k;
+                }
+            } // if (k >= 3)
+            result = th + sth * cth * q;
+            q = 0.0;
+            if (nu1 != 1) {
+                tn = tn + 2.0;
+                pr = pr * tn;
+                if (j != k) {
+                    L = j + 2;
+                    for (j = L; j <= k; j += 2) {
+                        tn = tn + 2.0;
+                        pr = pr * tn/j;
+                    } // for (j = L; j <= k; j += 2)
+                } // if (j != k)
+                tn = rnu2 - 1.0;
+                q = 1.0;
+                term = 1.0;
+                k = nu1 - 2;
+                if (k >= 3) {
+                    for (j = 3; j <= k; j += 2) {
+                        tn = tn + 2.0;
+                        term = term * tn * ss/j;
+                        q = q + term;
+                        if (term <= tol * q) {
+                            break;
+                        }
+                    } // for (j = 3; j <= k; j += 2)
+                } // if (k >= 3)
+                result = result - q * pr * sth * cth * nu2;
+            } // if (nu1 != 1)
+            result = result * 0.6366198;
+            return result;
+        } // if ((nu2 % 2) != 0)
+        // nu2 % 2 == 0
+        // Evaluates equation 26.6.5
+        term = 1.0;
+        q = 1.0;
+        k = nu2 - 2;
+        tn = rnu1 - 2.0;
+        for (j = 2; j <= k; j += 2) {
+            tn = tn + 2.0;
+            term = term * tn * x/j;
+            q = q + term;
+            if (term <= tol * q) {
+                break;
+            }
+        } // for (j = 2; j <= k; j += 2)
+        result = Math.sqrt(1.0 - x) * q;
         return result;
     } // fisher
     
     private void residu(int jlam, boolean plot, double puncor[], double asave[][][]) {
+        // Calculates weighted residuals from asave[j-1][jlam-1][0] and asave[j-1][jlam-1][1], which correspond
+        // to alpha and lambda, returns puncor (approximately probability that the residuals are uncorrelated
+        // for lags 1 thru 5) and weighted average in puncor[5], and if plot == true, calls plpres to plot
+        // weighted residuals on printer.
         
+        // Calls routines fisher and plpres
+        boolean ldum;
+        double dum = 0.0;
+        int k;
+        int j;
+        double ddum;
+        double rsumst;
+        double rsumen;
+        int L;
+        int nend;
+        
+        jlamp1 = jlam + 1;
+        ldum = !nobase;
+        if (ldum) {
+            dum = asave[jlamp1-1][jlam-1][0];
+        } // if (ldum)
+        for (k = 0; k < n; k++) {
+            ylyfit[k] = y[k];
+            if (ldum) {
+                ylyfit[k] = ylyfit[k] - dum * sqrtw[k];
+            } // if (ldum)
+        } // for (k = 0; k < n; k++)
+        for (j = 0; j < jlam; j++) {
+            dum = asave[j][jlam-1][0];
+            ddum = asave[j][jlam-1][1];
+            for (k = 0; k < n; k++) {
+                ylyfit[k] = ylyfit[k] - dum * Math.exp(-ddum * t[k]) * sqrtw[k];
+            } // for (k = 0; k < n; k++)
+        } // for (j = 0; j < jlam; j++)
+        rsumst = 0.0;
+        if (!ldum) {
+            for (k = 0; k < n; k++) {
+                rsumst = rsumst + ylyfit[k];
+            } // for (k = 0; k < n; k++)
+        } // if (!ldum)
+        rsumen = rsumst;
+        
+        // Calculate autocovariances and probabilities that residuals are uncorrelated (Hamilton, page 183)
+        puncor[5] = 0.0;
+        for (L = 1; L <= 5; L++) {
+            nend = n - L;
+        } // for (L = 1; L <= 5; L++)
     } // residu
     
 
