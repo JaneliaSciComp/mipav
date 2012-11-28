@@ -44,13 +44,15 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      * 
      * Download the Users Manual and other essential documentation from http://S-provencher.com.
      * 
-     * runAlgorithm calls routines blockData, weight, fanlyz, yanlyz which in turn call lstSqr,
-     * evar, varf, etheor, pivot, pivot1, anlerr, fisher, residu, plpres. 
+     * runAlgorithm calls routines weight, fanlyz, yanlyz which in turn call lstSqr,
+     * evar, varf, etheor, pivot, pivot1, anlerr, fisher, residu. 
      */
     
     // nmax must be greater than or equal to the maximum number of data points you will ever use
-    private int nmax = 200;
-    // nintmx must be greater than or equal to the maximum value of nint you will ever use wiht regint == true
+    // Since this version does not use last = false to get more data, nmax is not required.
+    // Just used n, the number of data points, instead
+    //private int nmax = 200;
+    // nintmx must be greater than or equal to the maximum value of nint you will ever use with regint == true
     private int nintmx = 10;
     private int mlammx = 9;
     private double convrg = 5.0E-5;
@@ -76,6 +78,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private boolean prfinl;
     private boolean plotrs;
     private boolean repeat;
+    private boolean fatalProblem = false;
     // n > 2*nlammx+3 && n <= nmax
     private int n;
     // t has n values
@@ -88,6 +91,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private double tend;
     // nt has nint values
     // All values of the nt array must be >= 2
+    // nt[0] = n when regint == false
     private int nt[];
     // y has n values
     private double y[];
@@ -95,9 +99,11 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // sqrtw has n values
     private double sqrtw[];
     
-    private double ylyfit[] = new double[nmax];
+    //private double ylyfit[] = new double[nmax];
+    private double ylyfit[] = new double[n];
     // Original code has equivalence of e and gse
-    private double e[][] = new double[nmax][10];
+    //private double e[][] = new double[nmax][10];
+    private double e[][] = new double[n][10];
     private double gse[][] = new double[500][4];
     private int ndime;
     private double deltat[] = new double[nintmx];
@@ -200,7 +206,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     public void runAlgorithm() {
         int j;
         double dub;
-        int l;
+        int L;
         int k;
         
         iwtsgn = iwt;
@@ -223,9 +229,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 dub = (tend - tstart[j-1])/(nt[j-1] - 1.0);
                 n++;
                 t[n-1] = tstart[j-1];
-                l = nt[j-1];
+                L = nt[j-1];
                 deltat[j-1] = dub;
-                for (k = 2; k <= l; k++) {
+                for (k = 2; k <= L; k++) {
                     n++;
                     t[n-1] = t[n-2] + dub;
                 } // for (k = 2; k <= l; k++)
@@ -251,7 +257,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         } // else iwt == 4
         
         if (!regint) {
-            ndime = nmax;
+            //ndime = nmax;
+            ndime = n;
             ndimg = 1;
         } // if (!regint)
         else {
@@ -262,6 +269,10 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // weight generates crude starting values for constrained least square fits to raw data to generate
         // weights and does initial computations of quantities for later use.
         weight(false);
+        if (fatalProblem) {
+            setCompleted(false);
+            return;
+        }
         
         // fanlyz is for the constrained stepwise least squares analysis of the raw data and the transforms
         // to get starting estimates for the final least squares analysis of the raw data.
@@ -270,9 +281,13 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // weight uses starting values from fanlyz for constrained least squares fits to raw data to generate
         // weights for the final least squares fits to the raw data.
         weight(true);
+        if (fatalProblem) {
+            setCompleted(false);
+            return;
+        }
         
         // yanlyz is for the constrained stepwise least squares analysis of the raw data (using the starting 
-        // values from fanlyz and the weights from weight).
+        // values obtained from fanlyz and the weights from weight).
         yanlyz();
         
         setCompleted(true);
@@ -425,9 +440,11 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 
                 // Start of main loop for stepwise analysis
                 for (jlam = 1; jlam <= nlammx; jlam++) {
-                    nf = 2*jlam + ibase;  
-                    Preferences.debug("Preliminary analysis to determine weights\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("Analysis assuming " + jlam + " components\n", Preferences.DEBUG_ALGORITHM);
+                    nf = 2*jlam + ibase; 
+                    if (prprel) {
+                        Preferences.debug("Preliminary analysis to determine weights\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("Analysis assuming " + jlam + " components\n", Preferences.DEBUG_ALGORITHM);
+                    } // if (prprel)
                     if (!finalVar) {
                         ffail[jlam-1][0] = true;
                         dum = Math.pow(ratiol, 1.0/(jlam+1.0));
@@ -458,7 +475,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     }
                 } // for (jlam = 1; jlam <= nlammx; jlam++)
                 if (varbes >= 1.0E20) {
-                    Preferences.debug("Component analysis to determine weights somehow failed\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("1-component analysis to determine weights somehow failed\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("Unit weights will be used\n", Preferences.DEBUG_ALGORITHM);
                     iwt = 1;
                 }
@@ -526,12 +543,12 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
             if (nobase) {
                 jgeadd = jgeadd + (int)(Math.log(lamnmx[0][1]/lamnmx[0][0])/dgride + 0.5);
             }
-            gest = lamnmx[0][1]/Math.pow(rgride,(jgeadd+1));
+            gest = lamnmx[0][1]/Math.pow(rgride,(jgeadd+1.0));
             gestl = Math.log(gest);
             nge1 = ngrid1 + jgeadd + (int)(Math.log(2.0 * lamnmx[1][0]/lamnmx[1][1])/dgride + 0.5) + minter/2;
             if (nge1 >  500) {
                 Preferences.debug("Fix lamnmx.  nge1 = " + nge1 + "\n", Preferences.DEBUG_ALGORITHM);
-                setCompleted(false);
+                fatalProblem = true;
                 return;
             }
             jgeadd++;
@@ -2244,7 +2261,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     }
     
     private void fanlyz() {
-        // Does constrained stepwise least squares analysis fo raw data (using grid search if necessary) to
+        // Does constrained stepwise least squares analysis of raw data (using grid search if necessary) to
         // get starting values for analysis of transforms, which yield lamf (starting values for final analysis
         // of raw data in yanlyz).
         
@@ -2322,174 +2339,174 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     Preferences.debug("Fit using starting set " + jtry + "\n", Preferences.DEBUG_ALGORITHM);
                 }
                 if (jlam != 1) {
-                if (jtry == 1) {
-                    // Select first set of starting values
-                    for (j = 0; j < jlaml1; j++) {
-                        lamst[j] = lamf[j][jlaml1-1][1];
-                    }
-                    if (lpeak == 1) {
-                        lamst[jlam-1] = Math.sqrt(lamnmx[0][1] * lamf[0][jlaml1-1][1]);
-                    }
-                    else if (lpeak == jlam) {
-                        lamst[jlam-1] = Math.sqrt(lamf[jlaml1-1][jlaml1-1][1] * lamnmx[1][1]);
-                    }
-                    else {
-                        lamst[jlam-1] = Math.sqrt(lamf[lpeak-2][jlaml1-1][1] * lamf[lpeak-1][jlaml1-1][1]);
-                    }
-                } // if (jtry == 1)
-                else { // jtry >= 2
-                    if (jtry == 2) {
-                        // Do coarse grid search
-                        L = ngrid2[jlam-1] - jlam;
-                        for (j = 0; j < jlam; j++) {
-                            L++;
-                            lendeq[j] = L;
-                        } // for (j = 0; j < jlam; j++)
-                        if (jlam != mlammx) {
-                            for (j = jlamp1; j <= mlammx; j++) {
-                                lendeq[j-1] = lendeq[jlam-1];
-                            }
-                        } // if (jlam != mlammx)
-                        jcentr[0] = jgeadd - 1 + (nperg2[jlam-1] + 1)/2;
-                        L = ngrid2[jlam-1];
-                        for (j = 1; j <= L-1; j++) {
-                            jcentr[j] = jcentr[j-1] + nperg2[jlam-1];
+                    if (jtry == 1) {
+                        // Select first set of starting values
+                        for (j = 0; j < jlaml1; j++) {
+                            lamst[j] = lamf[j][jlaml1-1][1];
                         }
-                        search = true;
-                    } // if (jtry == 2)
-                    else { // jtry >= 3
-                        // Find lowest variance on coarse grid
-                        vgmax = 1.0E20;
-                        for (j = 0; j < lvgrid; j++) {
-                            vgmax = Math.min(vgmax, vgrid2[j]);
+                        if (lpeak == 1) {
+                            lamst[jlam-1] = Math.sqrt(lamnmx[0][1] * lamf[0][jlaml1-1][1]);
                         }
-                        if (jtry > 2) {
-                            vgmax = 10.0 * vgmax;
+                        else if (lpeak == jlam) {
+                            lamst[jlam-1] = Math.sqrt(lamf[jlaml1-1][jlaml1-1][1] * lamnmx[1][1]);
                         }
-                        maxdif = -1;
-                        search = false;
-                        vgbest = 1.0E20;
-                    } // else jtry >= 3
-                    whileloop:
-                    while (true) {
-                        // Entry point to find starting lambda values from grid
-                        loc = 0;
-                        for (leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++) {
-                            lst2 = leq[0]+1;
-                            for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++) {
-                                lst3 = leq[1] + 1;
-                                if (jlam < 3) {
-                                    lst3 = lendeq[2];
+                        else {
+                            lamst[jlam-1] = Math.sqrt(lamf[lpeak-2][jlaml1-1][1] * lamf[lpeak-1][jlaml1-1][1]);
+                        }
+                    } // if (jtry == 1)
+                    else { // jtry >= 2
+                        if (jtry == 2) {
+                            // Do coarse grid search
+                            L = ngrid2[jlam-1] - jlam;
+                            for (j = 0; j < jlam; j++) {
+                                L++;
+                                lendeq[j] = L;
+                            } // for (j = 0; j < jlam; j++)
+                            if (jlam != mlammx) {
+                                for (j = jlamp1; j <= mlammx; j++) {
+                                    lendeq[j-1] = lendeq[jlam-1];
                                 }
-                                for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++) {
-                                    lst4 = leq[2] + 1;
-                                    if (jlam < 4) {
-                                        lst4 = lendeq[3];
+                            } // if (jlam != mlammx)
+                            jcentr[0] = jgeadd - 1 + (nperg2[jlam-1] + 1)/2;
+                            L = ngrid2[jlam-1];
+                            for (j = 1; j <= L-1; j++) {
+                                jcentr[j] = jcentr[j-1] + nperg2[jlam-1];
+                            }
+                            search = true;
+                        } // if (jtry == 2)
+                        else { // jtry >= 3
+                            // Find lowest variance on coarse grid
+                            vgmax = 1.0E20;
+                            for (j = 0; j < lvgrid; j++) {
+                                vgmax = Math.min(vgmax, vgrid2[j]);
+                            }
+                            if (jtry > 2) {
+                                vgmax = 10.0 * vgmax;
+                            }
+                            maxdif = -1;
+                            search = false;
+                            vgbest = 1.0E20;
+                        } // else jtry >= 3
+                        whileloop:
+                        while (true) {
+                            // Entry point to find starting lambda values from grid
+                            loc = 0;
+                            for (leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++) {
+                                lst2 = leq[0]+1;
+                                for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++) {
+                                    lst3 = leq[1] + 1;
+                                    if (jlam < 3) {
+                                        lst3 = lendeq[2];
                                     }
-                                    for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++) {
-                                        lst5 = leq[3] + 1;
-                                        if (jlam < 5) {
-                                            lst5 = lendeq[4];
+                                    for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++) {
+                                        lst4 = leq[2] + 1;
+                                        if (jlam < 4) {
+                                            lst4 = lendeq[3];
                                         }
-                                        for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++) {
-                                            lst6 = leq[4] + 1;
-                                            if (jlam < 6) {
-                                                lst6 = lendeq[5];
+                                        for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++) {
+                                            lst5 = leq[3] + 1;
+                                            if (jlam < 5) {
+                                                lst5 = lendeq[4];
                                             }
-                                            for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++) {
-                                                lst7 = leq[5] + 1;
-                                                if (jlam < 7) {
-                                                    lst7 = lendeq[6];
+                                            for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++) {
+                                                lst6 = leq[4] + 1;
+                                                if (jlam < 6) {
+                                                    lst6 = lendeq[5];
                                                 }
-                                                for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++) {
-                                                    lst8 = leq[6] + 1;
-                                                    if (jlam < 8) {
-                                                        lst8 = lendeq[7];
+                                                for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++) {
+                                                    lst7 = leq[5] + 1;
+                                                    if (jlam < 7) {
+                                                        lst7 = lendeq[6];
                                                     }
-                                                    for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++) {
-                                                        lst9 = leq[7] + 1;
-                                                        if (jlam < 9) {
-                                                            lst9 = lendeq[8];
+                                                    for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++) {
+                                                        lst8 = leq[6] + 1;
+                                                        if (jlam < 8) {
+                                                            lst8 = lendeq[7];
                                                         }
-                                                        loop9:
-                                                        for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++) {
-                                                            loc++;
-                                                            if (!search) {
-                                                                if (vgrid2[loc-1] <= vgmax) {
-                                                                    mindif = 1000;
-                                                                    if (jtry <= 2) {
-                                                                        go493 = true;
+                                                        for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++) {
+                                                            lst9 = leq[7] + 1;
+                                                            if (jlam < 9) {
+                                                                lst9 = lendeq[8];
+                                                            }
+                                                            loop9:
+                                                            for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++) {
+                                                                loc++;
+                                                                if (!search) {
+                                                                    if (vgrid2[loc-1] <= vgmax) {
+                                                                        mindif = 1000;
+                                                                        if (jtry <= 2) {
+                                                                            go493 = true;
+                                                                        }
+                                                                        else { // jtry > 2
+                                                                            L = jtry - 1;
+                                                                            for (j = 2; j <= L; j++) {
+                                                                                i = 0;  
+                                                                                for (k = 1; k <= jlam; k++) {
+                                                                                    i = i + Math.abs(leq[k-1] - lstart[k-1][j-1]);    
+                                                                                } // for (k = 1; k <= jlam; k++)
+                                                                                mindif = Math.min(mindif,  i);
+                                                                            } // for (j = 2; j <= L; j++)
+                                                                            dif = mindif - maxdif;
+                                                                            if (dif == 0) {
+                                                                                go493 = true;    
+                                                                            }
+                                                                            else if (dif > 0) {
+                                                                                go494 = true;
+                                                                            }
+                                                                        } // else jtry > 2
+                                                                        if (go493) {
+                                                                            go493 = false;
+                                                                            if (vgrid2[loc-1] < vgbest) {
+                                                                                go494 = true;
+                                                                            }
+                                                                        } // if (go493)
+                                                                        if (go494) {
+                                                                            go494 = false;
+                                                                            vgbest = vgrid2[loc-1];
+                                                                            maxdif = mindif;
+                                                                            for (j = 1; j <= jlam; j++) {
+                                                                                lstart[j-1][jtry-1] = leq[j-1];
+                                                                            }
+                                                                        } // if (go494)
+                                                                    } // if (vgrid2[loc-1] <= vgmax)
+                                                                    if (loc < lvgrid) {
+                                                                        continue loop9;
                                                                     }
-                                                                    else { // jtry > 2
-                                                                        L = jtry - 1;
-                                                                        for (j = 2; j <= L; j++) {
-                                                                            i = 0;  
-                                                                            for (k = 1; k <= jlam; k++) {
-                                                                                i = i + Math.abs(leq[k-1] - lstart[k-1][j-1]);    
-                                                                            } // for (k = 1; k <= jlam; k++)
-                                                                        } // for (j = 2; j <= L; j++)
-                                                                        mindif = Math.min(mindif,  i);
-                                                                        dif = mindif - maxdif;
-                                                                        if (dif == 0) {
-                                                                            go493 = true;    
-                                                                        }
-                                                                        else if (dif > 0) {
-                                                                            go494 = true;
-                                                                        }
-                                                                    } // else jtry > 2
-                                                                    if (go493) {
-                                                                        go493 = false;
-                                                                        if (vgrid2[loc-1] < vgbest) {
-                                                                            go494 = true;
-                                                                        }
-                                                                    } // if (go493)
-                                                                    if (go494) {
-                                                                        go494 = false;
-                                                                        vgbest = vgrid2[loc-1];
-                                                                        maxdif = mindif;
-                                                                        for (j = 1; j <= jlam; j++) {
-                                                                            lstart[j-1][jtry-1] = leq[j-1];
-                                                                        }
-                                                                    } // if (go494)
-                                                                } // if (vgrid2[loc-1] <= vgmax)
-                                                                if (loc < lvgrid) {
-                                                                    continue loop9;
-                                                                }
+                                                                    for (j = 0; j < jlam; j++) {
+                                                                        L = lstart[j][jtry-1];
+                                                                        lamst[j] = Math.exp(gestl + jcentr[L-1] * dgride);
+                                                                    } // for (j = 0; j < jlam; j++)
+                                                                    break whileloop;
+                                                                } // if (!search)
                                                                 for (j = 0; j < jlam; j++) {
-                                                                    L = lstart[j][jtry-1];
-                                                                    lamst[j] = Math.exp(gestl + jcentr[L-1] * dgride);
+                                                                    L = leq[j];
+                                                                    plam[j] = Math.exp(gestl + jcentr[L-1] * dgride);
                                                                 } // for (j = 0; j < jlam; j++)
-                                                                break whileloop;
-                                                            } // if (!search)
-                                                            for (j = 0; j < jlam; j++) {
-                                                                L = leq[j];
-                                                                plam[j] = Math.exp(gestl + jcentr[L-1] * dgride);
-                                                            } // for (j = 0; j < jlam; j++)
-                                                            qdum = new double[1];
-                                                            ierror[0] = j;
-                                                            evar(qdum, jlam, dub, false, ldum, ylyfit, jlam+ibase, 1.0E20, 0, true, ierror);
-                                                        } // for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++)
-                                                    } // for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++)
-                                                } // for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++)
-                                            } // for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++)
-                                        } // for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++)
-                                    } // for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++)
-                                } // for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++)
-                            } // for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++)
-                        } // (for leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++)
-                        // Find the lowest variance on the coarse grid
-                        vgmax = 1.0E20;
-                        for (j = 0; j < lvgrid; j++) {
-                            vgmax = Math.min(vgmax, vgrid2[j]);
-                        }
-                        if (jtry > 2) {
-                            vgmax = 10.0 * vgmax;
-                        }
-                        maxdif = -1;
-                        search = false;
-                        vgbest = 1.0E20;
-                    } // while (true)
-                } // else jtry >= 2
+                                                                qdum = new double[1];
+                                                                ierror[0] = j;
+                                                                evar(qdum, jlam, dub, false, ldum, ylyfit, jlam+ibase, 1.0E20, 0, true, ierror);
+                                                            } // for (leq[8] = lst9; leq[8] <= lendeq[8]; leq[8]++)
+                                                        } // for (leq[7] = lst8; leq[7] <= lendeq[7]; leq[7]++)
+                                                    } // for (leq[6] = lst7; leq[6] <= lendeq[6]; leq[6]++)
+                                                } // for (leq[5] = lst6; leq[5] <= lendeq[5]; leq[5]++)
+                                            } // for (leq[4] = lst5; leq[4] <= lendeq[4]; leq[4]++)
+                                        } // for (leq[3] = lst4; leq[3] <= lendeq[3]; leq[3]++)
+                                    } // for (leq[2] = lst3; leq[2] <= lendeq[2]; leq[2]++)
+                                } // for (leq[1] = lst2; leq[1] <= lendeq[1]; leq[1]++)
+                            } // (for leq[0] = 1; leq[0] <= lendeq[0]; leq[0]++)
+                            // Find the lowest variance on the coarse grid
+                            vgmax = 1.0E20;
+                            for (j = 0; j < lvgrid; j++) {
+                                vgmax = Math.min(vgmax, vgrid2[j]);
+                            }
+                            if (jtry > 2) {
+                                vgmax = 10.0 * vgmax;
+                            }
+                            maxdif = -1;
+                            search = false;
+                            vgbest = 1.0E20;
+                        } // while (true)
+                    } // else jtry >= 2
                 } // if (jlam != 1)
                 // Do least squares fits
                 ldum[0] = jtry == 1;
@@ -2987,6 +3004,14 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double rsumen;
         int L;
         int nend;
+        double stbar;
+        double enbar;
+        double ss;
+        double se;
+        double ee;
+        double s;
+        double e;
+        double rsq;
         
         jlamp1 = jlam + 1;
         ldum = !nobase;
@@ -3018,7 +3043,31 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         puncor[5] = 0.0;
         for (L = 1; L <= 5; L++) {
             nend = n - L;
+            rsumst = rsumst - ylyfit[nend];
+            rsumen = rsumen - ylyfit[L-1];
+            stbar = rsumst/nend;
+            enbar = rsumen/nend;
+            ss = 0.0;
+            se = 0.0;
+            ee = 0.0;
+            j = L;
+            for (k = 1; k <= nend; k++) {
+                s = ylyfit[k-1] - stbar;
+                j++;
+                e = ylyfit[j-1] - enbar;
+                ss = ss + s * s;
+                se = se + s * e;
+                ee = ee + e * e;
+            } // for (k = 1; k <= nend; k++)
+            rsq = se*se/(ss * ee);
+            puncor[L-1] = 1.0 - fisher((nend - 2.0)*rsq/(1.0 - rsq), 1, nend - 2);
+            puncor[5] = puncor[5] + puncor[L-1]/L;
         } // for (L = 1; L <= 5; L++)
+        puncor[5] = puncor[5]/2.283333;
+        //if (plot) {
+            //plpres();
+        //} // if (plot)
+        return;
     } // residu
     
 
