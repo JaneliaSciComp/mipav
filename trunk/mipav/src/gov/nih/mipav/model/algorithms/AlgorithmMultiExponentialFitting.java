@@ -802,9 +802,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         varg[0] = 1.0E20;
         iter = -1;
         q[0] = 0.0;
-        if (prlsq) {
+        //if (prlsq) {
             
-        } // if (prlsq)
+        //} // if (prlsq)
         
         // Start of main loop for least squares fit
         bigloop:
@@ -852,18 +852,18 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     Preferences.debug("iter = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("var[0] = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("ddum = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("damping q q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("ntry = " + ntry + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("baseline palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
                     for (j = 0; j < nu; j++) {
-                        Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("alpha r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("lambda plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     } // for (j = 0; j < nu; j++)
                     if (jlam > 5) {
                         for (j = 5; j < jlam; j++) {
-                            Preferences.debug("r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                            Preferences.debug("plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("alpha r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("lambda plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);    
                         } // for (j = 5; j < jlam; j++)
                     } // if (jlam > 5)
@@ -1484,8 +1484,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         jp = jm+1;
                         h = dum[0] - jm;
                         hh = 1.0 - h;
-                        ddum[0] = 1.0E3 * h;
-                        dddum[0] = 1.0E3 * hh;
+                        ddum[0] = 1.0 + 3.0 * h;
+                        dddum[0] = 1.0 + 3.0 * hh;
                         dx = h * dgride;
                         ddx = -hh * dgride;
                         adub[j-1][k-1] = hh*hh*hh*((ddum[0]+6.0*h*h)*gse[jm-1][0]+dx*(ddum[0]*gse[jm-1][1]+ 
@@ -2609,7 +2609,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double ddum;
         double dddum;
         double probln[] = new double[9];
-        double pnxlin;
+        // 2 instances of pnxlin in program are unused dead ends
+        //double pnxlin;
         double puncor[] = new double[6];
         boolean done[] = new boolean[9];
         
@@ -2702,7 +2703,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
             return;
         }
         
-        // Calculate probsv and probln (probability and uncorrelated probability (i.e., using enphi = 0.0)
+        // Calculate probsv and probln (probability and uncorrected probability (i.e., using enphi = 0.0)
         // that the best solution is actually better than the others.
         pnxbes = 1.0E20;
         jlamnx = jlambs;
@@ -2737,16 +2738,16 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 continue;
             }
             pnxbes = probsv[j-1];
-            pnxlin = probln[j-1];
+            //pnxlin = probln[j-1];
             jlamnx = j;
         } // for (j = 1; j <= nlammx; j++)
         probsv[jlambs-1] = 0.0;
         if (pnxbes >= 1.0E20) {
             pnxbes = 1.0;
-            pnxlin = 1.0;
+            //pnxlin = 1.0;
         } // if (pnxbes >= 1.0E20)
         
-        // Final summary of results - summarizes up to best 5 solutions
+        // Final summary of results - summarizes up to best 5 solutions.
         residu(jlambs, plotrs, puncor, asave);
         bigloop:
         while (true) {
@@ -2800,7 +2801,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         Preferences.debug("A significant possibility\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // else j > 1
-                Preferences.debug("alpha +- std err precent lambda +- std err percent\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("alpha +- std err percent lambda +- std err percent\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("Starting lambda from fit to transforms " + nftry[i-1] + " tries\n", Preferences.DEBUG_ALGORITHM);
                 for (k = 1; k <= i; k++) {
                     Preferences.debug("alpha["+k+"]  = " + asave[k-1][i-1][0] + "\n", Preferences.DEBUG_ALGORITHM);;
@@ -2824,9 +2825,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     Preferences.debug("percent["+k+"] = " + asave[k-1][i-1][4] + "\n", Preferences.DEBUG_ALGORITHM);
                 } // if (!nobase)
                 if (j == 1 && pnxbes > 0.95) {
-                    Preferences.debug("Approximate probability that this " + jlamnx + " solution\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("is reallly better than the second best solution " + jlambs + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug(" = " + pnxbes + "\n", Preferences.DEBUG_ALGORITHM);		 
+                    Preferences.debug("Approximate probability that this solution is really better than the\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("second best solution = PNG(" + jlamnx + "/" + jlambs + ") = " +
+                                      pnxbes + "\n", Preferences.DEBUG_ALGORITHM);	 
                 } // if (j == 1 && pnxbes > 0.95)
                 if (j > 1) {
                     Preferences.debug("PNG(" + i + "/" + jlambs + ") = " + probsv[i-1] + "\n", Preferences.DEBUG_ALGORITHM);
@@ -2845,9 +2846,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 } // if (j == 1)
                 Preferences.debug("Probability residuals uncorrelated:\n", Preferences.DEBUG_ALGORITHM);
                 for (k = 1; k <= 5; k++) {
-                    Preferences.debug("K = " + k + "  " + puncor[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("puncor["+ (k-1) + "] = " + puncor[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
-                Preferences.debug("Weighted average PUNC = " + puncor[5] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Weighted average puncor[5] = " + puncor[5] + "\n", Preferences.DEBUG_ALGORITHM);
             } // for (j = 1; j <= nlammx; j++)
             if (!repeat) {
                 return;
