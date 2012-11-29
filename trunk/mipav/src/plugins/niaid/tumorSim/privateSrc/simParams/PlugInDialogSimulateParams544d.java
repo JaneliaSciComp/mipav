@@ -42,7 +42,7 @@ import java.util.Random;
 
 import javax.swing.*;
 
-import niaid.tumorSim.privateSrc.createMap.PlugInDialogCreateTumorMap544d;
+import niaid.tumorSim.privateSrc.createMap.PlugInDialogCreateSpheres601a;
 import niaid.tumorSim.privateSrc.postTreatment.PlugInDialogGeneratePostTreatment544d;
 
 /**
@@ -83,7 +83,7 @@ public class PlugInDialogSimulateParams544d extends JDialogScriptableBase implem
 
     private int iterNum;
 
-    private PlugInDialogCreateTumorMap544d createTumorDialogTemplate;
+    private PlugInDialogCreateSpheres601a createTumorDialogTemplate;
 
     /** Text fields for intensity value deviations. */
     private JTextField normalTissueText, tumor1Text, tumor2Text;
@@ -107,7 +107,7 @@ public class PlugInDialogSimulateParams544d extends JDialogScriptableBase implem
     public PlugInDialogSimulateParams544d(boolean modal) {
         super(modal); 
         
-        createTumorDialogTemplate = new PlugInDialogCreateTumorMap544d(false, false);
+        createTumorDialogTemplate = new PlugInDialogCreateSpheres601a(false, false);
         createTumorDialogTemplate.setVisible(false);
         //generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment543a();
         
