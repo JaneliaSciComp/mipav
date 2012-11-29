@@ -56,15 +56,15 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCreateSpheres601a extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**declare UID */
     
-    /** Type of tumor simulation */
-    public enum TumorSimMode {
+    /** Type of sphere simulation */
+    public enum SphereSimMode {
         //intensify,
         //deintensify,
         shrink,
@@ -85,7 +85,7 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
     private ModelImage resultImage = null;
     
     /** This is your algorithm */
-    private PlugInAlgorithmCreateTumorMap544d tumorSimAlgo = null;
+    private PlugInAlgorithmCreateSpheres544d sphereSimAlgo = null;
 
     private JTextField initRadiusText;
 
@@ -111,9 +111,9 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
 
     private double initRadius;
 
-    private double tumorChange;
+    private double sphereChange;
 
-    private TumorSimMode simMode;
+    private SphereSimMode simMode;
 
     private double intensity1;
 
@@ -155,16 +155,10 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
 
     private JTextField gaussianText;
 
-    /** Standard deviations for normal tissue, tumor1, tumor2, and noise profile*/
+    /** Standard deviations for normal tissue, sphere1, sphere2, and noise profile*/
     private double stdDevNormal, stdDevIntensity1, stdDevIntensity2, stdDevGaussian;
 
     private NoiseMode noise;
-
-	private JRadioButton adcButton;
-
-	private JRadioButton kTransButton;
-
-	private JRadioButton rStarButton;
 
 	/** Iteration number */
     private int iter;
@@ -178,7 +172,7 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogCreateTumorMap544d() { }
+    public PlugInDialogCreateSpheres601a() { }
 
     /**
      * Sets up variables but does not show dialog.
@@ -186,13 +180,13 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogCreateTumorMap544d(boolean modal, boolean doOkCancel) {
+    public PlugInDialogCreateSpheres601a(boolean modal, boolean doOkCancel) {
         super(modal); 
 
         init(doOkCancel);
     }
     
-    public PlugInDialogCreateTumorMap544d(PlugInDialogCreateTumorMap544d template, boolean modal, boolean doOkCancel) {
+    public PlugInDialogCreateSpheres601a(PlugInDialogCreateSpheres601a template, boolean modal, boolean doOkCancel) {
         this(modal, doOkCancel);
         template.setVisible(true);
         template.saveDefaults();
@@ -235,16 +229,16 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmCreateTumorMap544d) {
+       if (algorithm instanceof PlugInAlgorithmCreateSpheres544d) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
 
-            if (tumorSimAlgo.isCompleted()) {
+            if (sphereSimAlgo.isCompleted()) {
                 insertScriptLine();
             }
 
-            /*if (tumorSimAlgo != null) {
-                tumorSimAlgo.finalize();
-                tumorSimAlgo = null;
+            /*if (sphereSimAlgo != null) {
+                sphereSimAlgo.finalize();
+                sphereSimAlgo = null;
             }
 
             dispose();*/
@@ -258,8 +252,8 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
      */
     protected void callAlgorithm() {
 
-        if(tumorSimAlgo != null) {
-            tumorSimAlgo.finalize();
+        if(sphereSimAlgo != null) {
+            sphereSimAlgo.finalize();
         }
         
         try {
@@ -274,15 +268,15 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
             }
             
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap544d(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
+            sphereSimAlgo = new PlugInAlgorithmCreateSpheres544d(xyDim, zDim, xyRes, zRes, initRadius, sphereChange, simMode, 
                     intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noise, noiseParam, normalTissue, stdDevNormal);
 
-            tumorSimAlgo.setIter(iter);
+            sphereSimAlgo.setIter(iter);
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            tumorSimAlgo.addListener(this);
-            createProgressBar("Creating images", " ...", tumorSimAlgo);
+            sphereSimAlgo.addListener(this);
+            createProgressBar("Creating images", " ...", sphereSimAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -291,11 +285,11 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
          
-                if (tumorSimAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (sphereSimAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                tumorSimAlgo.run();
+                sphereSimAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -313,9 +307,9 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
     public void destroy() {
         System.out.println("Before: "+Runtime.getRuntime().freeMemory());
         
-        if(tumorSimAlgo != null) {
+        if(sphereSimAlgo != null) {
             
-            tumorSimAlgo = null;
+            sphereSimAlgo = null;
             
             ViewUserInterface.getReference().closeAllImages();
             
@@ -345,7 +339,7 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
    
     private void init(boolean doOKCancel) {
         setForeground(Color.black);
-        setTitle("Create tumor maps 544d");
+        setTitle("Create sphere maps 544d");
         try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -398,8 +392,8 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         return Double.valueOf(normalTissueText.getText()).doubleValue();
     }
 
-    public PlugInAlgorithmCreateTumorMap544d getTumorSimAlgo() {
-        return tumorSimAlgo;
+    public PlugInAlgorithmCreateSpheres544d getTumorSimAlgo() {
+        return sphereSimAlgo;
     }
     
     public JPanel getMainPanel() {
@@ -420,32 +414,6 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        
-        JPanel simTypePanel = new JPanel(new GridBagLayout());
-        simTypePanel.setForeground(Color.black);
-        simTypePanel.setBorder(MipavUtil.buildTitledBorder("Sample simulation params (based on image 1 tumor)"));
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        adcButton = gui.buildRadioButton("ADC", true);
-        simTypePanel.add(adcButton.getParent(), gbc);
-        
-        gbc.gridx++;
-        kTransButton = gui.buildRadioButton("Ktrans", false);
-        simTypePanel.add(kTransButton.getParent(), gbc);
-        
-        gbc.gridx++;
-        rStarButton = gui.buildRadioButton("R*", false);
-        simTypePanel.add(rStarButton.getParent(), gbc);
-        
-        ButtonGroup simMode = new ButtonGroup();
-        simMode.add(adcButton);
-        simMode.add(kTransButton);
-        simMode.add(rStarButton);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        mainPanel.add(simTypePanel, gbc);
         
         JPanel imageSizePanel = new JPanel(new GridBagLayout());
         imageSizePanel.setForeground(Color.black);
@@ -479,42 +447,42 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         unitsCombo = gui.buildComboBox("Units of image: ", UnitType.getUnitsOfType(UnitType.LENGTH), selected);
         imageSizePanel.add(unitsCombo.getParent(), gbc);
         
-        gbc.gridy = 1;
+        gbc.gridy = 0;
         gbc.gridx = 0;
         mainPanel.add(imageSizePanel, gbc);
         
-        JPanel tumorSimPanel = new JPanel(new GridBagLayout());
-        tumorSimPanel.setForeground(Color.black);
-        tumorSimPanel.setBorder(buildTitledBorder("Tumor simulation parameters"));
+        JPanel sphereSimPanel = new JPanel(new GridBagLayout());
+        sphereSimPanel.setForeground(Color.black);
+        sphereSimPanel.setBorder(buildTitledBorder("Sphere simulation parameters"));
         
-        doCenterCheck = gui.buildCheckBox("Enclose entire tumor within field of view", true);
-        tumorSimPanel.add(doCenterCheck.getParent(), gbc);
+        doCenterCheck = gui.buildCheckBox("Enclose entire sphere within field of view", true);
+        sphereSimPanel.add(doCenterCheck.getParent(), gbc);
         
         gbc.gridy++;
-        normalTissueText = gui.buildDecimalField("Normal tissue intensity: ", 70);
-        tumorSimPanel.add(normalTissueText.getParent(), gbc);
+        normalTissueText = gui.buildDecimalField("Background intensity: ", 70);
+        sphereSimPanel.add(normalTissueText.getParent(), gbc);
         
         gbc.gridx++;
         stdDevNormalText = gui.buildDecimalField("Std dev: ", (int)(70*.1));
-        tumorSimPanel.add(stdDevNormalText.getParent(), gbc);
+        sphereSimPanel.add(stdDevNormalText.getParent(), gbc);
         
         gbc.gridx = 0;
         gbc.gridy++;
-        intensity1Text = gui.buildDecimalField("Image 1 tumor intensity: ", 109);
-        tumorSimPanel.add(intensity1Text.getParent(), gbc);
+        intensity1Text = gui.buildDecimalField("Image 1 sphere intensity: ", 109);
+        sphereSimPanel.add(intensity1Text.getParent(), gbc);
         
         gbc.gridx++;
         stdDevIntensity1Text = gui.buildDecimalField("Std dev: ", (int)(109*.1));
-        tumorSimPanel.add(stdDevIntensity1Text.getParent(), gbc);
+        sphereSimPanel.add(stdDevIntensity1Text.getParent(), gbc);
         
         gbc.gridx = 0;
         gbc.gridy++;
-        intensity2Text = gui.buildDecimalField("Image 2 tumor intensity: ", 201);
-        tumorSimPanel.add(intensity2Text.getParent(), gbc);
+        intensity2Text = gui.buildDecimalField("Image 2 sphere intensity: ", 201);
+        sphereSimPanel.add(intensity2Text.getParent(), gbc);
         
         gbc.gridx++;
         stdDevIntensity2Text = gui.buildDecimalField("Std dev: ", (int)(201*.1));
-        tumorSimPanel.add(stdDevIntensity2Text.getParent(), gbc);
+        sphereSimPanel.add(stdDevIntensity2Text.getParent(), gbc);
         
         gbc.gridx = 0;
         gbc.gridy++;
@@ -522,33 +490,33 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
         panel.setLayout(flow);
         
-        final JLabel measureLabel = new JLabel("Radius of initial tumor (in "+Unit.MILLIMETERS.getAbbrev()+"): ");
+        final JLabel measureLabel = new JLabel("Radius of initial sphere (in "+Unit.MILLIMETERS.getAbbrev()+"): ");
         panel.add(measureLabel, flow);
         
         initRadiusText = gui.buildDecimalField("", 2.808);
         panel.add(initRadiusText, flow);
-        tumorSimPanel.add(panel, gbc);
+        sphereSimPanel.add(panel, gbc);
         
         unitsCombo.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent e) {
-                measureLabel.setText("Radius of initial tumor (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
+                measureLabel.setText("Radius of initial sphere (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
             }
         });
         
         gbc.gridy++;
         subSampleCombo = gui.buildComboBox("Subsampling amount: ", new Integer[] {8, 4, 2, 0}, 0);
-        tumorSimPanel.add(subSampleCombo.getParent(), gbc);
+        sphereSimPanel.add(subSampleCombo.getParent(), gbc);
         
         gbc.gridy++;
-        growthShrinkCombo = gui.buildComboBox("Simulate tumor: ", TumorSimMode.values());
-        tumorSimPanel.add(growthShrinkCombo.getParent(), gbc);
+        growthShrinkCombo = gui.buildComboBox("Simulate sphere: ", SphereSimMode.values());
+        sphereSimPanel.add(growthShrinkCombo.getParent(), gbc);
         
         gbc.gridy++;      
         percentChangeText = gui.buildDecimalField("Percentage change: ", .33);
-        tumorSimPanel.add(percentChangeText.getParent(), gbc);
+        sphereSimPanel.add(percentChangeText.getParent(), gbc);
               
-        gbc.gridy = 2;
-        mainPanel.add(tumorSimPanel, gbc);
+        gbc.gridy = 1;
+        mainPanel.add(sphereSimPanel, gbc);
        
         JPanel noisePanel = new JPanel(new GridBagLayout());
         noisePanel.setForeground(Color.black);
@@ -591,15 +559,9 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         noisePanel.add(gaussianText.getParent(), gbc);
         gaussianText.getParent().setVisible(false);
         
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         gbc.gridx = 0;
         mainPanel.add(noisePanel, gbc);
-        
-        ActionListener listen = new TumorSimListener();
-        
-        adcButton.addActionListener(listen);
-        kTransButton.addActionListener(listen);
-        rStarButton.addActionListener(listen);
         
         if(doOKCancel) {
             gbc.gridy++;
@@ -608,13 +570,6 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
         }
         
         return mainPanel;
-    }
-    
-    private class TumorSimListener implements ActionListener {
-
-        public void actionPerformed(ActionEvent e) {
-	        System.out.println("Simulating "+e.getSource().toString());
-        }
     }
 
     /**
@@ -635,7 +590,7 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
     	    
     	    subsample = Integer.valueOf(subSampleCombo.getSelectedItem().toString());
     	    
-    	    tumorChange = Double.valueOf(percentChangeText.getText());
+    	    sphereChange = Double.valueOf(percentChangeText.getText());
     	    
     	    intensity1 = Double.valueOf(intensity1Text.getText());
     	    
@@ -658,16 +613,16 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
     	        noise = NoiseMode.gaussian;
     	    }
     	    
-    	    Preferences.data("====Create tumor map algorithm information====\n");
+    	    Preferences.data("====Create sphere map algorithm information====\n");
             Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");
             Preferences.data("Resolution:\tXY: "+xyRes+"\nZ: "+zRes+"\n");
             Preferences.data("Initial Radius: "+initRadius+"\n");
             Preferences.data("Subsample: "+subsample+"\n");
-            Preferences.data("Percent change: "+tumorChange+"\n");
+            Preferences.data("Percent change: "+sphereChange+"\n");
             Preferences.data("Intensity1: "+intensity1+"\tIntensity2: "+intensity2+"\n");
             Preferences.data("Noise maximum: "+noiseMax+"\n");
             Preferences.data("Normal tissue: "+normalTissue+"\n");
-            Preferences.data("====End create tumor map algorithm information====\n");
+            Preferences.data("====End create sphere map algorithm information====\n");
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
@@ -675,7 +630,7 @@ public class PlugInDialogCreateTumorMap544d extends JDialogScriptableBase implem
 	    
 	    doCenter = doCenterCheck.isSelected();
 
-	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
+	    simMode = (SphereSimMode)growthShrinkCombo.getSelectedItem();
 	    
 		return true;
 	} //end setVariables()
