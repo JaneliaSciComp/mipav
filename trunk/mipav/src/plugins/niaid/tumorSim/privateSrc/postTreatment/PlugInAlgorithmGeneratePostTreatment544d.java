@@ -25,7 +25,7 @@ This software may NOT be used for diagnostic purposes.
 
 import java.util.Random;
 
-import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateTumorMap544d;
+import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateSpheres544d;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
@@ -177,7 +177,7 @@ public class PlugInAlgorithmGeneratePostTreatment544d extends AlgorithmBase {
         threshold(image1c, image1ThresholdLower, image1ThresholdUpper);
         
         if(image1cVOI) {
-            PlugInAlgorithmCreateTumorMap544d.createVOI(image1c, image1Intensity-stdDevNum*image1IntensityStd, image1Intensity+stdDevNum*image1IntensityStd);
+            PlugInAlgorithmCreateSpheres544d.createVOI(image1c, image1Intensity-stdDevNum*image1IntensityStd, image1Intensity+stdDevNum*image1IntensityStd);
         }
         
         image2c = (ModelImage) image2b.clone();
@@ -185,7 +185,7 @@ public class PlugInAlgorithmGeneratePostTreatment544d extends AlgorithmBase {
         image2c = subtractImages(image2c, image2a, image2b);
         
         if(image2cVOI) {
-            PlugInAlgorithmCreateTumorMap544d.createVOI(image2c, image2Intensity-stdDevNum*image2IntensityStd, image2Intensity+stdDevNum*image2IntensityStd);
+            PlugInAlgorithmCreateSpheres544d.createVOI(image2c, image2Intensity-stdDevNum*image2IntensityStd, image2Intensity+stdDevNum*image2IntensityStd);
         }
         
         threshold(image2c, image2ThresholdLower, image2ThresholdUpper);
@@ -200,7 +200,7 @@ public class PlugInAlgorithmGeneratePostTreatment544d extends AlgorithmBase {
             //calculate propagation of error
             double postStdDev = Math.sqrt(image1IntensityStd*image1IntensityStd + image2IntensityStd*image2IntensityStd);
             double postIntensity = image2Intensity - image1Intensity;
-            PlugInAlgorithmCreateTumorMap544d.createVOI(postTreatment, postIntensity-stdDevNum*postStdDev, postIntensity+stdDevNum*postStdDev);
+            PlugInAlgorithmCreateSpheres544d.createVOI(postTreatment, postIntensity-stdDevNum*postStdDev, postIntensity+stdDevNum*postStdDev);
         }
         
         reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 

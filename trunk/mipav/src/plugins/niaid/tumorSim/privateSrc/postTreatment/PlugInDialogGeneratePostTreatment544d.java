@@ -42,7 +42,7 @@ import java.util.HashSet;
 
 import javax.swing.*;
 
-import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateTumorMap544d;
+import niaid.tumorSim.privateSrc.createMap.PlugInAlgorithmCreateSpheres544d;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
@@ -358,19 +358,19 @@ public class PlugInDialogGeneratePostTreatment544d extends JDialogScriptableBase
         double intensity1 = 109, intensity1Std = 10, intensity2 = 201, intensity2Std = 20, normalTissue = 70, normalTissueStd = 7;
         String intenSearch = Preferences.getData(), subSearch;
         try {
-            int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap544d.INTENSITY1);
+            int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateSpheres544d.INTENSITY1);
 
-            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.INTENSITY1.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.INTENSITY1.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            intensity1Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            intensity1Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
             loc+=2;
-            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.INTENSITY2.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.INTENSITY2.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            intensity2Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            intensity2Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
             loc+=2;
-            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.NORMAL_TISSUE.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.NORMAL_TISSUE.length(), loc = intenSearch.indexOf('\t', loc)).trim());
             loc++;
-            normalTissueStd = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.STD_DEV.length(), intenSearch.indexOf(';', loc)).trim());
+            normalTissueStd = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.STD_DEV.length(), intenSearch.indexOf(';', loc)).trim());
         } catch(Exception e) {
             intensity1 = 109;
             intensity1Std = (int)(intensity1*.1);
@@ -397,8 +397,8 @@ public class PlugInDialogGeneratePostTreatment544d extends JDialogScriptableBase
         double noise1 = 1, noise2 = 1;
         String noiseSearch = Preferences.getData();
         try {
-            int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap544d.NOISE_LEVEL);
-            double noise = Double.valueOf(noiseSearch.substring(loc+PlugInAlgorithmCreateTumorMap544d.NOISE_LEVEL.length(), noiseSearch.indexOf(';', loc)).trim());
+            int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateSpheres544d.NOISE_LEVEL);
+            double noise = Double.valueOf(noiseSearch.substring(loc+PlugInAlgorithmCreateSpheres544d.NOISE_LEVEL.length(), noiseSearch.indexOf(';', loc)).trim());
             noise1 = noise2 = noise;
         } catch(Exception e) {
             noise1 = noise2 = .05;
