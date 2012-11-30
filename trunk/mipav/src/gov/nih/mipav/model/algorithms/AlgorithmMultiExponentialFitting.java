@@ -103,12 +103,16 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private double ylyfit[] = new double[n];
     // Original code has equivalence of e and gse
     //private double e[][] = new double[nmax][10];
-    private double e[][] = new double[n][10];
-    private double gse[][] = new double[500][4];
-    private int ndime;
+    private double e[][];
+    // ndimg is only used in establishing the first dimension of gse
+    // if regint == false, ndimg = 1.  If regint ==  true, ndimg = 200.
+    //private int ndimg;
+    private double gse[][];
+    // ndime is only used in establishing the first dimension of e[][]
+    // If regint == false, ndime == n.  If regint = true, ndime = 1.
+    //private int ndime;
     private double deltat[] = new double[nintmx];
-    private int ndimg;
-    private int routineCalled;
+   
     private int evarCalled = 1;
     private int varfCalled = 2;
     private double trbase[] = new double[19];
@@ -258,12 +262,12 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         
         if (!regint) {
             //ndime = nmax;
-            ndime = n;
-            ndimg = 1;
+            e = new double[n][10];
+            gse = new double[1][4];
         } // if (!regint)
         else {
-            ndime = 1;
-            ndimg = 500;
+            e = new double[1][10];
+            gse = new double[500][4];
         }
         
         // weight generates crude starting values for constrained least square fits to raw data to generate
@@ -752,7 +756,6 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double dalpl[][] = new double[10][9];
         int i;
         double ddub = 0.0;
-        double array[][];
         double qmax[] = new double[1];
         double qt[] = new double[3];
         double vt[] = new double[3];
@@ -1009,19 +1012,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     r[j] = adub[j][jlamp1-1];
                 } // for (j = 0; j < jlam; j++)
                 adub[jlamp1-1][jlamp1-1] = 0.0;
-                array = new double[mdima][mdima];
-                for (i = 0; i < mdima; i++) {
-                    for (j = 0; j < mdima; j++) {
-                        array[i][j] = adub[i][j];
-                    }
-                }
-                pivot(array, mdima, jlam, false, false, true, lamnmx[0][0], lamnmx[1][0], plam, dtoler, deltap, ldum, qg, 
+                pivot(adub, mdima, jlam, false, false, true, lamnmx[0][0], lamnmx[1][0], plam, dtoler, deltap, ldum, qg, 
                       pivlam, jlam, qmax, ierror);
-                for (i = 0; i < mdima; i++) {
-                    for (j = 0; j < mdima; j++) {
-                        adub[i][j] = array[i][j];
-                    }
-                }
                 if (ierror[0] == 5) {
                     break bigloop;
                 }
@@ -1206,7 +1198,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // adub has dimension [mdima][mdima]
         // Does Gauss-Jordan pivots on all np diagonal elements of augmented matrix adub except those that have
         // a tolerance less than dtoler or that cause a violation of the constraint pmin <= p <= pmax.
-        // Only needs full upper triangle of matrix on input, and overwrites it with inverse and solution.
+        // Only needs full upper triangle of matrix on input, and overwrites it with inverse on solution.
         // Calls pivot1
         int npp;
         int j;
@@ -1803,7 +1795,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     private void anlerr(int jlam, int nlin, int itype, boolean inter, boolean prlsq) {
         // Does final error analysis of fit and calculates nonlinearity term enphi of 
-        // beale for later use.
+        // Beale for later use.
         
         // Calls pivot
         // which in turn calls pivot1
@@ -2114,13 +2106,13 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         k = jlam;
         for (j[0] = 0; j[0] < jlam; j[0]++) {
             k++;
-            Preferences.debug("plam["+j[0]+"] = " + plam[j[0]] + " sigmap["+j[0]+"] = " + sigmap[j[0]] +
+            Preferences.debug("plam["+j[0]+"] = " + plam[j[0]] + " sigmap["+j[0]+"] = +-" + sigmap[j[0]] +
                               "pcerr[" + j[0] + "] = " + pcerr[j[0]] + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("palpha["+j[0]+"] = " + palpha[j[0]] + " sigmap["+(k-1)+"] = " + sigmap[k-1] +
+            Preferences.debug("palpha["+j[0]+"] = " + palpha[j[0]] + " sigmap["+(k-1)+"] = +-" + sigmap[k-1] +
                               "pcerr[" + (k-1) + "] = " + pcerr[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (J[0] = 0; j[0] < jlam; j[0]++)
         if (!nobase) {
-            Preferences.debug("BASELINE palpha["+(jlamp1-1)+ "] = " + palpha[jlamp1-1] + " sigmap["+(nf-1)+"] = " + sigmap[nf-1] +
+            Preferences.debug("BASELINE palpha["+(jlamp1-1)+ "] = " + palpha[jlamp1-1] + " sigmap["+(nf-1)+"] = +-" + sigmap[nf-1] +
                               " pcerr["+(nf-1)+"] = " + pcerr[nf-1] + "\n", Preferences.DEBUG_ALGORITHM);
         } // if (!nobase)
         return;
@@ -2156,7 +2148,6 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double edl;
         double ents;
         double c;
-        double d;
         double ss;
         
         if (doe) {
@@ -2846,7 +2837,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 } // if (j == 1)
                 Preferences.debug("Probability residuals uncorrelated:\n", Preferences.DEBUG_ALGORITHM);
                 for (k = 1; k <= 5; k++) {
-                    Preferences.debug("puncor["+ (k-1) + "] = " + puncor[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("LAG " + k + " puncor["+ (k-1) + "] = " + puncor[k-1] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
                 Preferences.debug("Weighted average puncor[5] = " + puncor[5] + "\n", Preferences.DEBUG_ALGORITHM);
             } // for (j = 1; j <= nlammx; j++)
@@ -2966,7 +2957,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         }
                     } // for (j = 3; j <= k; j += 2)
                 } // if (k >= 3)
-                result = result - q * pr * sth * cth * nu2;
+                result = result - q * pr * sth * Math.pow(cth, nu2);
             } // if (nu1 != 1)
             result = result * 0.6366198;
             return result;
@@ -2991,7 +2982,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     private void residu(int jlam, boolean plot, double puncor[], double asave[][][]) {
         // Calculates weighted residuals from asave[j-1][jlam-1][0] and asave[j-1][jlam-1][1], which correspond
-        // to alpha and lambda, returns puncor (approximately probability that the residuals are uncorrelated
+        // to alpha and lambda, returns puncor (approximate probability that the residuals are uncorrelated
         // for lags 1 thru 5) and weighted average in puncor[5], and if plot == true, calls plpres to plot
         // weighted residuals on printer.
         
