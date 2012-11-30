@@ -44,6 +44,12 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      * 
      * Download the Users Manual and other essential documentation from http://S-provencher.com.
      * 
+     * The data is represented by y[k] = sum from j = 0 to nlambda of alpha[j]*exp(-lambda[j] * t[k]), k = 1, 2, ..., n,
+     * with nlambda varied from 1 to nlammx with nlammx <= mlammx = 9. 
+     * Provision can be make for an unknown baseline component alpha[0] with lambda[0] = 0.
+     * It is completely automatic in that only the raw data y[k] and t[k] are input; no potentially biased initial guesses
+     * at alpha[j], lambda[j], or even the number of terms nlambda are needed or even allowed.
+     * 
      * runAlgorithm calls routines weight, fanlyz, yanlyz which in turn call lstSqr,
      * evar, varf, etheor, pivot, pivot1, anlerr, fisher, residu. 
      */
@@ -63,20 +69,46 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private double precis = 1.0E-7;
     
     // nlammx >=1 && nlammx <= mlammx
+    // In each run the number of terms nlambda is varied from 1 to nlammx in looking for the best fit.
     private int nlammx;
     // iwt = +1, +-2, +-3, +4
+    // iwt = 1 for the normal (unweighted) case of unit least squares weights w[k]; i.e., when sigma(y[k]),
+    // the expected error in y[k] is independent of k.
+    // iwt = 2 for w[k] = [abs(sum from j = 0 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-1.
+    // i.e., sigma(y[k]) is proportional to sqrt(y(t[k])), where ERRFIT is described below and y(t[k]) is
+    // the exact value without random experimental error.  This error is appropriate (to a good approximation)
+    // for many counting and correlation experiments.
     private int iwt;
     // mtry >= 1 && mtry <= 45
     private int mtry;
     // Read in t values if regint == false
     // Calculates t values from tstart, tend, and nt if regint == true
+    // regint == true if the data points are in "regular intervals" of t; i.e., if the y[k] and t[k] are read in
+    // nint groups such that for each group L there are nt[L] t[k] running in equal increments between tstart[L]
+    // and tend[L].  For example, if the t[k] are 1,2, 4,6,8,10, 20,30,40,50, 100,200,300,400,500
+    // then you could input regint = true, nint = 4,
+    //         L                 tstart              tend             nt
+    //         1                   1.0                 2.0             2
+    //         2                   4.0                10.0             4
+    //         3                  20.0                50.0             4
+    //         4                 100.0               500.0             5
     private boolean regint;
+    // nobase = true if it is known apriori that there is no baseline alpha[0].
     private boolean nobase;
-    private boolean nonneg;
+    // noneg - true if it is known apriori that alpha[j] >= 0 for j > 0; e.g., if the alpha[j] correspond to 
+    // concentrations or populations.  If there is a baseline component, alpha[0] is not so constrained.
+    private boolean nonneg;               
+    // pry = true if the input values of y[k], t[k], and (if least squares weights w[k] are read in),
+    // sqrt(w[k]) are to be printed out
     private boolean pry;
+    // prprel = true if the results of each iteration of the preliminary analyses are to be printed out.
     private boolean prprel;
+    // prfinl = true if the results of each iteration of the final analyses of the raw data are to be printed out.
     private boolean prfinl;
+    // plotrs = true if the results of the fit of the final solution to the raw data are to be plotted by the printer
+    // plotrs is not implemented yet.
     private boolean plotrs;
+    // repeat = true if the final summary of the results is to be printed a second time
     private boolean repeat;
     private boolean fatalProblem = false;
     // n > 2*nlammx+3 && n <= nmax
