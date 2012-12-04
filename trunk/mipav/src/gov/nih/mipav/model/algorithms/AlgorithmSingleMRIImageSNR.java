@@ -258,12 +258,12 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase implements RealFun
         boolean validityTest = false;
         
         boolean testme= true;
-        if (testme) {
-            AlgorithmMultiExponentialFitting mef = new AlgorithmMultiExponentialFitting();
-            mef.selfTest();
-            setCompleted(true);
-            return;
-        }
+//        if (testme) {
+//            AlgorithmMultiExponentialFitting mef = new AlgorithmMultiExponentialFitting();
+//            mef.selfTest();
+//            setCompleted(true);
+//            return;
+//        }
 
         if (validityTest) {
             testAlgorithm();
