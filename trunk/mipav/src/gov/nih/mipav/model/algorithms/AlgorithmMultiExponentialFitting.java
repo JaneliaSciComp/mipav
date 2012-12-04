@@ -30,15 +30,15 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      *    Methods in the references below are used to get starting estimates and to speed up the analysis:
      *    
      * References:
-     *    S.W. Provencher: An eigenfunction expansion method for the analysis of exponential decay curves. J. Chem. Phys. 64, 
+     *    I) S.W. Provencher: A Fourier Method for the Analysis of Exponential Decay Curves, Biophysical Journal, Vol. 16,
+     *                                  pp. 27-41 (1976). 
+     *    II)S.W. Provencher: An eigenfunction expansion method for the analysis of exponential decay curves. J. Chem. Phys. 64, 
      *                                  pp. 2772-2777. (1976).
-     *    S.W. Provencher & R.H. Vogel: Information loss with transform methods in system identification: 
+     *    III)S.W. Provencher & R.H. Vogel: Information loss with transform methods in system identification: 
      *                                  A new set of transforms with high information content. Math. Biosci. 50, pp. 251-262 (1980).
-     *    S.W. Provencher & R.H. Vogel: Regularization techniques for inverse problems in molecular biology in: 
+     *    IV)S.W. Provencher & R.H. Vogel: Regularization techniques for inverse problems in molecular biology in: 
      *                                  Numerical Treatment of Inverse Problems in Differential and Integral Equations, 
      *                                  eds. P. Deuflhard & E. Hairer (Birkhauser, Boston, 1983), pp. 304-319.
-     *    S.W. Provencher: A Fourier Method for the Analysis of Exponential Decay Curves, Biophysical Journal, Vol. 16,
-     *                                  pp. 27-41 (1976). 
      *                                  
      * This program is used for the automatic analysis of multicomponent exponential decay for up to 9 components.
      * 
@@ -49,6 +49,11 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
      * Provision can be make for an unknown baseline component alpha[0] with lambda[0] = 0.
      * It is completely automatic in that only the raw data y[k] and t[k] are input; no potentially biased initial guesses
      * at alpha[j], lambda[j], or even the number of terms nlambda are needed or even allowed.
+     * 
+     * There is no need to normalize any of the input data like tstart, tend, t, y, or sqrtw.  However, the number 1.0E20
+     * has been used throughout the program to represent an infinitely large number and hence nothing should get larger than
+     * 1.0E20.  Since some of the values are squared and summed over n, it is best to choose units so that all input values
+     * are between 1.0E-9 and 1.0E6 in absolute value.
      * 
      * runAlgorithm calls routines weight, fanlyz, yanlyz which in turn call lstSqr,
      * evar, varf, etheor, pivot, pivot1, anlerr, fisher, residu. 
@@ -74,13 +79,38 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // iwt = +1, +-2, +-3, +4
     // iwt = 1 for the normal (unweighted) case of unit least squares weights w[k]; i.e., when sigma(y[k]),
     // the expected error in y[k] is independent of k.
-    // iwt = 2 for w[k] = [abs(sum from j = 0 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-1.
+    // iwt = 2 for w[k] = [abs(sum from j = 0 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-1,
     // i.e., sigma(y[k]) is proportional to sqrt(y(t[k])), where ERRFIT is described below and y(t[k]) is
     // the exact value without random experimental error.  This error is appropriate (to a good approximation)
     // for many counting and correlation experiments.
-    private int iwt;
+    // iwt = -2 for w[k] = [abs(sum from j = 1 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-1,
+    // i.e., sigma(y[k]) = is proportional to sqrt(y(t[k]) - alpha[0])
+    // iwt = 3 for w[k] =  [abs(sum from j = 0 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-2,
+    // i.e., sigma(y[k]) is proportional to y(t[k])
+    // iwt = -3 for w[k] =  [abs(sum from j = 1 to nlambda of alpha[j]*exp(-lambda[j]*t[k])) + ERRFIT]**-2,
+    // i.e., sigma(y[k]) is proportional to y(t[k]) - alpha[0]
+    // iwt = 4 if you are going to input your own w[k]
+    // Thus, when iwt = +-2 or +-3, the w[k] are calculated from a smooth least squares fit to the y[k], 
+    // rather than directly from y[k], which would lead to erratic and biased weights.  However, even the
+    // smooth curve could lead to a disastrously large w[k] if it happened to come very close to the x
+    // axis near a t[k].  ERRFIT is the standard deviation of the fit to the 10 y[k] in the interval where
+    // the least squares curve is closest to the x axis, and eliminates this danger.
+    private int iwt = 1;
     // mtry >= 1 && mtry <= 45
-    private int mtry;
+    // mtry = the maximum number of tries that will be made to find a solution for a single value of nlambda
+    // during the preliminary analyses of the transforms.  If the first try fails, a grid search is performed
+    // in (lambda[j]-) parameter space and up to mtry-1 tries are started from points on this grid.  You must
+    // input 1 <= mtry <= 45.
+    // However, these limits are extreme values; e.g., for mtry = 1, no grid search is performed at all.  
+    // DISCRETE was tested on the 24 data sets used in references I and II, as well as on 15 more difficult cases that
+    // could only be successfully analyzed by DISCRETE.  Of these 39 unusually difficult cases, only 3 needed
+    // mtry between 11 and 13; all others worked with mtry = 5 and nearly all with mtry = 3.  During stages
+    // when mtry is searching for more components than there actually are, the computer time is almost
+    // directly proportional to mtry, since mtry unsuccessful searches are often performed.  Thus, if the size
+    // of the problem makes computer time a major consideration, mtry = 5 should be adequate.  If reliability
+    // and thoroughness are of utmost importance an mtry equals about 15 can be used.  An mtry = 45 would be
+    // practically always a great waste of computer time.
+    private int mtry = 15;
     // Read in t values if regint == false
     // Calculates t values from tstart, tend, and nt if regint == true
     // regint == true if the data points are in "regular intervals" of t; i.e., if the y[k] and t[k] are read in
@@ -111,23 +141,33 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // repeat = true if the final summary of the results is to be printed a second time
     private boolean repeat;
     private boolean fatalProblem = false;
+    // n only needed if regint = false
+    // n is the total number of data points
     // n > 2*nlammx+3 && n <= nmax
     private int n;
     // t has n values
     // Read in t values if regint == false
+    // t only needed if regint == false, and in this cases they need not be in any special order and need not have any
+    // regular spacing (duplicate values are even permitted).
     private double t[];
     // nint >= 1 && nint <= nintmx
+    // nint only needed if regint == true
     private int nint;
     // tstart has nint values
+    // tstart only needed if regint == true
     private double tstart[];
-    private double tend;
+    // tend has nint values
+    // tend only needed if regint == true
+    private double tend[];
     // nt has nint values
     // All values of the nt array must be >= 2
     // nt[0] = n when regint == false
     private int nt[];
     // y has n values
+    // y always needed
+    // array of data points y[k] measured at t[k]
     private double y[];
-    // Special weights for iwt = +-4
+    // Special weights for iwt = +4
     // sqrtw has n values
     private double sqrtw[];
     
@@ -202,7 +242,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     public AlgorithmMultiExponentialFitting(int nlammx, int iwt, int mtry, boolean regint,
             boolean nobase, boolean nonneg, boolean pry, boolean prprel, boolean prfinl, boolean plotrs,
-            boolean repeat, int n, double t[], int nint, double tstart[], double tend, int nt[],
+            boolean repeat, int n, double t[], int nint, double tstart[], double tend[], int nt[],
             double y[], double sqrtw[]) {
         this.nlammx = nlammx;
         this.iwt = iwt;
@@ -224,9 +264,101 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         this.y = y;
         this.sqrtw = sqrtw;
     }
+    
+    public AlgorithmMultiExponentialFitting() {
+        
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
+    
+    public void selfTest() {
+        // The raw data for data sets 1 and 2 is the same.  It was stimulated using alpha[j] and lambda[j]
+        // parameters of Example II of References I and II for j = 1,2,3.  However, noise with a constant
+        // rms error = 0.01[y[0] - alpha[0]] = 0.03395 was added instead of the 5% rms error of example II.
+        // The baseline error was alpha[0] = -0.207.  Hence data set 1 has the appropriate weighting (i.e., unweighted)
+        // with iwt = 1, while set 2 has an incorrect iwt = -3.  In set 2, regint = false in order to test the
+        // corresponding part of discrete and illustrate the input format for this case;  however, this is actually
+        // a great waste of computer time.
+        
+        // Example 2 has:
+        // alpha[0] = -0.214    lambda[0] = 0.0
+        // alpha[1] = 1.029     lambda[1] = 0.0017
+        // alpha[2] = 1.176     lambda[2] = 0.0105
+        // alpha[3] = 1.190     lambda[3] = 0.0798
+        // RMS, root mean square error 0.05t[t]
+        // data weighting [y[t]]**-2
+        // Number of equally spaced points in t range      Start of t range    End of t range
+        //                10                                   0                   45
+        //                30                                  75                  945
+        // n, total number of data points = 40
+        // The lambda[j] are always subscripted in increasing order.  Thus lambda[1]*t[n] measures how
+        // completely the decay of the longest-lived component has been observed.  lambda[1]*t[n] = 1.6
+        // Test data set 1 with proper unit weighting and normally comprehensive output
+        regint = true;
+        nobase = false;
+        nonneg = false;
+        pry = true;
+        prprel = true;
+        prfinl = true;
+        plotrs = true;
+        repeat = true;
+        nlammx = 4;
+        iwt = 1;
+        mtry = 5;
+        nint = 2;
+        tstart = new double[nint];
+        tend = new double[nint];
+        nt = new int[nint];
+        tstart[0] = 0.0;
+        tend[0] = 45.0;
+        nt[0] = 10;
+        tstart[1] = 75.0;
+        tend[1] = 945.0;
+        nt[1] = 30;
+        n = 40;
+        y = new double[]{3.17951, 2.72385, 2.38005, 2.17513, 1.96817,
+                         1.83133, 1.71227, 1.66732, 1.60041, 1.52702,
+                         1.28123, 1.03639, 0.911274, 0.793438, 0.704310,
+                         0.649749, 0.595533, 0.499157, 0.461291, .0351978,
+                         0.381508, 0.328100, 0.273046, 0.263287, 0.266722,
+                         0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
+                         0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
+                         5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
+        
+        // Test data set 2 with incorrect weighting and most comprehensive output
+        runAlgorithm();
+        regint = false;
+        nobase = false;
+        nonneg = false;
+        pry = true;
+        prprel = true;
+        prfinl = true;
+        plotrs = true;
+        repeat = true;
+        nlammx = 4;
+        iwt = -3;
+        mtry = 5;
+        n = 40;
+        t = new double[]{0.0, 5.0, 10.0, 15.0, 20.0,
+                         25.0, 30.0, 35.0, 40.0, 45.0,
+                         75.0, 105.0, 135.0, 165.0, 195.0,
+                         225.0, 255.0, 285.0, 315.0, 345.0,
+                         375.0, 405.0, 435.0, 465.0, 495.0,
+                         525.0, 555.0, 585.0, 615.0, 645.0,
+                         675.0, 705.0, 735.0, 765.0, 795.0,
+                         825.0, 855.0, 885.0, 915.0, 945.0};
+        
+        y = new double[]{3.17951, 2.72385, 2.38005, 2.17513, 1.96817,
+                1.83133, 1.71227, 1.66732, 1.60041, 1.52702,
+                1.28123, 1.03639, 0.911274, 0.793438, 0.704310,
+                0.649749, 0.595533, 0.499157, 0.461291, .0351978,
+                0.381508, 0.328100, 0.273046, 0.263287, 0.266722,
+                0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
+                0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
+                5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
+        runAlgorithm();
+    }
 
     /**
      * Prepares this class for destruction.
@@ -244,6 +376,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         double dub;
         int L;
         int k;
+        int index;
         
         iwtsgn = iwt;
         iwt = Math.abs(iwt);
@@ -256,24 +389,32 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         } // if (!regint)
         else { // regint == true
             // Calculates t values from tstart, tend, and nt when regint == true
+            n = nt[0];
+            for (j = 2; j <= nint; j++) {
+                n += nt[j-1];    
+            }
+            t = new double[n];
+            index = 0;
             for (j = 1; j <= nint; j++) {
                 if (nt[j-1] < 2) {
                     MipavUtil.displayError("nt[" + (j-1) + "] = " + nt[j-1]  + " instead of being >= 2");
                     setCompleted(false);
                     return;
                 }
-                dub = (tend - tstart[j-1])/(nt[j-1] - 1.0);
-                n++;
-                t[n-1] = tstart[j-1];
+                dub = (tend[j-1] - tstart[j-1])/(nt[j-1] - 1.0);
+                index++;
+                t[index-1] = tstart[j-1];
                 L = nt[j-1];
                 deltat[j-1] = dub;
                 for (k = 2; k <= L; k++) {
-                    n++;
-                    t[n-1] = t[n-2] + dub;
+                    index++;
+                    t[index-1] = t[index-2] + dub;
                 } // for (k = 2; k <= l; k++)
             } // for (j = 1; j <= nint; j++)
         } // regint == true
+        ylyfit = new double[n];
         if (iwt != 4) {
+            sqrtw = new double[n];
             if (pry) {
                 for (j = 0; j < n; j++) {
                     Preferences.debug("t["+j+"] = " + t[j] + " y[" + j + "] = " + y[j] + "\n", Preferences.DEBUG_ALGORITHM);
@@ -694,8 +835,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
             } // for (k = 1; k <= nparmx; k++)
             if (prprel) {
                 Preferences.debug("delta = " + delta + " fhat[0] = " + fhat[0] + "\n", Preferences.DEBUG_ALGORITHM);
-                for (k = 0; k < nlammx; k++) {
-                    Preferences.debug("mu["+k+"] = " + mu[k] + "\n",Preferences.DEBUG_ALGORITHM); 
+                for (k = 1; k < nlammx; k++) {
+                    Preferences.debug("mu["+(k-1)+"] = " + mu[k-1] + "\n",Preferences.DEBUG_ALGORITHM); 
                     Preferences.debug("Real transform part fhat["+(2*k-1)+"] = " + fhat[2*k-1] + "\n", Preferences.DEBUG_ALGORITHM);   
                     Preferences.debug("Imaginary transform part fhat["+(2*k)+"] = " + fhat[2*k] + "\n", Preferences.DEBUG_ALGORITHM);   
                 }
@@ -1561,7 +1702,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         xlam = plmtry[k-1] + plmtry[j-1];
                         etheor(xlam, invert, wted, dum, ddum, dddum, s, true, false);
                         adub[j-1][k-1] = dum[0];
-                        if (!notinv) {
+                        if (notinv) {
                             continue;
                         }
                         dfcapl[k-1][j-1] = -ddum[0]/xlam;
@@ -2778,7 +2919,12 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
             for (j = 0; j < nlammx; j++) {
                 done[j] = yfail[j];
             } // for (j = 0; j < nlammx; j++)
-            Preferences.debug("The best solution " + jlambs + " components\n", Preferences.DEBUG_ALGORITHM);
+            if (jlambs == 1) {
+                Preferences.debug("The best solution has " + jlambs + " component\n", Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                Preferences.debug("The best solution has " + jlambs + " components\n", Preferences.DEBUG_ALGORITHM);    
+            }
             if (pnxbes <= 0.95) {
                 Preferences.debug("The approximate probability that this solution is actually best is only " + pnxbes + "\n",
                                    Preferences.DEBUG_ALGORITHM);
@@ -2809,16 +2955,36 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                     done[i-1] = true;
                     residu(i, false, puncor, asave);
                     if (j == 2) {
-                        Preferences.debug("The second best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                        if (i == 1) {
+                            Preferences.debug("The second best solution has " + i + " component\n", Preferences.DEBUG_ALGORITHM);
+                        }
+                        else {
+                            Preferences.debug("The second best solution has " + i + " components\n", Preferences.DEBUG_ALGORITHM);    
+                        }
                     }
                     else if (j == 3) {
-                        Preferences.debug("The third best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);    
+                        if (i == 1) {
+                            Preferences.debug("The third best solution has " + i + " component\n", Preferences.DEBUG_ALGORITHM);     
+                        }
+                        else {
+                            Preferences.debug("The third best solution has " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                        }
                     }
                     else if (j == 4) {
-                        Preferences.debug("The fourth best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                        if (i == 1) {
+                            Preferences.debug("The fourth best solution has " + i + " component\n", Preferences.DEBUG_ALGORITHM);
+                        }
+                        else {
+                            Preferences.debug("The fourth best solution has " + i + " components\n", Preferences.DEBUG_ALGORITHM);    
+                        }
                     }
                     else if (j == 5) {
-                        Preferences.debug("The fifth best solution " + i + " components\n", Preferences.DEBUG_ALGORITHM);
+                        if (i == 1) {
+                            Preferences.debug("The fifth best solution has " + i + " component\n", Preferences.DEBUG_ALGORITHM);
+                        }
+                        else {
+                            Preferences.debug("The fifth best solution has " + i + " components\n", Preferences.DEBUG_ALGORITHM);    
+                        }
                     }
                     if (dum <= 0.95) {
                         Preferences.debug("A significant possibility\n", Preferences.DEBUG_ALGORITHM);
@@ -2874,6 +3040,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 Preferences.debug("Weighted average puncor[5] = " + puncor[5] + "\n", Preferences.DEBUG_ALGORITHM);
             } // for (j = 1; j <= nlammx; j++)
             if (!repeat) {
+                Preferences.debug("END OF RUN\n", Preferences.DEBUG_ALGORITHM);
                 return;
             }
             repeat = false;
