@@ -155,14 +155,14 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private int nint;
     // tstart has nint values
     // tstart only needed if regint == true
-    private double tstart[];
+    private double tstart[] = new double[1];
     // tend has nint values
     // tend only needed if regint == true
     private double tend[];
     // nt has nint values
     // All values of the nt array must be >= 2
     // nt[0] = n when regint == false
-    private int nt[];
+    private int nt[] = new int[1];
     // y has n values
     // y always needed
     // array of data points y[k] measured at t[k]
@@ -295,6 +295,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // The lambda[j] are always subscripted in increasing order.  Thus lambda[1]*t[n] measures how
         // completely the decay of the longest-lived component has been observed.  lambda[1]*t[n] = 1.6
         // Test data set 1 with proper unit weighting and normally comprehensive output
+        // When iwt = -3 in the second set is changed to iwt = 1 there is a very close match between the 
+        // regint = true and regint = false outputs.
         regint = true;
         nobase = false;
         nonneg = false;
@@ -325,9 +327,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                          0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
                          0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
                          5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
+        runAlgorithm();
         
         // Test data set 2 with incorrect weighting and most comprehensive output
-        runAlgorithm();
         regint = false;
         nobase = false;
         nonneg = false;
@@ -338,6 +340,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         repeat = true;
         nlammx = 4;
         iwt = -3;
+        //iwt = 1;
         mtry = 5;
         n = 40;
         t = new double[]{0.0, 5.0, 10.0, 15.0, 20.0,
