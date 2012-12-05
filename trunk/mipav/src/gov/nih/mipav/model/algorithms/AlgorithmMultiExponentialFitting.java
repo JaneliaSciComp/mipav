@@ -411,8 +411,8 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         plotrs = true;
         repeat = true;
         nlammx = 4;
-        //iwt = 1;
-        iwt = 4;
+        //iwt = 4;
+        iwt = 1;
         mtry = 5;
         nint = 2;
         tstart = new double[nint];
