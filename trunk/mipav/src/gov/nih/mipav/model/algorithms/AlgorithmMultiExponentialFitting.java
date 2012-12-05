@@ -76,6 +76,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     // nlammx >=1 && nlammx <= mlammx
     // In each run the number of terms nlambda is varied from 1 to nlammx in looking for the best fit.
     private int nlammx;
+    // Does not work with iwt == 4 and regint == true
     // iwt = +1, +-2, +-3, +4
     // iwt = 1 for the normal (unweighted) case of unit least squares weights w[k]; i.e., when sigma(y[k]),
     // the expected error in y[k] is independent of k.
@@ -124,6 +125,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     //         4                 100.0               500.0             5
     private boolean regint;
     // nobase = true if it is known apriori that there is no baseline alpha[0].
+    // Does not work with regint == true and iwt == 4
     private boolean nobase;
     // noneg - true if it is known apriori that alpha[j] >= 0 for j > 0; e.g., if the alpha[j] correspond to 
     // concentrations or populations.  If there is a baseline component, alpha[0] is not so constrained.
@@ -297,7 +299,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // Test data set 1 with proper unit weighting and normally comprehensive output
         // When iwt = -3 in the second set is changed to iwt = 1 there is a very close match between the 
         // regint = true and regint = false outputs.
-        regint = true;
+        /*regint = true;
         nobase = false;
         nonneg = false;
         pry = true;
@@ -360,7 +362,106 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
                 0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
                 5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
+        runAlgorithm();*/
+        
+        // Test data set 1 without noise to see if correct answer is obtained
+        // Perfect results obtained with no noise:
+        // The best solution has 3 components
+        // alpha +- std err percent lambda +- std err percent
+        // Starting lambda from fit to transforms 1 tries
+        // alpha[1]  = 1.0290000000001618
+        // standard error[1] = 3.5237830160309766E-14
+        // percent[1] = 3.4244732906029376E-12
+        // lambda[1]  = 0.0017000000000015202
+        // standard error[1] = 3.0672761475030535E-16
+        // percent[1] = 1.8042800867648887E-11
+        // starting lambda = 0.001699999999984239
+        // alpha[2]  = 1.1759999999996413
+        // standard error[2] = 6.63666041844438E-14
+        // percent[2] = 5.643418723168711E-12
+        // lambda[2]  = 0.010500000000004237
+        // standard error[2] = 8.950831387162288E-16
+        // percent[2] = 8.524601321103502E-12
+        // starting lambda = 0.010500000000028674
+        // alpha[3]  = 1.1899999999999153
+        // standard error[3] = 3.069861147177338E-14
+        // percent[3] = 2.579715249729039E-12
+        // lambda[3]  = 0.07980000000000263
+        // standard error[3] = 2.678479354078293E-15
+        // percent[3] = 3.3564904186443673E-12
+        // starting lambda = 0.07980000000056142
+        // alpha[4]  = -0.21399999999972122
+        // standard error[4] = 5.863823492405693E-14
+        // percent[4] = 2.7401044357071642E-11
+        // lambda[4]  = 0.0
+        // standard error[4] = 0.0
+        // percent[4] = 0.0
+        // Approximate probability that this solution is really better than the
+        // second best solution = PNG(1/3) = 1.0
+        
+        // Test data set 2 without noise shows similar perfect results.
+        // Error with iwt = 4 and regint = true
+        // No error if iwt = 1 or iwt = -3 or regint = false
+        regint = true;
+        nobase = false;
+        nonneg = false;
+        pry = true;
+        prprel = true;
+        prfinl = true;
+        plotrs = true;
+        repeat = true;
+        nlammx = 4;
+        //iwt = 1;
+        iwt = 4;
+        mtry = 5;
+        nint = 2;
+        tstart = new double[nint];
+        tend = new double[nint];
+        nt = new int[nint];
+        tstart[0] = 0.0;
+        tend[0] = 45.0;
+        nt[0] = 10;
+        tstart[1] = 75.0;
+        tend[1] = 945.0;
+        nt[1] = 30;
+        n = 40;
+        /*regint = false;
+        nobase = false;
+        nonneg = false;
+        pry = true;
+        prprel = true;
+        prfinl = true;
+        plotrs = true;
+        repeat = true;
+        nlammx = 4;
+        //iwt = -3;
+        //iwt = 1;
+        iwt = 4;
+        mtry = 5;
+        n = 40;
+        t = new double[]{0.0, 5.0, 10.0, 15.0, 20.0,
+                         25.0, 30.0, 35.0, 40.0, 45.0,
+                         75.0, 105.0, 135.0, 165.0, 195.0,
+                         225.0, 255.0, 285.0, 315.0, 345.0,
+                         375.0, 405.0, 435.0, 465.0, 495.0,
+                         525.0, 555.0, 585.0, 615.0, 645.0,
+                         675.0, 705.0, 735.0, 765.0, 795.0,
+                         825.0, 855.0, 885.0, 915.0, 945.0};*/
+        y = new double[40];
+        int i;
+        sqrtw = new double[40];
+        for (i = 0; i < 40; i++) {
+            sqrtw[i] = 1.0;
+        }
+        int index = 0;
+        for (i = 0; i <= 45; i += 5) {
+            y[index++] = -0.214 + 1.029 * Math.exp(-0.0017*i) + 1.176 * Math.exp(-0.0105*i) + 1.190 * Math.exp(-0.0798*i);    
+        }
+        for (i = 75; i <= 945; i += 30) {
+            y[index++] = -0.214 + 1.029 * Math.exp(-0.0017*i) + 1.176 * Math.exp(-0.0105*i) + 1.190 * Math.exp(-0.0798*i);     
+        }
         runAlgorithm();
+        
     }
 
     /**
