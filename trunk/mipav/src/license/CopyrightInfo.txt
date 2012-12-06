@@ -611,7 +611,7 @@ DAMAGES.
 TableLayout-*.jar
 ----
 
-Binary redistribution fine with no restrictions.
+Unmodified binary redistribution fine with no restrictions.
 
 ----
 
