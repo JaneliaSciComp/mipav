@@ -296,17 +296,21 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // n, total number of data points = 40
         // The lambda[j] are always subscripted in increasing order.  Thus lambda[1]*t[n] measures how
         // completely the decay of the longest-lived component has been observed.  lambda[1]*t[n] = 1.6
-        // Test data set 1 with proper unit weighting and normally comprehensive output
+        
+        // Test set 1 output agrees with supplied solution.
+        // Best solution with 3 components agree, second best solution with 2 components agree, third best
+        // solution with 1 component agree
         // When iwt = -3 in the second set is changed to iwt = 1 there is a very close match between the 
         // regint = true and regint = false outputs.
+        // Test data set 1 with proper unit weighting and normally comprehensive output
         /*regint = true;
         nobase = false;
         nonneg = false;
         pry = true;
-        prprel = true;
+        prprel = false;
         prfinl = true;
         plotrs = true;
-        repeat = true;
+        repeat = false;
         nlammx = 4;
         iwt = 1;
         mtry = 5;
@@ -324,14 +328,19 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         y = new double[]{3.17951, 2.72385, 2.38005, 2.17513, 1.96817,
                          1.83133, 1.71227, 1.66732, 1.60041, 1.52702,
                          1.28123, 1.03639, 0.911274, 0.793438, 0.704310,
-                         0.649749, 0.595533, 0.499157, 0.461291, .0351978,
+                         0.649749, 0.595533, 0.499157, 0.461291, 0.351978,
                          0.381508, 0.328100, 0.273046, 0.263287, 0.266722,
                          0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
                          0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
                          5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
-        runAlgorithm();
+        runAlgorithm();*/
         
         // Test data set 2 with incorrect weighting and most comprehensive output
+        // Agreement with supplied solution is close enough
+        // Best solutions with 2 components agree, second best solutions with 3 components agree,
+        // Supplied solution finds a third best solution with 4 components not found by this version
+        // Supplied fourth best solution with 1 component agrees with this version's third best
+        // solution with 1 component
         regint = false;
         nobase = false;
         nonneg = false;
@@ -357,12 +366,12 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         y = new double[]{3.17951, 2.72385, 2.38005, 2.17513, 1.96817,
                 1.83133, 1.71227, 1.66732, 1.60041, 1.52702,
                 1.28123, 1.03639, 0.911274, 0.793438, 0.704310,
-                0.649749, 0.595533, 0.499157, 0.461291, .0351978,
+                0.649749, 0.595533, 0.499157, 0.461291, 0.351978,
                 0.381508, 0.328100, 0.273046, 0.263287, 0.266722,
                 0.248385, 0.177709, 0.133162, 0.155815, 8.17959E-2,
                 0.103332, 0.161067, 7.68593E-2, 0.119229, 6.39275E-2,
                 5.87735E-3, 1.99340E-2, 2.95760E-2, 0.0, 2.92465E-2};
-        runAlgorithm();*/
+        runAlgorithm();
         
         // Test data set 1 without noise to see if correct answer is obtained
         // Perfect results obtained with no noise:
@@ -402,7 +411,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         // Test data set 2 without noise shows similar perfect results.
         // Error with iwt = 4 and regint = true
         // No error if iwt = 1 or iwt = -3 or regint = false
-        regint = true;
+        /*regint = true;
         nobase = false;
         nonneg = false;
         pry = true;
@@ -425,7 +434,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         tend[1] = 945.0;
         nt[1] = 30;
         n = 40;
-        /*regint = false;
+        //regint = false;
         nobase = false;
         nonneg = false;
         pry = true;
@@ -446,7 +455,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                          375.0, 405.0, 435.0, 465.0, 495.0,
                          525.0, 555.0, 585.0, 615.0, 645.0,
                          675.0, 705.0, 735.0, 765.0, 795.0,
-                         825.0, 855.0, 885.0, 915.0, 945.0};*/
+                         825.0, 855.0, 885.0, 915.0, 945.0};
         y = new double[40];
         int i;
         sqrtw = new double[40];
@@ -460,7 +469,7 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
         for (i = 75; i <= 945; i += 30) {
             y[index++] = -0.214 + 1.029 * Math.exp(-0.0017*i) + 1.176 * Math.exp(-0.0105*i) + 1.190 * Math.exp(-0.0798*i);     
         }
-        runAlgorithm();
+        runAlgorithm();*/
         
     }
 
@@ -1130,20 +1139,20 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         }
                     } // for (j = 0; j < jlam; j++)
                     Preferences.debug("iter = " + iter + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("var[0] = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("variance = " + var[0] + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("ddum = " + ddum + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("damping q q[0] = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("damping q = " + q[0] + "\n", Preferences.DEBUG_ALGORITHM);
                     Preferences.debug("ntry = " + ntry + "\n", Preferences.DEBUG_ALGORITHM);
-                    Preferences.debug("baseline palpha[jlamp1-1] = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("baseline = " + palpha[jlamp1-1] + "\n", Preferences.DEBUG_ALGORITHM);
                     for (j = 0; j < nu; j++) {
-                        Preferences.debug("alpha r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                        Preferences.debug("lambda plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("alpha["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("lambda["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
                         Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     } // for (j = 0; j < nu; j++)
                     if (jlam > 5) {
                         for (j = 5; j < jlam; j++) {
-                            Preferences.debug("alpha r["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
-                            Preferences.debug("lambda plam["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("alpha["+j+"] = " + r[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("lambda["+j+"] = " + plam[j] + "\n", Preferences.DEBUG_ALGORITHM);
                             Preferences.debug("pcerr["+j+"] = " + pcerr[j] + "\n", Preferences.DEBUG_ALGORITHM);    
                         } // for (j = 5; j < jlam; j++)
                     } // if (jlam > 5)
@@ -2180,12 +2189,11 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                 }
                 if (L < 3) {
                     if (L == 1) {
-                        Preferences.debug("LAMBDA\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("LAMBDA" + jj + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                     else if (L == 2) {
-                        Preferences.debug("ALPHA\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("ALPHA" + jj + "\n", Preferences.DEBUG_ALGORITHM);
                     }
-                    Preferences.debug("jj = " + jj + "\n", Preferences.DEBUG_ALGORITHM);
                     for (k = 0; k < jk; k++) {
                         Preferences.debug("dtoler["+k+"] = " + dtoler[k] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
