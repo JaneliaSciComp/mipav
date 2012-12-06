@@ -149,7 +149,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     private JCheckBox initialCheckBox;
     
-    private boolean previousFindInitial = true;
+    //private boolean previousFindInitial = true;
     
     private boolean findInitialFromData = true;
     
@@ -292,25 +292,20 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	                (source == laplaceFit) || (source == lorentzFit) || (source == multiExponentialFit) ||
 	                (source == rayleighFit)) {
 	    	if (multiExponentialFit.isSelected()) {
-	    	    previousFindInitial = initialCheckBox.isSelected();
-	    	    initialCheckBox.setEnabled(false);
-	    	    initialCheckBox.setSelected(false);
 	    	    numVariablesLabel.setEnabled(true);
 	    	    numVariablesField.setEnabled(true);
-	    	    labela0.setEnabled(true);
-	    	    texta0.setEnabled(true);
-	    	    labela1.setEnabled(true);
-	    	    texta1.setEnabled(true);
-	    	    labela2.setEnabled(true);
-	    	    texta2.setEnabled(true);
-	    	    labela3.setEnabled(true);
-	    	    texta3.setEnabled(true);
-	    	    labela4.setEnabled(true);
-	    	    texta4.setEnabled(true);
-	    	    labela5.setEnabled(true);
-                texta5.setEnabled(true);
-                labela6.setEnabled(true);
-                texta6.setEnabled(true);
+	    	    if (!initialCheckBox.isSelected()) {
+    	    	    labela2.setEnabled(true);
+    	    	    texta2.setEnabled(true);
+    	    	    labela3.setEnabled(true);
+    	    	    texta3.setEnabled(true);
+    	    	    labela4.setEnabled(true);
+    	    	    texta4.setEnabled(true);
+    	    	    labela5.setEnabled(true);
+                    texta5.setEnabled(true);
+                    labela6.setEnabled(true);
+                    texta6.setEnabled(true);
+	    	    }
                 b2CheckBox.setEnabled(true);
                 b3CheckBox.setEnabled(true);
                 b4CheckBox.setEnabled(true);
@@ -318,8 +313,6 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                 b6CheckBox.setEnabled(true);
                 return;
 	    	}
-    	    initialCheckBox.setEnabled(true);
-    	    initialCheckBox.setSelected(previousFindInitial);
     	    numVariablesLabel.setEnabled(false);
             numVariablesField.setEnabled(false);
             labela3.setEnabled(false);
@@ -365,14 +358,10 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	            high2TextField.setEnabled(false);
 	    	}
 	    	else {
-	    	    labela2.setEnabled(!previousFindInitial);
-                texta2.setEnabled(!previousFindInitial);
-                b3CheckBox.setEnabled(true);
+	    	    labela2.setEnabled(!initialCheckBox.isSelected());
+	    	    texta2.setEnabled(!initialCheckBox.isSelected());
+                b2CheckBox.setEnabled(true);
 	    	}
-	    	labela0.setEnabled(!previousFindInitial);
-	    	texta0.setEnabled(!previousFindInitial);
-	    	labela1.setEnabled(!previousFindInitial);
-            texta1.setEnabled(!previousFindInitial);
 	     } else if (source == initialCheckBox) {
 	         if (!initialCheckBox.isSelected()) {
 	             labela0.setEnabled(true);
@@ -383,6 +372,16 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
 	                 labela2.setEnabled(true);
 	                 texta2.setEnabled(true);
 	             }
+	             if (multiExponentialFit.isSelected()) {
+	                 labela3.setEnabled(true);
+	                 texta3.setEnabled(true);
+	                 labela4.setEnabled(true);
+	                 texta4.setEnabled(true);
+	                 labela5.setEnabled(true);
+	                 texta5.setEnabled(true);
+	                 labela6.setEnabled(true);
+	                 texta6.setEnabled(true);
+	             }
 	         }
 	         else {
 	             labela0.setEnabled(false);
@@ -391,6 +390,14 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
                  texta1.setEnabled(false);
                  labela2.setEnabled(false);
                  texta2.setEnabled(false);
+                 labela3.setEnabled(false);
+                 texta3.setEnabled(false);
+                 labela4.setEnabled(false);
+                 texta4.setEnabled(false);
+                 labela5.setEnabled(false);
+                 texta5.setEnabled(false);
+                 labela6.setEnabled(false);
+                 texta6.setEnabled(false);
 	         }
 	         
 	     } else if (source == b0CheckBox) {
