@@ -232,6 +232,36 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         double exppoint5 = Math.exp(0.5);
         double expminuspoint5 = Math.exp(-0.5);
         double B = 0.0;
+        AlgorithmMultiExponentialFitting multiExponentialAlg;
+        int numExponentials = (numVariables - 1)/2;
+        // the normal (unweighted) case of unit least squares weights w[k]
+        int iwt = 1;
+        // mtry = the maximum number of tries that will be made to find a solution for a single value of nlambda
+        int mtry = 15;
+        // t values are specified rather than calculated from tstart and tend.
+        boolean regint = false;
+        // Do not assume a zero baseline
+        boolean nobase = false;
+        // coefficients multiplying exponentials can be negative
+        boolean nonneg = false;
+        // No Preferences.debug from AlgorithmMultiExponentialFitting
+        boolean showDebug = false;
+        // Don't output t[] and y[] values
+        boolean pry = false;
+        // Don't output each iteration of preliminary analysis
+        boolean prprel = false;
+        // Don't output each iteration of final analysis
+        boolean prfinl = false;
+        // Don't plot fit of final solution
+        boolean plotrs = false;
+        // Don't print final summary of results a second time
+        boolean repeat = false;
+        // Number of time intervals
+        int nint = 1;
+        double tstart[] = new double[1];
+        double tend[] = null;
+        int nt[] = new int[1];
+        double sqrtw[] = null;
 
         processors = Runtime.getRuntime().availableProcessors();
         Preferences.debug("Available processors = " + processors + "\n", Preferences.DEBUG_ALGORITHM);
@@ -424,6 +454,7 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             for (t = 0; t < tDim; t++) {
                 srcArray[t * volSize + 6] = a0/((t-a1)*(t-a1) + a2*a2);
             }
+            numExponentials = 2;
             functionArray[7] = MULTIEXPONENTIAL_FIT;
             numVariablesArray[7] = 5;
             initialArray[7][0] = -80.0;
@@ -433,9 +464,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             initialArray[7][4] = -1.1E-2;
             a0 = -85.0;
             a1 = -25.0;
-            a2 = -2.5E-3;
+            a2 = -2.5E-2;
             a3 = -100.0;
-            a4 = -1.0E-2;
+            a4 = -2.0E-1;
             for (t = 0; t < tDim; t++) {
                 srcArray[t * volSize + 7] = a0 + a1 * Math.exp(a2 * t) + a3 * Math.exp(a4 * t);
             } 
@@ -716,11 +747,20 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = lorentzModel.getExitStatus();
                             break;
                         case MULTIEXPONENTIAL_FIT:
-                            multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
-                            multiExponentialModel.driver();
-                            params = multiExponentialModel.getParameters();
-                            chi_squared = multiExponentialModel.getChiSquared();
-                            status = multiExponentialModel.getExitStatus();
+                            if (findInitialFromData) {
+                                multiExponentialAlg =  new AlgorithmMultiExponentialFitting(numExponentials, iwt, mtry, regint,
+                                        nobase, nonneg, showDebug, pry, prprel, prfinl, plotrs, repeat, tDim, timeVals, nint,
+                                        tstart, tend, nt, y_array, sqrtw);  
+                                multiExponentialAlg.run();
+                                params = multiExponentialAlg.getParameters();
+                            }
+                            else {
+                                multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
+                                multiExponentialModel.driver();
+                                params = multiExponentialModel.getParameters();
+                                chi_squared = multiExponentialModel.getChiSquared();
+                                status = multiExponentialModel.getExitStatus();
+                            }
                             break;
                         case RAYLEIGH_FIT:
                             if (findInitialFromData) {
@@ -1800,6 +1840,36 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             double sqrtpoint5 = Math.sqrt(0.5);
             double exppoint5 = Math.exp(0.5);
             double expminuspoint5 = Math.exp(-0.5);
+            AlgorithmMultiExponentialFitting multiExponentialAlg;
+            int numExponentials = (numVariables - 1)/2;
+            // the normal (unweighted) case of unit least squares weights w[k]
+            int iwt = 1;
+            // mtry = the maximum number of tries that will be made to find a solution for a single value of nlambda
+            int mtry = 15;
+            // t values are specified rather than calculated from tstart and tend.
+            boolean regint = false;
+            // Do not assume a zero baseline
+            boolean nobase = false;
+            // coefficients multiplying exponentials can be negative
+            boolean nonneg = false;
+            // No Preferences.debug from AlgorithmMultiExponentialFitting
+            boolean showDebug = false;
+            // Don't output t[] and y[] values
+            boolean pry = false;
+            // Don't output each iteration of preliminary analysis
+            boolean prprel = false;
+            // Don't output each iteration of final analysis
+            boolean prfinl = false;
+            // Don't plot fit of final solution
+            boolean plotrs = false;
+            // Don't print final summary of results a second time
+            boolean repeat = false;
+            // Number of time intervals
+            int nint = 1;
+            double tstart[] = new double[1];
+            double tend[] = null;
+            int nt[] = new int[1];
+            double sqrtw[] = null;
             for (i = start; i < end; i++) {
                 // fireProgressStateChanged(i * 100/volSize);
                 if (wholeImage || bitMask.get(i)) {
@@ -2009,11 +2079,20 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             status = lorentzModel.getExitStatus();
                             break;
                         case MULTIEXPONENTIAL_FIT:
-                            multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
-                            multiExponentialModel.driver();
-                            params = multiExponentialModel.getParameters();
-                            chi_squared = multiExponentialModel.getChiSquared();
-                            status = multiExponentialModel.getExitStatus();
+                            if (findInitialFromData) {
+                                multiExponentialAlg =  new AlgorithmMultiExponentialFitting(numExponentials, iwt, mtry, regint,
+                                        nobase, nonneg, showDebug, pry, prprel, prfinl, plotrs, repeat, tDim, timeVals, nint,
+                                        tstart, tend, nt, y_array, sqrtw);   
+                                multiExponentialAlg.run();
+                                params = multiExponentialAlg.getParameters();
+                            }
+                            else {
+                                multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
+                                multiExponentialModel.driver();
+                                params = multiExponentialModel.getParameters();
+                                chi_squared = multiExponentialModel.getChiSquared();
+                                status = multiExponentialModel.getExitStatus();
+                            }
                             break;
                         case RAYLEIGH_FIT:
                             if (findInitialFromData) {
