@@ -753,6 +753,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         tstart, tend, nt, y_array, sqrtw);  
                                 multiExponentialAlg.run();
                                 params = multiExponentialAlg.getParameters();
+                                chi_squared = multiExponentialAlg.getChiSquared();
+                                status = multiExponentialAlg.getStatus();
                             }
                             else {
                                 multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
@@ -877,10 +879,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                         for (j = 0; j < numVariables; j++) {
                             paramTotal[j] += params[j];
                         }
-                    } else {
-                        if (bitMask != null) {
-                            bitMask.clear(i);
-                        }
+                    } else if (bitMask != null) {
+                        bitMask.clear(i);
                     }
                     destArray[(numVariables * volSize) + i] = chi_squared;
                     destExitStatusArray[i] = status;
@@ -1689,6 +1689,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Number = " + exitStatus[55] + "\n", Preferences.DEBUG_ALGORITHM);
         }
+        
+        if (exitStatus[31] > 0) {
+            normalTerminations += exitStatus[31];
+            Preferences.debug("Values normally obtained from AlgorithmMultiExponentialFitting = " + exitStatus[31] + "\n",
+                    Preferences.DEBUG_ALGORITHM);
+        }
 
         if (exitStatus[11] > 0) {
             abnormalTerminations += exitStatus[11];
@@ -1754,6 +1760,12 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             abnormalTerminations += exitStatus[3];
             Preferences.debug("Abnormal terminations because of NLConstrainedEngine driver error = " + exitStatus[3]
                     + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        if (exitStatus[2] > 0) {
+            abnormalTerminations += exitStatus[2];
+            Preferences.debug("Failures to obtain solution from AlgorithmMultiFittingExponential = " + exitStatus[2] + "\n",
+                    Preferences.DEBUG_ALGORITHM);
         }
 
         System.out.println("\nTotal normal terminations = " + normalTerminations);
@@ -2087,6 +2099,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                                         tstart, tend, nt, y_array, sqrtw);   
                                 multiExponentialAlg.run();
                                 params = multiExponentialAlg.getParameters();
+                                chi_squared = multiExponentialAlg.getChiSquared();
+                                status = multiExponentialAlg.getStatus();
                             }
                             else {
                                 multiExponentialModel = new FitMultiExponential(tDim, y_array, initial, useBounds, lowBounds, highBounds);
@@ -2203,10 +2217,8 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                 for (j = 0; j < numVariables; j++) {
                     paramTotal[j] += params[j];
                 }
-            } else {
-                if (bitMask != null) {
-                    bitMask.clear(i);
-                }
+            } else if (bitMask != null) {
+                bitMask.clear(i);
             }
             destArray[(numVariables * volSize) + i] = chi_squared;
             destExitStatusArray[i] = status;
