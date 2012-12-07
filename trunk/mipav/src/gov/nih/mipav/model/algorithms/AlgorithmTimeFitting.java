@@ -878,7 +878,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                             paramTotal[j] += params[j];
                         }
                     } else {
-                        bitMask.clear(i);
+                        if (bitMask != null) {
+                            bitMask.clear(i);
+                        }
                     }
                     destArray[(numVariables * volSize) + i] = chi_squared;
                     destExitStatusArray[i] = status;
@@ -2202,7 +2204,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
                     paramTotal[j] += params[j];
                 }
             } else {
-                bitMask.clear(i);
+                if (bitMask != null) {
+                    bitMask.clear(i);
+                }
             }
             destArray[(numVariables * volSize) + i] = chi_squared;
             destExitStatusArray[i] = status;
