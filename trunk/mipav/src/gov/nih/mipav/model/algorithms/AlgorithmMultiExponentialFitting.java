@@ -242,6 +242,10 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     private boolean pivalp[] = new boolean[19];
     // Used to return calculated parameters
     private double params[];
+    private double chiSquared;
+    // status = -9 when solution not obtained
+    // status = 20 when solution obtained
+    private int status = -9;
     
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -488,6 +492,15 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
     
     public double[] getParameters() {
         return params;
+    }
+    
+    // Only correct for iwt = 1 or unit least squares weights
+    public double getChiSquared() {
+        return chiSquared;
+    }
+    
+    public int getStatus() {
+        return status;
     }
 
     /**
@@ -3127,8 +3140,10 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         }
                     } // if (showDebug)
                 } // else j > 1
-             // Store parameter coefficients
+                // Store parameter coefficients
                 if (i == nlammx) {
+                    // status changed from -9 to 20 when a solution is obtained
+                    status = 20;
                     // Store baseline
                     index = 0;
                     params[index++] = asave[i][i-1][0];
@@ -3138,6 +3153,9 @@ public class AlgorithmMultiExponentialFitting extends AlgorithmBase {
                         // Store lambda
                         params[index++] = -asave[k-1][i-1][1];
                     }
+                    // For iwt == 1 case of (unweighted) unit least squares weights
+                    // chiSquared = variance * (n - number of variables) = variance * (n - 2*nlammx - ibase)
+                    chiSquared = (n - 2*nlammx - ibase)*sigysv[i-1]*sigysv[i-1];
                 }
                 if (showDebug) {
                     Preferences.debug("alpha +- std err percent lambda +- std err percent\n", Preferences.DEBUG_ALGORITHM);
