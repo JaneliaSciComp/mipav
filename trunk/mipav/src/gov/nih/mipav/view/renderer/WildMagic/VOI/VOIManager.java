@@ -4442,7 +4442,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
 				m_abInitLevelSet[iSlice] = true;
 			} catch (IOException error) {
-				MipavUtil.displayError("Error while trying to retrieve RGB data.");
+				MipavUtil.displayError("Error while trying to retrieve black and white data.");
 			}
 		}
 	}
