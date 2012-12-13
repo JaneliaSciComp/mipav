@@ -6,8 +6,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class SelectedEigenvalue2 implements java.io.Serializable {
     
-    // dchkst_test repeats 5 times: All 630 tests for dchkst passed the threshold.  This indicates the dstebz and dstein are working.
-    // ddrvst_test repeats 5 times: All 1944 tests for ddrvst passed the threshold.
+   
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -4737,474 +4736,336 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         return;
   } // dlarre
   
-  /*> \brief \b DLARRF finds a new relatively robust representation such that at least one of the eigenvalues is relatively isolated.
-  *
-  * =========== DOCUMENTATION ===========
-  *
-  * Online html documentation available at
-  * http://www.netlib.org/lapack/explore-html/
-  *
-  *> \htmlonly
-  *> Download DLARRF + dependencies
-  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.tgz?format=tgz&filename=/lapack/lapack_routine/dlarrf.f">
-  *> [TGZ]</a>
-  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.zip?format=zip&filename=/lapack/lapack_routine/dlarrf.f">
-  *> [ZIP]</a>
-  *> <a href="http://www.netlib.org/cgi-bin/netlibfiles.txt?format=txt&filename=/lapack/lapack_routine/dlarrf.f">
-  *> [TXT]</a>
-  *> \endhtmlonly
-  *
-  * Definition:
-  * ===========
-  *
-  * SUBROUTINE DLARRF( N, D, L, LD, CLSTRT, CLEND,
-  * W, WGAP, WERR,
-  * SPDIAM, CLGAPL, CLGAPR, PIVMIN, SIGMA,
-  * DPLUS, LPLUS, WORK, INFO )
-  *
-  * .. Scalar Arguments ..
-  * INTEGER CLSTRT, CLEND, INFO, N
-  * DOUBLE PRECISION CLGAPL, CLGAPR, PIVMIN, SIGMA, SPDIAM
-  * ..
-  * .. Array Arguments ..
-  * DOUBLE PRECISION D( * ), DPLUS( * ), L( * ), LD( * ),
-  * $ LPLUS( * ), W( * ), WGAP( * ), WERR( * ), WORK( * )
-  * ..
-  *
-  *
-  *> \par Purpose:
-  * =============
-  *>
-  *> \verbatim
-  *>
-  *> Given the initial representation L D L^T and its cluster of close
-  *> eigenvalues (in a relative measure), W( CLSTRT ), W( CLSTRT+1 ), ...
-  *> W( CLEND ), DLARRF finds a new relatively robust representation
-  *> L D L^T - SIGMA I = L(+) D(+) L(+)^T such that at least one of the
-  *> eigenvalues of L(+) D(+) L(+)^T is relatively isolated.
-  *> \endverbatim
-  *
-  * Arguments:
-  * ==========
-  *
-  *> \param[in] N
-  *> \verbatim
-  *> N is INTEGER
-  *> The order of the matrix (subblock, if the matrix splitted).
-  *> \endverbatim
-  *>
-  *> \param[in] D
-  *> \verbatim
-  *> D is DOUBLE PRECISION array, dimension (N)
-  *> The N diagonal elements of the diagonal matrix D.
-  *> \endverbatim
-  *>
-  *> \param[in] L
-  *> \verbatim
-  *> L is DOUBLE PRECISION array, dimension (N-1)
-  *> The (N-1) subdiagonal elements of the unit bidiagonal
-  *> matrix L.
-  *> \endverbatim
-  *>
-  *> \param[in] LD
-  *> \verbatim
-  *> LD is DOUBLE PRECISION array, dimension (N-1)
-  *> The (N-1) elements L(i)*D(i).
-  *> \endverbatim
-  *>
-  *> \param[in] CLSTRT
-  *> \verbatim
-  *> CLSTRT is INTEGER
-  *> The index of the first eigenvalue in the cluster.
-  *> \endverbatim
-  *>
-  *> \param[in] CLEND
-  *> \verbatim
-  *> CLEND is INTEGER
-  *> The index of the last eigenvalue in the cluster.
-  *> \endverbatim
-  *>
-  *> \param[in] W
-  *> \verbatim
-  *> W is DOUBLE PRECISION array, dimension
-  *> dimension is >= (CLEND-CLSTRT+1)
-  *> The eigenvalue APPROXIMATIONS of L D L^T in ascending order.
-  *> W( CLSTRT ) through W( CLEND ) form the cluster of relatively
-  *> close eigenalues.
-  *> \endverbatim
-  *>
-  *> \param[in,out] WGAP
-  *> \verbatim
-  *> WGAP is DOUBLE PRECISION array, dimension
-  *> dimension is >= (CLEND-CLSTRT+1)
-  *> The separation from the right neighbor eigenvalue in W.
-  *> \endverbatim
-  *>
-  *> \param[in] WERR
-  *> \verbatim
-  *> WERR is DOUBLE PRECISION array, dimension
-  *> dimension is >= (CLEND-CLSTRT+1)
-  *> WERR contain the semiwidth of the uncertainty
-  *> interval of the corresponding eigenvalue APPROXIMATION in W
-  *> \endverbatim
-  *>
-  *> \param[in] SPDIAM
-  *> \verbatim
-  *> SPDIAM is DOUBLE PRECISION
-  *> estimate of the spectral diameter obtained from the
-  *> Gerschgorin intervals
-  *> \endverbatim
-  *>
-  *> \param[in] CLGAPL
-  *> \verbatim
-  *> CLGAPL is DOUBLE PRECISION
-  *> \endverbatim
-  *>
-  *> \param[in] CLGAPR
-  *> \verbatim
-  *> CLGAPR is DOUBLE PRECISION
-  *> absolute gap on each end of the cluster.
-  *> Set by the calling routine to protect against shifts too close
-  *> to eigenvalues outside the cluster.
-  *> \endverbatim
-  *>
-  *> \param[in] PIVMIN
-  *> \verbatim
-  *> PIVMIN is DOUBLE PRECISION
-  *> The minimum pivot allowed in the Sturm sequence.
-  *> \endverbatim
-  *>
-  *> \param[out] SIGMA
-  *> \verbatim
-  *> SIGMA is DOUBLE PRECISION
-  *> The shift used to form L(+) D(+) L(+)^T.
-  *> \endverbatim
-  *>
-  *> \param[out] DPLUS
-  *> \verbatim
-  *> DPLUS is DOUBLE PRECISION array, dimension (N)
-  *> The N diagonal elements of the diagonal matrix D(+).
-  *> \endverbatim
-  *>
-  *> \param[out] LPLUS
-  *> \verbatim
-  *> LPLUS is DOUBLE PRECISION array, dimension (N-1)
-  *> The first (N-1) elements of LPLUS contain the subdiagonal
-  *> elements of the unit bidiagonal matrix L(+).
-  *> \endverbatim
-  *>
-  *> \param[out] WORK
-  *> \verbatim
-  *> WORK is DOUBLE PRECISION array, dimension (2*N)
-  *> Workspace.
-  *> \endverbatim
-  *>
-  *> \param[out] INFO
-  *> \verbatim
-  *> INFO is INTEGER
-  *> Signals processing OK (=0) or failure (=1)
-  *> \endverbatim
-  *
-  * Authors:
-  * ========
-  *
-  *> \author Univ. of Tennessee
-  *> \author Univ. of California Berkeley
-  *> \author Univ. of Colorado Denver
-  *> \author NAG Ltd.
-  *
-  *> \date September 2012
-  *
-  *> \ingroup auxOTHERauxiliary
-  *
-  *> \par Contributors:
-  * ==================
-  *>
-  *> Beresford Parlett, University of California, Berkeley, USA \n
-  *> Jim Demmel, University of California, Berkeley, USA \n
-  *> Inderjit Dhillon, University of Texas, Austin, USA \n
-  *> Osni Marques, LBNL/NERSC, USA \n
-  *> Christof Voemel, University of California, Berkeley, USA
-  *
-  * =====================================================================
-  SUBROUTINE DLARRF( N, D, L, LD, CLSTRT, CLEND,
-  $ W, WGAP, WERR,
-  $ SPDIAM, CLGAPL, CLGAPR, PIVMIN, SIGMA,
-  $ DPLUS, LPLUS, WORK, INFO )
-  *
-  * -- LAPACK auxiliary routine (version 3.4.2) --
-  * -- LAPACK is a software package provided by Univ. of Tennessee, --
-  * -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
-  * September 2012
-  *
-  * .. Scalar Arguments ..
-  INTEGER CLSTRT, CLEND, INFO, N
-  DOUBLE PRECISION CLGAPL, CLGAPR, PIVMIN, SIGMA, SPDIAM
-  * ..
-  * .. Array Arguments ..
-  DOUBLE PRECISION D( * ), DPLUS( * ), L( * ), LD( * ),
-  $ LPLUS( * ), W( * ), WGAP( * ), WERR( * ), WORK( * )
-  * ..
-  *
-  * =====================================================================
-  *
-  * .. Parameters ..
-  DOUBLE PRECISION FOUR, MAXGROWTH1, MAXGROWTH2, ONE, QUART, TWO
-  PARAMETER ( ONE = 1.0D0, TWO = 2.0D0, FOUR = 4.0D0,
-  $ QUART = 0.25D0,
-  $ MAXGROWTH1 = 8.D0,
-  $ MAXGROWTH2 = 8.D0 )
-  * ..
-  * .. Local Scalars ..
-  LOGICAL DORRR1, FORCER, NOFAIL, SAWNAN1, SAWNAN2, TRYRRR1
-  INTEGER I, INDX, KTRY, KTRYMAX, SLEFT, SRIGHT, SHIFT
-  PARAMETER ( KTRYMAX = 1, SLEFT = 1, SRIGHT = 2 )
-  DOUBLE PRECISION AVGAP, BESTSHIFT, CLWDTH, EPS, FACT, FAIL,
-  $ FAIL2, GROWTHBOUND, LDELTA, LDMAX, LSIGMA,
-  $ MAX1, MAX2, MINGAP, OLDP, PROD, RDELTA, RDMAX,
-  $ RRR1, RRR2, RSIGMA, S, SMLGROWTH, TMP, ZNM2
-  * ..
-  * .. External Functions ..
-  LOGICAL DISNAN
-  DOUBLE PRECISION DLAMCH
-  EXTERNAL DISNAN, DLAMCH
-  * ..
-  * .. External Subroutines ..
-  EXTERNAL DCOPY
-  * ..
-  * .. Intrinsic Functions ..
-  INTRINSIC ABS
-  * ..
-  * .. Executable Statements ..
-  *
-  INFO = 0
-  FACT = DBLE(2**KTRYMAX)
-  EPS = DLAMCH( 'Precision' )
-  SHIFT = 0
-  FORCER = .FALSE.
-  * Note that we cannot guarantee that for any of the shifts tried,
-  * the factorization has a small or even moderate element growth.
-  * There could be Ritz values at both ends of the cluster and despite
-  * backing off, there are examples where all factorizations tried
-  * (in IEEE mode, allowing zero pivots & infinities) have INFINITE
-  * element growth.
-  * For this reason, we should use PIVMIN in this subroutine so that at
-  * least the L D L^T factorization exists. It can be checked afterwards
-  * whether the element growth caused bad residuals/orthogonality.
-  * Decide whether the code should accept the best among all
-  * representations despite large element growth or signal INFO=1
-  NOFAIL = .TRUE.
-  *
-  * Compute the average gap length of the cluster
-  CLWDTH = ABS(W(CLEND)-W(CLSTRT)) + WERR(CLEND) + WERR(CLSTRT)
-  AVGAP = CLWDTH / DBLE(CLEND-CLSTRT)
-  MINGAP = MIN(CLGAPL, CLGAPR)
-  * Initial values for shifts to both ends of cluster
-  LSIGMA = MIN(W( CLSTRT ),W( CLEND )) - WERR( CLSTRT )
-  RSIGMA = MAX(W( CLSTRT ),W( CLEND )) + WERR( CLEND )
-  * Use a small fudge to make sure that we really shift to the outside
-  LSIGMA = LSIGMA - ABS(LSIGMA)* FOUR * EPS
-  RSIGMA = RSIGMA + ABS(RSIGMA)* FOUR * EPS
-  * Compute upper bounds for how much to back off the initial shifts
-  LDMAX = QUART * MINGAP + TWO * PIVMIN
-  RDMAX = QUART * MINGAP + TWO * PIVMIN
-  LDELTA = MAX(AVGAP,WGAP( CLSTRT ))/FACT
-  RDELTA = MAX(AVGAP,WGAP( CLEND-1 ))/FACT
-  *
-  * Initialize the record of the best representation found
-  *
-  S = DLAMCH( 'S' )
-  SMLGROWTH = ONE / S
-  FAIL = DBLE(N-1)*MINGAP/(SPDIAM*EPS)
-  FAIL2 = DBLE(N-1)*MINGAP/(SPDIAM*SQRT(EPS))
-  BESTSHIFT = LSIGMA
-  *
-  * while (KTRY <= KTRYMAX)
-  KTRY = 0
-  GROWTHBOUND = MAXGROWTH1*SPDIAM
-  5 CONTINUE
-  SAWNAN1 = .FALSE.
-  SAWNAN2 = .FALSE.
-  * Ensure that we do not back off too much of the initial shifts
-  LDELTA = MIN(LDMAX,LDELTA)
-  RDELTA = MIN(RDMAX,RDELTA)
-  * Compute the element growth when shifting to both ends of the cluster
-  * accept the shift if there is no element growth at one of the two ends
-  * Left end
-  S = -LSIGMA
-  DPLUS( 1 ) = D( 1 ) + S
-  IF(ABS(DPLUS(1)).LT.PIVMIN) THEN
-  DPLUS(1) = -PIVMIN
-  * Need to set SAWNAN1 because refined RRR test should not be used
-  * in this case
-  SAWNAN1 = .TRUE.
-  ENDIF
-  MAX1 = ABS( DPLUS( 1 ) )
-  DO 6 I = 1, N - 1
-  LPLUS( I ) = LD( I ) / DPLUS( I )
-  S = S*LPLUS( I )*L( I ) - LSIGMA
-  DPLUS( I+1 ) = D( I+1 ) + S
-  IF(ABS(DPLUS(I+1)).LT.PIVMIN) THEN
-  DPLUS(I+1) = -PIVMIN
-  * Need to set SAWNAN1 because refined RRR test should not be used
-  * in this case
-  SAWNAN1 = .TRUE.
-  ENDIF
-  MAX1 = MAX( MAX1,ABS(DPLUS(I+1)) )
-  6 CONTINUE
-  SAWNAN1 = SAWNAN1 .OR. DISNAN( MAX1 )
-  IF( FORCER .OR.
-  $ (MAX1.LE.GROWTHBOUND .AND. .NOT.SAWNAN1 ) ) THEN
-  SIGMA = LSIGMA
-  SHIFT = SLEFT
-  GOTO 100
-  ENDIF
-  * Right end
-  S = -RSIGMA
-  WORK( 1 ) = D( 1 ) + S
-  IF(ABS(WORK(1)).LT.PIVMIN) THEN
-  WORK(1) = -PIVMIN
-  * Need to set SAWNAN2 because refined RRR test should not be used
-  * in this case
-  SAWNAN2 = .TRUE.
-  ENDIF
-  MAX2 = ABS( WORK( 1 ) )
-  DO 7 I = 1, N - 1
-  WORK( N+I ) = LD( I ) / WORK( I )
-  S = S*WORK( N+I )*L( I ) - RSIGMA
-  WORK( I+1 ) = D( I+1 ) + S
-  IF(ABS(WORK(I+1)).LT.PIVMIN) THEN
-  WORK(I+1) = -PIVMIN
-  * Need to set SAWNAN2 because refined RRR test should not be used
-  * in this case
-  SAWNAN2 = .TRUE.
-  ENDIF
-  MAX2 = MAX( MAX2,ABS(WORK(I+1)) )
-  7 CONTINUE
-  SAWNAN2 = SAWNAN2 .OR. DISNAN( MAX2 )
-  IF( FORCER .OR.
-  $ (MAX2.LE.GROWTHBOUND .AND. .NOT.SAWNAN2 ) ) THEN
-  SIGMA = RSIGMA
-  SHIFT = SRIGHT
-  GOTO 100
-  ENDIF
-  * If we are at this point, both shifts led to too much element growth
-  * Record the better of the two shifts (provided it didn't lead to NaN)
-  IF(SAWNAN1.AND.SAWNAN2) THEN
-  * both MAX1 and MAX2 are NaN
-  GOTO 50
-  ELSE
-  IF( .NOT.SAWNAN1 ) THEN
-  INDX = 1
-  IF(MAX1.LE.SMLGROWTH) THEN
-  SMLGROWTH = MAX1
-  BESTSHIFT = LSIGMA
-  ENDIF
-  ENDIF
-  IF( .NOT.SAWNAN2 ) THEN
-  IF(SAWNAN1 .OR. MAX2.LE.MAX1) INDX = 2
-  IF(MAX2.LE.SMLGROWTH) THEN
-  SMLGROWTH = MAX2
-  BESTSHIFT = RSIGMA
-  ENDIF
-  ENDIF
-  ENDIF
-  * If we are here, both the left and the right shift led to
-  * element growth. If the element growth is moderate, then
-  * we may still accept the representation, if it passes a
-  * refined test for RRR. This test supposes that no NaN occurred.
-  * Moreover, we use the refined RRR test only for isolated clusters.
-  IF((CLWDTH.LT.MINGAP/DBLE(128)) .AND.
-  $ (MIN(MAX1,MAX2).LT.FAIL2)
-  $ .AND.(.NOT.SAWNAN1).AND.(.NOT.SAWNAN2)) THEN
-  DORRR1 = .TRUE.
-  ELSE
-  DORRR1 = .FALSE.
-  ENDIF
-  TRYRRR1 = .TRUE.
-  IF( TRYRRR1 .AND. DORRR1 ) THEN
-  IF(INDX.EQ.1) THEN
-  TMP = ABS( DPLUS( N ) )
-  ZNM2 = ONE
-  PROD = ONE
-  OLDP = ONE
-  DO 15 I = N-1, 1, -1
-  IF( PROD .LE. EPS ) THEN
-  PROD =
-  $ ((DPLUS(I+1)*WORK(N+I+1))/(DPLUS(I)*WORK(N+I)))*OLDP
-  ELSE
-  PROD = PROD*ABS(WORK(N+I))
-  END IF
-  OLDP = PROD
-  ZNM2 = ZNM2 + PROD**2
-  TMP = MAX( TMP, ABS( DPLUS( I ) * PROD ))
-  15 CONTINUE
-  RRR1 = TMP/( SPDIAM * SQRT( ZNM2 ) )
-  IF (RRR1.LE.MAXGROWTH2) THEN
-  SIGMA = LSIGMA
-  SHIFT = SLEFT
-  GOTO 100
-  ENDIF
-  ELSE IF(INDX.EQ.2) THEN
-  TMP = ABS( WORK( N ) )
-  ZNM2 = ONE
-  PROD = ONE
-  OLDP = ONE
-  DO 16 I = N-1, 1, -1
-  IF( PROD .LE. EPS ) THEN
-  PROD = ((WORK(I+1)*LPLUS(I+1))/(WORK(I)*LPLUS(I)))*OLDP
-  ELSE
-  PROD = PROD*ABS(LPLUS(I))
-  END IF
-  OLDP = PROD
-  ZNM2 = ZNM2 + PROD**2
-  TMP = MAX( TMP, ABS( WORK( I ) * PROD ))
-  16 CONTINUE
-  RRR2 = TMP/( SPDIAM * SQRT( ZNM2 ) )
-  IF (RRR2.LE.MAXGROWTH2) THEN
-  SIGMA = RSIGMA
-  SHIFT = SRIGHT
-  GOTO 100
-  ENDIF
-  END IF
-  ENDIF
-  50 CONTINUE
-  IF (KTRY.LT.KTRYMAX) THEN
-  * If we are here, both shifts failed also the RRR test.
-  * Back off to the outside
-  LSIGMA = MAX( LSIGMA - LDELTA,
-  $ LSIGMA - LDMAX)
-  RSIGMA = MIN( RSIGMA + RDELTA,
-  $ RSIGMA + RDMAX )
-  LDELTA = TWO * LDELTA
-  RDELTA = TWO * RDELTA
-  KTRY = KTRY + 1
-  GOTO 5
-  ELSE
-  * None of the representations investigated satisfied our
-  * criteria. Take the best one we found.
-  IF((SMLGROWTH.LT.FAIL).OR.NOFAIL) THEN
-  LSIGMA = BESTSHIFT
-  RSIGMA = BESTSHIFT
-  FORCER = .TRUE.
-  GOTO 5
-  ELSE
-  INFO = 1
-  RETURN
-  ENDIF
-  END IF
-  100 CONTINUE
-  IF (SHIFT.EQ.SLEFT) THEN
-  ELSEIF (SHIFT.EQ.SRIGHT) THEN
-  * store new L and D back into DPLUS, LPLUS
-  CALL DCOPY( N, WORK, 1, DPLUS, 1 )
-  CALL DCOPY( N-1, WORK(N+1), 1, LPLUS, 1 )
-  ENDIF
-  RETURN
-  *
-  * End of DLARRF
-  *
-  END*/
+  /** This is a port of version 3.4.2 LAPACK auxiliary routine dlarrf.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. September 2012
+  Contributors:
+ 
+  Beresford Parlett, University of California, Berkeley, USA
+  Jim Demmel, University of California, Berkeley, USA
+  Inderjit Dhillon, University of Texas, Austin, USA
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  
+  dlarrf finds a new relatively robust representation such that at least one of the eigenvalues is relatively isolated.
+  Given the initial representation L D L^T and its cluster of close
+  eigenvalues (in a relative measure), w[clstrt-1], w[clstrt], ...
+  w[clend-1], dlarrf finds a new relatively robust representation
+  L D L^T - SIGMA I = L(+) D(+) L(+)^T such that at least one of the
+  eigenvalues of L(+) D(+) L(+)^T is relatively isolated.
+  
+  @param n input int The order of the matrix (subblock, if the matrix splitted).
+  @param d input double[] of dimension n.  The n diagonal elements of the diagonal matrix d.
+  @param L input double[] of dimension (n-1).  The (n-1) subdiagonal elements of the unit bidiagonal matrix L.
+  @param ld input double[] of dimension (n-1).  The (n-1) elements L[i]*d[i].
+  @param clstrt input int.  The index of the first eigenvalue in the cluster.
+  @param clend input int.  The index of the last eigenvalue in the cluster.
+  @param w input double[] of dimension >= (clend - clstrt + 1).  The eigenvalue approximations of L D L^T in ascending
+           order.  w[csltrt-1] through w[clend-1] form the cluster of relatively close eigenvalues.
+  @param wgap (input/output) double[] of dimension >= (clend - clstrt + 1).  The separation from the right neighbor 
+           eigenvalue in w.
+  @param werr input double[] of dimension >= (clend - clstrt + 1).  werr contains the semiwidth of the uncertainty
+           interval of the corresponding eigenvalue approximation in w.
+  @param spdiam input double  Estimate of the spectral diameter obtained from the Gerschgorin intervals.
+  @param clgapl input double Absolute gap on the left end of the cluster.  Set by the calling routine to protect
+           against shifts too close to eigenvalues outside the cluster.
+  @param clgapr input double Absolute gap on the right end of the cluster.  Set by the calling routine to protect
+           against shifts too close to eigenvalues outside the cluster.
+  @param pivmin input double  The minimum pivot allowed in the Sturm sequence.
+  @param sigma output double[] of dimension 1.  The shift used to form L(+) D(+) L(+)^T.
+  @param dplus output double[] of dimension n.  The n diagonal elements of the diagonal matrix D(+).
+  @param lplus output double[] of dimension (n-1).  The first (n-1) elements of lplus contain the subdiagonal
+           elements of the unit bidiagonal matrix L(+).
+  @param work workspace double[] of dimension (2*n)
+  @param info output int[] of dimension 1.  Signals processing OK (= 0) or failure (=1)
+  */
+  
+  private void dlarrf(int n, double d[], double L[], double ld[], int clstrt, int clend,
+                     double w[], double wgap[], double werr[], double spdiam, double clgapl, double clgapr, double pivmin, 
+                     double sigma[], double dplus[], double lplus[], double work[], int info[]) {
+
+  double maxgrowth1 = 8.0;
+  double maxgrowth2 = 8.0;
+  int ktrymax = 1;
+  int sleft = 1;
+  int sright = 2;
+  
+  boolean dorrr1;
+  boolean forcer;
+  boolean nofail;
+  boolean sawnan1;
+  boolean sawnan2;
+  boolean tryrrr1;
+  int i;
+  int indx = 0;
+  int ktry;
+  int shift;
+  double avgap;
+  double bestshift;
+  double clwdth;
+  double eps;
+  double fact;
+  double fail;
+  double fail2;
+  double growthbound;
+  double ldelta;
+  double ldmax;
+  double lsigma;
+  double max1;
+  double max2;
+  double mingap;
+  double oldp;
+  double prod;
+  double rdelta;
+  double rdmax;
+  double rrr1;
+  double rrr2;
+  double rsigma;
+  double s;
+  double smlgrowth;
+  double tmp;
+  double znm2;
+  boolean goto50 = false;
+ 
+  info[0] = 0;
+  fact = Math.pow(2.0, ktrymax);
+  eps = ge.dlamch('P');
+  shift = 0;
+  forcer = false;
+  /* Note that we cannot guarantee that for any of the shifts tried,
+    the factorization has a small or even moderate element growth.
+    There could be Ritz values at both ends of the cluster and despite
+    backing off, there are examples where all factorizations tried
+    (in IEEE mode, allowing zero pivots & infinities) have INFINITE
+    element growth.
+    For this reason, we should use PIVMIN in this subroutine so that at
+    least the L D L^T factorization exists. It can be checked afterwards
+    whether the element growth caused bad residuals/orthogonality.
+    Decide whether the code should accept the best among all
+    representations despite large element growth or signal INFO=1
+  */
+  nofail = true;
+  
+  // Compute the average gap length of the cluster
+  clwdth = Math.abs(w[clend-1]-w[clstrt-1]) + werr[clend-1] + werr[clstrt-1];
+  avgap = clwdth / (double)(clend-clstrt);
+  mingap = Math.min(clgapl, clgapr);
+  // Initial values for shifts to both ends of cluster
+  lsigma = Math.min(w[clstrt-1],w[clend-1]) - werr[clstrt-1];
+  rsigma = Math.max(w[clstrt-1],w[clend-1]) + werr[clend-1];
+  // Use a small fudge to make sure that we really shift to the outside
+  lsigma = lsigma - Math.abs(lsigma)* 4.0 * eps;
+  rsigma = rsigma + Math.abs(rsigma)* 4.0 * eps;
+  // Compute upper bounds for how much to back off the initial shifts
+  ldmax = 0.25 * mingap + 2.0 * pivmin;
+  rdmax = 0.25 * mingap + 2.0 * pivmin;
+  ldelta = Math.max(avgap, wgap[clstrt-1])/fact;
+  rdelta = Math.max(avgap, wgap[clend-2])/fact;
+  
+  // Initialize the record of the best representation found
+  
+  s = ge.dlamch('S');
+  smlgrowth = 1.0/ s;
+  fail = (n-1.0)*mingap/(spdiam*eps);
+  fail2 = (n-1.0)*mingap/(spdiam*Math.sqrt(eps));
+  bestshift = lsigma;
+  
+  // while (KTRY <= KTRYMAX)
+  ktry = 0;
+  growthbound = maxgrowth1*spdiam;
+  while (true) {
+      sawnan1 = false;
+      sawnan2 = false;
+      // Ensure that we do not back off too much of the initial shifts
+      ldelta = Math.min(ldmax, ldelta);
+      rdelta = Math.min(rdmax, rdelta);
+      // Compute the element growth when shifting to both ends of the cluster
+      // accept the shift if there is no element growth at one of the two ends
+      // Left end
+      s = -lsigma;
+      dplus[0] = d[0] + s;
+      if (Math.abs(dplus[0]) < pivmin) {
+          dplus[0] = -pivmin;
+          // Need to set sawnan1 because refined RRR test should not be used
+          // in this case
+          sawnan1 = true;
+      } // if (Math.abs(dplus[0]) < pivmin)
+      max1 = Math.abs(dplus[0]);
+      for (i = 0; i < n-1; i++) {
+          lplus[i] = ld[i] / dplus[i];
+          s = s*lplus[i]*L[i] - lsigma;
+          dplus[i+1] = d[i+1] + s;
+          if (Math.abs(dplus[i+1]) < pivmin) {
+              dplus[i+1] = -pivmin;
+              // Need to set sawnan1 because refined RRR test should not be used
+              // in this case
+              sawnan1 = true;
+          } // if (Math.abs(dplus[i+1] < pivmin)
+          max1 = Math.max(max1, Math.abs(dplus[i+1]));
+      } // for (i = 0; i < n-1; i++)
+      sawnan1 = sawnan1 || Double.isNaN(max1);
+      if (forcer || (max1 <= growthbound && !sawnan1)) {
+          sigma[0] = lsigma;
+          shift = sleft;
+          break;
+      } // if (forcer || (max1 <= growthbound && !sawnan1))
+      // Right end
+      s = -rsigma;
+      work[0] = d[0] + s;
+      if (Math.abs(work[0]) < pivmin) {
+          work[0] = -pivmin;
+          // Need to set sawnan2 because refined RRR test should not be used
+          // in this case
+          sawnan2 = true;
+      } // if (Math.abs(work[0]) < pivmin)
+      max2 = Math.abs(work[0]);
+      for (i = 0; i < n-1; i++) {
+          work[n+i] = ld[i] / work[i];
+          s = s*work[n+i]*L[i] - rsigma;
+          work[i+1] = d[i+1] + s;
+          if (Math.abs(work[i+1]) < pivmin) {
+              work[i+1] = -pivmin;
+              // Need to set sawnan2 because refined RRR test should not be used
+              // in this case
+              sawnan2 = true;
+          } // if (Math.abs(work[i+1]) < pivmin)
+          max2 = Math.max(max2, Math.abs(work[i+1]));
+      } // for (i = 0; i < n-1; i++)
+      sawnan2 = sawnan2 || Double.isNaN(max2);
+      
+      
+      if (forcer || (max2 <= growthbound && !sawnan2)) {
+          sigma[0] = rsigma;
+          shift = sright;
+          break;
+      } // if (forcer || (max2 <= growthbound && !sawnan2))
+      // If we are at this point, both shifts led to too much element growth
+      
+      // Record the better of the two shifts (provided it didn't lead to NaN)
+      if (sawnan1 && sawnan2) {
+          // both MAX1 and MAX2 are NaN
+          goto50 = true;
+      }
+      else {
+          if (!sawnan1) {
+              indx = 1;
+              if (max1 <= smlgrowth) {
+                  smlgrowth = max1;
+                  bestshift = lsigma;
+              } // if (max1 <= smlgrowth)
+          } // if (!sawnan1)
+          if (!sawnan2) {
+              if (sawnan1 || max2 <= max1) {
+                  indx = 2;
+              }
+              if (max2 <= smlgrowth) {
+                  smlgrowth = max2;
+                  bestshift = rsigma;
+              } // if (max2 <= smlgrowth)
+          } // if (!sawnan2)
+      } // else
+  
+      if (!goto50) {
+          // If we are here, both the left and the right shift led to
+          // element growth. If the element growth is moderate, then
+          // we may still accept the representation, if it passes a
+          // refined test for RRR. This test supposes that no NaN occurred.
+          // Moreover, we use the refined RRR test only for isolated clusters.
+          if ((clwdth < mingap/128.0) && (Math.min(max1,max2) < fail2)
+             && (!sawnan1) && (!sawnan2)) {
+              dorrr1 = true;
+          }
+          else {
+              dorrr1 = false;
+          }
+          tryrrr1 = true;
+          if (tryrrr1 && dorrr1) {
+              if (indx == 1) {
+                  tmp = Math.abs(dplus[n-1]);
+                  znm2 = 1.0;
+                  prod = 1.0;
+                  oldp = 1.0;
+                  for (i = n-2; i >= 0; i--) {
+                      if (prod <= eps) {
+                          prod = ((dplus[i+1]*work[n+i+1])/(dplus[i]*work[n+i]))*oldp;
+                      } // if (prod <= eps)
+                      else {
+                          prod = prod*Math.abs(work[n+i]);
+                      } // else
+                      oldp = prod;
+                      znm2 = znm2 + prod * prod;
+                      tmp = Math.max(tmp, Math.abs(dplus[i] * prod));
+                  } // for (i = n-2; i >= 0; i--)
+                  rrr1 = tmp/(spdiam * Math.sqrt(znm2));
+                  if (rrr1 <= maxgrowth2) {
+                      sigma[0] = lsigma;
+                      shift = sleft;
+                      break;
+                  } // if (rrr1 <= maxgrowth2)
+              } // if (indx == 1)
+              else if (indx == 2) {
+                  tmp = Math.abs(work[n-1]);
+                  znm2 = 1.0;
+                  prod = 1.0;
+                  oldp = 1.0;
+                  for (i = n-2; i >= 0; i--) {
+                      if (prod <= eps) {
+                          prod = ((work[i+1]*lplus[i+1])/(work[i]*lplus[i]))*oldp;
+                      }
+                      else {
+                          prod = prod*Math.abs(lplus[i]);
+                      }
+                      oldp = prod;
+                      znm2 = znm2 + prod * prod;
+                      tmp = Math.max(tmp, Math.abs(work[i] * prod));
+                  } // for (i = n-2; i >= 0; i--) 
+                  rrr2 = tmp/(spdiam * Math.sqrt(znm2));
+                  if (rrr2 <= maxgrowth2) {
+                      sigma[0] = rsigma;
+                      shift = sright;
+                      break;
+                  } // if (rrr2 <= maxgrowth2)
+              } // else if (indx == 2)
+          } // if (tryrrr1 && dorrr1)
+      } // if (!goto50)
+  
+      goto50 = false;
+      if (ktry < ktrymax) {
+          // If we are here, both shifts failed also the RRR test.
+          //  Back off to the outside
+          lsigma = Math.max(lsigma - ldelta, lsigma - ldmax);
+          rsigma = Math.min(rsigma + rdelta, rsigma + rdmax);
+          ldelta = 2.0 * ldelta;
+          rdelta = 2.0 * rdelta;
+          ktry++;
+          continue;
+      } // if (ktry < ktrymax)
+      else {
+          // None of the representations investigated satisfied our
+          // criteria. Take the best one we found.
+          if ((smlgrowth < fail) || nofail) {
+              lsigma = bestshift;
+              rsigma = bestshift;
+              forcer = true;
+              continue;
+          } // if ((smlgrowth < fail) || nofail) 
+          else {
+              info[0] = 1;
+              return;
+          } // else
+      } // else
+  } // while (true)
+  
+  if (shift == sright) {
+      // store new L and D back into DPLUS, LPLUS
+      for (i = 0; i < n; i++) {
+          dplus[i] = work[i];
+      }
+      for (i = 0; i < n-1; i++) {
+          lplus[i] = work[n+i];
+      }
+  } // if (shift == sright)
+  return;
+  } // dlarrf
   
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrk.  LAPACK is a software package provided by Univ. of Tennessee,    --
   -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
@@ -5622,7 +5483,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double sigma;
         double spdiam;
         double ssigma;
-        double tau;
+        double tau[] = new double[1];
         double tmp;
         double tol;
         double ztz;
@@ -5633,6 +5494,9 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double vec4[];
         double vec5[];
         double vec6[];
+        double vec7[];
+        double vec8[];
+        double vec9[];
         int ivec[];
        
         
@@ -6065,13 +5929,45 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        // Note that the new RRR is stored in Z
    
                        // dlarrf needs LWORK = 2*n
-                       /*CALL DLARRF( IN, D( IBEGIN ), L( IBEGIN ),
-       $                         WORK(INDLD+IBEGIN-1),
-       $                         NEWFST, NEWLST, WORK(WBEGIN),
-       $                         WGAP(WBEGIN), WERR(WBEGIN),
-       $                         SPDIAM, LGAP, RGAP, PIVMIN, TAU,
-       $                         Z(IBEGIN, NEWFTT),Z(IBEGIN, NEWFTT+1),
-       $                         WORK( INDWRK ), IINFO )
+                       vec = new double[in];
+                       for (index = 0; index < in; index++) {
+                           vec[index] = d[ibegin - 1 + index];
+                       }
+                       vec2 = new double[in-1];
+                       for (index = 0; index < in-1; index++) {
+                           vec2[index] = l[ibegin -1 + index]; 
+                       }
+                       vec3 = new double[in-1];
+                       for (index = 0; index < in-1; index++) {
+                           vec3[index] = work[indld + ibegin - 2  + index];
+                       }
+                       vec4 = new double[newlst - newfst + 1];
+                       for (index = 0; index < newlst - newfst + 1; index++) {
+                           vec4[index] = work[wbegin - 1 + index];
+                       }
+                       vec5 = new double[newlst - newfst + 1];
+                       for (index = 0; index < newlst - newfst + 1; index++) {
+                           vec5[index] = wgap[wbegin - 1 + index];
+                       }
+                       vec6 = new double[newlst - newfst + 1];
+                       for (index = 0; index < newlst - newfst + 1; index++) {
+                           vec6[index] = werr[wbegin - 1 + index];
+                       }
+                       vec7 = new double[in];
+                       vec8 = new double[in-1];
+                       vec9 = new double[2*in];
+                       dlarrf(in, vec, vec2, vec3, newfst, newlst, vec4, vec5, vec6, spdiam, lgap, rgap, pivmin, tau,
+                               vec7, vec8, vec9, iinfo);
+                       for (index = 0; index < newlst - newfst + 1; index++) {
+                           wgap[wbegin - 1 + index] = vec5[index];
+                       }
+                       for (index = 0; index < in; index++) {
+                           Z[ibegin - 1 + index][newftt-1] = vec7[index];
+                       }
+                       for (index = 0; index < in-1; index++) {
+                           Z[ibegin - 1 + index][newftt] = vec8[index];
+                       }
+                      /*
                        IF( IINFO.EQ.0 ) THEN
   *                       a new RRR for the cluster was found by DLARRF
   *                       update shift and store it
