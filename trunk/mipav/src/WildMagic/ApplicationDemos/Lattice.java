@@ -286,7 +286,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 		m_spkEffect = new LatticeEffect("Leaf", "Gradient");
 		final int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, m_pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
 		}
 		m_pkMesh.AttachEffect(m_spkEffect);

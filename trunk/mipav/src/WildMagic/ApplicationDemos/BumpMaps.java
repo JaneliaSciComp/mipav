@@ -32,6 +32,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.SimpleBumpMapEffect;
 import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -110,7 +111,7 @@ implements GLEventListener, KeyListener
 			m_spkScene.SetChild(0,pkMesh);
 			m_spkScene.UpdateGS();
 			m_spkScene.UpdateRS();
-			UpdateBumpMap();
+			UpdateBumpMap(m_pkRenderer);
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
 		
@@ -123,7 +124,7 @@ implements GLEventListener, KeyListener
 
 		if (MoveObject())
 		{
-			UpdateBumpMap();
+			UpdateBumpMap(m_pkRenderer);
 			m_spkScene.UpdateGS();
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
@@ -175,7 +176,7 @@ implements GLEventListener, KeyListener
 		m_spkScene.UpdateGS();
 		m_spkScene.UpdateRS();
 
-		UpdateBumpMap();
+		UpdateBumpMap(m_pkRenderer);
 
 		// initial culling of scene
 		m_kCuller.SetCamera(m_spkCamera);
@@ -362,7 +363,7 @@ implements GLEventListener, KeyListener
 		return pkMesh;
 	}
 
-	private void UpdateBumpMap ()
+	private void UpdateBumpMap (Renderer kRenderer)
 	{
 		if (m_bUseBumpMap)
 		{
@@ -372,7 +373,7 @@ implements GLEventListener, KeyListener
 			SimpleBumpMapEffect pkEffect =
 				(SimpleBumpMapEffect)pkMesh.GetEffect(0);
 			pkEffect.ComputeLightVectors(pkMesh);
-			pkMesh.VBuffer.Release();
+			pkMesh.Release(kRenderer);
 		}
 	}
 

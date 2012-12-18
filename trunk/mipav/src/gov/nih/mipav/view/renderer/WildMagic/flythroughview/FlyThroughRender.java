@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
@@ -143,7 +144,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
@@ -319,7 +321,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 m_kSurface.VBuffer.GetColor3(0, i, m_akColorBackup[i]);
                 m_kSurface.VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
             }
-            m_kSurface.VBuffer.Release();
+            m_kSurface.Reload(true);
         }
         else if ( m_akColorBackup != null )
         {
@@ -327,7 +329,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             for (int i = 0; i < iVQuantity; i++) {
                 m_kSurface.VBuffer.SetColor3(0, i, m_akColorBackup[i]);
             }
-            m_kSurface.VBuffer.Release();
+            m_kSurface.Reload(true);
         }
         GetCanvas().display();
     }
@@ -1209,7 +1211,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_aiBranchIndexUnvisitedMin[iBranch] = iUnvisitedMin;
         m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
 
-        kLine.VBuffer.Release();
+        kLine.Reload(true);
     }
 
 }

@@ -31,6 +31,7 @@ import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -174,7 +175,7 @@ implements GLEventListener, KeyListener
 		m_kParent.updateLevWidgetState( m_akWidgets );
 		
 		// Call picking to see if the selected widget has changed:
-		Pick();    
+		Pick(m_pkRenderer);    
 		// Draw the widgets on the 2D Histogram background"
 		m_spkScene.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -795,7 +796,7 @@ implements GLEventListener, KeyListener
 	/**
 	 * Determine which widget is selected with the mouse/
 	 */
-	protected void Pick()
+	protected void Pick(Renderer kRenderer)
 	{
 		if (m_bPickPending)
 		{
@@ -803,7 +804,7 @@ implements GLEventListener, KeyListener
 			if ( m_iCurrent != -1 )
 			{
 				// Test the currently selected widget first:
-				if ( m_akWidgets.get(m_iCurrent).Pick(m_iMouseX, m_iMouseY ) )
+				if ( m_akWidgets.get(m_iCurrent).Pick(kRenderer, m_iMouseX, m_iMouseY ) )
 				{
 					return;
 				}
@@ -812,7 +813,7 @@ implements GLEventListener, KeyListener
 			// attempt to find which widget, and which component of the widget is selected:
 			for ( int i = 0; i < m_akWidgets.size(); i++ )
 			{
-				if ( m_akWidgets.get(i).Pick(m_iMouseX, m_iMouseY ) )
+				if ( m_akWidgets.get(i).Pick(kRenderer, m_iMouseX, m_iMouseY ) )
 				{
 					m_iCurrent = i;
 					m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,

@@ -1,7 +1,7 @@
-//----------------------------------------------------------------------------
+in vec4 varColor;
+out vec4     fragColor;
 void p_PassThrough3 ()
 {
-    gl_FragColor.xyz = gl_Color.xyz;
-    gl_FragColor.w = 1.0;
+    fragColor.xyz = varColor.xyz;
+    fragColor.w = 1.0;
 }
-//----------------------------------------------------------------------------

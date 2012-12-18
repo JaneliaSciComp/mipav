@@ -12,13 +12,17 @@ vec3 MapFromUnit (vec3 kVector)
 //----------------------------------------------------------------------------
 uniform sampler2D BaseSampler;
 uniform sampler2D NormalSampler;
+in vec2 varTexCoord0;
+in vec2 varTexCoord1;
+in vec4 varColor0;
+out vec4 fragColor;
 void p_SimpleBumpMapP()
 {
-    vec3 kLDir = MapFromUnit(gl_Color.rgb);
-    vec3 kNDir = MapFromUnit(texture2D(NormalSampler,gl_TexCoord[1].xy).rgb);
+    vec3 kLDir = MapFromUnit(varColor0.rgb);
+    vec3 kNDir = MapFromUnit(texture(NormalSampler,varTexCoord1, 0.0).rgb);
     float fDot = clamp(dot(kLDir,kNDir), 0.0, 1.0);
-    vec3 kBaseColor = texture2D(BaseSampler,gl_TexCoord[0].xy).rgb;
-    gl_FragColor.rgb = fDot*kBaseColor;
-    gl_FragColor.a = 1.0;
+    vec3 kBaseColor = texture(BaseSampler,varTexCoord0, 0.0).rgb;
+    fragColor.rgb = fDot*kBaseColor;
+    fragColor.a = 1.0;
 }
 //----------------------------------------------------------------------------

@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 
 import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -140,7 +141,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
 		m_kAnimator = kAnimator;
 		m_kVolumeImageA = kVolumeImageA;
@@ -160,7 +162,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());     
 
 		m_kAnimator = kAnimator;
 		m_kVolumeImageA = kVolumeImageA;
@@ -1028,9 +1031,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		}
 
 
-		m_kCortical.getMesh().VBuffer.Release();
-		m_kCortical.getSphere().VBuffer.Release();
-		m_kCortical.getCylinder().VBuffer.Release();
+		m_kCortical.getMesh().Reload(true);
+		m_kCortical.getSphere().Reload(true);
+		m_kCortical.getCylinder().Reload(true);
 	}
 
 	/**
@@ -1060,9 +1063,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 			m_akTriColors = null;
 			m_aiTriIndex = null;
 
-			m_kCortical.getMesh().VBuffer.Release();
-			m_kCortical.getSphere().VBuffer.Release();
-			m_kCortical.getCylinder().VBuffer.Release();
+			m_kCortical.getMesh().Reload(true);
+			m_kCortical.getSphere().Reload(true);
+			m_kCortical.getCylinder().Reload(true);
 		}
 	}
 
@@ -1139,8 +1142,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		    m_kCylinder.GetMesh().VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
 		}
 		m_kCortical.updateMesh(false);
-		m_kSphere.GetMesh().VBuffer.Release();
-		m_kCylinder.GetMesh().VBuffer.Release();
+		m_kSphere.GetMesh().Reload(true);
+		m_kCylinder.GetMesh().Reload(true);
 	}
 
 

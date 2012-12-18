@@ -75,15 +75,17 @@ public class VolumeVOI extends VolumeObject
 		m_kVOI = null;
 		if ( m_kVOILine != null )
 		{
-			kRenderer.ReleaseVBuffer(m_kVOILine.VBuffer);
-			kRenderer.ReleaseIBuffer(m_kVOILine.IBuffer);
+        	kRenderer.ReleaseVAO( m_kVOILine );
+			//kRenderer.ReleaseVBuffer(m_kVOILine.VBuffer);
+			//kRenderer.ReleaseIBuffer(m_kVOILine.IBuffer);
 			m_kVOILine.dispose();
 			m_kVOILine = null;
 		}
 		if ( m_kVOITicMarks != null )
 		{
-			kRenderer.ReleaseVBuffer(m_kVOITicMarks.VBuffer);
-			kRenderer.ReleaseIBuffer(m_kVOITicMarks.IBuffer);
+        	kRenderer.ReleaseVAO( m_kVOITicMarks );
+			//kRenderer.ReleaseVBuffer(m_kVOITicMarks.VBuffer);
+			//kRenderer.ReleaseIBuffer(m_kVOITicMarks.IBuffer);
 			m_kVOITicMarks.dispose();
 			m_kVOITicMarks = null;
 		}
@@ -247,14 +249,14 @@ public class VolumeVOI extends VolumeObject
 			{
 				m_kVOILine.VBuffer.SetColor3(0, i, kColor );
 			}
-			m_kVOILine.VBuffer.Release();
+			m_kVOILine.Reload(true);
 			if ( m_kVOITicMarks != null )
 			{
 				for ( int i = 0; i < m_kVOITicMarks.VBuffer.GetVertexQuantity(); i++ )
 				{
 					m_kVOITicMarks.VBuffer.SetColor3(0, i, kColor );
 				}
-				m_kVOITicMarks.VBuffer.Release();
+				m_kVOITicMarks.Reload(true);
 			}
 		}
 	}
@@ -310,7 +312,7 @@ public class VolumeVOI extends VolumeObject
 				kPos.add(kDiff);
 				m_kVOILine.VBuffer.SetPosition3(i, kPos );
 			}
-			m_kVOILine.VBuffer.Release();
+			m_kVOILine.Reload(true);
 		}
 		else if ( kVOI.size() == m_kVOILine.VBuffer.GetVertexQuantity() )
 		{
@@ -319,7 +321,7 @@ public class VolumeVOI extends VolumeObject
 				Vector3f kPos = Vector3f.mult( m_kVOI.get(i), m_kVolumeScale);
 				m_kVOILine.VBuffer.SetPosition3(i, kPos );
 			}
-			m_kVOILine.VBuffer.Release();
+			m_kVOILine.Reload(true);
 		}
 		else 
 		{
@@ -384,14 +386,14 @@ public class VolumeVOI extends VolumeObject
 		{
 			m_kVOILine.VBuffer.SetColor3(0, i, m_kColor );
 		}
-		m_kVOILine.VBuffer.Release();
+		m_kVOILine.Reload(true);
 		if ( m_kVOITicMarks != null )
 		{
 			for ( int i = 0; i < m_kVOITicMarks.VBuffer.GetVertexQuantity(); i++ )
 			{
 				m_kVOITicMarks.VBuffer.SetColor3(0, i, m_kColor );
 			}
-			m_kVOITicMarks.VBuffer.Release();
+			m_kVOITicMarks.Reload(true);
 		}
 		if ( (m_kVOI.getType() == VOI.ANNOTATION) && (m_kTextEffect != null) )
 		{

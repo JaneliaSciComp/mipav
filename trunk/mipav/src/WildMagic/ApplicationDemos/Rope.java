@@ -395,7 +395,7 @@ implements GLEventListener, KeyListener
 			m_pkSpline.SetControlPoint(i,m_akCtrlPoint[i]);
 		}
 		m_spkRope.UpdateSurface();
-		m_spkRope.VBuffer.Release();
+		m_spkRope.Reload(true);
 	}
 
 	private float GetTime()

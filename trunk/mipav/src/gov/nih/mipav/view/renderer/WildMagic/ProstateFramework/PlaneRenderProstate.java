@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.ProstateFramework;
 
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -101,15 +102,15 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                     kPos = VOIToFileCoordinates(kPos, true);
                     kVolumeVBuffer.SetPosition3(i, kPos);
                 }
-                kLocalVBuffer.Release();
-                kVolumeVBuffer.Release();
+                Local.get(0).Reload(true);
+                Volume.get(0).Reload(true);
                 m_bUpdateVOI = true;
             }
         }
 
         public void Release() {
-            Local.get(m_iCurrent).VBuffer.Release();
-            Volume.get(m_iCurrent).VBuffer.Release();
+            Local.get(m_iCurrent).Reload(true);
+            Volume.get(m_iCurrent).Reload(true);
         }
 
         public void setCenter(final float fX, final float fY, final float fZ) {
@@ -397,6 +398,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         ((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseListener(this);
         ((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseMotionListener(this);
         ((OpenGLRenderer) m_pkRenderer).GetCanvas().addMouseWheelListener(this);
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
@@ -1161,8 +1163,8 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             m_kYArrow[1].VBuffer.SetColor3(0, j, kYSliceHairColor);
         }
         for (int i = 0; i < 2; i++) {
-            m_kXArrow[i].VBuffer.Release();
-            m_kYArrow[i].VBuffer.Release();
+            m_kXArrow[i].Reload(true);
+            m_kYArrow[i].Reload(true);
         }
     }
 
@@ -1629,7 +1631,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                 m_kXArrow[1].VBuffer.SetPosition3(j, kPosition);
             }
             for (int i = 0; i < 2; i++) {
-                m_kXArrow[i].VBuffer.Release();
+                m_kXArrow[i].Reload(true);
                 m_kXArrow[i].UpdateGS();
                 m_kXArrow[i].UpdateRS();
                 m_pkRenderer.LoadResources(m_kXArrow[i]);
@@ -1640,7 +1642,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             pkVBuffer.SetPosition3(1, 0.06f, 0.85f, 0.5f);
             pkVBuffer.SetPosition3(2, 0.06f, 0.95f, 0.5f);
             pkVBuffer.SetPosition3(3, 0.05f, 0.95f, 0.5f);
-            pkVBuffer.Release();
+            m_kYArrow[0].Reload(true);
             m_kYArrow[0].UpdateGS();
             m_kYArrow[0].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[0]);
@@ -1649,7 +1651,7 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
             pkVBuffer.SetPosition3(0, 0.04f, 0.85f, 0.5f);
             pkVBuffer.SetPosition3(1, 0.055f, 0.82f, 0.5f);
             pkVBuffer.SetPosition3(2, 0.07f, 0.85f, 0.5f);
-            pkVBuffer.Release();
+            m_kYArrow[1].Reload(true);
             m_kYArrow[1].UpdateGS();
             m_kYArrow[1].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[1]);

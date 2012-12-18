@@ -18,6 +18,8 @@
 
 package WildMagic.ApplicationDemos;
 
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumePreRenderEffect;
+
 import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -28,15 +30,21 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.IridescenceEffect;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
@@ -78,6 +86,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	}
 
 	private WireframeState m_spkWireframe;
+	private CullState m_kCull;
 
 	private IridescenceEffect m_spkEffect;
 
@@ -156,13 +165,14 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 		m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();
 
+		/*
 		if (m_kShaderParamsWindow == null) {
 			m_kShaderParamsWindow = new ApplicationGUI();
 			m_kShaderParamsWindow.setParent(this);
 			m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
 			m_kShaderParamsWindow.Display();
 			m_kShaderParamsWindow.setParent(this);
-		}
+		}*/
 	}
 
 	@Override
@@ -211,15 +221,16 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	@Override
 	public void keyTyped(KeyEvent e) {
 		char ucKey = e.getKeyChar();
+		System.err.println( ucKey );
 		super.keyPressed(e);
 		float fInterpolateFactor;
 		if (ucKey == 'w' || ucKey == 'W')
 		{
-			m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
-			if ( m_spkWireframe.Enabled )
-				m_spkWireframe.Fill = WireframeState.FillMode.FM_LINE;
-			else
-				m_spkWireframe.Fill = WireframeState.FillMode.FM_FILL;
+			m_spkWireframe.Enabled = true;
+			m_spkWireframe.Fill = ( m_spkWireframe.Fill == WireframeState.FillMode.FM_FILL ) ? 
+					WireframeState.FillMode.FM_LINE : ( m_spkWireframe.Fill == WireframeState.FillMode.FM_LINE ) ?
+							WireframeState.FillMode.FM_POINT : 	WireframeState.FillMode.FM_FILL;
+			m_spkScene.UpdateGS();
 			return;
 		}
 		switch (ucKey) {
@@ -261,6 +272,10 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 			m_bLeft = false;
 			m_bRight = true;
 			break;
+		case 'c':
+	        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+		case 'b':
+	        m_kCull.CullFace = CullState.CullMode.CT_BACK;
 		}
 		return;
 	}
@@ -286,27 +301,207 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	private void CreateScene() {
 		m_spkScene = new Node();
 		m_spkWireframe = new WireframeState();
+        m_spkScene.AttachGlobalState(m_spkWireframe);
+
+        m_kCull = new CullState();
+        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        m_kCull.FrontFace = CullState.FrontMode.FT_CCW;
+        m_spkScene.AttachGlobalState(m_kCull);
 
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
-		kAttr.SetNChannels(3);
-		kAttr.SetTChannels(0, 2);
+		//kAttr.SetNChannels(3);
+		//kAttr.SetTChannels(0, 2);
+        kAttr.SetCChannels(0,3);
+        kAttr.SetTChannels(0,3);
+        kAttr.SetTChannels(1,3);
 		StandardMesh kSM = new StandardMesh(kAttr);
-		TriMesh pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
+		//TriMesh pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
+		TriMesh pkMesh = Box();
 
 		pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
 				-0.707f, 0.707f, 0f), false));
 		m_spkScene.AttachChild(pkMesh);
 
+		VertexColor3Effect effect = new VertexColor3Effect();
+		pkMesh.AttachEffect(effect);
+		
+		for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
+		{
+			//pkMesh.VBuffer.SetColor3(0, i, new ColorRGB( 1, 0, 0 ) );
+		}
 
+		/*
 		m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
 		m_spkEffect.SetInterpolateFactor(0.5f);
 		int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
 		}
-		pkMesh.AttachEffect(m_spkEffect);
+		pkMesh.AttachEffect(m_spkEffect);*/
 	}
+	
+
+    private TriMesh Box ()
+    {
+        Attributes kAttr = new Attributes();
+        kAttr.SetPChannels(3);
+        kAttr.SetCChannels(0,3);
+        kAttr.SetTChannels(0,3);
+        kAttr.SetTChannels(1,3);
+
+  
+  
+        float fMaxX = 249.02344f;
+        float fMaxY = 249.02344f;
+        float fMaxZ = 320.6056f;
+
+        float m_fMax = fMaxX;
+        if (fMaxY > m_fMax) {
+            m_fMax = fMaxY;
+        }
+        if (fMaxZ > m_fMax) {
+            m_fMax = fMaxZ;
+        }
+        float m_fX = 0.77672833f;
+        float m_fY = 0.77672833f;
+        float m_fZ = 1.0f;
+
+        int iVQuantity = 24;
+        int iTQuantity = 12;
+        VertexBuffer pkVB = new VertexBuffer(kAttr,iVQuantity);
+        IndexBuffer pkIB = new IndexBuffer(3*iTQuantity);
+
+        // generate connectivity (outside view)
+        int i = 0;
+        int[] aiIndex = pkIB.GetData();
+        
+        System.err.println( m_fX + " " + m_fY + " " + m_fZ );
+
+        // generate geometry
+        // front
+        pkVB.SetPosition3(0,0,0,0);
+        pkVB.SetPosition3(1,m_fX,0,0);
+        pkVB.SetPosition3(2,m_fX,m_fY,0);
+        pkVB.SetPosition3(3,0,m_fY,0);
+        pkVB.SetColor3(0,0,0,0,0);
+        pkVB.SetColor3(0,1,1,0,0);
+        pkVB.SetColor3(0,2,1,1,0);
+        pkVB.SetColor3(0,3,0,1,0);
+        aiIndex[i++] = 0;  aiIndex[i++] = 2;  aiIndex[i++] = 1;
+        aiIndex[i++] = 0;  aiIndex[i++] = 3;  aiIndex[i++] = 2;
+
+        // back
+        pkVB.SetPosition3(4,0,0,m_fZ);
+        pkVB.SetPosition3(5,m_fX,0,m_fZ);
+        pkVB.SetPosition3(6,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(7,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,4,0,0,1);
+        pkVB.SetColor3(0,5,1,0,1);
+        pkVB.SetColor3(0,6,1,1,1);
+        pkVB.SetColor3(0,7,0,1,1);
+        aiIndex[i++] = 4;  aiIndex[i++] = 5;  aiIndex[i++] = 6;
+        aiIndex[i++] = 4;  aiIndex[i++] = 6;  aiIndex[i++] = 7;
+
+        // top
+        pkVB.SetPosition3(8,0,m_fY,0);
+        pkVB.SetPosition3(9,m_fX,m_fY,0);
+        pkVB.SetPosition3(10,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(11,0,m_fY,m_fZ);
+        pkVB.SetColor3(0,8,0,1,0);
+        pkVB.SetColor3(0,9,1,1,0);
+        pkVB.SetColor3(0,10,1,1,1);
+        pkVB.SetColor3(0,11,0,1,1);
+        aiIndex[i++] = 8;  aiIndex[i++] = 10;  aiIndex[i++] = 9;
+        aiIndex[i++] = 8;  aiIndex[i++] = 11;  aiIndex[i++] = 10;
+
+        // bottom
+        pkVB.SetPosition3(12,0,0,0);
+        pkVB.SetPosition3(13,m_fX,0,0);
+        pkVB.SetPosition3(14,m_fX,0,m_fZ);
+        pkVB.SetPosition3(15,0,0,m_fZ);
+        pkVB.SetColor3(0,12,0,0,0);
+        pkVB.SetColor3(0,13,1,0,0);
+        pkVB.SetColor3(0,14,1,0,1);
+        pkVB.SetColor3(0,15,0,0,1);
+        aiIndex[i++] = 12;  aiIndex[i++] = 13;  aiIndex[i++] = 14;
+        aiIndex[i++] = 12;  aiIndex[i++] = 14;  aiIndex[i++] = 15;
+
+        // right
+        pkVB.SetPosition3(16,m_fX,0,0);
+        pkVB.SetPosition3(17,m_fX,m_fY,0);
+        pkVB.SetPosition3(18,m_fX,m_fY,m_fZ);
+        pkVB.SetPosition3(19,m_fX,0,m_fZ);
+        pkVB.SetColor3(0,16,1,0,0);
+        pkVB.SetColor3(0,17,1,1,0);
+        pkVB.SetColor3(0,18,1,1,1);
+        pkVB.SetColor3(0,19,1,0,1);
+        aiIndex[i++] = 16;  aiIndex[i++] = 17;  aiIndex[i++] = 18;
+        aiIndex[i++] = 16;  aiIndex[i++] = 18;  aiIndex[i++] = 19;
+
+        // left
+        pkVB.SetPosition3(20,0,0,0);
+        pkVB.SetPosition3(21,0,m_fY,0);
+        pkVB.SetPosition3(22,0,m_fY,m_fZ);
+        pkVB.SetPosition3(23,0,0,m_fZ);
+        pkVB.SetColor3(0,20,0,0,0);
+        pkVB.SetColor3(0,21,0,1,0);
+        pkVB.SetColor3(0,22,0,1,1);
+        pkVB.SetColor3(0,23,0,0,1);
+        aiIndex[i++] = 20;  aiIndex[i++] = 22;  aiIndex[i++] = 21;
+        aiIndex[i++] = 20;  aiIndex[i++] = 23;  aiIndex[i++] = 22;
+
+        if (kAttr.GetMaxTCoords() > 0)
+        {
+            for (int iUnit = 0; iUnit < kAttr.GetMaxTCoords(); iUnit++)
+            {
+                if (kAttr.HasTCoord(iUnit))
+                {
+                    pkVB.SetTCoord3(iUnit,0,0,0,0);
+                    pkVB.SetTCoord3(iUnit,1,1,0,0);
+                    pkVB.SetTCoord3(iUnit,2,1,1,0);
+                    pkVB.SetTCoord3(iUnit,3,0,1,0);
+
+                    pkVB.SetTCoord3(iUnit,4,0,0,1);
+                    pkVB.SetTCoord3(iUnit,5,1,0,1);
+                    pkVB.SetTCoord3(iUnit,6,1,1,1);
+                    pkVB.SetTCoord3(iUnit,7,0,1,1);
+
+                    pkVB.SetTCoord3(iUnit,8,0,1,0);
+                    pkVB.SetTCoord3(iUnit,9,1,1,0);
+                    pkVB.SetTCoord3(iUnit,10,1,1,1);
+                    pkVB.SetTCoord3(iUnit,11,0,1,1);
+
+                    pkVB.SetTCoord3(iUnit,12,0,0,0);
+                    pkVB.SetTCoord3(iUnit,13,1,0,0);
+                    pkVB.SetTCoord3(iUnit,14,1,0,1);
+                    pkVB.SetTCoord3(iUnit,15,0,0,1);
+
+                    pkVB.SetTCoord3(iUnit,16,1,0,0);
+                    pkVB.SetTCoord3(iUnit,17,1,1,0);
+                    pkVB.SetTCoord3(iUnit,18,1,1,1);
+                    pkVB.SetTCoord3(iUnit,19,1,0,1);
+
+                    pkVB.SetTCoord3(iUnit,20,0,0,0);
+                    pkVB.SetTCoord3(iUnit,21,0,1,0);
+                    pkVB.SetTCoord3(iUnit,22,0,1,1);
+                    pkVB.SetTCoord3(iUnit,23,0,0,1);
+                }
+            }
+        }
+        TriMesh kMesh = new TriMesh(pkVB,pkIB);
+        kMesh.VBuffer.SetName("BOX");
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.1f,0.1f,0.1f);
+        kMaterial.Diffuse = new ColorRGB(1f,1f,1f);
+        kMaterial.Specular = new ColorRGB(1f,1f,1f);
+        kMaterial.Shininess = 128f;
+        kMesh.AttachGlobalState(kMaterial);
+        kMesh.UpdateMS(true);
+        return kMesh;
+    }
+    
 
 }

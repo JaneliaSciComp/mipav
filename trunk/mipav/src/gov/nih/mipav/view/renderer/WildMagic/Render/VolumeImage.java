@@ -933,7 +933,7 @@ public class VolumeImage implements Serializable {
 	 * during the next frame.
 	 */
 	public void ReleaseVolume() {
-		m_kVolumeTarget.Release();
+		m_kVolumeTarget.Reload(true);
 	}
 
 

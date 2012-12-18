@@ -147,16 +147,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             { 
-                boolean bShared = 
-                    m_kDisplayList.get(i).GetMesh().VBuffer.GetShared();
-                m_kDisplayList.get(i).GetMesh().VBuffer.SetShared(false);
-                m_kDisplayList.get(i).GetMesh().VBuffer.Release( m_pkRenderer );
-                m_kDisplayList.get(i).GetMesh().VBuffer.SetShared(bShared);
-                bShared = 
-                    m_kDisplayList.get(i).GetMesh().IBuffer.GetShared();
-                m_kDisplayList.get(i).GetMesh().IBuffer.SetShared(false);
-                m_kDisplayList.get(i).GetMesh().IBuffer.Release( m_pkRenderer );
-                m_kDisplayList.get(i).GetMesh().IBuffer.SetShared(bShared);
+                m_kDisplayList.get(i).GetMesh().Release( m_pkRenderer );
             }
         }
         m_kSurfaceClip.dispose();

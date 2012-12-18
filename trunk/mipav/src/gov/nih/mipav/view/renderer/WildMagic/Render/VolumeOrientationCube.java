@@ -51,8 +51,9 @@ public class VolumeOrientationCube extends VolumeObject
     	{
     		for ( int i = 0; i < m_akOrientationCube.length; i++ )
     		{
-    			kRenderer.ReleaseVBuffer(m_akOrientationCube[i].VBuffer);
-    			kRenderer.ReleaseIBuffer(m_akOrientationCube[i].IBuffer);
+            	kRenderer.ReleaseVAO( m_akOrientationCube[i] );
+    			//kRenderer.ReleaseVBuffer(m_akOrientationCube[i].VBuffer);
+    			//kRenderer.ReleaseIBuffer(m_akOrientationCube[i].IBuffer);
     			m_akOrientationCube[i].dispose();
     		}
     	}

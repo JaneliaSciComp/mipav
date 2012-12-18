@@ -447,11 +447,11 @@ public class VolumeDTI extends VolumeObject
 		}
 
 
-		int iPassQuantity = m_kLightShader.GetPassQuantity();
-		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
-					kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
-		}
+		//int iPassQuantity = m_kLightShader.GetPassQuantity();
+		//for (int iPass = 0; iPass < iPassQuantity; iPass++) {
+		//	m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
+		//			kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
+		//}
 		m_kLightShader.SetPerPixelLighting( kRenderer, true );
 
 
@@ -755,12 +755,14 @@ public class VolumeDTI extends VolumeObject
 								kGlyph.UpdateRS();
 								Vector3f kPosColor = new Vector3f(kPos);
 								kPosColor.mult(kExtentsScale);
+								kShader[2].SetColor(kPosColor);
+								/*
 								if ( !kShader[2].SetColor(kPosColor) )
 								{
 									kShader[2].LoadPrograms(kRenderer, 0, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
 											kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
 									kShader[2].SetColor(kPosColor);
-								}
+								}*/
 							}
 							else
 							{

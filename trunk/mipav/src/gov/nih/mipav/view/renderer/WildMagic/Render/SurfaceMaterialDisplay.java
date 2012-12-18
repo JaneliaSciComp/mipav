@@ -66,6 +66,7 @@ implements GLEventListener, KeyListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 
         MipavInitGPU.InitGPU();
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
 
         m_pkMaterial = kMaterial;
         m_akLights = akLights;

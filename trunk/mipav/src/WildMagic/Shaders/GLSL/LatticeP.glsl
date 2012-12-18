@@ -11,11 +11,14 @@
 
 uniform vec2  Scale;
 uniform vec2  Threshold;
+in vec4 varColor;
+in vec2 varTexCoord0;
+out vec4 fragColor;
 void p_LatticeP()
 {
-    float ss = fract(gl_TexCoord[0].s * Scale.s);
-    float tt = fract(gl_TexCoord[0].t * Scale.t);
+    float ss = fract(varTexCoord0.s * Scale.s);
+    float tt = fract(varTexCoord0.t * Scale.t);
 
     if ((ss > Threshold.s) && (tt > Threshold.t)) discard;
-    gl_FragColor = gl_Color;
+    fragColor = varColor;
 }

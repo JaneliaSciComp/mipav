@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.VOIProtractor;
 import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -220,6 +221,7 @@ public class PlaneRender_WM extends GPURenderBase
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );        
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );   
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
         
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
@@ -1057,8 +1059,8 @@ public class PlaneRender_WM extends GPURenderBase
         }
         for ( int i = 0; i < 2; i++ )
         {
-            m_kXArrow[i].VBuffer.Release();
-            m_kYArrow[i].VBuffer.Release();
+            m_kXArrow[i].Reload(true);
+            m_kYArrow[i].Reload(true);
         }
     }
 
@@ -1230,7 +1232,7 @@ public class PlaneRender_WM extends GPURenderBase
             }
             for ( int i = 0; i < 2; i++ )
             {
-                m_kXArrow[i].VBuffer.Release();
+                m_kXArrow[i].Reload(true);
                 m_kXArrow[i].UpdateGS();
                 m_kXArrow[i].UpdateRS();
                 m_pkRenderer.LoadResources(m_kXArrow[i]);
@@ -1241,7 +1243,7 @@ public class PlaneRender_WM extends GPURenderBase
             pkVBuffer.SetPosition3(1, 0.06f,0.85f,0.5f);
             pkVBuffer.SetPosition3(2, 0.06f,0.95f,0.5f);
             pkVBuffer.SetPosition3(3, 0.05f,0.95f,0.5f);
-            pkVBuffer.Release();
+            m_kYArrow[0].Reload(true);
             m_kYArrow[0].UpdateGS();
             m_kYArrow[0].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[0]);
@@ -1250,7 +1252,7 @@ public class PlaneRender_WM extends GPURenderBase
             pkVBuffer.SetPosition3(0, 0.04f,0.85f,0.5f);
             pkVBuffer.SetPosition3(1, 0.055f,0.82f,0.5f);
             pkVBuffer.SetPosition3(2, 0.07f,0.85f,0.5f);
-            pkVBuffer.Release();
+            m_kYArrow[1].Reload(true);
             m_kYArrow[1].UpdateGS();
             m_kYArrow[1].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[1]);

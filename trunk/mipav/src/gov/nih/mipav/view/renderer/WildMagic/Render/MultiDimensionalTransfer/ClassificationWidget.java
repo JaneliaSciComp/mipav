@@ -12,6 +12,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -203,7 +204,7 @@ public abstract class ClassificationWidget implements Serializable
 	 * @param iY current mouse y position (MouseEvent coordinates).
 	 * @return true if this widget or one of it's control points was picked.
 	 */
-	public abstract boolean Pick( int iX, int iY );
+	public abstract boolean Pick( Renderer kRenderer, int iX, int iY );
 
 
 	/**
@@ -213,7 +214,7 @@ public abstract class ClassificationWidget implements Serializable
 	 * @param bPicked input parameter from the derived classes, when true the derived class widget shape was picked.
 	 * @return true if this widget or one of it's control points was picked.
 	 */
-	public boolean Pick( int iX, int iY, boolean bPicked )
+	public boolean Pick( Renderer kRenderer, int iX, int iY, boolean bPicked )
 	{
 		// convert the input MouseEvent coordinates into object- or world-coordinates:
 		float fX = calcObjX(iX);
@@ -274,7 +275,7 @@ public abstract class ClassificationWidget implements Serializable
 				fX += m_kWidgetMesh.VBuffer.GetPosition3fX(i);
 				fY += m_kWidgetMesh.VBuffer.GetPosition3fY(i);
 			}
-			m_kWidgetMesh.VBuffer.Release();
+			m_kWidgetMesh.Release(kRenderer);
 			fX /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 			fY /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 
@@ -364,7 +365,7 @@ public abstract class ClassificationWidget implements Serializable
 				m_kPicked = null;         
 			}
 		}
-		m_kWidgetMesh.VBuffer.Release();
+		m_kWidgetMesh.Reload(true);
 	}
 
 	/**

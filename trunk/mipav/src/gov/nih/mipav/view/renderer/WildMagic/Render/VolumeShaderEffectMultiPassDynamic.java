@@ -21,7 +21,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
 	private static final long serialVersionUID = -4552046274082477860L;
 
 	private static String basicParameters = ""
-    	+ "varying vec4 outPos;" + "\n"
+	    	+ "in vec4 outPos;" + "\n"
+	    	+ "in vec3 varTexCoord;" + "\n"
+	    	+ "out vec4 fragColor;" + "\n"
     	+ "uniform mat4 WVPMatrix;" + "\n"
     	+ "uniform sampler2D aSceneImage; " + "\n"
     	+ "uniform sampler3D bVolumeImageA; " + "\n"
@@ -113,12 +115,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String mainSetup = ""
     	+ "void p_VolumeShaderMultiPass() {" + "\n"
     	+ "vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;" + "\n"
-    	+ "vec3 back_position  = texture2D(aSceneImage, texc).xyz;" + "\n"
+    	+ "vec3 back_position  = texture(aSceneImage, texc, 0.0).xyz;" + "\n"
     	+ "if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) ) {" + "\n"
     	+ "   discard;" + "\n"
     	+ "   return;" + "\n"
     	+ "}" + "\n"
-    	+ "vec3 start = gl_TexCoord[0].xyz;" + "\n"
+    	+ "vec3 start = varTexCoord.xyz;" + "\n"
     	+ "vec3 dir = back_position - start;" + "\n"
     	+ "dir = normalize(dir);" + "\n"
     	+ "float fPos = iPass;" + "\n"
@@ -137,14 +139,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String readImageA = ""
         + "vec4 color = vec4(0.0);" + "\n"
         + "float opacity = 1.0;" + "\n"
-    	+ "color = texture3D(bVolumeImageA,position);" + "\n"
+    	+ "color = texture(bVolumeImageA,position, 0.0);" + "\n"
     	+ "vec4 normal = vec4(color.g, color.b, color.a, 0);" + "\n"
     	+ "color = vec4(color.r, color.r, color.r, color.r);" + "\n";
 
     private static String readImageB = ""
         + "vec4 color = vec4(0.0);" + "\n"
         + "float opacity = 1.0;" + "\n"
-    	+ "color = texture3D(jVolumeImageB,position);" + "\n"
+    	+ "color = texture(jVolumeImageB,position, 0.0);" + "\n"
     	+ "vec4 normal = vec4(color.g, color.b, color.a, 0);" + "\n"
     	+ "color = vec4(color.r, color.r, color.r, color.r);" + "\n";
 
@@ -152,26 +154,26 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String readImageColorA = ""
         + "vec4 color = vec4(0.0);" + "\n"
         + "float opacity = 1.0;" + "\n"
-    	+ "color = texture3D(bVolumeImageA,position);" + "\n";
+    	+ "color = texture(bVolumeImageA,position, 0.0);" + "\n";
 
     private static String readImageColorB = ""
         + "vec4 color = vec4(0.0);" + "\n"
         + "float opacity = 1.0;" + "\n"
-    	+ "color = texture3D(jVolumeImageB,position);" + "\n";
+    	+ "color = texture(jVolumeImageB,position, 0.0);" + "\n";
 
     private static String readColorMapA = ""
-    	+ "color = texture1D(cColorMapA,color.r);" + "\n"
+    	+ "color = texture(cColorMapA,color.r, 0.0);" + "\n"
     	+ "opacity = color.a;" + "\n";
 
     private static String readColorMapB = ""
-    	+ "color = texture1D(kColorMapB,color.r);" + "\n"
+    	+ "color = texture(kColorMapB,color.r, 0.0);" + "\n"
     	+ "opacity = color.a;" + "\n";
 
     private static String readColorMapRGBA = ""
     	+ "vec4 colorTemp = vec4(0);" + "\n"
     	+ "opacity = 0;" + "\n"
     	+ "if ( ColorLUTOnA.x != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(cColorMapA,color.r);" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,color.r, 0.0);" + "\n"
     	+ "   color.r = colorTemp.r;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -179,7 +181,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.r = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.y != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(cColorMapA,color.g);" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,color.g, 0.0);" + "\n"
     	+ "   color.g = colorTemp.g;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -187,7 +189,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.g = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.z != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(cColorMapA,color.b);" + "\n"
+    	+ "   colorTemp = texture(cColorMapA,color.b, 0.0);" + "\n"
     	+ "   color.b = colorTemp.b;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -199,7 +201,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "vec4 colorTemp = vec4(0);" + "\n"
     	+ "opacity = 0;" + "\n"
     	+ "if ( ColorLUTOnA.x != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(kColorMapB,color.r);" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,color.r, 0.0);" + "\n"
     	+ "   color.r = colorTemp.r;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -207,7 +209,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.r = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.y != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(kColorMapB,color.g);" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,color.g, 0.0);" + "\n"
     	+ "   color.g = colorTemp.g;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -215,7 +217,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.g = 0.0;" + "\n"
     	+ "}" + "\n"
     	+ "if ( ColorLUTOnA.z != 0.0 ) {" + "\n"
-    	+ "   colorTemp = texture1D(kColorMapB,color.b);" + "\n"
+    	+ "   colorTemp = texture(kColorMapB,color.b, 0.0);" + "\n"
     	+ "   color.b = colorTemp.b;" + "\n"
     	+ "   opacity += colorTemp.a;" + "\n"
     	+ "}" + "\n"
@@ -224,30 +226,32 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "}" + "\n";
 
     private static String gradientMagnitudeCompositeA = ""
-        	+ "vec4 colorGM = texture3D(fVolumeImageA_GM,position);" + "\n"
-        	+ "float opacityGM = texture1D(gOpacityMapA_GM,colorGM.r).r;" + "\n";
+        	+ "vec4 colorGM = texture(fVolumeImageA_GM,position, 0.0);" + "\n"
+        	+ "float opacityGM = texture(gOpacityMapA_GM,colorGM.r, 0.0).r;" + "\n";
 
     private static String gradientMagnitudeCompositeOpacityA = ""
         	+ "opacity = opacity * opacityGM;" + "\n";
 
     private static String gradientMagnitudeCompositeB = ""
-        	+ "vec4 colorGM = texture3D(nVolumeImageB_GM,position);" + "\n"
-        	+ "float opacityGM = texture1D(oOpacityMapB_GM,colorGM.r).r;" + "\n"
+        	+ "vec4 colorGM = texture(nVolumeImageB_GM,position, 0.0);" + "\n"
+        	+ "float opacityGM = texture(oOpacityMapB_GM,colorGM.r, 0.0).r;" + "\n"
         	+ "opacity = opacity * opacityGM;" + "\n";
     
     private static String blendComposite = ""
-    	+ "opacity *= Blend;" + "\n";
+    	+ "opacity *= localBlend;" + "\n";
 
     private static String compositeMIP_DRR = ""
     	+ "color.rgb *= opacity;" + "\n";
     private static String blendMIP_DRR = ""
-    	+ "color.rgb *= Blend * opacity;" + "\n";
+    	+ "color.rgb *= localBlend * opacity;" + "\n";
 
     private static String calcColorAStart = ""
-    	+ "vec4 calcColorA(vec3 position) {" + "\n";
+        	+ "vec4 calcColorA(vec3 position) {" + "\n"
+        	+ "float localBlend = Blend;" + "\n";
 
     private static String calcColorBStart = ""
-    	+ "vec4 calcColorB(vec3 position) {" + "\n";
+    	+ "vec4 calcColorB(vec3 position) {" + "\n"
+    	+ "float localBlend = Blend;" + "\n";
     
     private static String calcColorEnd = ""
         + "color.a = opacity;" + "\n"
@@ -261,26 +265,26 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
        	+ "vec4 colorB = calcColorB(position);" + "\n";
 
     private static String finalColorA = ""
-    	+ "gl_FragColor.rgb = colorA.rgb;" + "\n"
-    	+ "gl_FragColor.a = colorA.a;" + "\n";
+    	+ "fragColor.rgb = colorA.rgb;" + "\n"
+    	+ "fragColor.a = colorA.a;" + "\n";
 
     private static String finalColorB = ""
-    	+ "gl_FragColor.rgb = colorB.rgb;" + "\n"
-    	+ "gl_FragColor.a = colorB.a;" + "\n";
+    	+ "fragColor.rgb = colorB.rgb;" + "\n"
+    	+ "fragColor.a = colorB.a;" + "\n";
 
     private static String finalColorAB = ""
-    	+ "gl_FragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
-    	+ "gl_FragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n";
+    	+ "fragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
+    	+ "fragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n";
     
     private static String mainEnd = ""
-            + "if ( gl_FragColor == vec4(0) ) {" + "\n"
+            + "if ( fragColor == vec4(0) ) {" + "\n"
         	+ "   discard;" + "\n"
         	+ "}" + "\n"
         	+ "}" + "\n";
-        //+ "if ( gl_FragColor.a == 0 ) {" + "\n"
+        //+ "if ( fragColor.a == 0 ) {" + "\n"
     	//+ "   discard;" + "\n"
     	//+ "}" + "\n"
-        //+ "if ( (gl_FragColor.r == 0) && (gl_FragColor.g == 0) && (gl_FragColor.b == 0) ) {" + "\n"
+        //+ "if ( (fragColor.r == 0) && (fragColor.g == 0) && (fragColor.b == 0) ) {" + "\n"
     	//+ "   discard;" + "\n"
     	//+ "}" + "\n"
     	//+ "}" + "\n";
@@ -308,7 +312,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     
     private static String clipEnd = ""
     	+ "if ( bClipped == 1.0 ) {" + "\n"
-    	//+ "   gl_FragColor = vec4(0);" + "\n"
+    	//+ "   fragColor = vec4(0);" + "\n"
     	+ "   discard;" + "\n"
     	+ "   return;" + "\n"
     	+ "}" + "\n";
@@ -339,11 +343,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "" + "\n";
 
     public static String surfaceInitColorA = ""
-        	+ "vec4 normal = texture3D(eNormalMapA,position);" + "\n"
+        	+ "vec4 normal = texture(eNormalMapA,position, 0.0);" + "\n"
         	+ "normal.w = 0.0;" + "\n";
 
     public static String surfaceInitColorB = ""
-        	+ "vec4 normal = texture3D(mNormalMapB,position);" + "\n"
+        	+ "vec4 normal = texture(mNormalMapB,position, 0.0);" + "\n"
         	+ "normal.w = 0.0;" + "\n";
     
     public static String surfaceCompositeInit = ""
@@ -399,7 +403,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "                              CameraModelPosition," + "\n"
     	+ "                              LocalMaterialEmissive.xyz," + "\n"
     	+ "                              LocalMaterialAmbient.xyz," + "\n"
-    	+ "                              LocalMaterialDiffuse.xyzw," + "\n"
+    	+ "                              LocalMaterialDiffuse.xyz," + "\n"
     	+ "                              LocalMaterialSpecular.xyzw," + "\n"
     	+ "                              Light#ModelDirection.xyz," + "\n"
     	+ "                              Light#Ambient.xyz," + "\n"
@@ -457,16 +461,16 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
 
 
     private static String multiHistogramInitA = ""
-    	+ "vec4 colorGM = texture3D(fVolumeImageA_GM,position);" + "\n"
+    	+ "vec4 colorGM = texture(fVolumeImageA_GM,position, 0.0);" + "\n"
     	+ "float fMapZ = colorGM.a;" + "\n"
     	+ "float multiHOpacityTemp = 0;" + "\n"
     	+ "float multiHOpacitySum = 0;" + "\n"
-    	+ "vec4 multiHColorSum = 0;" + "\n"
-    	+ "vec4 widgetColor = 0;" + "\n"
+    	+ "vec4 multiHColorSum = vec4(0);" + "\n"
+    	+ "vec4 widgetColor = vec4(0);" + "\n"
     	+ "" + "\n";
 
     private static String multiHistogramInitB = ""
-    	+ "vec4 colorGM = texture3D(nVolumeImageB_GM,position);" + "\n"
+    	+ "vec4 colorGM = texture(nVolumeImageB_GM,position, 0.0);" + "\n"
     	+ "float fMapZ = colorGM.a;" + "\n"
     	+ "float multiHOpacityTemp = 0;" + "\n"
     	+ "float multiHOpacitySum = 0;" + "\n"
@@ -497,7 +501,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "widgetColor = LevColor#;" + "\n"
     	+ "" + "\n";
     private static String multiHistogramReadColorMap = ""
-        + "widgetColor = texture1D(hColorMap#, multiHOpacityTemp );" + "\n"
+        + "widgetColor = texture(hColorMap#, multiHOpacityTemp, 0.0 );" + "\n"
         + "widgetColor.a = LevColor#.a;" + "\n"
     	+ "" + "\n";
     private static String multiHistogramCompositeColorMap = ""
@@ -507,7 +511,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	//+ "multiHOpacitySum = multiHOpacityTemp + (1 - multiHOpacityTemp) * multiHOpacitySum;" + "\n"
     	+ "multiHColorSum += (widgetColor * multiHOpacityTemp);" + "\n"
     	+ "multiHOpacitySum += multiHOpacityTemp;" + "\n"
-    	+ "Blend += (multiHOpacityTemp * LevColor#.a);" + "\n"
+    	+ "localBlend += (multiHOpacityTemp * LevColor#.a);" + "\n"
     	//+ "Blend += (multiHOpacityTemp);" + "\n"
     	+ "" + "\n";
 
@@ -626,7 +630,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
        if ( super.SetLight(kLightType, afType) )
        {
     	   m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
-    	   GetCProgram(0).Release();
+    	   GetCProgram(0).Reload(true);
     	   return true;
        }
 	   return false;
@@ -643,7 +647,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     		m_iUsedWidgets = kLWS.size();
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
-    		GetCProgram(0).Release();
+    		GetCProgram(0).Reload(true);
     		return;
     	}
     	boolean bUpdate = false;
@@ -668,7 +672,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
 		if ( bUpdate )
 		{
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
-    		GetCProgram(0).Release();
+    		GetCProgram(0).Reload(true);
     		//System.err.println( "Widget Texture Use Changed" );
     		return;
 		}
@@ -887,7 +891,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
     		if ( GetCProgram(0) != null )
     		{
-    			GetCProgram(0).Release();
+    			GetCProgram(0).Reload(true);
     		}
     	}
     }
@@ -1157,8 +1161,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     			}
     		}
     	}
-    	
+    	//System.err.println("START");
 		//System.err.println( text );
+    	//System.err.println("END");
     	return text;
     }
     
