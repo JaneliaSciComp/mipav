@@ -1365,7 +1365,7 @@ public class TransMatrixd extends Matrix4d
      * @param  pt   3D double point to be transformed
      * @param  tPt  transformed point
      */
-    public final void transformAsPoint3Df(Vector3d pt, Vector3d tPt) {
+    public final void transformAsPoint3Dd(Vector3d pt, Vector3d tPt) {
 
         tPt.X = ((pt.X * M00) +
                          (pt.Y * M01) +
@@ -1709,6 +1709,8 @@ public class TransMatrixd extends Matrix4d
 
         return s;
     }
+    
+    
 
 
 
