@@ -1431,7 +1431,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 // intensity, or standard deviation of intensity, those properties were entered as Red,
                 // Green, Blue and we should display them differently.
                 if (calculator.isColor()
-                        && (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
+                        && ((VOIStatisticList.statisticDescription[k].indexOf("Intensit") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Center of Mass") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Coefficient of skewness") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Coefficient of kurtosis") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Mode Count") != -1))) {
                     String temp = "R: "
                             + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Red"
                                     + end);
