@@ -78,6 +78,7 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     	Vector<VOIBase>[] xCurveSortedCurves = null;
     	Vector<VOIBase>[] yCurveSortedCurves = null;
     	Vector<VOIBase>[] zCurveSortedCurves = null;
+    	Vector<VOIBase>[] nCurveSortedCurves = null;
     	
     	
     	
@@ -89,6 +90,8 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 	    	yCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.YPLANE, extents[1]);
 	
 	    	zCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.ZPLANE, extents[2]);
+	    	
+	    	nCurveSortedCurves = ((VOI) getUserObject()).getSortedCurves(VOIBase.NOT_A_PLANE, 0);
 	
 	    	
 	    	
@@ -102,6 +105,10 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 	    		add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "Z Plane",zCurveSortedCurves));
 	    		
 	    	}
+	    	if(nCurveSortedCurves!= null) {
+                add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "NOT A Plane",nCurveSortedCurves));
+                
+            }
     	}else {
     		Vector<VOIBase> curveList = ((VOI) getUserObject()).getCurves();
     		if (curveList.size() > 0) {
