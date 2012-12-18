@@ -1958,6 +1958,11 @@ public class VOI extends ModelSerialCloneable {
 					kTemp[(int)curves.elementAt(i).elementAt(0).Z].add( curves.elementAt(i) );
 				}
 			}
+			else if (iPlane == VOIBase.NOT_A_PLANE) {
+			    if (curves.elementAt(i).getPlane() == VOIBase.NOT_A_PLANE) {
+			        System.err.println("Contour " + i + " does not lie on a X, Y, or Z plane");
+			    }
+			}
 			else if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
 			{
 				int slice = curves.elementAt(i).slice(iPlane);
