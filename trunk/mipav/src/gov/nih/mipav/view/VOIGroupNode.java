@@ -105,10 +105,7 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 	    		add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "Z Plane",zCurveSortedCurves));
 	    		
 	    	}
-	    	if(nCurveSortedCurves!= null) {
-                add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "NOT A Plane",nCurveSortedCurves));
-                
-            }
+	    	
     	}else {
     		Vector<VOIBase> curveList = ((VOI) getUserObject()).getCurves();
     		if (curveList.size() > 0) {
