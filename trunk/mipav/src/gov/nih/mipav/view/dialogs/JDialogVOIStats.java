@@ -577,8 +577,9 @@ public class JDialogVOIStats extends JDialogBase
                       excluder.getRangeFlag(), voiProcessingSet); 
         
         algoVOI.addListener(this);
-        //only calculate these if appropriate box is checked for speed.
-        if(processingMode != AlgorithmVOIProps.PROCESS_PER_VOI) {
+        // only calculate these if appropriate box is checked for speed.
+        // also, only use one slice if 2D image
+        if(processingMode != AlgorithmVOIProps.PROCESS_PER_VOI || image.getNDims() == 2) {
             listPanel.setSliceCount(1);
         } else {
             listPanel.setSliceCount(image.getExtents()[2]);
