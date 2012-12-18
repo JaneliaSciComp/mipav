@@ -1960,7 +1960,7 @@ public class VOI extends ModelSerialCloneable {
 			}
 			else if (iPlane == VOIBase.NOT_A_PLANE) {
 			    if (curves.elementAt(i).getPlane() == VOIBase.NOT_A_PLANE) {
-			        System.err.println("Contour " + i + " does not lie on a X, Y, or Z plane");
+			        System.err.println("Contour " + i + " does not lie on an X, Y, or Z plane");
 			    }
 			}
 			else if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
