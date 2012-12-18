@@ -148,6 +148,7 @@ public class demoModel
 			{
 				System.err.println( "error reading normals" );
 			}
+			System.err.println( this.normalArraySize );
 				
 			this.normals = new float[this.numVertcies*this.normalSize];
 			for ( int i = 0; i < this.normals.length; i++ )

@@ -130,6 +130,9 @@ final int iBound = 256;
 		}
 		m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();
+		
+		Program pkCProgram = m_spkVolumeTexture.GetCProgram(0);
+		pkCProgram.GetUC("CommonAlpha").SetDataSource(m_afCommonAlpha);
 	}
 
 	@Override
@@ -223,6 +226,7 @@ final int iBound = 256;
 
 		CreateVolumeTexture();
 		CreateGridMesh();
+
 	}
 	void CreateGridMesh ()
 	{
@@ -310,10 +314,6 @@ final int iBound = 256;
 		m_spkVolumeTexture = new ShaderEffect(1);
 		m_spkVolumeTexture.SetVShader(0,pkVShader);
 		m_spkVolumeTexture.SetPShader(0,pkPShader);
-
-		m_pkRenderer.LoadResources(m_spkVolumeTexture);
-		Program pkCProgram = m_spkVolumeTexture.GetCProgram(0);
-		pkCProgram.GetUC("CommonAlpha").SetDataSource(m_afCommonAlpha);
 	}
 
 

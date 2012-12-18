@@ -16,79 +16,81 @@ uniform float ShowSurface;
 uniform float ZSlice;
 uniform float UseZSlice;
 
+in vec3 varTexCoord;
+out vec4 fragColor;
 void p_Color_Opacity_TextureP()
 {
-    vec3 texCoord = gl_TexCoord[0].xyz;
+    vec3 texCoord = varTexCoord.xyz;
     if ( UseZSlice != 0.0 )
     {
         texCoord.z = ZSlice;
     }
-    gl_FragColor = vec4(0.0);
-    vec4 color = texture3D(bVolumeImageA, texCoord );
+    fragColor = vec4(0.0);
+    vec4 color = texture(bVolumeImageA, texCoord, 0.0 );
     if ( IsColorA != 0.0 )
     {
         if ( ColorLUTOnA.x != 0.0 )
         {
-            gl_FragColor.r = texture1D(cColorMapA,color.r).r;
+            fragColor.r = texture(cColorMapA,color.r, 0.0).r;
         }
         if ( ColorLUTOnA.y != 0.0 )
         {
-            gl_FragColor.g = texture1D(cColorMapA,color.g).g;
+            fragColor.g = texture(cColorMapA,color.g, 0.0).g;
         }
         if ( ColorLUTOnA.z != 0.0 )
         {
-            gl_FragColor.b = texture1D(cColorMapA,color.b).b;
+            fragColor.b = texture(cColorMapA,color.b, 0.0).b;
         }
     }
     else
     {
-        gl_FragColor.rgb = texture1D(cColorMapA, color.r).rgb;
+        fragColor.rgb = texture(cColorMapA, color.r, 0.0).rgb;
     }
     if ( ABBlend != 1.0 )
     {
-        color = texture3D(jVolumeImageB, texCoord );
+        color = texture(jVolumeImageB, texCoord, 0.0 );
         if ( IsColorB != 0.0 )
         {
             if ( ColorLUTOnB.x != 0.0 )
             {
-                gl_FragColor.r = ABBlend * gl_FragColor.r + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).r;
+                fragColor.r = ABBlend * fragColor.r + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).r;
             }
             else
             {
-                gl_FragColor.r = ABBlend * gl_FragColor.r;
+                fragColor.r = ABBlend * fragColor.r;
             }
             if ( ColorLUTOnB.y != 0.0 )
             {
-                gl_FragColor.g = ABBlend * gl_FragColor.g + (1.0 - ABBlend) * texture1D(kColorMapB, color.g).g;
+                fragColor.g = ABBlend * fragColor.g + (1.0 - ABBlend) * texture(kColorMapB, color.g, 0.0).g;
             }
             else
             {
-                gl_FragColor.g = ABBlend * gl_FragColor.g;
+                fragColor.g = ABBlend * fragColor.g;
             }
             if ( ColorLUTOnB.z != 0.0 )
             {
-                gl_FragColor.b = ABBlend * gl_FragColor.b + (1.0 - ABBlend) * texture1D(kColorMapB, color.b).b;
+                fragColor.b = ABBlend * fragColor.b + (1.0 - ABBlend) * texture(kColorMapB, color.b, 0.0).b;
             }
             else
             {
-                gl_FragColor.b = ABBlend * gl_FragColor.b;
+                fragColor.b = ABBlend * fragColor.b;
             }
         }
         else
         {
-            gl_FragColor.rgb = ABBlend * gl_FragColor.rgb + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).rgb;
+            fragColor.rgb = ABBlend * fragColor.rgb + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).rgb;
         }
     }
 
     if ( ShowSurface != 0.0 )
     {
-        vec4 surfaceColor = texture3D(iSurfaceImage, texCoord);
+        vec4 surfaceColor = texture(iSurfaceImage, texCoord, 0.0);
         if ( (surfaceColor.r != 0) || (surfaceColor.g != 0) || (surfaceColor.b != 0))
         {
-            gl_FragColor.rgb = surfaceColor.rgb;
+            fragColor.rgb = surfaceColor.rgb;
         }
     }
     
-    gl_FragColor.a = Blend;
+    fragColor.a = Blend;
 }
 //----------------------------------------------------------------------------

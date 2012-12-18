@@ -31,6 +31,7 @@ public class VolumePreRenderEffect extends ShaderEffect
     /**  */
     private static final long serialVersionUID = -9019623746108147953L;
 
+    private Vector3f m_kPos = new Vector3f();
     /** Creates an new VolumePreRenderEffect 
      * @param bUnique when true create unique shader programs, when false share shader programs.
      */
@@ -92,6 +93,7 @@ public class VolumePreRenderEffect extends ShaderEffect
 
     public boolean SetColor( Vector3f kPos )
     {
+    	m_kPos.copy(kPos);
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram == null )
         {
@@ -114,6 +116,12 @@ public class VolumePreRenderEffect extends ShaderEffect
                                 Program pkPProgram, Program pkCProgram)
     {
         Blend(1);
+        if ( pkCProgram.GetUC("ConstantColor") != null)
+        {
+            pkCProgram.GetUC("ConstantColor").GetData()[0] = m_kPos.X;
+            pkCProgram.GetUC("ConstantColor").GetData()[1] = m_kPos.Y;
+            pkCProgram.GetUC("ConstantColor").GetData()[2] = m_kPos.Z;
+        }
     }
 
     /* (non-Javadoc)

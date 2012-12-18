@@ -967,7 +967,7 @@ public class MjCorticalMesh_WM {
         {
             m_kMesh.UpdateMS();
         }
-        m_kMesh.VBuffer.Release();
+        m_kMesh.Reload(true);
     }
 
     /**

@@ -938,15 +938,15 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_kAlphaState.set(0, spkSave);
     }
     
-    public void LoadPrograms (Renderer kRenderer, int iPass, int iMaxColors, int iMaxTCoords,
+    public void LoadPrograms (Renderer kRenderer, Geometry pkGeometry, int iPass, int iMaxColors, int iMaxTCoords,
             int iMaxVShaderImages, int iMaxPShaderImages)
     {
-    	super.LoadPrograms(kRenderer, 0, iMaxColors, iMaxTCoords, iMaxVShaderImages, iMaxPShaderImages );
+    	super.LoadPrograms(kRenderer, pkGeometry, 0, iMaxColors, iMaxTCoords, iMaxVShaderImages, iMaxPShaderImages );
     }
 
     public void LoadResources (Renderer pkRenderer, Geometry pkGeometry)
     {
-    	LoadPrograms(pkRenderer, 0,pkRenderer.GetMaxColors(),
+    	LoadPrograms(pkRenderer, pkGeometry, 0,pkRenderer.GetMaxColors(),
     			pkRenderer.GetMaxTCoords(),pkRenderer.GetMaxVShaderImages(),
     			pkRenderer.GetMaxPShaderImages());
 
@@ -954,8 +954,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	//Program pkVProgram = m_kVShader.get(iPass).GetProgram();
     	//pkRenderer.LoadVProgram(pkVProgram);
     	//pkRenderer.LoadPProgram(m_kPShader.get(iPass).GetProgram());
-    	Program pkVProgram = m_kCompiledPrograms.get(0);
-    	pkRenderer.LoadVProgram(pkVProgram);
+    	Program pkCProgram = m_kCompiledPrograms.get(0);
+    	pkRenderer.LoadProgram(pkCProgram);
 
     	// Load the textures into video memory.
     	final int iPTQuantity = GetTextureQuantity(0);
@@ -966,10 +966,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
     	if (pkGeometry != null)
     	{
-    		// Load the vertex buffer into video memory.
-    		Attributes rkIAttr = pkVProgram.GetInputAttributes();
-    		Attributes rkOAttr = pkVProgram.GetOutputAttributes();
-    		pkRenderer.LoadVBuffer(rkIAttr,rkOAttr,pkGeometry.VBuffer);
+    		pkRenderer.LoadVAO(pkGeometry);
     	}
     }
 
@@ -985,8 +982,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	// Release the programs from video memory.            
     	if ( m_kCompiledPrograms != null )
     	{
-    		Program pkVProgram = m_kCompiledPrograms.get(0);
-    		pkRenderer.ReleaseVProgram(pkVProgram);
+    		Program pkCProgram = m_kCompiledPrograms.get(0);
+    		pkRenderer.ReleaseProgram(pkCProgram);
 
     		// Release the programs from the shader objects.
     		ReleasePrograms(0);

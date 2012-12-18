@@ -102,6 +102,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
         MipavInitGPU.InitGPU();
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
     }
     public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -117,6 +118,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
         MipavInitGPU.InitGPU();
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
     }
 
     @Override
@@ -356,7 +358,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 1, 1,0, fZ);
         m_pkPlane.VBuffer.SetTCoord3(0, 2, 0,1, fZ);
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
-        m_pkPlane.VBuffer.Release();
+        m_pkPlane.Reload(true);
         m_bDisplay = true;
     }
 }

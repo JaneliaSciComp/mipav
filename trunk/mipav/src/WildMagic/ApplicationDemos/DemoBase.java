@@ -27,10 +27,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
@@ -63,9 +60,7 @@ implements GLEventListener, KeyListener
         
         String kExternalDirs = getExternalDirs();        
         ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        m_pkRenderer.SetExternalDir(kExternalDirs);
     }
 
     public DemoBase( String title, FrameBuffer.BufferingType eBuffering )
@@ -82,10 +77,8 @@ implements GLEventListener, KeyListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
         
         String kExternalDirs = getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );    
+        m_pkRenderer.SetExternalDir(kExternalDirs);  
     }
     
     public DemoBase( String title, GLCanvas canvas )
@@ -101,10 +94,8 @@ implements GLEventListener, KeyListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );         
         
         String kExternalDirs = getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );     
+        m_pkRenderer.SetExternalDir(kExternalDirs); 
     }
     
     public DemoBase( String title, int width, int height )
@@ -121,9 +112,7 @@ implements GLEventListener, KeyListener
         
         String kExternalDirs = getExternalDirs();        
         ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        m_pkRenderer.SetExternalDir(kExternalDirs);
     }
 
     public DemoBase ( final String acWindowTitle, int iXPosition,
@@ -151,9 +140,7 @@ implements GLEventListener, KeyListener
         
         String kExternalDirs = getExternalDirs();        
         ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        m_pkRenderer.SetExternalDir(kExternalDirs);
     }
     
     public GLCanvas GetCanvas()

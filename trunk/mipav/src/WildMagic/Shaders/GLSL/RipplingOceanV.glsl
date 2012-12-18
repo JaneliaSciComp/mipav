@@ -31,10 +31,18 @@ uniform vec4   WaveOffset;
 uniform vec4   WaveHeight;
 uniform vec4   BumpSpeed;
 uniform vec4   Constants;
-        // Constants.x = averageDuDxDvDy
-        // Constants.y = ambient
-        // Constants.z = textureRepeat
-        // Constants.w = time
+
+in vec3 inPosition;
+in vec3 inNormal;
+in vec2 inTexcoord0;
+in vec4 inColor0;
+out vec4 varTexcoord0;
+out vec4 varTexcoord1;
+out vec4 varTexcoord2;
+out vec4 varTexcoord3;
+out vec4 varTexcoord4;
+out vec4 varTexcoord5;
+out vec4 varTexcoord6;
 void v_RipplingOceanV()
 {
     // A numerical constant.
@@ -45,7 +53,7 @@ void v_RipplingOceanV()
     // the sin function.
  
     // Wave position at a given time is an input to the sinusoidal function.
-    vec4 kOffset = gl_MultiTexCoord0.x*WaveDirX + gl_MultiTexCoord0.y*WaveDirY + 
+    vec4 kOffset = inTexcoord0.x*WaveDirX + inTexcoord0.y*WaveDirY + 
         WaveSpeed*Constants.w + WaveOffset;
 
     // Map the offset components into the interval [-pi/2,pi/2).
@@ -63,7 +71,7 @@ void v_RipplingOceanV()
 
     // Add this wave height to the original position (along the normal).
     vec4 kWaveModelPosition;
-    kWaveModelPosition.xyz = fWaveHeight*gl_Normal.xyz + gl_Vertex.xyz;
+    kWaveModelPosition.xyz = fWaveHeight*inNormal.xyz + inPosition.xyz;
     kWaveModelPosition.w = 1.0;
     gl_Position = WVPMatrix*kWaveModelPosition;
 
@@ -80,34 +88,34 @@ void v_RipplingOceanV()
     kNormalOffset.z = fTemp;
     kNormalOffset *= Constants.x;
 
-    vec3 kTmpNormal = gl_Normal.xyz;
+    vec3 kTmpNormal = inNormal.xyz;
     kTmpNormal.xy += kNormalOffset.xy;
     kTmpNormal = normalize(kTmpNormal);    
-    gl_TexCoord[5].xyz = MapToUnit(kTmpNormal);
+    varTexcoord5.xyz = MapToUnit(kTmpNormal);
     
-    vec3 kTmpTangent = MapFromUnit(gl_Color.xyz);
+    vec3 kTmpTangent = MapFromUnit(inColor0.xyz);
     kTmpTangent.z += kNormalOffset.z;
     kTmpTangent = normalize(kTmpTangent);
-    gl_TexCoord[3].xyz = MapToUnit(kTmpTangent);
+    varTexcoord3.xyz = MapToUnit(kTmpTangent);
 
-    gl_TexCoord[4].xyz = MapToUnit(normalize(cross(kTmpNormal,kTmpTangent)));
+    varTexcoord4.xyz = MapToUnit(normalize(cross(kTmpNormal,kTmpTangent)));
 
     // Calculate the view direction for the vertex.
-    gl_TexCoord[2].xyz = MapToUnit(
+    varTexcoord2.xyz = MapToUnit(
         normalize(kWaveModelPosition.xyz - CameraWorldPosition));
 
     // Create texture coordinates.  The bump maps have a speed of bumpspeed
     // which is offset from their original texture coordinates.  If you want
     // the texture to repeat on the quad more often, then ramp up TexRepeat,
     // which gives the impression of being farther away.
-    gl_TexCoord[0].xy = (Constants.w*BumpSpeed.xy + Constants.z*gl_MultiTexCoord0.xy);
+    varTexcoord0.xy = (Constants.w*BumpSpeed.xy + Constants.z*inTexcoord0.xy);
     
     // Swizzle so that the textures will never line up.
-    gl_TexCoord[1].yx = (Constants.w*BumpSpeed.wz + Constants.z*gl_MultiTexCoord0.xy);
+    varTexcoord1.yx = (Constants.w*BumpSpeed.wz + Constants.z*inTexcoord0.xy);
 
     // Return the light direction, which assumes kLightDir is normalized.
     // The w-component is used to pass through the ambient value.
-    gl_TexCoord[6].xyz = MapToUnit(LightDir);
-    gl_TexCoord[6].w = Constants.y;
+    varTexcoord6.xyz = MapToUnit(LightDir);
+    varTexcoord6.w = Constants.y;
 }
 //----------------------------------------------------------------------------

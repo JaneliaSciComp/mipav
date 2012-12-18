@@ -973,8 +973,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                 	aiData[j+2] = temp;
                 }
                 kMesh.UpdateMS(true);
-                kMesh.IBuffer.Release();
-                kMesh.VBuffer.Release();
+                kMesh.Reload(true);
             }
         }
     }

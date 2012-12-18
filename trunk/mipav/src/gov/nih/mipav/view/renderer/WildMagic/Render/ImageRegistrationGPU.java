@@ -23,10 +23,7 @@ import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Polypoint;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
@@ -127,10 +124,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kTarget = kTarget;
         m_kMoving = kMoving;
         String kExternalDirs = MipavInitGPU.getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );     
+        m_pkRenderer.SetExternalDir(kExternalDirs);
     } 
     
     public static ImageRegistrationGPU create( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
@@ -283,14 +278,14 @@ public class ImageRegistrationGPU extends JavaApplication3D
         cleanUp();
         if ( m_kTextureA != null )
         {
-            m_kTextureA.Release();
+            m_kTextureA.Release(m_pkRenderer);
             m_kTextureA.GetImage().dispose();
             m_kTextureA.dispose();
             m_kTextureA = null;
         }
         if ( m_kTextureB != null )
         {
-            m_kTextureB.Release();
+            m_kTextureB.Release(m_pkRenderer);
             m_kTextureB.GetImage().dispose();
             m_kTextureB.dispose();
             m_kTextureB = null;
@@ -348,9 +343,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
     
         ImageCatalog.GetActive().dispose();
-        VertexProgramCatalog.GetActive().dispose();     
-        PixelProgramCatalog.GetActive().dispose();
-        CompiledProgramCatalog.GetActive().dispose();
                 
         super.dispose();
     }
@@ -796,7 +788,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kImagePointsDual.UpdateRS();    
         
 
-        return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
+        return m_pkRenderer.LoadVAO( m_kImagePointsDual );
+        //return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
     }
     
     

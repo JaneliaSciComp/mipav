@@ -10,6 +10,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -56,7 +57,7 @@ public class SquareClassificationWidget extends ClassificationWidget
 	/* (non-Javadoc)
 	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#Pick(int, int)
 	 */
-	public boolean Pick( int iX, int iY )
+	public boolean Pick( Renderer kRenderer, int iX, int iY )
 	{
 		boolean bPicked = false;
 		m_kPicked = null;
@@ -70,7 +71,7 @@ public class SquareClassificationWidget extends ClassificationWidget
 			m_kPicked = m_kWidgetMesh;
 			bPicked = true;
 		}
-		return super.Pick(iX,iY,bPicked);
+		return super.Pick(kRenderer, iX,iY,bPicked);
 	}
     
     /* (non-Javadoc)
@@ -367,7 +368,8 @@ public class SquareClassificationWidget extends ClassificationWidget
 		kPos.Y = centerY + diffY;
 		m_kWidgetMesh.VBuffer.SetPosition3(3, kPos);
 		m_kWidgetMesh.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
-        m_kWidgetMesh.VBuffer.Release();
+        m_kWidgetMesh.Reload(true);
+		m_kOutline.Reload(true);
 		
         // Move the upper and lower spheres based on the square corners:
         m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
@@ -441,7 +443,8 @@ public class SquareClassificationWidget extends ClassificationWidget
             		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
             m_kWidgetMesh.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
         }
-        m_kWidgetMesh.VBuffer.Release();
+        m_kWidgetMesh.Reload(true);
+		m_kOutline.Reload(true);
 
         // Move the upper and lower spheres based on the square corners:
         m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));

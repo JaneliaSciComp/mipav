@@ -597,8 +597,8 @@ implements GLEventListener, KeyListener
 				// Release the vertex buffers since the lighting effects have a
 				// different vertex layout than the default effect (the lights
 				// require normal vectors).
-				m_spkPlane.VBuffer.Release();
-				m_spkSphere.VBuffer.Release();
+				m_spkPlane.Reload(true);
+				m_spkSphere.Reload(true);
 
 				m_spkPlane.DetachEffect(m_spkDefaultEffect);
 				m_spkSphere.DetachEffect(m_spkDefaultEffect);
@@ -638,8 +638,8 @@ implements GLEventListener, KeyListener
 				// Release the vertex buffers since the default effect has a
 				// different vertex layout than the lighting effects (the lights
 				// require normal vectors).
-				m_spkPlane.VBuffer.Release();
-				m_spkSphere.VBuffer.Release();
+				m_spkPlane.Reload(true);
+				m_spkSphere.Reload(true);
 
 				m_spkPlane.AttachEffect(m_spkDefaultEffect);
 				m_spkSphere.AttachEffect(m_spkDefaultEffect);

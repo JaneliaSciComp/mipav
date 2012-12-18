@@ -529,8 +529,9 @@ public class VolumeSurface extends VolumeObject
         }
         if ( m_kMesh != null )
         {
-        	kRenderer.ReleaseVBuffer(m_kMesh.VBuffer);
-        	kRenderer.ReleaseIBuffer(m_kMesh.IBuffer);        	
+        	kRenderer.ReleaseVAO( m_kMesh );
+        	//kRenderer.ReleaseVBuffer(m_kMesh.VBuffer);
+        	//kRenderer.ReleaseIBuffer(m_kMesh.IBuffer);        	
             m_kMesh.dispose();
             m_kMesh = null;
         }
@@ -814,11 +815,7 @@ public class VolumeSurface extends VolumeObject
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
 
 
-        Attributes kIAttr = kRenderer.GetVBufferInputAttributes( m_kMesh.VBuffer );
-        if ( kIAttr == null )
-        {
-            kIAttr = m_kMesh.VBuffer.GetAttributes();
-        }
+        Attributes kIAttr = kIAttr = m_kMesh.VBuffer.GetAttributes();
         if ( iBrushSize > 1 )
         {
             Vector3f kDiff = new Vector3f();
@@ -1109,7 +1106,7 @@ public class VolumeSurface extends VolumeObject
             {
                 m_kMesh.VBuffer.SetColor3( 0, i, kColor );
             }
-            m_kMesh.VBuffer.Release();
+            m_kMesh.Reload(true);
         }
     }
 
@@ -1164,7 +1161,7 @@ public class VolumeSurface extends VolumeObject
             {
                 m_kMesh.VBuffer.SetColor3( 0, i, kMaterial.Diffuse );
             }
-            m_kMesh.VBuffer.Release();
+            m_kMesh.Reload(true);
             m_kScene.UpdateGS();
         }
     }
@@ -1250,7 +1247,7 @@ public class VolumeSurface extends VolumeObject
         }
 
         m_kMesh.UpdateMS();
-        m_kMesh.VBuffer.Release();
+        m_kMesh.Reload(true);
     }
 
     /**
@@ -1279,7 +1276,7 @@ public class VolumeSurface extends VolumeObject
         }
 
         m_kMesh.UpdateMS();
-        m_kMesh.VBuffer.Release();
+        m_kMesh.Reload(true);
     }
     /**
      * Derived from the first 2 of the 3 components of AlgorithmBrainExtraction Note that m_fStiffness does not increase
@@ -1365,7 +1362,7 @@ public class VolumeSurface extends VolumeObject
         
 
         m_kMesh.UpdateMS();
-        m_kMesh.VBuffer.Release();
+        m_kMesh.Reload(true);
     }
     /**
      * Switches between different ways of displaying the geodesic path (Euclidean, Geodesic, or Mesh).

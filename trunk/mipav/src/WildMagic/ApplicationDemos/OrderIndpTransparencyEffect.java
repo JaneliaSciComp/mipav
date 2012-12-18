@@ -37,7 +37,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
         String dir = new String( "dual_depth_peeling" + File.separator + "shaders" + File.separator ); 
 		
         m_kVShader.set(0, new VertexShader( dir + "wavg_init_vertex2.glsl"));
-        m_kPShader.set(0, new PixelShader( dir + "wavg_init_fragment2.glsl"));
+        m_kPShader.set(0, new PixelShader( dir + "wavg_init_fragment2a.glsl"));
     }
     
     public OrderIndpTransparencyEffect (final String rkBaseName, float fAlpha)
@@ -59,6 +59,15 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
         m_kBackgroundColor = kBackgroundColor;
     	String dir = new String( "dual_depth_peeling" + File.separator + "shaders" + File.separator ); 
 
+    	/*
+        PixelShader kPShader = new PixelShader( "TextureP" );
+        kPShader.SetTextureQuantity(1);
+        kPShader.SetTexture( 0, akTextures[0] );
+        kPShader.SetImageName( 0, akTextures[0].GetName() );
+        */
+    	
+
+        
         PixelShader kPShader = new PixelShader( dir + "wavg_final_fragment2.glsl");
         kPShader.SetTextureQuantity(akTextures.length);
         for ( int i = 0; i < akTextures.length; i++ )
@@ -66,7 +75,10 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             kPShader.SetTexture( i, akTextures[i] );
             kPShader.SetImageName( i, akTextures[i].GetName() );
         }
-    	m_kVShader.set(0, new VertexShader( dir + "wavg_final_vertex2.glsl"));
+    	//m_kVShader.set(0, new VertexShader( dir + "wavg_final_vertex2.glsl"));
+
+
+    	m_kVShader.set(0, new VertexShader( "TextureV" ));
     	m_kPShader.set(0, kPShader);
         
     }

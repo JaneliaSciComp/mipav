@@ -119,10 +119,14 @@ public class VolumeRayCast extends VolumeObject
     {            	
         // Create a scene graph with the face model as the leaf node.
         m_kScene = new Node();
+
+        m_kCull = new CullState();
+        //m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+        m_kCull.FrontFace = CullState.FrontMode.FT_CCW;
+        m_kScene.AttachGlobalState(m_kCull);
+        
         CreateBox();
         m_kScene.AttachChild( m_kMesh );
-        m_kCull = new CullState();
-        m_kScene.AttachGlobalState(m_kCull);
 
         m_kAlpha = new AlphaState();
         m_kAlpha.BlendEnabled = true;
@@ -144,8 +148,9 @@ public class VolumeRayCast extends VolumeObject
         }
         if ( m_kMesh != null )
         {
-        	kRenderer.ReleaseVBuffer( m_kMesh.VBuffer );
-        	kRenderer.ReleaseIBuffer( m_kMesh.IBuffer );
+        	kRenderer.ReleaseVAO( m_kMesh );
+        	//kRenderer.ReleaseVBuffer( m_kMesh.VBuffer );
+        	//kRenderer.ReleaseIBuffer( m_kMesh.IBuffer );
             m_kMesh.dispose();
             m_kMesh = null;
         }
@@ -280,18 +285,9 @@ public class VolumeRayCast extends VolumeObject
 
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
-    	//if ( m_kVolumeImageB.GetImage() != null )
-    	{
-    		//m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-            //    targetTexture);
-    	}
-    	//else
-    	{    		
-    		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB,
-    				targetTexture);
-    	}
-        kRenderer.LoadResources(m_kVolumeShaderEffect);
-        kRenderer.LoadResources(m_kMesh);
+    	m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB, targetTexture);
+    	m_kVolumeShaderEffect.LoadResources(kRenderer,m_kMesh);
+    	kRenderer.LoadResources(m_kMesh);
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
         Vector3f kLength = new Vector3f( m_fX, m_fY, m_fZ );
@@ -483,6 +479,9 @@ public class VolumeRayCast extends VolumeObject
         int i = 0;
         int[] aiIndex = pkIB.GetData();
 
+        //System.err.println( m_fX + " " + m_fY + " " + m_fZ );
+        //System.err.println( fMaxX + " " + fMaxY + " " + fMaxZ );
+
         // generate geometry
         // front
         pkVB.SetPosition3(0,0,0,0);
@@ -595,6 +594,7 @@ public class VolumeRayCast extends VolumeObject
             }
         }
         m_kMesh = new TriMesh(pkVB,pkIB);
+        m_kMesh.VBuffer.SetName("BOX");
         m_kMaterial = new MaterialState();
         m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
         m_kMaterial.Ambient = new ColorRGB(0.1f,0.1f,0.1f);
@@ -642,7 +642,7 @@ public class VolumeRayCast extends VolumeObject
         kRenderer.SetBackgroundColor(ColorRGBA.BLACK);
         kRenderer.ClearBuffers();
 
-        kCuller.ComputeVisibleSet(m_kScene);
+        //kCuller.ComputeVisibleSet(m_kScene);
 
         // Cull front-facing polygons:
         m_kCull.CullFace = CullState.CullMode.CT_FRONT;

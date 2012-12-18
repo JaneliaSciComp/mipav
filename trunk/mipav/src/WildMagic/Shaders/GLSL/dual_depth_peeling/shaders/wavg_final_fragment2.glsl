@@ -11,23 +11,21 @@ uniform sampler2D ColorTex0;
 uniform sampler2D ColorTex1;
 uniform sampler2D ColorTex2;
 
+in vec2 varTexCoord;
+out vec4 fragColor;
 void main(void)
 {
-    //gl_FragColor = gl_TexCoord[0];
-    //gl_FragColor = texture2D(ColorTex0, gl_TexCoord[0].xy);
-
-    vec4 BackgroundColor = texture2D(ColorTex0, gl_TexCoord[0].xy);
-    vec4 SumColor = texture2D(ColorTex1, gl_TexCoord[0].xy);
-    float n = texture2D(ColorTex2, gl_TexCoord[0].xy).r;
+    vec4 BackgroundColor = texture(ColorTex0, varTexCoord, 0.0);
+    vec4 SumColor = texture(ColorTex1, varTexCoord, 0.0);
+    float n = texture(ColorTex2, varTexCoord, 0.0).r;
     
     if (n == 0.0) {
-        gl_FragColor.rgb = BackgroundColor;
+        fragColor = BackgroundColor;
         return;
     }
-    
     vec3 AvgColor = SumColor.rgb / SumColor.a;
     float AvgAlpha = SumColor.a / n;
     
     float T = pow(1.0-AvgAlpha, n);
-    gl_FragColor.rgb = AvgColor * (1 - T) + BackgroundColor.rgb * T;
+    fragColor = vec4(AvgColor * (1 - T) + BackgroundColor.rgb * T, 1.0);
 }

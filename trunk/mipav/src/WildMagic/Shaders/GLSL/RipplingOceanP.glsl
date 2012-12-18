@@ -24,6 +24,14 @@ vec3 MapFromUnit (vec3 kVector)
 uniform sampler2D aBumpSampler;
 uniform sampler1D bWaterSampler;
 uniform sampler2D cEnvSampler;
+in vec4 varTexcoord0;
+in vec4 varTexcoord1;
+in vec4 varTexcoord2;
+in vec4 varTexcoord3;
+in vec4 varTexcoord4;
+in vec4 varTexcoord5;
+in vec4 varTexcoord6;
+out vec4 fragColor;
 void p_RipplingOceanP()
 {
     // A lot of this shader is making the water look just right.  It looks
@@ -31,8 +39,8 @@ void p_RipplingOceanP()
     // explain what is necessary and what is specific to this case.
 
     // Sample the bumpmap twice.
-    vec3 kNormPerturb0 = MapFromUnit(texture2D(aBumpSampler,gl_TexCoord[0].xy).xyz);
-    vec3 kNormPerturb1 = MapFromUnit(texture2D(aBumpSampler,gl_TexCoord[1].xy).xyz);
+    vec3 kNormPerturb0 = MapFromUnit(texture2D(aBumpSampler,varTexcoord0.xy).xyz);
+    vec3 kNormPerturb1 = MapFromUnit(texture2D(aBumpSampler,varTexcoord1.xy).xyz);
     
     // The perturbed normal (in bumpmap space) is going to be the average.
     vec3 kNormPerturb = normalize((kNormPerturb0 + kNormPerturb1)*0.5);
@@ -42,9 +50,9 @@ void p_RipplingOceanP()
     // model->world transform here because that applies to the original
     // model.  Because that got changed (along with the normal) in the
     // vertex shader, we have to do it this way.
-    vec3 kOldTangent = MapFromUnit(gl_TexCoord[3].xyz);
-    vec3 kOldBinormal = MapFromUnit(gl_TexCoord[4].xyz);
-    vec3 kOldNormal = MapFromUnit(gl_TexCoord[5].xyz);
+    vec3 kOldTangent = MapFromUnit(varTexcoord3.xyz);
+    vec3 kOldBinormal = MapFromUnit(varTexcoord4.xyz);
+    vec3 kOldNormal = MapFromUnit(varTexcoord5.xyz);
     vec3 kNewNormal = kNormPerturb.x*kOldTangent +
         kNormPerturb.y*kOldBinormal + kNormPerturb.z*kOldNormal;
 
@@ -53,7 +61,7 @@ void p_RipplingOceanP()
     // mapping) makes the Fresnel factor (and the water color) look more
     // right because it is much more low frequency than the bump mapped
     // ripples.
-    vec3 kOldView = MapFromUnit(gl_TexCoord[2].xyz);
+    vec3 kOldView = MapFromUnit(varTexcoord2.xyz);
     float fFresnel = 1.0 - clamp(-dot(kOldNormal,kOldView), 0.0, 1.0);
     
     // This step could have been done in the texture itself.
@@ -62,7 +70,7 @@ void p_RipplingOceanP()
     // Get the water color from the gradient texture.  If we are looking
     // tangentially at the water, it will be bluer.  If we are looking
     // straight down (fFresnel close to zero) it will be greener.
-    vec3 kWaterColor = texture1D(bWaterSampler,fFresnelCubed).xyz;
+    vec3 kWaterColor = texture(bWaterSampler,fFresnelCubed).xyz;
 
     // Get the reflection vector for specular reflections.
     vec3 kReflect = reflect(kNewNormal,kOldView);
@@ -95,15 +103,12 @@ void p_RipplingOceanP()
     
     // Calculate a diffuse factor, but we do not want it too dark, so we will
     // add a small arbitrary ambient factor.
-    vec3 kOldLightDir = MapFromUnit(gl_TexCoord[6].xyz);
-    float fAmbient = gl_TexCoord[6].w;
+    vec3 kOldLightDir = MapFromUnit(varTexcoord6.xyz);
+    float fAmbient = varTexcoord6.w;
     float fDiffuse = fAmbient - (1.0-fAmbient)*dot(kNewNormal,kOldLightDir);
 
     // Add the diffusely lit water color with some specular highlights.
-    gl_FragColor.rgb = kWaterColor*fDiffuse + kBackground*fSpecular;
-//     gl_FragColor.rgb -= kWaterColor*fDiffuse;
-//     gl_FragColor.rgb -= kBackground*fSpecular;
-//     gl_FragColor.rgb += kBackground.rgb;
-    gl_FragColor.a = 1.0;
+    fragColor.rgb = kWaterColor*fDiffuse + kBackground*fSpecular;
+    fragColor.a = 1.0;
 }
 //----------------------------------------------------------------------------

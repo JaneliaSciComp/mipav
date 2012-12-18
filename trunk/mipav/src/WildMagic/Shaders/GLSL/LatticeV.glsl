@@ -11,9 +11,13 @@
 
 uniform mat4 WVPMatrix;
 uniform vec4   MaterialDiffuse;
+in vec3 inPosition;
+in vec2 inTexcoord0;
+out vec4 varColor;
+out vec2 varTexCoord0;
 void v_LatticeV()
 {
-    gl_TexCoord[0]  = gl_MultiTexCoord0;
-    gl_Position = WVPMatrix * gl_Vertex;
-    gl_FrontColor = MaterialDiffuse;
+    varTexCoord0  = inTexcoord0;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
+    varColor = MaterialDiffuse;
 }

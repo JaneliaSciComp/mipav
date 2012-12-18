@@ -11,6 +11,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
@@ -58,7 +59,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 	/* (non-Javadoc)
 	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#Pick(int, int)
 	 */
-	public boolean Pick( int iX, int iY )
+	public boolean Pick( Renderer kRenderer, int iX, int iY )
 	{
 		boolean bPicked = false;
 		m_kPicked = null;
@@ -83,7 +84,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 			m_kPicked = m_kWidgetMesh;
 			bPicked = true;
 		}
-		return super.Pick(iX,iY,bPicked);
+		return super.Pick(kRenderer, iX,iY,bPicked);
 	}
     
 	/* (non-Javadoc)
@@ -115,7 +116,7 @@ public class CircleClassificationWidget extends ClassificationWidget
 	 * Clears or sets the current picked object, sets the outline color to red when picked, blue when not selected.
 	 * @param bPicked when true the widget is selected.
 	 */
-	public void setPicked( boolean bPicked )
+	public void setPicked( Renderer kRenderer, boolean bPicked )
 	{
 		for ( int i = 0; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
 		{
@@ -137,8 +138,8 @@ public class CircleClassificationWidget extends ClassificationWidget
 				m_kPicked = null;         
 			}
 		}
-		m_kWidgetMesh.VBuffer.Release();
-		m_kOutline.VBuffer.Release();
+		m_kWidgetMesh.Release(kRenderer);
+		m_kOutline.Release(kRenderer);
 		
         m_kWidget.DetachChild( m_kUpperSphere );
         m_kWidget.DetachChild( m_kMiddleSphere );
@@ -479,8 +480,8 @@ public class CircleClassificationWidget extends ClassificationWidget
 				index++;
 			}
 		}      
-		m_kWidgetMesh.VBuffer.Release();
-		m_kOutline.VBuffer.Release();
+		m_kWidgetMesh.Reload(true);
+		m_kOutline.Reload(true);
 
 		// Translate the upper sphere:
         m_kUpperSphere.Local.SetTranslate( kCurrentCenter.X + newX, kCurrentCenter.Y + newY, z );
@@ -552,8 +553,8 @@ public class CircleClassificationWidget extends ClassificationWidget
                 index++;
             }
         }
-        m_kWidgetMesh.VBuffer.Release();
-        m_kOutline.VBuffer.Release();
+        m_kWidgetMesh.Reload(true);
+        m_kOutline.Reload(true);
 
         // Move the center sphere by translating it the same amount as the circle:
         Vector3f kTranslate = m_kMiddleSphere.Local.GetTranslate(); 

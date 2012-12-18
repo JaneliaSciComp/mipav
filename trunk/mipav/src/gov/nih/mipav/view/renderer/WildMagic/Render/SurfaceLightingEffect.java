@@ -207,6 +207,8 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     {
         SetColorImage(pkCProgram);
         Blend(m_fBlend);
+        SetReverseFace(m_iReverseFace);
+        ResetClip();
         super.OnLoadPrograms ( iPass,  pkVProgram, pkPProgram, pkCProgram );
     }
     /**
@@ -242,7 +244,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         if ( m_kVolumeImageNew == null )
         {
             m_kVolumeImageNew = VolumeImage.UpdateData(kImage, 0, null, null, m_kVolumeTextureNew, new String(kImage.getImageName() + "New"), true, false );
-            m_kVolumeTextureNew.Release();
+            m_kVolumeTextureNew.Reload(true);
             m_kVolumeTextureNew.SetImage(m_kVolumeImageNew);
 
             Program kCProgram = GetCProgram(0);
@@ -284,7 +286,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         if ( m_kColorMapNew == null  )
         {
             m_kColorMapNew = VolumeImage.InitColorMap( kLUT, kRGBT, "New" );
-            m_kVolumeLUTNew.Release();
+            m_kVolumeLUTNew.Reload(true);
             m_kVolumeLUTNew.SetImage(m_kColorMapNew);
         }
         else if ( kLUT != null )
@@ -317,6 +319,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
                 m_kVShader.set(0, m_kVVertexLighting);
                 m_kPShader.set(0, m_kPVertexLighting);
             }
+            /*
             LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
                     kRenderer.GetMaxTCoords(),
                     kRenderer.GetMaxVShaderImages(),
@@ -324,6 +327,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             Blend(m_fBlend);
             SetReverseFace(m_iReverseFace);
             ResetClip();
+            */
         }
     }
     /**

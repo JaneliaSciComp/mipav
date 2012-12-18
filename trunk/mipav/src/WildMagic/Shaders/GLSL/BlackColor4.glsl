@@ -1,13 +1,15 @@
 uniform mat4 WVPMatrix;
 
+in vec3  inPosition;  
+out vec4 varColor;
 
 //----------------------------------------------------------------------------
 void  v_BlackColor4()
 {
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
     
     // Black.
-    gl_FrontColor = vec4(0.0, 0.0, 0.0, 1.0);
+    varColor = vec4(0.0, 0.0, 0.0, 1.0);
 } 
 

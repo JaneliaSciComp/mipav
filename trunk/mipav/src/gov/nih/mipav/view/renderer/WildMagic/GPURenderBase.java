@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -136,7 +137,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;

@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -198,7 +199,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );
+		 m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());       
 		 
 		 m_bStandAlone = true;
 		 m_kAnimator = new Animator();
@@ -233,7 +235,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );      
+		 m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs()); 
 
 		 m_kAnimator = kAnimator;
 		 if ( m_kAnimator != null )
@@ -265,6 +268,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
 		 ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+		 m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
 
 		 m_kShared = kShared;
 		 m_bShared = true;
@@ -824,7 +828,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  {
 			  m_pkRenderer.ReleaseTexture( ms_akLUTTexture[i] );			  
 		  }
-		 m_kSlices.dispose(m_pkRenderer);  
+		 //m_kSlices.dispose(m_pkRenderer);  
 	 }
 
 
@@ -1287,6 +1291,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  if ( m_kVolumeImageA == null ) {
 			  return;
 		  }      
+			//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+			//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
+			//Profile.clear();
+			//Profile.start();
 		  if ( m_pkRenderer != null )
 		  {
 			  ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -1326,7 +1334,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 
 		  if ( !m_bStandAlone )
 		  {
-			  CopyShared( );
+			  //CopyShared( );
 		  }
 
 		  CreateScene( );
@@ -1415,6 +1423,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  setVolumeBlend( 1.0f );
 			  setVolumeSamplesMouseReleased( .7f );
 			  setVolumeSamplesMouseDragged( .7f );
+			  break;
+		  case 'z':
+			  //Profile.stop();
+			  //Profile.setFileName( "newWM_profile" );
+			  //Profile.shutdown();
+			  //System.err.println( "Profile DONE" );
 			  break;
 		  }
 		  return;
@@ -2675,7 +2689,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  }
 			  else
 			  {
-				  m_akSceneTarget[i].Release();
+				  m_akSceneTarget[i].Release(m_pkRenderer);
 			  }
 			  GraphicsImage pkSceneImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA32,iWidth,iHeight,(float[])null,
 					  "ColorTex" + i );
@@ -2984,8 +2998,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  m_fX = m_kVolumeImageA.GetScaleX();
 		  m_fY = m_kVolumeImageA.GetScaleY();
 		  m_fZ = m_kVolumeImageA.GetScaleZ();
-		  m_kSlices = new VolumeSlices( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
-		  displayVolumeSlices( true );        
+		  //m_kSlices = new VolumeSlices( m_pkRenderer, m_kVolumeImageA, m_kVolumeImageB, m_kTranslate, m_fX, m_fY, m_fZ );
+		  //displayVolumeSlices( true );        
 	  }
 
 	  /**

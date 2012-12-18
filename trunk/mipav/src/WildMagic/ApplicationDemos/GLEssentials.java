@@ -21,11 +21,13 @@ import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GL2GL3;
 import javax.media.opengl.GL3;
+import javax.media.opengl.GL3bc;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
 import javax.media.opengl.GLProfile;
+import javax.media.opengl.TraceGL3;
 import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
@@ -86,7 +88,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 	private GLCanvas m_kCanvas;
 
 	/** GL object from GLCanvas.getGL() used to access openGL calls. */
-	private GL2 m_kGL = null;
+	private GL3 m_kGL = null;
 
 	public static void main(String[] args) {
 
@@ -121,7 +123,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 
 	@Override
 	public void display(GLAutoDrawable drawable) {	
-		m_kGL = drawable.getGL().getGL2();	
+		m_kGL = drawable.getGL().getGL3();	
 
 		if ( !m_bInit )
 		{
@@ -307,9 +309,9 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 	public void init(GLAutoDrawable drawable) {
 		//GL gl = drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 		//m_kGL = gl.getGL2();
-		//GL gl = drawable.setGL(new TraceGL2(drawable.getGL().getGL2(), System.err));
-		System.err.println( drawable.getGL() );
-		System.err.println( drawable.getGLProfile() );
+		//GL gl = drawable.setGL(new TraceGL3(drawable.getGL().getGL3(), System.err));
+		System.err.println( "getGL " + drawable.getGL() );
+		System.err.println( "getProfile " + drawable.getGLProfile() );
 		System.err.println( "GL4bc " + drawable.getGL().isGL4bc() );
 		System.err.println( "GL3bc " + drawable.getGL().isGL3bc() );
 		System.err.println( "GL2 " + drawable.getGL().isGL2() );
@@ -321,12 +323,13 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		System.err.println( "GLES1 " + drawable.getGL().isGLES1() );
 		System.err.println( "GL2ES1 " + drawable.getGL().isGL2ES1() );
 		try {
-		m_kGL = drawable.getGL().getGL2();
+		m_kGL = drawable.getGL().getGL3();
 		} catch ( GLException e )
 		{
 			e.printStackTrace();
 		}
 		drawable.setAutoSwapBufferMode( false );
+		System.err.println( "m_kGL " + m_kGL );
 		
 		
 		float  glLanguageVersion;
@@ -410,10 +413,10 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		}
 		System.err.println( "" );
 		System.err.println( "" );
-		System.err.println( GLProfile.getDefault() );
-		System.err.println( GLProfile.getMaxProgrammable() );
-		//GLProfile kProfile = GLProfile.getMaxProgrammable();
-		GLProfile kProfile = GLProfile.get( "GL2" );
+		System.err.println( "default " + GLProfile.getDefault() );
+		System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable() );
+		GLProfile kProfile = GLProfile.getMaxProgrammable();
+		//GLProfile kProfile = GLProfile.get( "GL3" );
 		System.err.println( kProfile );
 		GLCapabilities kGlCapabilities = new GLCapabilities(kProfile);
 		kGlCapabilities.setHardwareAccelerated(true);
@@ -885,6 +888,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 			return 0;
 		}
 
+		System.err.println( sourceString[0] );
 		sourceString[0] = null;
 
 		// Attach the vertex shader to our program
@@ -922,6 +926,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 			System.err.println("Failed to compile frag shader:\n" + sourceString );
 			return 0;
 		}
+		System.err.println( sourceString[0] );
 		sourceString[0] = null;
 
 		// Attach the fragment shader to our program

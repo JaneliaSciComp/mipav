@@ -8,11 +8,12 @@
 //--------------------------------------------------------------------------------------
 
 uniform mat4 WVPMatrix;
+in vec3 inPosition;
+in vec3 inNormal;
+out vec3 varTexCoord;
 void main(void)
 {
-    gl_Position = WVPMatrix * gl_Vertex;
-    //float diffuse = abs(normalize(gl_NormalMatrix * gl_Normal).z);
-    //float diffuse = abs(normalize(WVMatrix * vec4(gl_Normal,0)).z);
-    float diffuse = abs(normalize(gl_Normal).z);
-    gl_TexCoord[0].xyz = vec3(gl_Vertex.xy, diffuse);
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
+    float diffuse = abs(normalize(inNormal).z);
+    varTexCoord.xyz = vec3(inPosition.xy, diffuse);
 }

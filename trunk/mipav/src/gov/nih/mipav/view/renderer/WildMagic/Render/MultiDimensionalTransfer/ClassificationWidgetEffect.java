@@ -43,35 +43,37 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			"uniform vec4 Radius;" + "\n" +
 			"uniform sampler2D BaseSampler;" + "\n" +
 			"uniform sampler1D ColorMap;" + "\n" +
+			"in vec2 varTexCoord;" + "\n" +
+			"out vec4 fragColor;" + "\n" +
 			"void main()" + "\n" +
 			"{" + "\n" +
-			"    vec4 kBase = texture2D(BaseSampler,gl_TexCoord[0].xy);" + "\n";
+			"    vec4 kBase = texture(BaseSampler,varTexCoord, 0.0);" + "\n";
 
 	/** GLSL function call for the triangle widget: */
 	private String mainPixelShaderTriangle = "" + 
-			"    float fAlpha = computeAlphaTriangle( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
+			"    float fAlpha = computeAlphaTriangle( varTexCoord.x, varTexCoord.y, Shift," + "\n" +
 			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
 	/** GLSL function call for the square widget: */
 	private String mainPixelShaderSquare = "" + 
-			"    float fAlpha = computeAlphaSquare( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift," + "\n" +
+			"    float fAlpha = computeAlphaSquare( varTexCoord.x, varTexCoord.y, Shift," + "\n" +
 			"                                 LevMidLine, LevLeftLine, LevRightLine );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
 	/** GLSL function call for the circle widget: */
 	private String mainPixelShaderCircle = "" + 
-			"    float fAlpha = computeAlphaCircle( gl_TexCoord[0].x, gl_TexCoord[0].y," + "\n" +
+			"    float fAlpha = computeAlphaCircle( varTexCoord.x, varTexCoord.y," + "\n" +
 			"                                 Center, LevMidLine, Radius );" + "\n" +
 			"    vec4 widgetColor = LevColor;" + "\n";
 
 	/** GLSL main code part 2 for all widget types. */
 	private String mainPixelShader2 = "" + 
 			"    fAlpha *= widgetColor.a;" + "\n" +
-			"    gl_FragColor.r = widgetColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;" + "\n" +
-			"    gl_FragColor.g = widgetColor.g*fAlpha + (1.0 - fAlpha)*kBase.g;" + "\n" +
-			"    gl_FragColor.b = widgetColor.b*fAlpha + (1.0 - fAlpha)*kBase.b;" + "\n" +
-			"    gl_FragColor.a = 1.0;" + "\n" +
+			"    fragColor.r = widgetColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;" + "\n" +
+			"    fragColor.g = widgetColor.g*fAlpha + (1.0 - fAlpha)*kBase.g;" + "\n" +
+			"    fragColor.b = widgetColor.b*fAlpha + (1.0 - fAlpha)*kBase.b;" + "\n" +
+			"    fragColor.a = 1.0;" + "\n" +
 			"}" + "\n";
 
 	/** GLSL computeAlpha function definition for the triangle widgets: */
@@ -240,8 +242,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			+ "    if ( r >= 0 )" + "\n"
 			+ "    {" + "\n"
 			+ "        // solve for x values - using the quadratic equation" + "\n"
-			+ "        float x3 = (float)(-B-sqrt(r))/(2*A);" + "\n"
-			+ "        float x4 = (float)(-B+sqrt(r))/(2*A);" + "\n"
+			+ "        float x3 = (-B-sqrt(r))/(2*A);" + "\n"
+			+ "        float x4 = (-B+sqrt(r))/(2*A);" + "\n"
 			+ "        // calculate y, since we know it's on the line at that point (otherwise there would be no intersection)" + "\n"
 			+ "        float y3 = slope*x3+intercept;" + "\n"
 			+ "        float y4 = slope*x4+intercept;				" + "\n"
@@ -262,7 +264,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			+ "    }" + "\n"
 			+ "    else" + "\n"
 			+ "    {" + "\n"
-			+ "        float x3 = (float)(-B-sqrt(r))/(2*A);	" + "\n"
+			+ "        float x3 = (-B-sqrt(r))/(2*A);	" + "\n"
 			+ "        float y3 = slope*x3+intercept;" + "\n"  
 			+ "        intersect0.x = Center.x + x3;" + "\n"
 			+ "        intersect0.y = Center.y + y3;" + "\n"
@@ -634,7 +636,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 			m_kPShader.get(0).GetProgram().SetProgramText( m_kCurrentText );
 			if ( GetCProgram(0) != null )
 			{
-				GetCProgram(0).Release();
+				GetCProgram(0).Reload(true);
 			}
 		}
 	}
@@ -659,7 +661,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		if ( m_kWidgetState.UseColorMap[0] != -1 )
 		{
 			mainPixelShader += "" +
-					"  widgetColor = texture1D(ColorMap, fAlpha );" + "\n" +
+					"  widgetColor = texture(ColorMap, fAlpha, 0.0);" + "\n" +
 					"  widgetColor.a = LevColor.a;" + "\n";
 			bUseColorTexture = true;
 		}
