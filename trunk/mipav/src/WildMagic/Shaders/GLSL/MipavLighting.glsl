@@ -452,10 +452,13 @@ uniform mat4 WMatrix;
 uniform mat4 WVPMatrix;
 uniform float ReverseFace;
 
+in vec3 inPosition;
+in vec3 inNormal;
+out vec4 varColor;
 void v_MipavLighting()
 
 {
-    vec3 kModelNormal = gl_Normal.xyz;
+    vec3 kModelNormal = inNormal.xyz;
     if ( ReverseFace == 1 )
     {
         kModelNormal.x *= -1;
@@ -464,10 +467,10 @@ void v_MipavLighting()
     }
 
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix*gl_Vertex;
+    gl_Position = WVPMatrix*vec4(inPosition, 1.0);
 
     // First light is static light:
-    vec4 color0 = computeColor( gl_Vertex.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
+    vec4 color0 = computeColor( inPosition.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
                                 MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse, MaterialSpecular,
                                 Light0Ambient, Light0Diffuse, Light0Specular,
                                 Light0ModelPosition, Light0ModelDirection,
@@ -480,20 +483,20 @@ void v_MipavLighting()
                                 Light1Attenuation );
     
     // Remaining lights:
-    vec4 color2 = computeColor( gl_Vertex.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
+    vec4 color2 = computeColor( inPosition.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
                                 MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse, MaterialSpecular,
                                 Light2Ambient, Light2Diffuse, Light2Specular,
                                 Light2WorldPosition, Light2WorldDirection,
                                 Light2SpotCutoff, Light2Attenuation,
                                 Light2Type );
     
-    vec4 color3 = computeColor( gl_Vertex.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
+    vec4 color3 = computeColor( inPosition.xyz, kModelNormal.xyz, CameraModelPosition.xyz,
                                 MaterialEmissive.xyz,  MaterialAmbient.xyz, MaterialDiffuse, MaterialSpecular,
                                 Light3Ambient, Light3Diffuse, Light3Specular,
                                 Light3WorldPosition, Light3WorldDirection,
                                 Light3SpotCutoff, Light3Attenuation,
                                 Light3Type );
     
-    gl_FrontColor = color0 + color1 + color2 + color3;
-    gl_FrontColor.a = 1.0;
+    varColor = color0 + color1 + color2 + color3;
+    varColor.a = 1.0;
 }

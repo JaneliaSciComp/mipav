@@ -8,7 +8,7 @@ uniform vec3 range;
 uniform vec3 plane;
 in vec4 position;
 
-in vec2 varTexCoord;
+in vec3 varTexCoord;
 in vec4 varColor;
 out vec4 fragColor;
 void p_BoundingBoxGridP ()

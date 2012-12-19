@@ -6,6 +6,7 @@ import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** ShaderEffect class for calculating the volume normals on the GPU.  The
@@ -47,7 +48,7 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV"));
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true));
         String kName = kShaderName + (bPostFix ? kVolumeImage.GetPostfix() : "");
         PixelShader kPShader = new PixelShader(kName, false);
         SetPShader(0,kPShader);
@@ -93,8 +94,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV"));
-        PixelShader kPShader = new PixelShader("SurfaceExtract", false);
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true ));
+        PixelShader kPShader = new PixelShader("SurfaceExtract", true );
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(2);
         kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
