@@ -5498,6 +5498,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double vec8[];
         double vec9[];
         int ivec[];
+        boolean goto125 = false;
        
         
         // Executable Statements ..
@@ -5967,147 +5968,174 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        for (index = 0; index < in-1; index++) {
                            Z[ibegin - 1 + index][newftt] = vec8[index];
                        }
-                      /*
-                       IF( IINFO.EQ.0 ) THEN
-  *                       a new RRR for the cluster was found by DLARRF
-  *                       update shift and store it
-                          SSIGMA = SIGMA + TAU
-                          Z( IEND, NEWFTT+1 ) = SSIGMA
-  *                       WORK() are the midpoints and WERR() the semi-width
-  *                       Note that the entries in W are unchanged.
-                          DO 116 K = NEWFST, NEWLST
-                             FUDGE =
-       $                          THREE*EPS*ABS(WORK(WBEGIN+K-1))
-                             WORK( WBEGIN + K - 1 ) =
-       $                          WORK( WBEGIN + K - 1) - TAU
-                             FUDGE = FUDGE +
-       $                          FOUR*EPS*ABS(WORK(WBEGIN+K-1))
-  *                          Fudge errors
-                             WERR( WBEGIN + K - 1 ) =
-       $                          WERR( WBEGIN + K - 1 ) + FUDGE
-  *                          Gaps are not fudged. Provided that WERR is small
-  *                          when eigenvalues are close, a zero gap indicates
-  *                          that a new representation is needed for resolving
-  *                          the cluster. A fudge could lead to a wrong decision
-  *                          of judging eigenvalues 'separated' which in
-  *                          reality are not. This could have a negative impact
-  *                          on the orthogonality of the computed eigenvectors.
-   116                    CONTINUE
+                      
+                       if (iinfo[0] == 0) {
+                          // a new RRR for the cluster was found by dlarrf
+                          // update shift and store it
+                          ssigma = sigma + tau[0];
+                          Z[iend-1][newftt] = ssigma;
+                          // work are the midpoints and werr the semi-width
+                          // Note that the entries in W are unchanged.
+                          for (k = newfst; k <= newlst; k++) {
+                             fudge = 3.0*eps*Math.abs(work[wbegin+k-2]);
+                             work[wbegin+k-2] = work[wbegin+k-2] - tau[0];
+                             fudge = fudge + 4.0*eps*Math.abs(work[wbegin+k-2]);
+                             // Fudge errors
+                             werr[wbegin+k-2] = werr[wbegin+k-2] + fudge;
+                             // Gaps are not fudged. Provided that werr is small
+                             // when eigenvalues are close, a zero gap indicates
+                             // that a new representation is needed for resolving
+                             // the cluster. A fudge could lead to a wrong decision
+                             // of judging eigenvalues 'separated' which in
+                             // reality are not. This could have a negative impact
+                             // on the orthogonality of the computed eigenvectors.
+                          } // for (k = newfst; k <= newlst; k++)
 
-                          NCLUS = NCLUS + 1
-                          K = NEWCLS + 2*NCLUS
-                          IWORK( K-1 ) = NEWFST
-                          IWORK( K ) = NEWLST
-                       ELSE
-                          INFO = -2
-                          RETURN
-                       ENDIF*/
+                          nclus++;
+                          k = newcls + 2*nclus;
+                          iwork[k-2] = newfst;
+                          iwork[k-1] = newlst;
+                       } // if (iinfo[0] == 0)
+                       else { // iinfo[0] != 0
+                          info[0] = -2;
+                          return;
+                       } // else iinfo[0] != 0
                     } // if (newsiz > 1)
-                    /*ELSE
-  *
-  *                    Compute eigenvector of singleton
-  *
-                       ITER = 0
-  *
-                       TOL = FOUR * LOG(DBLE(IN)) * EPS
-  *
-                       K = NEWFST
-                       WINDEX = WBEGIN + K - 1
-                       WINDMN = MAX(WINDEX - 1,1)
-                       WINDPL = MIN(WINDEX + 1,M)
-                       LAMBDA = WORK( WINDEX )
-                       DONE = DONE + 1
-  *                    Check if eigenvector computation is to be skipped
-                       IF((WINDEX.LT.DOL).OR.
-       $                  (WINDEX.GT.DOU)) THEN
-                          ESKIP = .TRUE.
-                          GOTO 125
-                       ELSE
-                          ESKIP = .FALSE.
-                       ENDIF
-                       LEFT = WORK( WINDEX ) - WERR( WINDEX )
-                       RIGHT = WORK( WINDEX ) + WERR( WINDEX )
-                       INDEIG = INDEXW( WINDEX )
-  *                    Note that since we compute the eigenpairs for a child,
-  *                    all eigenvalue approximations are w.r.t the same shift.
-  *                    In this case, the entries in WORK should be used for
-  *                    computing the gaps since they exhibit even very small
-  *                    differences in the eigenvalues, as opposed to the
-  *                    entries in W which might "look" the same.
+                    /*else { // newsiz == 1
+   
+                       // Compute eigenvector of singleton
+   
+                       iter = 0;
+   
+                       tol = 4.0 * Math.log((double)in) * eps;
+  
+                       k = newfst;
+                       windex = wbegin + k - 1;
+                       windmn = Math.max(windex - 1,1);
+                       windpl = Math.min(windex+1,m);
+                       lambda = work[windex-1];
+                       done++;
+                       // Check if eigenvector computation is to be skipped
+                       if ((windex < dol) || (windex > dou)) {
+                          eskip = true;
+                          goto125 = true;
+                       }
+                       else {
+                          eskip = false;
+                       }
+                       if (!goto125) {
+                           left = work[windex-1] - werr[windex-1];
+                           right = work[windex-1] + werr[windex-1];
+                           indeig = indexw[windex-1];
+                           // Note that since we compute the eigenpairs for a child,
+                           // all eigenvalue approximations are w.r.t the same shift.
+                           // In this case, the entries in WORK should be used for
+                           // computing the gaps since they exhibit even very small
+                           // differences in the eigenvalues, as opposed to the
+                           // entries in W which might "look" the same.
 
-                       IF( K .EQ. 1) THEN
-  *                       In the case RANGE='I' and with not much initial
-  *                       accuracy in LAMBDA and VL, the formula
-  *                       LGAP = MAX( ZERO, (SIGMA - VL) + LAMBDA )
-  *                       can lead to an overestimation of the left gap and
-  *                       thus to inadequately early RQI 'convergence'.
-  *                       Prevent this by forcing a small left gap.
-                          LGAP = EPS*MAX(ABS(LEFT),ABS(RIGHT))
-                       ELSE
-                          LGAP = WGAP(WINDMN)
-                       ENDIF
-                       IF( K .EQ. IM) THEN
-  *                       In the case RANGE='I' and with not much initial
-  *                       accuracy in LAMBDA and VU, the formula
-  *                       can lead to an overestimation of the right gap and
-  *                       thus to inadequately early RQI 'convergence'.
-  *                       Prevent this by forcing a small right gap.
-                          RGAP = EPS*MAX(ABS(LEFT),ABS(RIGHT))
-                       ELSE
-                          RGAP = WGAP(WINDEX)
-                       ENDIF
-                       GAP = MIN( LGAP, RGAP )
-                       IF(( K .EQ. 1).OR.(K .EQ. IM)) THEN
-  *                       The eigenvector support can become wrong
-  *                       because significant entries could be cut off due to a
-  *                       large GAPTOL parameter in LAR1V. Prevent this.
-                          GAPTOL = ZERO
-                       ELSE
-                          GAPTOL = GAP * EPS
-                       ENDIF
-                       ISUPMN = IN
-                       ISUPMX = 1
-  *                    Update WGAP so that it holds the minimum gap
-  *                    to the left or the right. This is crucial in the
-  *                    case where bisection is used to ensure that the
-  *                    eigenvalue is refined up to the required precision.
-  *                    The correct value is restored afterwards.
-                       SAVGAP = WGAP(WINDEX)
-                       WGAP(WINDEX) = GAP
-  *                    We want to use the Rayleigh Quotient Correction
-  *                    as often as possible since it converges quadratically
-  *                    when we are close enough to the desired eigenvalue.
-  *                    However, the Rayleigh Quotient can have the wrong sign
-  *                    and lead us away from the desired eigenvalue. In this
-  *                    case, the best we can do is to use bisection.
-                       USEDBS = .FALSE.
-                       USEDRQ = .FALSE.
-  *                    Bisection is initially turned off unless it is forced
-                       NEEDBS =  .NOT.TRYRQC
-   120                 CONTINUE
-  *                    Check if bisection should be used to refine eigenvalue
-                       IF(NEEDBS) THEN
-  *                       Take the bisection as new iterate
-                          USEDBS = .TRUE.
-                          ITMP1 = IWORK( IINDR+WINDEX )
-                          OFFSET = INDEXW( WBEGIN ) - 1
-                          CALL DLARRB( IN, D(IBEGIN),
-       $                       WORK(INDLLD+IBEGIN-1),INDEIG,INDEIG,
-       $                       ZERO, TWO*EPS, OFFSET,
-       $                       WORK(WBEGIN),WGAP(WBEGIN),
-       $                       WERR(WBEGIN),WORK( INDWRK ),
-       $                       IWORK( IINDWK ), PIVMIN, SPDIAM,
-       $                       ITMP1, IINFO )
-                          IF( IINFO.NE.0 ) THEN
-                             INFO = -3
-                             RETURN
-                          ENDIF
-                          LAMBDA = WORK( WINDEX )
-  *                       Reset twist index from inaccurate LAMBDA to
-  *                       force computation of true MINGMA
-                          IWORK( IINDR+WINDEX ) = 0
-                       ENDIF
-  *                    Given LAMBDA, compute the eigenvector.
+                           if (k == 1) {
+                               // In the case range == 'I' and with not much initial
+                               // accuracy in lambda and vl, the formula
+                               // lgap = MAX(0.0, (sigma - vl) + lambda)
+                               // can lead to an overestimation of the left gap and
+                               // thus to inadequately early RQI 'convergence'.
+                               // Prevent this by forcing a small left gap.
+                               lgap = eps*Math.max(Math.abs(left), Math.abs(right));
+                           } // if (k == 1)
+                           else { // k != 1
+                               lgap = wgap[windmn-1];
+                           } // else k != 1
+                           if (k == im) {
+                               // In the case range == 'I' and with not much initial
+                               // accuracy in lambda and vu, the formula
+                               // can lead to an overestimation of the right gap and
+                               // thus to inadequately early RQI 'convergence'.
+                               // Prevent this by forcing a small right gap.
+                               rgap = eps*Math.max(Math.abs(left),Math.abs(right));
+                           } // if (k == im)
+                           else { // k != im
+                               rgap = wgap[windex-1];
+                           } // k != im
+                           gap = Math.min(lgap, rgap);
+                           if ((k == 1) || (k == im)) {
+                               // The eigenvector support can become wrong
+                               // because significant entries could be cut off due to a
+                               // large gaptol parameter in lariv. Prevent this.
+                               gptol = 0.0;
+                           } // if ((k == 1) || (k == im))
+                           else {
+                               gaptol = gap * eps;
+                           }
+                           isupmn = in;
+                           isupmx = 1;
+                           // Update wgap so that it holds the minimum gap
+                           // to the left or the right. This is crucial in the
+                           // case where bisection is used to ensure that the
+                           // eigenvalue is refined up to the required precision.
+                           // The correct value is restored afterwards.
+                           savgap = wgap[windex-1];
+                           wgap[windex-1] = gap;
+                           // We want to use the Rayleigh Quotient Correction
+                           // as often as possible since it converges quadratically
+                           // when we are close enough to the desired eigenvalue.
+                           // However, the Rayleigh Quotient can have the wrong sign
+                           // and lead us away from the desired eigenvalue. In this
+                           // case, the best we can do is to use bisection.
+                           usedbs = false;
+                           usedrq = false;
+                           // Bisection is initially turned off unless it is forced
+                           needbs =  !tryrqc;
+                           while (true) {
+                               // Check if bisection should be used to refine eigenvalue
+                               if (needbs) {
+                                   // Take the bisection as new iterate
+                                   usedbs = true;
+                                   itmp1 = iwork[iindr+windex-1];
+                                   offset = index[wbegin-1] - 1;
+                                   vec = new double[in];
+                                   for (index = 0; index < in; index++) {
+                                       vec[index] = d[ibegin-1+index];
+                                   }
+                                   vec2 = new double[in-1];
+                                   for (index = 0; index < in-1; index++) {
+                                       vec2[index] = work[indlld+ibegin-2+index];
+                                   }
+                                   vec3 = new double[in];
+                                   for (index = 0; index < in; index++) {
+                                       vec3[index] = work[wbegin-1+index];
+                                   }
+                                   vec4 = new double[in-1];
+                                   for (index = 0; index < in-1; index++) {
+                                       vec4[index] = wgap[wbegin-1+index];
+                                   }
+                                   vec5 = new double[in];
+                                   for (index = 0; index < in; index++) {
+                                       vec5[index] = werr[wbegin-1+index];
+                                   }
+                                   vec6 = new double[2*in];
+                                   ivec = new in[2*in];
+                                   dlarrb(in, vec, vec2, indeig, indeig, 0.0, 2.0*eps, offset, vec3, vec4, vec5,
+                                           vec6, ivec, pivmin, spdiam, itmp1, iinfo);
+                                   for (index = 0; index < in; index++) {
+                                       work[wbegin-1+index] = vec3[index];
+                                   }
+                                   for (index = 0; index < in-1; index++) {
+                                       wgap[wbegin-1+index] = vec4[index];
+                                   }
+                                   for (index = 0; index < in; index++) {
+                                       werr[wbegin-1+index] = vec5[index];
+                                   }
+                                   if (iinfo[0] != 0) {
+                                       info[0] = -3;
+                                       return;
+                                   }
+                                   lambda = work[windex-1];
+                                   // Reset twist index from inaccurate lambda to
+                                   // force computation of true mingma
+                                   iwork[iindr+windex-1] = 0;
+                               } // if (needbs)
+                               // Given lambda, compute the eigenvector.
                        CALL DLAR1V( IN, 1, IN, LAMBDA, D( IBEGIN ),
        $                    L( IBEGIN ), WORK(INDLD+IBEGIN-1),
        $                    WORK(INDLLD+IBEGIN-1),
@@ -6189,12 +6217,12 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   *                             The eigenvalue is computed to bisection accuracy
   *                             compute eigenvector and stop
                              USEDBS = .TRUE.
-                             GOTO 120
+                             continue;
                           ELSEIF( ITER.LT.MAXITR ) THEN
-                             GOTO 120
+                             continue;
                           ELSEIF( ITER.EQ.MAXITR ) THEN
                              NEEDBS = .TRUE.
-                             GOTO 120
+                             continue;
                           ELSE
                              INFO = 5
                              RETURN
@@ -6220,6 +6248,8 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                           ENDIF
                           WORK( WINDEX ) = LAMBDA
                        END IF
+                               break;
+                           } // while (true)
   *
   *                    Compute FP-vector support w.r.t. whole matrix
   *
@@ -6242,7 +6272,8 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        ENDIF
                        CALL DSCAL( ZTO-ZFROM+1, NRMINV,
        $                       Z( ZFROM, WINDEX ), 1 )
-   125                 CONTINUE
+                       } // if !(goto125)
+                       goto125 = false;
   *                    Update W
                        W( WINDEX ) = LAMBDA+SIGMA
   *                    Recompute the gaps on the left and right
@@ -6264,7 +6295,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                           ENDIF
                        ENDIF
                        IDONE = IDONE + 1
-                    ENDIF*/
+                    } // else newsiz == 1*/
                     // here ends the code for the current child
    
                     // Proceed to any remaining child nodes
@@ -6280,6 +6311,315 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         return;
 
   } // private void dlarrv
+  
+  /** This is a port of the version 3.4.2 LAPACK DLAR1V auxiliary routine.  Original DLAR1V created by created by Univ. of Tennessee, Univ. of
+  California Berkeley, University of Colorado Denver, and NAG Ltd., September, 2012
+  
+  Contributors:
+  Beresford Parlett, University of California, Berkeley, USA
+  Jim Demmel, University of California, Berkeley, USA
+  Inderjit Dhillon, University of Texas, Austin, USA
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  
+  dlar1v computes the (scaled) r-th column of the inverse of
+  the sumbmatrix in rows B1 through BN of the tridiagonal matrix
+  L D L**T - sigma I. When sigma is close to an eigenvalue, the
+  computed vector is an accurate eigenvector. Usually, r corresponds
+  to the index where the eigenvector is largest in magnitude.
+  The following steps accomplish this computation :
+  (a) Stationary qd transform,  L D L**T - sigma I = L(+) D(+) L(+)**T,
+  (b) Progressive qd transform, L D L**T - sigma I = U(-) D(-) U(-)**T,
+  (c) Computation of the diagonal elements of the inverse of
+      L D L**T - sigma I by combining the above transforms, and choosing
+      r as the index where the diagonal of the inverse is (one of the)
+      largest in magnitude.
+  (d) Computation of the (scaled) r-th column of the inverse using the
+      twisted factorization obtained by combining the top part of the
+      the stationary and the bottom part of the progressive transform.
+      
+  @param n input int The order of the matrix L d L**T.
+  @param b1 input int First index of the submatrix of L d L**T.
+  @param bn input int Last index of the submatrix of L d L**T.
+  @param lambda input double  The shift. In order to compute an accurate eigenvector,
+         lambda should be a good approximation to an eigenvalue of L d L**T.
+  @param d input double[] of dim n  The n diagonal elements of the diagonal matrix d.
+  @param L input double[] of dim (n-1) The (n-1) subdiagonal elements of the unit bidiagonal matrix L,
+         in elements 1 to N-1.
+  @param ld input double of dim (n-1) The n-1 elements L(i)*d(i).
+  @param lld input double of dim (n-1)  The n-1 elements L(i)*L(i)*d(i).
+  @param pivmin input double The minimum pivot in the Sturm sequence.
+  @param gaptol input double Tolerance that indicates when eigenvector entries are negligible
+         w.r.t. their contribution to the residual.
+  @param z (input/output) double[] of dim n.  On input, all entries of z must be set to 0.
+         On output, z contains the (scaled) r-th column of the inverse. The scaling is such that z[r] equals 1.
+  @param wantnc input boolean  Specifies whether negcnt has to be computed.
+  @param negcnt output int[] of dim 1.  If wantnc is true, then negcnt[0] = the number of pivots < pivmin
+         in the  matrix factorization L d L**T, and negcnt[0] = -1 otherwise.
+  @param ztz output double[] of dim 1.  The square of the 2-norm of z.
+  @param mingma output double[] of dim 1.   The reciprocal of the largest (in magnitude) diagonal
+         element of the inverse of L d L**T - sigma I.
+  @param r (input/output) int[] of dim 1.  The twist index for the twisted factorization used to
+         compute z.  On input, 0 <= r[0] <= n. If r[0] is input as 0, r[0] is set to
+         the index where (L d L**T - sigma I)^{-1} is largest in magnitude. If 1 <= r[0] <= n, r[0] is unchanged.
+         On output, r[0] contains the twist index used to compute z.
+         Ideally, r[0] designates the position of the maximum entry in the eigenvector.
+  @param isuppz output int[] of dim 2.  The support of the vector in z, i.e., the vector z is
+         nonzero only in elements isuppz[0] through isuppz[1].
+  @param nrminv output double[] of dim 1.  nrminv = 1.0/sqrt(ztz[0])
+  @param resid output double[] of dim 1.  The residual of the FP vector.
+         resid = abs(mingma[0])/sqrt(ztz[0])
+  @param rqcorr output double[] of dim 1.  The Rayleigh Quotient correction to lambda.
+         rqcorr[0] = mingma[0]*tmp
+  @param work output double[] of dim (4*n).
+  */
+  
+  private void dlar1v(int n, int b1, int bn, double lambda, double d[], double L[], double ld[], double lld[], 
+                      double pivmin, double gaptol, double z[], boolean wantnc, int negcnt[], double ztz[], double mingma[],
+                      int r[], int isuppz[], double nrminv[], double resid[], double rqcorr[], double work[]) {
+  
+                boolean  sawnan1;
+                boolean  sawnan2;
+                int i;
+                int indlpl; 
+                int indp; 
+                int inds;
+                int indumn;
+                int neg1;
+                int neg2;
+                int r1;
+                int r2;
+                double dminus;
+                double dplus;
+                double eps;
+                double s;
+                double tmp;
+          
+                eps = ge.dlamch('P');
+
+                if (r[0] == 0) {
+                   r1 = b1;
+                   r2 = bn;
+                }
+                else {
+                   r1 = r[0];
+                   r2 = r[0];
+                }
+
+                // Storage for lplus
+                indlpl = 0;
+                // Storage for uminus
+                indumn = n;
+                inds = 2*n + 1;
+                indp = 3*n + 1;
+
+                if (b1 == 1) {
+                   work[inds-1] = 0.0;
+                }
+                else {
+                   work[inds+b1-2] = lld[b1-2];
+                }
+
+          
+                // Compute the stationary transform (using the differential form) until the index r2.
+          
+                sawnan1 = false;
+                neg1 = 0;
+                s = work[inds+b1-2] - lambda;
+                for (i = b1; i <= r1-1; i++) {
+                   dplus = d[i-1] + s;
+                   work[indlpl+i-1] = ld[i-1]/ dplus;
+                   if (dplus < 0.0) {
+                       neg1++;
+                   }
+                   work[inds+i-1] = s*work[indlpl+i-1]*L[i-1];
+                   s = work[inds+i-1] - lambda;
+                } // for (i = b1; i <= r1-1; i++)
+                sawnan1 = Double.isNaN(s);
+                    if (!sawnan1 ) {
+                    for (i = r1; i <= r2-1; i++) {
+                       dplus = d[i-1] + s;
+                       work[indlpl+i-1] = ld[i-1] / dplus;
+                       work[inds+i-1] = s*work[indlpl+i-1]*L[i-1];
+                       s = work[inds+i-1] - lambda;
+                    } // for (i = r1; i <= r2-1; i++)
+                    sawnan1 = Double.isNaN(s);
+                } // if (!sawnan1)
+                if (sawnan1) {
+                   // Runs a slower version of the above loop if a NaN is detected
+                   neg1 = 0;
+                   s = work[inds+b1-2] - lambda;
+                   for (i = b1; i <= r1 - 1; i++) {
+                      dplus = d[i-1] + s;
+                      if (Math.abs(dplus) < pivmin) {
+                          dplus = -pivmin;
+                      }
+                      work[indlpl+i-1] = ld[i-1] / dplus;
+                      if (dplus < 0.0) {
+                          neg1++;
+                      }
+                      work[inds+i-1] = s*work[indlpl+i-1]*L[i-1];
+                      if (work[indlpl+i-1] == 0.0) {
+                          work[inds+i-1] = lld[i-1];
+                      }
+                      s = work[inds+i-1] - lambda;
+                    } // for (i = b1; i <= r1 - 1; i++)
+                    for (i = r1; i <= r2 - 1; i++) {
+                      dplus = d[i-1] + s;
+                      if (Math.abs(dplus) < pivmin) {
+                          dplus = -pivmin;
+                      }
+                      work[indlpl+i-1] = ld[i-1] / dplus;
+                      work[inds+i-1] = s*work[indlpl+i-1]*L[i-1];
+                      if (work[indlpl+i-1] == 0.0) {
+                          work[inds+i-1] = lld[i-1];
+                      }
+                      s = work[inds+i-1] - lambda;
+                    } // for (i = r1; i <= r2 - 1; i++)
+                } // if (sawnan1)
+          
+                // Compute the progressive transform (using the differential form)
+                // until the index r1
+          
+                sawnan2 = false;
+                neg2 = 0;
+                work[indp+bn-2] = d[bn-1] - lambda;
+                for (i = bn-1; i >= r1; i--) {
+                   dminus = lld[i-1] + work[indp+i-1];
+                   tmp = d[i-1] / dminus;
+                   if (dminus < 0.0) {
+                       neg2++;
+                   }
+                   work[indumn+i-1] = L[i-1]*tmp;
+                   work[indp+i-2] = work[indp+i-1]*tmp - lambda;
+                } // for (i = bn-1; i >= r1; i--)
+                tmp = work[indp+r1-2];
+                sawnan2 = Double.isNaN(tmp);
+
+                if (sawnan2) {
+                   // Runs a slower version of the above loop if a NaN is detected
+                   neg2 = 0;
+                   for (i = bn-1; i >= r1; i--) {
+                      dminus = lld[i-1] + work[indp+i-1];
+                      if (Math.abs(dminus) < pivmin) {
+                          dminus = -pivmin;
+                      }
+                      tmp = d[i-1] / dminus;
+                      if (dminus < 0.0) {
+                          neg2++;
+                      }
+                      work[indumn+i-1] = L[i-1]*tmp;
+                      work[indp+i-2] = work[indp+i-1]*tmp - lambda;
+                      if (tmp == 0.0) {
+                          work[indp+i-2] = d[i-1] - lambda;
+                      }
+                   } // for (i = bn-1; i >= r1; i--)
+                } // if (sawnan2)
+           
+                // Find the index (from r1 to r2) of the largest (in magnitude)
+                // diagonal element of the inverse
+           
+                mingma[0] = work[inds+r1-2] + work[indp+r1-2];
+                if (mingma[0] < 0.0) {
+                    neg1++;
+                }
+                if (wantnc) {
+                   negcnt[0] = neg1 + neg2;
+                }
+                else {
+                   negcnt[0] = -1;
+                }
+                if (Math.abs(mingma[0]) == 0.0) {
+                   mingma[0] = eps*work[inds+r1-2];
+                }
+                r[0] = r1;
+                for (i = r1; i <= r2-1; i++) {
+                   tmp = work[inds+i-1] + work[indp+i-1];
+                   if (tmp == 0.0) {
+                      tmp = eps*work[inds+i-1];
+                   }
+                   if (Math.abs(tmp) <= Math.abs(mingma[0])) {
+                      mingma[0] = tmp;
+                      r[0] = i + 1;
+                   } // if (Math.abs(tmp) <= Math.abs(mingma[0]))
+                } // for (i = r1; i <= r2-1; i++)
+          
+                // Compute the FP vector: solve N^T v = e_r
+           
+                isuppz[0] = b1;
+                isuppz[1] = bn;
+                z[r[0]-1] = 1.0;
+                ztz[0] = 1.0;
+           
+                // Compute the FP vector upwards from r[0]
+          
+                if (!sawnan1 && !sawnan2) {
+                    for (i = r[0]-1; i >= b1; i--) {
+                      z[i-1] = -(work[indlpl+i-1]*z[i]);
+                      if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol) {
+                         z[i-1] = 0.0;
+                         isuppz[0] = i + 1;
+                         break;
+                      } // if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol)
+                      ztz[0] = ztz[0] + z[i-1]* z[i-1];
+                    } // for (i = r[0]-1; i >= b1; i--)
+                } // if (!sawnan1 && !sawnan2)
+                else { // sawnan1 || sawnan2
+                    // Run slower loop if NaN occurred.
+                    for (i = r[0]-1; i >= b1; i--) {
+                      if (z[i] == 0.0) {
+                          z[i-1] = -(ld[i] / ld[i-1])*z[i+1];
+                      }
+                      else {
+                         z[i-1] = -(work[indlpl+i-1]*z[i]);
+                      }
+                      if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol) {
+                         z[i-1] = 0.0;
+                         isuppz[0] = i + 1;
+                         break;
+                      }
+                      ztz[0] = ztz[0] + z[i-1]*z[i-1];
+                    } // for (i = r[0]-1; i >= b1; i--)
+                } // else sawnan1 || sawnan2
+
+                // Compute the FP vector downwards from r[0] in blocks of size blksiz
+                if (!sawnan1 && !sawnan2) {
+                   for (i = r[0]; i <= bn-1 ; i++) {
+                      z[i] = -(work[indumn+i-1]*z[i-1]);
+                      if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol) {
+                         z[i] = 0.0;
+                         isuppz[1] = i;
+                         break;
+                      } // if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol)
+                      ztz[0] = ztz[0] + z[i]*z[i];
+                   } // for (i = r[0]; i <= bn-1; i++)
+                } // if (!sawnan1 && !sawnan2)
+                else { // sawnan1 || sawnan2
+                   // Run slower loop if NaN occurred.
+                    for (i = r[0]; i <= bn-1 ; i++) {
+                      if (z[i-1] == 0.0) {
+                         z[i] = -(ld[i-2] /ld[i-1])*z[i-2];
+                      }
+                      else {
+                         z[i] = -(work[indumn+i-1]*z[i-1]);
+                      }
+                      if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol) {
+                         z[i] = 0.0;
+                         isuppz[1] = i;
+                         break;
+                      } // if ((Math.abs(z[i-1])+Math.abs(z[i]))* Math.abs(ld[i-1]) < gaptol)
+                      ztz[0] = ztz[0] + z[i]*z[i];
+                    } // for (i = r[0]; i <= bn-1; i++)
+                } // else sawnan1 || sawnan2
+           
+                // Compute quantities for convergence test
+           
+                tmp = 1.0 / ztz[0];
+                nrminv[0] = Math.sqrt(tmp);
+                resid[0] = Math.abs(mingma[0])*nrminv[0];
+                rqcorr[0] = mingma[0]*tmp;
+                return;
+  } // dlar1v
 
   
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlaneg.  LAPACK is a software package provided by Univ. of Tennessee,    --
