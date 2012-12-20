@@ -9,6 +9,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.BitSet;
@@ -52,8 +53,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         animator.start();
     }
     private Vector<VolumeObject> m_kDisplayList = null;
-    
-    private SurfaceClipEffect m_kSurfaceClip = null;
+    private SurfaceClipEffect[] m_kSurfaceClip;
     private boolean m_bCreateMaskImage = false;
     private ModelImage m_kOutputImage = null;
     private BitSet m_kOutputMask = null;
@@ -74,25 +74,33 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         }      
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
         boolean bSurfaceAdded = true;
-        boolean bDrawSurface = false;
+        
+        int surfaceCount = 0;
+        for (int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+            {                
+            	surfaceCount++;
+            }
+        }
+        m_kSurfaceClip = new SurfaceClipEffect[surfaceCount];
+        
+        
         while ( bSurfaceAdded )
         {
             ModelImage kImage = m_kVolumeImage.GetImage();
             float fClipM1 = ((float)m_iSlice/(kImage.getExtents()[2] -1)) - (.5f/(kImage.getExtents()[2] -1));
             float fClipP1 = ((float)m_iSlice/(kImage.getExtents()[2] -1)) + (.5f/(kImage.getExtents()[2] -1));
-            m_kSurfaceClip.SetClip( 4, fClipM1, true );
-            m_kSurfaceClip.SetClip( 5, fClipP1, true );
 
-            m_kSurfaceClip.Scale(m_kVolumeImage.GetScaleX(), m_kVolumeImage.GetScaleY(), m_kVolumeImage.GetScaleZ(), true);
             
             m_pkRenderer.ClearBuffers();
             if (m_pkRenderer.BeginScene())
             {          
+            	surfaceCount = 0;
                 for (int i = 0; i < m_kDisplayList.size(); i++ )
                 {
                     if ( m_kDisplayList.get(i) instanceof VolumeSurface )
                     {                
-                        bDrawSurface = true;
                         Matrix3f kSave = new Matrix3f(m_kDisplayList.get(i).GetScene().Local.GetRotate());
                         m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(Matrix3f.IDENTITY);
                         
@@ -104,17 +112,26 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                         m_kDisplayList.get(i).SetBackface(false);
 
                         WireframeState.FillMode kFill = m_kDisplayList.get(i).GetPolygonMode();
+
+                        m_kDisplayList.get(i).GetMesh().Local.SetScale( 2.0f/m_kVolumeImage.GetScaleX(), 2.0f/m_kVolumeImage.GetScaleY(), 2.0f/m_kVolumeImage.GetScaleZ());
+                        m_kDisplayList.get(i).GetMesh().UpdateGS();
+                        
                         
                         m_kDisplayList.get(i).SetPolygonMode(true, WireframeState.FillMode.FM_FILL);
-                        ((VolumeSurface)m_kDisplayList.get(i)).Render( m_pkRenderer, m_kCuller, m_kSurfaceClip );
+                        ((VolumeSurface)m_kDisplayList.get(i)).Render( m_pkRenderer, m_kCuller, m_kSurfaceClip, surfaceCount, fClipM1, fClipP1 );
                         m_kDisplayList.get(i).SetPolygonMode(true, WireframeState.FillMode.FM_LINE);
-                        ((VolumeSurface)m_kDisplayList.get(i)).Render( m_pkRenderer, m_kCuller, m_kSurfaceClip );
+                        ((VolumeSurface)m_kDisplayList.get(i)).Render( m_pkRenderer, m_kCuller, m_kSurfaceClip, surfaceCount, fClipM1, fClipP1 );
                         
-
+                        
+                        
+                        m_kDisplayList.get(i).GetMesh().Local.SetScale(1, 1, 1);
+                        
                         m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(kSave);
                         m_kDisplayList.get(i).SetDisplay(bDisplaySave);
                         m_kDisplayList.get(i).SetBackface(bBackFaceSave);
                         m_kDisplayList.get(i).SetPolygonMode(true, kFill);
+                        
+                        surfaceCount++;
                     }
                 }
                 m_pkRenderer.EndScene();
@@ -129,6 +146,9 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             {            	
                 if ( m_kOutputImage != null )
                 {
+                	//m_kOutputImage.calcMinMax();
+                	//new ViewJFrameImage(m_kOutputImage);
+                    	
                 	m_kOutputImage.disposeLocal(false);
                 	m_kOutputImage = null;
                 }
@@ -143,18 +163,21 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
 	public void dispose(GLAutoDrawable arg0)
     {
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+        int surfaceCount = 0;
         for (int i = 0; i < m_kDisplayList.size(); i++ )
         {
             if ( m_kDisplayList.get(i) instanceof VolumeSurface )
             { 
+                m_kSurfaceClip[surfaceCount++].ReleaseResources( m_pkRenderer, m_kDisplayList.get(i).GetMesh() );
                 m_kDisplayList.get(i).GetMesh().Release( m_pkRenderer );
             }
         }
-        m_kSurfaceClip.dispose();
         m_kSurfaceClip = null;
         m_kOutputImage = null;
         super.dispose(arg0);
     }
+
+    protected void CreateScene () {}
 
     private void SaveImage(int iZ)
     {
@@ -164,31 +187,26 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         }
         int iWidth = m_kOutputImage.getExtents()[0];
         int iHeight = m_kOutputImage.getExtents()[1];
-        ByteBuffer kBuffer = m_pkRenderer.GetScreenImage( iWidth, iHeight );
+        BufferedImage kScreenShot = m_pkRenderer.Screenshot();
         int iSize = iWidth * iHeight * 4;
         try {
             byte[] aucData = new byte[iSize];
-            for ( int i = 0; i < iSize; i += 4)
+            for ( int y = 0; y < iHeight; y++ )
             {
-                aucData[i] = (byte)255;
-                aucData[i+1] = kBuffer.array()[i];
-                aucData[i+2] = kBuffer.array()[i+1];
-                aucData[i+3] = kBuffer.array()[i+2];
+            	for ( int x = 0; x < iWidth; x++ )
+            	{
+            		int rgb = kScreenShot.getRGB( x, y );
+    				aucData[ (y*iWidth +x) * 4 + 3 ] = (byte)((rgb & 0xff000000) >> 32);
+    				aucData[ (y*iWidth +x) * 4 + 0 ] = (byte)((rgb & 0x00ff0000) >> 16);
+    				aucData[ (y*iWidth +x) * 4 + 1 ] = (byte)((rgb & 0x0000ff00) >> 8);
+    				aucData[ (y*iWidth +x) * 4 + 2 ] = (byte)((rgb & 0x000000ff));            		
+            	}
             }
+            
             m_kOutputImage.importData( iZ * iSize, aucData, false );
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
     
-    @Override
-	protected void CreateScene ()
-    {
-        CreatePlaneNode();
-
-        m_kSurfaceClip = new SurfaceClipEffect( );
-        m_pkPlane.AttachEffect(m_kSurfaceClip);
-        m_pkRenderer.LoadResources(m_pkPlane);
-        m_pkPlane.DetachAllEffects();
-    }
 }

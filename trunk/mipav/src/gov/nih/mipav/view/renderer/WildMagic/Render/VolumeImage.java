@@ -1043,7 +1043,6 @@ public class VolumeImage implements Serializable {
 	 * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
 	 */
 	public void UpdateData(final ModelImage kImage, final boolean bCopytoCPU) {
-		System.err.println( "UPDATEDATA CALLED" );
 		m_kImage = kImage;
 		if (bCopytoCPU) {
 			VolumeImage.UpdateData(m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice],

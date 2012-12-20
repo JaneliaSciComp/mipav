@@ -9,6 +9,7 @@ import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /**
@@ -304,7 +305,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	public ClassificationWidgetEffect (Texture kTexture, int type)
 	{
 		SetPassQuantity(1);
-		m_kVShader.set(0, new VertexShader("TextureV"));
+		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
 		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
 
 		m_kPShader.get(0).SetTextureQuantity(2);
@@ -371,7 +372,7 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	{
 		String rkBaseName = (String)in.readObject();
 		SetPassQuantity(1);
-		m_kVShader.set(0, new VertexShader("TextureV"));
+		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
 		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
 
 		m_kPShader.get(0).SetTextureQuantity(2);

@@ -468,6 +468,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             insertTab("Sculpt", sculptGUI.getMainPanel());
         } else if (command.equals("Clipping")) {
             insertTab("Clip", clipGUI.getMainPanel());
+            clipMaskButton.setEnabled(true);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", m_kVolOpacityPanel.getMainPanel());
         } else if (command.equals("Opacity")) {
@@ -492,14 +493,18 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             insertTab("Display", displayGUI.getMainPanel());
         } else if (command.equals("InvokeClipping")) {
             clipGUI.invokeClippingPlanes();
+            clipMaskButton.setEnabled(true);
             insertTab("Clip", clipGUI.getMainPanel());
         } else if (command.equals("DisableClipping")) {
+            clipMaskButton.setEnabled(false);
             clipGUI.disable6Planes();
         } else if (command.equals("CropClipVolume")) {
             raycastRenderWM.cropClipVolume();
+            clipMaskUndoButton.setEnabled(true);
             setModified();
         } else if (command.equals("UndoCropVolume")) {
             updateData(false);
+            clipMaskUndoButton.setEnabled(false);
         } else if (command.equals("SaveCropVolume")) {
             raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {

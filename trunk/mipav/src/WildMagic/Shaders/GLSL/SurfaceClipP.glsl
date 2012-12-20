@@ -2,7 +2,7 @@
  * Clip the volume based on the x,y,z axes.
  * returns 1 when the volume is clipped, 0 when not clipped.
  */
-bool myClip(const vec3 myvec,
+bool myClip(vec3 myvec,
             float clipX,
             float clipXInv,
             float clipY,
@@ -44,12 +44,17 @@ uniform float clipY;
 uniform float clipYInv;
 uniform float clipZ;
 uniform float clipZInv;
+
+in vec3 varTexCoord;
+in vec4 varColor;
+out vec4 fragColor;
+
 void p_SurfaceClipP()
 {
     // axis-aligned clipping:
-    if ( myClip( gl_TexCoord[0].xyz, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+    if ( myClip( varTexCoord.xyz, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
     {
         discard;
     }
-    gl_FragColor = gl_Color;
+    fragColor = varColor;
 }

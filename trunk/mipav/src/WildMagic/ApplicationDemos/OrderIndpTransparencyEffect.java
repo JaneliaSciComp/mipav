@@ -7,6 +7,7 @@ import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class OrderIndpTransparencyEffect extends ShaderEffect
@@ -44,7 +45,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
     {
         super(1);   
         m_fAlpha = fAlpha;
-        m_kVShader.set(0, new VertexShader("TextureV"));
+        m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
         m_kPShader.set(0, new PixelShader("OrderIndpTransparencyInitP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);
@@ -58,15 +59,6 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
 
         m_kBackgroundColor = kBackgroundColor;
     	String dir = new String( "dual_depth_peeling" + File.separator + "shaders" + File.separator ); 
-
-    	/*
-        PixelShader kPShader = new PixelShader( "TextureP" );
-        kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, akTextures[0] );
-        kPShader.SetImageName( 0, akTextures[0].GetName() );
-        */
-    	
-
         
         PixelShader kPShader = new PixelShader( dir + "wavg_final_fragment2.glsl");
         kPShader.SetTextureQuantity(akTextures.length);
@@ -75,10 +67,8 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             kPShader.SetTexture( i, akTextures[i] );
             kPShader.SetImageName( i, akTextures[i].GetName() );
         }
-    	//m_kVShader.set(0, new VertexShader( dir + "wavg_final_vertex2.glsl"));
 
-
-    	m_kVShader.set(0, new VertexShader( "TextureV" ));
+    	m_kVShader.set(0, new VertexShader( "TextureV", Shader.vertexShaderTexture2, true  ));
     	m_kPShader.set(0, kPShader);
         
     }
@@ -94,7 +84,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
     {
         super(1);   
         m_kBackgroundColor = kBackgroundColor;
-        SetVShader(0,new VertexShader("TextureV", true));
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
         PixelShader kPShader = new PixelShader("OrderIndpTransparencyFinalP", true);
         SetPShader(0,kPShader);
 

@@ -433,6 +433,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 {
 				 if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				 {
+					 if ( ((VolumeSurface)(m_kDisplayList.get(i))).GetOpacity() == 1 )
+					 {
+						 m_bSurfaceUpdate = true;
+					 }
 					 m_kDisplayList.get(i).Blend( fValue );
 					 // save the opacity property in surface attributes
 					 ((VolumeSurface)(m_kDisplayList.get(i))).SetOpacity(fValue);
