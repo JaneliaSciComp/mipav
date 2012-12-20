@@ -3,6 +3,7 @@ import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 public class ScaledTextureEffect extends ShaderEffect
@@ -18,7 +19,7 @@ public class ScaledTextureEffect extends ShaderEffect
     public ScaledTextureEffect (final String rkBaseName, float fVal)
     {
         super(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
+        m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
         m_kPShader.set(0, new PixelShader("ScaledTextureP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);

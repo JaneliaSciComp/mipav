@@ -93,10 +93,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	 @Override
 	 public void display(GLAutoDrawable arg0) {
 
+		 boolean surfaceUpdate = m_bSurfaceUpdate;
 		 super.display(arg0);
-		 if ( m_bSurfaceUpdate )
+		 if ( surfaceUpdate )
 		 {
-			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, true);
+			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
 		 }
 		 if ( m_bCrop )
 		 {

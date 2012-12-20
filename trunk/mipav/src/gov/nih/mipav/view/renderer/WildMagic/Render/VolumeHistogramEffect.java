@@ -8,6 +8,7 @@ import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /** The VolumePlaneEffect ShaderEffect creates shaders for mapping the volume
@@ -56,7 +57,7 @@ implements StreamInterface
         else
         {
             kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
-            kPShader = new PixelShader("TextureP", true);
+            kPShader = new PixelShader("TextureP", Shader.pixelShaderTexture2, true );
         }
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);

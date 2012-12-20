@@ -279,6 +279,8 @@ public class VolumeSurface extends VolumeObject
     private float m_fVolumeDiv, m_fVolumeMult;
     private BoxBV  m_kBoundingBox = null;
     private Vector3f m_kMinBB, m_kMaxBB;
+    
+    private boolean m_bFirstRender = true;
 
     /**
      * Add a new geodesic component to the surface.
@@ -947,6 +949,11 @@ public class VolumeSurface extends VolumeObject
         {
             return;
         }
+        if ( m_bFirstRender )
+        {
+        	m_bFirstRender = false;
+        	//m_kLightShaderTransparent.LoadResources( kRenderer, m_kMesh );
+        }
         for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
         {
             //Spatial kObj = m_kScene.DetachChildAt(i);
@@ -999,20 +1006,31 @@ public class VolumeSurface extends VolumeObject
      * @param kRenderer the OpenGLRenderer object.
      * @param kCuller the Culler object.
      */
-    public void Render( Renderer kRenderer, Culler kCuller, Effect kEffect )
+    public void Render( Renderer kRenderer, Culler kCuller, SurfaceClipEffect[] kEffect, int index, float fClipM1, float fClipP1 )
     {
         if ( !m_bDisplay )
         {
             return;
         }
-        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
+        
+        if ( kEffect[index] == null )
         {
-            m_kScene.GetChild(i).DetachAllEffects();
-            m_kScene.GetChild(i).AttachEffect( kEffect );
+        	kEffect[index] = new SurfaceClipEffect();
+        	kEffect[index].LoadResources( kRenderer, m_kMesh );
         }
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
+        kEffect[index].SetClip( 4, fClipM1, true );
+        kEffect[index].SetClip( 5, fClipP1, true );
+        //for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
+        //{
+            //m_kScene.GetChild(i).DetachAllEffects();
+            //m_kScene.GetChild(i).AttachEffect( kEffect );
+        //}
+        m_kMesh.DetachAllEffects();
+        m_kMesh.AttachEffect( kEffect[index] );
+        kRenderer.Draw(m_kMesh);
+        //m_kScene.UpdateGS();
+        //kCuller.ComputeVisibleSet(m_kScene);
+        //kRenderer.DrawScene(kCuller.GetVisibleSet());
     }
 
     /**

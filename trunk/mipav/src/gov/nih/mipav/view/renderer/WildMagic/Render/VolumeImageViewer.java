@@ -221,16 +221,19 @@ public class VolumeImageViewer extends JavaApplication3D
 
         CreateScene();
 
-        // initial update of objects
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
+        if ( m_spkScene != null )
+        {
+        	// initial update of objects
+        	m_spkScene.UpdateGS();
+        	m_spkScene.UpdateRS();
 
-        // initial culling of scene
-        m_kCuller.SetCamera(m_spkCamera);
-        m_kCuller.ComputeVisibleSet(m_spkScene);
+        	// initial culling of scene
+        	m_kCuller.SetCamera(m_spkCamera);
+        	m_kCuller.ComputeVisibleSet(m_spkScene);
 
-        InitializeCameraMotion(0.001f,0.001f);
-        InitializeObjectMotion(m_spkScene);
+        	InitializeCameraMotion(0.001f,0.001f);
+        	InitializeObjectMotion(m_spkScene);
+        }
         m_bInit = true;
     }
 

@@ -62,12 +62,14 @@ public class VolumePreRenderEffect extends ShaderEffect
     	super(1);
     	String kShaderText = new String (
     			  "uniform mat4 WVPMatrix;"
-    			+ "uniform vec3 ConstantColor;"
+    		    			+ "uniform vec3 ConstantColor;"
+    		    			+ "in vec3 inPosition;"
+    		    			+ "out vec4 varColor;"
     			+ "void main() {"
     		    // Transform the position from model space to clip space.
-    			+ "gl_Position = WVPMatrix*gl_Vertex;"
-    	    	+ "gl_FrontColor.rgb = ConstantColor;"
-    	    	+ "gl_FrontColor.a = 1;"
+    			+ "gl_Position = WVPMatrix*vec4(inPosition, 1.0);"
+    	    	+ "varColor.rgb = ConstantColor;"
+    	    	+ "varColor.a = 1;"
     			+ "}"
     			);
     	m_kVShader.set( 0,  new VertexShader( "VolumePreRenderMatrix", kShaderText, true ) );
