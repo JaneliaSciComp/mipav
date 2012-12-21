@@ -2276,6 +2276,16 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   int iworkiindbl[] = new int[n];
   int iworkiindw[] = new int[n];
   int iworkiindwk[] = new int[5*n];
+  int ibegin;
+  int wbegin;
+  int jblk;
+  int iend;
+  int in;
+  int wend;
+  int offset;
+  int ifirst;
+  int ilast;
+  
        // Test the input parameters.
   
         wantz = ((jobz == 'V') || (jobz == 'v'));
@@ -2585,71 +2595,70 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         // (wl[0], wu[0]]
 
 
-        /*if (wantz) {
+       if (wantz) {
    
            //Compute the desired eigenvectors corresponding to the computed eigenvalues
    
-           CALL DLARRV( N, WL, WU, D, E,
-       $                PIVMIN, IWORK( IINSPL ), M,
-       $                1, M, MINRGP, RTOL1, RTOL2,
-       $                W, WORK( INDERR ), WORK( INDGP ), IWORK( IINDBL ),
-       $                IWORK( IINDW ), WORK( INDGRS ), Z, LDZ,
-       $                ISUPPZ, WORK( INDWRK ), IWORK( IINDWK ), IINFO )
-           IF( IINFO.NE.0 ) THEN
-              INFO = 20 + ABS( IINFO )
-              RETURN
-           END IF
+           dlarrv(n, wl[0], wu[0], d, e, pivmin[0], iwork, m[0], 1, m[0], minrgp, rtol1, rtol2,
+                  w, workinderr, workindgp, iworkiindbl, iworkiindw, work, Z, ldz,
+                  isuppz, workindwrk, iworkiindwk, iinfo);
+           if (iinfo[0] != 0) {
+              info[0] = 20 + Math.abs(iinfo[0]);
+              return;
+           }
         } // if (wantz)
         else {
-  *        DLARRE computes eigenvalues of the (shifted) root representation
-  *        DLARRV returns the eigenvalues of the unshifted matrix.
-  *        However, if the eigenvectors are not desired by the user, we need
-  *        to apply the corresponding shifts from DLARRE to obtain the
-  *        eigenvalues of the original matrix.
-           DO 20 J = 1, M
-              ITMP = IWORK( IINDBL+J-1 )
-              W( J ) = W( J ) + E( IWORK( IINSPL+ITMP-1 ) )
-   20      CONTINUE
+           // dlarre computes eigenvalues of the (shifted) root representation
+           // dlarrv returns the eigenvalues of the unshifted matrix.
+           // However, if the eigenvectors are not desired by the user, we need
+           // to apply the corresponding shifts from DLARRE to obtain the
+           // eigenvalues of the original matrix.
+           for (j = 1; j <= m[0]; j++) {
+              itmp[0] = iworkiindbl[j-1];
+              w[j-1] = w[j-1] + e[iwork[itmp[0]-1]-1];
+            } // for (j = 1; j <= m[0]; j++)
         }
-  *
+  
 
-        IF ( TRYRAC ) THEN
-  *        Refine computed eigenvalues so that they are relatively accurate
-  *        with respect to the original matrix T.
-           IBEGIN = 1
-           WBEGIN = 1
-           DO 39  JBLK = 1, IWORK( IINDBL+M-1 )
-              IEND = IWORK( IINSPL+JBLK-1 )
-              IN = IEND - IBEGIN + 1
-              WEND = WBEGIN - 1
-  *           check if any eigenvalues have to be refined in this block
-   36         CONTINUE
-              IF( WEND.LT.M ) THEN
-                 IF( IWORK( IINDBL+WEND ).EQ.JBLK ) THEN
-                    WEND = WEND + 1
-                    GO TO 36
-                 END IF
-              END IF
-              IF( WEND.LT.WBEGIN ) THEN
-                 IBEGIN = IEND + 1
-                 GO TO 39
-              END IF
+        if (tryac[0]) {
+           // Refine computed eigenvalues so that they are relatively accurate
+           // with respect to the original matrix T.
+           ibegin = 1;
+           wbegin = 1;
+           for (jblk = 1; jblk <= iworkiindbl[m[0]-1]; jblk++) {
+              iend = iwork[jblk-1];
+              in = iend - ibegin + 1;
+              wend = wbegin - 1;
+              // check if any eigenvalues have to be refined in this block
+              while (true) {
+                  if (wend < m[0]) {
+                      if (iworkiindbl[wend] == jblk) {
+                          wend++;
+                          continue;
+                      } // if (wend < m[0])
+                      break;
+                  } // if (wend < m[0])
+              } // while (true)
+              if (wend < wbegin) {
+                 ibegin = iend + 1;
+                 continue;
+              } // if (wend < wbegin)
 
-              OFFSET = IWORK(IINDW+WBEGIN-1)-1
-              IFIRST = IWORK(IINDW+WBEGIN-1)
-              ILAST = IWORK(IINDW+WEND-1)
-              RTOL2 = FOUR * EPS
-              CALL DLARRJ( IN,
+              offset = iworkiindw[wbegin-1]-1;
+              ifirst = iworkiindw[wbegin-1];
+              ilast = iworkiindw[wend-1];
+              rtol2 = 4.0 * eps;
+              /*CALL DLARRJ( IN,
        $                   WORK(INDD+IBEGIN-1), WORK(INDE2+IBEGIN-1),
        $                   IFIRST, ILAST, RTOL2, OFFSET, W(WBEGIN),
        $                   WORK( INDERR+WBEGIN-1 ),
        $                   WORK( INDWRK ), IWORK( IINDWK ), PIVMIN,
        $                   TNRM, IINFO )
               IBEGIN = IEND + 1
-              WBEGIN = WEND + 1
-   39      CONTINUE
-        ENDIF
-  *
+              WBEGIN = WEND + 1*/
+           } // for (jblk = 1; jblk <= iworkiindbl[m[0]-1]; jblk++)
+        } // if (tryac)
+  /*
   *     If matrix was scaled, then rescale eigenvalues appropriately.
   *
         IF( SCALE.NE.ONE ) THEN
@@ -5067,6 +5076,250 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   return;
   } // dlarrf
   
+  /** This is a port of version 3.4.2 LAPACK auxiliary routine dlarrj.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. September 2012
+  Contributors:
+ 
+  Beresford Parlett, University of California, Berkeley, USA
+  Jim Demmel, University of California, Berkeley, USA
+  Inderjit Dhillon, University of Texas, Austin, USA
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  
+  dlarrj performs refinement of the initial estimates of the eigenvalues of the matrix T.
+  Given the initial eigenvalue approximations of T, dlarrj
+  does  bisection to refine the eigenvalues of T,
+  w[ifirst-offset-1] through w[ilast-offset-1], to more accuracy. Initial
+  guesses for these eigenvalues are input in w, the corresponding estimate
+  of the error in these guesses in werr. During bisection, intervals
+  [left, right] are maintained by storing their mid-points and
+  semi-widths in the arrays w and werr respectively.
+  
+  @param n input n The order of the matrix
+  @param d input double[] of dim n.  The n diagonal elements of T.
+  @param e2 input double[] of dim (n-1).  The Squares of the (n-1) subdiagonal elements of T.
+  @param ifirst input int  The index of the first eigenvalue to be computed.
+  @param ilast input int The index of the last eigenvalue to be computed.
+  @param rtol input double Tolerance for the convergence of the bisection intervals.
+         An interval [LEFT,RIGHT] has converged if RIGHT-LEFT.LT.RTOL*MAX(|LEFT|,|RIGHT|).
+  @param offset input int Offset for the arrays w and werr, i.e., the ifirst-offset
+         through ilast-offset elements of these arrays are to be used.
+  @param w (input/output) double[] of dim n.  On input, w[ifirst-offset-1] through w[ilast-offset-1] are
+         estimates of the eigenvalues of L D L^T indexed ifirst through ilast.
+         On output, these estimates are refined.
+  @param werr (input/output) double[] of dim n.
+         On input, werr[ifirst-offset-1] through werr[ilast-offset-1] are
+         the errors in the estimates of the corresponding elements in w.
+         On output, these errors are refined.
+  @param work workspace double[] of dim (2*n)
+  @param iwork workspace int[] of dim (2*n)
+  @param pivmin input double The minimum pivot in the Sturm sequence for T.
+  @param spdiam input double The spectral diameter of T.
+  @param info output int[] of dim 1.  Error flag.
+  */
+  
+  private void dlarrj(int n, double d[], int ifirst, int ilast, double rtol, int offset, double w[], 
+                      double werr[], double work[], int iwork[], double pivmin, double spdiam, 
+                      int info[]) {
+  
+ 
+        int maxitr;
+        int cnt;
+        int i;
+        int i1;
+        int i2;
+        int ii;
+        int iter;
+        int j;
+        int k;
+        int next;
+        int nint;
+        int olnint;
+        int p;
+        int prev;
+        int savi1;
+        double dplus;
+        double fac;
+        double left;
+        double mid;
+        double right;
+        double s;
+        double tmp;
+        double width;
+        
+        info[0] = 0;
+  
+        maxitr = (int)((Math.log(spdiam+pivmin)-Math.log(pivmin)) / Math.log(2.0) ) + 2;
+  
+        // Initialize unconverged intervals in [work[2*i-2], work[2*i-1] ].
+        // The Sturm Count, Count[work[2*i-2]-1] is arranged to be i-1, while
+        // Count[work[2*i-1]-1] is stored in iwork[2*i-1]. The integer iwork[2*i-2]
+        // for an unconverged interval is set to the index of the next unconverged
+        // interval, and is -1 or 0 for a converged interval. Thus a linked
+        // list of unconverged intervals is set up.
+   
+
+        i1 = ifirst;
+        i2 = ilast;
+        // The number of unconverged intervals
+        nint = 0;
+        // The last unconverged interval found
+        prev = 0;
+        for (i = i1; i <= i2; i++) {
+           k = 2*i;
+           ii = i - offset;
+           left = w[ii-1] - werr[ii-1];
+           mid = w[ii-1];
+           right = w[ii-1] + werr[ii-1];
+           width = right - mid;
+           tmp = Math.max(Math.abs(left), Math.abs(right));
+
+           // The following test prevents the test of converged intervals
+           if (width < rtol*tmp) {
+              // This interval has already converged and does not need refinement.
+              // (Note that the gaps might change through refining the
+              // eigenvalues, however, they can only get bigger.)
+              // Remove it from the list.
+              iwork[k-2] = -1;
+              // Make sure that i1 always points to the first unconverged interval
+              if ((i == i1) && (i < i2)) {
+                  i1 = i + 1;
+              }
+              if ((prev >= i1) && (i <= i2)) {
+                  iwork[2*prev-2] = i + 1;
+              }
+           }
+           else {
+              // unconverged interval found
+              prev = i;
+              // Make sure that [LEFT,RIGHT] contains the desired eigenvalue
+  
+              // Do while( CNT(LEFT).GT.I-1 )
+   
+              fac = 1.0;
+   /*20         CONTINUE
+              CNT = 0
+              S = LEFT
+              DPLUS = D( 1 ) - S
+              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+              DO 30 J = 2, N
+                 DPLUS = D( J ) - S - E2( J-1 )/DPLUS
+                 IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+   30         CONTINUE
+              IF( CNT.GT.I-1 ) THEN
+                 LEFT = LEFT - WERR( II )*FAC
+                 FAC = TWO*FAC
+                 GO TO 20
+              END IF
+  *
+  *           Do while( CNT(RIGHT).LT.I )
+  *
+              FAC = ONE
+   50         CONTINUE
+              CNT = 0
+              S = RIGHT
+              DPLUS = D( 1 ) - S
+              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+              DO 60 J = 2, N
+                 DPLUS = D( J ) - S - E2( J-1 )/DPLUS
+                 IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+   60         CONTINUE
+              IF( CNT.LT.I ) THEN
+                 RIGHT = RIGHT + WERR( II )*FAC
+                 FAC = TWO*FAC
+                 GO TO 50
+              END IF
+              NINT = NINT + 1
+              IWORK( K-1 ) = I + 1
+              IWORK( K ) = CNT*/
+           } // else
+           work[k-2] = left;
+           work[k-1] = right;
+        } // for (i = i1; i <= i2; i++)
+
+
+        /*SAVI1 = I1
+  *
+  *     Do while( NINT.GT.0 ), i.e. there are still unconverged intervals
+  *     and while (ITER.LT.MAXITR)
+  *
+        ITER = 0
+   80   CONTINUE
+        PREV = I1 - 1
+        I = I1
+        OLNINT = NINT
+
+        DO 100 P = 1, OLNINT
+           K = 2*I
+           II = I - OFFSET
+           NEXT = IWORK( K-1 )
+           LEFT = WORK( K-1 )
+           RIGHT = WORK( K )
+           MID = HALF*( LEFT + RIGHT )
+
+  *        semiwidth of interval
+           WIDTH = RIGHT - MID
+           TMP = MAX( ABS( LEFT ), ABS( RIGHT ) )
+
+           IF( ( WIDTH.LT.RTOL*TMP ) .OR.
+       $      (ITER.EQ.MAXITR) )THEN
+  *           reduce number of unconverged intervals
+              NINT = NINT - 1
+  *           Mark interval as converged.
+              IWORK( K-1 ) = 0
+              IF( I1.EQ.I ) THEN
+                 I1 = NEXT
+              ELSE
+  *              Prev holds the last unconverged interval previously examined
+                 IF(PREV.GE.I1) IWORK( 2*PREV-1 ) = NEXT
+              END IF
+              I = NEXT
+              GO TO 100
+           END IF
+           PREV = I
+  *
+  *        Perform one bisection step
+  *
+           CNT = 0
+           S = MID
+           DPLUS = D( 1 ) - S
+           IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+           DO 90 J = 2, N
+              DPLUS = D( J ) - S - E2( J-1 )/DPLUS
+              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
+   90      CONTINUE
+           IF( CNT.LE.I-1 ) THEN
+              WORK( K-1 ) = MID
+           ELSE
+              WORK( K ) = MID
+           END IF
+           I = NEXT
+
+   100  CONTINUE
+        ITER = ITER + 1
+  *     do another loop if there are still unconverged intervals
+  *     However, in the last iteration, all intervals are accepted
+  *     since this is the best we can do.
+        IF( ( NINT.GT.0 ).AND.(ITER.LE.MAXITR) ) GO TO 80
+  *
+  *
+  *     At this point, all the intervals have converged
+        DO 110 I = SAVI1, ILAST
+           K = 2*I
+           II = I - OFFSET
+  *        All intervals marked by '0' have been refined.
+           IF( IWORK( K-1 ).EQ.0 ) THEN
+              W( II ) = HALF*( WORK( K-1 )+WORK( K ) )
+              WERR( II ) = WORK( K ) - W( II )
+           END IF
+   110  CONTINUE
+  */
+
+        return;
+  } // dlarrj
+
+
+  
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrk.  LAPACK is a software package provided by Univ. of Tennessee,    --
   -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
   dlarrk computes one eigenvalue of a symmetric tridiagonal
@@ -5435,7 +5688,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         int minwsize;
         int nclus;
         int ndepth;
-        int negcnt;
+        int negcnt[] = new int[1];
         int newcls;
         int newfst;
         int newftt;
@@ -5460,8 +5713,8 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         int zusedl;
         int zusedu;
         int zusedw;
-        double bstres;
-        double bstw;
+        double bstres = 0.0;
+        double bstw = 0.0;
         double eps;
         double fudge;
         double gap;
@@ -5471,14 +5724,14 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double lambda;
         double left;
         double lgap;
-        double mingma;
-        double nrminv;
-        double resid;
+        double mingma[] = new double[1];
+        double nrminv[] = new double[1];
+        double resid[] = new double[1];
         double rgap;
         double right;
-        double rqcorr;
+        double rqcorr[] = new double[1];
         double rqtol;
-        double savgap;
+        double savgap = 0.0;
         double sgndef;
         double sigma;
         double spdiam;
@@ -5486,7 +5739,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double tau[] = new double[1];
         double tmp;
         double tol;
-        double ztz;
+        double ztz[] = new double[1];
         double array[][];
         double vec[];
         double vec2[];
@@ -5498,6 +5751,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         double vec8[];
         double vec9[];
         int ivec[];
+        int ivec2[];
         boolean goto125 = false;
        
         
@@ -6001,7 +6255,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                           return;
                        } // else iinfo[0] != 0
                     } // if (newsiz > 1)
-                    /*else { // newsiz == 1
+                    else { // newsiz == 1
    
                        // Compute eigenvector of singleton
    
@@ -6062,7 +6316,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                                // The eigenvector support can become wrong
                                // because significant entries could be cut off due to a
                                // large gaptol parameter in lariv. Prevent this.
-                               gptol = 0.0;
+                               gaptol = 0.0;
                            } // if ((k == 1) || (k == im))
                            else {
                                gaptol = gap * eps;
@@ -6092,7 +6346,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                                    // Take the bisection as new iterate
                                    usedbs = true;
                                    itmp1 = iwork[iindr+windex-1];
-                                   offset = index[wbegin-1] - 1;
+                                   offset = indexw[wbegin-1] - 1;
                                    vec = new double[in];
                                    for (index = 0; index < in; index++) {
                                        vec[index] = d[ibegin-1+index];
@@ -6114,7 +6368,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                                        vec5[index] = werr[wbegin-1+index];
                                    }
                                    vec6 = new double[2*in];
-                                   ivec = new in[2*in];
+                                   ivec = new int[2*in];
                                    dlarrb(in, vec, vec2, indeig, indeig, 0.0, 2.0*eps, offset, vec3, vec4, vec5,
                                            vec6, ivec, pivmin, spdiam, itmp1, iinfo);
                                    for (index = 0; index < in; index++) {
@@ -6136,166 +6390,208 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                                    iwork[iindr+windex-1] = 0;
                                } // if (needbs)
                                // Given lambda, compute the eigenvector.
-                       CALL DLAR1V( IN, 1, IN, LAMBDA, D( IBEGIN ),
-       $                    L( IBEGIN ), WORK(INDLD+IBEGIN-1),
-       $                    WORK(INDLLD+IBEGIN-1),
-       $                    PIVMIN, GAPTOL, Z( IBEGIN, WINDEX ),
-       $                    .NOT.USEDBS, NEGCNT, ZTZ, MINGMA,
-       $                    IWORK( IINDR+WINDEX ), ISUPPZ( 2*WINDEX-1 ),
-       $                    NRMINV, RESID, RQCORR, WORK( INDWRK ) )
-                       IF(ITER .EQ. 0) THEN
-                          BSTRES = RESID
-                          BSTW = LAMBDA
-                       ELSEIF(RESID.LT.BSTRES) THEN
-                          BSTRES = RESID
-                          BSTW = LAMBDA
-                       ENDIF
-                       ISUPMN = MIN(ISUPMN,ISUPPZ( 2*WINDEX-1 ))
-                       ISUPMX = MAX(ISUPMX,ISUPPZ( 2*WINDEX ))
-                       ITER = ITER + 1
+                               vec = new double[in];
+                               for (index = 0; index < in; index++) {
+                                   vec[index] = d[ibegin-1+index];
+                               }
+                               vec2 = new double[in-1];
+                               for (index = 0; index < in-1; index++) {
+                                   vec2[index] = l[ibegin-1+index];
+                               }
+                               vec3 = new double[in-1];
+                               for (index = 0; index < in-1; index++) {
+                                   vec3[index] = work[indld+ibegin-2+index];
+                               }
+                               vec4 = new double[in-1];
+                               for (index = 0; index < in-1; index++) {
+                                   vec4[index] = work[indlld+ibegin-2+index];
+                               }
+                               vec5 =  new double[in];
+                               for (index = 0; index < in; index++) {
+                                   vec5[index] = Z[ibegin-1+index][windex-1];
+                               }
+                               ivec = new int[1];
+                               ivec2 = new int[2];
+                               vec6 = new double[4*in];
+                               dlar1v(in, 1, in, lambda, vec, vec2, vec3, vec4, pivmin, gaptol, vec5, !usedbs,
+                                       negcnt, ztz, mingma, ivec, ivec2, nrminv, resid, rqcorr, vec6);
+                               for (index = 0; index < in; index++) {
+                                   Z[ibegin-1+index][windex-1] = vec5[index];
+                               }
+                               iwork[iindr+windex-1] = ivec[0];
+                               isuppz[2*windex-2] = ivec2[0];
+                               isuppz[2*windex-1] = ivec2[1];
+                               if (iter == 0) {
+                                   bstres = resid[0];
+                                   bstw = lambda;
+                               }
+                               else if (resid[0] < bstres) {
+                                   bstres = resid[0];
+                                   bstw = lambda;
+                               }
+                               isupmn = Math.min(isupmn, isuppz[2*windex-2]);
+                               isupmx = Math.max(isupmx, isuppz[2*windex-1]);
+                               iter++;
 
-  *                    sin alpha <= |resid|/gap
-  *                    Note that both the residual and the gap are
-  *                    proportional to the matrix, so ||T|| doesn't play
-  *                    a role in the quotient
+                               // sin alpha <= |resid|/gap
+                               // Note that both the residual and the gap are
+                               //  proportional to the matrix, so ||T|| doesn't play
+                               // a role in the quotient
 
-  *
-  *                    Convergence test for Rayleigh-Quotient iteration
-  *                    (omitted when Bisection has been used)
-  *
-                       IF( RESID.GT.TOL*GAP .AND. ABS( RQCORR ).GT.
-       $                    RQTOL*ABS( LAMBDA ) .AND. .NOT. USEDBS)
-       $                    THEN
-  *                       We need to check that the RQCORR update doesn't
-  *                       move the eigenvalue away from the desired one and
-  *                       towards a neighbor. -> protection with bisection
-                          IF(INDEIG.LE.NEGCNT) THEN
-  *                          The wanted eigenvalue lies to the left
-                             SGNDEF = -ONE
-                          ELSE
-  *                          The wanted eigenvalue lies to the right
-                             SGNDEF = ONE
-                          ENDIF
-  *                       We only use the RQCORR if it improves the
-  *                       the iterate reasonably.
-                          IF( ( RQCORR*SGNDEF.GE.ZERO )
-       $                       .AND.( LAMBDA + RQCORR.LE. RIGHT)
-       $                       .AND.( LAMBDA + RQCORR.GE. LEFT)
-       $                       ) THEN
-                             USEDRQ = .TRUE.
-  *                          Store new midpoint of bisection interval in WORK
-                             IF(SGNDEF.EQ.ONE) THEN
-  *                             The current LAMBDA is on the left of the true
-  *                             eigenvalue
-                                LEFT = LAMBDA
-  *                             We prefer to assume that the error estimate
-  *                             is correct. We could make the interval not
-  *                             as a bracket but to be modified if the RQCORR
-  *                             chooses to. In this case, the RIGHT side should
-  *                             be modified as follows:
-  *                              RIGHT = MAX(RIGHT, LAMBDA + RQCORR)
-                             ELSE
-  *                             The current LAMBDA is on the right of the true
-  *                             eigenvalue
-                                RIGHT = LAMBDA
-  *                             See comment about assuming the error estimate is
-  *                             correct above.
-  *                              LEFT = MIN(LEFT, LAMBDA + RQCORR)
-                             ENDIF
-                             WORK( WINDEX ) =
-       $                       HALF * (RIGHT + LEFT)
-  *                          Take RQCORR since it has the correct sign and
-  *                          improves the iterate reasonably
-                             LAMBDA = LAMBDA + RQCORR
-  *                          Update width of error interval
-                             WERR( WINDEX ) =
-       $                             HALF * (RIGHT-LEFT)
-                          ELSE
-                             NEEDBS = .TRUE.
-                          ENDIF
-                          IF(RIGHT-LEFT.LT.RQTOL*ABS(LAMBDA)) THEN
-  *                             The eigenvalue is computed to bisection accuracy
-  *                             compute eigenvector and stop
-                             USEDBS = .TRUE.
-                             continue;
-                          ELSEIF( ITER.LT.MAXITR ) THEN
-                             continue;
-                          ELSEIF( ITER.EQ.MAXITR ) THEN
-                             NEEDBS = .TRUE.
-                             continue;
-                          ELSE
-                             INFO = 5
-                             RETURN
-                          END IF
-                       ELSE
-                          STP2II = .FALSE.
-          IF(USEDRQ .AND. USEDBS .AND.
-       $                     BSTRES.LE.RESID) THEN
-                             LAMBDA = BSTW
-                             STP2II = .TRUE.
-                          ENDIF
-                          IF (STP2II) THEN
-  *                          improve error angle by second step
-                             CALL DLAR1V( IN, 1, IN, LAMBDA,
-       $                          D( IBEGIN ), L( IBEGIN ),
-       $                          WORK(INDLD+IBEGIN-1),
-       $                          WORK(INDLLD+IBEGIN-1),
-       $                          PIVMIN, GAPTOL, Z( IBEGIN, WINDEX ),
-       $                          .NOT.USEDBS, NEGCNT, ZTZ, MINGMA,
-       $                          IWORK( IINDR+WINDEX ),
-       $                          ISUPPZ( 2*WINDEX-1 ),
-       $                          NRMINV, RESID, RQCORR, WORK( INDWRK ) )
-                          ENDIF
-                          WORK( WINDEX ) = LAMBDA
-                       END IF
+  
+                               // Convergence test for Rayleigh-Quotient iteration
+                               // (omitted when Bisection has been used)
+   
+                               if (resid[0] > tol*gap && Math.abs(rqcorr[0]) > rqtol*Math.abs(lambda) && !usedbs) {
+                                   // We need to check that the rqcorr[0] update doesn't
+                                   // move the eigenvalue away from the desired one and
+                                   // towards a neighbor. -> protection with bisection
+                                   if (indeig <= negcnt[0]) {
+                                       // The wanted eigenvalue lies to the left
+                                       sgndef = -1.0;
+                                   }
+                                   else {
+                                       //  The wanted eigenvalue lies to the right
+                                       sgndef = 1.0;
+                                   }
+                                   // We only use the rqcorr[0] if it improves the the iterate reasonably.
+                                   if ((rqcorr[0]*sgndef >= 0.0) && (lambda + rqcorr[0] <= right)
+                                      && (lambda + rqcorr[0] >=  left)) {
+                                       usedrq = true;
+                                       // Store new midpoint of bisection interval in WORK
+                                       if (sgndef == 1.0) {
+                                           // The current LAMBDA is on the left of the true eigenvalue
+                                           left = lambda;
+                                           // We prefer to assume that the error estimate
+                                           // is correct. We could make the interval not
+                                           // as a bracket but to be modified if the RQCORR
+                                           // chooses to. In this case, the RIGHT side should
+                                           // be modified as follows:
+                                           // RIGHT = MAX(RIGHT, LAMBDA + RQCORR)
+                                       }
+                                       else {
+                                           // The current LAMBDA is on the right of the true eigenvalue
+                                           right = lambda;
+                                           // See comment about assuming the error estimate is correct above.
+                                           // LEFT = MIN(LEFT, LAMBDA + RQCORR)
+                                       }
+                                       work[windex-1] = 0.5 * (right + left);
+                                       // Take RQCORR since it has the correct sign and
+                                       // improves the iterate reasonably
+                                       lambda = lambda + rqcorr[0];
+                                       // Update width of error interval
+                                       werr[windex-1] = 0.5 * (right - left);
+                                   }
+                                   else {     
+                                       needbs = true;
+                                   }
+                                   if (right-left < rqtol * Math.abs(lambda)) {
+                                       // The eigenvalue is computed to bisection accuracy
+                                       // compute eigenvector and stop
+                                       usedbs = true;
+                                       continue;
+                                   }
+                                   else if (iter < maxitr) {
+                                       continue;
+                                   }
+                                   else if (iter == maxitr) {
+                                       needbs = true;
+                                       continue;
+                                   }
+                                   else {
+                                       info[0] = 5;
+                                       return;
+                                   }
+                               }
+                               else { 
+                                   stp2ii = false;
+                                   if (usedrq && usedbs && bstres <= resid[0]) {
+                                       lambda = bstw;
+                                       stp2ii = true;
+                                   }
+                                   if (stp2ii) {
+                                       // improve error angle by second step
+                                       vec = new double[in];
+                                       for (index = 0; index < in; index++) {
+                                           vec[index] = d[ibegin-1+index];
+                                       }
+                                       vec2 = new double[in-1];
+                                       for (index = 0; index < in-1; index++) {
+                                           vec2[index] = l[ibegin-1+index];
+                                       }
+                                       vec3 = new double[in-1];
+                                       for (index = 0; index < in-1; index++) {
+                                           vec3[index] = work[indld+ibegin-2+index];
+                                       }
+                                       vec4 = new double[in-1];
+                                       for (index = 0; index < in-1; index++) {
+                                           vec4[index] = work[indlld+ibegin-2+index];
+                                       }
+                                       vec5 =  new double[in];
+                                       for (index = 0; index < in; index++) {
+                                           vec5[index] = Z[ibegin-1+index][windex-1];
+                                       }
+                                       ivec = new int[1];
+                                       ivec2 = new int[2];
+                                       vec6 = new double[4*in];
+                                       dlar1v(in, 1, in, lambda, vec, vec2, vec3, vec4, pivmin, gaptol, vec5, !usedbs,
+                                               negcnt, ztz, mingma, ivec, ivec2, nrminv, resid, rqcorr, vec6);
+                                       for (index = 0; index < in; index++) {
+                                           Z[ibegin-1+index][windex-1] = vec5[index];
+                                       }
+                                       iwork[iindr+windex-1] = ivec[0];
+                                       isuppz[2*windex-2] = ivec2[0];
+                                       isuppz[2*windex-1] = ivec2[1];
+                                   } // if (stp2ii) 
+                                   work[windex-1] = lambda;
+                               }    
                                break;
                            } // while (true)
-  *
-  *                    Compute FP-vector support w.r.t. whole matrix
-  *
-                       ISUPPZ( 2*WINDEX-1 ) = ISUPPZ( 2*WINDEX-1 )+OLDIEN
-                       ISUPPZ( 2*WINDEX ) = ISUPPZ( 2*WINDEX )+OLDIEN
-                       ZFROM = ISUPPZ( 2*WINDEX-1 )
-                       ZTO = ISUPPZ( 2*WINDEX )
-                       ISUPMN = ISUPMN + OLDIEN
-                       ISUPMX = ISUPMX + OLDIEN
-  *                    Ensure vector is ok if support in the RQI has changed
-                       IF(ISUPMN.LT.ZFROM) THEN
-                          DO 122 II = ISUPMN,ZFROM-1
-                             Z( II, WINDEX ) = ZERO
-   122                    CONTINUE
-                       ENDIF
-                       IF(ISUPMX.GT.ZTO) THEN
-                          DO 123 II = ZTO+1,ISUPMX
-                             Z( II, WINDEX ) = ZERO
-   123                    CONTINUE
-                       ENDIF
-                       CALL DSCAL( ZTO-ZFROM+1, NRMINV,
-       $                       Z( ZFROM, WINDEX ), 1 )
+   
+                           // Compute FP-vector support w.r.t. whole matrix
+   
+                           isuppz[2*windex-2] = isuppz[2*windex-2]+oldien;
+                           isuppz[2*windex-1] = isuppz[2*windex-1]+oldien;
+                           zfrom = isuppz[2*windex-2];
+                           zto = isuppz[2*windex-1];
+                           isupmn = isupmn + oldien;
+                           isupmx = isupmx + oldien;
+                           // Ensure vector is ok if support in the RQI has changed
+                           if (isupmn < zfrom) {
+                               for (ii = isupmn; ii <= zfrom-1; ii++) {
+                                   Z[ii-1][windex-1] = 0.0;
+                               } // for (ii = isupmn; ii <= zfrom-1; ii++)
+                           } // if (isupmn < zfrom)
+                           if (isupmx > zto) {
+                               for (ii = zto+1; ii <= isupmx; ii++) {
+                                   Z[ii-1][windex-1] = 0.0;
+                               } // for (ii = zto+1; ii <= isupmx; ii++)
+                           } // if (isupmx > zto)
+                           for (index = 0; index < zto-zfrom+1; index++) {
+                               Z[zfrom-1+index][windex-1] = nrminv[0] * Z[zfrom-1+index][windex-1];
+                           }
                        } // if !(goto125)
-                       goto125 = false;
-  *                    Update W
-                       W( WINDEX ) = LAMBDA+SIGMA
-  *                    Recompute the gaps on the left and right
-  *                    But only allow them to become larger and not
-  *                    smaller (which can only happen through "bad"
-  *                    cancellation and doesn't reflect the theory
-  *                    where the initial gaps are underestimated due
-  *                    to WERR being too crude.)
-                       IF(.NOT.ESKIP) THEN
-                          IF( K.GT.1) THEN
-                             WGAP( WINDMN ) = MAX( WGAP(WINDMN),
-       $                          W(WINDEX)-WERR(WINDEX)
-       $                          - W(WINDMN)-WERR(WINDMN) )
-                          ENDIF
-                          IF( WINDEX.LT.WEND ) THEN
-                             WGAP( WINDEX ) = MAX( SAVGAP,
-       $                          W( WINDPL )-WERR( WINDPL )
-       $                          - W( WINDEX )-WERR( WINDEX) )
-                          ENDIF
-                       ENDIF
-                       IDONE = IDONE + 1
-                    } // else newsiz == 1*/
+                       goto125 = false; 
+                       // Update W
+                       w[windex-1] = lambda+sigma;
+                       // Recompute the gaps on the left and right
+                       // But only allow them to become larger and not
+                       // smaller (which can only happen through "bad"
+                       // cancellation and doesn't reflect the theory
+                       // where the initial gaps are underestimated due
+                       // to werr being too crude.)
+                       if (!eskip) {
+                          if (k > 1) {
+                             wgap[windmn-1] = Math.max(wgap[windmn-1], w[windex-1]-werr[windex-1]
+                                  - w[windmn-1]-werr[windmn-1]);
+                          } // if (k > 1)
+                          if (windex < wend) {
+                             wgap[windex-1] = Math.max(savgap, w[windpl-1]-werr[windpl-1]
+                                  - w[windex-1]-werr[windex-1]);
+                          } // if (windex < wend)
+                       } // if (!eskip)
+                       idone++;
+                    } // else newsiz == 1
                     // here ends the code for the current child
    
                     // Proceed to any remaining child nodes
@@ -6371,7 +6667,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
          resid = abs(mingma[0])/sqrt(ztz[0])
   @param rqcorr output double[] of dim 1.  The Rayleigh Quotient correction to lambda.
          rqcorr[0] = mingma[0]*tmp
-  @param work output double[] of dim (4*n).
+  @param work output (workspace?) double[] of dim (4*n).
   */
   
   private void dlar1v(int n, int b1, int bn, double lambda, double d[], double L[], double ld[], double lld[], 
