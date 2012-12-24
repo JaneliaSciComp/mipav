@@ -26,7 +26,796 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
     /** Common variables in testing routines. */
     private ViewUserInterface UI = ViewUserInterface.getReference();
     
+    /**
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvst,
+     * that tests symmetric generalized eigenvalue drivers. The driver tested is dsyevr. Numerical values were obtained
+     * from the sep.in datafile. Original DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG
+     * Ltd., January, 2007
+     */
+    public void ddrvst_test() {
+
+        // Number of values of n
+        final int nn = 6;
+
+        // Values of matrix dimension n
+        final int[] nval = new int[] {0, 1, 2, 3, 5, 20};
+
+        // Number of values of NB, NBMIN, and NX
+        final int nparms = 5;
+
+        // Values of blocksize NB
+        final int[] nbval = new int[] {1, 3, 3, 3, 10};
+
+        // Values of minimum blocksize NBMIN
+        final int[] nbmin = new int[] {2, 2, 2, 2, 2};
+
+        // Values of crossover point NX
+        final int[] nxval = new int[] {1, 0, 5, 9, 1};
+
+        // Threshold value for the test ratios. Information will be printed
+        // about each test for which the test ratio is greater than or equal
+        // to threshold.
+        final double thresh = 50.0;
+
+        // Test the driver routines
+        final boolean tstdrv = true;
+
+        // Code describing how to set the random number seed.
+        // = 0: Set the seed to a default number before each run.
+        // = 1: Initialize the seed to a default value only before the first
+        // run.
+        // = 2: Like 1, but use the seed values in the 4 integer array
+        // ioldsd
+        int newsd = 1;
+        final int maxt = 30;
+        final boolean[] dotype = new boolean[maxt];
+        final int[] ioldsd = new int[] {0, 0, 0, 1};
+        final int[] iseed = new int[] {0, 0, 0, 1};
+        final int nmax = 132;
+        final int lwork = (nmax * ( (5 * nmax) + 5)) + 1;
+        final int liwork = nmax * ( (5 * nmax) + 20);
+        final int[] iwork = new int[liwork];
+        final double[] work = new double[lwork];
+        final double[] result = new double[500];
+        final int[] info = new int[1];
+        double[][] A;
+        double[] D1;
+        double[] D2;
+        double[] D3;
+        double[] D4;
+        double[] eveigs;
+        double[] WA1;
+        double[] WA2;
+        double[] WA3;
+        double[][] U;
+        double[][] V;
+        double[] tau;
+        double[][] Z;
+
+        final int maxtyp = 21;
+        int i;
+        int k;
+        int maxnval;
+        int[] iparms;
+        UI.setDataText("Tests of the Symmetric Eigenvalue Problem routines\n");
+
+        for (i = 0; i < maxtyp; i++) {
+            dotype[i] = true;
+        }
+
+        maxnval = 0;
+
+        for (i = 0; i < nn; i++) {
+
+            if (nval[i] > maxnval) {
+                maxnval = nval[i];
+            }
+        }
+
+        iparms = new int[100];
+
+        // 9 = maximum size of the subproblems at the bottom of the computation
+        // tree in the divide-and-conquer algorithm (used by xgelsd and xgesdd)
+        iparms[9 - 1] = 25;
+        A = new double[nmax][maxnval];
+        D1 = new double[maxnval];
+        D2 = new double[maxnval];
+        D3 = new double[maxnval];
+        D4 = new double[maxnval];
+        eveigs = new double[maxnval];
+        WA1 = new double[maxnval];
+        WA2 = new double[maxnval];
+        WA3 = new double[maxnval];
+        U = new double[nmax][maxnval];
+        V = new double[nmax][maxnval];
+        tau = new double[maxnval];
+        Z = new double[nmax][maxnval];
+
+        for (i = 1; i <= nparms; i++) {
+
+            // 1 = The optimal blocksize; if this value is 1, an unblocked
+            // algorithm will give the best performance
+            iparms[1 - 1] = nbval[i - 1];
+
+            // 2 = The minimum blocksize for which the block routine should be
+            // used; if the usable block size is less than this value, an
+            // unblocked routine should be used.
+            iparms[2 - 1] = nbmin[i - 1];
+
+            // 3 = The crossover point (in a block routine, for n less than this
+            // value, an unblocked routine should be used).
+            iparms[3 - 1] = nxval[i - 1];
+
+            if (newsd == 0) {
+
+                for (k = 0; k < 4; k++) {
+                    iseed[k] = ioldsd[k];
+                }
+            } // if (newsd == 0)
+
+            UI.setDataText("Optimal blocksize = " + nbval[i - 1] + "\n");
+            UI.setDataText("Minimum blocksize = " + nbmin[i - 1] + "\n");
+            UI.setDataText("Crossover point = " + nxval[i - 1] + "\n");
+
+            if (tstdrv) {
+                ddrvst(nn, nval, 18, dotype, iseed, thresh, A, nmax, D1, D2, D3, D4, eveigs, WA1, WA2, WA3, U, nmax, V,
+                        tau, Z, work, lwork, iwork, liwork, result, info);
+
+                if (info[0] != 0) {
+                    MipavUtil.displayError("ddrvst had info = " + info[0]);
+                }
+            } // if (tstchk)
+        } // for (i = 1; i <= nparms; i++)
+    } // ddrvst_test
     
+    /**
+     * This is a port of the part of version 3.4.0 LAPACK test routine DDRVST used to test dsyevr. Original DDRVST created
+     * by Univ. of Tennessee, Univ. of California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2011.
+     * ddrvst checks the symmetric eigenvalue problem driver dsyevr. dsyevr computes selected eigenvalues and, optionally,
+     * eigenvectors of a real symmetric matrix using the Relatively Robust Representation where it can.
+     * 
+     * <p>
+     * When ddrvst is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For each
+     * size ("n") and each type of matrix, one matrix will be generated and used to test the dsyevx driver. For each
+     * matrix, the following tests will be performed: (1) | A - Z D Z' | / ( |A| n ulp ) (2) | I - Z Z' | / ( n ulp )
+     * (3) | D1 - D2 | / ( |D1| ulp ) where Z is the matrix of eigenvectors returned when the eigenvector option is
+     * given and D1 and D2 are the eigenvalues returned with and without the eigenvector option.
+     * </p>
+     * 
+     * <p>
+     * The "sizes" are specified by an array nn(0:nsizes-1); the value of each element nn[j] specifies one size. The
+     * "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j] is true, then matrix type "j" will be
+     * generated. Currently, the list of possible types is: (1) The zero matrix. (2) The identity matrix. (3) A diagonal
+     * matrix with evenly spaced eigenvalues 1, ..., ulp and random signs. (ulp = (first number larger than 1) - 1) (4)
+     * A diagonal matrix with geometrically spaced eigenvalues 1, ..., ulp and random signs. (5) A diagonal matrix with
+     * "clustered" eigenvalues 1, ulp, ..., ulp and random signs. (6) Same as (4), but multiplied by sqrt(overflow
+     * threshold) (7) Same as (4), but multiplied by sqrt(underflow threshold) (8) A matrix of the form U' D U, where U
+     * is orthogonal and D has evenly spaced entries 1, ..., ulp with random signs on the diagonal. (9) A matrix of the
+     * form U' D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp with random signs on the
+     * diagonal. (10) A matrix of the form U' D U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp
+     * with random signs on the diagonal. (11) Same as (8), but multiplied by sqrt( overflow threshold) (12) Same as
+     * (8), but multiplied by sqrt( underflow threshold) (13) Symmetric matrix with random entries chosen from (-1,1).
+     * (14) Same as (13), but multiplied by sqrt( overflow threshold) (15) Same as (13), but multiplied by
+     * sqrt(underflow threshold) (16) A band matrix with half bandwidth randomly chosen between 0 and n-1, with evenly
+     * spaced eigenvalues 1, ..., ulp with random signs. (17) Same as (16), but multiplied by sqrt(overflow threshold)
+     * (18) Same as (16), but multiplied by sqrt(underflow threshold)
+     * </p>
+     * 
+     * <p>
+     * The tests performed are: 
+     * (1) | A - U S U' | / ( |A| n ulp ) dsyevr(jobz = 'V', range = 'A' uplo = 'L',... )
+     * (2) | I - U U' | / ( n ulp ) dsyevr(jobz = 'V', range = 'A' uplo = 'L',... ) 
+     * (3) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevr(jobz = 'N', range = 'A' uplo = 'L',... )
+     * (4) | A - U S U' | / ( |A| n ulp ) dsyevr(jobz = 'V', range = 'I' uplo = 'L',... )
+     * (5) | I - U U' | / ( n ulp ) dsyevr(jobz = 'V', range = 'I' uplo = 'L',... ) 
+     * (6) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevr(jobz = 'N', range = 'I' uplo = 'L',... )
+     * (7) | A - U S U' | / ( |A| n ulp ) dsyevr(jobz = 'V', range = 'V' uplo = 'L',... )
+     * (8) | I - U U' | / ( n ulp ) dsyevr(jobz = 'V', range = 'V' uplo = 'L',... ) 
+     * (9) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevr(jobz = 'N', range = 'V' uplo = 'L',... )
+     *  Tests 1 through 9 are repeated with uplo = 'U'
+     * </p>
+     * 
+     * @param nsizes (input) int The number of sizes of matrices to use. If it is zero, ddrvst does nothing. It must be
+     *            at least zero.
+     * @param nn (input) int[] of dimension (nsizes) An array containing the sizes to be used for the matrices. Zero
+     *            values will be skipped. The values must be at least zero.
+     * @param ntypes (input) int The number of elements in dotype. If it is zero, ddrvst does nothing. It must be at
+     *            least zero. If it is maxtyp+1 and nsizes is 1, then an additional type, maxtyp+1 is defined, which is
+     *            to use whatever matrix is in A. This is only useful if dotype(0:maxtyp-1) is false and dotype[maxtyp]
+     *            is true.
+     * @param dotype (input) boolean[] of dimension (ntypes) If dotype[j] is true, then for each size in nn a matrix of
+     *            that size and of type j will be generated. If ntypes is smaller than the maximum number of types
+     *            defined (parameter maxtyp), then types ntypes+1 through maxtyp will not be generated. If ntypes is
+     *            larger than maxtyp, dotype[maxtyp] through dotype[ntypes-1] will be ignored.
+     * @param iseed (input/output) int[] of dimension (4) On entry iseed specifies the seed of the random number
+     *            generator. The array elements should be between 0 and 4095; if not they will be reduced mod 4096.
+     *            Also, iseed[3] must be odd. The random number generator uses a linear congruential sequence limited
+     *            to small integers, and so should produce machine independent random numbers. The values of iseed are
+     *            changed on exit, and can be used in the next call to ddrvst to continue the same random number
+     *            sequence.
+     * @param thresh (input) double A test will count as "failed" if the "error", computed as described above, exceeds
+     *            thresh. Note that the error is scaled to be O(1), so thresh should be a reasonably small multiple of
+     *            1, e.g., 10 or 100. In particular, it should not depend on the precision (single vs. double) or the
+     *            size of the matrix. It must be at least zero.
+     * @param A (input/workspace/output) double[][] of dimension (lda, max(nn)) Used to hold the matrix whose
+     *            eigenvalues are to be computed. On exit, A contains the last matrix actually used.
+     * @param lda (input) int The leading dimension of A. It must be at least 1 and at least max(nn).
+     * @param D1 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr
+     *            simultaneously with Z. On exit, the eigenvalues in D1 correspond with the matrix in A.
+     * @param D2 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr if Z is
+     *            not computed. On exit, the eigenvalues in D2 correspond with the matrix in A.
+     * @param D3 (workspace/output) double[] of dimension max(nn)) The eigenvalues of A, as computed by dsterf. On exit,
+     *            the eigenvalues in D3 correspond with the matrix in A.
+     * @param D4 double[] of dimension (max(nn))
+     * @param eveigs double[] of dimension (max(nn)) The eigenvalues as computed by dstev('N', ... )
+     * @param WA1 double[]
+     * @param WA2 double[]
+     * @param WA3 double[]
+     * @param U (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix computed by dsytrd +
+     *            dorgtr.
+     * @param ldu (input) int The leading dimension of U, Z and V. It must be at least 1 and at least max(nn).
+     * @param V (workspace/output) double[][] of dimension (ldu, max(nn)) The Householder vectors computed by dsytrd in
+     *            reducing A to tridiagonal form.
+     * @param tau (workspace/output) double[] of dimension max(nn) The Householder factors computed by dsytrd in
+     *            reducing A to tridiagonal form.
+     * @param Z (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix of eigenvectors computed
+     *            by dsteqr, dpteqr, and dstein.
+     * @param work (workspace/output) double[] of dimension (lwork)
+     * @param lwork (input) int The number of entries in work. This must be at least 1 + 4*nmax + 2 * nmax * lg nmax + 4
+     *            * nmax**2 where nmax = max(nn[j], 2) and lg = log base 2.
+     * @param iwork workspace int[] of dim (6 + 6*nmax + 5* nmax * lg nmax) where nmax = max(nn[j], 2) and lg = log base
+     *            2.
+     * @param liwork (input) int length of iwork
+     * @param result (output) double[] of dimension (105) The values computed by the tests described above. The values
+     *            are currently limited to 1/ulp, to avoid overflow.
+     * @param info (output) int[] If 0, then everything ran OK. -1: nsizes < 0 -2: Some nn[j] < 0 -3: ntypes < 0 -5:
+     *            thresh < 0 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -16: ldu < 1 or ldu < nmax -21: lwork
+     *            too small. If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, dsterf, or dormtr returns an error code, the
+     *            absolute value of it is returned.
+     */
+    private void ddrvst(final int nsizes, final int[] nn, final int ntypes, final boolean[] dotype, final int[] iseed,
+            final double thresh, final double[][] A, final int lda, final double[] D1, final double[] D2,
+            final double[] D3, final double[] D4, final double[] eveigs, final double[] WA1, final double[] WA2,
+            final double[] WA3, final double[][] U, final int ldu, final double[][] V, final double[] tau,
+            final double[][] Z, final double[] work, final int lwork, final int[] iwork, final int liwork,
+            final double[] result, final int[] info) {
+        final int maxtyp = 18; // The number of types defined
+        boolean badnn;
+        char uplo;
+        int i;
+        int idiag;
+        int ihbw;
+        final int[] iinfo = new int[1];
+        int iL;
+        int imode; // Value to be passed to the matrix generators
+        int irow;
+        int itemp;
+        int itype;
+        int iu;
+        int iuplo;
+        int j;
+        int j1;
+        int j2;
+        int jcol;
+        int jsize;
+        int jtype;
+        int lgn;
+        int mtypes;
+        int m[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int m2[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int m3[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int n;
+        final int[] nerrs = new int[1]; // The number of tests which have exceeded thresh
+        // so far (computed by dlafts).
+        int nmats; // The number of matrices generated so far.
+        int nmax; // Largest value in nn.
+        int ntest; // The number of tests performed, or which can
+        // be performed so far, for the current matrix
+        int ntestt; // The total number of tests performed so far.
+        double abstol;
+        double aninv;
+        double anorm; // Norm of A; passed to the matrix generators.
+        double cond; // Value to be passed to the matrix generators.
+        final double[] ovfl = new double[1]; // Overflow threshold
+        double rtovfl; // Square root of overflow threshold
+        double rtunfl; // Square root of underflow threshold
+        double temp1;
+        double temp2;
+        double temp3;
+        double ulp; // Finest relative precision
+        double ulpinv; // Inverse of finest relative precision
+        double vl;
+        double vu;
+        final double[] unfl = new double[1]; // Underflow threshold
+        final int[] idumma = new int[1];
+        final int[] ioldsd = new int[4];
+        final int[] iseed2 = new int[4];
+        final int[] iseed3 = new int[4];
+
+        // The order of magnitude (O(1), O(overflow^(1/2)), O(underflow^(1/2))
+        final int[] kmagn = new int[] {1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+
+        // The mode value to be passed to the matrix generator for type "j".
+        final int[] kmode = new int[] {0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 4, 4, 4};
+
+        // The general type (1-10) for type "j".
+        final int[] ktype = new int[] {1, 2, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 8, 8, 8, 9, 9, 9};
+        int[] iwork2;
+        double[] work2;
+        double[] work3;
+        final double[] res = new double[2];
+        String typeString;
+        
+        vl = 0.0;
+        vu = 0.0;
+
+        // Check for errors
+        ntestt = 0;
+        info[0] = 0;
+
+        badnn = false;
+        nmax = 1;
+
+        for (j = 0; j < nsizes; j++) {
+            nmax = Math.max(nmax, nn[j]);
+
+            if (nn[j] < 0) {
+                badnn = true;
+            }
+        } // for (j = 0; j < nsizes; j++)
+
+        work2 = new double[3 * nmax];
+        work3 = new double[nmax];
+
+        if (nsizes < 0) {
+            info[0] = -1;
+        } else if (badnn) {
+            info[0] = -2;
+        } else if (ntypes < 0) {
+            info[0] = -3;
+        } else if (lda < nmax) {
+            info[0] = -9;
+        } else if (ldu < nmax) {
+            info[0] = -16;
+        } else if ( (2 * Math.max(2, nmax) * Math.max(2, nmax)) > lwork) {
+            info[0] = -21;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error ddrvst had info[0] = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ( (nsizes == 0) || (ntypes == 0)) {
+            return;
+        }
+
+        unfl[0] = ge.dlamch('S');
+        ovfl[0] = ge.dlamch('O');
+        ge.dlabad(unfl, ovfl);
+        ulp = ge.dlamch('E') * ge.dlamch('B');
+        ulpinv = 1.0 / ulp;
+        rtunfl = Math.sqrt(unfl[0]);
+        rtovfl = Math.sqrt(ovfl[0]);
+
+        // Loop over sizes, types
+        for (i = 0; i < 4; i++) {
+            iseed2[i] = iseed[i];
+            iseed3[i] = iseed[i];
+        }
+
+        nerrs[0] = 0;
+        nmats = 0;
+
+        for (jsize = 1; j <= nsizes; jsize++) {
+            n = nn[jsize - 1];
+
+            if (n > 0) {
+                lgn = (int) (Math.log((double) n) / Math.log(2.0));
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+            } // if (n > 0)
+
+            aninv = 1.0 / (double) Math.max(1, n);
+
+            if (nsizes != 1) {
+                mtypes = Math.min(maxtyp, ntypes);
+            } else {
+                mtypes = Math.min(maxtyp + 1, ntypes);
+            }
+
+            for (jtype = 1; jtype <= mtypes; jtype++) {
+
+                if ( !dotype[jtype - 1]) {
+                    continue;
+                }
+
+                nmats = nmats + 1;
+                ntest = 0;
+
+                for (j = 0; j < 4; j++) {
+                    ioldsd[j] = iseed[j];
+                }
+
+                // Compute "A"
+                // Control parameters:
+                /*
+                 * kmagn kmode       ktype 
+           = 1     O(1)  clustered 1 zero 
+           = 2     large clustered 2 identity 
+           = 3     small exponential (none) 
+           = 4           arithmetic  diagonal, (w/ eigenvalues) 
+           = 5           random log  symmetric, w/ eigenvalues 
+           = 6           random      (none) 
+           = 7                       random diagonal 
+           = 8                       random symmetric 
+           = 9                       band symmetric, w/ eigenvalues
+                 */
+
+                if (mtypes <= maxtyp) {
+                    itype = ktype[jtype - 1];
+                    imode = kmode[jtype - 1];
+
+                    // Compute norm
+
+                    if (kmagn[jtype - 1] == 1) {
+                        anorm = 1.0;
+                    } else if (kmagn[jtype - 1] == 2) {
+                        anorm = (rtovfl * ulp) * aninv;
+                    } else {
+                        anorm = rtunfl * n * ulpinv;
+                    }
+
+                    ge.dlaset('F', lda, n, 0.0, 0.0, A, lda);
+                    iinfo[0] = 0;
+                    cond = ulpinv;
+
+                    // Special Matrices -- Identity & Jordan block
+
+                    // Zero
+                    if (itype == 1) {
+                        iinfo[0] = 0;
+                    } else if (itype == 2) {
+
+                        // Identity
+                        for (jcol = 0; jcol < n; jcol++) {
+                            A[jcol][jcol] = anorm;
+                        }
+                    } else if (itype == 4) {
+
+                        // Diagonal Matrix, [Eigen]values, Specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, 0, 0, 'N', A, lda, work2, iinfo);
+                    } else if (itype == 5) {
+
+                        // Symmetric, eigenvalues specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, n, n, 'N', A, lda, work2, iinfo);
+                    } else if (itype == 7) {
+
+                        // Diagonal, random eigenvalues
+                        idumma[0] = 1;
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, 0, 0, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 7)
+                    else if (itype == 8) {
+
+                        // Symmetric, random eigenvalues
+                        idumma[0] = 1;
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, n, n, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 8)
+                    else if (itype == 9) {
+
+                        // Symmetric banded, eigenvalues specified
+                        ihbw = (int) ( (n - 1) * ge.dlarnd(1, iseed3));
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, ihbw, ihbw, 'Z', U, ldu, work2, iinfo);
+
+                        // Store as dense matrix for most routines
+                        ge.dlaset('F', lda, n, 0.0, 0.0, A, lda);
+
+                        for (idiag = -ihbw; idiag <= ihbw; idiag++) {
+                            irow = ihbw - idiag + 1;
+                            j1 = Math.max(1, idiag + 1);
+                            j2 = Math.min(n, n + idiag);
+
+                            for (j = j1; j <= j2; j++) {
+                                i = j - idiag;
+                                A[i - 1][j - 1] = U[irow - 1][j - 1];
+                            }
+                        } // for (idiag = -ihbw; idiag <= ihbw; idiag++)
+                    } // else if (itype == 9)
+                    else {
+                        iinfo[0] = 1;
+                    } // else
+
+                    if (iinfo[0] != 0) {
+                        UI.setDataText("Generator iinfo[0] = " + iinfo[0] + "\n");
+                        UI.setDataText("n = " + n + "\n");
+                        UI.setDataText("jtype = " + jtype + "\n");
+                        UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                        UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                        UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                        UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                        info[0] = Math.abs(iinfo[0]);
+
+                        return;
+                    } // if (iinfo[0] != 0)
+
+                } // if (mtypes <= maxtyp)
+
+                abstol = unfl[0] + unfl[0];
+                if (n <= 1) {
+                    iL = 1;
+                    iu = n;
+                } else { // n > 1
+                    iL = 1 + ( (n - 1) * (int) (ge.dlarnd(1, iseed2)));
+                    iu = 1 + ( (n - 1) * (int) (ge.dlarnd(1, iseed2)));
+
+                    if (iL > iu) {
+                        itemp = iL;
+                        iL = iu;
+                        iu = itemp;
+                    }
+                } // else n > 1
+
+                // Test storing upper or lower triangular part of matrix.
+                for (iuplo = 0; iuplo <= 1; iuplo++) {
+
+                    if (iuplo == 0) {
+                        uplo = 'L';
+                        ntest = 1;
+                    } else {
+                        uplo = 'U';
+                        ntest = 10;
+                    }
+
+                    loop1: {
+                        ge.dlacpy(' ', n, n, A, lda, V, ldu);
+                        
+                        if (n > 0) {
+                            temp3 = Math.max(Math.abs(D1[0]), Math.abs(D1[n-1])); 
+                            if (iL != 1) {
+                                vl = D1[iL-1] - Math.max(0.5*(D1[iL-1] - D1[iL-2]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));    
+                            }
+                            else {
+                                vl = D1[0] - Math.max(0.5*(D1[n-1] - D1[0]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                            if (iu != n) {
+                                vu = D1[iu-1] + Math.max(0.5*(D1[iu] - D1[iu-1]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                            else {
+                                vu = D1[n-1] + Math.max(0.5*(D1[n-1] - D1[0]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                        } // if (n > 0)
+                        else { 
+                            temp3 = 0.0;
+                            vl = 0.0;
+                            vu = 0.0;
+                        } // else 
+                        
+                        iwork2 = new int[Math.max(1, liwork-2*n)];
+                        dsyevr('V', 'A', uplo, n, A, ldu, vl, vu, iL, iu,
+                               abstol, m, WA1, Z, ldu, iwork, work, lwork, iwork2, liwork-2*n, iinfo);
+                        if (iinfo[0] != 0) {
+                            UI.setDataText("dsyevr(V, A, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                            UI.setDataText("n = " + n + "\n");
+                            UI.setDataText("jtype = " + jtype + "\n");
+                            UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                            UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                            UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                            UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                            info[0] = Math.abs(iinfo[0]);
+
+                            if (iinfo[0] < 0) {
+                                return;
+                            } else {
+                                result[ntest - 1] = ulpinv;
+                                result[ntest] = ulpinv;
+                                result[ntest + 1] = ulpinv;
+
+                                break loop1;
+                            }
+                        } // if (iinfo[0] != 0)
+
+                         // Do tests 1 and 2 or 10 and 11
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        ge.dsyt21(1, uplo, n, 0, A, ldu, WA1, D2, Z, ldu, V, ldu, tau, work, res);
+                        result[ntest-1] = res[0];
+                        result[ntest] = res[1];
+                        ntest = ntest + 2;
+                        dsyevr('N', 'A', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, iwork, work, lwork, iwork2, liwork - 2*n, iinfo);
+                        if (iinfo[0] != 0) {
+                            UI.setDataText("dsyevr(N, A, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                            UI.setDataText("n = " + n + "\n");
+                            UI.setDataText("jtype = " + jtype + "\n");
+                            UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                            UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                            UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                            UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                            info[0] = Math.abs(iinfo[0]);
+
+                            if (iinfo[0] < 0) {
+                                return;
+                            } else {
+                                result[ntest - 1] = ulpinv;
+
+                                break loop1;
+                            }
+                        } // if (iinfo[0] != 0)
+                        
+                        // Do test 3 or 12
+                        temp1 = 0.0;
+                        temp2 = 0.0;
+                        for (j = 0; j < n; j++) {
+                            temp1 = Math.max(temp1, Math.max(Math.abs(WA1[j]), Math.abs(WA2[j])));
+                            temp2 = Math.max(temp2, Math.abs(WA1[j] - WA2[j]));
+                        }
+                        result[ntest-1] = temp2/Math.max(unfl[0], ulp * Math.max(temp1, temp2));
+                    } // loop1
+                    
+                    loop2: {
+                        ntest = ntest + 1;
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        dsyevr('V', 'I', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, iwork, work, lwork, iwork2, liwork-2*n, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevr(V, I, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+                                 result[ntest] = ulpinv;
+                                 result[ntest + 1] = ulpinv;
+
+                                 break loop2;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do tests 4 and 5 or 13 and 14
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         se.dsyt22(1, uplo, n, m2[0], 0, A, ldu, WA2, D2, Z, ldu, V, ldu, tau, work, res);
+                         result[ntest-1] = res[0];
+                         result[ntest] = res[1];
+                         ntest = ntest + 2;
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyevr('N', 'I', uplo, n, A, ldu, vl, vu, iL, iu,
+                                 abstol, m3, WA3, Z, ldu, iwork, work, lwork, iwork2, liwork-2*n, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevr(N, I, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+
+                                 break loop2;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do test 6 or 15
+
+                         temp1 = se.dsxt1(1, WA2, m2[0], WA3, m3[0], abstol, ulp, unfl[0]);
+                         temp2 = se.dsxt1(1, WA3, m3[0], WA2, m2[0], abstol, ulp, unfl[0]);
+                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], ulp * temp3);
+                    } // loop2
+                    
+                    loop3: {
+                        ntest = ntest + 1;
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        dsyevr('V', 'V', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, iwork, work, lwork, iwork2, liwork-2*n, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevr(V, V, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+                                 result[ntest] = ulpinv;
+                                 result[ntest + 1] = ulpinv;
+
+                                 break loop3;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do tests 7 and 8 or 16 and 17
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         se.dsyt22(1, uplo, n, m2[0], 0, A, ldu, WA2, D2, Z, ldu, V, ldu, tau, work, res);
+                         result[ntest-1] = res[0];
+                         result[ntest] = res[1];
+                         ntest = ntest + 2;
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyevr('N', 'V', uplo, n, A, ldu, vl, vu, iL, iu,
+                                 abstol, m3, WA3, Z, ldu, iwork, work, lwork, iwork2, liwork-2*n, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevr(N, V, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+
+                                 break loop3;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         if (m3[0] == 0 && n > 0) {
+                             result[ntest-1] = ulpinv;
+                             break loop3;
+                         }
+                         
+                         // Do test 9 or 18
+
+                         temp1 = se.dsxt1(1, WA2, m2[0], WA3, m3[0], abstol, ulp, unfl[0]);
+                         temp2 = se.dsxt1(1, WA3, m3[0], WA2, m2[0], abstol, ulp, unfl[0]);
+                         if (n > 0) {
+                             temp3 = Math.max(Math.abs(WA1[0]), Math.abs(WA1[n-1]));
+                         }
+                         else {
+                             temp3 = 0.0;
+                         }
+                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], temp3 * ulp);    
+                    } // loop3
+                } // for (iuplo = 0; iuplo <= 1; iuplo++)
+
+                // End of Loop -- Check for result[j] > thresh
+                ntestt = ntestt + ntest;
+                typeString = new String("DST");
+                ge.dlafts(typeString, n, n, jtype, ntest, result, ioldsd, thresh, nerrs);
+            } // for (jtype = 1; jtype <= mtypes; jtype++)
+        } // for (jsize = 1; j <= nsizes; jsize++)
+
+        // Summary
+        if (nerrs[0] > 0) {
+            UI.setDataText("ddrvst " + nerrs[0] + " out of " + ntestt + " tests failed to pass the threshold\n");
+        } else {
+            UI.setDataText("All " + ntestt + " tests for ddrvst passed the threshold\n");
+        }
+
+        return;
+
+    } // ddrvst
  
  /** This is a port of the version 3.2.2 LAPACK DSYEVR routine.  Original DSYEVR created by created by Univ. of Tennessee, Univ. of
  California Berkeley, University of Colorado Denver, and NAG Ltd., June 2010
@@ -213,10 +1002,6 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
  int indee;
  int indwk;
  int indwkn;
- int indibl;
- int indisp;
- int indifl;
- int indiwo;
  int iscale;
  int ivec2[];
  int ivec3[];
@@ -255,7 +1040,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
  boolean valeig;
  boolean indeig;
  boolean lquery;
- boolean tryac;
+ boolean tryac[] = new boolean[1];
  char order;
  char ch[] = new char[1];
  String opts;
@@ -446,21 +1231,6 @@ if (iscale == 1 ) {
  indwk = indee + n;
  llwork = lwork - indwk + 1;
 
-//     IWORK(INDIBL:INDIBL+M-1) corresponds to IBLOCK in DSTEBZ and
-//     stores the block indices of each of the M<=N eigenvalues.
- indibl = 1;
-//     IWORK(INDISP:INDISP+NSPLIT-1) corresponds to ISPLIT in DSTEBZ and
-//     stores the starting and finishing indices of each block.
- indisp = indibl + n;
-//     IWORK(INDIFL:INDIFL+N-1) stores the indices of eigenvectors
-//     that corresponding to eigenvectors that fail to converge in
-//     DSTEIN.  This information is discarded; if any fail, the driver
-//     returns INFO > 0.
- indifl = indisp + n;
-//     INDIWO is the offset of the remaining integer workspace.
- indiwo = indisp + n;
-
-
 //     Call DSYTRD to reduce symmetric matrix to tridiagonal form.
 
  vecindd = new double[n];
@@ -491,16 +1261,13 @@ if (iscale == 1 ) {
        }
        
        if (abstol <= 2.0*n*eps) {
-          tryac = true;
+          tryac[0] = true;
        }
        else {
-          tryac = false;
+          tryac[0] = false;
        }
-       /*CALL DSTEMR( JOBZ, 'A', N, WORK( INDDD ), WORK( INDEE ),
-$                   VL, VU, IL, IU, M, W, Z, LDZ, N, ISUPPZ,
-$                   TRYRAC, WORK( INDWK ), LWORK, IWORK, LIWORK,
-$                   INFO )*/
-
+       dstemr(jobz, 'A', n, vecinddd, vecindee, vl, vu, il, iu, m, w, Z, ldz, n, isuppz,
+              tryac, vecindwk, lwork, iwork, liwork, info);
 
 
        // Apply orthogonal matrix used in reduction to tridiagonal form to eigenvectors returned by dstein.
@@ -595,7 +1362,7 @@ $                   INFO )*/
     } // for (j = 1; j <= m[0] - 1; j++)
  } // if (wantz)
 
-     // Set WORK(1) to optimal workspace size.
+     // Set work[0] to optimal workspace size.
 
  work[0] = lwkopt;
  iwork[0] = liwmin;
@@ -2261,16 +3028,6 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   int lwmin;
   int liwmin;
   int nzcmin[] = new int[1];
-  int indgrs;
-  int inderr;
-  int indgp;
-  int indd;
-  int inde2;
-  int indwrk;
-  int iinspl;
-  int iindbl;
-  int iindw;
-  int iindwk;
   int iinfo[] = new int[1];
   int nsplit[] = new int[1];
   int iworkiindbl[] = new int[n];
@@ -2285,6 +3042,14 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   int offset;
   int ifirst;
   int ilast;
+  double vec[];
+  double vec2[];
+  double vec3[];
+  double vec4[];
+  int index;
+  double tmp;
+  int jj;
+  double var;
   
        // Test the input parameters.
   
@@ -2489,18 +3254,6 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         } // if (n == 2)
 
         // Continue with general n
-
-        indgrs = 1;
-        inderr = 2*n + 1;
-        indgp = 3*n + 1;
-        indd = 4*n + 1;
-        inde2 = 5*n + 1;
-        indwrk = 6*n + 1;
-  
-        iinspl = 1;
-        iindbl = n + 1;
-        iindw = 2*n + 1;
-        iindwk = 3*n + 1;
   
         //  Scale matrix to allowable range, if necessary.
         // The allowable range is related to the pivmin parameter; see the
@@ -2648,63 +3401,88 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
               ifirst = iworkiindw[wbegin-1];
               ilast = iworkiindw[wend-1];
               rtol2 = 4.0 * eps;
-              /*CALL DLARRJ( IN,
-       $                   WORK(INDD+IBEGIN-1), WORK(INDE2+IBEGIN-1),
-       $                   IFIRST, ILAST, RTOL2, OFFSET, W(WBEGIN),
-       $                   WORK( INDERR+WBEGIN-1 ),
-       $                   WORK( INDWRK ), IWORK( IINDWK ), PIVMIN,
-       $                   TNRM, IINFO )
-              IBEGIN = IEND + 1
-              WBEGIN = WEND + 1*/
+              vec = new double[in];
+              for (index = 0; index < in; index++) {
+                  vec[index] = workindd[ibegin-2+index];    
+              }
+              vec2 = new double[in-1];
+              for (index = 0; index < in-1; index++) {
+                  vec2[index] = workinde2[ibegin-2+index];
+              }
+              vec3 = new double[in];
+              for (index = 0; index < in; index++) {
+                  vec3[index] = w[wbegin-1+index];
+              }
+              vec4 = new double[in];
+              for (index = 0; index < in; index++) {
+                  vec4[index] = workinderr[wbegin-2+index];
+              }
+              dlarrj(in, vec, vec2, ifirst, ilast, rtol2, offset, vec3, vec4,
+                     workindwrk, iworkiindwk, pivmin[0], tnrm, iinfo);
+              for (index = 0; index < in; index++) {
+                  w[wbegin-1+index] = vec3[index];
+              }
+              for (index = 0; index < in; index++) {
+                  workinderr[wbegin-2+index] = vec4[index];
+              }
+              ibegin = iend + 1;
+              wbegin = wend + 1;
            } // for (jblk = 1; jblk <= iworkiindbl[m[0]-1]; jblk++)
         } // if (tryac)
-  /*
-  *     If matrix was scaled, then rescale eigenvalues appropriately.
-  *
-        IF( SCALE.NE.ONE ) THEN
-           CALL DSCAL( M, ONE / SCALE, W, 1 )
-        END IF
-  *
-  *     If eigenvalues are not in increasing order, then sort them,
-  *     possibly along with eigenvectors.
-  *
-        IF( NSPLIT.GT.1 ) THEN
-           IF( .NOT. WANTZ ) THEN
-              CALL DLASRT( 'I', M, W, IINFO )
-              IF( IINFO.NE.0 ) THEN
-                 INFO = 3
-                 RETURN
-              END IF
-           ELSE
-              DO 60 J = 1, M - 1
-                 I = 0
-                 TMP = W( J )
-                 DO 50 JJ = J + 1, M
-                    IF( W( JJ ).LT.TMP ) THEN
-                       I = JJ
-                       TMP = W( JJ )
-                    END IF
-   50            CONTINUE
-                 IF( I.NE.0 ) THEN
-                    W( I ) = W( J )
-                    W( J ) = TMP
-                    IF( WANTZ ) THEN
-                       CALL DSWAP( N, Z( 1, I ), 1, Z( 1, J ), 1 )
-                       ITMP = ISUPPZ( 2*I-1 )
-                       ISUPPZ( 2*I-1 ) = ISUPPZ( 2*J-1 )
-                       ISUPPZ( 2*J-1 ) = ITMP
-                       ITMP = ISUPPZ( 2*I )
-                       ISUPPZ( 2*I ) = ISUPPZ( 2*J )
-                       ISUPPZ( 2*J ) = ITMP
-                    END IF
-                 END IF
-   60         CONTINUE
-           END IF
-        ENDIF
-  *
-  *
-        WORK( 1 ) = LWMIN
-        IWORK( 1 ) = LIWMIN*/
+  
+        // If matrix was scaled, then rescale eigenvalues appropriately.
+   
+        if (scale != 1.0) {
+            for (index = 0; index < m[0]; index++) {
+                w[index] = (1.0/scale) * w[index];
+            }
+        } // if (scale != 1.0)
+   
+        // If eigenvalues are not in increasing order, then sort them,
+        // possibly along with eigenvectors.
+  
+        if (nsplit[0] > 1) {
+           if (!wantz) {
+              ge.dlasrt('I', m[0], w, iinfo);
+              if (iinfo[0] != 0) {
+                 info[0] = 3;
+                 return;
+              } // if (iinfo[0] != 0)
+           } // if (!wantz)
+           else { // wantz
+              for (j = 1; j <= m[0]-1; j++) {
+                 i = 0;
+                 tmp = w[j-1];
+                 for (jj = j+1; jj <= m[0]; jj++) {
+                    if (w[jj-1] < tmp) {
+                       i = jj;
+                       tmp = w[jj-1];
+                    } // if (w[jj-1] < tmp)
+                 } // for (jj = j+1; jj <= m[0]; jj++)
+                 if (i != 0) {
+                    w[i-1] = w[j-1];
+                    w[j-1] = tmp;
+                    if (wantz) {
+                       for (index = 0; index < n; index++) {
+                           var = Z[index][i-1];
+                           Z[index][i-1] = Z[index][j-1];
+                           Z[index][j-1] = var;
+                       }
+                       itmp[0] = isuppz[2*i-2];
+                       isuppz[2*i-2] = isuppz[2*j-2];
+                       isuppz[2*j-2] = itmp[0];
+                       itmp[0] = isuppz[2*i-1];
+                       isuppz[2*i-1] = isuppz[2*j-1];
+                       isuppz[2*j-1] = itmp[0];
+                    } // if (wantz)
+                 } // if (i != 0)
+              } // for (j = 1; j <= m[0]-1; j++)
+           } // else wantz
+        }// if (nsplit > 1)
+  
+  
+        work[0] = lwmin;
+        iwork[0] = liwmin;
         return;
   } // dstemr
   
@@ -5118,7 +5896,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   @param info output int[] of dim 1.  Error flag.
   */
   
-  private void dlarrj(int n, double d[], int ifirst, int ilast, double rtol, int offset, double w[], 
+  private void dlarrj(int n, double d[], double e2[], int ifirst, int ilast, double rtol, int offset, double w[], 
                       double werr[], double work[], int iwork[], double pivmin, double spdiam, 
                       int info[]) {
   
@@ -5197,123 +5975,145 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
               // Do while( CNT(LEFT).GT.I-1 )
    
               fac = 1.0;
-   /*20         CONTINUE
-              CNT = 0
-              S = LEFT
-              DPLUS = D( 1 ) - S
-              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-              DO 30 J = 2, N
-                 DPLUS = D( J ) - S - E2( J-1 )/DPLUS
-                 IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-   30         CONTINUE
-              IF( CNT.GT.I-1 ) THEN
-                 LEFT = LEFT - WERR( II )*FAC
-                 FAC = TWO*FAC
-                 GO TO 20
-              END IF
-  *
-  *           Do while( CNT(RIGHT).LT.I )
-  *
-              FAC = ONE
-   50         CONTINUE
-              CNT = 0
-              S = RIGHT
-              DPLUS = D( 1 ) - S
-              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-              DO 60 J = 2, N
-                 DPLUS = D( J ) - S - E2( J-1 )/DPLUS
-                 IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-   60         CONTINUE
-              IF( CNT.LT.I ) THEN
-                 RIGHT = RIGHT + WERR( II )*FAC
-                 FAC = TWO*FAC
-                 GO TO 50
-              END IF
-              NINT = NINT + 1
-              IWORK( K-1 ) = I + 1
-              IWORK( K ) = CNT*/
+              while (true) {
+                  cnt = 0;
+                  s = left;
+                  dplus = d[0] - s;
+                  if (dplus < 0.0) {
+                      cnt++;
+                  }          
+                  for (j = 2; j <= n; j++) {
+                      dplus = d[j-1] - s - e2[j-2]/dplus;
+                      if (dplus < 0.0) {
+                          cnt++;
+                      }
+                  } // for (j = 2; j <= n; j++)
+                  if (cnt > i-1) {
+                      left = left - werr[ii-1]*fac;
+                      fac = 2.0*fac;
+                      continue;
+                  } // if (cnt > i-1)
+                  break;
+              } // while (true)
+  
+              // Do while( CNT(RIGHT).LT.I )
+   
+              fac = 1.0;
+              while (true) {
+                  cnt = 0;
+                  s = right;
+                  dplus = d[0] - s;
+                  if (dplus < 0.0) {
+                      cnt++;
+                  }
+                  for (j = 2; j <= n; j++) {
+                      dplus = d[j-1] - s - e2[j-2]/dplus;
+                      if (dplus < 0.0) {
+                          cnt++;
+                      }
+                  } // for (j = 2; j <= n; j++)
+                  if (cnt < i) {
+                      right = right + werr[ii-1]*fac;
+                      fac = 2.0*fac;
+                      continue;
+                  } // if (cnt < i)
+                  break;
+              } // while (true)
+              nint++;
+              iwork[k-2] = i + 1;
+              iwork[k-1] = cnt;
            } // else
            work[k-2] = left;
            work[k-1] = right;
         } // for (i = i1; i <= i2; i++)
 
 
-        /*SAVI1 = I1
-  *
-  *     Do while( NINT.GT.0 ), i.e. there are still unconverged intervals
-  *     and while (ITER.LT.MAXITR)
-  *
-        ITER = 0
-   80   CONTINUE
-        PREV = I1 - 1
-        I = I1
-        OLNINT = NINT
+        savi1 = i1;
+   
+        // Do while(nint > 0), i.e. there are still unconverged intervals
+        // and while (iter < maxitr)
+   
+        iter = 0;
+        while (true) {
+            prev = i1 - 1;
+            i = i1;
+            olnint = nint;
 
-        DO 100 P = 1, OLNINT
-           K = 2*I
-           II = I - OFFSET
-           NEXT = IWORK( K-1 )
-           LEFT = WORK( K-1 )
-           RIGHT = WORK( K )
-           MID = HALF*( LEFT + RIGHT )
+            for (p = 1; p <= olnint; p++) {
+                k = 2*i;
+                ii = i - offset;
+                next = iwork[k-2];
+                left = work[k-2];
+                right = work[k-1];
+                mid = 0.5*(left + right);
 
-  *        semiwidth of interval
-           WIDTH = RIGHT - MID
-           TMP = MAX( ABS( LEFT ), ABS( RIGHT ) )
+                // semiwidth of interval
+               width = right - mid;
+               tmp = Math.max(Math.abs(left), Math.abs(right));
 
-           IF( ( WIDTH.LT.RTOL*TMP ) .OR.
-       $      (ITER.EQ.MAXITR) )THEN
-  *           reduce number of unconverged intervals
-              NINT = NINT - 1
-  *           Mark interval as converged.
-              IWORK( K-1 ) = 0
-              IF( I1.EQ.I ) THEN
-                 I1 = NEXT
-              ELSE
-  *              Prev holds the last unconverged interval previously examined
-                 IF(PREV.GE.I1) IWORK( 2*PREV-1 ) = NEXT
-              END IF
-              I = NEXT
-              GO TO 100
-           END IF
-           PREV = I
-  *
-  *        Perform one bisection step
-  *
-           CNT = 0
-           S = MID
-           DPLUS = D( 1 ) - S
-           IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-           DO 90 J = 2, N
-              DPLUS = D( J ) - S - E2( J-1 )/DPLUS
-              IF( DPLUS.LT.ZERO ) CNT = CNT + 1
-   90      CONTINUE
-           IF( CNT.LE.I-1 ) THEN
-              WORK( K-1 ) = MID
-           ELSE
-              WORK( K ) = MID
-           END IF
-           I = NEXT
+               if ((width < rtol*tmp) || (iter == maxitr)) {
+                   // reduce number of unconverged intervals
+                   nint--;
+                   // Mark interval as converged.
+                   iwork[k-2] = 0;
+                   if (i1 == i) {
+                       i1 = next;
+                   }
+                   else {
+                       // Prev holds the last unconverged interval previously examined
+                       if (prev >= i1) {
+                           iwork[2*prev-2] = next;
+                       }
+                   }
+                   i = next;
+                   continue;
+               } // if ((width < rtol*tmp) || (iter == maxitr))
+               prev = i;
+  
+               // Perform one bisection step
+   
+               cnt = 0;
+               s = mid;
+               dplus = d[0] - s;
+               if (dplus < 0.0) {
+                   cnt++;
+               }
+               for (j = 2; j <= n; j++) {
+                   dplus = d[j-1] - s - e2[j-2]/dplus;
+                   if (dplus < 0.0) {
+                       cnt++;
+                   }
+               } // for (j = 2; j <= n; j++)
+               if (cnt <= i-1) {
+                   work[k-2] = mid;
+               }
+               else {
+                   work[k-1] = mid;
+               }
+               i = next;
 
-   100  CONTINUE
-        ITER = ITER + 1
-  *     do another loop if there are still unconverged intervals
-  *     However, in the last iteration, all intervals are accepted
-  *     since this is the best we can do.
-        IF( ( NINT.GT.0 ).AND.(ITER.LE.MAXITR) ) GO TO 80
-  *
-  *
-  *     At this point, all the intervals have converged
-        DO 110 I = SAVI1, ILAST
-           K = 2*I
-           II = I - OFFSET
-  *        All intervals marked by '0' have been refined.
-           IF( IWORK( K-1 ).EQ.0 ) THEN
-              W( II ) = HALF*( WORK( K-1 )+WORK( K ) )
-              WERR( II ) = WORK( K ) - W( II )
-           END IF
-   110  CONTINUE
-  */
+            } // for (p = 1; p <= olnint; p++)
+            iter++;
+            // do another loop if there are still unconverged intervals
+            // However, in the last iteration, all intervals are accepted
+            // since this is the best we can do.
+            if ((nint > 0) && (iter <= maxitr)) {
+                continue;
+            }
+            break;
+        } // while (true)
+   
+   
+        // At this point, all the intervals have converged
+        for (i = savi1; i <= ilast; i++) {
+            k = 2*i;
+            ii = i - offset;
+            // All intervals marked by '0' have been refined.
+            if (iwork[k-2] == 0) {
+                w[ii-1] = 0.5*(work[k-2]+work[k-1]);
+                werr[ii-1] = work[k-1] - w[ii-1];
+            } // if (iwork[k-2] == 0)
+        } // for (i = savi1l i <= ilast; i++)
 
         return;
   } // dlarrj
@@ -5659,7 +6459,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         boolean tryrqc;
         boolean usedbs;
         boolean usedrq;
-        int done;
+        //int done;
         int i;
         int ibegin;
         int idone;
@@ -5668,7 +6468,6 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         int iindc1;
         int iindc2;
         int iindr;
-        int iindwk;
         int iinfo[] = new int[1];
         int im;
         int in;
@@ -5676,7 +6475,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         int index;
         int indld;
         int indlld;
-        int indwrk;
+        //int indwrk;
         int isupmn;
         int isupmx;
         int iter;
@@ -5760,7 +6559,6 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         // The first n entries of work are reserved for the eigenvalues
         indld = n+1;
         indlld= 2*n+1;
-        indwrk= 3*n+1;
         minwsize = 12 * n;
 
         for (i = 0; i < minwsize; i++) {
@@ -5772,7 +6570,6 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         // iwork[iindc1:iindc2+n-1] are used to store the clusters of the current layer and the one above.
         iindc1 = n;
         iindc2 = 2*n;
-        iindwk = 3*n + 1;
 
         miniwsize = 7 * n;
         for (i = 0; i < miniwsize; i++) {
@@ -5825,7 +6622,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         // are stored in k contiguous columns of Z.
 
         // done is the number of eigenvectors already computed
-        done = 0;
+        //done = 0;
         ibegin = 1;
         wbegin = 1;
         for (jblk = 1; jblk <= iblock[m-1]; jblk++) {
@@ -5864,7 +6661,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
 
            // This is for a 1x1 block
            if (ibegin == iend) {
-              done++;
+              //done++;
               Z[ibegin-1][wbegin-1] = 1.0;
               isuppz[2*wbegin-2] = ibegin;
               isuppz[2*wbegin-1] = ibegin;
@@ -6268,7 +7065,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        windmn = Math.max(windex - 1,1);
                        windpl = Math.min(windex+1,m);
                        lambda = work[windex-1];
-                       done++;
+                       //done++;
                        // Check if eigenvector computation is to be skipped
                        if ((windex < dol) || (windex > dou)) {
                           eskip = true;
