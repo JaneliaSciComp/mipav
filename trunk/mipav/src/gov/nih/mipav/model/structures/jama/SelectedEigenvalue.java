@@ -902,7 +902,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
        *          if ldu is at least n.
        *          Modified.
      */     
-    private void dsyt22(int itype, char uplo, int n, int m, int kband, double A[][],
+    public void dsyt22(int itype, char uplo, int n, int m, int kband, double A[][],
                         int lda, double d[], double e[], double U[][], int ldu,
                         double V[][], int ldv, double tau[], double work[], double result[]) {
              double unfl;
@@ -1211,7 +1211,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
      *  @param ulp input double Machine precision.
      *  @param unfl input double The smallest positive number whose reciprocal does not overflow.     
    */     
-    private double dsxt1(int ijob, double d1[], int n1, double d2[], int n2, double abstol,
+    public double dsxt1(int ijob, double d1[], int n1, double d2[], int n2, double abstol,
                          double ulp, double unfl) {
            double temp1;
            double temp2;
