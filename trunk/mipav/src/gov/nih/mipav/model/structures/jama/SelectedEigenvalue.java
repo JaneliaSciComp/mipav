@@ -1397,7 +1397,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
     } // dckkst_test
     
     /**
-     * This is a port of the porions of LAPACK version 3.4.0 test routine DCHKST used to test the symmetric eigenvalue
+     * This is a port of the portions of LAPACK version 3.4.0 test routine DCHKST used to test the symmetric eigenvalue
      * routines dstebz and dstein. Original DCHKST created by Univ. of Tennessee, Univ. of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011.
      * 
