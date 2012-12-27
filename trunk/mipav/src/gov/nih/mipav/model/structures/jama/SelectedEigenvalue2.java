@@ -6,7 +6,14 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class SelectedEigenvalue2 implements java.io.Serializable {
     
-   
+ // dchkst_test() repeats 5 times: All 378 tests for dchkst passed the threshold
+ // ddrvst_test() says: 
+    // ddrvst 155 out of 1944 tests failed to pass the threshold
+    // ddrvst 155 out of 1944 tests failed to pass the threshold
+    // ddrvst 154 out of 1944 tests failed to pass the threshold
+    // ddrvst 154 out of 1944 tests failed to pass the threshold
+    // ddrvst 154 out of 1944 tests failed to pass the threshold
+
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -809,8 +816,10 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
         // Summary
         if (nerrs[0] > 0) {
             UI.setDataText("ddrvst " + nerrs[0] + " out of " + ntestt + " tests failed to pass the threshold\n");
+            System.out.println("ddrvst " + nerrs[0] + " out of " + ntestt + " tests failed to pass the threshold");
         } else {
             UI.setDataText("All " + ntestt + " tests for ddrvst passed the threshold\n");
+            System.out.println("All " + ntestt + " tests for ddrvst passed the threshold");
         }
 
         return;
@@ -1566,7 +1575,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                               } // if (iinfo[0] != 0)
                       
                               // Do Tests 29 and 30
-                   
+                              ntest++;
                               array = new double[m[0]][m[0]+1];
                               dstt22( n, m[0], 0, SD, SE, D1, dumma, Z, ldu, array, m[0], res);
                               result[2] = res[0];
@@ -1684,7 +1693,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                               } // if (iinfo[0] != 0)
                       
                               // Do Tests 32 and 33
-                    
+                              ntest++;
                               array = new double[m[0]][m[0]+1];
                               dstt22( n, m[0], 0, SD, SE, D1, dumma, Z, ldu, array, m[0], res);
                               result[5] = res[0];
@@ -1762,7 +1771,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                           } // if (n > 0)
                 
                           // TEST = 35
-              
+                          ntest++;
                           dstemr( 'V', 'A', n, D5, work, vl, vu, il, iu,
                                    m, D1, Z, ldu, n, iwork, tryrac,
                                    work2, lwork-n, iwork2, liwork-2*n, iinfo);
@@ -1786,6 +1795,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                           } // if (iinfo[0] != 0)
                       
                           // Do Tests 35 and 36
+                          ntest++;
                           array = new double[m[0]][m[0]+1];
                           dstt22( n, m[0], 0, SD, SE, D1, dumma, Z, ldu, array, m[0], res );
                           result[8] = res[0];
@@ -1805,6 +1815,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                           }
                
                           // TEST = 37
+                          ntest++;
                           dstemr( 'N', 'A', n, D5, work, vl, vu, il, iu,
                                   m, D2, Z, ldu, n, iwork, tryrac,
                                   work2, lwork-n, iwork2, liwork-2*n, iinfo);
@@ -2494,6 +2505,7 @@ if (iscale == 1 ) {
        else {
           tryac[0] = false;
        }
+      
        dstemr(jobz, 'A', n, vecinddd, vecindee, vl, vu, il, iu, m, w, Z, ldz, n, isuppz,
               tryac, vecindwk, lwork, iwork, liwork, info);
 
@@ -4238,7 +4250,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   double workinde2[] = new double[n];
   double workinderr[] = new double[n];
   double workindgp[] = new double[n];
-  double workindwrk[] = new double[6*n];
+  double workindwrk[] = new double[12*n];
   double rtol1;
   double rtol2;
   boolean wantz;
@@ -4260,7 +4272,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
   int nsplit[] = new int[1];
   int iworkiindbl[] = new int[n];
   int iworkiindw[] = new int[n];
-  int iworkiindwk[] = new int[5*n];
+  int iworkiindwk[] = new int[7*n];
   int ibegin;
   int wbegin;
   int jblk;
@@ -4619,6 +4631,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                       } // if (wend < m[0])
                       break;
                   } // if (wend < m[0])
+                  break;
               } // while (true)
               if (wend < wbegin) {
                  ibegin = iend + 1;
@@ -4631,11 +4644,11 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
               rtol2 = 4.0 * eps;
               vec = new double[in];
               for (index = 0; index < in; index++) {
-                  vec[index] = workindd[ibegin-2+index];    
+                  vec[index] = workindd[ibegin-1+index];    
               }
               vec2 = new double[in-1];
               for (index = 0; index < in-1; index++) {
-                  vec2[index] = workinde2[ibegin-2+index];
+                  vec2[index] = workinde2[ibegin-1+index];
               }
               vec3 = new double[in];
               for (index = 0; index < in; index++) {
@@ -4643,7 +4656,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
               }
               vec4 = new double[in];
               for (index = 0; index < in; index++) {
-                  vec4[index] = workinderr[wbegin-2+index];
+                  vec4[index] = workinderr[wbegin-1+index];
               }
               dlarrj(in, vec, vec2, ifirst, ilast, rtol2, offset, vec3, vec4,
                      workindwrk, iworkiindwk, pivmin[0], tnrm, iinfo);
@@ -4651,7 +4664,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                   w[wbegin-1+index] = vec3[index];
               }
               for (index = 0; index < in; index++) {
-                  workinderr[wbegin-2+index] = vec4[index];
+                  workinderr[wbegin-1+index] = vec4[index];
               }
               ibegin = iend + 1;
               wbegin = wend + 1;
@@ -8221,16 +8234,16 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        for (index = 0; index < in-1; index++) {
                            vec3[index] = work[indld + ibegin - 2  + index];
                        }
-                       vec4 = new double[newlst - newfst + 1];
-                       for (index = 0; index < newlst - newfst + 1; index++) {
+                       vec4 = new double[newlst + 1];
+                       for (index = 0; index < newlst + 1; index++) {
                            vec4[index] = work[wbegin - 1 + index];
                        }
-                       vec5 = new double[newlst - newfst + 1];
-                       for (index = 0; index < newlst - newfst + 1; index++) {
+                       vec5 = new double[newlst + 1];
+                       for (index = 0; index < newlst + 1; index++) {
                            vec5[index] = wgap[wbegin - 1 + index];
                        }
-                       vec6 = new double[newlst - newfst + 1];
-                       for (index = 0; index < newlst - newfst + 1; index++) {
+                       vec6 = new double[newlst + 1];
+                       for (index = 0; index < newlst + 1; index++) {
                            vec6[index] = werr[wbegin - 1 + index];
                        }
                        vec7 = new double[in];
@@ -8238,7 +8251,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
                        vec9 = new double[2*in];
                        dlarrf(in, vec, vec2, vec3, newfst, newlst, vec4, vec5, vec6, spdiam, lgap, rgap, pivmin, tau,
                                vec7, vec8, vec9, iinfo);
-                       for (index = 0; index < newlst - newfst + 1; index++) {
+                       for (index = 0; index < newlst + 1; index++) {
                            wgap[wbegin - 1 + index] = vec5[index];
                        }
                        for (index = 0; index < in; index++) {
