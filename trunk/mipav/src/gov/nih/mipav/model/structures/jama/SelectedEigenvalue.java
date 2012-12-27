@@ -3048,12 +3048,12 @@ public class SelectedEigenvalue implements java.io.Serializable {
            if (gu < wl) {
               nwl = nwl + in;
               nwu = nwu + in;
-              break;
+              continue;
            }
            gl = Math.max(gl, wl);
            gu = Math.min(gu, wu);
            if (gl >= gu) {
-              break;
+              continue;
            }
         }
 
@@ -3075,7 +3075,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
         }
         array1 = new double[in][2];
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 array1[i][j] = work[n + index];
                 index++;
@@ -3087,7 +3087,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
         }
         iarray1 = new int[in][2];
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 iarray1[i][j] = iwork[index];
                 index++;
@@ -3100,7 +3100,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
                      idumma, array1, vec4, im,
                      iarray1, vec5, ivec1, iinfo);
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 work[n + index] = array1[i][j];
                 index++;
@@ -3110,7 +3110,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
             work[n+2*in+j] = vec4[j];
         }
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 iwork[index] = iarray1[i][j];
                 index++;
@@ -3134,7 +3134,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
             vec3[j] = work[ibegin-1+j];
         }
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 array1[i][j] = work[n + index];
                 index++;
@@ -3144,7 +3144,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
             vec4[j] = work[n+2*in+j];
         }
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 iarray1[i][j] = iwork[index];
                 index++;
@@ -3155,7 +3155,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
                      idumma, array1, vec4, iout,
                      iarray1, vec5, ivec1, iinfo);
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 work[n + index] = array1[i][j];
                 index++;
@@ -3165,7 +3165,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
             work[n+2*in+j] = vec4[j];
         }
         index = 0;
-        for (j = 0; j < 1; j++) {
+        for (j = 0; j < 2; j++) {
             for (i = 0; i < in; i++) {
                 iwork[index] = iarray1[i][j];
                 index++;
@@ -3963,7 +3963,6 @@ public class SelectedEigenvalue implements java.io.Serializable {
          gpind = b1;
 
          // Compute reorthogonalization criterion and stopping criterion.
-
          onenrm = Math.abs(d[b1-1]) + Math.abs(e[b1-1]);
          onenrm = Math.max(onenrm, Math.abs(d[bn-1])+Math.abs(e[bn-2]) );
          for (i = b1+1; i <= bn-1; i++) {
