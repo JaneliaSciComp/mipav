@@ -8,11 +8,11 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
     
  // dchkst_test() repeats 5 times: All 378 tests for dchkst passed the threshold
  // ddrvst_test() says: 
-    // ddrvst 155 out of 1944 tests failed to pass the threshold
-    // ddrvst 155 out of 1944 tests failed to pass the threshold
-    // ddrvst 154 out of 1944 tests failed to pass the threshold
-    // ddrvst 154 out of 1944 tests failed to pass the threshold
-    // ddrvst 154 out of 1944 tests failed to pass the threshold
+    // ddrvst 53 out of 1944 tests failed to pass the threshold
+    // ddrvst 58 out of 1944 tests failed to pass the threshold
+    // ddrvst 45 out of 1944 tests failed to pass the threshold
+    // ddrvst 46 out of 1944 tests failed to pass the threshold
+    // ddrvst 51 out of 1944 tests failed to pass the threshold
 
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -586,6 +586,10 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                     loop1: {
                         ge.dlacpy(' ', n, n, A, lda, V, ldu);
                         
+                        for (i = 0; i < n; i++) {
+                            D1[i] = A[i][i];
+                        }
+                        
                         if (n > 0) {
                             temp3 = Math.max(Math.abs(D1[0]), Math.abs(D1[n-1])); 
                             if (iL != 1) {
@@ -802,7 +806,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                          else {
                              temp3 = 0.0;
                          }
-                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], temp3 * ulp);    
+                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], temp3 * ulp);
                     } // loop3
                 } // for (iuplo = 0; iuplo <= 1; iuplo++)
 
