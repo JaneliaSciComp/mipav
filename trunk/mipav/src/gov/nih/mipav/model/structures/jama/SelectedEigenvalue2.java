@@ -13,11 +13,13 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
     // ddrvst 45 out of 1944 tests failed to pass the threshold
     // ddrvst 46 out of 1944 tests failed to pass the threshold
     // ddrvst 51 out of 1944 tests failed to pass the threshold
+    // These errors occur for matrix order as small as 2 and for types 8 thru 18.
     // All of these failures are in the last test because (m3[0] == 0 && n > 0).  That is, no eigenvalues are found
     // found in the dsyevr call to dstebz that are > vl and <= vu.  It is not clear that this is an error.  Perhaps,
     // there simply were no eigenvalues in the vl, vu range. 
     // If I changed to vl = -Double.MAX_VALUE vu = Double.MAX_VALUE only 1 failure occurred in 5 runs:
     // ddrvst 1 out of 1944 tests failed to pass the threshold
+    // Test 11 had result = 85.3 > threshold of 50 with matrix of order = 20 and type = 10.
     // All 1944 tests for ddrvst passed the threshold
     // All 1944 tests for ddrvst passed the threshold
     // All 1944 tests for ddrvst passed the threshold
@@ -619,8 +621,8 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                                 vu = D1[n-1] + Math.max(0.5*(D1[n-1] - D1[0]),
                                      Math.max(10.0*ulp*temp3, 10.0*rtunfl));
                             }
-                            // vl = - Double.MAX_VALUE;
-                            // vu = Double.MAX_VALUE;
+                             // vl = - Double.MAX_VALUE;
+                             // vu = Double.MAX_VALUE;
                         } // if (n > 0)
                         else { 
                             temp3 = 0.0;
