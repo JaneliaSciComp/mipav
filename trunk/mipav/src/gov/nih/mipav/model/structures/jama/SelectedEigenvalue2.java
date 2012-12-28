@@ -6,13 +6,24 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class SelectedEigenvalue2 implements java.io.Serializable {
     
- // dchkst_test() repeats 5 times: All 378 tests for dchkst passed the threshold
+ // dchkst_test() repeats 5 times: All 1146 tests for dchkst passed the threshold
  // ddrvst_test() says: 
     // ddrvst 53 out of 1944 tests failed to pass the threshold
     // ddrvst 58 out of 1944 tests failed to pass the threshold
     // ddrvst 45 out of 1944 tests failed to pass the threshold
     // ddrvst 46 out of 1944 tests failed to pass the threshold
     // ddrvst 51 out of 1944 tests failed to pass the threshold
+    // All of these failures are in the last test because (m3[0] == 0 && n > 0).  That is, no eigenvalues are found
+    // found in the dsyevr call to dstebz that are > vl and <= vu.  It is not clear that this is an error.  Perhaps,
+    // there simply were no eigenvalues in the vl, vu range. 
+    // If I changed to vl = -Double.MAX_VALUE vu = Double.MAX_VALUE only 1 failure occurred in 5 runs:
+    // ddrvst 1 out of 1944 tests failed to pass the threshold
+    // All 1944 tests for ddrvst passed the threshold
+    // All 1944 tests for ddrvst passed the threshold
+    // All 1944 tests for ddrvst passed the threshold
+    // All 1944 tests for ddrvst passed the threshold
+
+    
 
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -608,6 +619,8 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                                 vu = D1[n-1] + Math.max(0.5*(D1[n-1] - D1[0]),
                                      Math.max(10.0*ulp*temp3, 10.0*rtunfl));
                             }
+                            // vl = - Double.MAX_VALUE;
+                            // vu = Double.MAX_VALUE;
                         } // if (n > 0)
                         else { 
                             temp3 = 0.0;
@@ -1203,8 +1216,8 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
         double[] work2;
         double[] work3;
         final double[] res = new double[2];
-        boolean srel = false;
-        boolean srange = false;
+        boolean srel = true;
+        boolean srange = true;
         boolean tryrac[] = new boolean[1];
         int index;
         double array[][];
@@ -1512,15 +1525,20 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
                                   } // if (iinfo[0] != 0)
                       
                                   // Do test 28
-                                  temp2 = 96.0*(2.0*n-1.0)*ulp;
-                                  temp1 = 0.0;
+                                  if (n == 0) {
+                                      result[1] = 0.0;
+                                  }
+                                  else {
+                                      temp2 = 96.0*(2.0*n-1.0)*ulp;
+                                      temp1 = 0.0;
+                         
+                                      for (j = il; j <= iu; j++) {
+                                          temp1 = Math.max(temp1, Math.abs(WR[j-il]-D4[n-j] ) /
+                                                  (abstol+Math.abs( WR[j-il] ) ) );
+                                      } // for (j = il; j <= iu; j++) 
                      
-                                  for (j = il; j <= iu; j++) {
-                                      temp1 = Math.max(temp1, Math.abs(WR[j-il]-D4[n-j] ) /
-                                              (abstol+Math.abs( WR[j-il] ) ) );
-                                  } // for (j = il; j <= iu; j++) 
-                 
-                                  result[1] = temp1 / temp2;
+                                      result[1] = temp1 / temp2;
+                                  }
                               } // if (srange)
                               else { // !srange
                                   result[1] = 0.0;
@@ -4349,10 +4367,10 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
         else if (valeig && n > 0 && wu[0] <= wl[0]) {
            info[0] = -7;
         }
-        else if (indeig && (iil < 1 || iil > n)) {
+        else if (indeig && (n > 0) && (iil < 1 || iil > n)) {
            info[0] = -8;
         }
-        else if (indeig && (iiu < iil || iiu > n)) {
+        else if (indeig && (n > 0) && (iiu < iil || iiu > n)) {
            info[0] = -9;
         }
         else if (ldz < 1 || (wantz && ldz < n)) {
@@ -4394,7 +4412,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
            if (zquery && info[0] == 0) {
               Z[0][0] = nzcmin[0];
            }
-           else if (nzc < nzcmin[0] && !zquery) {
+           else if ((n > 0) && nzc < nzcmin[0] && !zquery) {
               info[0] = -14;
            }
         } // if (info[0] == 0)
@@ -6314,7 +6332,7 @@ private void dlasq6(int i0, int n0, double z[], int pp, double dmin[], double dm
            // 1 X 1 block
            if (in == 1) {
               if ( (irange == allrng) || ( (irange == valrng) &&
-                 ( d[ibegin-1] > vl[0]) && (d[ibegin] <= vu[0]) )
+                 ( d[ibegin-1] > vl[0]) && (d[ibegin-1] <= vu[0]) )
                  || ( (irange == indrng) && (iblock[wbegin-1] == jblk))) {
                  m[0] = m[0] + 1;
                  w[m[0]-1] = d[ibegin-1];
