@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 import gov.nih.mipav.model.structures.jama.SelectedEigenvalue;
+import gov.nih.mipav.model.structures.jama.SelectedEigenvalue2;
 
 import gov.nih.mipav.view.*;
 
@@ -139,6 +140,12 @@ public class AlgorithmLLE extends AlgorithmBase {
         int yInt[] = new int[1];
         int zInt[] = new int[1];
         VOI ptVOI[];
+        SelectedEigenvalue2 se2;
+        // The support of the eigenvectors in Z, i.e., the indices indicating the nonzero elements in Z. The i-th eigenvector
+        // is nonzero only in elements isuppz[2*i-2] through isuppz[ 2*i -1].
+        // Only used if all eigenvalues are desired
+        int isuppz[];
+        int liwork;
 
         if (srcImage == null) {
             displayError("LLE: Source Image is null");
@@ -323,8 +330,8 @@ public class AlgorithmLLE extends AlgorithmBase {
                                        // threshold 2*dlamch('S'), not zero.  
         ge = null;
         // numEigenvaluesFound[0] should return d;
-        eigenvalues = new double[zDim];// will return the found eigenvalues in the first d elements in ascending order
-        //eigenvectors = new double[zDim][d];
+        eigenvalues = new double[d];// will return the found eigenvalues in the first d elements in ascending order
+        eigenvectors = new double[zDim][d];
         // Use zDim for ldz
         work = new double[8 * zDim]; //  double workspace
         lwork = 8 * zDim; // length of work 
@@ -336,17 +343,26 @@ public class AlgorithmLLE extends AlgorithmBase {
         //        > 0:  if info[0] = i, then i eigenvectors failed to converge.
         //        Their indices are stored in array ifail.
         se = new SelectedEigenvalue();
-        // Needs abstol = 0.0 and range = 'A' to work correctly.
-        abstol = 0.0;
-        range = 'A';
-        eigenvectors = new double[zDim][zDim];
         se.dsyevx(jobz, range, uplo, zDim, M, zDim, 0.0, 0.0, il, iu, abstol, numEigenvaluesFound,
                   eigenvalues, eigenvectors, zDim, work, lwork, iwork, ifail, info);
+        /*se2 = new SelectedEigenvalue2();
+        // Only used if all eigenvalues are desired
+        isuppz = new int[2*zDim];
+        lwork = 26*zDim; // length of work
+        work = new double[lwork];
+        liwork = 10 * zDim; // length of iwork
+        iwork = new int[liwork];
+        se2.dsyevr(jobz, range, uplo, zDim, M, zDim, 0.0, 0.0, il, iu, abstol, numEigenvaluesFound,
+                eigenvalues, eigenvectors, zDim, isuppz, work, lwork, iwork, liwork, info);*/
         if (info[0] < 0) {
             // illegal argument
             setCompleted(false);
             return;
         }
+        /*else if (info[0] > 0) {
+            System.out.println("Internal dsyevr error");
+            Preferences.debug("Internal dsyevr error\n", Preferences.DEBUG_ALGORITHM);
+        }*/
         else if (info[0] > 0) {
             System.out.println(info[0] + " eigenvectors failed to converge");
             Preferences.debug(info[0] + " eigenvectors failed to converge\n", Preferences.DEBUG_ALGORITHM);
@@ -362,46 +378,54 @@ public class AlgorithmLLE extends AlgorithmBase {
             Preferences.debug("info[0] = 0 indicating a successful exit\n", Preferences.DEBUG_ALGORITHM);
         }
         
-        if (numEigenvaluesFound[0] == zDim) {
-            System.out.println("The number of eigenvalues found equals zDim = " + zDim + " as expected");
-            Preferences.debug("The number of eigenvalues found equals zDim = " + zDim + " as expected\n",
+        if (numEigenvaluesFound[0] == d) {
+            System.out.println("The number of eigenvalues found equals the number of embedded dimensions = " + d + " as expected");
+            Preferences.debug("The number of eigenvalues found equals the number of embedded dimensions = " + d + " as expected\n",
                              Preferences.DEBUG_ALGORITHM);
         }
         else {
             System.out.println("The number of eigenvalues found = " + numEigenvaluesFound[0]);
-            System.out.println("This is less than zDim = " + zDim);
+            System.out.println("This is less than the number of embedded dimensions = " + d);
             Preferences.debug("The number of eigenvalues found = " + numEigenvaluesFound[0] + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("This is less than zDim = " + zDim + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("This is less than the number of embedded dimensions = " + d + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
-        for (i = 1; i <= d; i++) {
+        for (i = 0; i < d; i++) {
             System.out.println("Eigenvalues["+i+"] = " + eigenvalues[i]);
             Preferences.debug("Eigenvalues["+i+"] = " + eigenvalues[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
-        minX = eigenvectors[0][1];
-        maxX = eigenvectors[0][1];
-        minY = eigenvectors[0][2];
-        maxY = eigenvectors[0][2];
+        /*if (d == zDim) {
+            for (i = 0; i < d; i++) {
+                System.out.println("Eigenvector " + i + " is nonzero in slices " + isuppz[2*i] + " thru " + isuppz[2*i+1]);
+                Preferences.debug("Eigenvector " + i + " is nonzero in slices " + isuppz[2*i] + " thru " + isuppz[2*i+1] + "\n",
+                                    Preferences.DEBUG_ALGORITHM);
+            }
+        }*/
+        
+        minX = eigenvectors[0][0];
+        maxX = eigenvectors[0][0];
+        minY = eigenvectors[0][1];
+        maxY = eigenvectors[0][1];
         minXIndex = 0;
         maxXIndex = 0;
         minYIndex = 0;
         maxYIndex = 0;
         for (i = 1; i < zDim; i++) {
-            if (eigenvectors[i][1] < minX) {
-                minX = eigenvectors[i][1];
+            if (eigenvectors[i][0] < minX) {
+                minX = eigenvectors[i][0];
                 minXIndex = i;
             }
-            if (eigenvectors[i][1] > maxX) {
-                maxX = eigenvectors[i][1];
+            if (eigenvectors[i][0] > maxX) {
+                maxX = eigenvectors[i][0];
                 maxXIndex = i;
             }
-            if (eigenvectors[i][2] < minY) {
-                minY = eigenvectors[i][2];
+            if (eigenvectors[i][1] < minY) {
+                minY = eigenvectors[i][1];
                 minYIndex = i;
             }
-            if (eigenvectors[i][2] > maxY) {
-                maxY = eigenvectors[i][2];
+            if (eigenvectors[i][1] > maxY) {
+                maxY = eigenvectors[i][1];
                 maxYIndex = i;
             }
         }
@@ -414,8 +438,8 @@ public class AlgorithmLLE extends AlgorithmBase {
         yo = 10 - ys * minY;
         ptVOI = new VOI[zDim];
         for (i = 0; i < zDim; i++) {
-           xInt[0] = (int)Math.round(eigenvectors[i][1] * xs + xo); 
-           yInt[0] = (int)Math.round(eigenvectors[i][2] * ys + yo);
+           xInt[0] = (int)Math.round(eigenvectors[i][0] * xs + xo); 
+           yInt[0] = (int)Math.round(eigenvectors[i][1] * ys + yo);
            destBuf[xInt[0] + 256 * yInt[0]] = 100;
            ptVOI[i] = new VOI((short)i, String.valueOf(i), VOI.POINT, -1.0f);
            ptVOI[i].importCurve(xInt, yInt, zInt);
