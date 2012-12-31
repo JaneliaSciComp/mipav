@@ -2199,7 +2199,7 @@ public class SelectedEigenvalue2 implements java.io.Serializable {
 *          with Guaranteed High Relative Accuracy," by Demmel and
 *          Kahan, LAPACK Working Note #3.
 *
-*          If high relative accuracy is important, set abstolL to
+*          If high relative accuracy is important, set abstol to
 *          dlamch( 'Safe minimum' ).  Doing so will guarantee that
 *          eigenvalues are computed to high relative accuracy when
 *          possible in future releases.  The current code does not
