@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.util.Enumeration;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -110,6 +111,10 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
 	private float blueBuffer[] = null;
 	// Scale factor used in RGB-CIELab conversions.  255 for ARGB, could be higher for ARGB_USHORT.
     private double scaleMax = 255.0;
+    
+    private JCheckBox unitVarianceCheckBox;
+    
+    private boolean scaleVariablesToUnitVariance;
     
     private JLabel resultsFileNameLabel;
     
@@ -496,7 +501,7 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
 		 try {
 		
 			 alg = new AlgorithmSpectralClustering(image, pos, scale, groupNum, centroidPos, resultsFileName, redBuffer,
-			                                       greenBuffer, blueBuffer, scaleMax);
+			                                       greenBuffer, blueBuffer, scaleMax, scaleVariablesToUnitVariance);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -688,7 +693,7 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy++;
         mainPanel.add(buttonPointsFile, gbc);
         
         textPointsFile = new JTextField();
@@ -697,13 +702,21 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
         gbc.gridx = 1;
         mainPanel.add(textPointsFile, gbc);
         
+        unitVarianceCheckBox = new JCheckBox("Scale variables to unit variance", false);
+        unitVarianceCheckBox.setFont(serif12);
+        unitVarianceCheckBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(unitVarianceCheckBox, gbc);
+        
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
         clustersLabel.setForeground(Color.black);
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy++;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -719,7 +732,7 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
         resultsFileNameLabel.setEnabled(false);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 26;
+        gbc.gridy++;
         mainPanel.add(resultsFileNameLabel, gbc);
         
         resultsFileNameText = new JTextField(40);
@@ -758,6 +771,10 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
 		int i;
     	
 		int nval;
+		int dim;
+		double totalSum;
+		double totalSumSquared;
+		double variance;
 		
     	image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
     	
@@ -909,7 +926,20 @@ public class JDialogSpectralClustering extends JDialogScriptableBase implements 
     	    return false;
     	}
     	
-    	
+    	scaleVariablesToUnitVariance = unitVarianceCheckBox.isSelected();
+        if (scaleVariablesToUnitVariance) {
+            
+            for (dim = 0; dim < nDims; dim++) {
+                 totalSum = 0.0;
+                 totalSumSquared = 0.0;
+                 for (i = 0; i < nPoints; i++) {
+                     totalSum += pos[dim][i];
+                     totalSumSquared += pos[dim][i]*pos[dim][i];
+                 }
+                 variance = (totalSumSquared - totalSum*totalSum/nPoints)/(nPoints - 1.0);
+                 scale[dim] = 1.0/Math.sqrt(variance);
+            } // for (dim = 0; dim < nDims; dim++) 
+        } // if (scaleVariablesToUnitVariance)
     	
     	tmpStr = textClusters.getText();
     	numberClusters = Integer.parseInt(tmpStr);
