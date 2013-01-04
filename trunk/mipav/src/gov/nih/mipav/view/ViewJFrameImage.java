@@ -2499,6 +2499,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogTimeFitting();
         } else if (command.equals("KMeans")) {
             new JDialogKMeans();
+        } else if (command.equals("SpectralClustering")) {
+            new JDialogSpectralClustering();
         } else if (command.equals("HyperGraph")) {
             new JDialogHyperGraph(this);
         } else if (command.startsWith("PlugInImageJ")) {
