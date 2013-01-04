@@ -1172,147 +1172,149 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	
 		int nval;
 		
-    	image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
-    	
-    	if(image == null) {
-    		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
-    		return false;
-    	}
-    	
-    	nDims = image.getNDims();
-        extents = image.getExtents();
-        length = extents[0];
-        for (i = 1; i < nDims; i++) {
-       	 length = length * extents[i];
-        }
-        if (image.isColorImage()) {
-       	 scale = new double[2];
-       	 scale[0] = 1.0;
-       	 scale[1] = 1.0;
-       	 redMin = image.getMinR();
-       	 redMax = image.getMaxR();
-       	 if (redMin != redMax) {
-	        	 redBuffer = new float[length];
-	        	 try {
-	             image.exportRGBData(1, 0, length, redBuffer); 
-	        	 }
-	        	 catch (IOException e) {
-		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, length, redBuffer)");
-		        	 image.disposeLocal();
-	      		     image = null;
-	      		     return false;	
-		         }
-       	 } // if (redMin != redMax)
-       	 greenMin = image.getMinG();
-       	 greenMax = image.getMaxG();
-       	 if (greenMin != greenMax) {
-	        	 greenBuffer = new float[length];
-	        	 try {
-	             image.exportRGBData(2, 0, length, greenBuffer); 
-	        	 }
-	        	 catch (IOException e) {
-		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, length, greenBuffer)");
-		        	 image.disposeLocal();
-	      		     image = null;
-	      		     return false;	
-		         }
-       	 } // if (greenMin != greenMax)
-       	 blueMin = image.getMinB();
-       	 blueMax = image.getMaxB();
-       	 if (blueMin != blueMax) {
-	        	 blueBuffer = new float[length];
-	        	 try {
-	             image.exportRGBData(3, 0, length, blueBuffer); 
-	        	 }
-	        	 catch (IOException e) {
-		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, length, blueBuffer)");
-		        	 image.disposeLocal();
-	      		     image = null;
-	      		     return false;	
-		         }
-       	 } // if (blueMin != blueMax)
-       	 textImage.setText(image.getImageFileName());
-       	 nPoints = length;
-        } // if (image.isColorImage())
-        else { // black and white point image
-       	 scale = new double[nDims];
-	         for (i = 0; i < nDims; i++) {
-	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
-	         }
-	         buffer = new double[length];
-	         try {
-	        	 image.exportData(0, length, buffer);
-	         }
-	         catch (IOException e) {
-	        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
-	        	 image.disposeLocal();
-     		     image = null;
-     		     return false;	
-	         }
-	         nPoints = 0;
-	         for (i = 0; i < length; i++) {
-	        	 if (buffer[i] > 0) {
-	        		 nPoints++;
-	        	 }
-	         }
-	         if (nPoints == 0) {
-	        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
-	        	 image.disposeLocal();
-	        	 image = null;
-                return false;	 
-	         }
-            textImage.setText(image.getImageFileName());
-	         groupNum = new int[nPoints];
-            pos = new double[nDims][nPoints];
-            weight = new double[nPoints];
-            if (nDims >= 4) {
-           	 tDim = extents[3];
+    	if (!havePoints) {
+    		image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
+        	
+        	if(image == null) {
+        		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
+        		return false;
+        	}
+        	
+        	nDims = image.getNDims();
+            extents = image.getExtents();
+            length = extents[0];
+            for (i = 1; i < nDims; i++) {
+           	 length = length * extents[i];
             }
-            else {
-           	 tDim = 1;
-            }
-	         if (nDims >= 3) {
-	        	 zDim = extents[2];
-	         }
-	         else {
-	        	 zDim = 1;
-	         }
-	         if (nDims >= 2) {
-	        	 yDim = extents[1];
-	         }
-	         else {
-	        	 yDim = 1;
-	         }
-	         xDim = extents[0];
-	         sliceSize = xDim * yDim;
-	         volume = sliceSize * zDim;
-	         nval = 0;
-	         for (t = 0; t < tDim; t++) {
-	        	 for (z = 0; z < zDim; z++) {
-	        		 for (y = 0; y < yDim; y++) {
-	        			 for (x = 0; x < xDim; x++) {
-	        			     index = x + y*xDim + z*sliceSize + t*volume;
-	        			     if (buffer[index] > 0) {
-	        			    	 weight[nval] = buffer[index];
-	        			         pos[0][nval] = x;
-	        			         if (nDims >= 2) {
-	        			        	 pos[1][nval] = y;
-	        			        	 if (nDims >= 3) {
-	        			        		 pos[2][nval] = z;
-	        			        		 if (nDims >= 4) {
-	        			        			 pos[3][nval] = t;
-	        			        		 }
-	        			        	 }
-	        			         }
-	        			         nval++;
-	        			     } // if (buffer[index] > 0)
-	        			 }
-	        		 }
-	        	 }
-	         } // for (t = 0; t < tDim; t++)
-	         buffer = null;
-        } // else black and white point image
-        havePoints = true;
+            if (image.isColorImage()) {
+           	 scale = new double[2];
+           	 scale[0] = 1.0;
+           	 scale[1] = 1.0;
+           	 redMin = image.getMinR();
+           	 redMax = image.getMaxR();
+           	 if (redMin != redMax) {
+    	        	 redBuffer = new float[length];
+    	        	 try {
+    	             image.exportRGBData(1, 0, length, redBuffer); 
+    	        	 }
+    	        	 catch (IOException e) {
+    		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, length, redBuffer)");
+    		        	 image.disposeLocal();
+    	      		     image = null;
+    	      		     return false;	
+    		         }
+           	 } // if (redMin != redMax)
+           	 greenMin = image.getMinG();
+           	 greenMax = image.getMaxG();
+           	 if (greenMin != greenMax) {
+    	        	 greenBuffer = new float[length];
+    	        	 try {
+    	             image.exportRGBData(2, 0, length, greenBuffer); 
+    	        	 }
+    	        	 catch (IOException e) {
+    		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, length, greenBuffer)");
+    		        	 image.disposeLocal();
+    	      		     image = null;
+    	      		     return false;	
+    		         }
+           	 } // if (greenMin != greenMax)
+           	 blueMin = image.getMinB();
+           	 blueMax = image.getMaxB();
+           	 if (blueMin != blueMax) {
+    	        	 blueBuffer = new float[length];
+    	        	 try {
+    	             image.exportRGBData(3, 0, length, blueBuffer); 
+    	        	 }
+    	        	 catch (IOException e) {
+    		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, length, blueBuffer)");
+    		        	 image.disposeLocal();
+    	      		     image = null;
+    	      		     return false;	
+    		         }
+           	 } // if (blueMin != blueMax)
+           	 textImage.setText(image.getImageFileName());
+           	 nPoints = length;
+            } // if (image.isColorImage())
+            else { // black and white point image
+           	 scale = new double[nDims];
+    	         for (i = 0; i < nDims; i++) {
+    	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
+    	         }
+    	         buffer = new double[length];
+    	         try {
+    	        	 image.exportData(0, length, buffer);
+    	         }
+    	         catch (IOException e) {
+    	        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
+    	        	 image.disposeLocal();
+         		     image = null;
+         		     return false;	
+    	         }
+    	         nPoints = 0;
+    	         for (i = 0; i < length; i++) {
+    	        	 if (buffer[i] > 0) {
+    	        		 nPoints++;
+    	        	 }
+    	         }
+    	         if (nPoints == 0) {
+    	        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
+    	        	 image.disposeLocal();
+    	        	 image = null;
+                    return false;	 
+    	         }
+                textImage.setText(image.getImageFileName());
+    	         groupNum = new int[nPoints];
+                pos = new double[nDims][nPoints];
+                weight = new double[nPoints];
+                if (nDims >= 4) {
+               	 tDim = extents[3];
+                }
+                else {
+               	 tDim = 1;
+                }
+    	         if (nDims >= 3) {
+    	        	 zDim = extents[2];
+    	         }
+    	         else {
+    	        	 zDim = 1;
+    	         }
+    	         if (nDims >= 2) {
+    	        	 yDim = extents[1];
+    	         }
+    	         else {
+    	        	 yDim = 1;
+    	         }
+    	         xDim = extents[0];
+    	         sliceSize = xDim * yDim;
+    	         volume = sliceSize * zDim;
+    	         nval = 0;
+    	         for (t = 0; t < tDim; t++) {
+    	        	 for (z = 0; z < zDim; z++) {
+    	        		 for (y = 0; y < yDim; y++) {
+    	        			 for (x = 0; x < xDim; x++) {
+    	        			     index = x + y*xDim + z*sliceSize + t*volume;
+    	        			     if (buffer[index] > 0) {
+    	        			    	 weight[nval] = buffer[index];
+    	        			         pos[0][nval] = x;
+    	        			         if (nDims >= 2) {
+    	        			        	 pos[1][nval] = y;
+    	        			        	 if (nDims >= 3) {
+    	        			        		 pos[2][nval] = z;
+    	        			        		 if (nDims >= 4) {
+    	        			        			 pos[3][nval] = t;
+    	        			        		 }
+    	        			        	 }
+    	        			         }
+    	        			         nval++;
+    	        			     } // if (buffer[index] > 0)
+    	        			 }
+    	        		 }
+    	        	 }
+    	         } // for (t = 0; t < tDim; t++)
+    	         buffer = null;
+            } // else black and white point image
+            havePoints = true;
+    	} // if (!havePoints)
     	
     	String tmpStr;
     	i = 0;
