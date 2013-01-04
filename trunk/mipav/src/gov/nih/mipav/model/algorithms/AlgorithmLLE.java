@@ -330,7 +330,7 @@ public class AlgorithmLLE extends AlgorithmBase {
                                        // threshold 2*dlamch('S'), not zero.  
         ge = null;
         // numEigenvaluesFound[0] should return d;
-        eigenvalues = new double[d];// will return the found eigenvalues in the first d elements in ascending order
+        eigenvalues = new double[zDim];// will return the found eigenvalues in the first d elements in ascending order
         eigenvectors = new double[zDim][d];
         // Use zDim for ldz
         work = new double[8 * zDim]; //  double workspace
