@@ -129,6 +129,13 @@ public class AlgorithmSpectralClustering extends AlgorithmBase  {
      */
     public void runAlgorithm() {
         
+        boolean selfTest = false;
+        if (selfTest) {
+            selfTest();
+            setCompleted(false);
+            return;
+        }
+        
         double sigma;
         int i;
         int j;
@@ -572,4 +579,106 @@ public class AlgorithmSpectralClustering extends AlgorithmBase  {
         
         return withinClustersSumsOfSquares;
     } // public double eval(double sigma)
+    
+    private void selfTest() {
+        // In a 512 x 512 image create an image which is a circle with intersecting perpindicular lines
+        // Should see intersecting perpindicular lines in transformed image if the scaling between the 2 rectangles
+        // is the same in x and y.
+        int xDim = 512;
+        int yDim = 512;
+        int sliceSize = xDim * yDim;
+        int extents[] = new int[2];
+        int destExtents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        byte buffer[] = new byte[sliceSize];
+        int xs;
+        int ys;
+        int index;
+        double xDist;
+        double yDist;
+        double r;
+        double xCen = 255.5;
+        double yCen = 255.5;
+        double radius = 150;
+        int i;
+        RandomNumberGen randomGen = new RandomNumberGen();
+        double rInner = 50;
+        double rOuter = 60;
+        double rInner2 = 90;
+        double rOuter2 = 100;
+        double rInner3 = 140;
+        double rOuter3 = 150;
+        double theta;
+        double delX;
+        double delY;
+       
+    
+        i = 0;
+        while (i < 200) {
+            radius = randomGen.genUniformRandomNum(rInner, rOuter);
+            theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
+            delX = radius * Math.cos(theta);
+            delY = radius * Math.sin(theta);
+            xs = (int)Math.round(xCen + delX);
+            ys = (int)Math.round(yCen + delY);
+            index = xs + ys * xDim;
+            if (buffer[index] == 0) {
+                buffer[index] = (byte)100;
+                i++;
+            }
+        }
+        
+        i = 0;
+        while (i < 200) {
+            radius = randomGen.genUniformRandomNum(rInner2, rOuter2);
+            theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
+            delX = radius * Math.cos(theta);
+            delY = radius * Math.sin(theta);
+            xs = (int)Math.round(xCen + delX);
+            ys = (int)Math.round(yCen + delY);
+            index = xs + ys * xDim;
+            if (buffer[index] == 0) {
+                buffer[index] = (byte)100;
+                i++;
+            }
+        }
+        
+        i = 0;
+        while (i < 200) {
+            radius = randomGen.genUniformRandomNum(rInner3, rOuter3);
+            theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
+            delX = radius * Math.cos(theta);
+            delY = radius * Math.sin(theta);
+            xs = (int)Math.round(xCen + delX);
+            ys = (int)Math.round(yCen + delY);
+            index = xs + ys * xDim;
+            if (buffer[index] == 0) {
+                buffer[index] = (byte)100;
+                i++;
+            }
+        }
+        
+        
+        
+        if ((image.getExtents()[0] != extents[0]) || (image.getExtents()[1] != extents[1])) {
+            image.changeExtents(extents);
+            image.recomputeDataSize();
+        }
+        
+        if (image.getParentFrame() != null) {
+            image.getParentFrame().dispose();
+        }
+        image.getVOIs().removeAllElements();
+        try {
+            image.importData(0, buffer, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException on image.importData");
+        }
+        
+        
+        
+        new ViewJFrameImage(image);    
+    }
 }
