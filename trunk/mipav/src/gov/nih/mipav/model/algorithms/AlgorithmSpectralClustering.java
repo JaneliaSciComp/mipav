@@ -16,9 +16,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
-import de.jtem.numericalMethods.calculus.minimizing.Brent;
-
 /**
  * 
  * @author William Gandler
@@ -26,7 +23,7 @@ import de.jtem.numericalMethods.calculus.minimizing.Brent;
  * by Andrew Y. Ng, Michael I. Jordan, and Yair Weiss.
  *
  */
-public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFunctionOfOneVariable {
+public class AlgorithmSpectralClustering extends AlgorithmBase  {
     
 //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -132,12 +129,9 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
      */
     public void runAlgorithm() {
         
-        // Initialize sigma with 1.0
-        double sigma = 1.0;
+        double sigma;
         int i;
         int j;
-        int k;
-        int m;
         Color color[];
         VOI newPtVOI;
         float xArr[] = new float[1];
@@ -177,7 +171,7 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         ge = null;
         numEigenvaluesFound = new int[1];
         // Will return the found eigenvalues in the first numberClusters elements in ascending order
-        eigenvalues = new double[numberClusters]; 
+        eigenvalues = new double[nPoints]; 
         work = new double[8 * nPoints]; //  double workspace
         lwork = 8 * nPoints; // length of work 
         iwork = new int[5 * nPoints]; // int workspace
@@ -189,30 +183,32 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         info = new int[1];
         totalWeight = new int[numberClusters];
         centroidDistances = new double[numberClusters][numberClusters];
-        double squaresArray[] = new double[13];
+        double squaresArray[] = new double[121];
         double smallestSquares = Double.MAX_VALUE;
         int squaresIndex = -1;
-        double tol;
-        double maxLikelihoodSigma[] = new double[1];
         
-        for (i = -6; i <= 6; i++) {
-            sigma = Math.pow(10.0, i);
-            squaresArray[6 + i] = eval(sigma);
-            if (squaresArray[6 + i] < smallestSquares) {
-                smallestSquares = squaresArray[6 + i];
-                squaresIndex = 6 + i;
+        for (i = -60; i <= 60; i++) {
+            sigma = Math.pow(10.0, i/10.0);
+            squaresArray[60 + i] = eval(sigma);
+            Preferences.debug("eval(" + sigma + ") = " + squaresArray[60 + i] + "\n", Preferences.DEBUG_ALGORITHM);
+            if (squaresArray[60 + i] < smallestSquares) {
+                smallestSquares = squaresArray[60 + i];
+                squaresIndex = 60 + i;
             }
-        } // for (i = -6; i <= 6; i++)
-        
-        if ((i >= 1) && (i <= 11)) {
-            tol = Math.pow(10.0, squaresIndex - 4);
-            Brent.search(Math.pow(10.0, squaresIndex-1), Math.pow(10.0, squaresIndex), Math.pow(10.0, squaresIndex+1), 
-                    maxLikelihoodSigma, this, tol );    
-        } // if ((i >= 1) && (i <= 11))
+        } // for (i = -60; i <= 60; i++)
+        Preferences.debug("Smallest eval = " + smallestSquares + " for index = " + squaresIndex + "\n", Preferences.DEBUG_ALGORITHM);
+        if (smallestSquares == Double.MAX_VALUE) {
+            System.out.println("No valid run of eval for sigma = 1.0E-6 to sigma = 1.0E6");
+            Preferences.debug("No valid run of eval for sigma = 1.0E-6 to sigma = 1.0E6\n", Preferences.DEBUG_ALGORITHM);
+            setCompleted(false);
+            return;
+        }
+        sigma = Math.pow(10.0, ((squaresIndex-60.0)/10.0));
+        eval(sigma);
         
         
         // Finally, assign the original point si to cluster j if and only if row i of the matrix Y was assigned to cluster j.
-        eval(maxLikelihoodSigma[0]);
+        
         
         if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)) {
             color = new Color[numberClusters];
@@ -315,7 +311,7 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         return;
     }
     
-    public double eval(double sigma) {
+    private double eval(double sigma) {
         int i;
         int j;
         int k;
@@ -329,7 +325,7 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         double innerProduct;
         int smallestIndex = 0;
         boolean changeOccurred;
-        int iteration;
+        //int iteration;
         double minDistSquared;
         int originalGroupNum;
         int clustersWithoutPoints = 0;
@@ -384,32 +380,28 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         if (info[0] < 0) {
             // illegal argument
             System.out.println("se.dsyevx had info[0] = " + info[0] + " indicating an illegal argument");
-            Preferences.debug("se.dsyevs had info[0] = " + info[0] + " indicating an illegal argument\n",
+            Preferences.debug("se.dsyevx had info[0] = " + info[0] + " indicating an illegal argument\n",
                               Preferences.DEBUG_ALGORITHM);
-            setCompleted(false);
             return Double.NaN;
         }
         else if (info[0] > 0) {
-            System.out.println(info[0] + " eigenvectors failed to converge");
             Preferences.debug(info[0] + " eigenvectors failed to converge\n", Preferences.DEBUG_ALGORITHM);
-            System.out.println("The eigenvectors that failed to converge are:\n");
             Preferences.debug("The eigenvectors that failed to converge are:\n", Preferences.DEBUG_ALGORITHM);
             for (i = 0; i < info[0]; i++) {
-                System.out.println("Eigenvector = " + ifail[i]);
                 Preferences.debug("Eigenvector = " + ifail[i] + "\n", Preferences.DEBUG_ALGORITHM);
             }
-            setCompleted(false);
             return Double.MAX_VALUE;
         }
         else {
             Preferences.debug("se.dsyevx had info[0] = 0 indicating a successful exit\n", Preferences.DEBUG_ALGORITHM);
         }
         if (numEigenvaluesFound[0] < numberClusters) {
-            System.out.println("numEigenvaluesFound[0] = " + numEigenvaluesFound[0] + " less than the needed " + numberClusters);
             Preferences.debug("numEigenvaluesFound[0] = " + numEigenvaluesFound[0] + " less than the needed " + numberClusters + "\n",
                               Preferences.DEBUG_ALGORITHM);
-            setCompleted(false);
             return Double.MAX_VALUE;
+        }
+        else {
+            Preferences.debug("numEigenvaluesFound[0] = " + numEigenvaluesFound[0] + " as expected\n", Preferences.DEBUG_ALGORITHM);
         }
         // In EigenvalueDecomposition the columns of V represent the eigenvectors,
         // Only real eigenvalue components are needed for symmetric matrices
@@ -489,12 +481,12 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
         } // for (i = 1; i < numberClusters; i++)
         
         changeOccurred = true;
-        iteration = 1;
-        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+        //iteration = 1;
+        //Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         while (changeOccurred) {
-            fireProgressStateChanged("K-means iteration = " + iteration);
-            Preferences.debug("K-means iteration = " + iteration + "\n", Preferences.DEBUG_ALGORITHM);
-            iteration++;
+            //fireProgressStateChanged("K-means iteration = " + iteration);
+            //Preferences.debug("K-means iteration = " + iteration + "\n", Preferences.DEBUG_ALGORITHM);
+            //iteration++;
             changeOccurred = false;
             for (i = 0; i < numberClusters; i++) {
                 totalWeight[i] = 0;
@@ -556,15 +548,15 @@ public class AlgorithmSpectralClustering extends AlgorithmBase implements RealFu
             clustersWithoutPoints = 0;
             for (i = 0; i < numberClusters; i++) {
                 if (totalWeight[i] <= 0) {
-                    Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
+                    //Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
                     clustersWithoutPoints++;
                 }
                 else {
-                    Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
+                    //Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
                     for (j = 0; j < numberClusters; j++) {
                         centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-                        Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
-                                Preferences.DEBUG_ALGORITHM);
+                        //Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
+                                //Preferences.DEBUG_ALGORITHM);
                     }
                 } // else
             }   
