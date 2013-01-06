@@ -206,7 +206,7 @@ public class Model {
         } 
 
 		VertexBuffer kVBuffer = new VertexBuffer( kAttr, (vertexBufferSize/6) );
-		kVBuffer.CopyData( vertices_.array() );
+		kVBuffer.SetPosition( vertices_.array() );
 		IndexBuffer kIBuffer = new IndexBuffer( indices_.array(), indexBufferSize );
 		return new TriMesh( kVBuffer, kIBuffer, false );		
 	}

@@ -452,7 +452,7 @@ public class VolumeDTI extends VolumeObject
 		//	m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
 		//			kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
 		//}
-		m_kLightShader.SetPerPixelLighting( kRenderer, true );
+		m_kLightShader.SetPerPixelLighting( true );
 
 
 		AlphaState aTemp = kRenderer.GetAlphaState();

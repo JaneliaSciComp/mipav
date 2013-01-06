@@ -410,8 +410,6 @@ bool myClip ( vec3 myVec,
     return false;
 }
 
-varying vec4        kInPos;
-varying vec3        kInNormal;
 uniform sampler3D bVolumeImageA; 
 uniform sampler1D cColorMapA; 
 uniform sampler3D fVolumeImageNew;
@@ -474,6 +472,12 @@ uniform vec3 CameraModelPosition;
 uniform mat4 WVPMatrix;
 
 
+in vec3 varTexCoord;
+in vec4 varPos;
+in vec3 varNormal;
+in vec4 varColor;
+out vec4 fragColor;
+
 void p_MipavLightingFragmentP()
 {
     bool bClipped = false;
@@ -481,7 +485,7 @@ void p_MipavLightingFragmentP()
     if ( !bClipped && (ClipEnabled == 1.0) )
     {
         // axis-aligned clipping:
-        if ( (DoClip != 0.0) && myClip( gl_TexCoord[0].xyz, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
+        if ( (DoClip != 0.0) && myClip( varTexCoord.xyz, clipX, clipXInv, clipY, clipYInv, clipZ, clipZInv ) )
         {
             bClipped = true;
         }
@@ -492,12 +496,12 @@ void p_MipavLightingFragmentP()
             {
                 // eye clipping and arbitrary clipping:
                 vec4 aPosition = vec4(0,0,0,0);
-                aPosition.xyz = gl_TexCoord[0].xyz - (.5,.5,.5);
+                aPosition.xyz = varTexCoord.xyz - (.5,.5,.5);
                 aPosition = WVPMatrix*aPosition;
                 aPosition.xyz = aPosition.xyz + (.5,.5,.5);
                 float fDot = dot( aPosition.xyz, clipEye.xyz );
                 float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
-                float fDotArb = dot( gl_TexCoord[0].xyz, clipArb.xyz );
+                float fDotArb = dot( varTexCoord.xyz, clipArb.xyz );
                 if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
                 {
                     bClipped = true;
@@ -520,44 +524,44 @@ void p_MipavLightingFragmentP()
         {
             if ( UseImageNew != 0.0 )
             {
-                color = texture3D(fVolumeImageNew,gl_TexCoord[0].xyz);
+                color = texture(fVolumeImageNew,varTexCoord.xyz);
             }
             else
             {
-                color = texture3D(bVolumeImageA,gl_TexCoord[0].xyz);
+                color = texture(bVolumeImageA,varTexCoord.xyz);
             }
             if ( UseLUTNew != 0.0 )
             {
                 if ( IsColorNew != 0.0 )
                 {
-                    LocalMaterialDiffuse.r = texture1D(gColorMapNew,color.r).r;
-                    LocalMaterialDiffuse.g = texture1D(gColorMapNew,color.g).g;
-                    LocalMaterialDiffuse.b = texture1D(gColorMapNew,color.b).b;
+                    LocalMaterialDiffuse.r = texture(gColorMapNew,color.r).r;
+                    LocalMaterialDiffuse.g = texture(gColorMapNew,color.g).g;
+                    LocalMaterialDiffuse.b = texture(gColorMapNew,color.b).b;
                 }
                 else
                 {
-                    LocalMaterialDiffuse.rgb = texture1D(gColorMapNew,color.r).rgb;
+                    LocalMaterialDiffuse.rgb = texture(gColorMapNew,color.r).rgb;
                 }
             }
             else
             {
                 if ( IsColor != 0.0 )
                 {
-                    LocalMaterialDiffuse.r = texture1D(cColorMapA,color.r).r;
-                    LocalMaterialDiffuse.g = texture1D(cColorMapA,color.g).g;
-                    LocalMaterialDiffuse.b = texture1D(cColorMapA,color.b).b;
+                    LocalMaterialDiffuse.r = texture(cColorMapA,color.r).r;
+                    LocalMaterialDiffuse.g = texture(cColorMapA,color.g).g;
+                    LocalMaterialDiffuse.b = texture(cColorMapA,color.b).b;
                 }
                 else
                 {
-                    LocalMaterialDiffuse.rgb = texture1D(cColorMapA,color.r).rgb;
+                    LocalMaterialDiffuse.rgb = texture(cColorMapA,color.r).rgb;
                 }
             }
-            LocalMaterialDiffuse.a = gl_Color.a;
+            LocalMaterialDiffuse.a = varColor.a;
             LocalMaterialAmbient = LocalMaterialDiffuse.xyz;
         }
         else
         {
-            LocalMaterialDiffuse = gl_Color;
+            LocalMaterialDiffuse = varColor;
         }
 
         // First light is static light:
@@ -565,7 +569,7 @@ void p_MipavLightingFragmentP()
         vec4 color1 = vec4(0.0,0.0,0.0,0.0);
         vec4 color2 = vec4(0.0,0.0,0.0,0.0);
         vec4 color3 = vec4(0.0,0.0,0.0,0.0);
-        color0 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
+        color0 = computeColor( varPos.xyz, varNormal.xyz, CameraModelPosition.xyz,
                                MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light0Ambient.xyz, Light0Diffuse.xyz, Light0Specular.xyz,
                                Light0ModelPosition.xyz, Light0ModelDirection.xyz,
@@ -578,14 +582,14 @@ void p_MipavLightingFragmentP()
                                Light1Attenuation.xyzw );
         
         // Remaining lights:
-        color2 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
+        color2 = computeColor( varPos.xyz, varNormal.xyz, CameraModelPosition.xyz,
                                MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light2Ambient.xyz, Light2Diffuse.xyz, Light2Specular.xyz,
                                Light2WorldPosition.xyz, Light2WorldDirection.xyz,
                                Light2SpotCutoff.xyzw, Light2Attenuation.xyzw,
                                Light2Type );
         
-        color3 = computeColor( kInPos.xyz, kInNormal.xyz, CameraModelPosition.xyz,
+        color3 = computeColor( varPos.xyz, varNormal.xyz, CameraModelPosition.xyz,
                                MaterialEmissive.xyz,  LocalMaterialAmbient.xyz, LocalMaterialDiffuse.xyzw, MaterialSpecular.xyzw,
                                Light3Ambient.xyz, Light3Diffuse.xyz, Light3Specular.xyz,
                                Light3WorldPosition.xyz, Light3WorldDirection.xyz,
@@ -597,9 +601,9 @@ void p_MipavLightingFragmentP()
 
         // Test normals:
 //         color -= (color0 + color1 + color2 + color3);
-//         color.r += (kInNormal.x + 1.0)/2.0;
-//         color.g += (kInNormal.y + 1.0)/2.0;
-//         color.b += (kInNormal.z + 1.0)/2.0;
+//         color.r += (varNormal.x + 1.0)/2.0;
+//         color.g += (varNormal.y + 1.0)/2.0;
+//         color.b += (varNormal.z + 1.0)/2.0;
 //         color.a = 1.0;
 
         if ( color.a == 0.0 )
@@ -607,5 +611,5 @@ void p_MipavLightingFragmentP()
             discard;
         }
     }
-    gl_FragColor = color;
+    fragColor = color;
 }
