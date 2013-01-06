@@ -88,6 +88,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected Vector<VolumeObject> m_kDisplayList = new Vector<VolumeObject>();
     /** Set to true when the surface has been added or modified. */
     protected boolean m_bSurfaceUpdate = false;
+    /** Set to true when the surface mask should be recalculated. */
+    protected boolean m_bSurfaceMaskUpdate = false;
     protected int m_iUpdateNormals = -1;
     protected boolean m_bExtract = false;
 

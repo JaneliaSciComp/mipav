@@ -301,10 +301,9 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     }
     /**
      * Sets the lighting shader to be per-pixel or per-vertex.
-     * @param kRenderer OpenGL renderer.
      * @param bOn turns per-pixel lighting on/off.
      */
-    public void SetPerPixelLighting( Renderer kRenderer, boolean bOn )
+    public void SetPerPixelLighting(boolean bOn )
     {
         if ( m_bPerPixelLighting != bOn)
         {
@@ -319,15 +318,10 @@ public class SurfaceLightingEffect extends VolumeClipEffect
                 m_kVShader.set(0, m_kVVertexLighting);
                 m_kPShader.set(0, m_kPVertexLighting);
             }
-            /*
-            LoadPrograms(kRenderer, 0,kRenderer.GetMaxColors(),
-                    kRenderer.GetMaxTCoords(),
-                    kRenderer.GetMaxVShaderImages(),
-                    kRenderer.GetMaxPShaderImages());
-            Blend(m_fBlend);
-            SetReverseFace(m_iReverseFace);
-            ResetClip();
-            */
+            if ( (m_kCompiledPrograms.size() > 0) && (m_kCompiledPrograms.elementAt(0) != null) )
+            {
+            	m_kCompiledPrograms.elementAt(0).Reload(true);
+            }
         }
     }
     /**

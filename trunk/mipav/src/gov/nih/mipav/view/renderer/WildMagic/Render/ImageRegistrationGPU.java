@@ -679,12 +679,12 @@ public class ImageRegistrationGPU extends JavaApplication3D
 
         // generate geometry
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.0f; afChannels[iIndex++] = 0.5f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
-        
+        pkVB.SetPosition( afChannels );
         
         m_kBracketPoints = new Polypoint( pkVB );        
         AlphaState kAlpha = new AlphaState();
@@ -710,7 +710,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         float fU, fV;
         int i0, i1;
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         
         for (i1 = 0; i1 < iHeight; i1++)
@@ -726,6 +726,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 //System.err.println( ((2.0f*fU-1.0f)) + " " + ((2.0f*fV-1.0f)));
             }
         }
+        pkVB.SetPosition( afChannels );
         m_kHistogramPoints2D = new Polypoint( pkVB );
         m_kEntropyPoints2D = new Polypoint( pkVB );
         
@@ -759,7 +760,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         float fU, fV, fW;
         int i0, i1, i2;
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         
         for (i2 = 0; i2 < iDepth; i2++ )
@@ -777,6 +778,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 }
             }
         }
+        pkVB.SetPosition( afChannels );
         
         m_kImagePointsDual = new Polypoint( pkVB );
         m_kAlpha = new AlphaState();
@@ -1220,12 +1222,13 @@ public class ImageRegistrationGPU extends JavaApplication3D
 
         // generate geometry
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -0.34f; afChannels[iIndex++] = 0.3f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.34f; afChannels[iIndex++] = 0.7f;  
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
+        pkVB.SetPosition( afChannels );
         
         
         m_kTransformPoints = new Polypoint( pkVB );        

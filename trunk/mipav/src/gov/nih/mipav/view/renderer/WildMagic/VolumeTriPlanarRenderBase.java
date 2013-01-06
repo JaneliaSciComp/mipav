@@ -319,6 +319,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				 kSurface );
 		 m_kDisplayList.add( kVolumeSurfaces );
 		 m_bSurfaceUpdate = true;
+		 m_bSurfaceMaskUpdate = true;
 	 }
 
 	 /**
@@ -333,6 +334,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				 kSurface, true );
 		 m_kDisplayList.add( kVolumeSurfaces );
 		 m_bSurfaceUpdate = true;
+		 m_bSurfaceMaskUpdate = true;
 	 }
 
 
@@ -1666,7 +1668,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 					  VolumeObject kObj = m_kDisplayList.remove(i);
 					  if ( kObj instanceof VolumeSurface )
 					  {
-						  m_bSurfaceUpdate = true;                        
+						  m_bSurfaceUpdate = true;    
+						  m_bSurfaceMaskUpdate = true;                    
 					  }
 					  m_kDeleteList.add(kObj);
 				  }
@@ -1966,11 +1969,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  }
 	  }
 
-	  /**
-	   * Sets blending between imageA and imageB.
-	   * @param fValue the blend value (0-1)
-	   */
-	  public void setColor( String kSurfaceName, ColorRGB kColor, boolean bUpdate )
+	 /**
+	 * @param kSurfaceName
+	 * @param kColor
+	 * @param bUpdate
+	 */
+	public void setColor( String kSurfaceName, ColorRGB kColor, boolean bUpdate )
 	  {
 		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		  {
@@ -1979,6 +1983,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				  {
 					  m_kDisplayList.get(i).SetColor( kColor, bUpdate );
+					  m_bSurfaceMaskUpdate = true;
 				  }
 			  }
 		  }
@@ -2262,6 +2267,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				  {
 					  ((VolumeSurface)(m_kDisplayList.get(i))).SetMaterial(kMaterial, bUpdate);
+					  m_bSurfaceMaskUpdate = true;
 				  }
 			  }
 		  }

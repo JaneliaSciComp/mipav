@@ -690,7 +690,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 m_pkRenderer.SetLight( 0, m_kLight );
             }
             String kLightType = new String("Light0Type");
-            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
+            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(true);
             ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetLight(kLightType, new float[]{2,-1,-1,-1});
             ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetReverseFace(1);
             m_kLightShader.SetLight(kLightType, new float[]{2,-1,-1,-1});

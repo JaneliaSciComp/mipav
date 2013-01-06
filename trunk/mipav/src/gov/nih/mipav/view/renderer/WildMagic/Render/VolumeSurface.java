@@ -131,6 +131,8 @@ public class VolumeSurface extends VolumeObject
 
         m_kLightShader = new SurfaceLightingEffect( kImageA, false );
         m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
+        m_kLightShader.SetPerPixelLighting(true);
+        m_kLightShaderTransparent.SetPerPixelLighting(true);
 
         if ( !bHasMaterial )
         {
@@ -642,40 +644,14 @@ public class VolumeSurface extends VolumeObject
                 }
             }
             m_kMesh.VBuffer.LoadSub( iMin, iMax );
-            /*
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
-                                                                           iMin, iMax );
-            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-*/
+            m_kMesh.Reload( kRenderer, true );
         }
         else
         {
             m_kMesh.VBuffer.LoadSub( kRecord.iV0, kRecord.iV0 );
             m_kMesh.VBuffer.LoadSub( kRecord.iV1, kRecord.iV1 );
             m_kMesh.VBuffer.LoadSub( kRecord.iV2, kRecord.iV2 );
-            /*
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV0,
-                                                                           kRecord.iV0);
-            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV0*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-
-
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV1,
-                                                                   kRecord.iV1);
-            kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV1*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-
-
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(), kRecord.iV2,
-                                                                   kRecord.iV2);
-            kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-            */
+            m_kMesh.Reload( kRenderer, true );
         }
     }
 
@@ -698,13 +674,7 @@ public class VolumeSurface extends VolumeObject
         }
 
         m_kMesh.VBuffer.LoadSub( iMin, iMax );
-        /*
-        float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(m_kMesh.VBuffer.GetAttributes(),
-                iMin, iMax );
-        FloatBuffer kData = FloatBuffer.wrap(afCompatible);
-        kData.rewind();
-        kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-*/
+        m_kMesh.Reload( kRenderer, true );
     }
     
     /**
@@ -811,11 +781,9 @@ public class VolumeSurface extends VolumeObject
     public void Paint( Renderer kRenderer, PickRecord kRecord, ColorRGBA kPaintColor, int iBrushSize )
     {
         m_bPainted = true;
-        //System.err.println( "Painting: " + m_kMesh.VBuffer.GetAttributes().GetCChannels(0) );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV0, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV1, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
         m_kMesh.VBuffer.SetColor4(0, kRecord.iV2, kPaintColor.R, kPaintColor.G, kPaintColor.B, kPaintColor.A );
-
 
         Attributes kIAttr = kIAttr = m_kMesh.VBuffer.GetAttributes();
         if ( iBrushSize > 1 )
@@ -843,61 +811,18 @@ public class VolumeSurface extends VolumeObject
                     }
                 }
             }
-            m_kMesh.VBuffer.LoadSub( iMin, iMax );
-            /*
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr,
-                                                                           iMin, iMax );
-            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, iMin*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-        */
+            //m_kMesh.VBuffer.LoadSub( iMin, iMax );
+            m_kMesh.Reload( kRenderer, true );
         }
         else
         {
-            m_kMesh.VBuffer.LoadSub( kRecord.iV0, kRecord.iV0 );
-            m_kMesh.VBuffer.LoadSub( kRecord.iV1, kRecord.iV1 );
-            m_kMesh.VBuffer.LoadSub( kRecord.iV2, kRecord.iV2 );
-            /*
-            float[] afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV0,
-                                                                           kRecord.iV0);
-            FloatBuffer kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV0*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV1,
-                                                                   kRecord.iV1);
-            kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV1*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-
-            afCompatible = m_kMesh.VBuffer.BuildCompatibleSubArray(kIAttr, kRecord.iV2,
-                                                                   kRecord.iV2);
-            kData = FloatBuffer.wrap(afCompatible);
-            kData.rewind();
-            kRenderer.LoadSubVBuffer(m_kMesh.VBuffer, kRecord.iV2*m_kMesh.VBuffer.GetVertexSize(), afCompatible.length, kData );
-            */
+            //m_kMesh.VBuffer.LoadSub( kRecord.iV0, kRecord.iV0 );
+            //m_kMesh.VBuffer.LoadSub( kRecord.iV1, kRecord.iV1 );
+            //m_kMesh.VBuffer.LoadSub( kRecord.iV2, kRecord.iV2 );
+            m_kMesh.Reload( kRenderer, true );
         }
     }
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject#PreRender(WildMagic.LibGraphics.Rendering.Renderer, WildMagic.LibGraphics.SceneGraph.Culler)
-   
-    public void PreRender( Renderer kRenderer, Culler kCuller, boolean bSolid )
-    {
-        if ( !m_bDisplay )
-        {
-            return;
-        }    
-        for ( int i = 0; i < m_kScene.GetQuantity(); i++ )
-        {
-            m_kScene.GetChild(i).DetachAllEffects();
-            m_kScene.GetChild(i).AttachEffect( m_kVolumePreShader );
-        }
-
-        m_kScene.UpdateGS();
-        kCuller.ComputeVisibleSet(m_kScene);
-        kRenderer.DrawScene(kCuller.GetVisibleSet());
-    }
-      */
+    
     /**
      * Removes all geodesic components from the given surface. */
     public void RemoveAllGeodesic()
@@ -1201,8 +1126,8 @@ public class VolumeSurface extends VolumeObject
     {
         if ( m_kLightShader != null )
         {
-            m_kLightShader.SetPerPixelLighting(kRenderer, bOn);
-            m_kLightShaderTransparent.SetPerPixelLighting(kRenderer, bOn);
+            m_kLightShader.SetPerPixelLighting(bOn);
+            m_kLightShaderTransparent.SetPerPixelLighting(bOn);
         }
     }
     
