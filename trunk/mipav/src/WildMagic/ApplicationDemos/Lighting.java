@@ -95,8 +95,7 @@ implements GLEventListener, KeyListener
 	private DefaultShaderEffect m_spkDefaultEffect;
 	private int m_iLightQuantity;
 
-	private char[] m_acCaption =
-		new char[]{'.','.','.','.','.','.','.','.','.'};
+	private String m_acCaption = new String("........");
 
 	private boolean m_bUpdateEffects = false;
 
@@ -143,8 +142,8 @@ implements GLEventListener, KeyListener
                 m_pkRenderer.Draw(m_spkSphere);
             }
 			 */
-			m_pkRenderer.Draw(8,16,ColorRGBA.BLACK,m_acCaption);
-			DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
+			m_pkRenderer.Draw(arg0, 8,16,ColorRGBA.BLACK,m_acCaption);
+			DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
 			m_pkRenderer.EndScene();
 		}
 		m_pkRenderer.DisplayBackBuffer();
@@ -584,12 +583,7 @@ implements GLEventListener, KeyListener
 	private void UpdateEffectsOnIdle ()
 	{
 		m_bUpdateEffects = false;
-		int i;
-		for (i = 0; i < 8; i++)
-		{
-			m_acCaption[i] = '.';
-		}
-
+		m_acCaption = "";	
 		if (m_iLightQuantity > 0)
 		{
 			if (m_spkPlane.GetEffectQuantity() > 0)
@@ -605,30 +599,25 @@ implements GLEventListener, KeyListener
 			}
 
 			m_spkScene.DetachAllLights();
-			int iCaption = 0;
-			for (i = 0; i < m_iAQuantity; i++)
+			for (int i = 0; i < m_iAQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkALight[i]);
-				m_acCaption[iCaption++] = 'a';
-				//*pcCaption++ = 'a';
+				m_acCaption = m_acCaption.concat("a");
 			}
-			for (i = 0; i < m_iDQuantity; i++)
+			for (int i = 0; i < m_iDQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkDLight[i]);
-				m_acCaption[iCaption++] = 'd';
-				//*pcCaption++ = 'd';
+				m_acCaption = m_acCaption.concat("d");
 			}
-			for (i = 0; i < m_iPQuantity; i++)
+			for (int i = 0; i < m_iPQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkPLight[i]);
-				m_acCaption[iCaption++] = 'p';
-				//*pcCaption++ = 'p';
+				m_acCaption = m_acCaption.concat("p");
 			}
-			for (i = 0; i < m_iSQuantity; i++)
+			for (int i = 0; i < m_iSQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkSLight[i]);
-				m_acCaption[iCaption++] = 's';
-				//*pcCaption++ = 's';
+				m_acCaption = m_acCaption.concat("s");
 			}
 		}
 		else

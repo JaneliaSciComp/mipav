@@ -32,6 +32,7 @@ import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.LatticeEffect;
 import WildMagic.LibGraphics.Effects.LightingEffect;
@@ -160,6 +161,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 			}
 		}
 		m_pkRenderer.DrawDefault();
+		DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
 		m_pkRenderer.DisplayBackBuffer();
 
 		if (m_kShaderParamsWindow == null && !m_bShared) {
@@ -169,6 +171,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 			m_kShaderParamsWindow.Display();
 			m_kShaderParamsWindow.setParent(this);
 		}
+		UpdateFrameCount();
 	}
 
 	@Override

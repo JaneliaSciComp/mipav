@@ -753,13 +753,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Renders the frame rate to the screen.
      */
-    protected void RenderFrameRate()
+    protected void RenderFrameRate(GLAutoDrawable kDraw)
     {
         //Draw frame rate:
         m_pkRenderer.SetCamera(m_spkCamera);
         if ( m_bTestFrameRate )
         {
-            DrawFrameRate(8,16,ColorRGBA.WHITE);
+            DrawFrameRate(kDraw, 50,50,ColorRGBA.WHITE);
         }
     }
     

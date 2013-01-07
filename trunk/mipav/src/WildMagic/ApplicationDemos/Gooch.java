@@ -125,7 +125,7 @@ implements GLEventListener, KeyListener
 		if (m_pkRenderer.BeginScene())
 		{
 			m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());            
-			DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
+			DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.WHITE);
 			m_pkRenderer.EndScene();
 		}
 		m_pkRenderer.DisplayBackBuffer();

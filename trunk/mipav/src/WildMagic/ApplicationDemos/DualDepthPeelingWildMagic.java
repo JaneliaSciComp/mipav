@@ -180,7 +180,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
 		m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw( m_pkPlane );               
 
-		DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
+		DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
         // Swap buffers:
         m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();

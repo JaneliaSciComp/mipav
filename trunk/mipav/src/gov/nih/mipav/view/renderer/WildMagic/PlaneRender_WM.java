@@ -316,8 +316,8 @@ public class PlaneRender_WM extends GPURenderBase
                     kSlices.ShowSurface(false);
                 }
             }
-            drawVOIs( m_kVolumeImageA.GetImage().getVOIs() );
-            drawAxes();
+            drawVOIs( arg0, m_kVolumeImageA.GetImage().getVOIs() );
+            drawAxes(arg0);
             m_pkRenderer.EndScene();
         }
         m_pkRenderer.DisplayBackBuffer();
@@ -417,7 +417,7 @@ public class PlaneRender_WM extends GPURenderBase
         return null;
     }
     
-    public void drawVOI( VOIBase kVOI, PlaneRender_WM kDisplay, Renderer kRenderer, Culler kCuller, 
+    public void drawVOI( GLAutoDrawable kDraw, VOIBase kVOI, PlaneRender_WM kDisplay, Renderer kRenderer, Culler kCuller, 
             float[] afResolutions, int[] aiUnits,
             int[] aiAxisOrder, Vector3f kCenter, int iSlice, int iOrientation,
             Vector3f kVolumeScale, Vector3f kTranslate)
@@ -472,25 +472,25 @@ public class PlaneRender_WM extends GPURenderBase
                 {
                 case VOI.CONTOUR:
                 case VOI.POLYLINE:
-                    drawVOIContour( kRenderer, iSlice, afResolutions, aiUnits, kVOI, kVolumeScale, kTranslate,
+                    drawVOIContour( kDraw, kRenderer, iSlice, afResolutions, aiUnits, kVOI, kVolumeScale, kTranslate,
                             iOrientation, aiAxisOrder );
                     return;
                 case VOI.LINE:
-                    drawVOILine( kVOI, kRenderer, iSlice, afResolutions, aiUnits, 
+                    drawVOILine( kDraw, kVOI, kRenderer, iSlice, afResolutions, aiUnits, 
                             kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
                     return;
                 case VOI.PROTRACTOR:
-                    drawVOIProtractor( kVOI, kRenderer, iSlice, afResolutions,  aiUnits, 
+                    drawVOIProtractor( kDraw, kVOI, kRenderer, iSlice, afResolutions,  aiUnits, 
                             kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
                     return;
                 case VOI.ANNOTATION:
-                    drawVOIText( kVOI, kRenderer, iSlice, kVolumeVOI );
+                    drawVOIText( kDraw, kVOI, kRenderer, iSlice, kVolumeVOI );
                     return;
                 case VOI.POINT:
-                    drawVOIPoint( kVOI, kRenderer, iSlice, kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
+                    drawVOIPoint( kDraw, kVOI, kRenderer, iSlice, kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
                     return;
                 case VOI.POLYLINE_SLICE:
-                    drawVOIPolyLineSlice( (VOIPolyLineSlice)kVOI, kRenderer, iSlice, afResolutions, aiUnits, 
+                    drawVOIPolyLineSlice( kDraw, (VOIPolyLineSlice)kVOI, kRenderer, iSlice, afResolutions, aiUnits, 
                             kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
                     return;
                 }
@@ -1332,7 +1332,7 @@ public class PlaneRender_WM extends GPURenderBase
     /**
      * Called from the display function. Draws the axis arrows.
      */
-    private void drawAxes()
+    private void drawAxes(GLAutoDrawable kDraw)
     {
         if ( m_bDrawAxes )
         {     
@@ -1371,13 +1371,15 @@ public class PlaneRender_WM extends GPURenderBase
             }
             if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                drawText( m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                drawText( m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());
+                drawText( kDraw, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor, "test");
+                //drawText( kDraw, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay);
+                //drawText( kDraw, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY);
+                drawText( kDraw, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor, "blah");
             }
             else
             {
-                drawText( m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay.toCharArray());
-                drawText( m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY.toCharArray());               
+                drawText( kDraw, m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay);
+                drawText( kDraw, m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY);               
             }
             m_pkRenderer.SetCamera(m_spkScreenCamera);  
             m_pkRenderer.Draw(m_kXArrow[0]);
@@ -1488,17 +1490,17 @@ public class PlaneRender_WM extends GPURenderBase
         }
     }
 
-    private void drawText( Renderer kRenderer, int iX, int iY, ColorRGBA kColor, char[] acText )
+    private void drawText( GLAutoDrawable kDraw, Renderer kRenderer, int iX, int iY, ColorRGBA kColor, String kText )
     {
-        kRenderer.Draw( iX, iY-1, ColorRGBA.BLACK, acText);
-        kRenderer.Draw( iX, iY+1, ColorRGBA.BLACK, acText);
-        kRenderer.Draw( iX-1, iY, ColorRGBA.BLACK, acText);
-        kRenderer.Draw( iX+1, iY, ColorRGBA.BLACK, acText);
+        kRenderer.Draw( kDraw, iX, iY-1, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( kDraw, iX, iY+1, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( kDraw, iX-1, iY, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( kDraw, iX+1, iY, ColorRGBA.BLACK, kText);
 
-        kRenderer.Draw( iX, iY, kColor, acText);        
+        kRenderer.Draw( kDraw, iX, iY, kColor, kText);        
     }
 
-    private void drawVOIContour( Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, 
+    private void drawVOIContour( GLAutoDrawable kDraw, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, 
             VOIBase kVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
     {             
         VolumeVOI kVolumeVOI = kVOI.getVolumeVOI();
@@ -1516,16 +1518,14 @@ public class PlaneRender_WM extends GPURenderBase
                             (kVOI instanceof VOIPolyLineSlice) ) )
                     {
                         String kMessage = new String("+");
-                        char[] acText = kMessage.toCharArray();
-                        int[] aiSize = kRenderer.GetSizeOnScreen( acText );
-                        drawText( kRenderer, (int)kCenter.X - aiSize[0]/2, (int)kCenter.Y + aiSize[1]/2, kVolumeVOI.getColor(), acText );
+                        int[] aiSize = kRenderer.GetSizeOnScreen( kMessage.toCharArray() );
+                        drawText( kDraw, kRenderer, (int)kCenter.X - aiSize[0]/2, (int)kCenter.Y + aiSize[1]/2, kVolumeVOI.getColor(), kMessage );
 
                         int iContourID = kVOI.getContourID();
                         if ( iContourID != -1 )
                         {
                             kMessage = String.valueOf(iContourID);
-                            acText = kMessage.toCharArray();
-                            drawText( kRenderer, (int)kCenter.X - aiSize[0]/2 - 10, (int)kCenter.Y + aiSize[1]/2 - 5, kVolumeVOI.getColor(), acText );
+                            drawText( kDraw, kRenderer, (int)kCenter.X - aiSize[0]/2 - 10, (int)kCenter.Y + aiSize[1]/2 - 5, kVolumeVOI.getColor(), kMessage );
                         }
                     }          
                     drawSelectedPoints( kVOI, kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
@@ -1535,7 +1535,7 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
 
-    private void drawVOILine( VOIBase kVOI, Renderer kRenderer, float[] afResolutions, int[] aiUnits )
+    private void drawVOILine( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, float[] afResolutions, int[] aiUnits )
     {
         Vector3f kStart = fileCoordinatesToPatient( kVOI.get(0) );
         Vector3f kEnd = fileCoordinatesToPatient( kVOI.get(1) );
@@ -1617,42 +1617,42 @@ public class PlaneRender_WM extends GPURenderBase
                     stringX += 25;
                 }
 
-                drawText( kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString );
             } else if ((iWidth - x[0]) < 20) {
-                drawText( kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString );
             } else {
-                drawText( kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString );
             }
         } else {
 
             if ((slope > 0) || (slope < -.5)) {
-                drawText( kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString );
             } else {
-                drawText( kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString );
             }
         }
     }
 
-    private void drawVOILine( VOIBase kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
+    private void drawVOILine( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
     {             
         if ( kVOI.isActive() && !kVOI.isSplit() )
         {
             if ( iSlice == getSlice( kVOI ) )
             {
-                drawVOILine( kVOI, kRenderer, afResolutions, aiUnits );
+                drawVOILine( kDraw, kVOI, kRenderer, afResolutions, aiUnits );
                 drawSelectedPoints( kVOI, kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
             }
         }
     }
 
-    private void drawVOIPoint( VOIBase kVOI, Renderer kRenderer, int iSlice, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
+    private void drawVOIPoint( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, int iSlice, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
     {             
         int iNumPoints = kVOI.size();
         if ( iNumPoints > 0 )
         {
             if ( iSlice == getSlice(kVOI) )
             {
-                drawVOIPoint( (VOIPoint)kVOI, kRenderer, kVolumeVOI );
+                drawVOIPoint( kDraw, (VOIPoint)kVOI, kRenderer, kVolumeVOI );
                 if ( !kVOI.isActive() )
                 {
                     return;
@@ -1670,7 +1670,7 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
 
-    private void drawVOIPoint( VOIPoint kVOI, Renderer kRenderer, VolumeVOI kVolumeVOI )
+    private void drawVOIPoint( GLAutoDrawable kDraw, VOIPoint kVOI, Renderer kRenderer, VolumeVOI kVolumeVOI )
     {
         Vector3f kScreen = fileToScreen( kVOI.get(0) );
         Vector3f kStart = fileCoordinatesToPatient( kVOI.get(0) );
@@ -1698,9 +1698,9 @@ public class PlaneRender_WM extends GPURenderBase
             if ( !kVOI.isActive() )
             {
                 if (kScreen.X < 20) {
-                    drawText( kRenderer, (int)(kScreen.X + 10), (int)kScreen.Y, kVolumeVOI.getColor(), kLabel.toCharArray() );
+                    drawText( kDraw, kRenderer, (int)(kScreen.X + 10), (int)kScreen.Y, kVolumeVOI.getColor(), kLabel );
                 } else {
-                    drawText( kRenderer, (int)(kScreen.X - 15), (int)(kScreen.Y - 5), kVolumeVOI.getColor(), kLabel.toCharArray() );
+                    drawText( kDraw, kRenderer, (int)(kScreen.X - 15), (int)(kScreen.Y - 5), kVolumeVOI.getColor(), kLabel );
                 }
             }
             else
@@ -1717,7 +1717,7 @@ public class PlaneRender_WM extends GPURenderBase
                     yPos -= 10;
                 }
 
-                drawText( kRenderer, xPos, yPos, new ColorRGBA(1,1,0,1), kLabel.toCharArray() );
+                drawText( kDraw, kRenderer, xPos, yPos, new ColorRGBA(1,1,0,1), kLabel );
             }
         }
         else
@@ -1732,55 +1732,55 @@ public class PlaneRender_WM extends GPURenderBase
 
                 if (kVOI.isFirstSlicePoint() && kVOI.isActivePoint()) {
                     if (xPos < 20) {
-                        drawText( kRenderer, xPos + 10, yPos - 5, kColor, kLabel.toCharArray() );
-                        drawText( kRenderer, xPos + 10, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()).toCharArray() );
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 5, kColor, kLabel);
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()) );
                         if (displaySegmentDistance)
                         {
-                            drawText( kRenderer, xPos + 10, yPos - 31, kColor, new String("segment: " + kVOI.distanceString()).toCharArray() );
+                            drawText( kDraw, kRenderer, xPos + 10, yPos - 31, kColor, new String("segment: " + kVOI.distanceString()) );
                         }
                     } else {
-                        drawText( kRenderer, xPos - 15, yPos - 5, kColor, kLabel.toCharArray() );
-                        drawText( kRenderer, xPos - 15, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()).toCharArray() );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 5, kColor, kLabel );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()) );
                         if (displaySegmentDistance)
                         {
-                            drawText( kRenderer, xPos - 15, yPos - 31, kColor, new String("segment: " + kVOI.distanceString()).toCharArray() );
+                            drawText( kDraw, kRenderer, xPos - 15, yPos - 31, kColor, new String("segment: " + kVOI.distanceString()) );
                         }
                     }
                 } else if (kVOI.isFirstSlicePoint()) {
                     if (xPos < 20) {                        
-                        drawText( kRenderer, xPos + 10, yPos - 5, kColor, kLabel.toCharArray() );
-                        drawText( kRenderer, xPos + 10, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()).toCharArray() );
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 5, kColor, kLabel );
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()) );
                     } else {
-                        drawText( kRenderer, xPos - 15, yPos - 5, kColor, kLabel.toCharArray() );
-                        drawText( kRenderer, xPos - 15, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()).toCharArray() );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 5, kColor, kLabel );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 18, kColor, new String("total: " + kVOI.totalDistanceString()) );
                     }
                 } else if (kVOI.isActivePoint()) {
                     if (xPos < 20) {
-                        drawText( kRenderer, xPos + 10, yPos - 5, kColor, kLabel.toCharArray() );
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 5, kColor, kLabel );
                         if (displaySegmentDistance)
                         {
-                            drawText( kRenderer, xPos + 10, yPos - 18, kColor, new String("segment: " + kVOI.distanceString()).toCharArray() );
+                            drawText( kDraw, kRenderer, xPos + 10, yPos - 18, kColor, new String("segment: " + kVOI.distanceString()) );
                         }
                     }
                     else {
-                        drawText( kRenderer, xPos - 15, yPos - 5, kColor, kLabel.toCharArray() );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 5, kColor, kLabel );
                         if (displaySegmentDistance)
                         {
-                            drawText( kRenderer, xPos - 15, yPos - 18, kColor, new String("segment: " + kVOI.distanceString()).toCharArray() );
+                            drawText( kDraw, kRenderer, xPos - 15, yPos - 18, kColor, new String("segment: " + kVOI.distanceString()) );
                         }
                     }
                 } else {
                     if (xPos < 20) {
-                        drawText( kRenderer, xPos + 10, yPos - 5, kColor, kLabel.toCharArray() );
+                        drawText( kDraw, kRenderer, xPos + 10, yPos - 5, kColor, kLabel );
                     } else {
-                        drawText( kRenderer, xPos - 15, yPos - 5, kColor, kLabel.toCharArray() );
+                        drawText( kDraw, kRenderer, xPos - 15, yPos - 5, kColor, kLabel );
                     }
                 }
             } else {
                 if (xPos < 20) {
-                    drawText( kRenderer, xPos + 10, yPos, kVolumeVOI.getColor(), kLabel.toCharArray() );
+                    drawText( kDraw, kRenderer, xPos + 10, yPos, kVolumeVOI.getColor(), kLabel );
                 } else {
-                    drawText( kRenderer, xPos - 15, yPos - 5, kVolumeVOI.getColor(), kLabel.toCharArray() );
+                    drawText( kDraw, kRenderer, xPos - 15, yPos - 5, kVolumeVOI.getColor(), kLabel );
                 }
 
             }
@@ -1790,7 +1790,7 @@ public class PlaneRender_WM extends GPURenderBase
 
 
 
-    private void drawVOIProtractorAngle( VOIBase kVOI, Renderer kRenderer, float[] afResolutions )
+    private void drawVOIProtractorAngle( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, float[] afResolutions )
     {
         Vector3f kStart = fileCoordinatesToPatient( kVOI.get(1) );
         Vector3f kEnd1 = fileCoordinatesToPatient( kVOI.get(0) );
@@ -1835,23 +1835,23 @@ public class PlaneRender_WM extends GPURenderBase
         if (close == true) {
 
             if ((iHeight - y[0]) < 20) {
-                drawText( kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, degreeString );
             } else if ((iWidth - x[0]) < 20) {
-                drawText( kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, degreeString );
             } else {
-                drawText( kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, degreeString );
             }
         } else {
 
             if ((slope > 0) || (slope < -.5)) {
-                drawText( kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, degreeString );
             } else {
-                drawText( kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, degreeString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, degreeString );
             }
         }
     }
 
-    private void drawVOIProtractorLength( VOIBase kVOI, Renderer kRenderer, float[] afResolutions, int[] aiUnits )
+    private void drawVOIProtractorLength( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, float[] afResolutions, int[] aiUnits )
     {
         Vector3f kStart = fileCoordinatesToPatient( kVOI.get(1) );
         Vector3f kEnd = fileCoordinatesToPatient( kVOI.get(2) );
@@ -1904,22 +1904,22 @@ public class PlaneRender_WM extends GPURenderBase
                     stringX += 25;
                 }
 
-                drawText( kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY - 20, ColorRGBA.WHITE, tmpString );
             } else if ((iWidth - x[0]) < 20) {
-                drawText( kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 50, stringY + 20, ColorRGBA.WHITE, tmpString );
             } else {
-                drawText( kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 20, stringY + 20, ColorRGBA.WHITE, tmpString );
             }
         } else {
 
             if ((slope > 0) || (slope < -.5)) {
-                drawText( kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX + 20, stringY + 20, ColorRGBA.WHITE, tmpString );
             } else {
-                drawText( kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString.toCharArray() );
+                drawText( kDraw, kRenderer, stringX - 40, stringY - 20, ColorRGBA.WHITE, tmpString );
             }
         }
     }
-    private void drawVOIs( VOIVector kVOIs )
+    private void drawVOIs( GLAutoDrawable kDraw, VOIVector kVOIs )
     {
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
@@ -1928,7 +1928,7 @@ public class PlaneRender_WM extends GPURenderBase
             for ( int k = 0; k < kCurves.size(); k++ )
             {
                 VOIBase kVOI3D = kCurves.get(k);
-                drawVOI( kVOI3D, this, m_pkRenderer, m_kCuller,                                     
+                drawVOI( kDraw, kVOI3D, this, m_pkRenderer, m_kCuller,                                     
                         m_afResolutions, m_aiUnits, 
                         m_aiAxisOrder, m_kCenter, m_iSlice, m_iPlaneOrientation,
                         m_kVolumeScale, m_kTranslate );
@@ -1939,12 +1939,12 @@ public class PlaneRender_WM extends GPURenderBase
 
 
 
-    private void drawVOIText( VOIText kVOI, Renderer kRenderer, VolumeVOI kVolumeVOI )
+    private void drawVOIText( GLAutoDrawable kDraw, VOIText kVOI, Renderer kRenderer, VolumeVOI kVolumeVOI )
     {
         Vector3f kScreen = fileToScreen( kVOI.get(1) );
         char[] acText = kVOI.getText().toCharArray();
         int[] aiSize = kRenderer.GetSizeOnScreen( acText );
-        drawText( kRenderer, (int)kScreen.X - aiSize[0]/2, (int)kScreen.Y, kVolumeVOI.getColor(), acText );      
+        drawText( kDraw, kRenderer, (int)kScreen.X - aiSize[0]/2, (int)kScreen.Y, kVolumeVOI.getColor(), kVOI.getText() );      
      } 
 
 
@@ -2108,18 +2108,18 @@ public class PlaneRender_WM extends GPURenderBase
     }
 
 
-    protected void drawText( int iX, int iY, ColorRGBA kColor, char[] acText )
+    protected void drawText( GLAutoDrawable kDraw, int iX, int iY, ColorRGBA kColor, String kText )
     {
-        m_pkRenderer.Draw( iX, iY-1, ColorRGBA.BLACK, acText);
-        m_pkRenderer.Draw( iX, iY+1, ColorRGBA.BLACK, acText);
-        m_pkRenderer.Draw( iX-1, iY, ColorRGBA.BLACK, acText);
-        m_pkRenderer.Draw( iX+1, iY, ColorRGBA.BLACK, acText);
+        //m_pkRenderer.Draw( kDraw, iX, iY-1, ColorRGBA.BLACK, kText);
+        //m_pkRenderer.Draw( kDraw, iX, iY+1, ColorRGBA.BLACK, kText);
+        //m_pkRenderer.Draw( kDraw, iX-1, iY, ColorRGBA.BLACK, kText);
+        //m_pkRenderer.Draw( kDraw, iX+1, iY, ColorRGBA.BLACK, kText);
 
-        m_pkRenderer.Draw( iX, iY, kColor, acText);        
+        m_pkRenderer.Draw( kDraw, iX, iY, kColor, kText);        
     }
 
 
-    protected void drawVOIPolyLineSlice( VOIPolyLineSlice kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
+    protected void drawVOIPolyLineSlice( GLAutoDrawable kDraw, VOIPolyLineSlice kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
     {             
         String totalDistance = kVOI.getTotalLengthString(afResolutions, aiUnits);
         String dist = new String();
@@ -2127,30 +2127,30 @@ public class PlaneRender_WM extends GPURenderBase
         {
             dist = kVOI.getLengthString( i, i+1, afResolutions, aiUnits );
             kVOI.getPoints().get(i).setFirstPoint( i==0, i==kVOI.getSelectedPoint(), totalDistance, dist, i+1);
-            drawVOIPoint( kVOI.getPoints().get(i), kRenderer, iSlice, kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder);
+            drawVOIPoint( kDraw, kVOI.getPoints().get(i), kRenderer, iSlice, kVolumeVOI, kVolumeScale, kTranslate, iOrientation, aiAxisOrder);
         }
     }
 
 
-    protected void drawVOIProtractor( VOIBase kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
+    protected void drawVOIProtractor( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, VolumeVOI kVolumeVOI, Vector3f kVolumeScale, Vector3f kTranslate, int iOrientation, int[] aiAxisOrder )
     {             
         if ( kVOI.isActive() )
         {
             if ( iSlice == getSlice(kVOI) )
             {
-                drawVOIProtractorAngle( kVOI, kRenderer, afResolutions );
-                drawVOIProtractorLength( kVOI, kRenderer, afResolutions, aiUnits );
+                drawVOIProtractorAngle( kDraw, kVOI, kRenderer, afResolutions );
+                drawVOIProtractorLength( kDraw, kVOI, kRenderer, afResolutions, aiUnits );
                 drawSelectedPoints( kVOI, kRenderer, kVolumeScale, kTranslate, iOrientation, aiAxisOrder );
             }
         }
     }
 
 
-    protected void drawVOIText( VOIBase kVOI, Renderer kRenderer, int iSlice, VolumeVOI kVolumeVOI )
+    protected void drawVOIText( GLAutoDrawable kDraw, VOIBase kVOI, Renderer kRenderer, int iSlice, VolumeVOI kVolumeVOI )
     {             
         if ( iSlice == getSlice(kVOI) )
         {
-            drawVOIText( (VOIText)kVOI, kRenderer, kVolumeVOI );
+            drawVOIText( kDraw, (VOIText)kVOI, kRenderer, kVolumeVOI );
         }
     }
 

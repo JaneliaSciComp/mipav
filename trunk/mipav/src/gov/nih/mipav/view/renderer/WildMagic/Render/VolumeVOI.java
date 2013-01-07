@@ -220,8 +220,8 @@ public class VolumeVOI extends VolumeObject
 
 				String kLabel = ((VOIText)m_kVOI).getText();
 				char[] acText = kLabel.toCharArray();
-				kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, 
-						new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
+				//kRenderer.Draw( kTextPos.X, kTextPos.Y, kTextPos.Z, 
+				//		new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
 			}
 		}
 		m_bUpdateDisplay = false;
