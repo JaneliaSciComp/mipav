@@ -537,7 +537,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 Pick();
 
 		 updateVOIs( m_kVolumeImageA.GetImage().getVOIs() );            
-		 Render();
+		 Render(arg0);
 		 UpdateFrameCount();
 
 		 if ( m_iUpdateNormals == 1 )
@@ -3015,7 +3015,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  /**
 	   * Render the display list objects without the raycast volume.
 	   */
-	  protected void Render()
+	  protected void Render(GLAutoDrawable kDraw)
 	  {
 
 		  if ( m_iStereo == 0 )
@@ -3061,7 +3061,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  }
 				  RenderSculpt();
 
-				  RenderFrameRate();                
+				  RenderFrameRate(kDraw);                
 				  if ( m_bSnapshot || m_bWriteImage )
 				  {
 					  writeImage();
@@ -3125,7 +3125,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  }
 
 			  m_pkRenderer.DrawDefault();
-			  RenderFrameRate();                
+			  RenderFrameRate(kDraw);                
 			  if ( m_bSnapshot )
 			  {
 				  writeImage();
@@ -3145,7 +3145,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  {
 		  if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
 		  {
-			  m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
+			  //m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
 		  }
 	  }
 
