@@ -87,6 +87,7 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLException;
+import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -355,7 +356,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected boolean m_bDependentInterfaceInit = false;
 
-    protected GLPbuffer sharedDrawable = null;
+    protected GLOffscreenAutoDrawable sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
 
@@ -3362,10 +3363,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	{
             caps.setStereo(true);
             try {
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
             } catch ( GLException e ) {
             	caps.setStereo( !caps.getStereo() );
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
             }
     		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
