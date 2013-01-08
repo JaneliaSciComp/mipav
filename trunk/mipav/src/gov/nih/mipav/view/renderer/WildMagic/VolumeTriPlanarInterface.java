@@ -362,7 +362,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected static boolean init = initClass();
 
     public static boolean initClass() {
-        GLProfile.initSingleton(true);
+        GLProfile.initSingleton();
         glp = GLProfile.getDefault();
         caps = new GLCapabilities(glp);
         gl_width  = 512;

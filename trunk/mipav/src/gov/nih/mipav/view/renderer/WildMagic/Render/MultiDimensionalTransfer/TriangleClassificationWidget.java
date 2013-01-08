@@ -340,7 +340,7 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kWidget.AttachChild(m_kWidgetMesh);
 
         // Outline for the triangle, uses the same VertexBuffer as the triangle:
-        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
+        m_kOutline = new Polyline( new VertexBuffer(m_kWidgetMesh.VBuffer), true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
 
@@ -448,6 +448,9 @@ public class TriangleClassificationWidget extends ClassificationWidget
         m_kWidgetMesh.VBuffer.SetPosition3( position, fX, fY,
         		m_kWidgetMesh.VBuffer.GetPosition3fZ(0) );
         m_kWidgetMesh.VBuffer.SetTCoord2(0, position, calcTCoordX(fX), calcTCoordY(fY));
+        m_kOutline.VBuffer.SetPosition3( position, fX, fY,
+        		m_kWidgetMesh.VBuffer.GetPosition3fZ(0) );
+        m_kOutline.VBuffer.SetTCoord2(0, position, calcTCoordX(fX), calcTCoordY(fY));
         m_kWidgetMesh.Reload(true);
 		m_kOutline.Reload(true);
         // Reposition lower sphere:
@@ -532,6 +535,9 @@ public class TriangleClassificationWidget extends ClassificationWidget
             m_kWidgetMesh.VBuffer.SetPosition3( i, fNewX, fNewY,
             		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
             m_kWidgetMesh.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
+            m_kOutline.VBuffer.SetPosition3( i, fNewX, fNewY,
+            		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
+            m_kOutline.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
         }
         m_kWidgetMesh.Reload(true);
 		m_kOutline.Reload(true);

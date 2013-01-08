@@ -120,7 +120,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
-        GetCanvas().getContext().setSynchronized(true);  
+        GetCanvas().getContext().setSwapInterval(0);  
+        //GetCanvas().getContext().setSynchronized(true);  
         m_kTarget = kTarget;
         m_kMoving = kMoving;
         String kExternalDirs = MipavInitGPU.getExternalDirs();        
