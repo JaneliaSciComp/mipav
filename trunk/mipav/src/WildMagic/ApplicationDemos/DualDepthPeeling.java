@@ -331,7 +331,7 @@ public class DualDepthPeeling implements GLEventListener, KeyListener, MouseList
 			
 			//gl.glEnable( GL2.GL_PIXEL_UNPACK_BUFFER );
 			
-			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_FLOAT_RG32_NV, g_imageWidth, g_imageHeight,
+			gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_R32F, g_imageWidth, g_imageHeight,
 					0,  GL.GL_RGB,  GL.GL_FLOAT, null);
 
 			gl.glBindTexture( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, g_dualFrontBlenderTexId[i]);
@@ -743,7 +743,7 @@ public class DualDepthPeeling implements GLEventListener, KeyListener, MouseList
 		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_WRAP_T,  GL2.GL_CLAMP);
 		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MIN_FILTER,  GL.GL_NEAREST);
 		gl.glTexParameteri( GL2GL3.GL_TEXTURE_RECTANGLE_ARB,  GL.GL_TEXTURE_MAG_FILTER,  GL.GL_NEAREST);
-		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_FLOAT_R32_NV,
+		gl.glTexImage2D( GL2GL3.GL_TEXTURE_RECTANGLE_ARB, 0,  GL2GL3.GL_R32F,
 				g_imageWidth, g_imageHeight, 0,  GL.GL_RGBA,  GL.GL_FLOAT, null);
 
 		gl.glGenFramebuffers(1, g_accumulationFboId, 0);

@@ -132,6 +132,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 			if (m_pkRenderer.BeginScene()) {
 				m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
 				DrawFrameRate(arg0, 8, GetHeight() - 8, ColorRGBA.WHITE);
+				DrawFrameRate(arg0, 8,GetHeight()-32,ColorRGBA.BLACK); 
 				m_pkRenderer.EndScene();
 			}
 		} else {

@@ -206,7 +206,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         kVBuffer.SetTCoord2(0, 1, calcTCoordX(fX+fSize), calcTCoordY(fY-fSize));
 
         kVBuffer.SetPosition3(2, fX+fSize, fY+fSize, 0.1f);
-        kVBuffer.SetColor3( 0, 2, 0f, 0f, 1f  );
+        kVBuffer.SetColor3( 0, 2, 1.0f, 0.01f, 0.01f  );
         kVBuffer.SetTCoord2(0, 2, calcTCoordX(fX+fSize), calcTCoordY(fY+fSize));
 
         kVBuffer.SetPosition3(3, fX-fSize, fY+fSize, 0.1f);
@@ -223,7 +223,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kWidget.AttachChild(m_kWidgetMesh);
         
         // Outline for the square, uses the same VertexBuffer as the square:
-        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
+        m_kOutline = new Polyline( new VertexBuffer(m_kWidgetMesh.VBuffer), true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
 
@@ -353,21 +353,29 @@ public class SquareClassificationWidget extends ClassificationWidget
 		kPos.Y = centerY - diffY;
 		m_kWidgetMesh.VBuffer.SetPosition3(0, kPos);
 		m_kWidgetMesh.VBuffer.SetTCoord2(0, 0, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kOutline.VBuffer.SetPosition3(0, kPos);
+		m_kOutline.VBuffer.SetTCoord2(0, 0, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 
 		kPos.X = centerX + diffX;
 		kPos.Y = centerY - diffY;
 		m_kWidgetMesh.VBuffer.SetPosition3(1, kPos);
 		m_kWidgetMesh.VBuffer.SetTCoord2(0, 1, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kOutline.VBuffer.SetPosition3(1, kPos);
+		m_kOutline.VBuffer.SetTCoord2(0, 1, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 		
 		kPos.X = centerX + diffX;
 		kPos.Y = centerY + diffY;
 		m_kWidgetMesh.VBuffer.SetPosition3(2, kPos);
 		m_kWidgetMesh.VBuffer.SetTCoord2(0, 2, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kOutline.VBuffer.SetPosition3(2, kPos);
+		m_kOutline.VBuffer.SetTCoord2(0, 2, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 		
 		kPos.X = centerX - diffX;
 		kPos.Y = centerY + diffY;
 		m_kWidgetMesh.VBuffer.SetPosition3(3, kPos);
 		m_kWidgetMesh.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kOutline.VBuffer.SetPosition3(3, kPos);
+		m_kOutline.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
         m_kWidgetMesh.Reload(true);
 		m_kOutline.Reload(true);
 		
@@ -442,6 +450,9 @@ public class SquareClassificationWidget extends ClassificationWidget
             m_kWidgetMesh.VBuffer.SetPosition3( i, fNewX, fNewY,
             		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
             m_kWidgetMesh.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
+            m_kOutline.VBuffer.SetPosition3( i, fNewX, fNewY,
+            		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
+            m_kOutline.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
         }
         m_kWidgetMesh.Reload(true);
 		m_kOutline.Reload(true);

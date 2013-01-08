@@ -52,7 +52,7 @@ public class SharedDemo extends Thread {
     static long duration = 500000; // ms
 
     public static boolean initClass() {
-        GLProfile.initSingleton(true);
+        GLProfile.initSingleton();
         glp = GLProfile.getDefault();
         caps = new GLCapabilities(glp);
         width  = 512;

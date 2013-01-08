@@ -333,7 +333,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		
 		
 		float  glLanguageVersion;
-		String versionString = m_kGL.glGetString(GL2.GL_SHADING_LANGUAGE_VERSION);
+		String versionString = m_kGL.glGetString(GL3.GL_SHADING_LANGUAGE_VERSION);
 		//System.err.println(versionString);
 		if ( versionString.indexOf(" ") != -1 )
 		{
@@ -349,7 +349,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		int version =  (int) (100.0 * glLanguageVersion + .5);	
 		if ( version < 140 )
 		{
-			System.err.println("Shading language version:" + version + "does not support required rendering" );
+			System.err.println("Shading language version: " + version + " does not support required rendering" );
 			System.exit(0);
 		}
 		else
@@ -414,8 +414,8 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		System.err.println( "" );
 		System.err.println( "" );
 		System.err.println( "default " + GLProfile.getDefault() );
-		System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable() );
-		GLProfile kProfile = GLProfile.getMaxProgrammable();
+		System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable(true) );
+		GLProfile kProfile = GLProfile.getMaxProgrammable(true);
 		//GLProfile kProfile = GLProfile.get( "GL3" );
 		System.err.println( kProfile );
 		GLCapabilities kGlCapabilities = new GLCapabilities(kProfile);
