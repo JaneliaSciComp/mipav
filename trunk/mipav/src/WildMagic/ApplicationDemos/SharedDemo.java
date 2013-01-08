@@ -53,7 +53,7 @@ public class SharedDemo extends Thread {
 
     public static boolean initClass() {
         GLProfile.initSingleton();
-        glp = GLProfile.getDefault();
+        glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
         width  = 512;
         height = 512;
