@@ -2,7 +2,7 @@ uniform sampler2D BaseSampler;
 uniform float MyAlpha;
 in vec2 varTexCoord;
 in vec4 varColor;
-#if __VERSION__ >= 150
+#if __VERSION__ > 150
 layout(location = 0) out vec4     outFragData0;
 layout(location = 1) out vec4     outFragData1;
 #else
