@@ -45,7 +45,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
     {
         super(1);   
         m_fAlpha = fAlpha;
-        m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
+        m_kVShader.set(0, new VertexShader("OrderIndpTransparencyInitV", OrderIndpTransparencyInitV, true ));
         m_kPShader.set(0, new PixelShader("OrderIndpTransparencyInitP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);
@@ -138,4 +138,25 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             pkCProgram.GetUC("MyAlpha").GetData()[0] = m_fAlpha;
         }
     }
+    
+
+
+    // Vertex Shader for texture mapping with 2D Texture Coordinates.
+    // Output to varTexCoord;
+    public static String OrderIndpTransparencyInitV = "" 
+    		+ "uniform mat4 WVPMatrix;" + "\n"
+    		+ "in vec3 inPosition;" + "\n"
+    		+ "in vec2 inTexcoord0;" + "\n"
+    		+ "in vec4 inColor0;" + "\n"
+    		+ "out vec2 varTexCoord;" + "\n"
+    		+ "out vec4 varColor;" + "\n"
+    		+ "void main ()" + "\n"
+    		+ "{" + "\n"
+    		// Transform the position from model space to clip space.
+    		+ "   gl_Position = WVPMatrix * vec4(inPosition, 1.0);" + "\n"
+    		// Pass through the texture coordinate.
+    		+ "   varTexCoord = inTexcoord0;" + "\n"
+    		// Pass through the color.
+    		+ "   varColor = inColor0;" + "\n"
+    		+ "}" + "\n";
 }
