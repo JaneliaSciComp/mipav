@@ -475,8 +475,13 @@ out vec3 varTexCoord;
 in vec4 varPos;
 in vec3 varNormal;
 in vec4 varColor;
-out vec4 outFragData0;
-out vec4 outFragData1;
+#if __VERSION__ > 150
+layout(location = 0) out vec4     outFragData0;
+layout(location = 1) out vec4     outFragData1;
+#else
+out vec4     outFragData0;
+out vec4     outFragData1;
+#endif
 
 void p_MipavLightingFragment_TransparencyP()
 {

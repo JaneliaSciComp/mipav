@@ -17,8 +17,13 @@ uniform float ZSlice;
 uniform float UseZSlice;
 
 in vec3 varTexCoord;
+#if __VERSION__ > 150
 layout(location = 0) out vec4     outFragData0;
 layout(location = 1) out vec4     outFragData1;
+#else
+out vec4     outFragData0;
+out vec4     outFragData1;
+#endif
 void p_Color_Opacity_Texture_TransparencyP()
 {
     vec3 texCoord = varTexCoord.xyz;
