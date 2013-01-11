@@ -3145,7 +3145,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  {
 		  if ( (m_kSculptor != null) && m_kSculptor.IsSculptDrawn() )
 		  {
-			  //m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
+			  m_pkRenderer.Draw( m_kSculptor.getSculptImage() );
 		  }
 	  }
 

@@ -1371,10 +1371,8 @@ public class PlaneRender_WM extends GPURenderBase
             }
             if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                drawText( kDraw, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor, "test");
-                //drawText( kDraw, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay);
-                //drawText( kDraw, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY);
-                drawText( kDraw, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor, "blah");
+                drawText( kDraw, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor,m_kLabelXDisplay);
+                drawText( kDraw, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor,m_kLabelY);
             }
             else
             {
@@ -1492,12 +1490,12 @@ public class PlaneRender_WM extends GPURenderBase
 
     private void drawText( GLAutoDrawable kDraw, Renderer kRenderer, int iX, int iY, ColorRGBA kColor, String kText )
     {
-        kRenderer.Draw( kDraw, iX, iY-1, ColorRGBA.BLACK, kText);
-        kRenderer.Draw( kDraw, iX, iY+1, ColorRGBA.BLACK, kText);
-        kRenderer.Draw( kDraw, iX-1, iY, ColorRGBA.BLACK, kText);
-        kRenderer.Draw( kDraw, iX+1, iY, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( iX, iY-1, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( iX, iY+1, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( iX-1, iY, ColorRGBA.BLACK, kText);
+        kRenderer.Draw( iX+1, iY, ColorRGBA.BLACK, kText);
 
-        kRenderer.Draw( kDraw, iX, iY, kColor, kText);        
+        kRenderer.Draw( iX, iY, kColor, kText);        
     }
 
     private void drawVOIContour( GLAutoDrawable kDraw, Renderer kRenderer, int iSlice, float[] afResolutions, int[] aiUnits, 
@@ -2115,7 +2113,7 @@ public class PlaneRender_WM extends GPURenderBase
         //m_pkRenderer.Draw( kDraw, iX-1, iY, ColorRGBA.BLACK, kText);
         //m_pkRenderer.Draw( kDraw, iX+1, iY, ColorRGBA.BLACK, kText);
 
-        m_pkRenderer.Draw( kDraw, iX, iY, kColor, kText);        
+        m_pkRenderer.Draw( iX, iY, kColor, kText);        
     }
 
 

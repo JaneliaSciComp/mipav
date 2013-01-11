@@ -1872,12 +1872,12 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
                 }
             }
             if (m_iPlaneOrientation == FileInfoBase.AXIAL) {
-                m_pkRenderer.Draw(arg0, m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor, m_kLabelXDisplay);
-                m_pkRenderer.Draw(arg0, m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor, m_kLabelY);
+                m_pkRenderer.Draw(m_iLabelX_SpacingX, m_iLabelX_SpacingY, kXSliceHairColor, m_kLabelXDisplay);
+                m_pkRenderer.Draw(m_iLabelY_SpacingX, m_iLabelY_SpacingY, kYSliceHairColor, m_kLabelY);
             } else {
-                m_pkRenderer.Draw(arg0, m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,
+                m_pkRenderer.Draw(m_iLabelX_SpacingX, m_iHeight - m_iLabelX_SpacingY, kXSliceHairColor,
                         m_kLabelXDisplay);
-                m_pkRenderer.Draw(arg0, m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor, m_kLabelY);
+                m_pkRenderer.Draw(m_iLabelY_SpacingX, m_iHeight - m_iLabelY_SpacingY, kYSliceHairColor, m_kLabelY);
             }
             m_pkRenderer.SetCamera(m_spkScreenCamera);
             m_pkRenderer.Draw(m_kXArrow[0]);
