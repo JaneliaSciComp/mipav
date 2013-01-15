@@ -759,7 +759,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_pkRenderer.SetCamera(m_spkCamera);
         if ( m_bTestFrameRate )
         {
-            DrawFrameRate(kDraw, 50,50,ColorRGBA.WHITE);
+            DrawFrameRate(50,50,ColorRGBA.WHITE);
         }
     }
     

@@ -1428,6 +1428,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  //Profile.shutdown();
 			  //System.err.println( "Profile DONE" );
 			  break;
+		  case 't':
+			  m_kVolumeRayCast.printProgram();
 		  }
 		  return;
 	  }

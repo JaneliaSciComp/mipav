@@ -236,6 +236,13 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.MULTIHISTOMode(bOn);
     }
            
+    public void printProgram()
+    {
+    	if ( m_kVolumeShaderEffect != null )
+    	{
+    		m_kVolumeShaderEffect.printProgram();
+    	}
+    }
 
     /** Reloads the VolumeShaderEffect current shader program.
      * @param kRenderer the OpenGLRenderer object.

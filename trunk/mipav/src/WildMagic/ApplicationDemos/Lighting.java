@@ -143,7 +143,7 @@ implements GLEventListener, KeyListener
             }
 			 */
 			m_pkRenderer.Draw(8,16,ColorRGBA.BLACK,m_acCaption);
-			DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
+			DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
 			m_pkRenderer.EndScene();
 		}
 		m_pkRenderer.DisplayBackBuffer();

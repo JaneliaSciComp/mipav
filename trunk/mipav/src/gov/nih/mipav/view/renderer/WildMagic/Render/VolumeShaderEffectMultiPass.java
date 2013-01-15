@@ -351,6 +351,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
         super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );    
     }
+    
+    public void printProgram() {}
 
     /**
      * Reload the current shader programs from disk, compile and parse and

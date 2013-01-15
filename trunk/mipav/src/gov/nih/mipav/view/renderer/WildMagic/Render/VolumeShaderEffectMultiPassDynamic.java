@@ -594,6 +594,13 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	super.dispose();
     }
 
+    public void printProgram()
+    {
+    	if ( (m_kPShaderCMP != null) && (m_kPShaderCMP.GetProgram() != null) )
+    	{
+    		System.err.println( m_kPShaderCMP.GetProgram().GetProgramText() );
+    	}
+    }
     
     public void SetClip(int iWhich, float data, boolean bEnable)
     {
@@ -1104,9 +1111,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget());   
     	}
     	if ( bAddNormal_TexturesA && (m_kPShaderCMP != null) )
-    	{
+    	{		
+			System.err.println( iTex + " " + m_kVolumeImageA.GetNormalMapTarget().GetName() );
     		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());    		
+    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());    
     	}
     	if ( bAddGM_TexturesA && (m_kPShaderCMP != null) )
     	{

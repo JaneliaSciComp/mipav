@@ -131,8 +131,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 			m_pkRenderer.ClearBuffers();
 			if (m_pkRenderer.BeginScene()) {
 				m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-				DrawFrameRate(arg0, 8, GetHeight() - 8, ColorRGBA.WHITE);
-				DrawFrameRate(arg0, 8,GetHeight()-32,ColorRGBA.BLACK); 
+				DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
 				m_pkRenderer.EndScene();
 			}
 		} else {
@@ -143,7 +142,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 					m_kCuller.ComputeVisibleSet(m_spkScene);
 					m_pkRenderer.SetColorMask(false, false, true, true);
 					m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-					DrawFrameRate(arg0, 8, GetHeight() - 8, ColorRGBA.WHITE);
+					DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
 					m_pkRenderer.EndScene();
 				}
 			}
@@ -155,7 +154,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 					m_kCuller.ComputeVisibleSet(m_spkScene);
 					m_pkRenderer.SetColorMask(true, false, false, true);
 					m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-					DrawFrameRate(arg0, 8, GetHeight() - 8, ColorRGBA.WHITE);
+					DrawFrameRate(8, GetHeight() - 8, ColorRGBA.WHITE);
 					m_pkRenderer.EndScene();
 				}
 

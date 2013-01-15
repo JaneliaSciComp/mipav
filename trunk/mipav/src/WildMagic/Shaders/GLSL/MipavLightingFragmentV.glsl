@@ -4,7 +4,7 @@ uniform mat4 WVPMatrix;
 
 in vec3 inPosition;
 in vec3 inNormal;
-in vec3 inTexCoord0;
+in vec3 inTexcoord0;
 in vec4 inColor0;
 
 out vec3 varTexCoord;
@@ -18,7 +18,7 @@ void v_MipavLightingFragmentV()
     gl_Position = WVPMatrix * vec4(inPosition, 1.0);
 
     // Pass through the texture coordinate.
-    varTexCoord = inTexCoord0;
+    varTexCoord = inTexcoord0;
 
     varPos = vec4(inPosition, 1.0);
     varNormal = inNormal;
