@@ -108,20 +108,23 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** DOCUMENT ME! */
     private int brightness = 0;
 
-    /** Dev data dictionary server. */
-    private static final String devServerHostname = "fitbir-dev-apps.cit.nih.gov";
+    /** String denoting dev server in URL. */
+    private static final String devServerIndicator = "dev";
     
-    /** Staging data dictionary server. */
-    private static final String stageServerHostname = "fitbir-stage-apps.cit.nih.gov";
+    /** String denoting staging server in URL. */
+    private static final String stageServerIndicator = "stage";
     
-    /** Demo data dictionary server. */
-    private static final String demoServerHostname = "fitbir-demo-apps.cit.nih.gov";
+    /** String denoting demo server in URL. */
+    private static final String demoServerIndicator = "demo";
     
     /** Prod data dictionary server. */
     private static final String prodServerHostname = "fitbir.nih.gov";
     
     /** Full data dictionary server url */
-    private static final String dataDictionaryServerUrl = "http://" + stageServerHostname;
+    private static final String ddServerURL = "http://fitbir-dd-" + demoServerIndicator + ".cit.nih.gov/";
+    
+    /** Full authentication server url */
+    private static final String authServerURL = "http://fitbir-portal-" + demoServerIndicator + ".cit.nih.gov/";
 
     private DictionaryProvider dictionaryProvider;
 
@@ -141,7 +144,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.2";
+    private static final String pluginVersion = "0.3";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
      public static final String FITBIR_PRIVACY_NOTICE = "FITBIR is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -1794,6 +1797,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     versionAL.add(version);
                     statusAL.add(status);
                 }
+            }
+            
+            // make sure we found a structure for imaging
+            if (shortNameAL.size() == 0) {
+                MipavUtil.displayWarning("No Imaging structures were found in the data dictionary.");
+                return;
             }
 
             // old way of using web service
@@ -4012,7 +4021,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
 
-                dictionaryProvider = new DictionaryProvider(dataDictionaryServerUrl);
+                dictionaryProvider = new DictionaryProvider(ddServerURL, authServerURL);
 
                 dataStructureList = dictionaryProvider.getDataStructures();
 
