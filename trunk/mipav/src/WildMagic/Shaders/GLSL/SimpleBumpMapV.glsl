@@ -12,8 +12,8 @@ vec3 MapToUnit (vec3 kVector)
 //----------------------------------------------------------------------------
 uniform mat4 WVPMatrix;
 in vec3 inPosition;
-in vec2 inTexCoord0;
-in vec2 inTexCoord1;
+in vec2 inTexcoord0;
+in vec2 inTexcoord1;
 in vec4 inColor0;
 out vec2 varTexCoord0;
 out vec2 varTexCoord1;
@@ -24,8 +24,8 @@ void v_SimpleBumpMapV()
     gl_Position = WVPMatrix*vec4(inPosition, 1.0);
 
     // Pass through the parameters.
-    varTexCoord0 = inTexCoord0;
-    varTexCoord1 = inTexCoord1;
+    varTexCoord0 = inTexcoord0;
+    varTexCoord1 = inTexcoord1;
     varColor0.rgb = MapToUnit(inColor0.rgb);
     varColor0.a = 1.0;
 }

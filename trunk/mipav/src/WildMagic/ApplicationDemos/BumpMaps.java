@@ -133,7 +133,7 @@ implements GLEventListener, KeyListener
 		if (m_pkRenderer.BeginScene())
 		{
 			m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-			DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.WHITE);
+			DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
 			m_pkRenderer.EndScene();
 		}
 		m_pkRenderer.DisplayBackBuffer();
@@ -312,18 +312,12 @@ implements GLEventListener, KeyListener
 	{
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
-		if (m_bUseBumpMap)
-		{
-			kAttr.SetNChannels(3);
-			kAttr.SetCChannels(0,3);
-			kAttr.SetTChannels(0,2);
-			kAttr.SetTChannels(1,2);
-		}
-		else
-		{
-			kAttr.SetTChannels(0,2);
-		}
-
+		kAttr.SetNChannels(3);
+		kAttr.SetCChannels(0,3);
+		kAttr.SetTChannels(0,2);
+		kAttr.SetTChannels(1,2);
+		
+		
 		StandardMesh kSM = new StandardMesh(kAttr);
 		TriMesh pkMesh = kSM.Torus(32,32,1.0f,0.4f);
 

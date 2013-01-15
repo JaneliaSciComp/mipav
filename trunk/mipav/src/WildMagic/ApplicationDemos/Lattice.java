@@ -158,7 +158,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 				m_kCuller.ComputeVisibleSet(m_spkScene);
 				m_pkRenderer.ClearBuffers();          
 				m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet()); 
-				DrawFrameRate(arg0, 8,GetHeight()-32,ColorRGBA.BLACK); 
+				DrawFrameRate(8,GetHeight()-32,ColorRGBA.BLACK); 
 			}
 		}
 		m_pkRenderer.DrawDefault();
