@@ -160,13 +160,9 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
     private Matrix4f m_kWVPMatrix = null;
     /** Texture data for ModelImage A in byte */
     private byte[] m_aucTextureImageDataA = null;
-    /** Texture data for ModelImage A in float */
-    private float[] m_afTextureImageDataA = null;
 
     /** Texture data for ModelImage B in byte */
     private byte[] m_aucTextureImageDataB = null;
-    /** Texture data for ModelImage B in float */
-    private float[] m_afTextureImageDataB = null;
     
     /**
      * Constructor.
@@ -199,7 +195,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             return false;
         }
 
-        if ( (m_aucTextureImageDataA == null) && (m_afTextureImageDataA == null) )
+        if ( (m_aucTextureImageDataA == null) )
         {
             return false;
         }
@@ -259,11 +255,11 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                     {
                         bVolumeChanged = true;
                         
-                        sculptData( m_kImageA, iDataIndex, iTextureIndex, m_aucTextureImageDataA, m_afTextureImageDataA );
+                        sculptData( m_kImageA, iDataIndex, iTextureIndex, m_aucTextureImageDataA );
 
                         if ( m_kImageB != null )
                         {
-                            sculptData( m_kImageB, iDataIndex, iTextureIndex, m_aucTextureImageDataB, m_afTextureImageDataB );
+                            sculptData( m_kImageB, iDataIndex, iTextureIndex, m_aucTextureImageDataB );
                         }
                     }
                 }
@@ -319,9 +315,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
 
         m_kWVPMatrix = null;
         m_aucTextureImageDataA = null;
-        m_afTextureImageDataA = null;
         m_aucTextureImageDataB = null;
-        m_afTextureImageDataB = null;
    }
 
     /**
@@ -1001,26 +995,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         m_aucTextureImageDataB = data;
     }
 
-
-    /**
-     * Set the texture data float[] for ModelImage A
-     * @param data the texture data float[] for ModelImage A
-     */
-    public void setTextureImageFloatDataA( float[] data )
-    {
-        m_afTextureImageDataA = data;
-    }
-    
-    /**
-     * Set the texture data float[] for ModelImage B
-     * @param data the texture data float[] for ModelImage B
-     */
-    public void setTextureImageFloatDataB( float[] data )
-    {
-        m_afTextureImageDataB = data;
-    }
-
-
     /**
      * Set the World-view-projection matrix from the renderer. Used to apply the sculpt image to the volume data.
      * @param kMatrix World-view-projection matrix
@@ -1050,8 +1024,6 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
             fImageMinB = (float)m_kImageB.getMin();
         }
 
-        int iA = 0;
-        int iB = 0;
         for (int iZ = 0; iZ < iZBound; iZ++)
         {
             for (int iY = 0; iY < iYBound; iY++)
@@ -1059,16 +1031,17 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                 for (int iX = 0; iX < iXBound; iX++)
                 {
                     int iDataIndex = iZ * (iSliceSize) + (iY * iXBound) + iX;
+                    int iVolIndex = iDataIndex + (iTSlice * iVolumeSize);
                     iDataIndex += (iTSlice * iVolumeSize);
                     backupData( m_kImageBackupA, m_kImageA, iDataIndex );
                     if ( m_kImageA.isColorImage() )
                     {
                         if ( m_aucTextureImageDataA != null )
                         {
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +1).byteValue();
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +2).byteValue();
-                            m_aucTextureImageDataA[iA++] = m_kImageA.get(iDataIndex*4 +3).byteValue();
-                            m_aucTextureImageDataA[iA++] = (byte)255;
+                            m_aucTextureImageDataA[iDataIndex*4 +0] = m_kImageA.get(iVolIndex*4 +1).byteValue();
+                            m_aucTextureImageDataA[iDataIndex*4 +1] = m_kImageA.get(iVolIndex*4 +2).byteValue();
+                            m_aucTextureImageDataA[iDataIndex*4 +2] = m_kImageA.get(iVolIndex*4 +3).byteValue();
+                            m_aucTextureImageDataA[iDataIndex*4 +3] = (byte)255;
                         }
                         else
                         {}
@@ -1076,19 +1049,12 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                     
                     else
                     {
-                        float fValue = m_kImageA.get(iDataIndex).floatValue();
+                        float fValue = m_kImageA.get(iVolIndex).floatValue();
                         fValue = (fValue - fImageMinA)/(fImageMaxA - fImageMinA);
                         byte bValue = (byte)(255.0f * fValue);
                         if ( m_aucTextureImageDataA != null )
                         {
-                            m_aucTextureImageDataA[iA++] = bValue;
-                            m_aucTextureImageDataA[iA++] = bValue;
-                            m_aucTextureImageDataA[iA++] = bValue;
-                            m_aucTextureImageDataA[iA++] = (byte)255;
-                        }
-                        else
-                        {
-                            m_afTextureImageDataA[iA++] = fValue;
+                            m_aucTextureImageDataA[iDataIndex*4 +0] = bValue;
                         }
                     }
 
@@ -1099,27 +1065,20 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
                         {
                             if ( m_aucTextureImageDataB != null )
                             {
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +1).byteValue();
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +2).byteValue();
-                                m_aucTextureImageDataB[iB++] = m_kImageB.get(iDataIndex*4 +3).byteValue();
-                                m_aucTextureImageDataB[iB++] = (byte)255;
+                                m_aucTextureImageDataB[iDataIndex*4 +0] = m_kImageB.get(iVolIndex*4 +1).byteValue();
+                                m_aucTextureImageDataB[iDataIndex*4 +1] = m_kImageB.get(iVolIndex*4 +2).byteValue();
+                                m_aucTextureImageDataB[iDataIndex*4 +2] = m_kImageB.get(iVolIndex*4 +3).byteValue();
+                                m_aucTextureImageDataB[iDataIndex*4 +3] = (byte)255;
                             }
                         }
                         else
                         {
-                            float fValue = m_kImageB.get(iDataIndex).floatValue();
+                            float fValue = m_kImageB.get(iVolIndex).floatValue();
                             fValue = (fValue - fImageMinB)/(fImageMaxB - fImageMinB);
                             byte bValue = (byte)(255.0f * fValue);
                             if ( m_aucTextureImageDataB != null )
                             {
-                                m_aucTextureImageDataB[iB++] = bValue;
-                                m_aucTextureImageDataB[iB++] = bValue;
-                                m_aucTextureImageDataB[iB++] = bValue;
-                                m_aucTextureImageDataB[iB++] = (byte)255;
-                            }
-                            else
-                            {
-                                m_afTextureImageDataB[iB++] = fValue;
+                                m_aucTextureImageDataB[iDataIndex*4 +0] = bValue;
                             }
                         }
                     }
@@ -1222,7 +1181,7 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
      * @param afTextureImageData float[] Texture
      */
     private void sculptData( ModelImage kImage, int iDataIndex, int iTextureIndex,
-                             byte[] aucTextureImageData, float[] afTextureImageData )
+                             byte[] aucTextureImageData )
     {
         if ( !kImage.isColorImage() )
         {
@@ -1237,21 +1196,17 @@ public class Sculptor_WM implements MouseMotionListener, MouseListener {
         
         if ( aucTextureImageData != null )
         {
-            //if ( kImage.isColorImage() )
+            if ( kImage.isColorImage() )
             {
                 aucTextureImageData[iTextureIndex * 4 + 0] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 1] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 2] = (byte)0;
                 aucTextureImageData[iTextureIndex * 4 + 3] = (byte)0;
             }
-            //else
-            //{
-            //    aucTextureImageData[iTextureIndex] = (byte)0;
-            //}
-        }
-        else
-        {
-            afTextureImageData[iTextureIndex] = 0f;
+            else
+            {
+                aucTextureImageData[iTextureIndex * 4 + 0] = (byte)0;
+            }
         }
 
     }

@@ -385,20 +385,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 {
 				 m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
 			 }
-			 else
-			 {
-				 m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
-			 }
 
 			 if ( m_kVolumeImageB.GetImage() != null )
 			 {
 				 if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
 				 {
 					 m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
-				 }
-				 else
-				 {
-					 m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
 				 }
 			 }
 			 if ( m_kSculptor.applySculpt(m_kVolumeImageA.GetTimeSlice()) )
@@ -2597,19 +2589,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  {
 				  m_kSculptor.setTextureImageDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetData() );
 			  }
-			  else
-			  {
-				  m_kSculptor.setTextureImageFloatDataA( m_kVolumeImageA.GetVolumeTarget().GetImage().GetFloatData() );
-			  }
 			  if ( m_kVolumeImageB.GetImage() != null )
 			  {
 				  if ( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() != null )
 				  {
 					  m_kSculptor.setTextureImageDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetData() );
-				  }
-				  else
-				  {
-					  m_kSculptor.setTextureImageFloatDataB( m_kVolumeImageB.GetVolumeTarget().GetImage().GetFloatData() );
 				  }
 			  }
 			  m_kSculptor.undoSculpt(m_kVolumeImageA.GetTimeSlice());

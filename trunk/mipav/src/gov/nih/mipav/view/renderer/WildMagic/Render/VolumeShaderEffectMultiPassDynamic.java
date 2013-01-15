@@ -417,7 +417,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "                              CameraWorldPosition," + "\n"
     	+ "                              LocalMaterialEmissive.xyz," + "\n"
     	+ "                              LocalMaterialAmbient.xyz," + "\n"
-    	+ "                              LocalMaterialDiffuse.xyzw," + "\n"
+    	+ "                              LocalMaterialDiffuse.xyz," + "\n"
     	+ "                              LocalMaterialSpecular.xyzw," + "\n"
     	+ "                              Light#ModelDirection.xyz," + "\n"
     	+ "                              Light#Ambient.xyz," + "\n"
