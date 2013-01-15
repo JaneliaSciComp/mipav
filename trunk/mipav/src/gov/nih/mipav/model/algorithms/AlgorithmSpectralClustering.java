@@ -21,6 +21,8 @@ import java.io.RandomAccessFile;
  * @author William Gandler
  * This program is an implementation of the algorithm described in "On Spectral Clustering: Analysis and an algorithm"
  * by Andrew Y. Ng, Michael I. Jordan, and Yair Weiss.
+ * 
+ * This forms clusters of nonconvex objects in black and white images or in text data files.
  *
  */
 public class AlgorithmSpectralClustering extends AlgorithmBase  {
@@ -581,23 +583,17 @@ public class AlgorithmSpectralClustering extends AlgorithmBase  {
     } // public double eval(double sigma)
     
     private void selfTest() {
-        // In a 512 x 512 image create an image which is a circle with intersecting perpindicular lines
-        // Should see intersecting perpindicular lines in transformed image if the scaling between the 2 rectangles
-        // is the same in x and y.
+        // In a 512 x 512 image create an image which is 3 concentric bands of randomly placed dots.
         int xDim = 512;
         int yDim = 512;
         int sliceSize = xDim * yDim;
         int extents[] = new int[2];
-        int destExtents[] = new int[2];
         extents[0] = xDim;
         extents[1] = yDim;
         byte buffer[] = new byte[sliceSize];
         int xs;
         int ys;
         int index;
-        double xDist;
-        double yDist;
-        double r;
         double xCen = 255.5;
         double yCen = 255.5;
         double radius = 150;
