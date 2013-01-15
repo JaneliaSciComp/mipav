@@ -33,7 +33,7 @@ import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLDrawableFactory;
-import javax.media.opengl.GLOffscreenAutoDrawable;
+import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
@@ -45,15 +45,18 @@ public class SharedDemo extends Thread {
     static GLProfile glp;
     static GLCapabilities caps;
     static int width, height;
-    GLOffscreenAutoDrawable sharedDrawable;
+    //GLOffscreenAutoDrawable sharedDrawable;
+    GLPbuffer sharedDrawable;
     Lattice sharedDemo;
     static boolean init = initClass();
 
     static long duration = 500000; // ms
 
     public static boolean initClass() {
-        GLProfile.initSingleton();
-        glp = GLProfile.getMaxProgrammable(true);
+        GLProfile.initSingleton(true);
+        glp = GLProfile.getMaxProgrammable();
+        //GLProfile.initSingleton();
+        //glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
         width  = 512;
         height = 512;
@@ -108,7 +111,8 @@ public class SharedDemo extends Thread {
     }
     
     private void initShared() {
-        sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+        //sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+        sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
         sharedDemo = new Lattice();
         sharedDrawable.addGLEventListener(sharedDemo);
         // init and render one frame, which will setup the Gears display lists

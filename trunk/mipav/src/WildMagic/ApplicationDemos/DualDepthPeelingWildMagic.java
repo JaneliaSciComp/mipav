@@ -110,6 +110,9 @@ public class DualDepthPeelingWildMagic extends DemoBase
     public DualDepthPeelingWildMagic()
     {
         super("DualDepthPeelingWildMagic",1024,768);
+        
+        
+		LoadModel( "dragon.obj" );
     }
 
 	@Override
@@ -180,7 +183,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
 		m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw( m_pkPlane );               
 
-		DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
+		//DrawFrameRate(arg0, 8,GetHeight()-8,ColorRGBA.BLACK);
         // Swap buffers:
         m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();
@@ -350,9 +353,6 @@ public class DualDepthPeelingWildMagic extends DemoBase
         m_kZBuffer.Enabled = false;
         m_kZBuffer.Writable = false;
         
-        
-        
-		LoadModel( "dragon.obj" );
 
 		OrderIndpTransparencyEffect pkEffect = new OrderIndpTransparencyEffect(.8f);
 		m_kDragon.AttachEffect(pkEffect);

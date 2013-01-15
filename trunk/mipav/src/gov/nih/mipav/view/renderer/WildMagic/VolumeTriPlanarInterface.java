@@ -87,7 +87,6 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLException;
-import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -356,15 +355,18 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected boolean m_bDependentInterfaceInit = false;
 
-    protected GLOffscreenAutoDrawable sharedDrawable = null;
+    //protected GLOffscreenAutoDrawable sharedDrawable = null;
+    protected GLPbuffer sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
 
     protected static boolean init = initClass();
 
     public static boolean initClass() {
-        GLProfile.initSingleton();
-        glp = GLProfile.getMaxProgrammable(true);
+        GLProfile.initSingleton(true);
+        glp = GLProfile.getMaxProgrammable();
+        //GLProfile.initSingleton();
+        //glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
         gl_width  = 512;
         gl_height = 512;
@@ -502,10 +504,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("CropClipVolume")) {
             raycastRenderWM.cropClipVolume();
             clipMaskUndoButton.setEnabled(true);
+            clipSaveButton.setEnabled(true);
             setModified();
         } else if (command.equals("UndoCropVolume")) {
             updateData(false);
             clipMaskUndoButton.setEnabled(false);
+            clipSaveButton.setEnabled(false);
         } else if (command.equals("SaveCropVolume")) {
             raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {
@@ -3363,10 +3367,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	{
             caps.setStereo(true);
             try {
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            	//sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+                sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
             } catch ( GLException e ) {
             	caps.setStereo( !caps.getStereo() );
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            	//sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+                sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
             }
     		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);

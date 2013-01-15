@@ -241,6 +241,8 @@ public class VolumeSurface extends VolumeObject
 
         m_kLightShader = new SurfaceLightingEffect( kImageA, false );
         m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
+        m_kLightShader.SetPerPixelLighting(true);
+        m_kLightShaderTransparent.SetPerPixelLighting(true);
 
         if ( !bHasMaterial )
         {
