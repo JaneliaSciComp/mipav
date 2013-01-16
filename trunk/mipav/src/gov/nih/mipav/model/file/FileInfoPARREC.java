@@ -30,6 +30,8 @@ public class FileInfoPARREC extends FileInfoBase {
 
     /** par/rec date **/
     private String date;
+    
+    private String patientName = null;
 
     /** par/rec examName **/
     private String examName;
@@ -93,6 +95,9 @@ public class FileInfoPARREC extends FileInfoBase {
         }
         
         dlg.append("PAR/REC Version: " + getVersion() + "\n");
+        if (patientName != null) {
+            dlg.append("Patient Name: " + patientName + "\n");
+        }
         dlg.append("Date: " + getDate() + "\n");
         dlg.append("Exam Name: " + getExamName() + "\n");
         dlg.append("Protocol Name: " + getProtocolName() + "\n");
@@ -203,6 +208,10 @@ public class FileInfoPARREC extends FileInfoBase {
 
     public void setDate(String date) {
         this.date = date;
+    }
+    
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
     }
 
     public String getExamName() {
