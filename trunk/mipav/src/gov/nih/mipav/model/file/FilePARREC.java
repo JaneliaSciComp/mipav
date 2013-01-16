@@ -818,7 +818,7 @@ public class FilePARREC extends FileBase {
         fileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE);
         for(int j=0;j<3;j++)
             fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(),j);
-        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(),3);
+        fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(),3);
 
 
         String s;
@@ -1000,6 +1000,12 @@ public class FilePARREC extends FileBase {
         s= (String)VolParameters.get("scn_pix_bits");
         if(s!=null)
 			bpp=Integer.valueOf(s).intValue();
+        
+        float repetitionTime = -1.0f;
+        s = (String)VolParameters.get("scn_rep_time");
+        if (s != null) {
+            repetitionTime = Float.valueOf(s).floatValue();
+        }
 
         int idx =0;
         rescaleIntercept = new float[Slices.size()];
@@ -1196,8 +1202,14 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(fovAP/dim2,1);
                 }
                 fileInfo.setResolutions(fovIS/numSlices,2);                
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
 //                fileInfo.setSliceThickness(fov2/numSlices);
                 break;
             case 2: //SAG
@@ -1213,8 +1225,14 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(fovIS/dim2,1);
                 }
                 fileInfo.setResolutions(fovRL/numSlices,2);
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
                 //fileInfo.setSliceThickness(fov3/numSlices);
                 break;
             case 3: //COR
@@ -1230,8 +1248,14 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(fovIS/dim2,1);
                 }
                 fileInfo.setResolutions(fovAP/numSlices,2);
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
 //                fileInfo.setSliceThickness(fov1/numSlices);
                 break;
 
@@ -1883,7 +1907,7 @@ public class FilePARREC extends FileBase {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
                 fileInfo.setUnitsOfMeasure(units, 2);
-                fileInfo.setUnitsOfMeasure(units, 3);
+                fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
             }
 
             for (int i = 0; i < (extents[2] * extents[3]); i++) {
