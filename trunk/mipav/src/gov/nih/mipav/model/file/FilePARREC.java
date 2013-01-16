@@ -984,9 +984,9 @@ public class FilePARREC extends FileBase {
         if(s!=null) {
             ss = s.trim().split("\\s+");
             if(ss.length==3) {
-                fovRL = Float.valueOf(ss[0]);
+                fovRL = Float.valueOf(ss[2]);
                 fovIS = Float.valueOf(ss[1]);
-                fovAP = Float.valueOf(ss[2]);
+                fovAP = Float.valueOf(ss[0]);
             } else {
                 Preferences.debug("FilePARREC:readHeader. FOV doesn't make sense: "+s+ "\n", Preferences.DEBUG_FILEIO);
                 return false;
@@ -1183,7 +1183,7 @@ public class FilePARREC extends FileBase {
         }
 
         switch(ori) {
-            case FileInfoBase.AXIAL: //TRA
+            case 1: //TRA
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
@@ -1200,11 +1200,11 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(1,3);
 //                fileInfo.setSliceThickness(fov2/numSlices);
                 break;
-            case FileInfoBase.SAGITTAL: //SAG
+            case 2: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
                 if(res1Cons && res2Cons) {
                     fileInfo.setResolutions(res1Val, 0);
                     fileInfo.setResolutions(res2Val, 1);
@@ -1217,7 +1217,7 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(1,3);
                 //fileInfo.setSliceThickness(fov3/numSlices);
                 break;
-            case FileInfoBase.CORONAL: //COR
+            case 3: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
