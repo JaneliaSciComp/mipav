@@ -76,6 +76,8 @@ public class FilePARREC extends FileBase {
     /**version**/
     private String version;
     
+    private String patientName = "";
+    
     /**exam name**/
     private String examName = "";
     
@@ -701,6 +703,20 @@ public class FilePARREC extends FileBase {
              
                     break;
                 case '.' : // scan file variable
+                    if(nextLine.contains("Patient name")) {
+                        String patientNameLine = nextLine.trim();
+                        int patientNameInd = patientNameLine.indexOf(":");
+                        int patientNameLineLength = patientNameLine.length();
+                        
+                        for (int i = 0 ; i < patientNameLineLength-(patientNameInd+1); i++) {
+                            int patientIndex = (patientNameInd+1)+i;
+                            char patientLetter= patientNameLine.charAt(patientIndex);
+                            patientName =patientName + patientLetter;
+                            patientName = patientName.trim();
+                          
+                        }
+                        fileInfo.setPatientName(patientName);
+                    } 
                     if(nextLine.contains("Examination name")) {
                         String examNameLine = nextLine.trim();
                         int examNameInd = examNameLine.indexOf(":");
