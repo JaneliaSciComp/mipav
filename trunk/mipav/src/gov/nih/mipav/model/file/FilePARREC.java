@@ -1293,8 +1293,8 @@ public class FilePARREC extends FileBase {
                 break;
                 
             case FileInfoBase.SAGITTAL:
-                sliceAngle = new double[]{sliceAngle[0], -sliceAngle[1], sliceAngle[2]};
-                offCentre = new double[]{offCentre[0], -offCentre[1], offCentre[2]};
+                sliceAngle = new double[]{sliceAngle[0], -sliceAngle[1], -sliceAngle[2]};
+                offCentre = new double[]{offCentre[0], -offCentre[1], -offCentre[2]};
                 break;
                 
             case FileInfoBase.CORONAL:
