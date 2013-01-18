@@ -314,6 +314,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
+                        menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 
                         menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
@@ -1052,6 +1053,7 @@ public class ViewMenuBar {
             if (ModelImage.isColorImage(type)) {
                 menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             }
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1076,6 +1078,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1189,6 +1192,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Color edge", false);
             menuBuilder.setMenuItemEnabled("Color saturation", false);
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
 
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
