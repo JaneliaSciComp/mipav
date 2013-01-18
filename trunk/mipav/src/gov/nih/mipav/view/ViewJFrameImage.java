@@ -1708,6 +1708,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Reslice - isotropic voxels")) {
             new JDialogReslice(this, getActiveImage());
         } else if (command.equals("Test algorithm")) { // new JDialogRegionGrow(this, getActiveImage());
+        } else if (command.equals("SCD")) {
+            new JDialogSCDSegmentation(this, getActiveImage());
         } else if (command.equals("threshMinMax")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
