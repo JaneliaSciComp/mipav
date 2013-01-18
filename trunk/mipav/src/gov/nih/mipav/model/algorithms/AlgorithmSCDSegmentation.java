@@ -60,6 +60,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
     public void runAlgorithm() {
         int i;
         int j;
+        int k;
         int xDim;
         int yDim;
         int x;
@@ -141,6 +142,29 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         double globalDispersionMeasure;
         double homogeneityDegree;
         double SCD[][][] = new double[highRedBound-lowRedBound+1][highGreenBound-lowGreenBound+1][highBlueBound-lowBlueBound+1];
+        int rx;
+        int gx;
+        int bx;
+        boolean localMaximum[][][] = new boolean[highRedBound-lowRedBound+1][highGreenBound-lowGreenBound+1][highBlueBound-lowBlueBound+1];
+        int nCandidates;
+        short candidateRed[];
+        short candidateGreen[];
+        short candidateBlue[];
+        int candidateSideHalf[];
+        boolean candidateMaxSize[];
+        double candidateSCD[];
+        int candidatesToGrow;
+        int sideHalf;
+        double newCandidateSCD[];
+        int colorClass[] = new int[numClasses];
+        double maxSCD;
+        boolean candidateChosen[];
+        double minEuclideanSquared;
+        double euclideanSquared;
+        double objectiveFunctionJ;
+        double maxObjectiveFunctionJ;
+        int candidateIndex = 0;
+        ModelImage resultImage;
         
         try {
             srcImage.exportRGBData(1, 0, sliceSize, redBuffer);
@@ -277,6 +301,324 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         } // for (r = lowRedBound; r <= highRedBound; r++)
         
         
+        nCandidates = 0;
+        for (r = 0; r <= highRedBound - lowRedBound; r++) {
+            for (g = 0; g <= highGreenBound - lowGreenBound; g++) {
+                for (b = 0; b <= highBlueBound - lowBlueBound; b++) {
+                    localMaximum[r][g][b] = true;
+                    for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1) && localMaximum[r][g][b]; rx++) {
+                        for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1) && localMaximum[r][g][b]; gx++) {
+                            for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1)  && localMaximum[r][g][b]; bx++) {
+                                if (SCD[r][g][b] < SCD[rx][gx][bx]) {
+                                    localMaximum[r][g][b] = false;
+                                }
+                            } // for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1)  && localMaximum[r][g][b]; bx++)
+                        } // for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1) && localMaximum[r][g][b]; gx++)
+                    } // for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1) && localMaximum[r][g][b]; rx++)
+                    if (localMaximum[r][g][b]) {
+                        nCandidates++;
+                    }
+                } // for (b = 0; b <= highBlueBound - lowBlueBound; b++) 
+            } // for (g = 0; g <= highGreenBound - lowGreenBound; g++)
+        } // for (r = 0; r <= highRedBound - lowRedBound; r++)
+        
+        candidatesToGrow = nCandidates;
+        candidateRed = new short[nCandidates];
+        candidateGreen = new short[nCandidates];
+        candidateBlue = new short[nCandidates];
+        candidateSideHalf = new int[nCandidates];
+        candidateMaxSize = new boolean[nCandidates];
+        candidateSCD = new double[nCandidates];
+        newCandidateSCD = new double[nCandidates];
+        i = 0;
+        for (r = 0; r <= highRedBound - lowRedBound; r++) {
+            for (g = 0; g <= highGreenBound - lowGreenBound; g++) {
+                for (b = 0; b <= highBlueBound - lowBlueBound; b++) {
+                    if (localMaximum[r][g][b]) {
+                        candidateRed[i] = (short)(r + lowRedBound);
+                        candidateGreen[i] = (short)(g + lowGreenBound);
+                        candidateBlue[i] = (short)(b + lowBlueBound);
+                        candidateSideHalf[i] = initialSideHalf;
+                        candidateSCD[i] = SCD[candidateRed[i] - lowRedBound][candidateGreen[i] - lowGreenBound][candidateBlue[i] - lowBlueBound];
+                    }
+                }
+            }
+        }
+        
+        for (i = 0; i < nCandidates; i++) {
+            for (j = i+1; j < nCandidates; j++) {
+                if ((Math.abs(candidateRed[i] - candidateRed[j]) <= (candidateSideHalf[i] + candidateSideHalf[j])) &&
+                    (Math.abs(candidateGreen[i] - candidateGreen[j]) <= (candidateSideHalf[i] + candidateSideHalf[j])) &&
+                    (Math.abs(candidateBlue[i] - candidateBlue[j]) <= (candidateSideHalf[i] + candidateSideHalf[j]))) {
+                    if (!candidateMaxSize[i]) {
+                        candidateMaxSize[i] = true;
+                        candidatesToGrow--;
+                    }
+                    if (!candidateMaxSize[j]) {
+                        candidateMaxSize[j] = true;
+                        candidatesToGrow--;
+                    }
+                }
+            }
+        }
+        
+        sideHalf = initialSideHalf;
+        while (candidatesToGrow > 0) {
+            sideHalf++;
+            for (i = 0; i < nCandidates; i++) {
+                if (!candidateMaxSize[i]) {
+                    if (((candidateRed[i] - sideHalf) < minRed) || ((candidateRed[i] + sideHalf) > maxRed) ||
+                        ((candidateGreen[i] - sideHalf) < minGreen) || ((candidateGreen[i] + sideHalf) > maxGreen) ||
+                        ((candidateBlue[i] - sideHalf) < minBlue) || ((candidateBlue[i] + sideHalf) > maxBlue)) {
+                        candidateMaxSize[i] = true;
+                        candidatesToGrow--;
+                    }
+                } // if (!candidateMaxSize[i])
+            } // for (i = 0; i < nCandidates; i++)
+            
+            for (i = 0; i < nCandidates; i++) {
+                if (!candidateMaxSize[i]) {
+                    lowRed = candidateRed[i] - sideHalf;
+                    highRed = candidateRed[i] + sideHalf;
+                    lowGreen = candidateGreen[i] - sideHalf;
+                    highGreen = candidateGreen[i] + sideHalf;
+                    lowBlue = candidateBlue[i] - sideHalf;
+                    highBlue = candidateBlue[i] + sideHalf;
+                    numSet = 0;
+                    connectednessSum = 0.0;
+                    localDispersionMeasureSum = 0.0;
+                    globalRedSum = 0;
+                    globalGreenSum = 0;
+                    globalBlueSum = 0;
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            index = x + y * xDim;
+                            red = redBuffer[index];
+                            if ((red >= lowRed) && (red <= highRed)) {
+                                green = greenBuffer[index];
+                                if ((green >= lowGreen) && (green <= highGreen)) {
+                                    blue = blueBuffer[index];
+                                    if ((blue >= lowBlue) && (blue <= highBlue)) {
+                                        globalRed[numSet] = red;
+                                        globalGreen[numSet] = green;
+                                        globalBlue[numSet] = blue;
+                                        globalRedSum += red;
+                                        globalGreenSum += green;
+                                        globalBlueSum += blue;
+                                        numSet++;
+                                        numNeighbors = 0;
+                                        connectedNeighbors = 0;
+                                        localRedSum = 0;
+                                        localGreenSum = 0;
+                                        localBlueSum = 0;
+                                        for (ys = Math.max(y-1,0); ys <= Math.min(y+1, yDim-1); ys++) {
+                                            for (xs = Math.max(x-1,0); xs <= Math.min(x+1, xDim-1); xs++) {
+                                                if ((ys != y) || (xs != x)) {
+                                                    numNeighbors++;
+                                                    neighborIndex = xs + ys * xDim;
+                                                    neighborRed = redBuffer[neighborIndex];
+                                                    if ((neighborRed >= lowRed) && (neighborRed <= highRed)) {
+                                                        neighborGreen = greenBuffer[neighborIndex];
+                                                        if ((neighborGreen >= lowGreen) && (neighborGreen <= highGreen)) {
+                                                            neighborBlue = blueBuffer[neighborIndex];
+                                                            if ((neighborBlue >= lowBlue) && (neighborBlue <= highBlue)) {
+                                                                localRed[connectedNeighbors] = neighborRed;
+                                                                localGreen[connectedNeighbors] = neighborGreen;
+                                                                localBlue[connectedNeighbors] = neighborBlue;
+                                                                localRedSum += neighborRed;
+                                                                localGreenSum += neighborGreen;
+                                                                localBlueSum += neighborBlue;
+                                                                connectedNeighbors++;
+                                                            } // if ((neighborBlue >= lowBlue) && (neighborBlue <= highBlue))
+                                                        } // if ((neighborGreen >= lowGreen) && (neighborGreen <= highGreen))
+                                                    } // if ((neighborRed >= lowRed) && (neighborRed <= highRed))
+                                                } // if ((ys != y) || (xs != x))
+                                            } // for (xs = Math.max(x-1,0); xs <= Math.min(x+1, xDim-1); xs++)
+                                        } // for (ys = Math.max(y-1,0); ys <= Math.min(y+1, yDim-1); ys++)
+                                        pixelConnectedness = ((double)connectedNeighbors)/((double)numNeighbors);
+                                        connectednessSum += pixelConnectedness;
+                                        localRedMean = ((double)localRedSum)/((double)connectedNeighbors);
+                                        localGreenMean = ((double)localGreenSum)/((double)connectedNeighbors);
+                                        localBlueMean = ((double)localBlueSum)/((double)connectedNeighbors);
+                                        localSum = 0.0;
+                                        for (j = 0; j < connectedNeighbors; j++) {
+                                            delta = localRed[j] - localRedMean;
+                                            localSum += delta * delta;
+                                            delta = localGreen[j] - localGreenMean;
+                                            localSum += delta * delta;
+                                            delta = localBlue[j] - localBlueMean;
+                                            localSum += delta * delta;
+                                        }
+                                        pixelDispersionMeasure = Math.sqrt(localSum)/connectedNeighbors;
+                                        localDispersionMeasureSum += pixelDispersionMeasure;
+                                    } // if ((blue >= lowBlue) && (blue <= highBlue))
+                                } // if ((green >= lowGreen) && (green <= highGreen))
+                            } // if ((red >= lowRed) && (red <= highRed))
+                        } // for (x = 0; x < xDim; x++)
+                    } // for (y = 0; y < yDim; y++)
+                    globalRedMean = ((double)globalRedSum)/((double)numSet);
+                    globalGreenMean = ((double)globalGreenSum)/((double)numSet);
+                    globalBlueMean = ((double)globalBlueSum)/((double)numSet);
+                    globalSum = 0.0;
+                    for (j = 0; j < numSet; j++) {
+                        delta = globalRed[j] - globalRedMean;
+                        globalSum += delta * delta;
+                        delta = globalGreen[j] - globalGreenMean;
+                        globalSum += delta * delta;
+                        delta = globalBlue[j] - globalBlueMean;
+                        globalSum += delta * delta;
+                    }
+                    connectednessDegree = connectednessSum/numSet;
+                    localDispersionMeasure = localDispersionMeasureSum/numSet;
+                    globalDispersionMeasure = Math.sqrt(globalSum)/numSet;
+                    if (globalDispersionMeasure != 0.0) {
+                        homogeneityDegree = localDispersionMeasure/globalDispersionMeasure;
+                    }
+                    else {
+                        homogeneityDegree = 1.0;
+                    }
+                    newCandidateSCD[i] = connectednessDegree * homogeneityDegree;
+                    if (newCandidateSCD[i] <= candidateSCD[i]) {
+                        candidateMaxSize[i] = true;
+                        candidatesToGrow--;
+                    }
+                } // if (!candidateMaxSize[i])
+            } // for (i = 0; i < nCandidates; i++)
+            
+            for (i = 0; i < nCandidates; i++) {
+                if (!candidateMaxSize[i]) {
+                    for (j = i+1; j < nCandidates; j++) {
+                        if (candidateMaxSize[j]) {
+                            if ((Math.abs(candidateRed[i] - candidateRed[j]) <= (sideHalf + candidateSideHalf[j])) &&
+                                    (Math.abs(candidateGreen[i] - candidateGreen[j]) <= (sideHalf + candidateSideHalf[j])) &&
+                                    (Math.abs(candidateBlue[i] - candidateBlue[j]) <= (sideHalf + candidateSideHalf[j]))) {
+                                    if (!candidateMaxSize[i]) {
+                                        candidateMaxSize[i] = true;
+                                        candidatesToGrow--;
+                                    }
+                            }    
+                        } // if (candidateMaxSize[j])
+                        else { // !candidateMaxSize[j]
+                            if ((Math.abs(candidateRed[i] - candidateRed[j]) <= (2*sideHalf)) &&
+                                    (Math.abs(candidateGreen[i] - candidateGreen[j]) <= (2*sideHalf)) &&
+                                    (Math.abs(candidateBlue[i] - candidateBlue[j]) <= (2*sideHalf))) {
+                                    if (!candidateMaxSize[i]) {
+                                        candidateMaxSize[i] = true;
+                                        candidatesToGrow--;
+                                    }
+                                    if (!candidateMaxSize[j]) {
+                                        candidateMaxSize[j] = true;
+                                        candidatesToGrow--;
+                                    }
+                                }    
+                        }
+                    } // for (j = i+1; j < nCandidates; j++)
+                } // if (!candidateMaxSize[i])
+                
+                if (!candidateMaxSize[i]) {
+                    candidateSCD[i] = newCandidateSCD[i];
+                    candidateSideHalf[i] = sideHalf;
+                }
+                
+            } // for (i = 0; i < nCandidates; i++)
+        } // while (candidatesToGrow > 0)
+        
+        // Select numClasses of the nCandidates
+        
+        // First select the nCandidate with the highest SCD
+        colorClass[0] = 0;
+        maxSCD = candidateSCD[0];
+        for (i = 1; i < nCandidates; i++) {
+            if (candidateSCD[i] > maxSCD) {
+                colorClass[0] = i;
+                maxSCD = candidateSCD[i];
+            }
+        }
+        candidateChosen = new boolean[nCandidates];
+        candidateChosen[colorClass[0]] = true;
+        
+        for (i = 1; i < numClasses; i++) {
+            maxObjectiveFunctionJ = 0.0;
+            for (j = 0; j < nCandidates; j++) {
+                if (!candidateChosen[j]) {
+                    minEuclideanSquared = Double.MAX_VALUE;
+                    for (k = 0; k < i; k++) {
+                        euclideanSquared = 0.0;
+                        delta = candidateRed[j] - candidateRed[colorClass[k]];
+                        euclideanSquared += delta * delta;
+                        delta = candidateGreen[j] - candidateGreen[colorClass[k]];
+                        euclideanSquared += delta * delta;
+                        delta = candidateBlue[j] - candidateBlue[colorClass[k]];
+                        euclideanSquared += delta * delta;
+                        if (euclideanSquared < minEuclideanSquared) {
+                            minEuclideanSquared = euclideanSquared;
+                        }
+                    } // for (k = 0; k < i; k++)
+                    objectiveFunctionJ = candidateSCD[j] * minEuclideanSquared;
+                    if (objectiveFunctionJ > maxObjectiveFunctionJ) {
+                        maxObjectiveFunctionJ = objectiveFunctionJ;
+                        colorClass[i] = j;
+                    }
+                } // if (!candidateChosen[j])
+            } // for (j = 0; j < nCandidates; j++)
+        } // for (i = 1; i < numClasses; i++)
+        
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                index = x + y * xDim;
+                minEuclideanSquared = Double.MAX_VALUE;
+                for (i = 0; i < numClasses; i++) {
+                    euclideanSquared = 0.0;
+                    delta = redBuffer[index] - candidateRed[colorClass[i]];
+                    euclideanSquared += delta * delta;
+                    delta = greenBuffer[index] - candidateGreen[colorClass[i]];
+                    euclideanSquared += delta * delta;
+                    delta = blueBuffer[index] - candidateBlue[colorClass[i]];
+                    euclideanSquared += delta * delta;
+                    if (euclideanSquared < minEuclideanSquared) {
+                        minEuclideanSquared = euclideanSquared;
+                        candidateIndex = colorClass[i];
+                    }
+                } // for (i = 0; i < numClasses; i++)
+                redBuffer[index] = candidateRed[candidateIndex];
+                greenBuffer[index] = candidateGreen[candidateIndex];
+                blueBuffer[index] = candidateBlue[candidateIndex];
+            } // for (x = 0; x < xDim; x++)
+        } // for (y = 0; y < yDim; y++)
+        
+        if (destImage == null) {
+            resultImage = srcImage;
+        }
+        else {
+            resultImage = destImage;
+        }
+        
+        try {
+            resultImage.importRGBData(1, 0, redBuffer, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on resultImage.importRGBData(1, 0, redBuffer, true)");
+            setCompleted(false);
+            return;    
+        }
+        
+        try {
+            resultImage.importRGBData(2, 0, greenBuffer, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on resultImage.importRGBData(2, 0, greenBuffer, true)");
+            setCompleted(false);
+            return;    
+        }
+        
+        try {
+            resultImage.importRGBData(3, 0,  blueBuffer, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on resultImage.importRGBData(3, 0, blueBuffer, true)");
+            setCompleted(false);
+            return;    
+        }
         
         setCompleted(true);
         return;
