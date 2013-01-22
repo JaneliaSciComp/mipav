@@ -160,6 +160,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

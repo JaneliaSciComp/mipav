@@ -178,7 +178,7 @@ public class JDialogOverlay extends JDialogBase {
                     break;
                 }
             }
-        }
+        } 
     }
 
     /**
@@ -394,8 +394,10 @@ public class JDialogOverlay extends JDialogBase {
             } else if (ac.equals("Cancel")) {
                 setVisible(false);
                 table.clearSelection();
+            } else {
+                super.actionPerformed(e);
             }
-        }
+        } 
 
         /**
          * sets the button that will have its name updated when OK is clicked.

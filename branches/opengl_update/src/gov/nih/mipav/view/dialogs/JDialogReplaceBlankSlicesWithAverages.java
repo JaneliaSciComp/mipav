@@ -73,14 +73,6 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Presently only the script function calls this method. When the script sends this dialog the action command, this
-     * method calls run.
-     *
-     * @param  event  event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) {}
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

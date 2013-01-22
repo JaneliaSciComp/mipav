@@ -436,6 +436,8 @@ public class JDialogBGAndFGDistanceMap extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
 
 	}

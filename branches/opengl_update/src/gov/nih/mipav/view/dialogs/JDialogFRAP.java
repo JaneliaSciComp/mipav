@@ -273,7 +273,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10083");
+            //MipavUtil.showHelp("10083");
+            MipavUtil.showWebHelp("Microscopy:_FRAP_(Fluorescence_Recovery_After_Photobleaching)#Applying_the_FRAP_algorithm");
         } else if (command.equals("Cancel")) {
             componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
@@ -326,6 +327,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

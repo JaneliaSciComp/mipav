@@ -65,6 +65,8 @@ public class JDialogNColors extends JDialogBase {
             }
         } else if (command.equals("Cancel")) {
             cancelFlag = true;
+        } else {
+            super.actionPerformed(event);
         }
 
         dispose();

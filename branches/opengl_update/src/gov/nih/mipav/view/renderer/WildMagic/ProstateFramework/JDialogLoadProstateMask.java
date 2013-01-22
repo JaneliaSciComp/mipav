@@ -69,10 +69,6 @@ public class JDialogLoadProstateMask extends JDialogBase implements AlgorithmInt
         init();
     }
 
-    public void actionPerformed(ActionEvent event) {
-
-    }
-
     public void init() {
         String fileName;
         String directory;

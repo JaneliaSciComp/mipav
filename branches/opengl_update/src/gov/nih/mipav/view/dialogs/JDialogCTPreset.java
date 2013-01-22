@@ -208,8 +208,6 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
         vertebraeMin = -620;
         vertebraeMax = 1680;
 
-        loadDefaults();
-
         radioAbdomen = new JRadioButton("Abdomen ", false);
         radioAbdomen.setFont(serif12);
         radioAbdomen.addItemListener(this);
@@ -368,10 +366,6 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
         int levelTemp;
         int windowTemp;
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
-
         if (command.equals("Close")) {
             dispose();
         } else if (command.equals("Cancel")) {
@@ -496,6 +490,8 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
                 maxText.setText("" + windowTemp + "");
                 ctMode(vertebraeMin, vertebraeMax);
             }
+        } else {
+            super.actionPerformed(event);
         }
 
     }
@@ -686,7 +682,7 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -719,7 +715,7 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);

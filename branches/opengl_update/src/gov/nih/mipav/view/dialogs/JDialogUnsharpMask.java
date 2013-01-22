@@ -93,7 +93,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -114,7 +113,10 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10025");
+            //MipavUtil.showHelp("10025");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Unsharp_Mask");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -179,7 +181,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
             }
         }
 
-        saveDefaults();
      // save the completion status for later
         setComplete(algorithm.isCompleted());
 
@@ -217,7 +218,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -251,7 +252,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + DELIMITER;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + DELIMITER;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + DELIMITER;

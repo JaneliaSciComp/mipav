@@ -9,12 +9,11 @@ import javax.swing.tree.*;
 
 
 /**
- * This class is used to represent a VOIContour, VOIPoint, or other two-dimensional VOI object in a tree. 
- * This is a node of the overall VOI. It has a gov.nih.mipav.structure.VOI as its object.
+ * This class is used to represent a frame, such as a slice number.
  *
  * <p>Nodes in the tree are expanded by calling this class's explore method.</p>
  *
- * @author  David Parsons
+ * @author  Justin Senseney
  */
 public class VOIFrameNode extends DefaultMutableTreeNode {
 
@@ -62,7 +61,7 @@ public class VOIFrameNode extends DefaultMutableTreeNode {
         Vector<VOIBase> curves = (Vector<VOIBase>) getUserObject();
 
         for (int i = 0; i < curves.size(); i++) {
-            add(new VOINode(curves.elementAt(i)));
+            add(new VOIContourNode(curves.elementAt(i)));
         }
     }
 

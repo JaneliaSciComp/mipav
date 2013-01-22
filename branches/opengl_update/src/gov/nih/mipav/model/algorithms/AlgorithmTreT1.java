@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +26,15 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private ModelImage r1ResultStack = null;
     private ModelImage b1ResultStack = null;
     
+    private double[][][] t1ResultData = null;
+    private double[][][] m0ResultData = null;
+    private double[][][] r1ResultData = null;
+    private double[][][] b1ResultData = null;
+    
     private ModelImage largestImage = null;
     
     private double treTR = 5.00;
-    @SuppressWarnings("unused")
     private double irspgrTR = 5.00;
-    @SuppressWarnings("unused")
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
@@ -41,45 +45,30 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     private double[] spgrData;
     private double[] irspgrData;
-    @SuppressWarnings("unused")
     private double scale;
-    @SuppressWarnings("unused")
     private double pointScale;
-    @SuppressWarnings("unused")
     private double scaleIncrement;
-    @SuppressWarnings("unused")
     private double[] estimates;
-    @SuppressWarnings("unused")
     private double[] residuals;
-    @SuppressWarnings("unused")
     private int[] direction;
     
     private int[] spgrImageIndex;
     private int[] irspgrImageIndex;
     private int b1ImageIndex;
-    @SuppressWarnings("unused")
     private double angleIncrement;
     private int Nsa = 2;
     private int Nti = 1;
-    @SuppressWarnings("unused")
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    @SuppressWarnings("unused")
     private boolean performStraightTreT1 = true;
     private boolean performTreT1withPreCalculatedB1Map = false;
     private boolean performTreT1HIFI = false;
-    @SuppressWarnings("unused")
     private boolean doubleInversion = true;
-    @SuppressWarnings("unused")
     private boolean singleInversion = false;
-    @SuppressWarnings("unused")
     private boolean geScanner = true;
-    @SuppressWarnings("unused")
     private boolean siemensScanner = false;
-    @SuppressWarnings("unused")
     private boolean threeTField = true;
-    @SuppressWarnings("unused")
     private boolean onefiveTField = false;
     
     private boolean calculateT1 = true;
@@ -88,13 +77,11 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private boolean invertT1toR1 = false;
     
     private boolean useWeights = true;
-    @SuppressWarnings("unused")
     private boolean uniformAngleSpacing = true;
     
     
     
     private String[] wList;
-    @SuppressWarnings("unused")
     private String[] titles;
     private boolean completed;
     
@@ -259,19 +246,6 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
      */
     private void init() {
         computeProcessors();
-        
-        String testResult = wList[spgrImageIndex[0]].length() > 20 ? wList[spgrImageIndex[0]].substring(0, 19) : wList[spgrImageIndex[0]];
-        this.tempDirString = System.getProperty("java.io.tmpdir")+File.separator+testResult+File.separator;
-        ViewUserInterface.getReference().getMessageFrame().append("Saving files to: "+tempDirString, ViewJFrameMessage.DEBUG);
-        File f = new File(tempDirString);
-        if(!f.exists()) {
-            f.mkdirs();
-        }
-        
-        this.dataListener = new DataListener();
-        if(Preferences.isMultiThreadingEnabled()) {
-            dataListener.start();
-        }
     }
     
     protected void computeProcessors() {
@@ -455,7 +429,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         fireProgressStateChanged("Computation finished..loading data");
         fireProgressStateChanged(85);
         
-        loadFinalData(tSeries);
+        initializeDisplayImages(largestImage);
         
         return true;
     }
@@ -507,7 +481,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         fireProgressStateChanged("Computation finished..loading data");
         fireProgressStateChanged(85);
         
-        loadFinalData(tSeries);
+        initializeDisplayImages(largestImage);
         
         return true;
     }
@@ -539,17 +513,6 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
         }
         else {
             completed = calculateT1UsingConventionalTreT1();
-        }
-        
-        dataListener.localInterrupt();
-        
-        try {
-            dataListener.join();
-        } catch (InterruptedException e) {
-            if(completed) {
-                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
-                e.printStackTrace();
-            }
         }
         
         setCompleted(completed);
@@ -646,93 +609,53 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
 	private void initializeDisplayImages(ModelImage image) {
 	    if(calculateT1) {
             t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-            t1ResultStack = nearCloneImage(image, t1ResultStack);
+            cloneFileInfo(image, t1ResultStack);
+            
+            loadFinalData(t1ResultStack, t1ResultData);   
         }
         
         if(calculateM0) {
             m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
+            cloneFileInfo(image, m0ResultStack);
+            
+            loadFinalData(m0ResultStack, m0ResultData);   
         }
          
         if(invertT1toR1) {
             r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-            r1ResultStack = nearCloneImage(image, r1ResultStack);
+            cloneFileInfo(image, r1ResultStack);
+            
+            loadFinalData(r1ResultStack, r1ResultData);   
         }
          
         if(performTreT1HIFI && showB1Map) {
             b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
-            b1ResultStack = nearCloneImage(image, b1ResultStack);
-        }
-	}
-
-    private void loadFinalData(int tSeries) {
-        //dataListener is normally started in init()
-        if(!Preferences.isMultiThreadingEnabled()) {
-            dataListener.run();
-        }
-        
-        dataListener.localInterrupt();
-        
-        try {
-            dataListener.join();
-        } catch (InterruptedException e) {
-            if(completed) {
-                MipavUtil.displayError("Thread execution irregular, dataoutput may be incorrect");
-                e.printStackTrace();
-            }
-        }
-        
-        if(t1ResultStack == null || m0ResultStack == null || r1ResultStack == null || b1ResultStack == null) {
-            initializeDisplayImages(largestImage);
-        }
-        
-        int numThreads = 1;
-        if(Preferences.isMultiThreadingEnabled()) {
-            numThreads += (calculateM0 ? 1 : 0) + (invertT1toR1 ? 1 : 0) + (showB1Map ? 1 : 0);
-            if(numThreads > Runtime.getRuntime().availableProcessors()-2) {
-                numThreads = Runtime.getRuntime().availableProcessors()-2;
-            }
-            if(numThreads < 1) {
-            	numThreads = 1;
-            }
-        }
-        
-        ExecutorService exec = Executors.newFixedThreadPool(numThreads);
-        LoadResultDataOuter t1 = null, m0 = null, r1 = null, b1 = null;
-        
-        if(calculateT1) {
-            t1 = new LoadResultDataOuter(t1ResultStack, "t1_results_volume", tSeries);
-            exec.submit(t1);
-        }
-        if(calculateM0) {
-            m0 = new LoadResultDataOuter(m0ResultStack, "m0_results_volume", tSeries);
-            exec.submit(m0);
-        }
-        if(invertT1toR1) {
-            r1 = new LoadResultDataOuter(r1ResultStack, "r1_results_volume", tSeries);
-            exec.submit(r1);
-        }
-        if(showB1Map) {
-            b1 = new LoadResultDataOuter(b1ResultStack, "b1_results_volume", tSeries);
-            exec.submit(b1);
-        }
-        exec.shutdown();
-        
-        try {
-            exec.awaitTermination(1, TimeUnit.DAYS);
-        } catch(InterruptedException e) {
-            MipavUtil.displayError("Program did not execute correctly");
-            e.printStackTrace();
+            cloneFileInfo(image, b1ResultStack);
+            
+            loadFinalData(b1ResultStack, b1ResultData);   
         }
         
         displayImages();
+	}
+
+    private void loadFinalData(ModelImage image, double[][][] data) {
+        int volumeSize = image.getVolumeSize();
+        int sliceSize = image.getSliceSize();
+        
+        for(int i=0; i<data.length; i++) {
+            for(int j=0; j<data[i].length; j++) {
+                try {
+                    image.importData(volumeSize*i + sliceSize*j, data[i][j], false);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+        image.calcMinMax();
     }
 
     private abstract class CalculateT1 extends CalculateT {
-        protected ModelImage t1ResultLocalVolume = null;
-        protected ModelImage m0ResultLocalVolume = null;
-        protected ModelImage r1ResultLocalVolume = null;
-        protected ModelImage b1ResultLocalVolume = null;
         
         
         public CalculateT1(ModelImage image, int t) {
@@ -746,54 +669,25 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
          * @param image
          */
         protected void initializeLocalImages(ModelImage image) {
-            //For 4D processing, only volumes are stored in local memory, these volumes are then re-read at program clean-up
-            int[] localExtents = new int[image.getNDims() > 3 ? image.getNDims()-1 : image.getNDims()];
-            for(int i=0; i<localExtents.length; i++) {
-                localExtents[i] = image.getExtents()[i];
+            int tSlice = 1;
+            if(image.getNDims() > 3) {
+                tSlice = image.getExtents()[3];
             }
             
             if(calculateT1) {
-                t1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "t1_results_volume"+t);
-                //t1ResultLocalVolume = nearCloneImage(image, t1ResultLocalVolume);
+                t1ResultData = new double[tSlice][][];
             }
             
             if(calculateM0) {
-                m0ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "m0_results_volume"+t);
-                //m0ResultLocalVolume = nearCloneImage(image, m0ResultLocalVolume);
+                m0ResultData = new double[tSlice][][];
             }
              
             if(invertT1toR1) {
-                r1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "r1_results_volume"+t);
-                //r1ResultLocalVolume = nearCloneImage(image, r1ResultLocalVolume);
+                r1ResultData = new double[tSlice][][];
             }
              
             if(performTreT1HIFI && showB1Map) {
-                b1ResultLocalVolume = new ModelImage(ModelImage.DOUBLE, localExtents, "b1_results_volume"+t);
-                //b1ResultLocalVolume = nearCloneImage(image, b1ResultLocalVolume);
-            }
-        }
-        
-        protected void disposeLocal() {
-            if(dataBar != null) {
-                dataBar.dispose();
-                dataBar = null;
-            }
-            
-            if(t1ResultLocalVolume != null) {
-                t1ResultLocalVolume.disposeLocal();
-                t1ResultLocalVolume = null;
-            }
-            if(m0ResultLocalVolume != null) {
-                m0ResultLocalVolume.disposeLocal();
-                m0ResultLocalVolume = null;
-            }
-            if(r1ResultLocalVolume != null) {
-                r1ResultLocalVolume.disposeLocal();
-                r1ResultLocalVolume = null;
-            }
-            if(b1ResultLocalVolume != null) {
-                b1ResultLocalVolume.disposeLocal();
-                b1ResultLocalVolume = null;
+                b1ResultData = new double[tSlice][][];
             }
         }
     }
@@ -834,7 +728,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             double[] scaledFA;
             double[][] spgrPixelValues;
             double[][] irspgrPixelValues;
-            float[][] t1Values, m0Values, r1Values, b1field;
+            double[][] t1Values, m0Values, r1Values, b1field;
             double[][][] b1Values;
             
             if(do4D) {
@@ -846,25 +740,25 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             spgrPixelValues = new double[Nsa][width*height];
             irspgrPixelValues = new double[Nsa][width*height];
             if (calculateT1) { 
-                t1Values = new float[irspgrSlices][width*height];
+                t1Values = new double[irspgrSlices][width*height];
             }
             else { 
-                t1Values = new float[1][1];
+                t1Values = new double[1][1];
             }
             if (calculateM0) { 
-                m0Values = new float[irspgrSlices][width*height];
+                m0Values = new double[irspgrSlices][width*height];
             }
             else { 
-                m0Values = new float[1][1];
+                m0Values = new double[1][1];
             }
             if (invertT1toR1) { 
-                r1Values = new float[irspgrSlices][width*height];
+                r1Values = new double[irspgrSlices][width*height];
             }
             else { 
-                r1Values = new float[1][1];
+                r1Values = new double[1][1];
             }
             
-            b1field = new float[irspgrSlices][width*height];
+            b1field = new double[irspgrSlices][width*height];
             b1Values = new double[irspgrSlices][height][width];
             
             fa = new double[Nsa];
@@ -1243,7 +1137,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                                 }
                             }
                             if (calculateT1) {
-                                t1Values[k][pixelIndex] = (float) t1;
+                                t1Values[k][pixelIndex] = t1;
                             }
                             if (calculateM0) {
                                 m0Values[k][pixelIndex] = (float) m0;
@@ -1269,16 +1163,16 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             }
             
             if(calculateT1) {
-                dataListener.insertData(t1ResultLocalVolume, t1Values, t);
+                t1ResultData[t] = t1Values;
             }
             if(calculateM0) {
-                dataListener.insertData(m0ResultLocalVolume, m0Values, t);
+                m0ResultData[t] = m0Values;
             }
             if(invertT1toR1) {
-                dataListener.insertData(r1ResultLocalVolume, r1Values, t);
+                r1ResultData[t] = r1Values;
             }
             if(showB1Map) {
-                dataListener.insertData(b1ResultLocalVolume, b1field, t);
+                b1ResultData[t] = b1field;
             }
             dataBar.setVisible(false);
         }
@@ -1301,7 +1195,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             double b1;
             double[] fa, b1Values;
             double[][] pixelValues;
-            float[][] t1Values, m0Values, r1Values;
+            double[][] t1Values, m0Values, r1Values;
             
             double sumX, sumY, sumXY, sumXX, slope, intercept, lnslope, t1, e1, m0, r1, d, a;
             double ernstAngle, ernstSignal, collectedSignal, weight, sumWeights;
@@ -1319,9 +1213,9 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             }
         
             pixelValues = new double[Nsa][width*height];
-            t1Values = new float[nSlices][width*height];
-            m0Values = new float[nSlices][width*height];
-            r1Values = new float[nSlices][width*height];
+            t1Values = new double[nSlices][width*height];
+            m0Values = new double[nSlices][width*height];
+            r1Values = new double[nSlices][width*height];
             
             fa = new double[Nsa];
             for (angle=0; angle<Nsa;angle++) {
@@ -1359,6 +1253,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
                     
                     pixelIndex = 0;
+
+                    
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
                             if(image.getNDims() < 4) {
@@ -1377,6 +1273,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                         }
                     }
                 }
+                
+
             
                 for (pixelIndex=0; pixelIndex<width*height; pixelIndex++) {
                     if (pixelValues[0][pixelIndex] > (threshold)) {
@@ -1521,13 +1419,13 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
             dataBar.updateValue(87);
             
             if(calculateT1) {
-                dataListener.insertData(t1ResultLocalVolume, t1Values, t);
+                t1ResultData[t] = t1Values;
             }
             if(calculateM0) {
-                dataListener.insertData(m0ResultLocalVolume, m0Values, t);
+                m0ResultData[t] = m0Values;
             }
             if(invertT1toR1) {
-                dataListener.insertData(r1ResultLocalVolume, r1Values, t);
+                r1ResultData[t] = r1Values;
             }
             
             dataBar.setVisible(false);

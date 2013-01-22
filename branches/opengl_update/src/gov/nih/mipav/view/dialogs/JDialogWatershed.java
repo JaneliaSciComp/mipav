@@ -165,10 +165,12 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
             dispose();
         }
          else if (source == helpButton) {
-            MipavUtil.showHelp("WShed10");
-            
+            //MipavUtil.showHelp("WShed10");
+            MipavUtil.showWebHelp("Watershed");
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************

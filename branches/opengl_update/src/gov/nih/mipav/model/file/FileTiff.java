@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -10,10 +11,22 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
 import java.io.*;
 
 import java.util.*;
 import java.util.zip.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -446,6 +459,11 @@ public class FileTiff extends FileBase {
     // Used by the GDAL library, holds an XML list of name=value 'metadata' values
     // about the image as a whole, and about specific samples.
     public static final int GDAL_METADATA = 42112;
+    
+    /** Adobe Tiff Tags */
+    public static final int META_DATA_BYTE_COUNTS = 50838;
+    
+    public static final int META_DATA = 50839;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -455,6 +473,14 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int MAX_IFD_LENGTH = 100000;
+    
+    public static final int MAGIC_NUMBER = 0x494a494a; // "IJIJ" used as first 4 bytes of metaDataHeader
+    public static final int INFO = 0x696e666f; // "info" (Info image property)
+    public static final int LABELS = 0x6c61626c; // "labl" (slice labels)
+    public static final int RANGES = 0x72616e67; // "rang" (display ranges)
+    public static final int LUTS = 0x6c757473; // "luts" (channel LUTs)
+    public static final int ROI = 0x726f6920; // "roi " (ROI)
+    public static final int OVERLAY = 0x6f766572; // "over" (overlay)
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -825,7 +851,11 @@ public class FileTiff extends FileBase {
     private AlgorithmRotate rotateAlgo;
     
     private boolean isRGBA = false;
-
+    
+    private int metaDataCounts[] = null;
+   
+    private VOIVector VOIs = new VOIVector();
+    private ViewUserInterface UI = ViewUserInterface.getReference();
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1415,6 +1445,10 @@ public class FileTiff extends FileBase {
             throw error;
         }
 
+        if (VOIs.size() > 0) {
+            image.setVOIs(VOIs);
+        }
+     
         return image;
     }
     
@@ -5603,7 +5637,9 @@ public class FileTiff extends FileBase {
      * @exception  IOException  if there is an error writing the file.
      */
     public void writeImage(ModelImage image, ModelLUT LUT, FileWriteOptions options) throws IOException {
-        int k, s, sEnd = 1, sBegin = 0;
+        int k, s;
+        int begin = 0;
+        int end = 1;
         ModelImage tmpImage = null;
         int seq;
         int imgOffset;
@@ -5656,26 +5692,41 @@ public class FileTiff extends FileBase {
 
             bufferSize = extents[0] * extents[1];
 
-            if (image.getNDims() >= 3) {
+            if (image.getNDims() == 3) {
 
                 if (options.isMultiFile()) {
                     oneFile = false;
-                    sBegin = options.getBeginSlice();
-                    sEnd = options.getEndSlice() + 1;
+                    begin = options.getBeginSlice();
+                    end = options.getEndSlice() + 1;
                 } else {
-                    sBegin = 0;
-                    sEnd = 1;
+                    begin = 0;
+                    end = 1;
                     oneFile = true;
                 }
-
-                if (image.getNDims() == 4) {
-                    timeOffset = options.getTimeSlice() * image.getExtents()[2] * bufferSize;
-                }
+            }
+            else if (image.getNDims() == 4) {
+                // Must be multifile, tiff has no 4D provision
+                oneFile = false;
+                begin = options.getBeginTime();
+                end = options.getEndTime() + 1;
             }
 
             index = fileName.indexOf(".");
+            if(index == -1) {
+                index = fileName.length();
+            }
             prefix = fileName.substring(0, index); // Used for setting file name
-            fileSuffix = fileName.substring(index);
+            
+            if(fileName.length() != index) {
+                fileSuffix = fileName.substring(index);
+            } else {
+                fileSuffix = new String();
+            }
+            
+            if(!fileSuffix.contains("tif")) {
+                fileSuffix = "tif";
+                fileName = prefix+"."+fileSuffix;
+            }
             zRes = -1.0;
 
             if ((image.getNDims() > 2) && (image.getFileInfo(0).getResolutions().length > 2)) {
@@ -5698,7 +5749,11 @@ public class FileTiff extends FileBase {
                 ztEntries++;
             }
 
-            for (s = sBegin, seq = options.getStartNumber(); s < sEnd; s++, seq++) {
+            for (s = begin, seq = options.getStartNumber(); s < end; s++, seq++) {
+                if (image.getNDims() == 4) {
+                    timeOffset = s * image.getExtents()[2] * bufferSize;
+                    fireProgressStateChanged(Math.round((float) (s - begin) / (end - begin) * 100));
+                }
 
                 if (oneFile) {
                     file = new File(fileDir + fileName);
@@ -5783,7 +5838,7 @@ public class FileTiff extends FileBase {
                             // Only one color map for all the images at the end of the file
                             // Only used if color map is saved with image. Pointer to the
                             // color map at the end of the file.
-                            if (oneFile == true) {
+                            if ((oneFile == true) || (image.getNDims() == 4)) {
                                 LUTOffset = 8 +
                                             ((2 + (nDirEntries * 12) + resolutionCount + 4 + intAlign + zResCount +
                                               tResCount) * (options.getEndSlice() - options.getBeginSlice() + 1)) +
@@ -5870,12 +5925,14 @@ public class FileTiff extends FileBase {
                 totStripCount = 0;
                 imgOffset = 0;
 
-                if (oneFile == true) { // one file with one or more images
+                if ((oneFile == true) || (image.getNDims() == 4)) { // one or more 3D files
 
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
-                        fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
+                        if (!(image.getNDims() == 4)) {
+                            fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                 (options.getEndSlice() - options.getBeginSlice() + 1) *
                                                                 100));
+                        }
 
                         if (options.isWritePackBit()) {
                             stripCount = filePB.getStripSize(image, timeOffset + (k * bufferSize),
@@ -5958,7 +6015,7 @@ public class FileTiff extends FileBase {
                                 else {
                                 // adjust for intAlign ????
                                     fileRW.writeImage(image, timeOffset + (k * bufferSize),
-                                                      timeOffset + (k * bufferSize) + bufferSize, 0);
+                                                      timeOffset + (k * bufferSize) + bufferSize);
                                 }
                             } else {
                                 filePB.writePackBitImage(image, timeOffset + (k * bufferSize),
@@ -5985,7 +6042,7 @@ public class FileTiff extends FileBase {
                     try {
 
                         if (!options.isWritePackBit()) {
-                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize, 0);
+                            fileRW.writeImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         } else {
                             filePB.writePackBitImage(image, s * bufferSize, (s * bufferSize) + bufferSize);
                         }
@@ -6025,8 +6082,10 @@ public class FileTiff extends FileBase {
      */
     private boolean openIFD(FileInfoTiff fileInfo) throws IOException {
         int i;
+        int j;
+        int k;
         int iExifStart = 0;
-        int i1;
+        int i1, i2, i3;
         int tag;
         Type type;
         int count;
@@ -6060,6 +6119,26 @@ public class FileTiff extends FileBase {
         int quality;
         int format;
         int progressiveScans;
+        int totalMetaDataCounts = 0;
+        int metaDataHeaderSize;
+        byte byteBuffer[] = null;
+        int magicNumber;
+        int maxMetaTypes;
+        int nMetaTypes;
+        int metaTypes[] = null;
+        int metaCounts[] = null;
+        int valueIndex;
+        int extraMetaDataEntries = 0;
+        int metaDataTypes[] = null;
+        byte metaData[] = null;
+        int start;
+        int eMDindex;
+        int len;
+        int last;
+        char[] chars;
+        String infoString;
+        byte overlay[][];
+        int index;
 
         if (nDirEntries <= 0) {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
@@ -6401,10 +6480,10 @@ public class FileTiff extends FileBase {
                         }
 
                         if ((valueArray[0] & 0x04) == 0x04) {
-                            Preferences.debug("Images defines a transparency mask for another image " +
+                            Preferences.debug("Image defines a transparency mask for another image " +
                                               "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         } else {
-                            Preferences.debug("Images does not define a transparency mask for another image " +
+                            Preferences.debug("Image does not define a transparency mask for another image " +
                                               "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -9986,6 +10065,185 @@ public class FileTiff extends FileBase {
                     }
                     
                     break;
+                    
+                case META_DATA_BYTE_COUNTS:
+                    if (type != Type.LONG) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal type = " + type + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    if (count < 2) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal count = " + count + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    metaDataCounts = new int[count];
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: META_DATA_BYTE_COUNTS has:\n", Preferences.DEBUG_FILEIO);    
+                    }
+                    totalMetaDataCounts = 0;
+                    for (i1 = 0; i1 < count; i1++) {
+                        metaDataCounts[i1] = (int)valueArray[i1];
+                        if (debuggingFileIO) {
+                            Preferences.debug("metaDataCounts[" + i1 + "] = " + metaDataCounts[i1] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        totalMetaDataCounts += metaDataCounts[i1];
+                    }
+                    
+                    
+                    break;
+                    
+                case META_DATA:
+                    if (type != Type.BYTE) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal type = " + type + "\n", Preferences.DEBUG_FILEIO); 
+                        }
+                        break;
+                    }
+                    
+                    if (count != totalMetaDataCounts) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("Count = " + count + " != total of metaDataCounts = " + totalMetaDataCounts + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    metaDataHeaderSize = metaDataCounts[0];
+                    if (debuggingFileIO) {
+                        Preferences.debug("metaDataHeaderSize = " + metaDataHeaderSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    
+                    if (metaDataHeaderSize < 12 || metaDataHeaderSize > 804) {
+                        break;
+                    }
+                    
+                    // Look for "IJIJ" magic number.
+                    byteBuffer = new byte[4];
+                    for (i1 = 0; i1 < 4; i1++) {
+                        byteBuffer[i1] = (byte)valueArray[i1];
+                    }
+                    magicNumber = getBufferInt(byteBuffer, 0, endianess);
+                    valueIndex = 4;
+                    if (magicNumber != MAGIC_NUMBER) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("magicNumber = " + magicNumber + " is not the required value = " + MAGIC_NUMBER + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    maxMetaTypes = 10;
+                    nMetaTypes = (metaDataHeaderSize - 4)/8;
+                    metaTypes = new int[nMetaTypes];
+                    metaCounts = new int[nMetaTypes];
+                    extraMetaDataEntries = 0;
+                    for (i1 = 0; i1 < nMetaTypes; i1++) {
+                        for (i2 = 0; i2 < 4; i2++) {
+                            byteBuffer[i2] = (byte)valueArray[valueIndex+i2];
+                        }
+                        valueIndex += 4;
+                        metaTypes[i1] = getBufferInt(byteBuffer, 0, endianess);
+                        for (i2 = 0; i2 < 4; i2++) {
+                            byteBuffer[i2] = (byte)valueArray[valueIndex+i2];
+                        }
+                        valueIndex += 4;
+                        metaCounts[i1] = getBufferInt(byteBuffer, 0, endianess);
+                        if (metaTypes[i1] < 0xffffff) {
+                            extraMetaDataEntries += metaCounts[i1];
+                        }
+                        if (debuggingFileIO) {
+                            if (metaTypes[i1] == INFO) {
+                                Preferences.debug("Info property ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == LABELS) {
+                                Preferences.debug("Slice labels ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == RANGES) {
+                                Preferences.debug("Display ranges ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == LUTS) {
+                                Preferences.debug("LUTs ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1]  == ROI) {
+                                Preferences.debug("ROI ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == OVERLAY) {
+                                Preferences.debug("OVERLAY ", Preferences.DEBUG_FILEIO);
+                            }
+                            else {
+                                Preferences.debug("metaTypes["+i1+"] is an unknown " + metaTypes[i1], Preferences.DEBUG_FILEIO);
+                            }
+                            Preferences.debug("counts = " + metaCounts[i1] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } // for (i1 = 0; i1 < nMetaTypes; i1++)
+                    if (extraMetaDataEntries > 0) {
+                        metaDataTypes = new int[extraMetaDataEntries];
+                        metaData = new byte[extraMetaDataEntries];
+                    }
+                    start = 1;
+                    eMDindex = 0;
+                    for (i1 = 0; i1 < nMetaTypes; i1++) {
+                        if (metaTypes[i1] == INFO) {
+                            len = metaDataCounts[start];
+                            byteBuffer = new byte[len];
+                            for (i2 = 0; i2 < len; i2++) {
+                                byteBuffer[i2] = (byte)valueArray[valueIndex+i2];    
+                            }
+                            valueIndex += len;
+                            len /= 2;
+                            chars = new char[len];
+                            if (!endianess) {
+                                for (j = 0, k = 0; j < len; j++) {
+                                    chars[j] = (char)(byteBuffer[k++]&0xff + ((byteBuffer[k++&0xff])<<8));
+                                }
+                            }
+                            else {
+                                for (j = 0, k = 0;  j < len; j++) {
+                                    chars[j] = (char)(((byteBuffer[k++]&0xff)<<8)+byteBuffer[k++]&0xff);
+                                }
+                            }
+                            infoString = new String(chars);
+                            UI.setDataText(infoString);
+                        }
+                        else if (metaTypes[i1] == ROI) {
+                            len = metaDataCounts[start];  
+                            byteBuffer = new byte[len];
+                            for (i2 = 0; i2 < len; i2++) {
+                                byteBuffer[i2] = (byte)valueArray[valueIndex+i2];    
+                            }
+                            valueIndex += len;
+                            decodeROI(byteBuffer);
+                        }
+                        else if (metaTypes[i1] == OVERLAY) {
+                            last = start + metaCounts[i1]-1;
+                            overlay = new byte[last-start+1][];
+                            index = 0;
+                            for (i2 = start; i2 <= last; i2++) {
+                                len = metaDataCounts[i2];
+                                overlay[index] = new byte[len];
+                                for (i3 = 0; i3 < len; i3++) {
+                                    overlay[index][i3] = (byte)valueArray[valueIndex+i3];
+                                }
+                                decodeROI(overlay[index]);
+                                valueIndex += len;
+                                index++;
+                            }
+                        }
+                        else { // skip unknown type
+                            last = start + metaCounts[i1] - 1;
+                            for (i2 = start; i2 <= last; i2++) {
+                                len = metaDataCounts[i2];
+                                valueIndex += len;
+                            }
+                        }
+                        start += metaCounts[i1];
+                    } // for (i1 = 0; i1 < nMetaTypes; i1++)
+                    break;
                 
                 default:
                     
@@ -10232,6 +10490,1350 @@ public class FileTiff extends FileBase {
         raFile.seek(saveLocus);
         return true; // Read more IFDs (ie. images)
     }
+    
+    
+    private void decodeROI(byte buffer[]) {
+        // offsets
+        final int VERSION_OFFSET = 4;
+        final int TYPE = 6;
+        final int TOP = 8;
+        final int LEFT = 10;
+        final int BOTTOM = 12;
+        final int RIGHT = 14;
+        final int N_COORDINATES = 16;
+        final int X1 = 18;
+        final int Y1 = 22;
+        final int X2 = 26;
+        final int Y2 = 30;
+        final int XD = 18;
+        final int YD = 22;
+        final int WIDTHD = 26;
+        final int HEIGHTD = 30;
+        final int STROKE_WIDTH = 34;
+        final int SHAPE_ROI_SIZE = 36;
+        final int STROKE_COLOR = 40;
+        final int FILL_COLOR = 44;
+        final int SUBTYPE = 48;
+        final int OPTIONS = 50;
+        final int ARROW_STYLE = 52;
+        final int ELLIPSE_ASPECT_RATIO = 52;
+        final int ARROW_HEAD_SIZE = 53;
+        final int BOUNDED_RECT_ARC_SIZE = 54;
+        final int POSITION = 56;
+        final int HEADER2_OFFSET = 60;
+        final int COORDINATES = 64;
+        final int textROIOffset = 64; // = RoiEncoder.HEADER_SIZE;
+        // header2 offsets
+        final int C_POSITION = 4;
+        final int Z_POSITION = 8;
+        final int T_POSITION = 12;
+        final int NAME_OFFSET = 16;
+        final int NAME_LENGTH = 20;
+        final int OVERLAY_LABEL_COLOR = 24;
+        final int OVERLAY_FONT_SIZE = 28; // short
+        final int AVAILABLE_BYTE1 = 30; // byte
+        final int IMAGE_OPACITY = 31; // byte
+        final int IMAGE_SIZE = 32; // int
+        final int FLOAT_STROKE_WIDTH = 36; // float
+        // types
+        final int polygon = 0;
+        final int rect = 1;
+        final int oval = 2;
+        final int line = 3;
+        final int freeline = 4;
+        final int polyline = 5;
+        final int noRoi = 6;
+        final int freehand = 7;
+        final int traced = 8;
+        final int angle = 9;
+        final int point = 10;
+        // subtypes
+        final int TEXT = 1;
+        final int ARROW = 2;
+        final int ELLIPSE = 3;
+        final int IMAGE = 4;
+        // options
+        final int SPLINE_FIT = 1;
+        final int DOUBLE_HEADED = 2;
+        final int OUTLINE = 4;
+        final int OVERLAY_LABELS = 8;
+        final int OVERLAY_NAMES = 16;
+        final int OVERLAY_BACKGROUNDS = 32;
+        final int OVERLAY_BOLD = 64;
+        final int SUB_PIXEL_RESOLUTION = 128;
+        final int DRAW_OFFSET = 256;
+        
+        // Arrow styles
+        final int FILLED = 0;
+        final int NOTCHED = 1;
+        final int OPEN = 2;
+        final int HEADLESS = 3;
+        
+        boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
+        int version;
+        int type;
+        int subtype;
+        int top;
+        int left;
+        int bottom;
+        int right;
+        int width;
+        int height;
+        int n;
+        int options;
+        int position;
+        int hdr2Offset;
+        int channel = 0;
+        int slice = 0;
+        int frame = 0;
+        int overlayLabelColor = 0;
+        int overlayFontSize = 0;
+        int imageOpacity = 0;
+        int imageSize = 0;
+        boolean subPixelResolution;
+        boolean drawOffset;
+        boolean subPixelRect;
+        double xd = 0.0;
+        double yd = 0.0;
+        double widthd = 0.0;
+        double heightd = 0.0;
+        boolean isComposite;
+        VOI annotationVOI;
+        float x[];
+        float y[];
+        float z[];
+        int fontSize;
+        int fontStyle;
+        int nameLength;
+        int textLength;
+        char name[];
+        String fontName;
+        char text[];
+        int i;
+        int j;
+        int k;
+        String textStr;
+        Font font;
+        double strokeWidth;
+        double strokeWidthD;
+        int strokeColorInt;
+        int fillColorInt;
+        int alpha;
+        Color strokeColor = null;
+        Color fillColor = null;
+        int nameOffset;
+        String roiName = null;
+        double xCenter;
+        double yCenter;
+        byte mask[];
+        VOI ovalVOI;
+        int theta;
+        double ang;
+        int xPos;
+        int yPos;
+        double semiMajorAxis;
+        double semiMinorAxis;
+        Vector<Vector3f> boundaryV;
+        Color ovalColor;
+        VOI rectVOI;
+        Color rectColor;
+        float x1;
+        float y1;
+        float x2;
+        float y2;
+        VOILine lineVOI;
+        Vector3f linePos1;
+        Vector3f linePos2;
+        VOI voi;
+        float shapeArray[];
+        int base;
+        int xi[];
+        int yi[];
+        float xf[] = null;
+        float yf[] = null;
+        int base1;
+        int base2;
+        int xtmp;
+        int ytmp;
+        VOI ptVOI;
+        VOIProtractor voiProtractor;
+        Vector3f firstEndPt;
+        Vector3f middlePt;
+        Vector3f secondEndPt;
+        int voiSliceNumber;
+        Shape s;
+        int index;
+        int pathType;
+        float seg[];
+        int len;
+        Rectangle r;
+        AffineTransform at;
+        ModelImage maskImage;
+        int extents2D[];
+        AlgorithmVOIExtraction VOIExtAlgo;
+        int nVOI;
+        VOI compositeVOI[] = null; 
+        Vector<VOIBase> curves;
+        int nCurves;
+        VOIBase vb;
+        int nPts;
+        double ex1;
+        double ey1;
+        double ex2;
+        double ey2;
+        double aspectRatio;
+        final int ellipseVertices = 72;
+        double centerX;
+        double centerY;
+        double dx;
+        double dy;
+        double major;
+        double minor;
+        double phiB;
+        double alphaEllipse;
+        double degrees;
+        double beta1;
+        double beta2;
+        double rad;
+        double beta3;
+        double dx2;
+        double dy2;
+        Vector3f pt[];
+        int arcSize;
+        double radius;
+        boolean doubleHeaded;
+        boolean outline;
+        int style;
+        double headSize;
+        // The line using subpixel coordinates
+        double x1d;
+        double y1d;
+        double x2d;
+        double y2d;
+        double tip;
+        double arrowBase = 0.0;
+        double shaftWidth;
+        double length;
+        double arrowLength;
+        double factor;
+        double arrowAlpha;
+        double SL;
+        GeneralPath path;
+        Shape arrow;
+        BasicStroke stroke;
+        Shape outlineShape;
+        Area a1;
+        Area a2;
+        
+        // ImageJ ROIs have "Iout" in the first 4 bytes
+        if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
+            if (debuggingFileIO) {
+                Preferences.debug("First 4 bytes do not have Iout of ImageJ ROI\n", Preferences.DEBUG_FILEIO);
+            }
+            return;
+        }
+        else {
+            if (debuggingFileIO) {
+                Preferences.debug("First 4 bytes have Iout of ImageJ ROI\n", Preferences.DEBUG_FILEIO);
+            }
+        }
+        version = getBufferUShort(buffer, VERSION_OFFSET, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("ROI version = " + version + "\n", Preferences.DEBUG_FILEIO);
+        }
+        type = buffer[TYPE];
+        if (debuggingFileIO) {
+            switch(type) {
+                case polygon:
+                    Preferences.debug("ROI type = polygon\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case rect:
+                    Preferences.debug("ROI type = rect\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case oval:
+                    Preferences.debug("ROI type = oval\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case line:
+                    Preferences.debug("ROI type = line\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case freeline:
+                    Preferences.debug("ROI type = freeline\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case polyline:
+                    Preferences.debug("ROI type = polyline\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case noRoi:
+                    Preferences.debug("ROI type = noRoi\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case freehand:
+                    Preferences.debug("ROI type = freehand\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case traced:
+                    Preferences.debug("ROI type = traced\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case angle:
+                    Preferences.debug("ROI type = angle\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case point:
+                    Preferences.debug("ROI type = point\n", Preferences.DEBUG_FILEIO);
+                    break;
+                default:
+                    Preferences.debug("ROI type is an unrecognized = " + type + "\n", Preferences.DEBUG_FILEIO);
+            }
+        }
+        if ((type < 0) || (type > 10)) {
+            return;
+        }
+        subtype = getBufferUShort(buffer, SUBTYPE, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            switch(subtype) {
+                case TEXT:
+                    Preferences.debug("ROI subtype = TEXT\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case ARROW:
+                    Preferences.debug("ROI subtype = ARROW\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case ELLIPSE:
+                    Preferences.debug("ROI subtype = ELLIPSE\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case IMAGE:
+                    Preferences.debug("ROI subtype = IMAGE\n", Preferences.DEBUG_FILEIO);
+                    break;
+            }
+        }
+        top = getBufferUShort(buffer, TOP, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
+        }
+        left = getBufferUShort(buffer, LEFT, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
+        }
+        bottom = getBufferUShort(buffer, BOTTOM, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
+        }
+        right = getBufferUShort(buffer, RIGHT, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
+        }
+        width = right - left;
+        height = bottom - top;
+        n = getBufferUShort(buffer, N_COORDINATES, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("Number of coordinates = " + n + "\n", Preferences.DEBUG_FILEIO);
+        }
+        options = getBufferUShort(buffer, OPTIONS, FileBase.BIG_ENDIAN);
+        position = getBufferInt(buffer, POSITION, FileBase.BIG_ENDIAN);
+        hdr2Offset = getBufferInt(buffer, HEADER2_OFFSET, FileBase.BIG_ENDIAN);
+        subPixelResolution = (options & SUB_PIXEL_RESOLUTION) != 0 && version >= 222;
+        if (debuggingFileIO && subPixelResolution) {
+            Preferences.debug("subPixelResolution is present\n", Preferences.DEBUG_FILEIO);
+        }
+        drawOffset = subPixelResolution && (options & DRAW_OFFSET) != 0;
+        if (debuggingFileIO && drawOffset) {
+            Preferences.debug("drawOffset is present\n", Preferences.DEBUG_FILEIO);
+        }
+        subPixelRect = version >= 223 && subPixelResolution && (type == rect || type == oval);
+        if (debuggingFileIO && subPixelRect) {
+            Preferences.debug("subPixelRect is present\n", Preferences.DEBUG_FILEIO);
+        }
+        if (subPixelRect) {
+            xd = getBufferFloat(buffer, XD, FileBase.BIG_ENDIAN);
+            yd = getBufferFloat(buffer, YD, FileBase.BIG_ENDIAN);
+            widthd = getBufferFloat(buffer, WIDTHD, FileBase.BIG_ENDIAN);
+            heightd = getBufferFloat(buffer, HEIGHTD, FileBase.BIG_ENDIAN);
+        }
+        if (hdr2Offset > 0 && hdr2Offset + IMAGE_SIZE+4 <= buffer.length) {
+            channel = getBufferInt(buffer, hdr2Offset+C_POSITION, FileBase.BIG_ENDIAN);
+            slice = getBufferInt(buffer, hdr2Offset+Z_POSITION, FileBase.BIG_ENDIAN);
+            frame = getBufferInt(buffer, hdr2Offset+T_POSITION, FileBase.BIG_ENDIAN);
+            overlayLabelColor = getBufferInt(buffer, hdr2Offset+OVERLAY_LABEL_COLOR, FileBase.BIG_ENDIAN);
+            overlayFontSize = getBufferUShort(buffer, hdr2Offset+OVERLAY_FONT_SIZE, FileBase.BIG_ENDIAN);
+            imageOpacity = 0xff & buffer[hdr2Offset+IMAGE_OPACITY];
+            imageSize = getBufferInt(buffer, hdr2Offset+IMAGE_SIZE, FileBase.BIG_ENDIAN);
+            nameOffset = getBufferInt(buffer, hdr2Offset + NAME_OFFSET, FileBase.BIG_ENDIAN);
+            nameLength = getBufferInt(buffer, hdr2Offset + NAME_LENGTH, FileBase.BIG_ENDIAN);
+            if ((nameOffset != 0) && (nameLength != 0) && (nameOffset + 2*nameLength <= buffer.length)) {
+                name = new char[nameLength];
+                for (i = 0; i < nameLength; i++) {
+                    name[i] = (char)getBufferShort(buffer, nameOffset+i*2, FileBase.BIG_ENDIAN);
+                }
+                roiName = new String(name);
+                if (debuggingFileIO) {
+                    Preferences.debug("ROI name = " + roiName + "\n", Preferences.DEBUG_FILEIO);
+                }
+            }
+        }
+        
+        if (position < 0) {
+            position = 0;
+        }
+        voiSliceNumber = position;
+        if (slice > 0) {
+            voiSliceNumber = slice;
+        }
+        if (debuggingFileIO) {
+            Preferences.debug("VOI slice number = " + voiSliceNumber + "\n", Preferences.DEBUG_FILEIO);
+        }
+        
+        // read stroke width, stroke color, and fill color (1.43i or later)
+        if (version >= 218) {
+            strokeWidth = (double)getBufferUShort(buffer, STROKE_WIDTH, FileBase.BIG_ENDIAN);
+            if (hdr2Offset > 0) {
+                strokeWidthD = (double)getBufferFloat(buffer, hdr2Offset + FLOAT_STROKE_WIDTH, FileBase.BIG_ENDIAN);
+                if (strokeWidthD > 0) {
+                    strokeWidth = strokeWidthD;
+                }
+            }
+            if (debuggingFileIO) {
+                Preferences.debug("strokeWidth = " + strokeWidth + "\n", Preferences.DEBUG_FILEIO);
+            }
+            strokeColorInt = getBufferInt(buffer, STROKE_COLOR, FileBase.BIG_ENDIAN);
+            if (strokeColorInt != 0) {
+                alpha = (strokeColorInt >> 24) & 0xff;
+                strokeColor = new Color(strokeColorInt, alpha != 255);
+            }
+            fillColorInt = getBufferInt(buffer, FILL_COLOR, FileBase.BIG_ENDIAN);
+            if (fillColorInt != 0) {
+                alpha = (fillColorInt >> 24) & 0xff;
+                fillColor = new Color(fillColorInt, alpha != 255);
+            }
+        }
+        
+        isComposite = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN) > 0;
+        if (isComposite) {
+            if (debuggingFileIO) {
+                Preferences.debug("ROI is a composite\n", Preferences.DEBUG_FILEIO);
+            }
+            if (type != rect) {
+                Preferences.debug("Composite ROI does not have the required rect type\n", Preferences.DEBUG_FILEIO);
+                return;
+            }
+            n = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN);
+            
+            shapeArray = new float[n];
+            base = COORDINATES;
+            for (i = 0; i < n; i++) {
+                shapeArray[i] = getBufferFloat(buffer, base, FileBase.BIG_ENDIAN);
+                base += 4;
+            }
+            /* Construct a Shape from shapeArray[] */
+            s = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
+            index = 0;
+            seg = new float[7];
+            while (true) {
+                len = getSegment(shapeArray, seg, index);
+                if (len < 0) {
+                    break;
+                }
+                index += len;
+                pathType = (int)seg[0];
+                switch(pathType) {
+                    case PathIterator.SEG_MOVETO:
+                        ((GeneralPath)s).moveTo(seg[1], seg[2]);
+                        break;
+                        case PathIterator.SEG_LINETO:
+                        ((GeneralPath)s).lineTo(seg[1], seg[2]);
+                        break;
+                        case PathIterator.SEG_QUADTO:
+                        ((GeneralPath)s).quadTo(seg[1], seg[2],seg[3], seg[4]);
+                        break;
+                        case PathIterator.SEG_CUBICTO:
+                        ((GeneralPath)s).curveTo(seg[1], seg[2], seg[3], seg[4], seg[5], seg[6]);
+                        break;
+                        case PathIterator.SEG_CLOSE:
+                        ((GeneralPath)s).closePath();
+                        break;
+                        default: break;    
+                } // switch(pathType)
+            } // while (true)
+            r = s.getBounds();
+            at = new AffineTransform();
+            at.translate(-r.x, -r.y);
+            s = new GeneralPath(at.createTransformedShape(s));
+            mask = new byte[xDim*yDim];
+            for (yPos = 0; yPos < yDim; yPos++) {
+                for (xPos = 0; xPos < xDim; xPos++) {
+                    if (s.contains(xPos, yPos)) {
+                        mask[xPos + xDim * yPos] = 1;
+                    }
+                }
+            } // for (yPos = 0; yPos < yDim; yPos++)
+            extents2D = new int[2];
+            extents2D[0] = xDim;
+            extents2D[1] = yDim;
+            maskImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "maskImage");
+            try {
+                maskImage.importData(0, mask, true);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on maskImage.importData");
+                return;
+            }
+            VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
+            VOIExtAlgo.run();
+            VOIs = maskImage.getVOIs();
+            nVOI = VOIs.size();
+            compositeVOI = new VOI[nVOI];
+            for (i = 0; i < nVOI; i++) {
+                compositeVOI[i] = VOIs.get(i);
+            }
+            VOIs.clear();
+            if (roiName != null) {
+                if (nVOI == 1) {
+                    compositeVOI[0].setName(roiName);
+                }
+                else {
+                    for (i = 0; i < nVOI; i++) {
+                        compositeVOI[i].setName(roiName + (i+1));
+                    }
+                }
+            } // if (roiName != null)
+            else {
+                if (nVOI == 1) {
+                    compositeVOI[0].setName("contourVOI");
+                }
+                else {
+                    for (i = 0; i < nVOI; i++) {
+                        compositeVOI[i].setName("contourVOI" + (i+1));
+                    }
+                }
+            }
+            if (strokeColor == null) {
+                strokeColor = Color.red;
+            }
+            for (i = 0; i < nVOI; i++) {
+                curves = compositeVOI[i].getCurves();  
+                nCurves = curves.size();
+                for (j = 0; j < nCurves; j++) {
+                    vb = curves.get(j);
+                    if (vb instanceof VOIContour) {
+                        nPts = vb.size();
+                        x = new float[nPts];
+                        y = new float[nPts];
+                        z = new float[nPts];
+                        vb.exportArrays(x, y, z);
+                        for (k = 0; k < nPts; k++) {
+                            z[k] = voiSliceNumber;
+                        }
+                        vb.clear();
+                        vb.importArrays(x, y, z, nPts);
+                    }
+                } // for (j = 0; j < nCurves; j++)
+                compositeVOI[i].setColor(strokeColor);
+                VOIs.add(compositeVOI[i]);
+            } // for (i = 0; i < nVOI; i++)
+            return;
+        } // if (isComposite)
+        
+        switch (type) {
+            case rect:
+                if (version >= 218 && subtype == TEXT) {
+                    annotationVOI = new VOI((short)VOIs.size(), "annotation.VOI", VOI.ANNOTATION, -1.0f);
+                    x = new float[1];
+                    y = new float[1];
+                    z = new float[1];
+                    x[0] = left;
+                    y[0] = bottom;
+                    z[0] = voiSliceNumber;
+                    annotationVOI.importCurve(x, y, z);
+                    // Don't draw the arrow
+                    ((VOIText)annotationVOI.getCurves().lastElement()).setUseMarker(false);
+                    fontSize = getBufferInt(buffer, textROIOffset, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font size = " + fontSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    fontStyle = getBufferInt(buffer, textROIOffset+4, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font style = " + fontStyle + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    nameLength = getBufferInt(buffer, textROIOffset+8, FileBase.BIG_ENDIAN);
+                    textLength = getBufferInt(buffer, textROIOffset+12, FileBase.BIG_ENDIAN);
+                    name = new char[nameLength];
+                    text = new char[textLength];
+                    for (i = 0; i < nameLength; i++) {
+                        name[i] = (char)getBufferShort(buffer, textROIOffset+16+2*i, FileBase.BIG_ENDIAN);
+                    }
+                    fontName = new String(name);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font name = " + fontName + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    font = new Font(fontName, fontStyle, fontSize);
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setTextFont(font);
+                    for (i = 0; i < textLength; i++) {
+                        text[i] = (char)getBufferShort(buffer, textROIOffset+16+2*nameLength+2*i, FileBase.BIG_ENDIAN);
+                    }
+                    textStr = new String(text);
+                    if (debuggingFileIO) {
+                        Preferences.debug("ROI text = " + textStr + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setText(textStr);
+                    if (strokeColor == null) {
+                        strokeColor = Color.BLACK;
+                    }
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setColor(strokeColor);
+                    if (fillColor == null) {
+                        fillColor = Color.WHITE;
+                    }
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setBackgroundColor(fillColor);
+                    if (roiName != null) {
+                        annotationVOI.setName(roiName);
+                    }
+                    VOIs.addElement(annotationVOI);
+                }
+                else {
+                    arcSize = getBufferShort(buffer, BOUNDED_RECT_ARC_SIZE, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("arcSize = " + arcSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    if (arcSize > 0) {
+                        rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
+                        // Start with 90 degree arc in the upper left corner going from (left, top + arcSize/2) to (left + arcSize/2, top)
+                        // In this quadrant all (x, y) values are <= (xCenter, yCenter), so angle must go from 180 to 270 degrees.
+                        radius = arcSize/2.0;
+                        xCenter = left + radius;
+                        yCenter = top + radius;
+                        mask = new byte[xDim*yDim];
+                        boundaryV = new Vector<Vector3f>();
+                        for (theta = 1800; theta <= 2700; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Next the 90 degree arc in the upper right corner going from (right - arcSize/2, top) to
+                        // (right, top + arcSize/2).  In this quadrant all x values are >= xCenter and all y
+                        // values are <= yCenter, so the angle must be going from 270 to 360 degrees.
+                        xCenter = right - radius;
+                        yCenter = top + radius;
+                        for (theta = 2700; theta <= 3600; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Next the 90 degree arc in the bottom right corner going from (right, bottom - arcSize/2) to
+                        // (right - arcSize/2, bottom).  In this quadrant all (x, y) values are >= 
+                        // (xCenter, yCenter) so the angle must go from 0 to 90 degrees.
+                        xCenter = right - radius;
+                        yCenter = bottom - radius;
+                        for (theta = 0; theta <= 900; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Finally the 90 degree arc in the bottom left corner going from (left + arcSize/2, bottom) to
+                        // (left, bottom - arcSize/2).  In this quadrant all x values are <= xCenter and all y values are >=
+                        // yCenter, so the angle must go from 90 degrees to 180 degrees.
+                        xCenter = left + radius;
+                        yCenter = bottom - radius;
+                        for (theta = 900; theta <= 1800; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        pt = new Vector3f[boundaryV.size()];
+                        for (i = 0; i < boundaryV.size(); i++) {
+                            pt[i] = boundaryV.elementAt(i);
+                        }
+                        rectVOI.importCurve(pt);
+                        if (strokeColor == null) {
+                            strokeColor = Color.RED;
+                        }
+                        rectVOI.setColor(strokeColor);
+                        if (roiName != null) {
+                            rectVOI.setName(roiName);
+                        }
+                        VOIs.addElement(rectVOI);
+                    } // if (arcSize > 0)
+                    else {
+                        rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
+                        pt = new Vector3f[4];
+                        pt[0] = new Vector3f(left, top, voiSliceNumber);
+                        pt[1] = new Vector3f(right, top, voiSliceNumber);
+                        pt[2] = new Vector3f(right, bottom, voiSliceNumber);
+                        pt[3] = new Vector3f(left, bottom, voiSliceNumber);
+                        rectVOI.importCurve(pt);
+                        if (strokeColor == null) {
+                            strokeColor = Color.RED;
+                        }
+                        rectColor = strokeColor;
+                        if (fillColor != null) {
+                            rectColor = fillColor;
+                        }
+                        rectVOI.setColor(rectColor);
+                        if (roiName != null) {
+                            rectVOI.setName(roiName);
+                        }
+                        VOIs.addElement(rectVOI);
+                    }
+                }
+                break;
+                
+            case oval:
+                semiMajorAxis = width/2.0;
+                semiMinorAxis = height/2.0;
+                xCenter = left + width/2.0;
+                yCenter = top + height/2.0;
+                mask = new byte[xDim * yDim];
+                ovalVOI = new VOI((short)VOIs.size(), "ovalVOI", VOI.CONTOUR, -1 );
+                boundaryV = new Vector<Vector3f>();
+                for (theta = 0; theta < 3600; theta++) {
+                    ang = theta * Math.PI/1800;
+                    xPos = (int)Math.round(xCenter + semiMajorAxis*Math.cos(ang)); 
+                    yPos = (int)Math.round(yCenter + semiMinorAxis*Math.sin(ang));
+                    if (mask[xPos + yPos * xDim] == 0) {
+                        mask[xPos + yPos * xDim] = 1;
+                        boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                    }
+                }
+                pt = new Vector3f[boundaryV.size()];
+                for (i = 0; i < boundaryV.size(); i++) {
+                    pt[i] = boundaryV.elementAt(i);
+                }
+                ovalVOI.importCurve(pt);
+                if (strokeColor == null) {
+                    strokeColor = Color.RED;
+                }
+                ovalColor = strokeColor;
+                if (fillColor != null) {
+                    ovalColor = fillColor;
+                }
+                ovalVOI.setColor(ovalColor);
+                if (roiName != null) {
+                    ovalVOI.setName(roiName);
+                }
+                VOIs.addElement(ovalVOI);
+                break;
+            case line:
+                x1 = getBufferFloat(buffer, X1, FileBase.BIG_ENDIAN);
+                y1 = getBufferFloat(buffer, Y1, FileBase.BIG_ENDIAN);
+                x2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
+                y2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
+                if (subtype == ARROW) {
+                    doubleHeaded = (options & DOUBLE_HEADED) != 0;
+                    if (debuggingFileIO && doubleHeaded) {
+                        Preferences.debug("Arrow is double headed\n", Preferences.DEBUG_FILEIO);
+                    }
+                    outline = (options & OUTLINE) != 0;
+                    if (debuggingFileIO && outline) {
+                        Preferences.debug("Arrow outline feature is present\n", Preferences.DEBUG_FILEIO);
+                    }
+                    style = buffer[ARROW_STYLE];
+                    if (debuggingFileIO) {
+                        switch(style) {
+                            case FILLED:
+                                Preferences.debug("Arrow style = FILLED\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case NOTCHED:
+                                Preferences.debug("Arrow style = NOTCHED\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case OPEN:
+                                Preferences.debug("Arrow style = OPEN\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case HEADLESS:
+                                Preferences.debug("Arrow style = HEADLESS\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                               Preferences.debug("Arrow style has an illegal value = " + style + "\n", Preferences.DEBUG_FILEIO); 
+                        }
+                    } // if (debuggingFileIO)
+                    headSize = (double)buffer[ARROW_HEAD_SIZE];
+                    if (debuggingFileIO) {
+                        Preferences.debug("Arrow head size = " + headSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    x1d=x1; 
+                    y1d=y1;
+                    x2d=x2; 
+                    y2d=y2; 
+                    tip = 0.0;
+                    strokeWidth = 2.0;
+                    shaftWidth = 2.0;
+                    length = 8 + 5.0*shaftWidth;
+                    length = length*(headSize/10.0);
+                    length -= shaftWidth*1.42;
+                    if (style == NOTCHED) {
+                        length *= 0.74;
+                    }
+                    if (style == OPEN) {
+                        length *= 1.32;
+                    }
+                    if (length < 0.0 || style == HEADLESS) {
+                        length = 0.0;
+                    }
+                    dx = x2d - x1d;
+                    dy = y2d - y1d;
+                    arrowLength = Math.sqrt(dx*dx + dy*dy);
+                    dx = dx/arrowLength;
+                    dy = dy/arrowLength;
+                    if (doubleHeaded && style != HEADLESS) {
+                        x = new float[12];
+                        y = new float[12];
+                        z = new float[12];
+                    }
+                    else {
+                        x = new float[6];
+                        y = new float[6];
+                        z = new float[6];
+                    }
+                    if (doubleHeaded && style != HEADLESS) {
+                        x[0] = (float)(x1d+2.0*dx*shaftWidth);
+                        y[0] = (float)(y1d+2.0*dy*shaftWidth);   
+                    }
+                    else {
+                        x[0] = (float)x1d;
+                        y[0] = (float)y1d;
+                    }
+                    z[0] = voiSliceNumber;
+                    if (length > 0) {
+                        factor = style == OPEN?1.3:1.42;
+                        x[3] = (float)(x2d-dx*shaftWidth*factor);
+                        y[3] = (float)(y2d-dy*shaftWidth*factor);
+                    }
+                    else {
+                        x[3] = (float)x2d;
+                        y[3] = (float)y2d;
+                    }
+                    z[3] = voiSliceNumber;
+                    arrowAlpha = Math.atan2(y[3]-y[0], x[3]-x[0]);
+                    SL = 0.0;
+                     switch(style) {
+                        case FILLED:
+                        case HEADLESS:
+                            tip = Math.toRadians(20.0);
+                            arrowBase = Math.toRadians(90.0);
+                            x[1] = (float)(x[3] - length*Math.cos(arrowAlpha));
+                            y[1] = (float)(y[3] - length*Math.sin(arrowAlpha));
+                            SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                            break;
+                        case NOTCHED:
+                            tip = Math.toRadians(20.0);
+                            arrowBase = Math.toRadians(120.0);
+                            x[1] = (float)(x[3] - length*Math.cos(arrowAlpha));
+                            y[1] = (float)(y[3] - length*Math.sin(arrowAlpha));
+                            SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                            break;
+                        case OPEN:
+                            tip = Math.toRadians(25.0); // 30
+                            x[1] = x[3];
+                            y[1] = y[3];
+                            SL = length;
+                            break;
+                    } // switch(style)
+                    z[1] = voiSliceNumber;
+                    // P2 = P3 - SL*alpha+tip
+                    x[2] = (float)(x[3] - SL*Math.cos(arrowAlpha+tip));
+                    y[2] = (float)(y[3] - SL*Math.sin(arrowAlpha+tip));
+                    z[2] = voiSliceNumber;
+                    // P4 = P3 -SL*alpha-tip
+                    x[4] = (float)(x[3] - SL*Math.cos(arrowAlpha-tip));
+                    y[4] = (float)(y[3] - SL*Math.sin(arrowAlpha-tip));
+                    z[4] = voiSliceNumber;
+                    // Close off triangle head on shaft
+                    x[5] = x[1];
+                    y[5] = y[1];
+                    z[5] = z[1];
+                    if (doubleHeaded && style != HEADLESS) {
+                        dx = -dx;
+                        dy = -dy;
+                        x[6] = (float)(x2d+2.0*dx*shaftWidth);
+                        y[6] = (float)(y2d+2.0*dy*shaftWidth); 
+                        z[6] = voiSliceNumber;
+                        if (length > 0) {
+                            factor = style == OPEN?1.3:1.42;
+                            x[9] = (float)(x1d-dx*shaftWidth*factor);
+                            y[9] = (float)(y1d-dy*shaftWidth*factor);
+                        }
+                        else {
+                            x[9] = (float)x1d;
+                            y[9] = (float)y1d;
+                        }
+                        z[9] = voiSliceNumber;
+                        arrowAlpha = Math.atan2(y[9]-y[6], x[9]-x[6]);
+                         switch(style) {
+                            case FILLED:
+                                x[7] = (float)(x[9] - length*Math.cos(arrowAlpha));
+                                y[7] = (float)(y[9] - length*Math.sin(arrowAlpha));
+                                SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                                break;
+                            case NOTCHED:
+                                x[7] = (float)(x[9] - length*Math.cos(arrowAlpha));
+                                y[7] = (float)(y[9] - length*Math.sin(arrowAlpha));
+                                SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                                break;
+                            case OPEN:
+                                x[7] = x[9];
+                                y[7] = y[9];
+                                SL = length;
+                                break;
+                        } // switch(style)
+                        z[7] = voiSliceNumber;
+                        // P2 = P3 - SL*alpha+tip
+                        x[8] = (float)(x[9] - SL*Math.cos(arrowAlpha+tip));
+                        y[8] = (float)(y[9] - SL*Math.sin(arrowAlpha+tip));
+                        z[8] = voiSliceNumber;
+                        // P4 = P3 -SL*alpha-tip
+                        x[10] = (float)(x[9] - SL*Math.cos(arrowAlpha-tip));
+                        y[10] = (float)(y[9] - SL*Math.sin(arrowAlpha-tip));
+                        z[10] = voiSliceNumber;
+                        // Close off triangle head on shaft
+                        x[11] = x[7];
+                        y[11] = y[7];
+                        z[11] = z[7];
+                    } // if (doubleHeaded && style != HEADLESS)
+                    if (outline) {
+                        path = new GeneralPath();
+                        path.moveTo(x[0], y[0]); // tail
+                        path.lineTo(x[1], y[1]); // head back
+                        path.moveTo(x[1], y[1]); // head back
+                        if (style == OPEN) {
+                            path.moveTo(x[2], y[2]);
+                        }
+                        else {
+                            path.lineTo(x[2], y[2]); // left point
+                        }
+                        path.lineTo(x[3], y[3]); // head tip
+                        path.lineTo(x[4], y[4]); // right point
+                        path.lineTo(x[1], y[1]); // back to the head back
+                        if (doubleHeaded && style != HEADLESS) {
+                            if (style == OPEN) {
+                                path.moveTo(x[6], y[6]);
+                            }
+                            else {
+                                path.lineTo(x[6], y[6]); // tail
+                            }
+                            path.lineTo(x[7], y[7]); // head back
+                            path.moveTo(x[7], y[7]); // head back
+                            if (style == OPEN) {
+                                path.moveTo(x[8], y[8]);
+                            }
+                            else {
+                                path.lineTo(x[8], y[8]); // left point
+                            }
+                            path.lineTo(x[9], y[9]); // head tip
+                            path.lineTo(x[10], y[10]); // right point
+                            path.lineTo(x[7], y[7]); // back to the head back    
+                        } // if (doubleHeaded && style != HEADLESS)
+                        arrow = path;
+                        stroke = new BasicStroke((float)strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+                        outlineShape = stroke.createStrokedShape(arrow);
+                        a1 = new Area(arrow);
+                        a2 = new Area(outlineShape);
+                        try {
+                            a1.add(a2);
+                        }
+                        catch (Exception e) {
+                            
+                        }
+                        s = (Shape)a1;
+                        mask = new byte[xDim*yDim];
+                        for (yPos = 0; yPos < yDim; yPos++) {
+                            for (xPos = 0; xPos < xDim; xPos++) {
+                                if (s.contains(xPos, yPos)) {
+                                    mask[xPos + xDim * yPos] = 1;
+                                }
+                            }
+                        } // for (yPos = 0; yPos < yDim; yPos++)
+                        extents2D = new int[2];
+                        extents2D[0] = xDim;
+                        extents2D[1] = yDim;
+                        maskImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "maskImage");
+                        try {
+                            maskImage.importData(0, mask, true);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on maskImage.importData");
+                            return;
+                        }
+                        VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
+                        VOIExtAlgo.run();
+                        VOIs = maskImage.getVOIs();
+                        nVOI = VOIs.size();
+                        compositeVOI = new VOI[nVOI];
+                        for (i = 0; i < nVOI; i++) {
+                            compositeVOI[i] = VOIs.get(i);
+                        }
+                        VOIs.clear();
+                        if (roiName != null) {
+                            if (nVOI == 1) {
+                                compositeVOI[0].setName(roiName);
+                            }
+                            else {
+                                for (i = 0; i < nVOI; i++) {
+                                    compositeVOI[i].setName(roiName + (i+1));
+                                }
+                            }
+                        } // if (roiName != null)
+                        else {
+                            if (nVOI == 1) {
+                                compositeVOI[0].setName("arrowVOI");
+                            }
+                            else {
+                                for (i = 0; i < nVOI; i++) {
+                                    compositeVOI[i].setName("arrowVOI" + (i+1));
+                                }
+                            }
+                        }
+                        if (strokeColor == null) {
+                            strokeColor = Color.red;
+                        }
+                        for (i = 0; i < nVOI; i++) {
+                            curves = compositeVOI[i].getCurves();  
+                            nCurves = curves.size();
+                            for (j = 0; j < nCurves; j++) {
+                                vb = curves.get(j);
+                                if (vb instanceof VOIContour) {
+                                    nPts = vb.size();
+                                    x = new float[nPts];
+                                    y = new float[nPts];
+                                    z = new float[nPts];
+                                    vb.exportArrays(x, y, z);
+                                    for (k = 0; k < nPts; k++) {
+                                        z[k] = voiSliceNumber;
+                                    }
+                                    vb.clear();
+                                    vb.importArrays(x, y, z, nPts);
+                                }
+                            } // for (j = 0; j < nCurves; j++)
+                            compositeVOI[i].setColor(strokeColor);
+                            VOIs.add(compositeVOI[i]);
+                        } // for (i = 0; i < nVOI; i++)
+                        return;
+                    } // if (outline)
+                    else {
+                        voi = new VOI((short)VOIs.size(), "arrow", VOI.POLYLINE, -1); 
+                        voi.importCurve(x, y, z);
+                        if (strokeColor == null) {
+                            strokeColor = Color.red;
+                        }
+                        //strokeColor = Color.red;
+                        voi.setColor(strokeColor);
+                        if (roiName != null) {
+                            voi.setName(roiName);
+                        }
+                        VOIs.addElement(voi); 
+                    }
+                } // if (subtype == ARROW)
+                else {
+                    lineVOI = new VOILine();
+                    linePos1 = new Vector3f(x1, y1, voiSliceNumber);
+                    linePos2 = new Vector3f(x2, y2, voiSliceNumber);
+                    lineVOI.add(linePos1);
+                    lineVOI.add(linePos2);
+                    
+                    voi = new VOI((short)VOIs.size(), "lineVOI", VOI.LINE, -1);
+                    voi.importCurve(lineVOI);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                }
+                break;
+            case polygon:
+            case freehand:
+            case traced:
+            case polyline:
+            case freeline:
+            case angle:
+            case point:
+                if (n == 0) {
+                    return;
+                }
+                xi = new int[n];
+                yi = new int[n];
+                base1 = COORDINATES;
+                base2 = base1 + 2*n;
+                for (i = 0; i < n; i++) {
+                    xtmp = getBufferShort(buffer, base1 + 2*i, FileBase.BIG_ENDIAN);
+                    if (xtmp < 0) {
+                        xtmp = 0;
+                    }
+                    ytmp = getBufferShort(buffer, base2 + 2*i, FileBase.BIG_ENDIAN);
+                    if (ytmp < 0) {
+                        ytmp = 0;
+                    }
+                    xi[i] = left + xtmp;
+                    yi[i] = top + ytmp;
+                 }
+                if (subPixelResolution) {
+                    xf = new float[n];
+                    yf = new float[n];
+                    base1 = COORDINATES + 4*n;
+                    base2 = base1 + 4*n;
+                    for (i = 0; i < n; i++) {
+                        xf[i] = getBufferFloat(buffer, base1 + 4*i, FileBase.BIG_ENDIAN);
+                        yf[i] = getBufferFloat(buffer, base2 + 4*i, FileBase.BIG_ENDIAN);
+                    }
+                }
+                if (type == point) {
+                    x = new float[1];
+                    y = new float[1];
+                    z = new float[1];
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    for (i = 0; i < n; i++) {
+                        ptVOI = new VOI((short) (VOIs.size()), String.valueOf(i+1), VOI.POINT, -1.0f);
+                        ptVOI.setColor(strokeColor);
+                        if (subPixelResolution) {
+                            x[0] = xf[i];
+                            y[0] = yf[i];
+                        }
+                        else {
+                            x[0] = xi[i];
+                            y[0] = yi[i];
+                        }
+                        z[0] = voiSliceNumber;
+                        ptVOI.importCurve(x, y, z);
+                        VOIs.addElement(ptVOI);
+                    }
+                } // if (type == point)
+                else if (type == angle) {
+                    if (n != 3) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("Number of points = " + n + " rather than the expected 3 for angle\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        return;
+                    } // if (n != 3)
+                    voiProtractor = new VOIProtractor();
+                    if (subPixelResolution) {
+                        firstEndPt = new Vector3f(xf[0], yf[0], voiSliceNumber);
+                        middlePt = new Vector3f(xf[1], yf[1], voiSliceNumber);
+                        secondEndPt = new Vector3f(xf[2], yf[2], voiSliceNumber);
+                    }
+                    else {
+                        firstEndPt = new Vector3f(xi[0], yi[0], voiSliceNumber);
+                        middlePt = new Vector3f(xi[1], yi[1], voiSliceNumber);
+                        secondEndPt = new Vector3f(xi[2], yi[2], voiSliceNumber);
+                    }
+                    voiProtractor.add(firstEndPt);
+                    voiProtractor.add(middlePt);
+                    voiProtractor.add(secondEndPt);
+                    voi = new VOI((short)VOIs.size(), "protractorVOI", VOI.PROTRACTOR, -1);
+                    voi.importCurve(voiProtractor);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if (type == angle)
+                else if ((type == freehand) && (subtype == ELLIPSE)) {
+                    voi = new VOI((short)VOIs.size(), "ellipseVOI", VOI.CONTOUR, -1);  
+                    pt = new Vector3f[ellipseVertices];
+                    ex1 = getBufferFloat(buffer, X1, FileBase.BIG_ENDIAN);
+                    ey1 = getBufferFloat(buffer, Y1, FileBase.BIG_ENDIAN);
+                    ex2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
+                    ey2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
+                    aspectRatio = getBufferFloat(buffer, ELLIPSE_ASPECT_RATIO, FileBase.BIG_ENDIAN);
+                    if (aspectRatio < 0.0) {
+                        aspectRatio = 0.0;
+                    }
+                    if (aspectRatio > 1.0) {
+                        aspectRatio = 1.0;
+                    }
+                    centerX = (ex1 + ex2)/2.0;
+                    centerY = (ey1 + ey2)/2.0;
+                    dx = ex2 - ex1;
+                    dy = ey2 - ey1;
+                    major = Math.sqrt(dx*dx + dy*dy);
+                    minor = major*aspectRatio;
+                    phiB = Math.atan2(dy, dx);
+                    alphaEllipse = phiB * 180.0/Math.PI;
+                    for (i = 0; i < ellipseVertices; i++) {
+                        degrees = i * 360.0/ellipseVertices;
+                        beta1 = degrees/180.0*Math.PI;
+                        dx = Math.cos(beta1)*major/2.0;
+                        dy = Math.sin(beta1)*minor/2.0;
+                        beta2 = Math.atan2(dy, dx);
+                        rad = Math.sqrt(dx*dx + dy*dy);
+                        beta3 = beta2 + alphaEllipse/180.0*Math.PI;
+                        dx2 = Math.cos(beta3)*rad;
+                        dy2 = Math.sin(beta3)*rad;
+                        pt[i] = new Vector3f((float)(centerX+dx2), (float)(centerY+dy2), (float)(voiSliceNumber));
+                    } // for (i = 0; i < ellipseVertices; i++)
+                    voi.importCurve(pt);
+                    if (strokeColor == null) {
+                        strokeColor = Color.RED;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if ((type == freehand) && (subtype == ELLIPSE))
+                else if (type == freehand) {
+                    voi = new VOI((short)VOIs.size(), "freehandVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if (type == freehand)
+                else if (type == polygon) {
+                    voi = new VOI((short)VOIs.size(), "polygonVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber; 
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == polygon)
+                else if (type == traced) {
+                    voi = new VOI((short)VOIs.size(), "tracedVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber; 
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == traced)
+                else if (type == freeline) {
+                    voi = new VOI((short)VOIs.size(), "freelineVOI", VOI.POLYLINE, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == freeline)
+                else if (type == polyline) {
+                    voi = new VOI((short)VOIs.size(), "polylineVOI", VOI.POLYLINE, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);        
+                } // else if (type == polyline)
+                break;
+        } // switch (type)
+    } // decodeROI;
+    
+    private int getSegment(float[] array, float[] seg, int index) {
+        int len = array.length;
+        if (index>=len) return -1; seg[0]=array[index++];
+        int type = (int)seg[0];
+        if (type==PathIterator.SEG_CLOSE) return 1;
+        if (index>=len) return -1; seg[1]=array[index++];
+        if (index>=len) return -1; seg[2]=array[index++];
+        if (type==PathIterator.SEG_MOVETO||type==PathIterator.SEG_LINETO) return 3;
+        if (index>=len) return -1; seg[3]=array[index++];
+        if (index>=len) return -1; seg[4]=array[index++];
+        if (type==PathIterator.SEG_QUADTO) return 5;
+        if (index>=len) return -1; seg[5]=array[index++];
+        if (index>=len) return -1; seg[6]=array[index++];
+        if (type==PathIterator.SEG_CUBICTO) return 7;
+        return -1;
+        }
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.

@@ -104,6 +104,8 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

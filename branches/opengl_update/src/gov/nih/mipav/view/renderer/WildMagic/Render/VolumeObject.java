@@ -121,7 +121,7 @@ public abstract class VolumeObject
     {
         m_kVolumeImageA = kImageA;
         m_kVolumeImageB = kImageB;
-        m_kTranslate.Copy(kTranslate);
+        m_kTranslate.copy(kTranslate);
         
         m_fX = fX;
         m_fY = fY;
@@ -378,7 +378,7 @@ public abstract class VolumeObject
      */
     public void SetTranslate(Vector3f kTranslate)
     {
-        m_kTranslate.Copy(kTranslate);
+        m_kTranslate.copy(kTranslate);
     }
     
     /**
@@ -387,7 +387,7 @@ public abstract class VolumeObject
      */
     public void Translate(Vector3f kTranslate)
     {
-        m_kTranslate.Add(kTranslate);
+        m_kTranslate.add(kTranslate);
     }
         
     protected void scale( VertexBuffer kVertexBuffer )
@@ -402,12 +402,12 @@ public abstract class VolumeObject
         {
             Vector3f kPos = new Vector3f();
             kVertexBuffer.GetPosition3(i, kPos);
-            kPos.Mult(kExtentsScale);
+            kPos.mult(kExtentsScale);
             if ( kVertexBuffer.GetAttributes().HasTCoord(0) )
             {            	
             	kVertexBuffer.SetTCoord3(0, i, kPos);
             }
-            kPos.Mult(kVolumeScale);
+            kPos.mult(kVolumeScale);
             kVertexBuffer.SetPosition3(i, kPos);
         }
     }

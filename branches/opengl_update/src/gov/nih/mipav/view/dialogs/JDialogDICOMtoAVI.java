@@ -115,6 +115,8 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
             }
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("10067");
+        } else {
+            super.actionPerformed(e);
         }
     }
 

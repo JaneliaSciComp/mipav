@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -48,8 +49,6 @@ public abstract class GPURenderBase extends JavaApplication3D
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 {
 	private static final long serialVersionUID = 9069227710441839806L;
-	/** Parent user-interface and display frame. */
-    protected VolumeTriPlanarInterface m_kParent = null;
     /** VolumeImage for ModelImageA, contains data and textures. */
     protected VolumeImage m_kVolumeImageA;
     /** VolumeImage for ModelImageB, contains data and textures. */
@@ -89,6 +88,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected Vector<VolumeObject> m_kDisplayList = new Vector<VolumeObject>();
     /** Set to true when the surface has been added or modified. */
     protected boolean m_bSurfaceUpdate = false;
+    /** Set to true when the surface mask should be recalculated. */
+    protected boolean m_bSurfaceMaskUpdate = false;
     protected int m_iUpdateNormals = -1;
     protected boolean m_bExtract = false;
 
@@ -107,8 +108,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Set to true when recording. */
     protected boolean m_bSnapshot = false;
     protected int m_iCaptureFPS;
-    
+
     protected boolean m_bShared = false;
+    protected boolean m_bStandAlone = false;
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
@@ -137,16 +139,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
-        m_kParent = kParent;
         
         
         //TODO: Try rotations here
-        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
     /**
@@ -162,7 +164,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         UpdateSceneRotation();
         return kVNode;
     }
-
+    
     protected boolean m_bDispose = false;
 	public void dispose()
     {
@@ -176,7 +178,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	public void dispose(GLAutoDrawable kDrawable)
     {
 		// System.err.println( "dispose(GLAutoDrawable) called" );
-        m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
         if ( m_kAnimator != null ) {
@@ -251,6 +252,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public ModelImage getImage()
     {
         return m_kVolumeImageA.GetImage();
+    }
+
+    /**
+     * @return ModelImage A.
+     */
+    public VolumeImage getVolumeImage()
+    {
+        return m_kVolumeImageA;
     }
 
 
@@ -377,7 +386,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void resetAxisX()
     {
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
-        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
+        m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
         UpdateSceneRotation();
     }
 
@@ -388,7 +397,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void resetAxisY()
     {
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
-        m_spkScene.Local.GetRotate().FromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
+        m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
         UpdateSceneRotation();
     }
 
@@ -577,7 +586,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         WildMagic.LibFoundation.Mathematics.Vector3f center = m_kVolumeImageA.GetImage().getImageCentermm(false);
 
         xfrm.setTranslate(center.X, center.Y, center.Z);
-        xfrm.Mult(transMtx);
+        xfrm.mult(transMtx);
         xfrm.setTranslate(-center.X, -center.Y, -center.Z);
 
         // Step.4
@@ -607,6 +616,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
     }
   
+
+    public void setDefaultLighting()
+    {
+        if ( m_akLights == null )
+        {
+        	m_akLights = new Light[2];
+        	m_akLights[0] = new Light(Light.LightType.LT_DIRECTIONAL);
+        	m_akLights[0].Intensity = 0.5f;
+        	m_akLights[0].Ambient.Set(1f, 1f, 1f);
+        	m_akLights[0].Diffuse.Set(1f, 1f, 1f);
+        	m_akLights[0].Specular.Set(1f, 1f, 1f);
+        	m_akLights[0].Position.set(0f,0f,3f);
+        	m_akLights[0].DVector.set( 0f, 0f, 1f );
+		    		
+        	m_akLights[1] = new Light();
+        	m_akLights[1].Intensity = 0.5f;
+        	m_akLights[1].Ambient.Set(1f, 1f, 1f);
+        	m_akLights[1].Diffuse.Set(1f, 1f, 1f);
+        	m_akLights[1].Specular.Set(1f, 1f, 1f);
+        }
+        updateLighting( m_akLights );
+    }
     
     /**
      * Called from JPanelLight. Updates the lighting parameters.
@@ -707,7 +738,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_bTestFrameRate )
         {
             Matrix3f kRotate = m_spkScene.Local.GetRotate();
-            kRotate.Mult(m_kRotate);
+            kRotate.mult(m_kRotate);
             m_spkScene.Local.SetRotate(kRotate);
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -722,13 +753,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /**
      * Renders the frame rate to the screen.
      */
-    protected void RenderFrameRate()
+    protected void RenderFrameRate(GLAutoDrawable kDraw)
     {
         //Draw frame rate:
         m_pkRenderer.SetCamera(m_spkCamera);
         if ( m_bTestFrameRate )
         {
-            DrawFrameRate(8,16,ColorRGBA.WHITE);
+            DrawFrameRate(50,50,ColorRGBA.WHITE);
         }
     }
     

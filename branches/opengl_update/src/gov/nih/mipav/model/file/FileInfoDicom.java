@@ -172,8 +172,8 @@ public class FileInfoDicom extends FileInfoBase {
     public Short pixelPaddingValue = null;
 
     /** DICOM tag (0028, 0103) 
-     * 	-1 = undefined
-     * 	 0 = unsigned 
+     *  -1 = undefined
+     *   0 = unsigned 
      *   1 = signed */
     public short pixelRepresentation = UNDEFINED_PIXEL_REP;
     
@@ -215,9 +215,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @param  format     format (in this case, DICOM)
      */
     public FileInfoDicom(String name, String directory, int format) {
-        super(name, directory, format);
-
-        tagTable = new FileDicomTagTable(this, vr_type);
+        this(name, directory, format, null);
     }
 
     /**
@@ -231,9 +229,14 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public FileInfoDicom(String name, String directory, int format, FileInfoDicom refInfo) {
         super(name, directory, format);
-        this.vr_type = refInfo.vr_type;
-
-        tagTable = new FileDicomTagTable(this, refInfo.getTagTable(), vr_type);
+        
+        FileDicomTagTable refTagTable = null;
+        if(refInfo != null) {
+            this.vr_type = refInfo.vr_type;
+            refTagTable = refInfo.getTagTable();
+        }
+            
+        tagTable = new FileDicomTagTable(this, refTagTable, vr_type);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -267,8 +270,8 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                	String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
-                	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
+                    String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+                    getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
                 throw new IllegalArgumentException("(" + anonymizeTagIDs[i] + ") is a required type 2 tag.");
@@ -283,8 +286,8 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-        		String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
-            	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
+                String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+                getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
             }
         }
         // this fileInfo is now an expurgated/sanitised version
@@ -296,7 +299,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @return
      */
     public Object generateNewTagValue(String key) {
-    	return generateNewTagValue(key, getTagTable());
+        return generateNewTagValue(key, getTagTable());
     }
     
     /**
@@ -474,10 +477,10 @@ public class FileInfoDicom extends FileInfoBase {
             dirCos[1][0] = Double.valueOf(orientation.substring(index3 + 1, index4)).doubleValue();
             dirCos[1][1] = Double.valueOf(orientation.substring(index4 + 1, index5)).doubleValue();
             if (index6 == notSet)
-            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+                dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
             else
-            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1, index6)).doubleValue();
-            	
+                dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1, index6)).doubleValue();
+                
             dirCos[1][3] = 0;
 
             // cross product
@@ -848,6 +851,14 @@ public class FileInfoDicom extends FileInfoBase {
      * @param  tag  The tag to use to update the file info fields (not all tags cause field changes).
      */
     protected final void setInfoFromTag(FileDicomTag tag) {
+        if (tag == null) {
+            Preferences.debug("tag == null on entry to setInfoFromTag(FileDicomTag tag)\n", Preferences.DEBUG_FILEIO);
+            return;
+        }
+        else if (tag.getInfo() == null) {
+            Preferences.debug("tag.getInfo() == null on entry to setInfoFromTag(FileDicomTag tag)\n", Preferences.DEBUG_FILEIO);
+            return;    
+        }
         FileDicomKey tagKey = tag.getInfo().getKey();
         //TODO: JDK7 allows this to turn into switch statements
         // ordering by type 1 tags first.  Then in numerical order.
@@ -857,6 +868,7 @@ public class FileInfoDicom extends FileInfoBase {
                 // setModalityFromDicomStr() covers the possibility of value == ""
             } else if (tagKey.equals("0018,0088")) {
                 super.setResolutions(Float.parseFloat(tag.getValue(false).toString()), 2); // type 1
+                setUnitsOfMeasure(Unit.MILLIMETERS, 2);
             } else if (tagKey.equals("0028,0100")) {
                 bitsAllocated = ((Short) tag.getValue(false)).shortValue(); // type 1
             } else if (tagKey.equals("0028,0103")) {
@@ -873,8 +885,10 @@ public class FileInfoDicom extends FileInfoBase {
                 setSliceThickness(Float.parseFloat(((String) tag.getValue(false)).trim())); // type 2
             } else if (tagKey.equals("0018,602C")) {
                 setResolutions(((Double) tag.getValue(false)).floatValue(), 0);
+                setUnitsOfMeasure(Unit.CENTIMETERS, 0);
             } else if (tagKey.equals("0018,602E")) {
                 setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
+                setUnitsOfMeasure(Unit.CENTIMETERS, 1);
             } else if (tagKey.equals("0020,0032")) { // type 2c
                 orientation = ((String) tag.getValue(false)).trim();
                 int index1 = -1, index2 = -1;
@@ -890,14 +904,14 @@ public class FileInfoDicom extends FileInfoBase {
                     }
                 }
                 if (index1 != -1)
-                	xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                    xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
                 if (index1 != -1 && index2 != -1)
-                	yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                    yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
                 if (index2 != -1)
-                	zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                    zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
               
                 if (index1 == -1 || index2 == -1)
-                	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
                 
             } else if (tagKey.equals("0020,0013")) { // type 2
                 instanceNumber = Integer.parseInt(tag.getValue(true).toString());
@@ -905,7 +919,7 @@ public class FileInfoDicom extends FileInfoBase {
                 sliceLocation =  Float.valueOf(tag.getValue(true).toString()).floatValue();
             } else if (tagKey.equals("0028,0030") &&
                            ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
-            	// y resolution followed by x resolution
+                // y resolution followed by x resolution
     
                 String valueStr = ((String) tag.getValue(false)).trim();
                 String firstHalf, secondHalf;
@@ -1011,7 +1025,13 @@ public class FileInfoDicom extends FileInfoBase {
                 planarConfig = ((Number)tag.getValue(false)).shortValue();
             } else if(tagKey.equals("0028,0004")) { //requires bitsAllocated(0028,0100) and pixelRepresentation(0028,0103) to be set
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0100")));
-                setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
+                if (tagTable.get(new FileDicomKey("0028,0103"))  == null) {
+                    Preferences.debug("In FileInfoDicom.setInfoFromTag tagTable.get(new FileDicomKey(\"0028,0103\"))  == null\n",
+                            Preferences.DEBUG_FILEIO);
+                }
+                else {
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
+                }
                 photometricInterp = ((String) tag.getValue(false)).trim();
                 
                 if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
@@ -1053,6 +1073,11 @@ public class FileInfoDicom extends FileInfoBase {
                     setDataType(ModelStorageBase.ARGB);
                     displayType = ModelStorageBase.ARGB;
                     bytesPerPixel = 3;
+                } else if (photometricInterp.equals("RGB") && (bitsAllocated == 16)) { //requires 0028,0006 to be set
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
+                    setDataType(ModelStorageBase.ARGB_USHORT);
+                    displayType = ModelStorageBase.ARGB_USHORT;
+                    bytesPerPixel = 6;
                 } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {  //requires 0028,0006 to be set
                     setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
                     setDataType(ModelStorageBase.ARGB);
@@ -1092,10 +1117,6 @@ public class FileInfoDicom extends FileInfoBase {
                     lut.makeIndexedLUT(null);
                     //TODO: store this in file for display
                 }
-            } else if (tagKey.equals("0018,602C")) {
-                setUnitsOfMeasure(Unit.CENTIMETERS, 0);
-            } else if (tagKey.equals("0018,602E")) {
-                setUnitsOfMeasure(Unit.CENTIMETERS, 1);
             } 
         } catch(NumberFormatException ex) {
             Preferences.debug("Tag "+tag.getKey().toString()+" does not contain a number.", Preferences.DEBUG_FILEIO);
@@ -1103,14 +1124,14 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     public boolean isEnhancedDicom() {
-		return isEnhancedDicom;
-	}
+        return isEnhancedDicom;
+    }
 
-	public void setIsEnhancedDicom(boolean isEnhancedDicom) {
-		this.isEnhancedDicom = isEnhancedDicom;
-	}
+    public void setIsEnhancedDicom(boolean isEnhancedDicom) {
+        this.isEnhancedDicom = isEnhancedDicom;
+    }
 
-	/**
+    /**
      * Uses the DICOM tag value to set the Image modality field.
      *
      * @param  value  Object used is the value of DICOM tag (0008,0060)

@@ -105,6 +105,8 @@ public class JDialogRecordLUT extends JDialogBase {
 
         if (command.equals("Save")) {
             writeImage();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -167,7 +167,10 @@ public class JDialogOpen extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor004OP1");
+        	//MipavUtil.showHelp("Mor004OP1");
+            MipavUtil.showWebHelp("Morphology#Open");
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
 
     }

@@ -59,13 +59,6 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Calls the algorithm from the script parser.
-     *
-     * @param  event  Event that triggers function.
-     */
-    public void actionPerformed(ActionEvent event) { }
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

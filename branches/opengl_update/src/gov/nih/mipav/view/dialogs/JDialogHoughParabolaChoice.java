@@ -109,8 +109,10 @@ public class JDialogHoughParabolaChoice extends JDialogBase {
                 }
             } // for (i = 0; i < numParabolasFound; i++)
             okayPressed = true;
-        } // if (event.getSource() == OKButton)
-
+        } else { // if (event.getSource() == OKButton)
+            super.actionPerformed(event);
+        }
+        
         selectedArray = null;
         dispose();
     }

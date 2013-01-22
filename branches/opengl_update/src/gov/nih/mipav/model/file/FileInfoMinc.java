@@ -559,27 +559,46 @@ public class FileInfoMinc extends FileInfoBase {
      * </p>
      * 
      * @param slice slice to begin the start variable on.
+     * @param timeSlice time to begin the start variable on
      * 
      * @return The slice position in dicom (and mipav) space.
      */
-    public final double[] getConvertStartLocationsToDICOM(final int slice) {
+    public final double[] getConvertStartLocationsToDICOM(final int slice, final int time) {
         double x = 0;
         double y = 0;
         double z = 0;
+        double t = 0;
         double xStep = 1;
         double yStep = 1;
         double zStep = 1;
+        double tStep = 1;
 
         boolean isXCentered = false;
         boolean isYCentered = false;
         @SuppressWarnings("unused")
         boolean isZCentered = false;
+        @SuppressWarnings("unused")
+        boolean isTCentered = false;
 
-        String spacex, spacey, spacez;
+        String spacex, spacey;
+        String spacez = null;
+        String spacet = null;
 
-        spacex = getDimElem(2).name;
-        spacey = getDimElem(1).name;
-        spacez = getDimElem(0).name;
+        if (getDimElem(3) != null) {
+            spacex = getDimElem(3).name;
+            spacey = getDimElem(2).name;
+            spacez = getDimElem(1).name; 
+            spacet = getDimElem(0).name;
+        }
+        else if (getDimElem(2) != null) {
+            spacex = getDimElem(2).name;
+            spacey = getDimElem(1).name;
+            spacez = getDimElem(0).name;
+        }
+        else {
+            spacex = getDimElem(1).name;
+            spacey = getDimElem(0).name;
+        }
 
         for (final FileMincVarElem element : varArray) {
 
@@ -618,6 +637,18 @@ public class FileInfoMinc extends FileInfoBase {
                     }
                 }
             }
+            
+            if (element.name.equals(spacet)) {
+                t = element.start;
+                tStep = element.step;
+
+                for (final FileMincAttElem element2 : element.vattArray) {
+
+                    if (element2.name.equals("alignment")) {
+                        isTCentered = element2.getValueString().equals("centre");
+                    }
+                }
+            }
         }
 
         // System.out.println("convert: begin res:\t" + xRes + " " + yRes + " " + zRes);
@@ -627,15 +658,20 @@ public class FileInfoMinc extends FileInfoBase {
         if (startLocs.length == 2) {
             startLocs[0] = x;
             startLocs[1] = y;
-        } else {
+        } else if (startLocs.length == 3){
             startLocs[0] = x;
             startLocs[1] = y;
             startLocs[2] = z + (zStep * slice);
+        } else if (startLocs.length == 4) {
+            startLocs[0] = x;
+            startLocs[1] = y;
+            startLocs[2] = z + (zStep * slice); 
+            startLocs[3] = t + (tStep * time);
         }
 
         // System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
         final TransMatrix matrix = new TransMatrix(Math.min(4, getExtents().length + 1));
-        matrix.MakeIdentity();
+        matrix.identity();
 
         for (final FileMincVarElem element : varArray) {
 
@@ -689,13 +725,13 @@ public class FileInfoMinc extends FileInfoBase {
 
         if (getExtents().length == 2) {
             matrix.transform(startLocs[0], startLocs[1], transformedPt);
-        } else if (getExtents().length == 3) {
+        } else if (getExtents().length >= 3) {
             matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
         }
 
         // System.out.println("convert: trans:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
 
-        if (startLocs.length == 3) {
+        if (startLocs.length >= 3) {
 
             if (getImageOrientation() == FileInfoBase.SAGITTAL) {
                 transformedPt[0] = -transformedPt[0];
@@ -818,7 +854,12 @@ public class FileInfoMinc extends FileInfoBase {
      * @return dimArray[index]
      */
     public final FileMincDimElem getDimElem(final int index) {
-        return dimArray[index];
+        if (dimArray.length > index) {
+            return dimArray[index];
+        }
+        else {
+            return null;
+        }
     }
 
     /**
@@ -852,6 +893,7 @@ public class FileInfoMinc extends FileInfoBase {
         double x = 0;
         double y = 0;
         double z = 0;
+        double t = 0;
 
         for (final FileMincVarElem element : varArray) {
 
@@ -866,6 +908,10 @@ public class FileInfoMinc extends FileInfoBase {
             if (element.name.equals("zspace")) {
                 z = element.trueStart;
             }
+            
+            if (element.name.equals("tspace")) {
+                t = element.trueStart;
+            }
         }
 
         final float[] start = new float[getExtents().length];
@@ -877,6 +923,11 @@ public class FileInfoMinc extends FileInfoBase {
             start[0] = (float) x;
             start[1] = (float) y;
             start[2] = (float) z;
+        } else if (start.length == 4) {
+            start[0] = (float) x;
+            start[1] = (float) y;
+            start[2] = (float) z;
+            start[3] = (float) t;
         }
 
         return start;
@@ -907,17 +958,25 @@ public class FileInfoMinc extends FileInfoBase {
      */
     public final void setImportantImageInfo() {
         int ix = 0, iy = 0, iz = 0;
-
-        final String firstDim = getDimElem(0).name;
+        int i;
+        
+        i = 0;
+        if (getDimElem(0).name.equalsIgnoreCase("time")) {
+            i = 1;
+        }
+        final String firstDim = getDimElem(i).name;
         Preferences.debug("firstDim = " + firstDim + "\n", Preferences.DEBUG_FILEIO);
 
-        final String secondDim = getDimElem(1).name;
+        final String secondDim = getDimElem(i+1).name;
         Preferences.debug("secondDim = " + secondDim + "\n", Preferences.DEBUG_FILEIO);
 
-        final String thirdDim = getDimElem(2).name;
-        Preferences.debug("thirdDim = " + thirdDim + "\n", Preferences.DEBUG_FILEIO);
+        String thirdDim = null;
+        if (getExtents().length > 2) {
+            thirdDim = getDimElem(i+2).name;
+            Preferences.debug("thirdDim = " + thirdDim + "\n", Preferences.DEBUG_FILEIO);
+        }
 
-        for (int i = 0; i < varArray.length; i++) {
+        for (i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("image")) {
                 setOffset(varArray[i].begin);
@@ -1109,7 +1168,7 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
 
-        for (int i = 0; i < axisOrientation.length; i++) {
+        for (i = 0; i < axisOrientation.length; i++) {
 
             switch (axisOrientation[i]) {
 
@@ -1359,15 +1418,15 @@ public class FileInfoMinc extends FileInfoBase {
         int i, j, k, p, q, r;
         double detP;
 
-        xi = mat.Get(0, 0);
-        xj = mat.Get(0, 1);
-        xk = mat.Get(0, 2);
-        yi = mat.Get(1, 0);
-        yj = mat.Get(1, 1);
-        yk = mat.Get(1, 2);
-        zi = mat.Get(2, 0);
-        zj = mat.Get(2, 1);
-        zk = mat.Get(2, 2);
+        xi = mat.get(0, 0);
+        xj = mat.get(0, 1);
+        xk = mat.get(0, 2);
+        yi = mat.get(1, 0);
+        yj = mat.get(1, 1);
+        yk = mat.get(1, 2);
+        zi = mat.get(2, 0);
+        zj = mat.get(2, 1);
+        zk = mat.get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1669,7 +1728,7 @@ public class FileInfoMinc extends FileInfoBase {
 
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
         final TransMatrix Q = new TransMatrix(mat);
-        detQ = Q.Determinant();
+        detQ = Q.determinant();
         final TransMatrix P = new TransMatrix(mat.getDim());
         final TransMatrix M = new TransMatrix(mat.getDim());
 
@@ -1707,7 +1766,7 @@ public class FileInfoMinc extends FileInfoBase {
                         continue;
                     }
 
-                    P.MakeZero();
+                    P.makeZero();
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
 
@@ -1717,7 +1776,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 P.set(0, i - 1, p);
                                 P.set(1, j - 1, q);
                                 P.set(2, k - 1, r);
-                                detP = P.Determinant();
+                                detP = P.determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ( (detP * detQ) <= 0.0) {
@@ -1725,7 +1784,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 }
 
                                 M.Copy(P);
-                                M.Mult(Q);
+                                M.mult(Q);
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I

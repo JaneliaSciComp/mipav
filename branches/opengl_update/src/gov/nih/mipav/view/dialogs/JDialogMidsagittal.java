@@ -21,7 +21,7 @@ import java.awt.event.*;
  * @author   Evan McCreedy
  */
 public class JDialogMidsagittal extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface {
+	implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -56,7 +56,6 @@ public class JDialogMidsagittal extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         init();
-        loadDefaults();
 
         callAlgorithm();
     }
@@ -80,6 +79,8 @@ public class JDialogMidsagittal extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp( "10009" );
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -94,11 +95,6 @@ public class JDialogMidsagittal extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
-
         if (algorithm instanceof AlgorithmMidsagittal) {
             Preferences.debug("Midsagittal elapsed: " + algorithm.getElapsedTime());
 
@@ -145,7 +141,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -164,7 +160,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         Preferences.saveDialogDefaults(getDialogName(), new String());
     }
 

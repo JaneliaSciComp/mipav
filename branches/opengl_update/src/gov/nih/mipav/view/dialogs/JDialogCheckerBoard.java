@@ -336,6 +336,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         	
         	
         	
+        } else {
+            super.actionPerformed(event);
         }
     }
 

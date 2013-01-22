@@ -14,6 +14,8 @@ import gov.nih.mipav.model.structures.*;
 
 
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
+import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogCheckerBoard.Animate;
 import gov.nih.mipav.view.icons.PlaceHolder;
@@ -71,14 +73,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     /** Used to indicte linear zoom steps (2x, 3x, 4x, 5x ...). */
     public static final int LINEAR_ZOOM = 1;
-
-    /** Bilinear interpolation image component rendering mode. */
-    public static final RenderingHints renderBilinear = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-
-    /** Nearest neighbor interpolation image component rendering mode. */
-    public static final RenderingHints renderNearestNeighbor = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -2240,7 +2234,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * 
      * @return whether to enable showIntensity checkbox
      */
-    public boolean getShowMagIntensityEnabled() {
+    public boolean getShowMagIntensityEnabled(int width, int height, float mag) {
         final Graphics g = getGraphics();
 
         if (g == null) {
@@ -2249,7 +2243,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         g.setFont(MipavUtil.font10);
 
-        return super.getShowMagIntensityEnabled(g, MAGR_WIDTH, MAGR_HEIGHT, MAGR_MAG, imageActive.getType(),
+        return super.getShowMagIntensityEnabled(g, width, height, mag, imageActive.getType(),
                 getActiveImage().getMin(), getActiveImage().getMax());
 
     }
@@ -2679,7 +2673,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             return;
         }
-        if ( cursorMode != ViewJComponentBase.VOI_3D )
+        if ((cursorMode != ViewJComponentBase.VOI_3D) && (cursorMode != ViewJComponentBase.DROPPER_PAINT))
         {
             setCursorMode(ViewJComponentBase.DEFAULT);
         }
@@ -3135,7 +3129,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
                     || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
             }
 
             // draw image A
@@ -3146,9 +3140,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
                         || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                    offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
                 } else {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+                    offscreenGraphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
                 }
 
                 // if checkerboarding is OFF, this means blending should be enabled
@@ -3192,9 +3186,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             Image paintImage = createImage(memImageA); // the image representing the paint mask
 
-            // change rendering hint back from BILINEAR to nearest neighbor so that
+            // change rendering hint back from preference set interpolation mode to nearest neighbor so that
             // all other painting will not be in interpolated mode
-            offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+            offscreenGraphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
 
             offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
@@ -3233,7 +3227,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
                         || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                    offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
                 }
 
                 if ( (lastWinRegionSlice != slice) || (cleanImageB == null)) {
@@ -3405,6 +3399,20 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         int x1, y1, xw1, yh1;
         int x2, y2;
 
+        RenderingHints hintImageA = InterpolateDisplay.NEAREST.getRenderingHint();
+        RenderingHints hintImageB = InterpolateDisplay.NEAREST.getRenderingHint();
+        if(magSettings != null) {
+            hintImageA = magSettings.getInterpType().getRenderingHint();
+            hintImageB = magSettings.getInterpType().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)) {
+            hintImageA = Preferences.getInterpolateDisplay().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)) {
+            hintImageB = Preferences.getInterpolateDisplay().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+            hintImageA = Preferences.getInterpolateDisplay().getRenderingHint();
+            hintImageB = Preferences.getInterpolateDisplay().getRenderingHint();
+        }
+        
         if (zoomX >= 2) {
 
             while ( ( (Math.round(width / zoomX) - (width / zoomX)) != 0)
@@ -3412,8 +3420,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 width++;
             }
         }
-
-        height = width;
 
         xNew = (int) ( ((int) (xNew / zoomX) * zoomX) + 0.5);
         yNew = (int) ( ((int) (yNew / zoomY) * zoomY) + 0.5);
@@ -3444,23 +3450,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             y1 = yNewO;
             yh1 = height + yNewO;
 
-            if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
-                    || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
-            } else {
-                graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
-            }
+            graphics2d.setRenderingHints(hintImageA);
 
             graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (sIWidth / 2), sY + (sIHeight / 2), this);
 
             if ( (imageB != null) && (imgB != null)) {
 
-                if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
-                        || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
-                } else {
-                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
-                }
+                graphics2d.setRenderingHints(hintImageB);
 
                 if ( !isCheckerboarded()) {
                     graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
@@ -3471,7 +3467,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             }
 
-            graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+            graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
 
             graphics2d.setColor(Color.red.darker());
             graphics2d.drawRect(xNewO, yNewO, width - 1, height - 1);
@@ -3517,15 +3513,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 nf.setMaximumFractionDigits(1);
             }
 
-            if ( ( ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE) || (imageType == ModelStorageBase.DCOMPLEX) 
-                    || (imageType == ModelStorageBase.COMPLEX) || (imageType == ModelStorageBase.ARGB) 
-                    || (imageType == ModelStorageBase.ARGB_FLOAT) || (imageType == ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
-                        || ( ( (imageType != ModelStorageBase.FLOAT) && (imageType != ModelStorageBase.DOUBLE) && (imageType != ModelStorageBase.DCOMPLEX)
-                            && (imageType != ModelStorageBase.COMPLEX) && (imageType != ModelStorageBase.ARGB) && (imageType != ModelStorageBase.ARGB_FLOAT) 
-                            && (imageType != ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
-
-                if (showMagIntensity) {
-
+            if (showMagIntensity) {
+            
+                if ( ( ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE) || (imageType == ModelStorageBase.DCOMPLEX) 
+                        || (imageType == ModelStorageBase.COMPLEX) || (imageType == ModelStorageBase.ARGB) 
+                        || (imageType == ModelStorageBase.ARGB_FLOAT) || (imageType == ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
+                            || ( ( (imageType != ModelStorageBase.FLOAT) && (imageType != ModelStorageBase.DOUBLE) && (imageType != ModelStorageBase.DCOMPLEX)
+                                && (imageType != ModelStorageBase.COMPLEX) && (imageType != ModelStorageBase.ARGB) && (imageType != ModelStorageBase.ARGB_FLOAT) 
+                                && (imageType != ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
+                    
                     for (int y = startY; y < endY; y++) {
                         float offsetX = 0;
 
@@ -4093,6 +4089,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
+            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
 
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
@@ -4726,13 +4723,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		this.doCheckerboardAnimate = doCheckerboardAnimate;
 	}
 	
-	
-	
-	
-	
-
-	
-	
 	public synchronized boolean isMakingCheckerboard() {
 		return makingCheckerboard;
 	}
@@ -5275,14 +5265,16 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 for (int i = nVOI - 1; i >= 0; i--) {    
                     VOI kVOI = VOIs.get(i);
                     Vector<VOIBase> kCurves = kVOI.getCurves();
-                    for ( int k = 0; k < kCurves.size(); k++ )
-                    {
-                        VOIBase kVOI3D = kCurves.get(k);
-                        offscreenGraphics2d.setColor( kVOI.getColor() );
-                        voiManager.draw( kVOI3D, 
-                                    imageA.getResolutions(0), 
-                                    imageA.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                    if(kCurves != null) {
+                        for ( int k = 0; k < kCurves.size(); k++ )
+                        {
+                            VOIBase kVOI3D = kCurves.get(k);
+                            offscreenGraphics2d.setColor( kVOI.getColor() );
+                            voiManager.draw( kVOI3D, 
+                                        imageA.getResolutions(0), 
+                                        imageA.getUnitsOfMeasure(), slice, 
+                                        offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                        }
                     }
                 }
             }
@@ -5296,13 +5288,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 for (int i = nVOI - 1; i >= 0; i--) {    
                     VOI kVOI = VOIs.get(i);
                     Vector<VOIBase> kCurves = kVOI.getCurves();
-                    for ( int k = 0; k < kCurves.size(); k++ )
-                    {
-                        VOIBase kVOI3D = kCurves.get(k);
-                        voiManager.draw( kVOI3D, 
-                                    imageB.getResolutions(0), 
-                                    imageB.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                    if(kCurves != null) {
+                        for ( int k = 0; k < kCurves.size(); k++ )
+                        {
+                            VOIBase kVOI3D = kCurves.get(k);
+                            voiManager.draw( kVOI3D, 
+                                        imageB.getResolutions(0), 
+                                        imageB.getUnitsOfMeasure(), slice, 
+                                        offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
+                        }
                     }
                 }
             }
@@ -5427,6 +5421,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( (magSettings != null) && !magSettings.isVisible()) {
                 magSettings.setWidthText((int) (frame.getSize().width * 0.25));
+                magSettings.setHeightText((int) (frame.getSize().height * 0.25));
                 magSettings.setVisible(true);
             }
         }
@@ -7035,8 +7030,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
         
-        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]) )
         {
             bClipped = true;
         }
@@ -7077,8 +7072,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         if ( axisFlip[1] ) patientPt.Y -= 1;
         //if ( axisFlip[2] ) patientPt.Z -= 1;
         
-        if ( (patientPt.X < 0) || (patientPt.X > extents[0]-1) ||
-                (patientPt.Y < 0) || (patientPt.Y > extents[1]-1) )
+        if ( (patientPt.X < 0) || (patientPt.X > extents[0]) ||
+                (patientPt.Y < 0) || (patientPt.Y > extents[1]) )
         {
             bClipped = true;
         }

@@ -107,7 +107,9 @@ public class JDialogUninstallPlugin extends JDialogBase implements ActionListene
            for(int i=0; i<pluginTree.getRowCount(); i++) {
            		pluginTree.expandRow(i);
            }
-       } 
+       } else {
+           super.actionPerformed(event);
+       }
     }
 
     private String deleteOrphans(File[] orphans) {

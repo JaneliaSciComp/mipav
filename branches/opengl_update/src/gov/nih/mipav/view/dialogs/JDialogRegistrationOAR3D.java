@@ -340,7 +340,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("OAR19076");
+            //MipavUtil.showHelp("OAR19076");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Optimized_Automatic_Registration_dialog_box_options");
         } else if (command.equals("AdvancedSettings")) {
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
@@ -462,7 +463,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
         } else if (command.equals("AdvancedHelp")) {
-            MipavUtil.showHelp("OAR19078");
+            //MipavUtil.showHelp("OAR19078");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Advanced_OAR_settings_for_Constrained_Optimized_Automatic_Registration_3D");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -507,7 +511,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setComplete(algorithm.isCompleted());
 
         if (algorithm instanceof AlgorithmRegOAR3D) {
-
+            final int xdimA = refImage.getExtents()[0];
+            final int ydimA = refImage.getExtents()[1];
+            final int zdimA = refImage.getExtents()[2];
+            final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+            final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+            final float zresA = refImage.getFileInfo(0).getResolutions()[2];
             if (reg3.isCompleted()) {
                 final TransMatrix finalMatrix = reg3.getTransform();
                 System.err.println(finalMatrix);
@@ -516,17 +525,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
                     // System.err.println("LS Matrix: " + lsMatrix);
 
-                    finalMatrix.Mult(lsMatrix);
+                    finalMatrix.mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
                 if (displayTransform) {
-                    final int xdimA = refImage.getExtents()[0];
-                    final int ydimA = refImage.getExtents()[1];
-                    final int zdimA = refImage.getExtents()[2];
-                    final float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    final float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    final float zresA = refImage.getFileInfo(0).getResolutions()[2];
+                    
 
                     final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
@@ -569,12 +573,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 finalMatrix.Inverse();
-                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
-                        + finalMatrix.Get(0, 3);
-                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
-                        + finalMatrix.Get(1, 3);
-                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
-                        + finalMatrix.Get(2, 3);
+                xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
+                        + finalMatrix.get(0, 3);
+                yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
+                        + finalMatrix.get(1, 3);
+                zCenNew = xCen * finalMatrix.get(2, 0) + yCen * finalMatrix.get(2, 1) + zCen * finalMatrix.get(2, 2)
+                        + finalMatrix.get(2, 3);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
                         + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -607,7 +611,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
                 finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
-                        + refImage.getImageName() + ".mtx", message);
+                        + refImage.getImageName() + ".mtx", interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
                         + refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 
@@ -637,6 +641,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         }
         
         if (algorithm instanceof AlgorithmRegELSUNCOAR3D) {
+            final int xdimA = refImage.getExtents()[0];
+            final int ydimA = refImage.getExtents()[1];
+            final int zdimA = refImage.getExtents()[2];
+            final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+            final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+            final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
             if (reg3E.isCompleted()) {
                 final TransMatrix finalMatrix = reg3E.getTransform();
@@ -646,17 +656,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
                     // System.err.println("LS Matrix: " + lsMatrix);
 
-                    finalMatrix.Mult(lsMatrix);
+                    finalMatrix.mult(lsMatrix);
                     // System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
                 if (displayTransform) {
-                    final int xdimA = refImage.getExtents()[0];
-                    final int ydimA = refImage.getExtents()[1];
-                    final int zdimA = refImage.getExtents()[2];
-                    final float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    final float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
                     final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
@@ -699,12 +703,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 finalMatrix.Inverse();
-                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
-                        + finalMatrix.Get(0, 3);
-                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
-                        + finalMatrix.Get(1, 3);
-                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
-                        + finalMatrix.Get(2, 3);
+                xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
+                        + finalMatrix.get(0, 3);
+                yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
+                        + finalMatrix.get(1, 3);
+                zCenNew = xCen * finalMatrix.get(2, 0) + yCen * finalMatrix.get(2, 1) + zCen * finalMatrix.get(2, 2)
+                        + finalMatrix.get(2, 3);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
                         + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -737,7 +741,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
                 finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
-                        + refImage.getImageName() + ".mtx", message);
+                        + refImage.getImageName() + ".mtx", interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
                         + refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 

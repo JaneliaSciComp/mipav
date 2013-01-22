@@ -225,20 +225,16 @@ implements GLEventListener, KeyListener
 
 		m_spkScene.UpdateGS(0.0f, true);;
 		Vector3f transResult = new Vector3f(m_spkScene.WorldBound.GetCenter());
-		transResult.Neg();
+		transResult.neg();
 		m_spkTrnNode.Local.SetTranslate(transResult);
 
 		m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,100.0f);
 		Vector3f kCDir = new Vector3f(0.0f,-1.0f,0.0f);
 		Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
-		Vector3f kTemp1 = new Vector3f();
-		kTemp1.Scale( 0.5f, kCUp );
-		Vector3f kTemp2 = new Vector3f();
-		kTemp2.Scale( -3.0f*m_spkScene.WorldBound.GetRadius(), kCDir );
-		Vector3f kCLoc = new Vector3f();
-		kCLoc.Sub( kTemp2, kTemp1 );
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+		Vector3f kTemp1 = Vector3f.scale( 0.5f, kCUp );
+		Vector3f kTemp2 = Vector3f.scale( -3.0f*m_spkScene.WorldBound.GetRadius(), kCDir );
+		Vector3f kCLoc = Vector3f.sub( kTemp2, kTemp1 );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		// initial update of objects
@@ -399,7 +395,7 @@ implements GLEventListener, KeyListener
 			m_pkSpline.SetControlPoint(i,m_akCtrlPoint[i]);
 		}
 		m_spkRope.UpdateSurface();
-		m_spkRope.VBuffer.Release();
+		m_spkRope.Reload(true);
 	}
 
 	private float GetTime()

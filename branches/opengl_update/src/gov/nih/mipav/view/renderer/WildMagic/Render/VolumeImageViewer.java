@@ -21,6 +21,7 @@ import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
+import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -72,6 +73,7 @@ public class VolumeImageViewer extends JavaApplication3D
         animator.start();
     }    
     protected Node m_spkScene;
+    protected CullState m_kCull;
     protected Culler m_kCuller = new Culler(0,0,null);
     protected VolumeImage m_kVolumeImage;
     protected ShaderEffect m_spkEffect;
@@ -100,6 +102,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
         MipavInitGPU.InitGPU();
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
     }
     public VolumeImageViewer( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -115,6 +118,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_kParent = kParentFrame;
         m_kVolumeImage = kVolumeImage;
         MipavInitGPU.InitGPU();
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
     }
 
     @Override
@@ -217,16 +221,19 @@ public class VolumeImageViewer extends JavaApplication3D
 
         CreateScene();
 
-        // initial update of objects
-        m_spkScene.UpdateGS();
-        m_spkScene.UpdateRS();
+        if ( m_spkScene != null )
+        {
+        	// initial update of objects
+        	m_spkScene.UpdateGS();
+        	m_spkScene.UpdateRS();
 
-        // initial culling of scene
-        m_kCuller.SetCamera(m_spkCamera);
-        m_kCuller.ComputeVisibleSet(m_spkScene);
+        	// initial culling of scene
+        	m_kCuller.SetCamera(m_spkCamera);
+        	m_kCuller.ComputeVisibleSet(m_spkScene);
 
-        InitializeCameraMotion(0.001f,0.001f);
-        InitializeObjectMotion(m_spkScene);
+        	InitializeCameraMotion(0.001f,0.001f);
+        	InitializeObjectMotion(m_spkScene);
+        }
         m_bInit = true;
     }
 
@@ -354,7 +361,7 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 1, 1,0, fZ);
         m_pkPlane.VBuffer.SetTCoord3(0, 2, 0,1, fZ);
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
-        m_pkPlane.VBuffer.Release();
+        m_pkPlane.Reload(true);
         m_bDisplay = true;
     }
 }

@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmHurstIndex
  */
 public class JDialogHurstIndex extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ScriptableActionInterface
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -128,7 +128,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -151,6 +150,8 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -243,7 +244,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -269,7 +270,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

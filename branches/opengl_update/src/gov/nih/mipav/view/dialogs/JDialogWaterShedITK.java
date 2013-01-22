@@ -29,7 +29,7 @@ import javax.swing.*;
  * @see  AlgorithmWaterShedITK
  */
 public class JDialogWaterShedITK extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -109,7 +109,10 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
             dispose();
         } 
         else if (command.equals("Help")) {
-            MipavUtil.showHelp("WShed10");
+            //MipavUtil.showHelp("WShed10");
+            MipavUtil.showWebHelp("Watershed");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -124,10 +127,6 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         image.clearMask();
 
@@ -245,7 +244,7 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (outputOptionsPanel != null)) {
@@ -281,7 +280,7 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

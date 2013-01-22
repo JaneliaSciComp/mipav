@@ -106,6 +106,8 @@ public class JDialogDataProvenance extends JDialogBase implements ProvenanceChan
         	save();
         } else if (event.getActionCommand().equals("Open")) {
         	open();
+        } else {
+            super.actionPerformed(event);
         }
     }
     

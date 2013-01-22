@@ -1,19 +1,22 @@
 uniform sampler2D BaseSampler;
 uniform float MyAlpha;
+in vec2 varTexCoord;
+in vec4 varColor;
+#if __VERSION__ > 150
+layout(location = 0) out vec4     outFragData0;
+layout(location = 1) out vec4     outFragData1;
+#else
+out vec4     outFragData0;
+out vec4     outFragData1;
+#endif
 void p_OrderIndpTransparencyInitP()
 {
     // Add the material and texture colors.
-    vec4 kBaseColor = texture2D(BaseSampler,gl_TexCoord[0].xy);
+    vec4 kBaseColor = texture(BaseSampler,varTexCoord.xy, 0.0);
     vec4 color;
-    color.rgb = clamp(kBaseColor.rgb + gl_Color.rgb, 0.0, 1.0);
+    color.rgb = clamp(kBaseColor.rgb + varColor.rgb, 0.0, 1.0);
     color.a = MyAlpha;
-
-//     gl_FragData[0] = vec4(color.rgb * color.a, color.a);
-//     gl_FragData[1] = vec4(1.0);
-//     gl_FragData[0] = vec4(0.0);
-//     gl_FragData[1] = vec4(color.rgb * color.a, color.a);
-//     gl_FragData[2] = vec4(1.0);
-    gl_FragData[0] = vec4(color.rgb * color.a, color.a);
-    gl_FragData[1] = vec4(1.0);
-    //gl_FragData[0] = vec4(0.0);
+    
+    outFragData0 = vec4(color.rgb * color.a, color.a);
+    outFragData1 = vec4(1.0);
 }

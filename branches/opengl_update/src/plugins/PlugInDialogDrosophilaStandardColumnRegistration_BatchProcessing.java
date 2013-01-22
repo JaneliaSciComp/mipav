@@ -236,7 +236,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 			 
 		 }else if(command.equals("cancel")) {
 			 dispose();
-		 }
+		 } else {
+             super.actionPerformed(e);
+         }
 
 	}
 	

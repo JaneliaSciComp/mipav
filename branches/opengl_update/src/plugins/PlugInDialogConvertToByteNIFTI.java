@@ -152,7 +152,9 @@ public class PlugInDialogConvertToByteNIFTI extends JDialogScriptableBase implem
 		}else if(command.equals("ok")){
 			parse(studyFile);
 			dispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

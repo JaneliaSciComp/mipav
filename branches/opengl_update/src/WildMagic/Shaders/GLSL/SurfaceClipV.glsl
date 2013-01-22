@@ -1,17 +1,17 @@
 uniform vec4 SurfaceScale;
 uniform mat4 WVPMatrix;
+in vec3 inPosition;
+in vec3 inTexcoord0;
+in vec4 inColor0;
+out vec3 varTexCoord;
+out vec4 varColor;
+
 void v_SurfaceClipV()
 {
-    if ( SurfaceScale.w != 0.0 )
-    {
-        gl_Vertex.x *= 2.0/SurfaceScale.x;
-        gl_Vertex.y *= 2.0/SurfaceScale.y;
-        gl_Vertex.z *= 2.0/SurfaceScale.z;
-    }
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
     // Pass through the texture coordinate.
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+    varTexCoord = inTexcoord0;
     // Pass through the color.
-    gl_FrontColor = gl_Color;
+    varColor = inColor0;
 }

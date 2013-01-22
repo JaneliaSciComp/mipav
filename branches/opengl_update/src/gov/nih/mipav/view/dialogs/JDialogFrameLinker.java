@@ -96,6 +96,8 @@ public class JDialogFrameLinker extends JDialogBase {
         } else if (command.equals("Cancel")) {
             ((ViewJFrameBase) (parentFrame)).setLinkedFrame(null);
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

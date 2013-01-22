@@ -173,10 +173,10 @@ implements GLEventListener, KeyListener
 		m_spkCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,10000.0f);
 		Vector3f kCLoc = new Vector3f(0.0f,-600.0f,-100.0f);
 		Vector3f kCDir = new Vector3f(0.0f,1.0f,0.5f);
-		kCDir.Normalize();
+		kCDir.normalize();
 		Vector3f kCUp = new Vector3f(0.0f,kCDir.Z,-kCDir.Y);
 		Vector3f kCRight = new Vector3f(Vector3f.UNIT_X);
-		kCRight.Neg();
+		kCRight.neg();
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -376,7 +376,7 @@ implements GLEventListener, KeyListener
 				float fDHDY = 0.5f*(fRXYp1 - fRXYm1);
 
 				Vector3f kNormal = new Vector3f(fScale*fDHDX,fScale*fDHDY,1.0f);
-				kNormal.Normalize();
+				kNormal.normalize();
 
 				// Transform the normal vector from [-1,1]^3 to [0,255]^3 so it
 				// can be stored as a color value.
@@ -419,7 +419,7 @@ implements GLEventListener, KeyListener
 
 		// Fix the light direction for the entire simulation.
 		Vector3f kLightDir = new Vector3f(0.0f,1.0f,1.0f);
-		kLightDir.Normalize();
+		kLightDir.normalize();
 		m_spkEffect.SetLightDir(kLightDir);
 
 		// Arbitrary constants to make particular looking waves.

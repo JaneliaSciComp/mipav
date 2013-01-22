@@ -6,28 +6,29 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.structures.ModelImage;
 
-public class AlgorithmConcatMult3Dto3D extends AlgorithmBase {
+public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
 
-	
-	/** array of 3D images **/
-	private ModelImage[] images;
-	
-	/** final image **/
-	private ModelImage destImage;
-
-	
-	
 	/**
-	 * comstructor
+	 * constructor
 	 * @param images
 	 * @param destImage
+	 * @param copyAllInfo 
 	 */
-	public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage) {
+	public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage, boolean copyAllInfo) {
 		this.images = images;
 		this.destImage = destImage;
+		this.copyAllInfo = copyAllInfo;
 		
 	}
 	
+	/**
+     * constructor
+     * @param images
+     * @param destImage
+     */
+    public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage) {
+        this(images, destImage, false);
+    }
 	
 	/**
 	 * run algorithm
@@ -76,56 +77,36 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmBase {
 	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
 	        origins[2] = images[0].getFileInfo()[0].getOrigin(2);
 
-	        
-	        
-	        boolean isFileInfoDicom = true;
-	        for(int i=0;i<images.length;i++) {
-	        	if(!(images[i].getFileInfo()[0] instanceof FileInfoDicom)) {
-	        		isFileInfoDicom = false;
-	        		break;
-	        	}
-	        }
-	        FileInfoBase[] fileInfo = null;
-	        FileInfoDicom[] fileInfoDicom = null;
+	        FileInfoBase[] fileInfo = new FileInfoBase[destImage.getExtents()[2]];
 	        
 
-	        if (isFileInfoDicom) {
-	            fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
-	            
+	        if (copyAllInfo) {
 	            counter = 0;
-		        for(int i=0;i<images.length;i++) {
-		        	ModelImage img = images[i];
-		        	for(int k=0;k<img.getExtents()[2];k++) {
-		        		fileInfoDicom[counter] = (FileInfoDicom) (((FileInfoDicom) img.getFileInfo()[k]).clone());
-		        		fileInfoDicom[counter].setResolutions(resols);
-		                fileInfoDicom[counter].setOrigin(origins);
-		        		
-		        		
-		        		counter++;
-		        	}
+	            for(int i=0; i<images.length; i++) {
+    	            ModelImage img = images[i];
+                    for(int k=0;k<img.getExtents()[2];k++) {
+                        fireProgressStateChanged((100 * counter)/(destImage.getExtents()[2]));
+                        
+                        if(images[i].isDicomImage()) {
+                            copyDicomInfo(fileInfo, images[i].getFileInfo(0), resols, k, i, counter); 
+                        } else {
+                            fileInfo[counter] = (FileInfoBase) images[i].getFileInfo(k).clone();
+                            copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, counter); //used for copying resolution inof
+                        }
+                        counter++; 
+                    }
 		        }
 
-	            destImage.setFileInfo(fileInfoDicom);
+		        destImage.setFileInfo(fileInfo);
 
 	        } else {
 	            fileInfo = destImage.getFileInfo();
 
-	            for (int i = 0; (i < destImage.getExtents()[2]); i++) {
-	                fileInfo[i].setModality(images[0].getFileInfo()[0].getModality());
-	                fileInfo[i].setFileDirectory(images[0].getFileInfo()[0].getFileDirectory());
-	                fileInfo[i].setEndianess(images[0].getFileInfo()[0].getEndianess());
-	                fileInfo[i].setUnitsOfMeasure(images[0].getFileInfo()[0].getUnitsOfMeasure());
-	                fileInfo[i].setResolutions(resols);
-	                fileInfo[i].setExtents(destImage.getExtents());
-	                fileInfo[i].setMax(destImage.getMax());
-	                fileInfo[i].setMin(destImage.getMin());
-	                fileInfo[i].setImageOrientation(images[0].getImageOrientation());
-	                fileInfo[i].setPixelPadValue(images[0].getFileInfo()[0].getPixelPadValue());
-	                fileInfo[i].setPhotometric(images[0].getFileInfo()[0].getPhotometric());
-	                fileInfo[i].setAxisOrientation(images[0].getAxisOrientation());
-	            }
-	            
-	            
+	             for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
+	                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
+	                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, i);
+	             }
+
 	            counter = 0;
 		        for(int i=0;i<images.length;i++) {
 		        	ModelImage img = images[i];
@@ -139,14 +120,10 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmBase {
 		        		counter++;
 		        	}
 		        }
-		        
-
-
 	        }
 
 	        setCompleted(true);
 	        fileInfo = null;
-	        fileInfoDicom = null;
 
 		}catch(Exception e) {
 			e.printStackTrace();

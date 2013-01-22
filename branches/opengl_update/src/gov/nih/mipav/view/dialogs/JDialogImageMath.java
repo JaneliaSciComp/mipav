@@ -27,7 +27,7 @@ import javax.swing.*;
  * @version  0.1 Dec 21, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogImageMath extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogImageMath extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -134,7 +134,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -158,7 +157,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } if (command.equals("Help")) {
-            MipavUtil.showHelp("U4033");
+            //MipavUtil.showHelp("U4033");
+            MipavUtil.showWebHelp("Image_Math");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -173,10 +175,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmImageMath) {
             image.clearMask();
@@ -423,7 +421,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (comboBoxOperator != null)) {
@@ -478,7 +476,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + outputPanel.isOutputNewImageSet());
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);

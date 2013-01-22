@@ -8,9 +8,9 @@ import java.io.*;
 import gov.nih.mipav.view.*;
 
 /**
-   Documentation used was the ZVI Format Specification V 2.0.4 - June, 2009.
+   Documentation used was the ZVI Format Specification V 2.0.5 - August, 2010.
    The following email was sent to Zeiss support:
-   Here are problems I spotted in ZVI Format Specification V 2.0.4 - June, 2009:
+   Here are problems I spotted in ZVI Format Specification V 2.0.5 - August, 2010:
 2.1.1 <Contents> stream of the container image:
 TypeDescription is VT_EMPTY rather than VT_BSTR
 FileName is VT_EMPTY rather than VT_BSTR
@@ -30,17 +30,14 @@ VT_DISPATCH
 VT_DISPATCH
 RAW pixel data
 
-3.2 Scaling type:
-In the table both decimeter and meter have value 72.
-Info for Mil should be Thousandths of an inch rather than Micrometers.
-
 3.3 Coordinate ID for Image Dimensions:
 Index should be 0 1 2 3 4 5 6 7 instead of the existing 0 1 3 4 5 6 7 8.
 
 3.4 Tag IDs
 ID 301 is used for both ImageBaseTimeFirst and ImageBaseTime1.  I suspect the ImageBaseTimeFirst entry should be deleted.
 The following tags show up in .ZVI files but are not listed in your table:
-2071, 20478, 65651, 65652, 65657, 65658, 65661, 65662.  What is the info for these tags?
+2071, 20478.  What is the info for these tags?
+65781 has both AuroxCamRes6 and AuroxCamCFactor.
 
 Information for decoding the 64-bit VT_DATE structure is missing.  Is it available somewhere?
 
@@ -132,18 +129,31 @@ public class FileZVI extends FileBase {
     
     private int zDim = 1;
     
+    private int backupZDim = 1;
+    
     private int tDim = 1;
     
     private int channelNumber = 1;
     
+    private int positionNumber = 1;
+    
     private int zArray[] = null;
     private int cArray[] = null;
     private int tArray[] = null;
+    private int positionArray[] = null;
     private int startSectorArray[] = null;
     private int offsetArray[] = null;
     // array pointer
     private int ap = 0;
     private double imageFocusPositionArray[] = null;
+    private double imageStagePositionXArray[] = null;
+    private int imageZXArray[] = null;
+    private int imageZYArray[] = null;
+    private double imageStagePositionYArray[] = null;
+    private double imageOriginalStagePositionXArray[] = null;
+    private int imageOriginalZXArray[] = null;
+    private int imageOriginalZYArray[] = null;
+    private double imageOriginalStagePositionYArray[] = null;
     private int imageZArray[] = null;
     private int imageZ2Array[] = null;
     private int imageC2Array[] = null;
@@ -179,6 +189,14 @@ public class FileZVI extends FileBase {
     private int icp6 = 0;
     // image count pointer for imageRelativeTime
     private int icp7 = 0;
+    // image count pointer for imageStagePositionX
+    private int icpX = 0;
+    // image count pointer for imageStagePositionY
+    private int icpY = 0;
+    // image count pointer for imageOriginalStagePositionX
+    private int icpOriginalX = 0;
+    // image count pointer for imageOriginalStagePositionY
+    private int icpOriginalY = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -196,6 +214,10 @@ public class FileZVI extends FileBase {
     private int minT = Integer.MAX_VALUE;
     
     private int maxT = Integer.MIN_VALUE;
+    
+    private int minPosition = Integer.MAX_VALUE;
+    
+    private int maxPosition = Integer.MIN_VALUE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -232,8 +254,16 @@ public class FileZVI extends FileBase {
         zArray = null;
         cArray = null;
         tArray = null;
+        positionArray = null;
         imageFocusPositionArray = null;
-        imageZArray = null;
+        imageStagePositionXArray = null;
+        imageZXArray = null;
+        imageStagePositionYArray = null;
+        imageZYArray = null;
+        imageOriginalStagePositionXArray = null;
+        imageOriginalZXArray = null;
+        imageOriginalStagePositionYArray = null;
+        imageOriginalZYArray = null;
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
@@ -337,6 +367,10 @@ public class FileZVI extends FileBase {
         double processedFocusPositionArray[] = null;
         double processedRelFocusPosition1Array[] = null;
         double processedRelFocusPosition2Array[] = null;
+        double processedStagePositionXArray[] = null;
+        double processedStagePositionYArray[] = null;
+        double processedOriginalStagePositionXArray[] = null;
+        double processedOriginalStagePositionYArray[] = null;
         double blackValue0Array[] = null;
         double blackValue1Array[] = null;
         double blackValue2Array[] = null;
@@ -356,6 +390,10 @@ public class FileZVI extends FileBase {
         int numberFocusPositions = 0;
         int numberRelFocusPosition1s = 0;
         int numberRelFocusPosition2s = 0;
+        int numberStagePositionXs = 0;
+        int numberStagePositionYs = 0;
+        int numberOriginalStagePositionXs = 0;
+        int numberOriginalStagePositionYs = 0;
         int numberBlack0Values = 0;
         int numberBlack1Values = 0;
         int numberBlack2Values = 0;
@@ -372,6 +410,14 @@ public class FileZVI extends FileBase {
         int numberImageRelativeTime1Values = 0;
         int numberImageRelativeTime2Values = 0;
         int numberImageRelativeTime3Values = 0;
+        boolean haveFirstChannel = false;
+        boolean haveSecondChannel = false;
+        boolean haveThirdChannel = false;
+        boolean haveFourthChannel = false;
+        int ch0 = Integer.MIN_VALUE;
+        int ch1 = Integer.MIN_VALUE;
+        int ch2 = Integer.MIN_VALUE;
+        int ch3 = Integer.MIN_VALUE;
         FileInfoBase fInfo[] = null;
         
         try {
@@ -405,16 +451,41 @@ public class FileZVI extends FileBase {
                 if (tArray[i] > maxT) {
                     maxT = tArray[i];
                 }
+                
+                if (positionArray[i] < minPosition) {
+                    minPosition = positionArray[i];
+                }
+                
+                if (positionArray[i] > maxPosition) {
+                    maxPosition = positionArray[i];
+                }
             }
             
             channelNumber = maxC - minC + 1;
             zDim = maxZ - minZ + 1;
+            positionNumber = maxPosition - minPosition + 1;
+            if ((zDim == 1) && (positionNumber > 1)) {
+                zDim = positionNumber;
+                minZ = minPosition;
+                maxZ = maxPosition; 
+                for (i = 0; i < zDim; i++) {
+                    zArray[i] = positionArray[i];
+                }
+            }
+            if ((zDim == 1) && (backupZDim > 1)) {
+                zDim = backupZDim;
+                minZ = 0;
+                maxZ = zDim - 1;
+                for (i = 0; i < zDim; i++) {
+                    zArray[i] = i;
+                }
+            }
             tDim = maxT - minT + 1;
             
             processedFocusPositionArray = new double[zDim];
             numberFocusPositions = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp; i++) {
                     if ((imageZArray[i] == z) && (!Double.isNaN(imageFocusPositionArray[i]))) {
                         processedFocusPositionArray[numberFocusPositions++] = imageFocusPositionArray[i];    
                     }
@@ -424,7 +495,7 @@ public class FileZVI extends FileBase {
             processedRelFocusPosition1Array = new double[zDim];
             numberRelFocusPosition1s = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp4; i++) {
                     if ((imageZ4Array[i] == z) && (!Double.isNaN(imageRelFocusPosition1Array[i]))) {
                         processedRelFocusPosition1Array[numberRelFocusPosition1s++] = imageRelFocusPosition1Array[i];    
                     }
@@ -434,11 +505,187 @@ public class FileZVI extends FileBase {
             processedRelFocusPosition2Array = new double[zDim];
             numberRelFocusPosition2s = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp5; i++) {
                     if ((imageZ5Array[i] == z) && (!Double.isNaN(imageRelFocusPosition2Array[i]))) {
                         processedRelFocusPosition2Array[numberRelFocusPosition2s++] = imageRelFocusPosition2Array[i];    
                     }
                 }
+            }
+            
+            processedStagePositionXArray = new double[zDim];
+            numberStagePositionXs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < icpX; i++) {
+                    if ((imageZXArray[i] == z) && (!Double.isNaN(imageStagePositionXArray[i]))) {
+                        processedStagePositionXArray[numberStagePositionXs++] = imageStagePositionXArray[i];    
+                    }
+                }
+            }
+            
+            processedStagePositionYArray = new double[zDim];
+            numberStagePositionYs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < icpY; i++) {
+                    if ((imageZYArray[i] == z) && (!Double.isNaN(imageStagePositionYArray[i]))) {
+                        processedStagePositionYArray[numberStagePositionYs++] = imageStagePositionYArray[i];    
+                    }
+                }
+            }
+            
+            processedOriginalStagePositionXArray = new double[zDim];
+            numberOriginalStagePositionXs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < icpOriginalX; i++) {
+                    if ((imageOriginalZXArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionXArray[i]))) {
+                        processedOriginalStagePositionXArray[numberOriginalStagePositionXs++] = imageOriginalStagePositionXArray[i];    
+                    }
+                }
+            }
+            
+            processedOriginalStagePositionYArray = new double[zDim];
+            numberOriginalStagePositionYs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < icpOriginalY; i++) {
+                    if ((imageOriginalZYArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionYArray[i]))) {
+                        processedOriginalStagePositionYArray[numberOriginalStagePositionYs++] = imageOriginalStagePositionYArray[i];    
+                    }
+                }
+            }
+            
+            for (i = 0; i < icp2; i++) {
+                if (imageC2Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC2Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC2Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC2Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC2Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < icp3; i++) {
+                if (imageC3Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC3Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC3Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC3Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC3Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < icp6; i++) {
+                if (imageC6Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC6Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC6Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC6Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC6Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < icp7; i++) {
+                if (imageC7Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC7Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC7Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC7Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC7Array[i];
+                   }
+                }
+            }
+            
+            if (ch0 != Integer.MIN_VALUE) {
+                fileInfo.setChannel0(ch0);
+            }
+            
+            if (ch1 != Integer.MIN_VALUE) {
+                fileInfo.setChannel1(ch1);
+            }
+            
+            if (ch2 != Integer.MIN_VALUE) {
+                fileInfo.setChannel2(ch2);
+            }
+            
+            if (ch3 != Integer.MIN_VALUE) {
+                fileInfo.setChannel3(ch3);
             }
             
             blackValue0Array = new double[zDim*tDim];
@@ -449,9 +696,9 @@ public class FileZVI extends FileBase {
             numberBlack0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 0) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch0) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue0Array[numberBlack0Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -461,9 +708,9 @@ public class FileZVI extends FileBase {
             numberBlack1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 1) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch1) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue1Array[numberBlack1Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -473,9 +720,9 @@ public class FileZVI extends FileBase {
             numberBlack2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 2) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch2) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue2Array[numberBlack2Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -485,9 +732,9 @@ public class FileZVI extends FileBase {
             numberBlack3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 3) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch3) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue3Array[numberBlack3Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -502,9 +749,9 @@ public class FileZVI extends FileBase {
             numberWhite0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue0Array[numberWhite0Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -514,9 +761,9 @@ public class FileZVI extends FileBase {
             numberWhite1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue1Array[numberWhite1Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -526,9 +773,9 @@ public class FileZVI extends FileBase {
             numberWhite2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue2Array[numberWhite2Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -538,9 +785,9 @@ public class FileZVI extends FileBase {
             numberWhite3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue3Array[numberWhite3Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -555,9 +802,9 @@ public class FileZVI extends FileBase {
             numberAcqTime0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime0[numberAcqTime0Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -567,9 +814,9 @@ public class FileZVI extends FileBase {
             numberAcqTime1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime1[numberAcqTime1Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -579,9 +826,9 @@ public class FileZVI extends FileBase {
             numberAcqTime2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime2[numberAcqTime2Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -591,9 +838,9 @@ public class FileZVI extends FileBase {
             numberAcqTime3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime3[numberAcqTime3Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -608,9 +855,9 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 0) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch0) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime0[numberImageRelativeTime0Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -620,9 +867,9 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 1) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch1) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime1[numberImageRelativeTime1Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -632,9 +879,9 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 2) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch2) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime2[numberImageRelativeTime2Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -644,9 +891,9 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 3) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch3) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime3[numberImageRelativeTime3Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -788,7 +1035,7 @@ public class FileZVI extends FileBase {
                                 bytesRead += Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 bytesToRead -= Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 presentSector = sat[presentSector];
-                                while (bytesToRead > 0) {
+                                while ((bytesToRead > 0) && (presentSector >= 0)) {
                                     if (add128) {
                                         raFile.seek((presentSector+1)*sectorSize + 128);
                                     }
@@ -960,6 +1207,42 @@ public class FileZVI extends FileBase {
                     for (z = 0; z < zDim; z++) {
                         index = z + t * zDim;
                         ((FileInfoZVI)fInfo[index]).setRelFocusPosition2(processedRelFocusPosition2Array[z]);
+                    }
+                }
+            }
+            
+            if (numberStagePositionXs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setStagePositionX(processedStagePositionXArray[z]);
+                    }
+                }
+            }
+            
+            if (numberStagePositionYs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setStagePositionY(processedStagePositionYArray[z]);
+                    }
+                }
+            }
+            
+            if (numberOriginalStagePositionXs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setOriginalStagePositionX(processedOriginalStagePositionXArray[z]);
+                    }
+                }
+            }
+            
+            if (numberOriginalStagePositionYs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setOriginalStagePositionY(processedOriginalStagePositionYArray[z]);
                     }
                 }
             }
@@ -1169,23 +1452,97 @@ public class FileZVI extends FileBase {
         short shortValue;
         long tmpLong;
         boolean booleanValue = false;
+        boolean readImagePixels;
         int measureUnits;
-        double exposureTime = Double.NaN;;
+        double exposureTime = Double.NaN;
+        boolean haveExposureTime0 = false;
+        boolean haveExposureTime1 = false;
+        boolean haveExposureTime2 = false;
+        boolean haveExposureTime3 = false;
+        int exposureTimeChannel0 = Integer.MIN_VALUE;
+        int exposureTimeChannel1 = Integer.MIN_VALUE;
+        int exposureTimeChannel2 = Integer.MIN_VALUE;
+        int exposureTimeChannel3 = Integer.MIN_VALUE;
         int apotomeGridPosition = Integer.MIN_VALUE;
+        String channelName = null;
+        boolean haveChannelName0 = false;
+        boolean haveChannelName1 = false;
+        boolean haveChannelName2 = false;
+        boolean haveChannelName3 = false;
+        int channelNameChannel0 = Integer.MIN_VALUE;
+        int channelNameChannel1 = Integer.MIN_VALUE;
+        int channelNameChannel2 = Integer.MIN_VALUE;
+        int channelNameChannel3 = Integer.MIN_VALUE;
+        boolean haveApotomeGridPosition0 = false;
+        boolean haveApotomeGridPosition1 = false;
+        boolean haveApotomeGridPosition2 = false;
+        boolean haveApotomeGridPosition3 = false;
+        int apotomeGridPositionChannel0 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel1 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel2 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel3 = Integer.MIN_VALUE;
         double focusPosition = Double.NaN;
         double relFocusPosition1 = Double.NaN;
         double relFocusPosition2 = Double.NaN;
+        double stagePositionX = Double.NaN;
+        double stagePositionY = Double.NaN;
+        double originalStagePositionX = Double.NaN;
+        double originalStagePositionY = Double.NaN;
         int zValue = Integer.MIN_VALUE;
         int cValue = Integer.MIN_VALUE;
         int tValue = Integer.MIN_VALUE;
+        int tileValue = Integer.MIN_VALUE;
+        int zTileValue;
+        boolean haveFirstZValue = false;
+        boolean haveSecondZValue = false;
+        boolean haveFirstTileValue = false;
+        boolean haveSecondTileValue = false;
+        // If true use Z value, if false use tile value
+        boolean useZValue = true;
+        int firstZValue = Integer.MIN_VALUE;
+        int firstTileValue = Integer.MIN_VALUE;
         double blackValue = Double.NaN;
         double whiteValue = Double.NaN;
         int reflectorPosition = Integer.MIN_VALUE;
+        boolean haveReflectorPosition0 = false;
+        boolean haveReflectorPosition1 = false;
+        boolean haveReflectorPosition2 = false;
+        boolean haveReflectorPosition3 = false;
+        int reflectorPositionChannel0 = Integer.MIN_VALUE;
+        int reflectorPositionChannel1 = Integer.MIN_VALUE;
+        int reflectorPositionChannel2 = Integer.MIN_VALUE;
+        int reflectorPositionChannel3 = Integer.MIN_VALUE;
         int multichannelColor = Integer.MIN_VALUE;
+        boolean haveMultichannelColor0 = false;
+        boolean haveMultichannelColor1 = false;
+        boolean haveMultichannelColor2 = false;
+        boolean haveMultichannelColor3 = false;
+        int multichannelColorChannel0 = Integer.MIN_VALUE;
+        int multichannelColorChannel1 = Integer.MIN_VALUE;
+        int multichannelColorChannel2 = Integer.MIN_VALUE;
+        int multichannelColorChannel3 = Integer.MIN_VALUE;
         int excitationWavelength = Integer.MIN_VALUE;
+        boolean haveExcitationWavelength0 = false;
+        boolean haveExcitationWavelength1 = false;
+        boolean haveExcitationWavelength2 = false;
+        boolean haveExcitationWavelength3 = false;
+        int excitationWavelengthChannel0 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel1 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel2 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel3 = Integer.MIN_VALUE;
         int emissionWavelength = Integer.MIN_VALUE;
+        boolean haveEmissionWavelength0 = false;
+        boolean haveEmissionWavelength1 = false;
+        boolean haveEmissionWavelength2 = false;
+        boolean haveEmissionWavelength3 = false;
+        int emissionWavelengthChannel0 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel1 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel2 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel3 = Integer.MIN_VALUE;
         double acqTime = Double.NaN;
         double relTime = Double.NaN;
+        String lastElementName = null;
+        String twoAgoElementName = null;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -1613,7 +1970,10 @@ public class FileZVI extends FileBase {
             raFile.seek(directoryStart);
             b = new byte[elementNameBytes];
             raFile.readFully(b);
-            String lastElementName = elementName;
+            if (lastElementName != null) {
+                twoAgoElementName = new String(lastElementName);
+            }
+            lastElementName = new String(elementName);
             elementName = new String(b, "UTF-16LE").trim();
             Preferences.debug("The element name is " + elementName + "\n", Preferences.DEBUG_FILEIO);
             // Read the type of object
@@ -1730,11 +2090,26 @@ public class FileZVI extends FileBase {
             
             directoryStart = directoryStart + 128;
             
-            if ((lastElementName.equals("Image")) &&
-                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+            if ((((lastElementName.equals("Image")) &&
+                    (elementName.equals("Contents"))) ||
+                 ((twoAgoElementName != null ) && (twoAgoElementName.equals("Image")) &&
+                  (lastElementName.substring(0,4).equals("Item")) && (elementName.equals("Contents"))))
+                 && (objectType[0] == 2) && (streamSize > 0)) {
                 Preferences.debug("Reading the contents stream of the container image\n", Preferences.DEBUG_FILEIO);
+                if  ((twoAgoElementName != null ) && (twoAgoElementName.equals("Image")) &&
+                        (lastElementName.substring(0,4).equals("Item")) && (elementName.equals("Contents"))) {
+                            readImagePixels = true;    
+                        }
+                else {
+                    readImagePixels = false;
+                }
                       
+                if (readImagePixels) {
+                    startSectorArray = new int[100];
+                    startSectorArray[ap] = startSect;    
+                }
                 bytesToRead = (int)streamSize;
+                Preferences.debug("bytesToRead = " + bytesToRead + "\n", Preferences.DEBUG_FILEIO);
                 b = new byte[bytesToRead];
                 bytesRead = 0;
                     if (streamSize < miniSectorCutoff) {
@@ -1819,7 +2194,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        String typeDescription = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Type description = " + typeDescription + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -1841,7 +2216,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String fileName = new String(b, "UTF-16LE").trim();
+                        String fileName = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Name of zvi file = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -1955,12 +2330,21 @@ public class FileZVI extends FileBase {
                     }
                     imageCount = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    backupZDim = imageCount;
+                    if (imageCount == 0) {
+                        Preferences.debug("Original total number of image item storages = 0.  Setting to 100\n",
+                                          Preferences.DEBUG_FILEIO);
+                        imageCount = 100;
+                    }
                     bp += 4;
                     Preferences.debug("Total number of image item storages = " + imageCount + "\n", Preferences.DEBUG_FILEIO);
                     zArray = new int[imageCount];
                     cArray = new int[imageCount];
                     tArray = new int[imageCount];
-                    startSectorArray = new int[imageCount];
+                    positionArray = new int[imageCount];
+                    if (!readImagePixels) {
+                        startSectorArray = new int[imageCount];
+                    }
                     offsetArray = new int[imageCount];
                     imageFocusPositionArray = new double[imageCount+10];
                     imageZArray = new int[imageCount+10];
@@ -1984,6 +2368,14 @@ public class FileZVI extends FileBase {
                     imageC7Array = new int[imageCount+10];
                     imageT7Array = new int[imageCount+10];
                     imageRelativeTime = new double[imageCount+10];
+                    imageStagePositionXArray = new double[imageCount+10];
+                    imageZXArray = new int[imageCount+10];
+                    imageStagePositionYArray = new double[imageCount+10];
+                    imageZYArray = new int[imageCount+10];
+                    imageOriginalStagePositionXArray = new double[imageCount+10];
+                    imageOriginalZXArray = new int[imageCount+10];
+                    imageOriginalStagePositionYArray = new double[imageCount+10];
+                    imageOriginalZYArray = new int[imageCount+10];
                     for (i = 0; i < imageCount+10; i++) {
                         imageFocusPositionArray[i] = Double.NaN;
                         imageZArray[i] = Integer.MIN_VALUE;
@@ -2007,6 +2399,14 @@ public class FileZVI extends FileBase {
                         imageC7Array[i] = Integer.MIN_VALUE;
                         imageT7Array[i] = Integer.MIN_VALUE;
                         imageRelativeTime[i] = Double.NaN;
+                        imageStagePositionXArray[i] = Double.NaN;
+                        imageZXArray[i] = Integer.MIN_VALUE;
+                        imageStagePositionYArray[i] = Double.NaN;
+                        imageZYArray[i] = Integer.MIN_VALUE;
+                        imageOriginalStagePositionXArray[i] = Double.NaN;
+                        imageOriginalZXArray[i] = Integer.MIN_VALUE;
+                        imageOriginalStagePositionYArray[i] = Double.NaN;
+                        imageOriginalZYArray[i] = Integer.MIN_VALUE;
                     }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
@@ -2026,135 +2426,186 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Valid bits per pixel in raw image data = " + imageValidBitsPerPixel + "\n", 
                     		Preferences.DEBUG_FILEIO);
                     //fileInfo.setValidBitsPerPixel(imageValidBitsPerPixel);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_BLOB) {
-                        Preferences.debug("Expected VT_BLOB data type for {m_PluginCLSID}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {m_PluginCLSID}\n", 
+                    if (readImagePixels) {
+                        bp = 296;
+                        // Read the image header at 296 bytes from the stream beginning
+                        // Don't read dType any more
+                        Preferences.debug("Reading the image header\n", Preferences.DEBUG_FILEIO);
+                        // Stream version ID
+                        // 2 byte minor 0x2000 followed by 2 byte major 0x1000
+                        minorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        Preferences.debug("The minor version = " + minorVersion + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("The current minor version is 8192\n", Preferences.DEBUG_FILEIO);
+                        majorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        Preferences.debug("The major version = " + majorVersion + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("The current major version is 4096\n", Preferences.DEBUG_FILEIO);
+                        width = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Width = " + width + "\n", Preferences.DEBUG_FILEIO);
+                        height = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Height = " + height + "\n", Preferences.DEBUG_FILEIO);
+                        depth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Unused depth = " + depth + "\n", Preferences.DEBUG_FILEIO);
+                        pixelWidth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Size in bytes of an image pixel = " + pixelWidth + "\n", Preferences.DEBUG_FILEIO);
+                        pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        displayPixelFormat(pixelFormat);
+                        // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
+                        validBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Valid bits per pixel in raw image data = " + validBitsPerPixel + "\n", 
+                                Preferences.DEBUG_FILEIO);
+                        // Raw bytes for image slice are stored here
+                        // Store the offset into the starting sector
+                        offsetArray[ap++] = bp;
+                        break;    
+                    } // readImgagePixels
+                    else { //  not readImagePixels
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_BLOB) {
+                            Preferences.debug("Expected VT_BLOB data type for {m_PluginCLSID}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {m_PluginCLSID}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("The length of the {m_PluginCLSID} binary data = " + pluginLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("The length of the {m_PluginCLSID} binary data = " + pluginLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    bp += pluginLength;
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_BLOB) {
-                        Preferences.debug("Expected VT_BLOB data type for {Others}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {Others}\n", 
+                        bp += pluginLength;
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_BLOB) {
+                            Preferences.debug("Expected VT_BLOB data type for {Others}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {Others}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("The length of the {Others} binary data = " + othersLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("The length of the {Others} binary data = " + othersLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    bp += othersLength;
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Layers}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Layers}\n", 
+                        bp += othersLength;
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Layers}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Layers}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int layersLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Layers stored object = " + layersLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int layersLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Layers stored object = " + layersLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    byte obj[] = new byte[layersLength];
-                    for (i = 0; i < layersLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    String str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the vector overlay layers = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Tags}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Tags}\n", 
+                        byte obj[] = new byte[layersLength];
+                        for (i = 0; i < layersLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        String str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the vector overlay layers = " + str + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int tagsLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Tags stored object = " + tagsLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[tagsLength];
-                    for (i = 0; i < tagsLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the Tags information = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Scaling}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Scaling}\n", 
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Tags}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Tags}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int tagsLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Tags stored object = " + tagsLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int scalingLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Scaling stored object = " + scalingLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[scalingLength];
-                    for (i = 0; i < scalingLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the scaling information = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {RootFloder}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {RootFolder}\n", 
+                        obj = new byte[tagsLength];
+                        for (i = 0; i < tagsLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the Tags information = " + str + "\n", 
                         		Preferences.DEBUG_FILEIO);
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Scaling}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Scaling}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int scalingLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Scaling stored object = " + scalingLength + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        obj = new byte[scalingLength];
+                        for (i = 0; i < scalingLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the scaling information = " + str + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {RootFloder}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {RootFolder}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int rootFolderLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in RootFolder stored object = " + rootFolderLength + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        obj = new byte[rootFolderLength];
+                        for (i = 0; i < rootFolderLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing a ZiFolder object with advanced information = " 
+                                          + str + "\n", Preferences.DEBUG_FILEIO);
                         break;
-                    }
-                    int rootFolderLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in RootFolder stored object = " + rootFolderLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[rootFolderLength];
-                    for (i = 0; i < rootFolderLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing a ZiFolder object with advanced information = " 
-                                      + str + "\n", Preferences.DEBUG_FILEIO);
-                    break;
+                    } // else not readImagePixels
                 } // while (true)
             } // if ((lastElementName.equals("Image")) &&
             
             if ((lastElementName.length() > 4) && (lastElementName.substring(0,4).equals("Item")) &&
-                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize >= sliceBytes)) {
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize >= sliceBytes) &&
+                    ((twoAgoElementName == null) || (!twoAgoElementName.equals("Image")))) {
+                
                 Preferences.debug("Reading Contents of " + lastElementName + "\n", Preferences.DEBUG_FILEIO);
                 startSectorArray[ap] = startSect;
                 bytesToRead = (int)streamSize;
+                Preferences.debug("bytesToRead = " + bytesToRead + "\n", Preferences.DEBUG_FILEIO);
                 b = new byte[bytesToRead];
                 bytesRead = 0;
                     if (streamSize < miniSectorCutoff) {
@@ -2242,7 +2693,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        String typeDescription = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Type description = " + typeDescription + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -2264,7 +2715,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String fileName = new String(b, "UTF-16LE").trim();
+                        String fileName = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Name of zvi file = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -2435,10 +2886,10 @@ public class FileZVI extends FileBase {
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
                     Preferences.debug("Scene ID = " + sceneID + "\n", Preferences.DEBUG_FILEIO);
-                    int positionID = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                    positionArray[ap] = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
-                    Preferences.debug("Position ID = " + positionID + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Position ID = " + positionArray[ap] + "\n", Preferences.DEBUG_FILEIO);
                     int A = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
@@ -2731,9 +3182,14 @@ public class FileZVI extends FileBase {
                    focusPosition = Double.NaN;
                    relFocusPosition1 = Double.NaN;
                    relFocusPosition2 = Double.NaN;
+                   stagePositionX = Double.NaN;
+                   stagePositionY = Double.NaN;
+                   originalStagePositionX = Double.NaN;
+                   originalStagePositionY = Double.NaN;
                    zValue = Integer.MIN_VALUE;
                    cValue = Integer.MIN_VALUE;
                    tValue = Integer.MIN_VALUE;
+                   tileValue = Integer.MIN_VALUE;
                    blackValue = Double.NaN;
                    whiteValue = Double.NaN;
                    reflectorPosition = Integer.MIN_VALUE;
@@ -2742,6 +3198,7 @@ public class FileZVI extends FileBase {
                    emissionWavelength = Integer.MIN_VALUE;
                    acqTime = Double.NaN;
                    relTime = Double.NaN;
+                   channelName = null;
                     for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
                         short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 2;
@@ -2792,8 +3249,11 @@ public class FileZVI extends FileBase {
                                 for (i = 0; i < stringBytes; i++) {
                                     bf[i] = b[bp++];
                                 }
-                                stringValue = new String(b, "UTF-16LE").trim();
-                                //Preferences.debug("Value = " + valueString + "\n", Preferences.DEBUG_FILEIO);
+                                stringValue = new String(bf, "UTF-16LE").trim();
+                                if (stringValue.length() == 0) {
+                                    stringValue = null;
+                                }
+                                Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case VT_STORED_OBJECT:
                                 Preferences.debug("Data type of value is VT_STORED_OBJECT\n", Preferences.DEBUG_FILEIO);
@@ -2804,8 +3264,8 @@ public class FileZVI extends FileBase {
                                 for (i = 0; i < stringBytes; i++) {
                                     bf[i] = b[bp++];
                                 }
-                                stringValue = new String(b, "UTF-16LE").trim();
-                                //Preferences.debug("Value = " + valueString + "\n", Preferences.DEBUG_FILEIO);
+                                stringValue = new String(bf, "UTF-16LE").trim();
+                                //Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case VT_DISPATCH:
                                 Preferences.debug("Data type of value is VT_DISPATCH\n", Preferences.DEBUG_FILEIO);
@@ -2960,6 +3420,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 530:
                                 Preferences.debug("tagID = Document subtype\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDocumentSubtype(stringValue);
+                                }
                                 break;
                             case 531:
                                 Preferences.debug("tagID = Acquisition bit depth\n", Preferences.DEBUG_FILEIO);
@@ -3062,6 +3525,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1027:
                                 Preferences.debug("tagID = Camera bit depth\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraBitDepth(intValue);
+                                }
                                 break;
                             case 1029:
                                 Preferences.debug("tagID = Mono reference low\n", Preferences.DEBUG_FILEIO);
@@ -3092,6 +3558,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1042:
                                 Preferences.debug("tagID = Camera\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setCamera(stringValue);
+                                }
                                 break;
                             case 1044:
                                 Preferences.debug("tagID = Camera trigger signal type\n", Preferences.DEBUG_FILEIO);
@@ -3119,12 +3588,18 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1284:
                                 Preferences.debug("tagID = Channel name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    channelName = stringValue;
+                                }
                                 break;
                             case 1536:
                                 Preferences.debug("tagID = Document information group\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1537:
                                 Preferences.debug("tagID = Title\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setTitle(stringValue);
+                                }
                                 break;
                             case 1538:
                                 Preferences.debug("tagID = Author\n", Preferences.DEBUG_FILEIO);
@@ -3134,6 +3609,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1540:
                                 Preferences.debug("tagID = Comments\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setComments(stringValue);
+                                }
                                 break;
                             case 1541:
                                 Preferences.debug("tagID = Sample ID\n", Preferences.DEBUG_FILEIO);
@@ -3149,18 +3627,30 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1545:
                                 Preferences.debug("tagID = File link\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFileLink(stringValue);
+                                }
                                 break;
                             case 1546:
                                 Preferences.debug("tagID = Document type\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDocumentType(stringValue);
+                                }
                                 break;
                             case 1547:
                                 Preferences.debug("tagID = Storage media\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1548:
                                 Preferences.debug("tagID = File ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFileID(stringValue);
+                                }
                                 break;
                             case 1549:
                                 Preferences.debug("tagID = Reference\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReference(stringValue);
+                                }
                                 break;
                             case 1550:
                                 Preferences.debug("tagID = File date\n", Preferences.DEBUG_FILEIO);
@@ -3176,6 +3666,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1553:
                                 Preferences.debug("tagID = Filename\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFilename(stringValue);
+                                }
                                 break;
                             case 1554:
                                 Preferences.debug("tagID = File attributes\n", Preferences.DEBUG_FILEIO);
@@ -3188,48 +3681,90 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1794:
                                 Preferences.debug("tagID = Last modified by\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setLastModifiedBy(stringValue);
+                                }
                                 break;
                             case 1795:
                                 Preferences.debug("tagID = User company\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCompany(stringValue);
+                                }
                                 break;
                             case 1796:
                                 Preferences.debug("tagID = User company logo\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCompanyLogo(stringValue);
+                                }
                                 break;
                             case 1797:
                                 Preferences.debug("tagID = Image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1800:
                                 Preferences.debug("tagID = User ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR){
+                                    fileInfo.setUserID(stringValue);
+                                }
                                 break;
                             case 1801:
                                 Preferences.debug("tagID = User name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserName(stringValue);
+                                }
                                 break;
                             case 1802:
                                 Preferences.debug("tagID = User city\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCity(stringValue);
+                                }
                                 break;
                             case 1803:
                                 Preferences.debug("tagID = User address\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserAddress(stringValue);
+                                }
                                 break;
                             case 1804:
                                 Preferences.debug("tagID = User country\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCountry(stringValue);
+                                }
                                 break;
                             case 1805:
                                 Preferences.debug("tagID = User phone\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserPhone(stringValue);
+                                }
                                 break;
                             case 1806:
                                 Preferences.debug("tagID = User fax\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserFax(stringValue);
+                                }
                                 break;
                             case 2049:
                                 Preferences.debug("tagID = Objective name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setObjectiveName(stringValue);
+                                }
                                 break;
                             case 2050:
                                 Preferences.debug("tagID = Optovar\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setOptovar(doubleValue);
+                                }
                                 break;
                             case 2051:
                                 Preferences.debug("tagID = Reflector\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReflector(stringValue);
+                                }
                                 break;
                             case 2052:
                                 Preferences.debug("tagID = Condenser contrast\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCondenserContrast(intValue);
+                                }
                                 break;
                             case 2053:
                                 Preferences.debug("tagID = Transmitted light filter 1\n", Preferences.DEBUG_FILEIO);
@@ -3257,6 +3792,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2062:
                                 Preferences.debug("tagID = Condenser N.A.\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setCondenserNumericalAperture(doubleValue);
+                                }
                                 break;
                             case 2063:
                                 Preferences.debug("tagID = Light path\n", Preferences.DEBUG_FILEIO);
@@ -3297,17 +3835,22 @@ public class FileZVI extends FileBase {
                             case 2073:
                                 Preferences.debug("tagID = Stage position X\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_R8) {
-                                    fileInfo.setStagePositionX(doubleValue);
+                                    // Different value for every z slice
+                                    stagePositionX = doubleValue;
                                 }
                                 break;
                             case 2074:
                                 Preferences.debug("tagID = Stage position Y\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_R8) {
-                                    fileInfo.setStagePositionY(doubleValue);
+                                    // Different value for every z slice
+                                    stagePositionY = doubleValue;
                                 }
                                 break;
                             case 2075:
                                 Preferences.debug("tagID = Microscope name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setMicroscopeName(stringValue);
+                                }
                                 break;
                             case 2076:
                                 Preferences.debug("tagID = Objective magnification\n", Preferences.DEBUG_FILEIO);
@@ -3329,6 +3872,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2079:
                                 Preferences.debug("tagID = External shutter 1\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setExternalShutter1(intValue);
+                                }
                                 break;
                             case 2080:
                                 Preferences.debug("tagID = External shutter 2\n", Preferences.DEBUG_FILEIO);
@@ -3488,6 +4034,14 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2133:
                                 Preferences.debug("tagID = Stage calibrated\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setStageCalibrated("Stage is calibrated");
+                                    }
+                                    else {
+                                        fileInfo.setStageCalibrated("Stage is not calibrated");
+                                    }
+                                }
                                 break;
                             case 2134:
                                 Preferences.debug("tagID = Stage power\n", Preferences.DEBUG_FILEIO);
@@ -3788,9 +4342,15 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2261:
                                 Preferences.debug("tagID = Objective ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setObjectiveID(stringValue);
+                                }
                                 break;
                             case 2262:
                                 Preferences.debug("tagID = Reflector ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReflectorID(stringValue);
+                                }
                                 break;
                             case 2307:
                                 Preferences.debug("tagID = Camera frame start left\n", Preferences.DEBUG_FILEIO);
@@ -3987,6 +4547,13 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Image index Z\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_I4) {
                                     zValue = intValue;
+                                    if (haveFirstZValue && (!haveSecondZValue) && (zValue != firstZValue)) {
+                                        haveSecondZValue = true;
+                                    }
+                                    if (!haveFirstZValue) {
+                                        haveFirstZValue = true;
+                                        firstZValue = zValue;
+                                    }
                                 }
                                 break;
                             case 2820:
@@ -4003,6 +4570,16 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2822:
                                 Preferences.debug("tagID = Image tile index\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    tileValue = intValue;                       
+                                    if (haveFirstTileValue && (!haveSecondTileValue) && (tileValue != firstTileValue)) {
+                                        haveSecondTileValue = true;
+                                    }
+                                    if (!haveFirstTileValue) {
+                                        haveFirstTileValue = true;
+                                        firstTileValue = tileValue;
+                                    }
+                                }
                                 break;
                             case 2823:
                                 Preferences.debug("tagID = Image acquisition index\n", Preferences.DEBUG_FILEIO);
@@ -4038,10 +4615,18 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Image count S\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2841:
-                                Preferences.debug("tagiD = Original stage position X\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("tagID = Original stage position X\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    originalStagePositionX = doubleValue;
+                                }
                                 break;
                             case 2842:
                                 Preferences.debug("tagID = Original stage position Y\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    originalStagePositionY = doubleValue;
+                                }
                                 break;
                             case 3088:
                                 Preferences.debug("tagID = Layer draw flags\n", Preferences.DEBUG_FILEIO);
@@ -4297,6 +4882,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65602:
                                 Preferences.debug("tagID = Apotome grid name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeGridName(stringValue);
+                                }
                                 break;
                             case 65603:
                                 Preferences.debug("tagID = Apotome staining\n", Preferences.DEBUG_FILEIO);
@@ -4312,6 +4900,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65606:
                                 Preferences.debug("tagID = Apotome filter name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeFilterName(stringValue);
+                                }
                                 break;
                             case 65607:
                                 Preferences.debug("tagID = Apotome filter strength\n", Preferences.DEBUG_FILEIO);
@@ -4366,6 +4957,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65619:
                                 Preferences.debug("tagID = Device scaling name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDeviceScalingName(stringValue);
+                                }
                                 break;
                             case 65620:
                                 Preferences.debug("tagID = Camera shading is calculated\n", Preferences.DEBUG_FILEIO);
@@ -4427,8 +5021,353 @@ public class FileZVI extends FileBase {
                             case 65643:
                                 Preferences.debug("tagID = Deep view slider name\n", Preferences.DEBUG_FILEIO);
                                 break;
+                            case 65644:
+                                Preferences.debug("tagID = Roper Cam Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65646:
+                                Preferences.debug("tagID = Roper Cam Pixel Clock\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65647:
+                                Preferences.debug("tagID = Roper Cam Temperature\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65648:
+                                Preferences.debug("tagID = Camera Image Mem Unit Names\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65649:
+                                Preferences.debug("tagID = Apotome Cam Live Phase\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65650:
+                                Preferences.debug("tagID = Dual Axio Cam Algorithm Type\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65651:
+                                Preferences.debug("tagID = Apotome Cam Decay\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65652:
+                                Preferences.debug("tagID = Apotome Cam Epsilon\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65653:
+                                Preferences.debug("tagID = Axio Cam HSBuffer Number\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65654:
+                                Preferences.debug("tagID = Axio Cam HSFrame Time\n", Preferences.DEBUG_FILEIO);
+                                break;
                             case 65655:
-                                Preferences.debug("tagID = Deep view slider name\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("tagID = Axio Cam Analog Gain Enable\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamAnalogGainEnable(intValue);
+                                }
+                                break;
+                            case 65656:
+                                Preferences.debug("tagID = Axio Cam Analog Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65657:
+                                Preferences.debug("tagID = Apotome Cam Phase Angles\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeCamPhaseAngles(stringValue);
+                                }
+                                break;
+                            case 65658:
+                                Preferences.debug("tagID = Apotome Cam Image Format\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65659:
+                                Preferences.debug("tagID = Camera Shading Count\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65660:
+                                Preferences.debug("tagID = Camera Image Raw Size\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65661:
+                                Preferences.debug("tagID = Apotome Cam Burst Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65662:
+                                Preferences.debug("tagID = Apotome Cam Generic Camera Name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeCamGenericCameraName(stringValue);
+                                }
+                                break;
+                            case 65663:
+                                Preferences.debug("tagID = Acquisition Device\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65664:
+                                Preferences.debug("tagID = Apotome Grating Period Measured\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65665:
+                                Preferences.debug("tagID = Camera Lut Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65666:
+                                Preferences.debug("tagID = Axio Cam Saturation\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setAxioCamSaturation(doubleValue);
+                                }
+                                break;
+                            case 65667:
+                                Preferences.debug("tagID = Camera Color Correction\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65668:
+                                Preferences.debug("tagID = Camera Color Processing Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65669:
+                                Preferences.debug("tagID = Camera Analog Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65670:
+                                Preferences.debug("tagID = Camera White Balance Target PosX\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65671:
+                                Preferences.debug("tagID = Camera White Balance Target PosY\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65672:
+                                Preferences.debug("tagID = Camera Shutter Signal Port\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65673:
+                                Preferences.debug("tagID = Axio Cam IC Saturation\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65674:
+                                Preferences.debug("tagID = Apotome Cam Cam Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65675:
+                                Preferences.debug("tagID = Apotome Cam Cam Calib Value\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65676:
+                                Preferences.debug("tagID = Apotome Cam Admin Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65677:
+                                Preferences.debug("tagID = Apotome Cam Is Admin\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65678:
+                                Preferences.debug("tagID = Apotome Cam Pw\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65679:
+                                Preferences.debug("tagID = Apotome Cam Admin Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65680:
+                                Preferences.debug("tagID = Camera Shutter Live Enable\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraShutterLiveEnable(intValue);
+                                }
+                                break;
+                            case 65681:
+                                Preferences.debug("tagID = Camera Exposure Time Auto Live Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65682:
+                                Preferences.debug("tagID = Camera EM Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65683:
+                                Preferences.debug("tagID = Apotome Cam Hardware Version\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65684:
+                                Preferences.debug("tagID = Apotome Cam Grid Position\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65685:
+                                Preferences.debug("tagID = Apotome Cam Auto Grid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65703:
+                                Preferences.debug("tagID = Orca Cam Number Of Scan Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65704:
+                                Preferences.debug("tagID = Orca Cam Scan Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65705:
+                                Preferences.debug("tagID = Orca Cam EMCCD Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65706:
+                                Preferences.debug("tagID = Orca Cam EMCCD Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65707:
+                                Preferences.debug("tagID = Orca Cam Fast Acq\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65708:
+                                Preferences.debug("tagID = Orca Cam Min Exposure Time\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65709:
+                                Preferences.debug("tagID = Orca Cam Number Of Photon Imaging Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65710:
+                                Preferences.debug("tagID = Orca Cam Photon Imaging Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65711:
+                                Preferences.debug("tagID = Orca Cam Direct EM Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65712:
+                                Preferences.debug("tagID = Orca Cam Direct EM Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65713:
+                                Preferences.debug("tagID = Orca Cam EM Gain Protection Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65714:
+                                Preferences.debug("tagID = Orca Cam EM Gain Protection\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65716:
+                                Preferences.debug("tagID = Camera EM Gain Minimum\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65717:
+                                Preferences.debug("tagID = Camera EM Gain Maximum\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65718:
+                                Preferences.debug("tagID = Camera EM Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65719:
+                                Preferences.debug("tagID = Camera EM Gain Enabled\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65736:
+                                Preferences.debug("tagID = Yokogawa Synchronize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65737:
+                                Preferences.debug("tagID = Yokogawa Is In Sync\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65738:
+                                Preferences.debug("tagID = Yokogawa Status\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65739:
+                                Preferences.debug("tagID = Yokogawa Keep In Sync\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65740:
+                                Preferences.debug("tagID = Yokogawa Is Busy\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65741:
+                                Preferences.debug("tagID = Yokogawa Stop Disc\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65742:
+                                Preferences.debug("tagID = Yokogawa Cam Exposure Time\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65743:
+                                Preferences.debug("tagID = Yokogawa Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65744:
+                                Preferences.debug("tagID = Yokogawa Depth\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65745:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved12\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65746:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved13\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65747:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved14\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65748:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved15\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65749:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved16\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65750:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved17\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65751:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved18\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65752:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved19\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65753:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved20\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65754:
+                                Preferences.debug("tagID = Aurox Cam Status\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65755:
+                                Preferences.debug("tagID = Aurox Cam Input Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65756:
+                                Preferences.debug("tagID = Aurox Cam Live Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65757:
+                                Preferences.debug("tagID = Aurox Cam Calibration Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65758:
+                                Preferences.debug("tagID = Aurox Cam Generic Camera Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65759:
+                                Preferences.debug("tagID = Aurox Cam Button Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65760:
+                                Preferences.debug("tagID = Aurox Cam Depth\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65761:
+                                Preferences.debug("tagID = Aurox Cam Center\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65762:
+                                Preferences.debug("tagID = Aurox Cam Factor\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65763:
+                                Preferences.debug("tagID = Aurox Cam Create Registration\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65764:
+                                Preferences.debug("tagID = Aurox Cam Regoistration Valid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65765:
+                                Preferences.debug("tagID = Aurox Cam Registration Error\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65766:
+                                Preferences.debug("tagID = Aurox Cam Shading Image Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65767:
+                                Preferences.debug("tagID = Aurox Cam Shading Image Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65768:
+                                Preferences.debug("tagID = Aurox Cam Quality\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65769:
+                                Preferences.debug("tagID = Aurox Cam Cut Left\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65770:
+                                Preferences.debug("tagID = Aurox Cam Cut Top\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65771:
+                                Preferences.debug("tagID = Aurox Cam Cut Right\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65772:
+                                Preferences.debug("tagID = Aurox Cam Cut Bottom\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65773:
+                                Preferences.debug("tagID = Aurox Cam Mean\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65774:
+                                Preferences.debug("tagID = Aurox Cam Normalize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65775:
+                                Preferences.debug("tagID = Aurox Cam Use Shading\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65776:
+                                Preferences.debug("tagID = Aurox Cam Shading Valid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65777:
+                                Preferences.debug("tagID = Aurox Cam Notification\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65778:
+                                Preferences.debug("tagID = Aurox Cam Calibration ID\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65779:
+                                Preferences.debug("tagID = Aurox Cam Simple Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65780:
+                                Preferences.debug("tagID = Aurox Cam Calibration Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65781:
+                                Preferences.debug("tagID = Aurox Cam CFactor\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65782:
+                                Preferences.debug("tagID = Aurox Cam Registration Center\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65783:
+                                Preferences.debug("tagID = Aurox Cam Calibration ID2\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65784:
+                                Preferences.debug("tagID = Aurox Cam Averaging\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65785:
+                                Preferences.debug("tagID = Aurox Cam Unique ID\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65786:
+                                Preferences.debug("tagID = Aurox Cam Auto Normalize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65787:
+                                Preferences.debug("tagID = Aurox Cam Reserved3\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65788:
+                                Preferences.debug("tagID = Aurox Cam Reserved4\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65789:
+                                Preferences.debug("tagID = Aurox Cam Reserved5\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 5439491:
                                 Preferences.debug("tag ID = Acquisition software\n", Preferences.DEBUG_FILEIO);
@@ -4472,215 +5411,467 @@ public class FileZVI extends FileBase {
                     } // for (i = 0; i < tokenCount  && bp < b.length - 13; i++)
                     
                     if (!Double.isNaN(exposureTime)) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setExposureTime0(exposureTime);
-                                break;
-                            case 1:
-                                fileInfo.setExposureTime1(exposureTime);
-                                break;
-                            case 2:
-                                fileInfo.setExposureTime2(exposureTime);
-                                break;
-                            case 3:
-                                fileInfo.setExposureTime3(exposureTime);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveExposureTime2 && (!haveExposureTime3) && (cValue != exposureTimeChannel0) &&
+                                (cValue != exposureTimeChannel1) && (cValue != exposureTimeChannel2)) {
+                            haveExposureTime3 = true;
+                            exposureTimeChannel3 = cValue;
+                            fileInfo.setExposureTime3(exposureTimeChannel3, exposureTime);
+                        }
+                        else if (haveExposureTime1 && (!haveExposureTime2) && (cValue != exposureTimeChannel0) &&
+                                (cValue != exposureTimeChannel1)) {
+                            haveExposureTime2 = true;
+                            exposureTimeChannel2 = cValue;
+                            fileInfo.setExposureTime2(exposureTimeChannel2, exposureTime);
+                        }
+                        else if (haveExposureTime0 && (!haveExposureTime1) && (cValue != exposureTimeChannel0)) {
+                            haveExposureTime1 = true;
+                            exposureTimeChannel1 = cValue;
+                            fileInfo.setExposureTime1(exposureTimeChannel1, exposureTime);
+                        }
+                        else if (!haveExposureTime0) {
+                            haveExposureTime0 = true;
+                            exposureTimeChannel0 = cValue;
+                            fileInfo.setExposureTime0(exposureTimeChannel0, exposureTime);
+                        }
                     } // if (!Double.isNaN(exposureTime)
                     
+                    if (channelName != null) {
+                        if (haveChannelName2 && (!haveChannelName3) && (cValue != channelNameChannel0) &&
+                                (cValue != channelNameChannel1) && (cValue != channelNameChannel2)) {
+                            haveChannelName3 = true;
+                            channelNameChannel3 = cValue;
+                            fileInfo.setChannelName3(channelNameChannel3, channelName);
+                        }
+                        else if (haveChannelName1 && (!haveChannelName2) && (cValue != channelNameChannel0) &&
+                                (cValue != channelNameChannel1)) {
+                            haveChannelName2 = true;
+                            channelNameChannel2 = cValue;
+                            fileInfo.setChannelName2(channelNameChannel2, channelName);
+                        }
+                        else if (haveChannelName0 && (!haveChannelName1) && (cValue != channelNameChannel0)) {
+                            haveChannelName1 = true;
+                            channelNameChannel1 = cValue;
+                            fileInfo.setChannelName1(channelNameChannel1, channelName);
+                        }
+                        else if (!haveChannelName0) {
+                            haveChannelName0 = true;
+                            channelNameChannel0 = cValue;
+                            fileInfo.setChannelName0(channelNameChannel0, channelName);
+                        }
+                    } // if (channelName != null)
+                    
                     if (apotomeGridPosition != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setApotomeGridPosition0(apotomeGridPosition);
-                                break;
-                            case 1:
-                                fileInfo.setApotomeGridPosition1(apotomeGridPosition);
-                                break;
-                            case 2:
-                                fileInfo.setApotomeGridPosition2(apotomeGridPosition);
-                                break;
-                            case 3:
-                                fileInfo.setApotomeGridPosition3(apotomeGridPosition);
-                                break;
-                            default:
-                        } // switch(cValue)
-                    } // if (apotomeGridPosition >= 0)
+                        if (haveApotomeGridPosition2 && (!haveApotomeGridPosition3) && (cValue != apotomeGridPositionChannel0) &&
+                                (cValue != apotomeGridPositionChannel1) && (cValue != apotomeGridPositionChannel2)) {
+                            haveApotomeGridPosition3 = true;
+                            apotomeGridPositionChannel3 = cValue;
+                            fileInfo.setApotomeGridPosition3(apotomeGridPositionChannel3, apotomeGridPosition);
+                        }
+                        else if (haveApotomeGridPosition1 && (!haveApotomeGridPosition2) && (cValue != apotomeGridPositionChannel0) &&
+                                (cValue != apotomeGridPositionChannel1)) {
+                            haveApotomeGridPosition2 = true;
+                            apotomeGridPositionChannel2 = cValue;
+                            fileInfo.setApotomeGridPosition2(apotomeGridPositionChannel2, apotomeGridPosition);
+                        }
+                        else if (haveApotomeGridPosition0 && (!haveApotomeGridPosition1) && (cValue != apotomeGridPositionChannel0)) {
+                            haveApotomeGridPosition1 = true;
+                            apotomeGridPositionChannel1 = cValue;
+                            fileInfo.setApotomeGridPosition1(apotomeGridPositionChannel1, apotomeGridPosition);
+                        }
+                        else if (!haveApotomeGridPosition0) {
+                            haveApotomeGridPosition0 = true;
+                            apotomeGridPositionChannel0 = cValue;
+                            fileInfo.setApotomeGridPosition0(apotomeGridPositionChannel0, apotomeGridPosition);
+                        }
+                    } // if (apotomeGridPosition != Integer.MIN_VALUE)
                     
                     if (excitationWavelength != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setExcitationWavelength0(excitationWavelength);
-                                break;
-                            case 1:
-                                fileInfo.setExcitationWavelength1(excitationWavelength);
-                                break;
-                            case 2:
-                                fileInfo.setExcitationWavelength2(excitationWavelength);
-                                break;
-                            case 3:
-                                fileInfo.setExcitationWavelength3(excitationWavelength);
-                                break;
-                        } // switch(cValue)
+                        if (haveExcitationWavelength2 && (!haveExcitationWavelength3) && (cValue != excitationWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1) && (cValue != excitationWavelengthChannel2)) {
+                            haveExcitationWavelength3 = true;
+                            excitationWavelengthChannel3 = cValue;
+                            fileInfo.setExcitationWavelength3(excitationWavelengthChannel3, excitationWavelength);
+                        }
+                        else if (haveExcitationWavelength1 && (!haveExcitationWavelength2) && (cValue != excitationWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1)) {
+                            haveExcitationWavelength2 = true;
+                            excitationWavelengthChannel2 = cValue;
+                            fileInfo.setExcitationWavelength2(excitationWavelengthChannel2, excitationWavelength);
+                        }
+                        else if (haveExcitationWavelength0 && (!haveExcitationWavelength1) && (cValue != excitationWavelengthChannel0)) {
+                            haveExcitationWavelength1 = true;
+                            excitationWavelengthChannel1 = cValue;
+                            fileInfo.setExcitationWavelength1(excitationWavelengthChannel1, excitationWavelength);
+                        }
+                        else if (!haveExcitationWavelength0) {
+                            haveExcitationWavelength0 = true;
+                            excitationWavelengthChannel0 = cValue;
+                            fileInfo.setExcitationWavelength0(excitationWavelengthChannel0, excitationWavelength);
+                        }
                     } // if (excitationWavelength != Integer.MIN_VALUE)
                     
                     if (emissionWavelength != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setEmissionWavelength0(emissionWavelength);
-                                break;
-                            case 1:
-                                fileInfo.setEmissionWavelength1(emissionWavelength);
-                                break;
-                            case 2:
-                                fileInfo.setEmissionWavelength2(emissionWavelength);
-                                break;
-                            case 3:
-                                fileInfo.setEmissionWavelength3(emissionWavelength);
-                                break;
-                        } // switch(cValue)
+                        if (haveEmissionWavelength2 && (!haveEmissionWavelength3) && (cValue != emissionWavelengthChannel0) &&
+                                (cValue != emissionWavelengthChannel1) && (cValue != emissionWavelengthChannel2)) {
+                            haveEmissionWavelength3 = true;
+                            emissionWavelengthChannel3 = cValue;
+                            fileInfo.setEmissionWavelength3(emissionWavelengthChannel3, emissionWavelength);
+                        }
+                        else if (haveEmissionWavelength1 && (!haveEmissionWavelength2) && (cValue != emissionWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1)) {
+                            haveEmissionWavelength2 = true;
+                            emissionWavelengthChannel2 = cValue;
+                            fileInfo.setEmissionWavelength2(emissionWavelengthChannel2, emissionWavelength);
+                        }
+                        else if (haveEmissionWavelength0 && (!haveEmissionWavelength1) && (cValue != emissionWavelengthChannel0)) {
+                            haveEmissionWavelength1 = true;
+                            emissionWavelengthChannel1 = cValue;
+                            fileInfo.setEmissionWavelength1(emissionWavelengthChannel1, emissionWavelength);
+                        }
+                        else if (!haveEmissionWavelength0) {
+                            haveEmissionWavelength0 = true;
+                            emissionWavelengthChannel0 = cValue;
+                            fileInfo.setEmissionWavelength0(emissionWavelengthChannel0, emissionWavelength);
+                        }
                     } // if (emissionWavelength != Integer.MIN_VALUE)
                     
                     if (reflectorPosition != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setReflectorPosition0(reflectorPosition);
-                                break;
-                            case 1:
-                                fileInfo.setReflectorPosition1(reflectorPosition);
-                                break;
-                            case 2:
-                                fileInfo.setReflectorPosition2(reflectorPosition);
-                                break;
-                            case 3:
-                                fileInfo.setReflectorPosition3(reflectorPosition);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveReflectorPosition2 && (!haveReflectorPosition3) && (cValue != reflectorPositionChannel0) &&
+                                (cValue != reflectorPositionChannel1) && (cValue != reflectorPositionChannel2)) {
+                            haveReflectorPosition3 = true;
+                            reflectorPositionChannel3 = cValue;
+                            fileInfo.setReflectorPosition3(reflectorPositionChannel3, reflectorPosition);
+                        }
+                        else if (haveReflectorPosition1 && (!haveReflectorPosition2) && (cValue != reflectorPositionChannel0) &&
+                                (cValue != reflectorPositionChannel1)) {
+                            haveReflectorPosition2 = true;
+                            reflectorPositionChannel2 = cValue;
+                            fileInfo.setReflectorPosition2(reflectorPositionChannel2, reflectorPosition);
+                        }
+                        else if (haveReflectorPosition0 && (!haveReflectorPosition1) && (cValue != reflectorPositionChannel0)) {
+                            haveReflectorPosition1 = true;
+                            reflectorPositionChannel1 = cValue;
+                            fileInfo.setReflectorPosition1(reflectorPositionChannel1, reflectorPosition);
+                        }
+                        else if (!haveReflectorPosition0) {
+                            haveReflectorPosition0 = true;
+                            reflectorPositionChannel0 = cValue;
+                            fileInfo.setReflectorPosition0(reflectorPositionChannel0, reflectorPosition);
+                        }
                     } // if (reflectorPosition != Integer.MIN_VALUE)
                     
                     if (multichannelColor != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setMultichannelColor0(multichannelColor);
-                                break;
-                            case 1:
-                                fileInfo.setMultichannelColor1(multichannelColor);
-                                break;
-                            case 2:
-                                fileInfo.setMultichannelColor2(multichannelColor);
-                                break;
-                            case 3:
-                                fileInfo.setMultichannelColor3(multichannelColor);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveMultichannelColor2 && (!haveMultichannelColor3) && (cValue != multichannelColorChannel0) &&
+                                (cValue != multichannelColorChannel1) && (cValue != multichannelColorChannel2)) {
+                            haveMultichannelColor3 = true;
+                            multichannelColorChannel3 = cValue;
+                            fileInfo.setMultichannelColor3(multichannelColorChannel3, multichannelColor);
+                        }
+                        else if (haveMultichannelColor1 && (!haveMultichannelColor2) && (cValue != multichannelColorChannel0) &&
+                                (cValue != multichannelColorChannel1)) {
+                            haveMultichannelColor2 = true;
+                            multichannelColorChannel2 = cValue;
+                            fileInfo.setMultichannelColor2(multichannelColorChannel2, multichannelColor);
+                        }
+                        else if (haveMultichannelColor0 && (!haveMultichannelColor1) && (cValue != multichannelColorChannel0)) {
+                            haveMultichannelColor1 = true;
+                            multichannelColorChannel1 = cValue;
+                            fileInfo.setMultichannelColor1(multichannelColorChannel1, multichannelColor);
+                        }
+                        else if (!haveMultichannelColor0) {
+                            haveMultichannelColor0 = true;
+                            multichannelColorChannel0 = cValue;
+                            fileInfo.setMultichannelColor0(multichannelColorChannel0, multichannelColor);
+                        }
                     } // if (multichannelColor != Integer.MIN_VALUE)
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(focusPosition))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp; i++) {
-                            if (imageZArray[i] == zValue) {
-                                doFill = false;
-                            }
+                    if (useZValue && haveSecondTileValue && (!haveSecondZValue)) {
+                        useZValue = false;
+                        if (imageZArray[0] != Integer.MIN_VALUE) {
+                            imageZArray[0] = firstTileValue;
                         }
-                        if (doFill) {
-                            imageZArray[icp] = zValue;
-                            imageFocusPositionArray[icp++] = focusPosition;
+                        if (imageZ2Array[0] != Integer.MIN_VALUE) {
+                            imageZ2Array[0] = firstTileValue;
+                        }
+                        if (imageZ3Array[0] != Integer.MIN_VALUE) {
+                            imageZ3Array[0] = firstTileValue;
+                        }
+                        if (imageZ4Array[0] != Integer.MIN_VALUE) {
+                            imageZ4Array[0] = firstTileValue;
+                        }
+                        if (imageZ5Array[0] != Integer.MIN_VALUE) {
+                            imageZ5Array[0] = firstTileValue;
+                        }
+                        if (imageZ6Array[0] != Integer.MIN_VALUE) {
+                            imageZ6Array[0] = firstTileValue;
+                        }
+                        if (imageZ7Array[0] != Integer.MIN_VALUE) {
+                            imageZ7Array[0] = firstTileValue;
+                        }
+                        if (imageZXArray[0] != Integer.MIN_VALUE) {
+                            imageZXArray[0] = firstTileValue;
+                        }
+                        if (imageZYArray[0] != Integer.MIN_VALUE) {
+                            imageZYArray[0] = firstTileValue;
+                        }
+                        
+                        if (imageOriginalZXArray[0] != Integer.MIN_VALUE) {
+                            imageOriginalZXArray[0] = firstTileValue;
+                        }
+                        if (imageOriginalZYArray[0] != Integer.MIN_VALUE) {
+                            imageOriginalZYArray[0] = firstTileValue;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition1))) {
+                    if (useZValue) {
+                        zTileValue = zValue;
+                    }
+                    else {
+                        zTileValue = tileValue;
+                    }
+                    
+                    
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(focusPosition))) {
+                        if (imageCount == 1) {
+                            imageZArray[0] = 0;
+                            imageFocusPositionArray[0] = focusPosition;
+                            icp = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp; i++) {
+                                if (imageZArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZArray[icp] = zTileValue;
+                                imageFocusPositionArray[icp++] = focusPosition;
+                            }
+                        }
+                    }
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition1))) {
                         boolean doFill = true;
                         for (i = 0; i < icp4; i++) {
-                            if (imageZ4Array[i] == zValue) {
+                            if (imageZ4Array[i] == zTileValue) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ4Array[icp4] = zValue;
+                            imageZ4Array[icp4] = zTileValue;
                             imageRelFocusPosition1Array[icp4++] = relFocusPosition1;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition2))) {
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition2))) {
                         boolean doFill = true;
                         for (i = 0; i < icp5; i++) {
-                            if (imageZ5Array[i] == zValue) {
+                            if (imageZ5Array[i] == zTileValue) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ5Array[icp5] = zValue;
+                            imageZ5Array[icp5] = zTileValue;
                             imageRelFocusPosition2Array[icp5++] = relFocusPosition2;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp2; i++) {
-                            if ((imageZ2Array[i] == zValue) && (imageC2Array[i] == cValue) &&
-                                (imageT2Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(stagePositionX))) {
+                        if (imageCount == 1) {
+                            imageZXArray[0] = 0;
+                            imageStagePositionXArray[0] = stagePositionX;
+                            icpX = 1;
                         }
-                        if (doFill) {
-                            imageZ2Array[icp2] = zValue;
-                            imageC2Array[icp2] = cValue;
-                            imageT2Array[icp2] = tValue;
-                            imageBlackValueArray[icp2++] = blackValue;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpX; i++) {
+                                if (imageZXArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZXArray[icpX] = zTileValue;
+                                imageStagePositionXArray[icpX++] = stagePositionX;
+                            }
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp3; i++) {
-                            if ((imageZ3Array[i] == zValue) && (imageC3Array[i] == cValue) &&
-                                (imageT3Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(stagePositionY))) {
+                        if (imageCount == 1) {
+                            imageZYArray[0] = 0;
+                            imageStagePositionYArray[0] = stagePositionY;
+                            icpY = 1;
                         }
-                        if (doFill) {
-                            imageZ3Array[icp3] = zValue;
-                            imageC3Array[icp3] = cValue;
-                            imageT3Array[icp3] = tValue;
-                            imageWhiteValueArray[icp3++] = whiteValue;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpY; i++) {
+                                if (imageZYArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZYArray[icpY] = zTileValue;
+                                imageStagePositionYArray[icpY++] = stagePositionY;
+                            }
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(acqTime))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp6; i++) {
-                            if ((imageZ6Array[i] == zValue) && (imageC6Array[i] == cValue) &&
-                                (imageT6Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(originalStagePositionX))) {
+                        if (imageCount == 1) {
+                            imageOriginalZXArray[0] = 0;
+                            imageOriginalStagePositionXArray[0] = originalStagePositionX;
+                            icpOriginalX = 1;
                         }
-                        if (doFill) {
-                            imageZ6Array[icp6] = zValue;
-                            imageC6Array[icp6] = cValue;
-                            imageT6Array[icp6] = tValue;
-                            cameraImageAcquisitionTime[icp6++] = acqTime;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpOriginalX; i++) {
+                                if (imageOriginalZXArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageOriginalZXArray[icpOriginalX] = zTileValue;
+                                imageOriginalStagePositionXArray[icpOriginalX++] = originalStagePositionX;
+                            }
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(relTime))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp7; i++) {
-                            if ((imageZ7Array[i] == zValue) && (imageC7Array[i] == cValue) &&
-                                (imageT7Array[i] == tValue)) {
-                                doFill = false;
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(originalStagePositionY))) {
+                        if (imageCount == 1) {
+                            imageOriginalZYArray[0] = 0;
+                            imageOriginalStagePositionYArray[0] = originalStagePositionY;
+                            icpOriginalY = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpOriginalY; i++) {
+                                if (imageOriginalZYArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageOriginalZYArray[icpOriginalY] = zTileValue;
+                                imageOriginalStagePositionYArray[icpOriginalY++] = originalStagePositionY;
                             }
                         }
-                        if (doFill) {
-                            imageZ7Array[icp7] = zValue;
-                            imageC7Array[icp7] = cValue;
-                            imageT7Array[icp7] = tValue;
-                            imageRelativeTime[icp7++] = relTime;
+                    }
+                    
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                        (cValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
+                        if (imageCount == 1) {
+                            imageZ2Array[0] = 0;
+                            imageC2Array[0] = cValue;
+                            imageT2Array[0] = 0;
+                            imageBlackValueArray[0] = blackValue;
+                            icp2 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp2; i++) {
+                                if ((imageZ2Array[i] == zTileValue) && (imageC2Array[i] == cValue) &&
+                                    (imageT2Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ2Array[icp2] = zTileValue;
+                                imageC2Array[icp2] = cValue;
+                                imageT2Array[icp2] = tValue;
+                                imageBlackValueArray[icp2++] = blackValue;
+                            }
+                        }
+                    }
+                    
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (cValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
+                        if (imageCount == 1) {
+                            imageZ3Array[0] = 0;
+                            imageC3Array[0] = cValue;
+                            imageT3Array[0] = 0;
+                            imageWhiteValueArray[0] = whiteValue;
+                            icp3 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp3; i++) {
+                                if ((imageZ3Array[i] == zTileValue) && (imageC3Array[i] == cValue) &&
+                                    (imageT3Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ3Array[icp3] = zTileValue;
+                                imageC3Array[icp3] = cValue;
+                                imageT3Array[icp3] = tValue;
+                                imageWhiteValueArray[icp3++] = whiteValue;
+                            }
+                        }
+                    }
+                    
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (!Double.isNaN(acqTime))) {
+                        int cNow;
+                        if (cValue == Integer.MIN_VALUE) {
+                            cNow = 0;
+                        }
+                        else {
+                            cNow = cValue;
+                        }
+                        if (imageCount == 1) {
+                            imageZ6Array[0] = 0;
+                            imageC6Array[0] = cNow;
+                            imageT6Array[0] = 0;
+                            cameraImageAcquisitionTime[0] = acqTime;
+                            icp6 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp6; i++) {
+                                if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cNow) &&
+                                    (imageT6Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ6Array[icp6] = zTileValue;
+                                imageC6Array[icp6] = cNow;
+                                imageT6Array[icp6] = tValue;
+                                cameraImageAcquisitionTime[icp6++] = acqTime;
+                            }
+                        }
+                    }
+                    
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (!Double.isNaN(relTime))) {
+                        int cNow;
+                        if (cValue == Integer.MIN_VALUE) {
+                            cNow = 0;
+                        }
+                        else {
+                            cNow = cValue;
+                        }
+                        if (imageCount == 1) {
+                            imageZ7Array[0] = 0;
+                            imageC7Array[0] = cNow;
+                            imageT7Array[0] = 0;
+                            imageRelativeTime[0] = relTime;
+                            icp7 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp7; i++) {
+                                if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cNow) &&
+                                    (imageT7Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ7Array[icp7] = zTileValue;
+                                imageC7Array[icp7] = cNow;
+                                imageT7Array[icp7] = tValue;
+                                imageRelativeTime[icp7++] = relTime;
+                            }
                         }
                     }
                     

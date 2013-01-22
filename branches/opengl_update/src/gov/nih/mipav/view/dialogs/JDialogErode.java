@@ -213,7 +213,10 @@ public class JDialogErode extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor003Er1");
+        	//MipavUtil.showHelp("Mor003Er1");
+            MipavUtil.showWebHelp("Morphology#Applying_the_erosion");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

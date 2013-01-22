@@ -122,6 +122,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** Reference to the containing VOI object. */
     protected VOI voiGroup = null;
 
+    /** If true this flag indicates that the shape should be included (applied) when processing the image. 
+     * It is possible that an individual contour may not be set for processing, while a VOI may be processed. */
+    protected boolean process = true;
+    
     /**
      * If doGeometricCenterLabel = true and if active == false and if closed =
      * true, execute drawGeometricCenterLabel when in drawSelf
@@ -218,6 +222,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public VOIBase() {
         super(20, 10);
+        process = true;
     }
 
 
@@ -264,11 +269,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public VOIBase( VOIBase kBase ) {
         super(20, 10);
         this.active = kBase.active;
-        this.gcPt.Copy(kBase.gcPt);
-        this.cenMassPt.Copy(kBase.cenMassPt);
-        this.cenMassPtR.Copy(kBase.cenMassPtR);
-        this.cenMassPtG.Copy(kBase.cenMassPtG);
-        this.cenMassPtB.Copy(kBase.cenMassPtB);
+        this.gcPt.copy(kBase.gcPt);
+        this.cenMassPt.copy(kBase.cenMassPt);
+        this.cenMassPtR.copy(kBase.cenMassPtR);
+        this.cenMassPtG.copy(kBase.cenMassPtG);
+        this.cenMassPtB.copy(kBase.cenMassPtB);
         this.fixed = kBase.fixed;
         if ( kBase.label != null )
         {
@@ -290,8 +295,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
         this.m_bSplit = kBase.m_bSplit;
         this.m_bQuickLUT = kBase.m_bQuickLUT;
         this.m_iPlane = kBase.m_iPlane;
-        this.m_akImageMinMax[0].Copy( kBase.m_akImageMinMax[0] );
-        this.m_akImageMinMax[1].Copy( kBase.m_akImageMinMax[1] );
+        this.m_akImageMinMax[0].copy( kBase.m_akImageMinMax[0] );
+        this.m_akImageMinMax[1].copy( kBase.m_akImageMinMax[1] );
         this.m_kColor.Copy( kBase.m_kColor );
 
         // Don't copy the VolumeVOI, it will be re-generated when displayed.
@@ -303,7 +308,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         //{
         //    this.m_kMaskPositions.add( new Vector3f( kBase.m_kMaskPositions.elementAt(i)));
         //}
-        this.m_kPositionSum.Copy( kBase.m_kPositionSum );               
+        this.m_kPositionSum.copy( kBase.m_kPositionSum );               
 
         for ( int i = 0; i < kBase.size(); i++ )
         {
@@ -327,19 +332,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
             Vector3f kProp = new Vector3f();
             if ( (iPlane & XPLANE) == XPLANE )
             {
-                kProp.Set( iPropDir, 0, 0 );
+                kProp.set( iPropDir, 0, 0 );
             }
             if ( (iPlane & YPLANE) == YPLANE )
             {
-                kProp.Set( 0, iPropDir, 0 );
+                kProp.set( 0, iPropDir, 0 );
             }
             if ( (iPlane & ZPLANE) == ZPLANE )
             {
-                kProp.Set( 0, 0, iPropDir );
+                kProp.set( 0, 0, iPropDir );
             }
             for (int i = 0; i < kBase.size(); i++) {
-                Vector3f pt = new Vector3f();
-                pt.Add( kBase.elementAt(i), kProp );
+                Vector3f pt = Vector3f.add( kBase.elementAt(i), kProp );
                 this.addElement(pt);
             }
         }
@@ -872,9 +876,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
             else
             {
-                Vector3f kDir = new Vector3f();
-                kDir.Sub( kPos1, kPos0 );
-                float fLength = kDir.Normalize();
+                Vector3f kDir = Vector3f.sub( kPos1, kPos0 );
+                float fLength = kDir.normalize();
                 Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
                 DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kVOIPoint, kSegment );
                 fDist = kDist.Get();
@@ -898,9 +901,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         else
         {           
-            Vector3f kDir = new Vector3f();
-            kDir.Sub( kPos1, kPos0 );
-            float fLength = kDir.Normalize();
+            Vector3f kDir = Vector3f.sub( kPos1, kPos0 );
+            float fLength = kDir.normalize();
             Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
             DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kVOIPoint, kSegment );
             float fDist = kDist.Get();
@@ -1085,8 +1087,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public void findPositionAndIntensity(Vector3f kStart, Vector3f kEnd,
             ModelImage kImage, Vector<Vector3f> positions, Vector<ColorRGB> colors)
     {              
-        Vector3f kDiff = new Vector3f();
-        kDiff.Sub( kEnd, kStart );
+        Vector3f kDiff = Vector3f.sub( kEnd, kStart );
 
         double xDist = Math.abs(kDiff.X);
         double yDist = Math.abs(kDiff.Y);
@@ -1108,9 +1109,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
         {            
             if ( i == max -1 )
             {
-                kStep.Copy(kEnd);
+                kStep.copy(kEnd);
             }
-            kDiff.Sub( kStep, kStart );
+            kDiff.copy( kStep ).sub( kStart );
             double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(0) );          
 
             int indexZ = Math.min(Math.round(kStep.Z), zD - 1);
@@ -1164,15 +1165,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
         {
             return new Vector3f(averagePt);
         }  
-        averagePt.Set(0,0,0);
+        averagePt.set(0,0,0);
         for ( int i = 0; i < size(); i++ )
         {
-            averagePt.Add(elementAt(i));
+            averagePt.add(elementAt(i));
         }
         if ( size() > 0 )
         {
             float fScale = 1f/size();
-            averagePt.Scale(fScale);        
+            averagePt.scale(fScale);        
         }
         return new Vector3f(averagePt);
     }
@@ -1412,13 +1413,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 Vector3f kVolumePt = elementAt(i);
                 if ( i == 0 )
                 {
-                    m_akImageMinMax[0].Copy(kVolumePt);
-                    m_akImageMinMax[1].Copy(kVolumePt);
+                    m_akImageMinMax[0].copy(kVolumePt);
+                    m_akImageMinMax[1].copy(kVolumePt);
                 }
-                m_akImageMinMax[0].Min( kVolumePt );
-                m_akImageMinMax[1].Max( kVolumePt );
+                m_akImageMinMax[0].min( kVolumePt );
+                m_akImageMinMax[1].max( kVolumePt );
             }
-            if (voiGroup.getCurveType() == VOI.PROTRACTOR) {
+            if (voiGroup != null && voiGroup.getCurveType() == VOI.PROTRACTOR) {
 	        	if (m_akImageMinMax[0].X == m_akImageMinMax[1].X) {
 	        		m_akImageMinMax[0].X -= 2.0f;
 	        		m_akImageMinMax[1].X += 2.0f;
@@ -1612,6 +1613,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
         return m_iPlane;
     }
     
+    /**
+     * Accessor that returns the process.
+     *
+     * @return  the process
+     */
+    public boolean getProcess() {
+        return process;
+    }
+
+
     /**
      * Returns the last selected point.
      * @return
@@ -2014,6 +2025,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
         m_iPlane = iPlane;
         m_bUpdatePlane = false;
     }
+    
+    /**
+     * Sets whether the shape is included in processing.
+     *
+     * @param  flag  the process flag
+     */
+    public void setProcess(boolean process) {
+        this.process = process; 
+        voiGroup.notifyParentVOIProcess(process);
+    }
 
     /**
      * Sets the QuickLUT flag.
@@ -2051,15 +2072,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
 	}
 
     /**
-     * If the points of this contour all exist on either the x,y,z plane, 
-     * then the value of that plane is returned.  If the points are not on a plane,
+     * Returns the slice value of the contour on every plane.  If the contour does not exist
+     * on the x-plane, returns its value on the y-plane.  If the contour does not exist on the
+     * y-plane, returns its value on the z-plane.  Use <code>slice(int iPlane)</code> for 
+     * a more reliable value. 
+     * @return
+     */
+    public int slice() {
+        return slice(m_iPlane);
+    }
+    
+    /**
+     * Returns the point value the contour has in common if it lies in the given plane.  
+     * If the contour does not exist on the given plane,
      * -1 is returned.
      * @return
      */
-    public int slice()
-    {
-        int iPlane = getPlane();
-
+    public int slice(int iPlane) {
         if ( (iPlane&XPLANE) == XPLANE )
         {
             return (int)get(0).X;
@@ -2127,9 +2156,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 Vector3f kPos1 = get(i + 1);
                 Vector3f kPos2 = get(i + 2);
 
-                Vector3f kDir = new Vector3f();
-                kDir.Sub( kPos2, kPos0 );
-                float fLength = kDir.Normalize();
+                Vector3f kDir = Vector3f.sub( kPos2, kPos0 );
+                float fLength = kDir.normalize();
                 Segment3f kSegment = new Segment3f(kPos0, kDir, fLength);
                 DistanceVector3Segment3 kDist = new DistanceVector3Segment3( kPos1, kSegment );
                 float fDist = kDist.Get();
@@ -2147,7 +2175,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             for (i = 1; i < size()-1; i++) {  
                 Vector3f a = new Vector3f(elementAt(i).X-elementAt(i-1).X, elementAt(i).Y-elementAt(i-1).Y, elementAt(i).Z-elementAt(i-1).Z);
                 Vector3f b = new Vector3f(elementAt(i+1).X-elementAt(i-1).X, elementAt(i+1).Y-elementAt(i-1).Y, elementAt(i+1).Z-elementAt(i-1).Z);
-                a.Cross(b);
+                a.cross(b);
                 if(a.X + a.Y + a.Z == 0) {     
                     removeElementAt(i);
                     i = i - 1;
@@ -2202,10 +2230,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
     {
         m_bUpdateMask = true;
         m_bReloadPoints = true;
-        gcPt.Add(kTranslate);
-        averagePt.Add(kTranslate);
-        m_akImageMinMax[0].Add(kTranslate);
-        m_akImageMinMax[1].Add(kTranslate);
+        gcPt.add(kTranslate);
+        averagePt.add(kTranslate);
+        m_akImageMinMax[0].add(kTranslate);
+        m_akImageMinMax[1].add(kTranslate);
         if ( m_kVolumeVOI != null )
         {
             m_kVolumeVOI.setVOI(this);
@@ -2583,8 +2611,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
     
     private void fillX(int iX, Vector<Vector3f> kMaskPositions, BitSet kMask, int xDim, int yDim ) {
-        m_kPositionSum.Set(0,0,0);
-        gcPt.Set(0,0,0); 
+        m_kPositionSum.set(0,0,0);
+        gcPt.set(0,0,0); 
         
         int iYMin = (int)(m_akImageMinMax[0].Y);
         int iYMax = (int)(m_akImageMinMax[1].Y);
@@ -2624,8 +2652,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     
 
     private void fillY(int iY, Vector<Vector3f> kMaskPositions, BitSet kMask, int xDim, int yDim ) {
-        m_kPositionSum.Set(0,0,0);
-        gcPt.Set(0,0,0); 
+        m_kPositionSum.set(0,0,0);
+        gcPt.set(0,0,0); 
         
         int iXMin = (int)(m_akImageMinMax[0].X);
         int iXMax = (int)(m_akImageMinMax[1].X);
@@ -2662,8 +2690,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
     
     private void fillZ(int iZ, Vector<Vector3f> kMaskPositions, BitSet kMask, int xDim, int yDim ) {
-        m_kPositionSum.Set(0,0,0);
-        gcPt.Set(0,0,0); 
+        m_kPositionSum.set(0,0,0);
+        gcPt.set(0,0,0); 
 
         int iXMin = (int)(m_akImageMinMax[0].X);
         int iXMax = (int)(m_akImageMinMax[1].X);

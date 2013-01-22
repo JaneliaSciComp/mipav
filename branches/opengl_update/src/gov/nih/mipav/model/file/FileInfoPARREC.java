@@ -30,6 +30,8 @@ public class FileInfoPARREC extends FileInfoBase {
 
     /** par/rec date **/
     private String date;
+    
+    private String patientName = null;
 
     /** par/rec examName **/
     private String examName;
@@ -46,7 +48,7 @@ public class FileInfoPARREC extends FileInfoBase {
     /** par/rec slice Angulation **/
     private double[] sliceAng;
 
-    /** DOCUMENT ME **/
+    /** Off-centre translation **/
     private double[] offCentre;
 
     /** par/rec Bvalues **/
@@ -71,11 +73,31 @@ public class FileInfoPARREC extends FileInfoBase {
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
         super(name, directory, format);
-
     }
 
     public void displayDTIInfo_JDialogText(JDialogText dlg) {
+        String ori0, ori1, ori2;
+        
+        ori0 = FileInfoBase.axisOrientationStr[getAxisOrientation(0)];
+        ori1 = FileInfoBase.axisOrientationStr[getAxisOrientation(1)];
+        ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
+        
+        if(sliceAng != null) {
+            dlg.append(ori0+" angulation: "+ Double.toString(sliceAng[0])+ "\n");
+            dlg.append(ori1+" angulation: "+ Double.toString(sliceAng[1])+ "\n");
+            dlg.append(ori2+" angulation: "+ Double.toString(sliceAng[2])+ "\n");
+        }
+        
+        if(offCentre != null) {
+            dlg.append(ori0+" off centre: "+ Double.toString(offCentre[0])+ "\n");
+            dlg.append(ori1+" off centre: "+ Double.toString(offCentre[1])+ "\n");
+            dlg.append(ori2+" off centre: "+ Double.toString(offCentre[2])+ "\n");
+        }
+        
         dlg.append("PAR/REC Version: " + getVersion() + "\n");
+        if (patientName != null) {
+            dlg.append("Patient Name: " + patientName + "\n");
+        }
         dlg.append("Date: " + getDate() + "\n");
         dlg.append("Exam Name: " + getExamName() + "\n");
         dlg.append("Protocol Name: " + getProtocolName() + "\n");
@@ -150,13 +172,8 @@ public class FileInfoPARREC extends FileInfoBase {
         } else {
             dialog.appendPrimaryData("Endianess", "Big Endian");
         }
-
-        if (matrix != null) {
-
-            // when using displayAboutInfo(dialog) this doesn't appear
-            // calling prg might use an editing panel to adjust this matrix
-            dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
-        }
+        
+        
         displayDTIInfo_JDialogFileInfo(dialog);
     }
 
@@ -191,6 +208,10 @@ public class FileInfoPARREC extends FileInfoBase {
 
     public void setDate(String date) {
         this.date = date;
+    }
+    
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
     }
 
     public String getExamName() {

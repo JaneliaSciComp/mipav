@@ -53,8 +53,9 @@ public class VolumeBoundingBox extends VolumeObject
     {
         for ( int i = 0; i < 6; i++ )
         {
-        	kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
-        	kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
+        	kRenderer.ReleaseVAO(m_akBoundingBox[i]);
+        	//kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
+        	//kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
             m_akBoundingBox[i].dispose();
             m_akBoundingBox[i] = null;
         }

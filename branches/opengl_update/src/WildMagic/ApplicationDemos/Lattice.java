@@ -32,6 +32,7 @@ import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.LatticeEffect;
 import WildMagic.LibGraphics.Effects.LightingEffect;
@@ -156,7 +157,8 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 			{
 				m_kCuller.ComputeVisibleSet(m_spkScene);
 				m_pkRenderer.ClearBuffers();          
-				m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());  
+				m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet()); 
+				DrawFrameRate(8,GetHeight()-32,ColorRGBA.BLACK); 
 			}
 		}
 		m_pkRenderer.DrawDefault();
@@ -169,6 +171,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 			m_kShaderParamsWindow.Display();
 			m_kShaderParamsWindow.setParent(this);
 		}
+		UpdateFrameCount();
 	}
 
 	@Override
@@ -192,8 +195,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 		Vector3f kCLoc = new Vector3f(0.0f, 0.0f, -8.0f);
 		Vector3f kCDir = new Vector3f(0.0f, 0.0f, 1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, 1.0f, 0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross(kCDir, kCUp);
+		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
 		m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
 		if ( !m_bShared )
@@ -287,7 +289,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 		m_spkEffect = new LatticeEffect("Leaf", "Gradient");
 		final int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, m_pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
 		}
 		m_pkMesh.AttachEffect(m_spkEffect);

@@ -31,6 +31,7 @@ public class VolumePreRenderEffect extends ShaderEffect
     /**  */
     private static final long serialVersionUID = -9019623746108147953L;
 
+    private Vector3f m_kPos = new Vector3f();
     /** Creates an new VolumePreRenderEffect 
      * @param bUnique when true create unique shader programs, when false share shader programs.
      */
@@ -61,12 +62,14 @@ public class VolumePreRenderEffect extends ShaderEffect
     	super(1);
     	String kShaderText = new String (
     			  "uniform mat4 WVPMatrix;"
-    			+ "uniform vec3 ConstantColor;"
+    		    			+ "uniform vec3 ConstantColor;"
+    		    			+ "in vec3 inPosition;"
+    		    			+ "out vec4 varColor;"
     			+ "void main() {"
     		    // Transform the position from model space to clip space.
-    			+ "gl_Position = WVPMatrix*gl_Vertex;"
-    	    	+ "gl_FrontColor.rgb = ConstantColor;"
-    	    	+ "gl_FrontColor.a = 1;"
+    			+ "gl_Position = WVPMatrix*vec4(inPosition, 1.0);"
+    	    	+ "varColor.rgb = ConstantColor;"
+    	    	+ "varColor.a = 1;"
     			+ "}"
     			);
     	m_kVShader.set( 0,  new VertexShader( "VolumePreRenderMatrix", kShaderText, true ) );
@@ -92,6 +95,7 @@ public class VolumePreRenderEffect extends ShaderEffect
 
     public boolean SetColor( Vector3f kPos )
     {
+    	m_kPos.copy(kPos);
         Program pkCProgram = GetCProgram(0);
         if ( pkCProgram == null )
         {
@@ -114,6 +118,12 @@ public class VolumePreRenderEffect extends ShaderEffect
                                 Program pkPProgram, Program pkCProgram)
     {
         Blend(1);
+        if ( pkCProgram.GetUC("ConstantColor") != null)
+        {
+            pkCProgram.GetUC("ConstantColor").GetData()[0] = m_kPos.X;
+            pkCProgram.GetUC("ConstantColor").GetData()[1] = m_kPos.Y;
+            pkCProgram.GetUC("ConstantColor").GetData()[2] = m_kPos.Z;
+        }
     }
 
     /* (non-Javadoc)

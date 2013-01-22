@@ -5,6 +5,9 @@ import gov.nih.mipav.view.Preferences;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -122,15 +125,23 @@ public class GuiBuilder implements ActionListener {
         panel.add(text);
         return text;
     }
+        
     
     public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode) {
         return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
     }
     
+    public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode, ActionListener updateAction) {
+        return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode, false, updateAction);
+    }
+    
     public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel panel = new JPanel(f);
+        return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, createNewFiles, null);
+    }
+    
+    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
         JLabel label = new JLabel(labelText);
         final JTextField text = new JTextField(initText);
         text.setColumns(8);
@@ -158,6 +169,9 @@ public class GuiBuilder implements ActionListener {
                     
                     text.setText(selectedFile.toString());
                     text.updateUI();
+                    if(updateAction != null) {
+                        updateAction.actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
+                    }
                 }
             }
         };
@@ -197,10 +211,23 @@ public class GuiBuilder implements ActionListener {
             }
         };
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 10, 0, 10);
+        gbc.weightx = 0.2;
+        
         listenerList.add(textListener);
-        panel.add(label);
-        panel.add(text);
-        panel.add(button);
+        panel.add(label, gbc);
+        gbc.weightx = 0.8;
+        gbc.gridx++;
+        panel.add(text, gbc);
+        gbc.gridx++;
+        gbc.weightx = 0;
+        panel.add(button, gbc);
         
         return text;
     }
@@ -321,6 +348,18 @@ public class GuiBuilder implements ActionListener {
         panel.add(parent.OKButton);
         panel.add(parent.cancelButton);
         return panel;
+    }
+    
+    public JButton buildButton(String text) {
+        JButton button = new JButton(text);
+        button.addActionListener(this);
+
+        button.setActionCommand(text);
+        button.setMinimumSize(MipavUtil.defaultButtonSize);
+        button.setPreferredSize(MipavUtil.defaultButtonSize);
+        button.setFont(MipavUtil.font12B);
+
+        return button;
     }
 
     public void actionPerformed(ActionEvent e) {

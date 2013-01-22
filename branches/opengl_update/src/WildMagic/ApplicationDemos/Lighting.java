@@ -95,8 +95,7 @@ implements GLEventListener, KeyListener
 	private DefaultShaderEffect m_spkDefaultEffect;
 	private int m_iLightQuantity;
 
-	private char[] m_acCaption =
-		new char[]{'.','.','.','.','.','.','.','.','.'};
+	private String m_acCaption = new String("........");
 
 	private boolean m_bUpdateEffects = false;
 
@@ -187,8 +186,8 @@ implements GLEventListener, KeyListener
 		m_spkCamera.SetFrustum(60.0f,1.0f,0.1f,100.0f);
 		Vector3f kCLoc = new Vector3f(8.0f,0.0f,4.0f);
 		Vector3f kCDir = new Vector3f(kCLoc);
-		kCDir.Neg();  // lookat origin
-		kCDir.Normalize();
+		kCDir.neg();  // lookat origin
+		kCDir.normalize();
 		Vector3f kCUp = new Vector3f(kCDir.Z,0,-kCDir.X);
 		Vector3f kCRight = new Vector3f(Vector3f.UNIT_Y);
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
@@ -584,12 +583,7 @@ implements GLEventListener, KeyListener
 	private void UpdateEffectsOnIdle ()
 	{
 		m_bUpdateEffects = false;
-		int i;
-		for (i = 0; i < 8; i++)
-		{
-			m_acCaption[i] = '.';
-		}
-
+		m_acCaption = "";	
 		if (m_iLightQuantity > 0)
 		{
 			if (m_spkPlane.GetEffectQuantity() > 0)
@@ -597,38 +591,33 @@ implements GLEventListener, KeyListener
 				// Release the vertex buffers since the lighting effects have a
 				// different vertex layout than the default effect (the lights
 				// require normal vectors).
-				m_spkPlane.VBuffer.Release();
-				m_spkSphere.VBuffer.Release();
+				m_spkPlane.Reload(true);
+				m_spkSphere.Reload(true);
 
 				m_spkPlane.DetachEffect(m_spkDefaultEffect);
 				m_spkSphere.DetachEffect(m_spkDefaultEffect);
 			}
 
 			m_spkScene.DetachAllLights();
-			int iCaption = 0;
-			for (i = 0; i < m_iAQuantity; i++)
+			for (int i = 0; i < m_iAQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkALight[i]);
-				m_acCaption[iCaption++] = 'a';
-				//*pcCaption++ = 'a';
+				m_acCaption = m_acCaption.concat("a");
 			}
-			for (i = 0; i < m_iDQuantity; i++)
+			for (int i = 0; i < m_iDQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkDLight[i]);
-				m_acCaption[iCaption++] = 'd';
-				//*pcCaption++ = 'd';
+				m_acCaption = m_acCaption.concat("d");
 			}
-			for (i = 0; i < m_iPQuantity; i++)
+			for (int i = 0; i < m_iPQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkPLight[i]);
-				m_acCaption[iCaption++] = 'p';
-				//*pcCaption++ = 'p';
+				m_acCaption = m_acCaption.concat("p");
 			}
-			for (i = 0; i < m_iSQuantity; i++)
+			for (int i = 0; i < m_iSQuantity; i++)
 			{
 				m_spkScene.AttachLight(m_aspkSLight[i]);
-				m_acCaption[iCaption++] = 's';
-				//*pcCaption++ = 's';
+				m_acCaption = m_acCaption.concat("s");
 			}
 		}
 		else
@@ -638,8 +627,8 @@ implements GLEventListener, KeyListener
 				// Release the vertex buffers since the default effect has a
 				// different vertex layout than the lighting effects (the lights
 				// require normal vectors).
-				m_spkPlane.VBuffer.Release();
-				m_spkSphere.VBuffer.Release();
+				m_spkPlane.Reload(true);
+				m_spkSphere.Reload(true);
 
 				m_spkPlane.AttachEffect(m_spkDefaultEffect);
 				m_spkSphere.AttachEffect(m_spkDefaultEffect);

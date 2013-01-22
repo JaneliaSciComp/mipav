@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
-public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -96,7 +96,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         getContentPane().add(buildOkayCancelPanel(), BorderLayout.SOUTH);
 
         pack();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -127,6 +126,8 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
             }
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 
@@ -141,10 +142,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmColorEdge) {
             sourceImage.clearMask();
@@ -245,7 +242,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (red1Text != null)) {
@@ -271,7 +268,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

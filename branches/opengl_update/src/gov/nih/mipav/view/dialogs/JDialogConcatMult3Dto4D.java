@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -19,6 +20,7 @@ import java.util.Vector;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -36,6 +38,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewFileChooserBase;
@@ -81,7 +84,12 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
     /** destination image **/
     private ModelImage destImage;
 
-
+    /** Whether all info in the image's FileInfo is copied */
+    private boolean copyAllInfo = true;
+    
+    /**Checkbox for representing whether FileInfo is copied */
+    private JCheckBox copyAllInfoBox;
+    
 	/**
 	 * empty constructor..needed for scripting
 	 *
@@ -324,7 +332,20 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         gbc.insets = new Insets(5, 5, 15, 5);
         mainPanel.add(movePanel, gbc);
         
+        gbc.gridy++;
+        JPanel optionsPanel = new JPanel(new GridLayout(1, 1));
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
         
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        copyAllInfoBox = new JCheckBox("Copy all file information");
+        copyAllInfoBox.setSelected(copyAllInfo);
+        optionsPanel.add(copyAllInfoBox);
+
+        mainPanel.add(optionsPanel, gbc);
+        
+        gbc.gridy++;
         
 
         /*gbc.gridx = 0;
@@ -403,18 +424,18 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 
 		}
 
-		
+		copyAllInfo = copyAllInfoBox.isSelected();		
 
-			int [] destExtents = new int[4];
-	         destExtents[0] = images[0].getExtents()[0];
-	         destExtents[1] = images[0].getExtents()[1];
-	         destExtents[2] = images[0].getExtents()[2];
-	         destExtents[3] = images.length;
+		int [] destExtents = new int[4];
+         destExtents[0] = images[0].getExtents()[0];
+         destExtents[1] = images[0].getExtents()[1];
+         destExtents[2] = images[0].getExtents()[2];
+         destExtents[3] = images.length;
 
 
 		destImage = new ModelImage(images[0].getType(), destExtents, makeImageName(images[0].getImageName(), "_concat"));
 		
-		alg = new AlgorithmConcatMult3Dto4D(images, destImage);
+		alg = new AlgorithmConcatMult3Dto4D(images, destImage, copyAllInfo);
 		
 		
 		 alg.addListener(this);
@@ -442,7 +463,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 */
 	protected void setGUIFromParams() {
 		// TODO Auto-generated method stub
-
+	    copyAllInfo = scriptParameters.getParams().getBoolean("copy_all_image_info");
 	}
 
 	/**
@@ -450,14 +471,14 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 */
 	protected void storeParamsFromGUI() throws ParserException {
 		// TODO Auto-generated method stub
-
+	    scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", copyAllInfo));
 	}
 
 	/**
 	 * algorithm performed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(algorithm instanceof AlgorithmConcatMult3Dto4D) {
+	    if(algorithm instanceof AlgorithmConcatMult3Dto4D) {
 			if (alg.isCompleted() == true) {
 				new ViewJFrameImage(destImage);
 				cleanup();
@@ -598,7 +619,9 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	     }else if(command.equals("Cancel")) {
 	    	 cleanup();
 	    	 dispose();
-	     }
+	     } else {
+	            super.actionPerformed(e);
+	        }
 
 	}
 	

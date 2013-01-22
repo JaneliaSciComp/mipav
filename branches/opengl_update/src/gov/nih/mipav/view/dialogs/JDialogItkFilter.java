@@ -30,7 +30,7 @@ import javax.swing.*;
  * @see  AlgorithmItkFiler
  */
 public class JDialogItkFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers --------------------------------------------------------------
 
@@ -94,7 +94,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
         m_srcImage = im;
         m_userInterface = ViewUserInterface.getReference();
         if (init(fr)) {
-            loadDefaults();
             setVisible(true);
         }
     }
@@ -123,7 +122,10 @@ public class JDialogItkFilter extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             // TODO correct help item.
-            MipavUtil.showHelp("10009");
+            //MipavUtil.showHelp("10009");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gaussian_Blur#Applying_the_Gaussian_Blur_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -140,10 +142,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         m_srcImage.clearMask();
 
@@ -243,7 +241,7 @@ public class JDialogItkFilter extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (m_outputOptionsPanel != null)) {
@@ -272,7 +270,7 @@ public class JDialogItkFilter extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," 
                                            + m_outputOptionsPanel.isOutputNewImageSet());
 

@@ -14,34 +14,41 @@ uniform mat4 WVPMatrix;
 uniform mat4 WMatrix;
 uniform vec3 CameraWorldPosition;
 uniform float InterpolateFactor;
+in vec3 inPosition;
+in vec3 inNormal;
+in vec2 inTexcoord0;
+out vec2 varTexCoord0;
+out vec2 varTexCoord1;
+out vec3 varTexCoord2;
+out vec3 varTexCoord3;
 //----------------------------------------------------------------------------
 void  v_IridescenceV()
 {
 
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
     
     // Transform the position from model space to world space.
-    vec3 kWorldPosition = (WMatrix * gl_Vertex).xyz;
+    vec3 kWorldPosition = (WMatrix * vec4(inPosition, 1.0)).xyz;
 
     // Transform the normal from model space to world space.  In case the
     // model-to-world matrix has nonunit scales, the resulting vector must
     // be normalized.  Map the vector to [0,1]^3.
-    vec3 kWorldNormal = MapToUnit(normalize( (WMatrix * vec4(gl_Normal, 0.0) ).xyz));
+    vec3 kWorldNormal = MapToUnit(normalize( (WMatrix * vec4(inNormal, 0.0) ).xyz));
 
     // Calculate the eye direction.  Map the vector to [0,1]^3.
     vec3 kEyeDirection = MapToUnit(normalize(kWorldPosition-CameraWorldPosition));
 
     // Pass through the base texture coordinate.
-    gl_TexCoord[0].xy = gl_MultiTexCoord0.xy;
+    varTexCoord0.xy = inTexcoord0.xy;
 
     // Pass through the interpolation factor.
-    gl_TexCoord[1].x = InterpolateFactor;
+    varTexCoord1.x = InterpolateFactor;
 
     
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
 
-    gl_TexCoord[3].xyz = kEyeDirection;
-    gl_TexCoord[2].xyz = kWorldNormal;
+    varTexCoord3.xyz = kEyeDirection;
+    varTexCoord2.xyz = kWorldNormal;
 
 }

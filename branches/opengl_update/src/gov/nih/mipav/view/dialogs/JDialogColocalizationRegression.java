@@ -288,7 +288,8 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10052");
+            //MipavUtil.showHelp("10052");
+            MipavUtil.showWebHelp("Microscopy_Colocalization_Orthogonal_Regression");
         } else if (command.equals("Cancel")) {
             componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
@@ -345,7 +346,10 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
                 return;
             }
-        } // else if (command.equals("Mask"))
+        } else { // else if (command.equals("Mask"))
+            super.actionPerformed(event);
+        }
+        
     }
 
     // ************************************************************************

@@ -493,7 +493,6 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int xDim = xDimE / 2;
         int yDim = yDimE / 2;
         int smallLength = xDim * yDim;
-        int i;
         int backAtStart = 0;
         BitSet mask;
 
@@ -503,9 +502,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return null;
         }
 
-        for (i = 0; i < smallLength; i++) {
-            mask.clear(i);
-        }
+        mask.clear();
 
         do {
 

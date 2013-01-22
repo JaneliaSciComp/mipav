@@ -141,12 +141,13 @@ public class VolumeImage implements Serializable {
 	 * later use. The directory is created if it does not already exist, with the ModelImage name + "_RenderFiles" as
 	 * the directory name.
 	 * 
+	 * @param bClone, when true clone the input ModelImage, when false reference the ModelImage
 	 * @param kImage input ModelImage
 	 * @param kPostfix Postfix for images 'A' or 'B'
 	 * @param kProgress progress bar
 	 * @param iProgress progress bar increment
 	 */
-	public VolumeImage(final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
+	public VolumeImage(boolean bClone, final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
 		m_kPostfix = new String(kPostfix);
 
 		// See if the render files directory exists for this image, if not create it.
@@ -164,7 +165,14 @@ public class VolumeImage implements Serializable {
 			} catch (final SecurityException e) {}
 		}
 		// clone the input image, in the future this might be a reference.
-		m_kImage = (ModelImage)kImage.clone();
+		if ( bClone )
+		{
+			m_kImage = (ModelImage)kImage.clone();
+		}
+		else
+		{
+			m_kImage = kImage;
+		}
 		// Initialize the Texture maps.
 		init(kProgress, iProgress);
 	}
@@ -241,6 +249,22 @@ public class VolumeImage implements Serializable {
 		}
 		// Return the new GraphicsImage containing the table data:
 		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + kPostFix));
+	}
+	
+	
+	private GraphicsImage initColorMap() {
+		final byte[] aucData = new byte[256 * 4];
+		if (m_kRGBT != null) 
+		{
+			// ModelImage is Color, initialize the ModelRGB
+			ModelLUT.exportIndexedLUTMin(m_kRGBT, aucData);
+		} else if ( m_kLUT != null )
+		{
+			// Initialize the ModelLUT
+			ModelLUT.exportIndexedLUTMin(m_kLUT, aucData);
+		}
+		// Return the new GraphicsImage containing the table data:
+		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + m_kPostfix));
 	}
 
 	/**
@@ -339,6 +363,121 @@ public class VolumeImage implements Serializable {
 		return kReturn;
 	}
 
+	private GraphicsImage initVolumeData(final ModelImage kImage, final int iTimeSlice, final ModelImage kNewImage,
+			final Texture kVolumeTexture, final String kImageName, final boolean bSwap, final boolean bRescale)
+	{
+		GraphicsImage kReturn = null;
+		final int iXBound = kImage.getExtents()[0];
+		final int iYBound = kImage.getExtents()[1];
+		final int iZBound = kImage.getExtents()[2];
+
+		byte[] aucData = null;
+		int iSize = iXBound * iYBound * iZBound;
+		if (kImage.isColorImage()) {
+			iSize *= 4;
+			aucData = new byte[iSize];
+			try {
+				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
+				if (bSwap) {
+					for (int i = 0; i < iSize; i += 4) {
+						final byte tmp = aucData[i];
+						aucData[i] = aucData[i + 1];
+						aucData[i + 1] = aucData[i + 2];
+						aucData[i + 2] = aucData[i + 3];
+						aucData[i + 3] = tmp;
+					}
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+			kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData,
+					kImageName);
+		} else {
+			aucData = new byte[iSize];
+			try {
+				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
+				// Temporary make the texture an RGBA texture until JOGL2 fixes NPOT textures.
+				byte[] aucData2 = new byte[iSize*4];
+				for (int i = 0; i < iSize; i++) {
+					aucData2[i * 4 + 0] = aucData[i];
+					aucData2[i * 4 + 1] = aucData[i];
+					aucData2[i * 4 + 2] = aucData[i];
+					aucData2[i * 4 + 3] = 1;
+				}
+
+				kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData2,
+						kImageName);
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+		if (kNewImage != null) {
+			try {
+				kNewImage.importData(0, aucData, true);
+			} catch (final IOException e) {}
+		}
+		if (kVolumeTexture != null) {
+			kVolumeTexture.Reload(true);
+		}
+		return kReturn;
+	}
+
+	private GraphicsImage resetVolumeData(final ModelImage kImage, final int iTimeSlice, final ModelImage kNewImage, GraphicsImage kGraphicsImage,
+			final Texture kVolumeTexture, final String kImageName, final boolean bSwap, final boolean bRescale)
+	{
+		final int iXBound = kImage.getExtents()[0];
+		final int iYBound = kImage.getExtents()[1];
+		final int iZBound = kImage.getExtents()[2];
+		int iSize = iXBound * iYBound * iZBound;
+		if ( (kGraphicsImage == null) || (kGraphicsImage.GetData().length != (iSize * 4)) )
+		{
+			return initVolumeData(kImage, iTimeSlice, kNewImage, kVolumeTexture, kImageName, bSwap, bRescale );
+		}
+		
+
+		byte[] aucData = null;
+		if (kImage.isColorImage()) {
+			iSize *= 4;
+			aucData = kGraphicsImage.GetData();
+			try {
+				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
+				if (bSwap) {
+					for (int i = 0; i < iSize; i += 4) {
+						final byte tmp = aucData[i];
+						aucData[i] = aucData[i + 1];
+						aucData[i + 1] = aucData[i + 2];
+						aucData[i + 2] = aucData[i + 3];
+						aucData[i + 3] = tmp;
+					}
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		} 
+		else {
+			aucData = new byte[iSize];
+			try {
+				kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
+				byte[] aucData2 = kGraphicsImage.GetData();
+				for (int i = 0; i < iSize; i++) {
+					aucData2[i * 4 + 0] = aucData[i];
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+		if (kNewImage != null) {
+			try {
+				kNewImage.importData(0, aucData, true);
+			} catch (final IOException e) {}
+		}
+		if (kVolumeTexture != null) {
+			kVolumeTexture.Reload(true);
+		}
+		return kGraphicsImage;
+	}
 
 	private void addNormals(final ModelImage kImage, final int iTimeSlice) {
 		final int iXBound = kImage.getExtents()[0];
@@ -490,8 +629,7 @@ public class VolumeImage implements Serializable {
 		ModelImage.saveImage( kImage, kImageName + ".xml", m_kDir );
 		if ( m_kImage.isColorImage() )
 		{
-			m_kNormal[i] = VolumeImage.UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(),
-					true, true);
+			m_kNormal[i] = initVolumeData(kImage, 0, null, m_kNormalMapTarget, kImage.getImageName(), true, true);
 		}
 		else
 		{
@@ -637,8 +775,7 @@ public class VolumeImage implements Serializable {
 			{
 				if ( m_kImage.isColorImage() )
 				{
-					m_kNormal[i] = VolumeImage.UpdateData(kNormal, i, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(),
-							true, true);
+					m_kNormal[i] = initVolumeData(kNormal, i, null, m_kNormalMapTarget, kNormal.getImageName(), true, true);
 				}
 				else
 				{
@@ -667,8 +804,7 @@ public class VolumeImage implements Serializable {
 				
 				if ( m_kImage.isColorImage() )
 				{
-					m_kNormal[i] = VolumeImage.UpdateData(result, i, null, m_kNormal[i], m_kNormalMapTarget, result.getImageName(),
-							true, true);
+					m_kNormal[i] = initVolumeData(result, i, null, m_kNormalMapTarget, result.getImageName(), true, true);
 				}
 				else
 				{
@@ -719,11 +855,11 @@ public class VolumeImage implements Serializable {
 	}
 
 	/**
-	 * Returns the name of the multi-histogram histogram GraphicsImage.
-	 * @return the name of the multi-histogram histogram GraphicsImage.
+	 * Returns the multi-histogram histogram Texture.
+	 * @return the multi-histogram histogram Texture.
 	 */
-	public String GetHistoName() {
-		return m_kHisto[m_iTimeSlice].GetName();
+	public Texture GetHistoTarget() {
+		return m_kHistoTarget;
 	}
 
 
@@ -925,7 +1061,7 @@ public class VolumeImage implements Serializable {
 	 * during the next frame.
 	 */
 	public void ReleaseVolume() {
-		m_kVolumeTarget.Release();
+		m_kVolumeTarget.Reload(true);
 	}
 
 
@@ -989,7 +1125,11 @@ public class VolumeImage implements Serializable {
 	 * @param kRGBT new ModelRGB
 	 */
 	public void SetRGBT(final ModelRGB kRGBT) {
-		VolumeImage.SetRGBT(m_kColorMapTarget, m_kColorMap, kRGBT);
+		if (kRGBT == null) {
+			return;
+		}
+		ModelLUT.exportIndexedLUTMin(kRGBT, m_kColorMap.GetData());
+		m_kColorMapTarget.Reload(true);
 		m_kRGBT = kRGBT;
 	}
 
@@ -1035,13 +1175,12 @@ public class VolumeImage implements Serializable {
 	 * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
 	 */
 	public void UpdateData(final ModelImage kImage, final boolean bCopytoCPU) {
-		System.err.println( "UPDATEDATA CALLED" );
 		m_kImage = kImage;
 		if (bCopytoCPU) {
-			VolumeImage.UpdateData(m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice],
+			m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice],
 					m_kVolumeTarget, m_kImage.getImageName(), true, false);
 		} else {
-			VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
+			m_kVolume[m_iTimeSlice] = resetVolumeData(m_kImage, m_iTimeSlice, null, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
 					.getImageName(), true, false);
 		}
 	}
@@ -1580,7 +1719,7 @@ public class VolumeImage implements Serializable {
 	private void initImages() {
 		m_fDRRNormalize = computeIntegralNormalizationFactor();
 		// Initialize Color Map GraphicsImage:
-		m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
+		m_kColorMap = initColorMap();
 		// Initialize Opacity Map for the GradientMagnitude image:
 		m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(m_kPostfix + "_GM"));
 
@@ -1621,7 +1760,7 @@ public class VolumeImage implements Serializable {
 				m_akImages[i] = new ModelImage(m_kImage.getType(), aiSubset, JDialogBase.makeImageName(m_kImage
 						.getImageName(), "_" + i));
 				JDialogBase.updateFileInfo( m_kImage, m_akImages[i] );
-				m_kVolume[i] = VolumeImage.UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i]
+				m_kVolume[i] = initVolumeData(m_kImage, i, m_akImages[i], m_kVolumeTarget, m_akImages[i]
 						.getImageName(), true, false);
 				m_akImages[i].copyFileTypeInfo(m_kImage);
 				m_akImages[i].calcMinMax();
@@ -1630,7 +1769,7 @@ public class VolumeImage implements Serializable {
 			{
 				// Already 3D, just generate the GraphicsImage:
 				m_akImages[0] = m_kImage;
-				m_kVolume[0] = VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage
+				m_kVolume[0] = initVolumeData(m_kImage, m_iTimeSlice, null, m_kVolumeTarget, m_kImage
 						.getImageName(), true, false);
 			}
 
@@ -1698,7 +1837,7 @@ public class VolumeImage implements Serializable {
 	private void initImagesColor() {
 		m_fDRRNormalize = computeIntegralNormalizationFactor();
 		// Initialize Color Map GraphicsImage:
-		m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
+		m_kColorMap = initColorMap();
 		// Initialize Opacity Map for the GradientMagnitude image:
 		m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(m_kPostfix + "_GM"));
 
@@ -1739,7 +1878,7 @@ public class VolumeImage implements Serializable {
 				m_akImages[i] = new ModelImage(m_kImage.getType(), aiSubset, JDialogBase.makeImageName(m_kImage
 						.getImageName(), "_" + i));
 				JDialogBase.updateFileInfo( m_kImage, m_akImages[i] );
-				m_kVolume[i] = VolumeImage.UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i]
+				m_kVolume[i] = initVolumeData(m_kImage, i, m_akImages[i], m_kVolumeTarget, m_akImages[i]
 						.getImageName(), true, false);
 				m_akImages[i].copyFileTypeInfo(m_kImage);
 				m_akImages[i].calcMinMax();
@@ -1748,7 +1887,7 @@ public class VolumeImage implements Serializable {
 			{
 				// Already 3D, just generate the GraphicsImage:
 				m_akImages[0] = m_kImage;
-				m_kVolume[0] = VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage
+				m_kVolume[0] = initVolumeData(m_kImage, m_iTimeSlice, null, m_kVolumeTarget, m_kImage
 						.getImageName(), true, false);
 			}
 			// Allocate GraphcisImage for Normal Map Texture:

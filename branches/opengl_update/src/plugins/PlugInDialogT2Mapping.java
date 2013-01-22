@@ -157,6 +157,8 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

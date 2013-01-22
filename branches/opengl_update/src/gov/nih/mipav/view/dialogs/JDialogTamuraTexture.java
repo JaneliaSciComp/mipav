@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmTamuraTexture
  */
 public class JDialogTamuraTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -136,7 +136,6 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -191,6 +190,8 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
                 labelHistogramThreshold.setEnabled(false);
                 textHistogramThreshold.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -299,7 +300,7 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -325,7 +326,7 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

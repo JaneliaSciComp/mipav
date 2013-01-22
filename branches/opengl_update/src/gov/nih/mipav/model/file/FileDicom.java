@@ -187,6 +187,9 @@ public class FileDicom extends FileDicomBase {
     /**Whether adequate processing of the file has occurred to allowed image to be extracted, this includes getting offset
      * and pixel representation. */
     private boolean imageLoadReady = false;
+    
+    /** Header loop keeps executing when true */
+    private boolean flag = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -622,7 +625,9 @@ public class FileDicom extends FileDicomBase {
      */
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
         endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
-        boolean flag = true;
+        flag = true;
+        int exceptionCount = 0;
+        int maxExceptionCount = 10;
 
         if (loadTagBuffer == true) {
             loadTagBuffer();
@@ -676,9 +681,18 @@ public class FileDicom extends FileDicomBase {
             int bPtrOld = getFilePointer();
             try {
                 flag = processNextTag(tagTable, key, endianess, false);
+                if (flag == false && imageLoadReady == false) {
+                    Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
+                    break;
+                }
             } catch(Exception e) {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
+                exceptionCount++;
+                // Prevent infinite looping
+                if (exceptionCount >= maxExceptionCount) {
+                    break;
+                }
             }
             if(bPtrOld+tagElementLength != getFilePointer()) {
                 Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
@@ -763,7 +777,9 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Unrecognized vr: "+new String(vrBytes)+" for tag "+key, Preferences.DEBUG_FILEIO);
             } finally {
                 if(key.toString().matches(FileDicom.IMAGE_TAG)) {
-                    vr = VR.OB;
+                    if(!key.getGroup().equals("7FDF")) { //defunct scanner companies use this as another private group sometimes
+                        vr = VR.OB;
+                    }
                 } else if((vr == VR.UN || vr == VR.XX || vr == null) && DicomDictionary.containsTag(key)) {
                     vr = DicomDictionary.getType(key);
                 } else if(vr == null) {
@@ -858,6 +874,10 @@ public class FileDicom extends FileDicomBase {
                 } //else is implicit sequence, so continue
             case SQ:
                 processSequence(tagTable, key, name, endianess);
+                if (flag == false) {
+                    Preferences.debug("flag was set false in processSequence\n", Preferences.DEBUG_FILEIO);
+                    return false;
+                }
                 break;
             }
             
@@ -1019,7 +1039,19 @@ public class FileDicom extends FileDicomBase {
             }
             numSlices = checkMaxSlice(tagTable, numSlices, sliceInt);
             for(int i=1; i<v.size(); i++) { //each entire children tag table is just what's in v
-                enhancedTagTables[i-1] = v.get(i);
+                if (enhancedTagTables == null) {
+                    Preferences.debug("In processSequence enhancedTagTables == null\n", Preferences.DEBUG_FILEIO);
+                    flag = false;
+                    return;
+                }
+                if (enhancedTagTables.length >= i) {
+                    enhancedTagTables[i-1] = v.get(i);
+                }
+                else {
+                    Preferences.debug("In processSequence enhancedTagTables[" + (i-1) + "] is null\n", Preferences.DEBUG_FILEIO);
+                    flag = false;
+                    return;
+                }
                 numSlices = checkMaxSlice(enhancedTagTables[i-1], numSlices, sliceInt);
             }
             enhancedNumSlices = numSlices;
@@ -1489,14 +1521,14 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * buffer.length), imageType); // *****
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * buffer.length), imageType); // *****
                     // Read
                     // image
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
+                            (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType); // *****
                     // Read
                     // image
                     rawFile.raFile.close();
@@ -1641,7 +1673,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileRaw
      */
     public void readImage(final short[] buffer, final int imageType, final int imageNo) throws IOException {
-        // System.out.println("in read image short");
+        //System.out.println("in read image short");
         // Read in header info, if something goes wrong, print out error
         if (hasHeaderBeenRead == false) {
 
@@ -1669,14 +1701,20 @@ public class FileDicom extends FileDicomBase {
             try { // rafile (type RandomAccessFile) for header, rawfile (type FileRaw) for image data.
                 rawFile.setImageFile(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-                if (ModelImage.isColorImage(imageType)) {
+                if (imageType == ModelStorageBase.ARGB) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
+                }
+                else if (imageType == ModelStorageBase.ARGB_USHORT) {
+                        rawFile.setPlanarConfig(fileInfo.planarConfig);
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 6)), imageType);
+                        rawFile.raFile.close();
+                        rawFile.raFile = null;
                 } else {
                     rawFile.readImage(buffer,
-                            fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                            (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 }
@@ -1772,8 +1810,8 @@ public class FileDicom extends FileDicomBase {
         fileInfo.setMin(min);
         fileInfo.setMax(max);
 
-        // System.out.println("min = " + min + " max = " + max);
-        if ( (pixelPad <= min) || (pixelPad >= max)) {
+        //System.out.println("min = " + min + " max = " + max);
+        if ((fileInfo.getPixelPadValue() != null) && ((pixelPad <= min) || (pixelPad >= max))) {
 
             for (int i = 0; i < buffer.length; i++) {
 
@@ -1862,7 +1900,7 @@ public class FileDicom extends FileDicomBase {
             try { // rafile (type RandomAccessFile) for header, rawfile (type FileRaw) for image data.
                 rawFile.setImageFile(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ); 
                 rawFile.readImage(buffer,
-                        fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
+                        (long)fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel), imageType);
                 rawFile.raFile.close();
                 rawFile.raFile = null;
             } catch (final IOException error) {
@@ -2120,6 +2158,7 @@ public class FileDicom extends FileDicomBase {
         double[] doubleData = null;
         BitSet bufferBitSet = null;
         short[] dataRGB = null;
+        int[] dataRGB_USHORT = null;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
         
@@ -2141,6 +2180,8 @@ public class FileDicom extends FileDicomBase {
             // if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
             if (fileInfo.getDataType() == ModelStorageBase.ARGB) {
                 dataRGB = new short[4 * (end - start)];
+            } else if (fileInfo.getDataType() == ModelStorageBase.ARGB_USHORT) {
+                dataRGB_USHORT = new int[4 * (end - start)];
             } else if (fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
             	doubleData = new double[(end - start)];
             } else if (fileInfo.getDataType() == ModelStorageBase.BOOLEAN) {
@@ -2335,6 +2376,25 @@ public class FileDicom extends FileDicomBase {
                         rawChunkFile.writeBufferUByte(dRGB, 0, 3 * length);
                         dRGB = null;
                         break;
+                        
+                        
+                    case ModelStorageBase.ARGB_USHORT:
+
+                        int[] dRGB_USHORT = new int[3 * length];
+                        image.exportData(index * (4 * length), (4 * length), dataRGB_USHORT);
+
+                        for (int i = 1, iRGB = 0; i < dataRGB_USHORT.length;) {
+
+                            // Not sure slope intercept is needed here for color images
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            dRGB_USHORT[iRGB++] = MipavMath.round( (dataRGB_USHORT[i++] - intercept) / invSlope);
+                            i++;
+                        }
+
+                        rawChunkFile.writeBufferUShort(dRGB_USHORT, 0, 3 * length, image.getFileInfo(0).getEndianess());
+                        dRGB_USHORT = null;
+                        break;
 
                     default:
 
@@ -2382,13 +2442,22 @@ public class FileDicom extends FileDicomBase {
 
         final String nFramesStr = String.valueOf((endSlice - startSlice + 1)*(endTime - startTime + 1));
         fileInfo.getTagTable().setValue("0028,0008", nFramesStr, nFramesStr.length());
+        int dataType = image.getType();
+        int bitsPerPixel;
+        if (dataType == ModelStorageBase.ARGB) {
+            bitsPerPixel = 8; // writing a ARGB color image
+        }
+        else {
+            bitsPerPixel = 16; // writing a signed or unsigned short or ARGB_USHORT image
+        }
+        String bitsPerPixelString = String.valueOf(bitsPerPixel);
+        fileInfo.getTagTable().setValue("0028,0100", bitsPerPixelString, bitsPerPixelString.length());
 
         if (stampSecondary) {
             // store that this DICOM has been saved/modified since original capture:
             stampSecondaryCapture(fileInfo);
         }
         this.image = image;
-        ModelImage image2 = new ModelImage(DataType.SHORT, image.getExtents(), "TempExport");
         
         final int imageSize = image.getSliceSize();
         int volumeSize = 0;
@@ -2402,29 +2471,85 @@ public class FileDicom extends FileDicomBase {
         try {
             writeHeader(raFile, fileInfo, false);
 
-            final float[] data = new float[imageSize];
-
             final double invSlope = fileInfo.getRescaleSlope();
             final double intercept = fileInfo.getRescaleIntercept();
-            final short[] data2 = new short[imageSize];
-
+            if (dataType == ModelStorageBase.ARGB) {
+                final float[] data = new float[4 *imageSize];
+                final int[] data2 = new int[4 * imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(4*timeNum*volumeSize + 4*sliceNum*imageSize, 4*imageSize, data);
             
-            for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
-            	for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
-                    image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
-        
-                    for (int i = 0; i < data.length; i++) {
-                        data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferRGB(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize);
+            
                     }
-        
-                    image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
-                    
-                    rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize, sliceNum);
+                }        
+            } // if (dataType == ModelStorageBase.ARGB)
+            else if (dataType == ModelStorageBase.ARGB_USHORT) {
+                final float[] data = new float[4 *imageSize];
+                final int[] data2 = new int[4 * imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(4*timeNum*volumeSize + 4*sliceNum*imageSize, 4*imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferRGB_USHORT(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
+                    }
+                }            
+            } // else if (dataType == ModelStorageBase.ARGB_USHORT)
+            else if (dataType == ModelStorageBase.USHORT) {
+                final float[] data = new float[imageSize];
+                final int[] data2 = new int[imageSize];
+                
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferUShort(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
+                    }
+                }    
+            } // if (dataType == ModelStorageBase.USHORT)
+            else {
+                final float[] data = new float[imageSize];
+                final short[] data2 = new short[imageSize];
+    
+                for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
+                    for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+                        image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
+            
+                        for (int i = 0; i < data.length; i++) {
+                            data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+                        }
+                        
+                        rawChunkFile.writeBufferShort(data2, timeNum*volumeSize + sliceNum*imageSize,
+                                timeNum*volumeSize + sliceNum*imageSize + imageSize,
+                                fileInfo.getEndianess());
+            
+                    }
                 }
-            }
+            } // else
 
             rawChunkFile.close();
-            image2.disposeLocal();
         } catch (final IOException error) {
             throw new IOException("FileDicomWrite: " + error);
         } catch (final OutOfMemoryError error) {
@@ -2930,13 +3055,13 @@ public class FileDicom extends FileDicomBase {
         table.setWriteAsUnknownLength(itemLength == -1); //if reported item length is -1, item will continue to be written with unknown length
         
         final int startfptr = getFilePointer();
-        boolean flag = true; //whether dicom header processing should continue
-        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
+        boolean dataSetflag = true; //whether dicom header processing should continue
+        while (dataSetflag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
             Preferences.debug("Processed seq amount: "+(getFilePointer() - startfptr), Preferences.DEBUG_FILEIO);
             FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
             if(!nameSQ.equals(FileDicom.SEQ_ITEM_END) && !nameSQ.matches(FileDicom.IMAGE_TAG)) {
-                flag = processNextTag(table, key, endianess, true);
+                dataSetflag = processNextTag(table, key, endianess, true);
             } else if(nameSQ.matches(FileDicom.IMAGE_TAG)) {
                 numEmbeddedImages++;
                 seek(getFilePointer()+elementLength); //embedded image not displayed //TODO: make this image availbale in the dicom infobox
@@ -3775,7 +3900,7 @@ public class FileDicom extends FileDicomBase {
         if (fileInfo.getTagTable().getValue("0028,0002") != null) {
             samplesPerPixel = ((Short) fileInfo.getTagTable().getTagList().get("0028,0002").getValue(false)).shortValue();
         }
-
+        
         final int imageLength = image.getSliceSize()
                 * ((Short) fileInfo.getTagTable().getValue("0028,0100", false)).shortValue() / 8 * // bits per pixel
                 samplesPerPixel; // samples per pixel (i.e RGB = 3)

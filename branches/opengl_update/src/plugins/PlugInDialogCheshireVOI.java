@@ -116,6 +116,8 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

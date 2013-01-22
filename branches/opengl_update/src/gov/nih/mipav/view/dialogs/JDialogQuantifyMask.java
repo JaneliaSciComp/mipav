@@ -71,10 +71,6 @@ public class JDialogQuantifyMask
     	
     }
     
-    public void actionPerformed(ActionEvent e) {
-    	
-    }
-    
     public void algorithmPerformed(AlgorithmBase algorithm) {
     	if (algorithm.isCompleted()) {
         	insertScriptLine();

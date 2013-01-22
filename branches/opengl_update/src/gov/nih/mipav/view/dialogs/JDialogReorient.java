@@ -18,7 +18,7 @@ import gov.nih.mipav.model.structures.MatrixHolder;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -54,7 +54,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 *
 */  
 public class JDialogReorient extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
+	implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface  {
     
     private     AlgorithmTransform 		algoTrans = null;
     private     ModelImage              image;                // source image
@@ -125,7 +125,6 @@ public class JDialogReorient extends JDialogScriptableBase
     public JDialogReorient(Frame theParentFrame, ModelImage im) {
 		super(theParentFrame, false);
 		image = im;
-		loadDefaults();
         init();
 	}
 	
@@ -470,7 +469,7 @@ public class JDialogReorient extends JDialogScriptableBase
  	/**
      *  Loads the default settings from Preferences to set up the dialog
      */
-	public void loadDefaults() {
+	public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -498,7 +497,7 @@ public class JDialogReorient extends JDialogScriptableBase
      * Saves the default settings into the Preferences file
      */
 	
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String( getParameterString(",") );
         //System.out.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(),defaultsString);
@@ -522,6 +521,8 @@ public class JDialogReorient extends JDialogScriptableBase
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
+        } else {
+            super.actionPerformed(event);
         }
 		
     }
@@ -538,9 +539,6 @@ public class JDialogReorient extends JDialogScriptableBase
     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
                 
-		if (Preferences.isPreference(Preferences.PREF_SAVE_DEFAULTS) && this.getOwner() != null && !isScriptRunning()) {
-			saveDefaults();
-		}
 		
         if ( algorithm instanceof AlgorithmTransform) {
         	TransMatrix newMatrix = null;

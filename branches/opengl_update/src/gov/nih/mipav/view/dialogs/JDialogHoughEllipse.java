@@ -140,9 +140,12 @@ public class JDialogHoughEllipse extends JDialogBase implements AlgorithmInterfa
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("HoughEllipse003");
+            //MipavUtil.showHelp("HoughEllipse003");
+            MipavUtil.showWebHelp("Hough_Transform#Running_the_Hough_Transform_for_Ellipse_Detection_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.structures;
 
+import gov.nih.mipav.util.MipavMath;
+
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -124,17 +126,13 @@ public class VOIProtractor extends VOIBase {
         Vector3f kEnd1 = get(0);
         Vector3f kEnd2 = get(2);
 
-        Vector3f kV1 = new Vector3f();
-        kV1.Sub( kEnd1, kStart );
-        kV1.Mult( kScale );
-        kV1.Normalize();
+        Vector3f kV1 = Vector3f.sub( kEnd1, kStart );
+        kV1.mult( kScale ).normalize();
 
-        Vector3f kV2 = new Vector3f();
-        kV2.Sub( kEnd2, kStart );
-        kV2.Mult( kScale );
-        kV2.Normalize();
+        Vector3f kV2 = Vector3f.sub( kEnd2, kStart );
+        kV2.mult( kScale ).normalize();
 
-        double fAngle = (180.0 / Math.PI) * Vector3f.Angle( kV1, kV2 );
+        double fAngle = (180.0 / Math.PI) * Vector3f.angle( kV1, kV2 );
         if (fAngle < -180.0) {
             fAngle = fAngle + 360.0;
         }
@@ -143,6 +141,16 @@ public class VOIProtractor extends VOIBase {
         }
         return fAngle;               
     }    
+    
+    /**
+     * Returns the total length of this contour, based on the input resolutions.
+     * @param resolutions.
+     * @return total length of this contour, scaled by the resolutions.
+     */
+    public double getLengthPtToPt(float[] resolutions) {
+
+        return MipavMath.distance(get(size()-2), lastElement(), resolutions);
+    }
 
 
     /**
@@ -155,6 +163,7 @@ public class VOIProtractor extends VOIBase {
         allSlices = bValue;
     }
 
+    
 
     /**
      * Translates 3 points of the protractor VOI.

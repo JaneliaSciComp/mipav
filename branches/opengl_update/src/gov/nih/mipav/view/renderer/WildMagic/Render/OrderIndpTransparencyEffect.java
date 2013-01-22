@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Shader;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 /**
@@ -42,20 +43,6 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             kPShader.SetImageName( i, akTextures[i].GetName() );
         }
         SetPShader(0, kPShader);
-        SetVShader(0, new VertexShader( "TextureV.glsl"));
-        
-        
-        /*
-        SetVShader(0,new VertexShader("TextureV", true));
-        PixelShader kPShader = new PixelShader("OrderIndpTransparencyFinalP", true);
-        SetPShader(0,kPShader);
-
-        kPShader.SetTextureQuantity(akTextures.length);
-        for ( int i = 0; i < akTextures.length; i++ )
-        {
-            kPShader.SetTexture( i, akTextures[i] );
-            kPShader.SetImageName( i, akTextures[i].GetName() );
-        }
-        */
+        SetVShader(0, new VertexShader( "TextureV", Shader.vertexShaderTexture2, true ));
     }
 }

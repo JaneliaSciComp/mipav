@@ -14,7 +14,7 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -51,7 +51,7 @@ import javax.swing.JCheckBox;
  * @see      AlgorithmGradientMagnitude
  */
 public class JDialogGradientMagnitude extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -127,7 +127,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         outputImageType = image.getType();
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         // setVisible(true);
     }
 
@@ -151,8 +150,10 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-
-            MipavUtil.showHelp("10011");
+            //MipavUtil.showHelp("10011");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gradient_Magnitude#Applying_the_Gradient_Magnitude_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -168,9 +169,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
         String name = makeImageName(image.getImageName(), "_gmag");
 
 
@@ -435,7 +433,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (outputOptionsPanel != null)) {
@@ -464,7 +462,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

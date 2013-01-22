@@ -31,7 +31,7 @@ import javax.swing.*;
  * @see      AlgorithmGaussianBlur
  */
 public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -95,7 +95,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -119,9 +118,12 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10007");
+            //MipavUtil.showHelp("10007");
+            MipavUtil.showWebHelp("Filters_(Spatial)_Anisotropic_Diffusion#Applying_the_Anisotropic_Diffusion_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
      
     /**
      * Record the parameters just used to run this algorithm in a script.
@@ -180,9 +182,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmAnisotropicDiffusion) {
             image.clearMask();
@@ -265,7 +264,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null && outputPanel != null) {
@@ -299,7 +298,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
         
         String defaultsString = outputPanel.isProcessWholeImageSet() + delim;

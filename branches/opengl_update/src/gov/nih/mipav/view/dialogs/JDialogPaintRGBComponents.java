@@ -85,6 +85,8 @@ public class JDialogPaintRGBComponents extends JDialogBase implements ItemListen
         	}
         	
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

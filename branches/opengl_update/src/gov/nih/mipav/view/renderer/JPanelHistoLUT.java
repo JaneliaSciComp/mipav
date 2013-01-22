@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -1461,6 +1462,7 @@ public class JPanelHistoLUT
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
+            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
 
         } catch (IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());

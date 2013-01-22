@@ -194,7 +194,9 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
 
                 return;
             }
-    }
+        } else {
+            super.actionPerformed(event);
+        }
     }
 
     // ************************************************************************

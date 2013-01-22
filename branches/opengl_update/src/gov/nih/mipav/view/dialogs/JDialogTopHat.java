@@ -157,6 +157,8 @@ public class JDialogTopHat extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

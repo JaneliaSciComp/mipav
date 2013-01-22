@@ -202,9 +202,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
-                t2ResultStack = nearCloneImage(image, t2ResultStack);
-                m0ResultStack = nearCloneImage(image, m0ResultStack);
-                r2ResultStack = nearCloneImage(image, r2ResultStack);
+                cloneFileInfo(image, t2ResultStack);
+                cloneFileInfo(image, m0ResultStack);
+                cloneFileInfo(image, r2ResultStack);
             }
         }
         
@@ -213,9 +213,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
-            t2ResultStack = nearCloneImage(image, t2ResultStack);
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
-            r2ResultStack = nearCloneImage(image, r2ResultStack);
+            cloneFileInfo(image, t2ResultStack);
+            cloneFileInfo(image, m0ResultStack);
+            cloneFileInfo(image, r2ResultStack);
         }
         
         String prefix = new String();
@@ -501,9 +501,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
-                t2ResultStack = nearCloneImage(image, t2ResultStack);
-                m0ResultStack = nearCloneImage(image, m0ResultStack);
-                r2ResultStack = nearCloneImage(image, r2ResultStack);
+                cloneFileInfo(image, t2ResultStack);
+                cloneFileInfo(image, m0ResultStack);
+                cloneFileInfo(image, r2ResultStack);
             }
         }
         
@@ -512,9 +512,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
-            t2ResultStack = nearCloneImage(image, t2ResultStack);
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
-            r2ResultStack = nearCloneImage(image, r2ResultStack);
+            cloneFileInfo(image, t2ResultStack);
+            cloneFileInfo(image, m0ResultStack);
+            cloneFileInfo(image, r2ResultStack);
         }
         
         String prefix = new String();
@@ -794,9 +794,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 
-                t2ResultStack = nearCloneImage(image, t2ResultStack);
-                m0ResultStack = nearCloneImage(image, m0ResultStack);
-                r2ResultStack = nearCloneImage(image, r2ResultStack);
+                cloneFileInfo(image, t2ResultStack);
+                cloneFileInfo(image, m0ResultStack);
+                cloneFileInfo(image, r2ResultStack);
             }
         }
         
@@ -810,9 +810,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
                     r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                     
-                    t2ResultStack = nearCloneImage(image, t2ResultStack);
-                    m0ResultStack = nearCloneImage(image, m0ResultStack);
-                    r2ResultStack = nearCloneImage(image, r2ResultStack);
+                    cloneFileInfo(image, t2ResultStack);
+                    cloneFileInfo(image, m0ResultStack);
+                    cloneFileInfo(image, r2ResultStack);
                 }
             }
         }
@@ -822,9 +822,9 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             
-            t2ResultStack = nearCloneImage(image, t2ResultStack);
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
-            r2ResultStack = nearCloneImage(image, r2ResultStack);
+            cloneFileInfo(image, t2ResultStack);
+            cloneFileInfo(image, m0ResultStack);
+            cloneFileInfo(image, r2ResultStack);
         }
         
         String prefix = new String();
@@ -1216,10 +1216,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                 r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                 b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
                 
-                t2ResultStack = nearCloneImage(image, t2ResultStack);
-                m0ResultStack = nearCloneImage(image, m0ResultStack);
-                r2ResultStack = nearCloneImage(image, r2ResultStack);
-                b0ResultStack = nearCloneImage(image, b0ResultStack);
+                cloneFileInfo(image, t2ResultStack);
+                cloneFileInfo(image, m0ResultStack);
+                cloneFileInfo(image, r2ResultStack);
+                cloneFileInfo(image, b0ResultStack);
             }
         }
         
@@ -1234,10 +1234,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
                     r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
                     b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
                     
-                    t2ResultStack = nearCloneImage(image, t2ResultStack);
-                    m0ResultStack = nearCloneImage(image, m0ResultStack);
-                    r2ResultStack = nearCloneImage(image, r2ResultStack);
-                    b0ResultStack = nearCloneImage(image, b0ResultStack);
+                    cloneFileInfo(image, t2ResultStack);
+                    cloneFileInfo(image, m0ResultStack);
+                    cloneFileInfo(image, r2ResultStack);
+                    cloneFileInfo(image, b0ResultStack);
                 }
             }
         }
@@ -1248,10 +1248,10 @@ public class AlgorithmTreT2 extends AlgorithmTProcess {
             r2ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r2_results");
             b0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b0_results");
             
-            t2ResultStack = nearCloneImage(image, t2ResultStack);
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
-            r2ResultStack = nearCloneImage(image, r2ResultStack);
-            b0ResultStack = nearCloneImage(image, b0ResultStack);
+            cloneFileInfo(image, t2ResultStack);
+            cloneFileInfo(image, m0ResultStack);
+            cloneFileInfo(image, r2ResultStack);
+            cloneFileInfo(image, b0ResultStack);
         }
 
         String prefix = new String();
@@ -2163,37 +2163,6 @@ public void twoPDownHillSimplex(double[] optimization, double[] initialGuess, do
         bestToWorst[2] = worst;
         
         return;
-    }
-    
-    /**
-     * This method gives <code>clo</code> most of the image attributes of <code>orig</code> besides
-     * data type to minimize rounding errors.
-     * 
-     * @param orig Original image
-     * @param clo Near clone image
-     */
-    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
-        FileInfoBase[] oArr = orig.getFileInfo();
-        FileInfoBase[] cArr = clo.getFileInfo();
-        if(cArr.length != oArr.length) {
-            MipavUtil.displayError("Images are not same length");
-            return clo;
-        }
-        for(int i=0; i<cArr.length; i++) {
-            if(cArr == null) {
-                return clo;
-            }
-            cArr[i].setOffset(oArr[i].getOffset());
-            cArr[i].setEndianess(oArr[i].getEndianess());
-            cArr[i].setResolutions(oArr[i].getResolutions().clone());
-            cArr[i].setUnitsOfMeasure(oArr[i].getUnitsOfMeasure().clone());
-            cArr[i].setOrigin(oArr[i].getOrigin().clone());
-            cArr[i].setImageOrientation(cArr[i].getImageOrientation());
-            cArr[i].setAxisOrientation(oArr[i].getAxisOrientation().clone());
-            cArr[i].setDataType(ModelImage.DOUBLE);
-        }
-        
-        return clo;
     }
     
     public void reduceB0Field(double[][] b0Field, double resonancePeriod, int width, int height) {

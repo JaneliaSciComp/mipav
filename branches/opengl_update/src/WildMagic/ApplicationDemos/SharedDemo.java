@@ -45,6 +45,7 @@ public class SharedDemo extends Thread {
     static GLProfile glp;
     static GLCapabilities caps;
     static int width, height;
+    //GLOffscreenAutoDrawable sharedDrawable;
     GLPbuffer sharedDrawable;
     Lattice sharedDemo;
     static boolean init = initClass();
@@ -53,7 +54,9 @@ public class SharedDemo extends Thread {
 
     public static boolean initClass() {
         GLProfile.initSingleton(true);
-        glp = GLProfile.getDefault();
+        glp = GLProfile.getMaxProgrammable();
+        //GLProfile.initSingleton();
+        //glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
         width  = 512;
         height = 512;
@@ -108,6 +111,7 @@ public class SharedDemo extends Thread {
     }
     
     private void initShared() {
+        //sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
         sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
         sharedDemo = new Lattice();
         sharedDrawable.addGLEventListener(sharedDemo);

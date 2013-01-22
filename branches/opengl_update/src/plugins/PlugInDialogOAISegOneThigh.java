@@ -110,6 +110,8 @@ public class PlugInDialogOAISegOneThigh extends JDialogBase implements Algorithm
 
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

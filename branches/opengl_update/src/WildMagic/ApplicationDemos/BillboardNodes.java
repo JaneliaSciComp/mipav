@@ -28,6 +28,7 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Mathf;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -226,8 +227,7 @@ public class BillboardNodes extends DemoBase
         Vector3f kCLoc = new Vector3f(0.0f,-1.0f,0.25f);
         Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
         Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
         
         
@@ -402,6 +402,7 @@ public class BillboardNodes extends DemoBase
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetTChannels(0,2);
+        kAttr.SetCChannels(0,3);
         StandardMesh kSM = new StandardMesh(kAttr);
         m_kGround = kSM.Rectangle(2,2,16.0f,16.0f);
         MaterialTextureEffect pkGroundEffect = new MaterialTextureEffect("Horizontal");
@@ -426,6 +427,10 @@ public class BillboardNodes extends DemoBase
         OrderIndpTransparencyEffect pkEffect = new OrderIndpTransparencyEffect("Leaf", 0.2f);
         pkMesh.AttachGlobalState(kMaterial);
         pkMesh.AttachEffect(pkEffect);
+        for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+        	pkMesh.VBuffer.SetColor3(0,  i, ColorRGB.BLACK );
+        }
         pkEffect.LoadResources(m_pkRenderer, pkMesh);
         m_spkBillboard0.AttachChild(pkMesh);
 
@@ -434,7 +439,7 @@ public class BillboardNodes extends DemoBase
         // billboard so it's up-vector matches the world's.
         m_spkBillboard0.Local.SetTranslate( -0.25f,0.0f,0.1f);
         Matrix3f kMatrix = new Matrix3f();
-        kMatrix.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
+        kMatrix.fromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard0.Local.SetRotate( kMatrix );
 
         // Create a billboard node that causes an object to always be oriented
@@ -459,7 +464,7 @@ public class BillboardNodes extends DemoBase
         // billboard so it's up-vector matches the world's.
         m_spkBillboard1.Local.SetTranslate( 0.25f,0.0f,0.1f);
         Matrix3f kMatrix2 = new Matrix3f();
-        kMatrix2.FromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
+        kMatrix2.fromAxisAngle(Vector3f.UNIT_X,Mathf.HALF_PI);
         m_spkBillboard1.Local.SetRotate(kMatrix2);
     }    
 }

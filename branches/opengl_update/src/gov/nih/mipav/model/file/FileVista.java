@@ -33,7 +33,7 @@ public class FileVista extends FileBase {
     private FileInfoVista fileInfo;
     
     /** offset to image data **/
-    private int offset;
+    private long offset;
     
     /** image **/
     private ModelImage image;
@@ -211,7 +211,7 @@ public class FileVista extends FileBase {
          fileInfo.setOrigin(o);
          
          
-    	 offset = (int)raFile.getFilePointer();
+    	 offset = raFile.getFilePointer();
 
     	 raFile.close();
     	 
@@ -295,7 +295,7 @@ public class FileVista extends FileBase {
             		
             		
             		
-            		offset = (int)rawFile.getRaFile().getFilePointer();
+            		offset = rawFile.getRaFile().getFilePointer();
             		
             	}
             	image.calcMinMax();
@@ -325,7 +325,7 @@ public class FileVista extends FileBase {
             		
             		
             		
-            		offset = (int)rawFile.getRaFile().getFilePointer();
+            		offset = rawFile.getRaFile().getFilePointer();
             		
             	}
             	image.calcMinMax();
@@ -355,7 +355,7 @@ public class FileVista extends FileBase {
             		
             		
             		
-            		offset = (int)rawFile.getRaFile().getFilePointer();
+            		offset = rawFile.getRaFile().getFilePointer();
             		
             	}
             	image.calcMinMax();

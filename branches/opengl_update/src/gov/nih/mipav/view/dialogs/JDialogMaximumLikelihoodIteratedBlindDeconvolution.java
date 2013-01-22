@@ -179,13 +179,17 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			MipavUtil.showHelp("19003");
+			//MipavUtil.showHelp("19003");
+		    MipavUtil.showWebHelp("Microscopy:_Blind_Deconvolution#Applying_the_Maximum_Likelihood_Iterative_Blind_Deconvolution_algorithm");
 		} else if (command.equals("MicroscopeOptions")) {
 			useMicroscopeSettings = ((JCheckBox) event.getSource()).isSelected();
 			textObjectiveNumericalAperature.setEnabled(useMicroscopeSettings);
 			textWavelength.setEnabled(useMicroscopeSettings);
 			textRefractiveIndex.setEnabled(useMicroscopeSettings);
-		} // else if (command.equals("MicroscopeOptions") )
+		} else { // else if (command.equals("MicroscopeOptions") )
+            super.actionPerformed(event);
+        }
+		
 	} // actionPerformed(...)
 
 	/**

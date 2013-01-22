@@ -825,12 +825,12 @@ public class FileImageXML extends FileXML {
                  // imageFileName was parsed from the "image".xml file.
                  rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo, FileBase.READ);
 
-                 int offset = 0;
+                 long offset = 0L;
 
                  if (one) {
 
                      if ( ((FileInfoImageXML) fileInfo).getExtents().length > 2) {
-                         offset = getOffset((FileInfoImageXML) fileInfo);
+                         offset = (long)getOffset((FileInfoImageXML) fileInfo);
                      }
                  }
 
@@ -1245,7 +1245,7 @@ public class FileImageXML extends FileXML {
 
             rawFile = new FileRaw(imageFileName, fileDir, (FileInfoImageXML) fileInfo,
                     FileBase.READ);
-            rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
+            rawFile.readImage(buffer, 0L, ((FileInfoImageXML) fileInfo).getDataType());
 
             if (fileInfo.getFileName().indexOf(".img") == (fileInfo.getFileName().length() - 4)) {
                 flipTopBottom(buffer, (FileInfoImageXML) fileInfo);
@@ -1697,11 +1697,11 @@ public class FileImageXML extends FileXML {
 
                     if (orient == FileInfoBase.SAGITTAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
+                        tMatrix.set(0, 1, 0, 0, 0, 0, -1, 0, -1, 0, 0, 0, 0, 0, 0, 1);
 
                     } else if (orient == FileInfoBase.CORONAL) {
                         // same for 2D or 3D, 2D doesn't use last row/col
-                        tMatrix.Set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+                        tMatrix.set(1, 0, 0, 0, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
 
                     }
                 }
@@ -1709,7 +1709,7 @@ public class FileImageXML extends FileXML {
                 for (i = 0; i < tMatrix.getDim(); i++) {
 
                     for (j = 0; j < tMatrix.getDim(); j++) {
-                        closedTag("Data", new Double(tMatrix.Get(i, j)).toString());
+                        closedTag("Data", new Double(tMatrix.get(i, j)).toString());
                     }
                 }
 

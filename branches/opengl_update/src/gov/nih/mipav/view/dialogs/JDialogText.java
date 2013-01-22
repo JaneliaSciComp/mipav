@@ -104,7 +104,7 @@ public class JDialogText extends JDialogBase {
      * @param  title   Title of dialog frame.
      */
     public JDialogText(Frame parent, String title) {
-        super(parent, false);
+        super(parent, false, false);
         setResizable(true);
         message = new StringBuffer("");
         init(title);
@@ -147,6 +147,8 @@ public class JDialogText extends JDialogBase {
 
         if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -25,7 +25,7 @@ public class LogStdStreams extends PrintStream {
     private static String logFileName;
 
     /** The only instance of this class. */
-    private static LogStdStreams logStream = null;
+    public static LogStdStreams logStream = null;
 
     /** DOCUMENT ME! */
     private static final PrintStream stdSystemErr = System.err;
@@ -145,7 +145,7 @@ public class LogStdStreams extends PrintStream {
     public static void initializeErrorLogging(String fileName, String initialStr, boolean logStdOut, boolean append) {
 
         if (logStream != null) {
-            throw new RuntimeException("initializeErrorLogging() has already been called.");
+            Preferences.debug("Reinitializing logging", Preferences.DEBUG_MINOR);
         }
 
         logFileName = fileName;

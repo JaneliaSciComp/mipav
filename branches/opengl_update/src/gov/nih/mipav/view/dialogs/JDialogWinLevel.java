@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,6 +26,8 @@ import javax.swing.event.*;
  * <p>
  * Image intensity
  * </p>
+ * 
+ * @author senseneyj
  */
 public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyListener, MouseListener {
 
@@ -55,7 +58,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /** Reference to the image that will be affected by the adjust of the window and level. */
     private final ModelImage image;
 
-    /** Average of the min and max extents of the transfer window that desribes the window size. */
+    /** Average of the min and max extents of the transfer window that describes the window size. */
     private float level;
 
     private float min, max;
@@ -332,9 +335,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             if (tabbedPane.getSelectedIndex() == 0) {
                 Preferences.setProperty(Preferences.PREF_LEVEL, levelValTextField.getText());
                 Preferences.setProperty(Preferences.PREF_WINDOW, winValTextField.getText());
+                Preferences.setDefaultDisplay(DefaultDisplay.WindowLevel);
             } else if (tabbedPane.getSelectedIndex() == 1) {
                 Preferences.setProperty(Preferences.PREF_MIN, minValTextField.getText());
                 Preferences.setProperty(Preferences.PREF_MAX, maxValTextField.getText());
+                Preferences.setDefaultDisplay(DefaultDisplay.MinMax);
             }
         } else if (source == loadButton) {
             if (tabbedPane.getSelectedIndex() == 0) {
@@ -382,6 +387,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     MipavUtil.displayError("There are no min and max preference values saved");
                 }
             }
+        } else {
+            super.actionPerformed(event);
         }
 
     }
@@ -897,7 +904,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(sliderMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
-        min = .25f * (maxImage - minImage);
+        min = .25f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
         minSlider = new JSlider(0, 11999, 3000);
 
         // set slider attributes
@@ -988,7 +995,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(sliderMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
-        max = .75f * (maxImage - minImage);
+        max = .75f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
         maxSlider = new JSlider(0, 11999, 9000);
 
         // set slider attributes
@@ -1225,7 +1232,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             windowSliderMax = 511;
         } else if (image.getType() == ModelStorageBase.BYTE) {
             minImage = -128;
-            maxImage = 127;
+            maxImage = 127; 
             levelSliderMax = 255;
             windowSliderMax = 511;
         } else {

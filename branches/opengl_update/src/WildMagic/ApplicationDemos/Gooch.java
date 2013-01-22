@@ -164,8 +164,7 @@ implements GLEventListener, KeyListener
 		Vector3f kCLoc = new Vector3f(0.0f,0.0f,-8.0f);
 		Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
 		Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -243,7 +242,7 @@ implements GLEventListener, KeyListener
 		final int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++)
 		{
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, m_pkMesh, iPass,m_pkRenderer.GetMaxColors(),m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(),m_pkRenderer.GetMaxPShaderImages());
 		}
 		m_pkMesh.AttachEffect(m_spkEffect);

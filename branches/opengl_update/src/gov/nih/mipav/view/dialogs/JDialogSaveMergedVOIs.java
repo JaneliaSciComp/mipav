@@ -119,6 +119,8 @@ public class JDialogSaveMergedVOIs extends JDialogBase {
             dispose();
         } else if (command.equals("Help")) {
 
+        } else {
+            super.actionPerformed(event);
         }
 
     }

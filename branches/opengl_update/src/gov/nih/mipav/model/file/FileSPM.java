@@ -811,12 +811,12 @@ public class FileSPM extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            int offset = 0;
+            long offset = 0L;
 
             if (one) {
 
                 if (fileInfo.getExtents().length > 2) {
-                    offset = getOffset(fileInfo);
+                    offset = (long)getOffset(fileInfo);
                 }
             }
 
@@ -863,7 +863,7 @@ public class FileSPM extends FileBase {
 
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-            rawFile.readImage(buffer, 0, fileInfo.getDataType());
+            rawFile.readImage(buffer, 0L, fileInfo.getDataType());
             rawFile.raFile.close();
             flipTopBottom(buffer, fileInfo);
         } catch (IOException error) {

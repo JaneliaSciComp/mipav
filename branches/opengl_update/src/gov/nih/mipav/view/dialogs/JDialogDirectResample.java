@@ -202,7 +202,10 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             z = MipavMath.dimPowerOfTwo(z);
             extZOutput.setText(Integer.toString(z));
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19040");
+            //MipavUtil.showHelp("19040");
+            MipavUtil.showWebHelp("Transform_to_power_of_2#Resample_dialog_box");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

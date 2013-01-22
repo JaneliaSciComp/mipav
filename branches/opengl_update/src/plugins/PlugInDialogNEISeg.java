@@ -82,6 +82,8 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

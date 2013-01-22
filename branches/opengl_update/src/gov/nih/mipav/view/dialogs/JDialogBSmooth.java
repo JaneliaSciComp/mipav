@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -72,6 +73,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
+    
+    private VOIManagerInterface voiManager;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -172,6 +175,18 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
 
         init();
     }
+    
+    /**
+     * Creates new dialog for entering parameters for algorithm.
+     *
+     * @param  theParentFrame  Parent frame
+     * @param  im              Source image
+     * @param  _zSlice         Z slice of image.
+     */
+    public JDialogBSmooth(Frame theParentFrame, VOIManagerInterface voiManager, ModelImage im, int _zSlice) {
+    	this(theParentFrame,im,_zSlice);
+    	this.voiManager = voiManager;
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -224,10 +239,13 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
                 titles = new String[imageFrames.size()];
 
                 for (i = 0; i < imageFrames.size(); i++) {
+                	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+                	{
                     titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
                     ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                	}
                 }
 
                 // Start the thread as a low priority because we wish to still have user interface.
@@ -244,8 +262,10 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             dispose();
         }
         else if (source == helpButton) {
-            MipavUtil.showHelp("Smooth01");
-            
+            //MipavUtil.showHelp("Smooth01");
+            MipavUtil.showWebHelp("Modifying_Contours#Smooth_VOI");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -302,14 +322,20 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
-                ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+            	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+            	{
+            		((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+            		((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+            		((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+            	}
             }
         }
 
         // Update frame
-        ((ViewJFrameBase) parentFrame).updateImages(true);
+        if ( voiManager != null )
+        {
+        	voiManager.updateDisplay();
+        }
         dispose();
     }
 

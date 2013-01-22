@@ -20,7 +20,7 @@ import java.util.*;
 import javax.swing.*;
 
 public class JDialogProstateSaveFeatures extends JDialogScriptableBase
-		implements AlgorithmInterface, DialogDefaultsInterface {
+		implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
 	// ~ Static fields/initializers
 	// -------------------------------------------------------------------------------------
@@ -497,7 +497,6 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		image = im;
 		this.testSample = testSample;
 		init();
-		loadDefaults();
 		setVisible(true);
 	}
 
@@ -521,7 +520,8 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			MipavUtil.showHelp("Haral1001");
+			//MipavUtil.showHelp("Haral1001");
+			MipavUtil.showWebHelp("Filters_(Spatial):_Haralick_Texture");
 		} else if (command.equalsIgnoreCase("saveFileBrowse")) {
 			JFileChooser chooser = new JFileChooser();
 
@@ -538,7 +538,9 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 				textSavedFileName.setText(savedFileDirAbs);
 
 			}
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	// ************************************************************************
@@ -816,7 +818,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	/**
 	 * Loads the default settings from Preferences to set up the dialog.
 	 */
-	public void loadDefaults() {
+	public void legacyLoadDefaults() {
 		String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
 		if (defaultsString != null) {
@@ -859,7 +861,7 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 	/**
 	 * Saves the default settings into the Preferences file.
 	 */
-	public void saveDefaults() {
+	public void legacySaveDefaults() {
 		String defaultsString = new String(getParameterString(","));
 		Preferences.saveDialogDefaults(getDialogName(), defaultsString);
 	}

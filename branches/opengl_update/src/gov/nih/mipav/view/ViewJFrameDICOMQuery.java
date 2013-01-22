@@ -800,13 +800,17 @@ public class ViewJFrameDICOMQuery extends JFrame implements ActionListener, List
             final DICOM_Verification verify = new DICOM_Verification((String) sendDestCBox.getSelectedItem(), this);
             verify.verify();
         } else if (command.equals("Help1")) {
-            MipavUtil.showHelp("10308");
+            //MipavUtil.showHelp("10308");
+            MipavUtil.showWebHelp("Posing_queries_and_retrieving_images"); 
         } else if (command.equals("Help2")) {
-            MipavUtil.showHelp("10309");
+            //MipavUtil.showHelp("10309");
+            MipavUtil.showWebHelp("Receiving_and_sending_image_files");
         } else if (command.equals("Help3")) {
-            MipavUtil.showHelp("10305");
+            //MipavUtil.showHelp("10305");
+            MipavUtil.showWebHelp("Sending_and_retrieving_DICOM_images#Creating.2C_editing.2C_and_deleting_servers");
         } else if (command.equals("Help4")) {
-            MipavUtil.showHelp("10304");
+            //MipavUtil.showHelp("10304");
+            MipavUtil.showWebHelp("Sending_and_retrieving_DICOM_images#Setting_up_the_hosts_table");
         } else if (command.equals("Activate")) {
             final int selected = storageTable.getSelectedRow();
             DICOM_Receiver rec;

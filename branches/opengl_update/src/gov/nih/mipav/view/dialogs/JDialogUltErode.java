@@ -113,7 +113,10 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor015UE");
+        	//MipavUtil.showHelp("Mor015UE");
+        	MipavUtil.showWebHelp("Morphology#Ultimate_erode");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

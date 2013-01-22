@@ -250,9 +250,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                     kDiffZ.X = akSourceMap[0].data[iDZ1] - akSourceMap[0].data[iDZ0];
                     kDiffZ.Y = akSourceMap[1].data[iDZ1] - akSourceMap[1].data[iDZ0];
                     kDiffZ.Z = akSourceMap[2].data[iDZ1] - akSourceMap[2].data[iDZ0];
-                    kDiffX.Scale(1.0f / ((iX1 - iX0) * fDX));
-                    kDiffY.Scale(1.0f / ((iY1 - iY0) * fDY));
-                    kDiffZ.Scale(1.0f / ((iZ1 - iZ0) * fDZ));
+                    kDiffX.scale(1.0f / ((iX1 - iX0) * fDX));
+                    kDiffY.scale(1.0f / ((iY1 - iY0) * fDY));
+                    kDiffZ.scale(1.0f / ((iZ1 - iZ0) * fDZ));
 
                     float a = kDiffX.X;
                     float b = kDiffY.X;
@@ -530,13 +530,13 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         getErrorDeriv(iControlX, iControlY, iControlZ, kDirection);
 //        System.out.println("Time consumed by getErrorDeriv() is " + (System.currentTimeMillis()-currentTime));
         
-        kDirection.Neg();
+        kDirection.neg();
 
-        if (0.0f == kDirection.Length()) {
+        if (0.0f == kDirection.length()) {
             return;
         }
 
-        kDirection.Normalize();
+        kDirection.normalize();
 
         // Compute how far the current control point is from the
         // boundary formed by its neighbor control points in the
@@ -560,7 +560,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         
 //        currentTime = System.currentTimeMillis();
         for (float fT = fStepSize; fT <= fMaxDist; fT += fStepSize) {
-            kNewPoint.ScaleAdd(fT, kDirection, kOrigin);
+            kNewPoint.scaleAdd(fT, kDirection, kOrigin);
             m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
             updateControlPointSamples(iControlX, iControlY, iControlZ);
 
@@ -575,7 +575,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
        
         // Set the control point to the point along the ray where
         // the minimum was found.
-        kNewPoint.ScaleAdd(fMinErrorT, kDirection, kOrigin);
+        kNewPoint.scaleAdd(fMinErrorT, kDirection, kOrigin);
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
 //        currentTime = System.currentTimeMillis();
         updateControlPointSamples(iControlX, iControlY, iControlZ);
@@ -605,20 +605,19 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
     	Vector3f kOrigin = new Vector3f();
         m_kBSpline3D.getControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
-        Vector3f kDirection = new Vector3f();
-        kDirection.Sub(kPoint, kOrigin);
+        Vector3f kDirection = Vector3f.sub(kPoint, kOrigin);
 
-        float fDist = kDirection.Length();
+        float fDist = kDirection.length();
 
         if (0.0f == fDist) {
             return fDist;
         }
 
-        kDirection.Normalize();
+        kDirection.normalize();
         fDist = getControlPointMaxMoveDist(iControlX, iControlY, iControlZ, kDirection, fDist);
 
         Vector3f kNewPoint = new Vector3f();
-        kNewPoint.ScaleAdd(fDist, kDirection, kOrigin);
+        kNewPoint.scaleAdd(fDist, kDirection, kOrigin);
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         updateControlPointSamples(iControlX, iControlY, iControlZ);
 
@@ -680,14 +679,14 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                                          ms_aaaiPolyhedronTriangleControlPointOffset[2][2][iTriangle] + iControlZ, kP2);
 
             // Create vectors which define plane containing the triangle vertices.
-            kV1.Sub(kP1, kP0);
-            kV2.Sub(kP2, kP0);
-            kV1.Normalize();
-            kV2.Normalize();
+            kV1.copy(kP1).sub(kP0);
+            kV2.copy(kP2).sub(kP0);
+            kV1.normalize();
+            kV2.normalize();
             
             // Create the normal vector of the triangle plane.
-            kN.Cross(kV1, kV2);
-            kN.Normalize();
+            kN.copy(kV1).cross(kV2);
+            kN.normalize();
 
             // Find the intersection of the ray with the plane.
             //
@@ -699,7 +698,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
             // ((BxC)*A - (BxC)*D)
             // t = -------------------
             // ((BxC)*E)
-            float fNdD = kN.Dot(kRayDirection);
+            float fNdD = kN.dot(kRayDirection);
 
             if (0.0f == fNdD) {
 
@@ -707,9 +706,9 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 continue;
             }
 
-            kV.Sub(kP0, kP);
+            kV.copy(kP0).sub(kP);
 
-            float fT = kN.Dot(kV) / fNdD;
+            float fT = kN.dot(kV) / fNdD;
 
             if (fT <= 0.0f) {
 
@@ -718,48 +717,48 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
                 continue;
             }
 
-            kPT.ScaleAdd(fT, kRayDirection, kP);
+            kPT.scaleAdd(fT, kRayDirection, kP);
 
             // Project each triangle vertex and ray-plane intersection vertex
             // onto the orthogonal axis plane which is most parallel to the
             // plane defined by the three vertices.  This axis is identified
             // by the axis of the plane normal vector with the largest magnitude.
             if ((Math.abs(kN.X) > Math.abs(kN.Y)) && (Math.abs(kN.X) > Math.abs(kN.Z))) {
-                kPP0.Set(kP0.Y, kP0.Z);
-                kPP1.Set(kP1.Y, kP1.Z);
-                kPP2.Set(kP2.Y, kP2.Z);
-                kPP.Set(kPT.Y, kPT.Z);
+                kPP0.set(kP0.Y, kP0.Z);
+                kPP1.set(kP1.Y, kP1.Z);
+                kPP2.set(kP2.Y, kP2.Z);
+                kPP.set(kPT.Y, kPT.Z);
             } else if (Math.abs(kN.Y) > Math.abs(kN.Z)) {
-                kPP0.Set(kP0.X, kP0.Z);
-                kPP1.Set(kP1.X, kP1.Z);
-                kPP2.Set(kP2.X, kP2.Z);
-                kPP.Set(kPT.X, kPT.Z);
+                kPP0.set(kP0.X, kP0.Z);
+                kPP1.set(kP1.X, kP1.Z);
+                kPP2.set(kP2.X, kP2.Z);
+                kPP.set(kPT.X, kPT.Z);
             } else {
-                kPP0.Set(kP0.X, kP0.Y);
-                kPP1.Set(kP1.X, kP1.Y);
-                kPP2.Set(kP2.X, kP2.Y);
-                kPP.Set(kPT.X, kPT.Y);
+                kPP0.set(kP0.X, kP0.Y);
+                kPP1.set(kP1.X, kP1.Y);
+                kPP2.set(kP2.X, kP2.Y);
+                kPP.set(kPT.X, kPT.Y);
             }
 
             // Determine if this point is inside the triangle.
-            kPV.Sub(kPP1, kPP0);
+            kPV = Vector2f.sub(kPP1, kPP0);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP0);
+            kPV = Vector2f.sub(kPP, kPP0);
 
-            float fC0 = kPVPerp.Dot(kPV);
-            kPV.Sub(kPP2, kPP1);
+            float fC0 = kPVPerp.dot(kPV);
+            kPV = Vector2f.sub(kPP2, kPP1);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP1);
+            kPV = Vector2f.sub(kPP, kPP1);
 
-            float fC1 = kPVPerp.Dot(kPV);
-            kPV.Sub(kPP0, kPP2);
+            float fC1 = kPVPerp.dot(kPV);
+            kPV = Vector2f.sub(kPP0, kPP2);
             kPVPerp.X = +kPV.Y;
             kPVPerp.Y = -kPV.X;
-            kPV.Sub(kPP, kPP2);
+            kPV = Vector2f.sub(kPP, kPP2);
 
-            float fC2 = kPVPerp.Dot(kPV);
+            float fC2 = kPVPerp.dot(kPV);
 
             if (((fC0 * fC1) >= 0.0f) && ((fC0 * fC2) >= 0.0f)) {
 
@@ -791,7 +790,7 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         while ((fMaxDesiredDist * 0.01) < (fIterMoveDistMax - fIterMoveDistMin)) {
 
             // Where will the control point be moved to?
-            kPT.ScaleAdd(fIterMoveDist, kRayDirection, kP);
+            kPT.scaleAdd(fIterMoveDist, kRayDirection, kP);
 
             // Look at each tetrahedron formed by the center control point
             // and the triangles on the face of the polyhedron formed by
@@ -896,8 +895,8 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         Vector3f kNewPoint = new Vector3f();
 
         // Compute the error in the +X direction.
-        kNewPoint.Set(+fSmallStepX, 0.0f, 0.0f);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(+fSmallStepX, 0.0f, 0.0f);
+        kNewPoint.add(kOrigin);
 
         float fStepXPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         
@@ -905,40 +904,38 @@ public class BSplineRegistration3Df extends BSplineRegistrationBasef {
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -X direction.
-        kNewPoint.Set(-fSmallStepX, 0.0f, 0.0f);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(-fSmallStepX, 0.0f, 0.0f);
+        kNewPoint.add(kOrigin);
 
         float fStepXNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorXNeg = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the +Y direction.
-        kNewPoint.Set(0.0f, +fSmallStepY, 0.0f);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(0.0f, +fSmallStepY, 0.0f);
+        kNewPoint.add(kOrigin);
 
         float fStepYPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorYPos = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -Y direction.
-        kNewPoint.Set(0.0f, -fSmallStepY, 0.0f);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(0.0f, -fSmallStepY, 0.0f);
+        kNewPoint.add(kOrigin);
 
         float fStepYNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorYNeg = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the +Z direction.
-        kNewPoint.Set(0.0f, 0.0f, +fSmallStepZ);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(0.0f, 0.0f, +fSmallStepZ).add(kOrigin);
 
         float fStepZPos = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorZPos = m_kRegMeasure.getError();
         m_kBSpline3D.setControlPoint(iControlX, iControlY, iControlZ, kOrigin);
 
         // Compute the error in the -Z direction.
-        kNewPoint.Set(0.0f, 0.0f, -fSmallStepZ);
-        kNewPoint.Add(kOrigin);
+        kNewPoint.set(0.0f, 0.0f, -fSmallStepZ).add(kOrigin);
 
         float fStepZNeg = moveControlPoint(iControlX, iControlY, iControlZ, kNewPoint);
         double dErrorZNeg = m_kRegMeasure.getError();

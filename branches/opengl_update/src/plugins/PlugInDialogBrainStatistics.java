@@ -58,13 +58,6 @@ public class PlugInDialogBrainStatistics extends JDialogBase implements Algorith
     /**
      * Placeholder.
      *
-     * @param  event  ActionEvent
-     */
-    public void actionPerformed(ActionEvent event) { }
-
-    /**
-     * Placeholder.
-     *
      * @param  algo  AlgorithmBase
      */
     public void algorithmPerformed(AlgorithmBase algo) { }

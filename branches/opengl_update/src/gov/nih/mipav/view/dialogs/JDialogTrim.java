@@ -87,6 +87,8 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
             //Preferences.setProperty(Preferences.PREF_TRIM_VOI, String.valueOf(voiTrimSlider.getValue() / (float) 100));
             //only set trim when OK is pressed
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

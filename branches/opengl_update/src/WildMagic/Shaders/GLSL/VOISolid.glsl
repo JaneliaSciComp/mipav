@@ -1,7 +1,11 @@
 //----------------------------------------------------------------------------
 uniform float UseSlice;
 uniform float Slice;
-varying float ZVal;
+
+in float ZVal;
+in vec4 varColor;
+out vec4 fragColor;
+
 void p_VOISolid ()
 {
     if ( UseSlice == 1.0 )
@@ -11,6 +15,6 @@ void p_VOISolid ()
             discard;
         }
     }
-    gl_FragColor = gl_Color;
+    fragColor = varColor;
 }
 //----------------------------------------------------------------------------

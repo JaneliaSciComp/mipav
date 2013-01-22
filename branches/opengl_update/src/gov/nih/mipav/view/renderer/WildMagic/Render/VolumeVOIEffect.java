@@ -41,18 +41,7 @@ public class VolumeVOIEffect extends ShaderEffect
             m_kPShader.set(0, new PixelShader("VOISolid", true));
         }
     }
-    
-
-    public VolumeVOIEffect (final String rkPName, final String rkBaseName)
-    {
-        super(1);
-        m_kVShader.set(0, new VertexShader("TextureV"));
-        m_kPShader.set(0, new PixelShader(rkPName));
-
-        m_kPShader.get(0).SetTextureQuantity(1);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
-    }
-    
+        
     
     /**
      * Set the blend value.

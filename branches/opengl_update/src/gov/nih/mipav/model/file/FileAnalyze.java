@@ -1081,7 +1081,7 @@ public class FileAnalyze extends FileBase {
             }
             linkProgress(rawFile);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
 
             if (one) {
 
@@ -1123,6 +1123,9 @@ public class FileAnalyze extends FileBase {
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
         int i;
+        int index;
+        String fileBase;
+        String dataFileName;
 
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
@@ -1148,13 +1151,16 @@ public class FileAnalyze extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-            if (image.getType() == ModelStorageBase.BOOLEAN) {
+            index = fileInfo.getFileName().lastIndexOf(".");
+            fileBase = fileInfo.getFileName().substring(0, index+1);
+            dataFileName = fileBase + "img";
+            rawFile = new FileRaw(dataFileName, fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+            if (fileInfo.getDataType() == ModelStorageBase.BOOLEAN) {
                 rawFile.setMinimumBitsMinus1(7);
                 rawFile.setShiftToDivide(3);
             }
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
             rawFile.raFile.close();
 

@@ -186,6 +186,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

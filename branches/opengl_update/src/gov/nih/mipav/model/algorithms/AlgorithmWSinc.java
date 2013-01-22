@@ -19,64 +19,64 @@ public class AlgorithmWSinc extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float alphaMax = 255.0f;
+    private double alphaMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float alphaMin = 0.0f;
+    private double alphaMin = 0.0;
 
     /** DOCUMENT ME! */
-    private float blueMax = 255.0f;
+    private double blueMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float blueMin = 0.0f;
+    private double blueMin = 0.0;
 
     /** DOCUMENT ME! */
     private boolean clip;
 
     /** DOCUMENT ME! */
-    private float greenMax = 255.0f;
+    private double greenMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float greenMin = 0.0f;
+    private double greenMin = 0.0;
 
     /** DOCUMENT ME! */
-    private float inputMax;
+    private double inputMax;
 
     /** DOCUMENT ME! */
-    private float inputMin;
+    private double inputMin;
 
     /** DOCUMENT ME! */
-    private float redMax = 255.0f;
+    private double redMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float redMin = 0.0f;
+    private double redMin = 0.0;
 
     /** DOCUMENT ME! */
     private int rX, rY, rZ; // Number used in interpolation along each axis is 2 + 2*r;
 
     /** DOCUMENT ME! */
-    private float scaleX;
+    private double scaleX;
 
     /** DOCUMENT ME! */
-    private float scaleY;
+    private double scaleY;
 
     /** DOCUMENT ME! */
-    private float scaleZ;
+    private double scaleZ;
 
     /** DOCUMENT ME! */
     private int sliceSize;
 
     /** Global variables. */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
-    private float[] wSincXT = null;
+    private double[] wSincXT = null;
 
     /** DOCUMENT ME! */
-    private float[] wSincYT = null;
+    private double[] wSincYT = null;
 
     /** DOCUMENT ME! */
-    private float[] wSincZT = null;
+    private double[] wSincZT = null;
 
     /** DOCUMENT ME! */
     private int xD, yD, zD;
@@ -118,10 +118,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DWSinc(float[] vol, int[] extents, boolean clip) {
+    public void setup2DWSinc(double[] vol, int[] extents, boolean clip) {
         int i;
-        float invX, invY;
-        float diffX, diffY;
+        double invX, invY;
+        double diffX, diffY;
         double argX, argY;
 
         volume = vol;
@@ -130,22 +130,22 @@ public class AlgorithmWSinc extends AlgorithmBase {
         this.clip = clip;
         rX = 3; // to third zero crossing
         rY = 3;
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
-        wSincXT[0] = 1.0f;
-        wSincYT[0] = 1.0f;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
+        wSincXT[0] = 1.0;
+        wSincYT[0] = 1.0;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] = ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         if (clip) {
@@ -173,10 +173,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  range    determines number of pixels used along each axis
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DWSinc(float[] vol, int[] extents, int[] range, boolean clip) {
+    public void setup2DWSinc(double[] vol, int[] extents, int[] range, boolean clip) {
         int i;
-        float invX, invY;
-        float diffX, diffY;
+        double invX, invY;
+        double diffX, diffY;
         double argX, argY;
 
         volume = vol;
@@ -184,22 +184,22 @@ public class AlgorithmWSinc extends AlgorithmBase {
         ydim = extents[1];
         rX = range[0];
         rY = range[1];
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
-        wSincXT[0] = 1.0f;
-        wSincYT[0] = 1.0f;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
+        wSincXT[0] = 1.0;
+        wSincYT[0] = 1.0;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] = ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         inputMin = volume[0];
@@ -225,10 +225,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DWSincC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup2DWSincC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
-        float invX, invY;
-        float diffX, diffY;
+        double invX, invY;
+        double diffX, diffY;
         double argX, argY;
 
         volume = vol;
@@ -241,22 +241,22 @@ public class AlgorithmWSinc extends AlgorithmBase {
         this.clip = clip;
         rX = 3; // to third zero crossing
         rY = 3;
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
         wSincXT[0] = 1.0f;
         wSincYT[0] = 1.0f;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] = ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         if (clip) {
@@ -313,10 +313,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim, zdim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DWSinc(float[] vol, int[] extents, boolean clip) {
+    public void setup3DWSinc(double[] vol, int[] extents, boolean clip) {
         int i;
-        float invX, invY, invZ;
-        float diffX, diffY, diffZ;
+        double invX, invY, invZ;
+        double diffX, diffY, diffZ;
         double argX, argY, argZ;
 
         volume = vol;
@@ -331,29 +331,29 @@ public class AlgorithmWSinc extends AlgorithmBase {
         rX = 3; // to third zero crossing
         rY = 3;
         rZ = 3;
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        wSincZT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        scaleZ = 999.0f / (rZ + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
-        invZ = 1.0f / scaleZ;
-        wSincXT[0] = 1.0f;
-        wSincYT[0] = 1.0f;
-        wSincZT[0] = 1.0f;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        wSincZT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        scaleZ = 999.0 / (rZ + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
+        invZ = 1.0 / scaleZ;
+        wSincXT[0] = 1.0;
+        wSincYT[0] = 1.0;
+        wSincZT[0] = 1.0;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] = ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffZ = i * invZ;
             argZ = Math.PI * diffZ;
-            wSincZT[i] = (float) ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincZT[i] = ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         if (clip) {
@@ -381,10 +381,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  range    determines number of pixels used along each axis
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DWSinc(float[] vol, int[] extents, int[] range, boolean clip) {
+    public void setup3DWSinc(double[] vol, int[] extents, int[] range, boolean clip) {
         int i;
-        float invX, invY, invZ;
-        float diffX, diffY, diffZ;
+        double invX, invY, invZ;
+        double diffX, diffY, diffZ;
         double argX, argY, argZ;
 
         volume = vol;
@@ -399,29 +399,29 @@ public class AlgorithmWSinc extends AlgorithmBase {
         rX = range[0];
         rY = range[1];
         rZ = range[2];
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        wSincZT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        scaleZ = 999.0f / (rZ + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
-        invZ = 1.0f / scaleZ;
-        wSincXT[0] = 1.0f;
-        wSincYT[0] = 1.0f;
-        wSincZT[0] = 1.0f;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        wSincZT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        scaleZ = 999.0 / (rZ + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
+        invZ = 1.0 / scaleZ;
+        wSincXT[0] = 1.0;
+        wSincYT[0] = 1.0;
+        wSincZT[0] = 1.0;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] = ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffZ = i * invZ;
             argZ = Math.PI * diffZ;
-            wSincZT[i] = (float) ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincZT[i] =  ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         inputMin = volume[0];
@@ -447,10 +447,10 @@ public class AlgorithmWSinc extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DWSincC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup3DWSincC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
-        float invX, invY, invZ;
-        float diffX, diffY, diffZ;
+        double invX, invY, invZ;
+        double diffX, diffY, diffZ;
         double argX, argY, argZ;
 
         volume = vol;
@@ -469,29 +469,29 @@ public class AlgorithmWSinc extends AlgorithmBase {
         rX = 3; // to third zero crossing
         rY = 3;
         rZ = 3;
-        wSincXT = new float[1000];
-        wSincYT = new float[1000];
-        wSincZT = new float[1000];
-        scaleX = 999.0f / (rX + 1.0f);
-        scaleY = 999.0f / (rY + 1.0f);
-        scaleZ = 999.0f / (rZ + 1.0f);
-        invX = 1.0f / scaleX;
-        invY = 1.0f / scaleY;
-        invZ = 1.0f / scaleZ;
-        wSincXT[0] = 1.0f;
-        wSincYT[0] = 1.0f;
-        wSincZT[0] = 1.0f;
+        wSincXT = new double[1000];
+        wSincYT = new double[1000];
+        wSincZT = new double[1000];
+        scaleX = 999.0 / (rX + 1.0);
+        scaleY = 999.0 / (rY + 1.0);
+        scaleZ = 999.0 / (rZ + 1.0);
+        invX = 1.0 / scaleX;
+        invY = 1.0 / scaleY;
+        invZ = 1.0 / scaleZ;
+        wSincXT[0] = 1.0;
+        wSincYT[0] = 1.0;
+        wSincZT[0] = 1.0;
 
         for (i = 1; i < 1000; i++) {
             diffX = i * invX;
             argX = Math.PI * diffX;
-            wSincXT[i] = (float) ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincXT[i] =  ((Math.sin(argX) / argX) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffY = i * invY;
             argY = Math.PI * diffY;
-            wSincYT[i] = (float) ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincYT[i] = ((Math.sin(argY) / argY) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
             diffZ = i * invZ;
             argZ = Math.PI * diffZ;
-            wSincZT[i] = (float) ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
+            wSincZT[i] = ((Math.sin(argZ) / argZ) * 0.5 * (1.0 + Math.cos(Math.PI * i / 999.0)));
         }
 
         if (clip) {
@@ -544,25 +544,25 @@ public class AlgorithmWSinc extends AlgorithmBase {
     /**
      * 2D windowed sinc function.
      *
-     * @param   x  float point index
-     * @param   y  float point index
+     * @param   x  double point index
+     * @param   y  double point index
      *
      * @return  the wSinc2D interpolated data point
      */
-    public float wSinc2D(float x, float y) {
+    public double wSinc2D(double x, double y) {
 
         int xbase, ybase;
         int j0, j1;
         int l0, l1;
-        float diffX, diffY;
-        float wSincX, wSincY;
-        float sum;
+        double diffX, diffY;
+        double wSincX, wSincY;
+        double sum;
         int indexX, indexY;
 
         xbase = (int) x;
         ybase = (int) y;
 
-        sum = 0.0f;
+        sum = 0.0;
 
         for (j0 = xbase - rX; j0 <= (xbase + 1 + rX); j0++) {
             l0 = Math.max(Math.min(j0, xdim - 1), 0);
@@ -589,30 +589,30 @@ public class AlgorithmWSinc extends AlgorithmBase {
     /**
      * 2D windowed sinc function for color.
      *
-     * @param   x  float point index
-     * @param   y  float point index
+     * @param   x  double point index
+     * @param   y  double point index
      *
      * @return  the wSinc2D interpolated data point
      */
-    public float[] wSinc2DC(float x, float y) {
+    public double[] wSinc2DC(double x, double y) {
 
         int xbase, ybase;
         int j0, j1;
         int l0, l1;
-        float diffX, diffY;
-        float wSincX, wSincY;
-        float[] sum = new float[4];
+        double diffX, diffY;
+        double wSincX, wSincY;
+        double[] sum = new double[4];
         int offset;
-        float wXY;
+        double wXY;
         int indexX, indexY;
 
         xbase = (int) x;
         ybase = (int) y;
 
-        sum[0] = 0.0f;
-        sum[1] = 0.0f;
-        sum[2] = 0.0f;
-        sum[3] = 0.0f;
+        sum[0] = 0.0;
+        sum[1] = 0.0;
+        sum[2] = 0.0;
+        sum[3] = 0.0;
 
         for (j0 = xbase - rX; j0 <= (xbase + 1 + rX); j0++) {
             l0 = Math.max(Math.min(j0, xdim - 1), 0);
@@ -648,21 +648,21 @@ public class AlgorithmWSinc extends AlgorithmBase {
     /**
      * 3D windowed sinc function.
      *
-     * @param   x  float point index
-     * @param   y  float point index
-     * @param   z  float point index
+     * @param   x  double point index
+     * @param   y  double point index
+     * @param   z  double point index
      *
      * @return  the wSinc3D interpolated data point
      */
-    public final float wSinc3D(float x, float y, float z) {
+    public final double wSinc3D(double x, double y, double z) {
 
         int xbase, ybase, zbase;
         int j0, j1, j2;
         int l0, l1, l2;
         int endX, endY, endZ;
         int stX, stY, stZ;
-        float wSincX, wXY;
-        float sum;
+        double wSincX, wXY;
+        double sum;
         int offset;
 
         xbase = (int) x;
@@ -671,7 +671,7 @@ public class AlgorithmWSinc extends AlgorithmBase {
 
         // 15% - 20% faster since Math.max and Math.min are function calls
         // I also replaced the Math.abs but saw no speed improvement.
-        sum = 0.0f;
+        sum = 0.0;
         stX = xbase - rX;
         endX = xbase + 2 + rX;
         stY = ybase - rY;
@@ -738,33 +738,33 @@ public class AlgorithmWSinc extends AlgorithmBase {
     /**
      * 3D windowed sinc function for color (3 channel images).
      *
-     * @param   x  float point index
-     * @param   y  float point index
-     * @param   z  float point index
+     * @param   x  double point index
+     * @param   y  double point index
+     * @param   z  double point index
      *
      * @return  the wSinc3D interpolated data point
      */
-    public float[] wSinc3DC(float x, float y, float z) {
+    public double[] wSinc3DC(double x, double y, double z) {
 
         int xbase, ybase, zbase;
         int j0, j1, j2;
         int l0, l1, l2;
-        float diffX, diffY, diffZ;
-        float wSincX, wSincY, wSincZ;
-        float[] sum = new float[4];
+        double diffX, diffY, diffZ;
+        double wSincX, wSincY, wSincZ;
+        double[] sum = new double[4];
         int offset, offset2;
         int sliceSize = xdim * ydim;
-        float wXY, wXYZ;
+        double wXY, wXYZ;
         int indexX, indexY, indexZ;
 
         xbase = (int) x;
         ybase = (int) y;
         zbase = (int) z;
 
-        sum[0] = 0.0f;
-        sum[1] = 0.0f;
-        sum[2] = 0.0f;
-        sum[3] = 0.0f;
+        sum[0] = 0.0;
+        sum[1] = 0.0;
+        sum[2] = 0.0;
+        sum[3] = 0.0;
 
         for (j0 = xbase - rX; j0 <= (xbase + 1 + rX); j0++) {
             l0 = Math.max(Math.min(j0, xdim - 1), 0);

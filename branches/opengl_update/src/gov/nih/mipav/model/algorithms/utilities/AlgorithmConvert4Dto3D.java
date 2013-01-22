@@ -11,15 +11,29 @@ import gov.nih.mipav.model.structures.*;
  */
 public class AlgorithmConvert4Dto3D extends AlgorithmBase {
 
+    private boolean copyAlInfo = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs new algorithm and sets source.
      *
      * @param  srcImg  source image model
+     * @param copyAllInfo has no effect right now since this is an in-place algorithm
+     */
+    public AlgorithmConvert4Dto3D(ModelImage srcImg, boolean copyAllInfo) {
+        super(null, srcImg);
+        
+        this.copyAlInfo = copyAllInfo;
+    }
+    
+    /**
+     * Constructs new algorithm and sets source.
+     *
+     * @param  srcImg  source image model
      */
     public AlgorithmConvert4Dto3D(ModelImage srcImg) {
-        super(null, srcImg);
+        this(srcImg, true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

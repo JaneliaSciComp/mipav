@@ -1,24 +1,33 @@
-varying vec4       kInPos;
-varying vec3       kInNormal;
+
 uniform float ReverseFace;
 uniform mat4 WVPMatrix;
+
+in vec3 inPosition;
+in vec3 inNormal;
+in vec3 inTexcoord0;
+in vec4 inColor0;
+
+out vec3 varTexCoord;
+out vec4 varPos;
+out vec3 varNormal;
+out vec4 varColor;
 
 void v_MipavLightingFragmentV()
 {
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
 
     // Pass through the texture coordinate.
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+    varTexCoord = inTexcoord0;
 
-    kInPos = gl_Vertex;
-    kInNormal = gl_Normal;
+    varPos = vec4(inPosition, 1.0);
+    varNormal = inNormal;
     if ( ReverseFace == 1.0 )
     {
-        kInNormal.x *= -1.0;
-        kInNormal.y *= -1.0;
-        kInNormal.z *= -1.0;
+        varNormal.x *= -1.0;
+        varNormal.y *= -1.0;
+        varNormal.z *= -1.0;
     }
     
-    gl_FrontColor = gl_Color;
+    varColor = inColor0;
 }

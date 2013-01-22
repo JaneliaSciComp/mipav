@@ -10,7 +10,7 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.DialogDefaultsInterface;
+import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -49,7 +49,7 @@ import javax.swing.JCheckBox;
  * @author   William Gandler
  * @see      AlgorithmBilateralFilter
  */
-public class JDialogBilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogBilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -109,7 +109,6 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -132,6 +131,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -146,10 +147,6 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmBilateralFilter) {
             Preferences.debug("Bilateral Filter Elapsed: " + algorithm.getElapsedTime());
@@ -248,7 +245,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (outputOptionsPanel != null)) {
@@ -278,7 +275,7 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
         String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
         defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;

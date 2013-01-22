@@ -319,16 +319,7 @@ public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements 
 
         // This instance is stored in the base class.
         return renderBase;
-    }
-    
-
-    /**
-     */
-    public VolumeTriPlanarInterface getParentVolumeViewer() {
-
-        // This instance is stored in the base class.
-        return m_kVolumeViewer;
-    }
+    }    
 
     /**
      * Return the selected tabbbed pane component. Should be overridden in JPanelVolOpacity and JPanelVolOpacityRGB

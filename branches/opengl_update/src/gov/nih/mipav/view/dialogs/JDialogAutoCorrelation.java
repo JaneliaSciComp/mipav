@@ -107,7 +107,10 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Autocor001");
+            //MipavUtil.showHelp("Autocor001");
+            MipavUtil.showWebHelp("Autocorrelation_Coefficients");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

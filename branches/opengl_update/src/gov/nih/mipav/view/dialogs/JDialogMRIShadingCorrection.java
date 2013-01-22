@@ -27,7 +27,7 @@ import javax.swing.*;
  * @see      AlgorithmMRIShadingCorrection
  */
 public class JDialogMRIShadingCorrection extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -141,7 +141,6 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -174,7 +173,9 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
                 thresholdLabel.setEnabled(false);
                 thresholdText.setEnabled(false);
             }
-        } // else if (source == thresholdCheckbox)
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
+        }
     }
 
     // ************************************************************************
@@ -258,7 +259,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -299,7 +300,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
 
         String defaultsString = norm + delim;

@@ -2018,6 +2018,188 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
+
+
+    public final synchronized void exportDiagonal(final int tSlice, final int slice, final int[] extents,
+            final Vector3f[] verts, final float[] values, final boolean bInterpolate, final BitSet imageMask,
+            Vector<BitSet> surfaceMask, boolean[] surfaceValues) throws IOException {
+
+        try {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
+            releaseLock();
+            throw error;
+        }
+
+        final int iBound = extents[0];
+        final int jBound = extents[1];
+
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+        
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
+
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
+
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
+
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
+
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
+
+        final boolean exportComplex = (values.length == (2 * iBound * jBound)) ? true : false;
+        double real, imaginary, mag;
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                final int iIndex = (int) x;
+                final int jIndex = (int) y;
+                final int kIndex = (int) z;
+
+                /* calculate the ModelImage space index: */
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                /* Bounds checking, if out of bounds, set to zero: */
+                if (( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                        || ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                    }
+                    /* not color: */
+                    else {
+                        values[ (j * iBound) + i] = (float) this.min;
+                    }
+                    if ( surfaceValues != null )
+                    {
+                    	surfaceValues[ (j * iBound) + i] = false;
+                    }
+                } 
+                else if ( (imageMask != null) && !imageMask.get(index) )
+                {
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                    }
+                    /* not color: */
+                    else {
+                        values[ (j * iBound) + i] = (float) this.min;
+                    }   
+                    if ( surfaceValues != null )
+                    {
+                    	surfaceValues[ (j * iBound) + i] = false;
+                    }             	
+                }                
+                else {
+
+                    /* if color: */
+                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                            || (bufferType == DataType.ARGB_FLOAT)) {
+                        values[ ( ( (j * iBound) + i) * 4) + 0] = getFloat( (index * 4) + 0);
+                        values[ ( ( (j * iBound) + i) * 4) + 1] = getFloat( (index * 4) + 1);
+                        values[ ( ( (j * iBound) + i) * 4) + 2] = getFloat( (index * 4) + 2);
+                        values[ ( ( (j * iBound) + i) * 4) + 3] = getFloat( (index * 4) + 3);
+                    }
+                    /* if complex: */
+                    else if (bufferType == DataType.COMPLEX) {
+
+                        if (exportComplex) {
+                            values[ ( ( (j * iBound) + i) * 2) + 0] = getFloat(index * 2);
+                            values[ ( ( (j * iBound) + i) * 2) + 1] = getFloat( (index * 2) + 1);
+                        } else {
+                            real = getFloat(index * 2);
+                            imaginary = getFloat( (index * 2) + 1);
+
+                            if (logMagDisp == true) {
+                                mag = Math.sqrt( (real * real) + (imaginary * imaginary));
+                                values[ (j * iBound) + i] = (float) (0.4342944819 * Math.log( (1.0 + mag)));
+                            } else {
+                                values[ (j * iBound) + i] = (float) Math.sqrt( (real * real) + (imaginary * imaginary));
+                            }
+                        }
+                    }
+                    /* not color: */
+                    else {
+
+                        if (bInterpolate) {
+                            values[ (j * iBound) + i] = getFloatTriLinearBounds(x, y, z);
+                        } else {
+                            values[ (j * iBound) + i] = getFloat(index);
+                        }
+                    }
+                    if ( surfaceValues != null && surfaceMask != null )
+                    {
+                    	boolean isSurface = false;
+                    	for ( int surface = 0; surface < surfaceMask.size(); surface++ )
+                    	{
+                    		isSurface |= surfaceMask.elementAt(surface).get(index);
+                    	}
+                    	surfaceValues[ (j * iBound) + i] = isSurface;
+                    }
+                }
+
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+    }
+
+    
     
     /**
      * Export magnitude data to values array.
@@ -2997,6 +3179,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         final int[] extentsReturn = new int[3];
         final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            extentsReturn[i] = dimExtents[aiAxisOrder[i]];
+        }
+
+        return extentsReturn;
+    }
+
+
+    /**
+     * Returns the image extents translated into the Patient-Coordinate system:
+     * 
+     * @param aiAxisOrder the Patient-Coordinate order of the original data for which the extents are needed:
+     * 
+     * @return Extents for the image in Patient Coordinates
+     */
+    public final int[] getExtents(final int[] aiAxisOrder) {
+
+        /* Do not reorder the extents if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return dimExtents;
+        }
+
+        final int[] extentsReturn = new int[3];
 
         for (int i = 0; i < 3; i++) {
             extentsReturn[i] = dimExtents[aiAxisOrder[i]];
@@ -4183,6 +4389,36 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Returns the resolutions for the image translated into the Patient-Coordinate systsm:
+     * 
+     * @param index the fileInfo index
+     * @param aiAxisOrder the Patient-Coordinate order of the original data for which the resolutions are needed:
+     * 
+     * @return the resolutions for the image in Patient Coordinates
+     */
+    public float[] getResolutions(final int index, final int[] aiAxisOrder) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        final float[] resTemp = fileInfo[index].getResolutions();
+
+        /* Do not reorder the resolutions if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return resTemp;
+        }
+
+        final float[] resReturn = new float[3];
+
+        for (int i = 0; i < 3; i++) {
+            resReturn[i] = resTemp[aiAxisOrder[i]];
+        }
+
+        return resReturn;
+    }
+
+    /**
      * Version of get that does NOT perform bounds checking.
      * 
      * @param position The index into the one dimensional array
@@ -5067,6 +5303,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public int[] getVolumeIterationFactors() {
         return new int[] {1, dimExtents[0], dimExtents[0] * dimExtents[1]};
+    }
+    
+    /**
+     * Gets the number of pixels in a volume of the image.
+     */
+    public int getVolumeSize() {
+        return getSliceSize() * (getNDims() > 2 ? getExtents()[2] : 1);
     }
 
     /**

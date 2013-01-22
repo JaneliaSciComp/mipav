@@ -173,8 +173,10 @@ public class VolumeClip extends VolumeObject
         }
         for ( int i = 0; i < MAX_CLIP_PLANES; i++ )
         {
-        	kRenderer.ReleaseVBuffer(m_akPolyline[i].VBuffer);
-        	kRenderer.ReleaseIBuffer(m_akPolyline[i].IBuffer);
+        	kRenderer.ReleaseVAO( m_akPolyline[i] );
+        	
+        	//kRenderer.ReleaseVBuffer(m_akPolyline[i].VBuffer);
+        	//kRenderer.ReleaseIBuffer(m_akPolyline[i].IBuffer);
             m_akPolyline[i].dispose();
             m_akPolyline[i] = null;
         }
@@ -258,7 +260,7 @@ public class VolumeClip extends VolumeObject
         {
             m_akPolyline[CLIP_A].VBuffer.SetColor3( 0, i, kColor );
         }
-        m_akPolyline[CLIP_A].VBuffer.Release();
+        m_akPolyline[CLIP_A].Reload(true);
     }
     
     /**
@@ -271,7 +273,7 @@ public class VolumeClip extends VolumeObject
         m_akPolyline[CLIP_A].VBuffer.SetPosition3( 1, fX, 0, m_fMax ) ;
         m_akPolyline[CLIP_A].VBuffer.SetPosition3( 2, fX, m_fMax, m_fMax ) ;
         m_akPolyline[CLIP_A].VBuffer.SetPosition3( 3, fX, m_fMax, 0 ) ;
-        m_akPolyline[CLIP_A].VBuffer.Release();
+        m_akPolyline[CLIP_A].Reload(true);
         m_kScene.UpdateGS();
     }
     /**
@@ -306,7 +308,7 @@ public class VolumeClip extends VolumeObject
                                                           );
             }
         }
-        m_akPolyline[iWhich].VBuffer.Release();
+        m_akPolyline[iWhich].Reload(true);
         
         m_kScene.UpdateGS();
         m_kScene.UpdateRS();
@@ -324,7 +326,7 @@ public class VolumeClip extends VolumeObject
         {
             m_akPolyline[iWhich].VBuffer.SetColor3( 0, i, kColor );
         }
-        m_akPolyline[iWhich].VBuffer.Release();
+        m_akPolyline[iWhich].Reload(true);
     }
     /**
      * Sets the eye clip plane position.
@@ -337,7 +339,7 @@ public class VolumeClip extends VolumeObject
         m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 1, m_fX, 0f, fZ ) ;
         m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 2, m_fX, m_fY, fZ ) ;
         m_akPolyline[CLIP_EYE].VBuffer.SetPosition3( 3, 0f, m_fY, fZ ) ;
-        m_akPolyline[CLIP_EYE].VBuffer.Release();
+        m_akPolyline[CLIP_EYE].Reload(true);
 
         m_akPolyline[CLIP_EYE].UpdateGS();
         m_akPolyline[CLIP_EYE].UpdateRS();
@@ -354,7 +356,7 @@ public class VolumeClip extends VolumeObject
         m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 1, m_fX, 0f, fZ ) ;
         m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 2, m_fX, m_fY, fZ ) ;
         m_akPolyline[CLIP_EYE_INV].VBuffer.SetPosition3( 3, 0f, m_fY, fZ ) ;
-        m_akPolyline[CLIP_EYE_INV].VBuffer.Release();
+        m_akPolyline[CLIP_EYE_INV].Reload(true);
 
         m_akPolyline[CLIP_EYE_INV].UpdateGS();
         m_akPolyline[CLIP_EYE_INV].UpdateRS();
@@ -462,10 +464,8 @@ public class VolumeClip extends VolumeObject
         m_spkEyeCamera.SetFrustum(-0.55f,0.55f,-0.4125f,0.4125f,1.0f,1000.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f,-1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
-        Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.Scale(-4.0f);
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+        Vector3f kCLoc = Vector3f.scale(-4.0f, kCDir);
         m_spkEyeCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         for ( int i = 0; i < 4; i++ )

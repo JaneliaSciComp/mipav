@@ -111,7 +111,8 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Barr010");
+            //MipavUtil.showHelp("Barr010");
+            MipavUtil.showWebHelp("Barrel_Distortion_Correction");
         }
         else if (source == noScalingDCheckBox) {
             if (noScalingDCheckBox.isSelected()) {
@@ -122,6 +123,8 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
                 dLabel.setEnabled(true);
                 dText.setEnabled(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -136,10 +139,6 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmBarrelDistortion) {
             Preferences.debug("Barrel distortion: " + algorithm.getElapsedTime());
@@ -200,7 +199,7 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
 
         String defaultsString = noScalingD + delim;

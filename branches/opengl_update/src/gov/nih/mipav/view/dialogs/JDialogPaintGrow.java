@@ -474,7 +474,8 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         Object source = event.getSource();
 
         if (command.equals("Help")) {
-            MipavUtil.showHelp("PaintGrow001");
+            //MipavUtil.showHelp("PaintGrow001");
+            MipavUtil.showWebHelp("Creating_a_mask_using_the_Paint_Grow_Segmentation_method");
         }
         if (command.equals("Close") || command.equals("Apply")) {
 
@@ -917,7 +918,10 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                     lowerMid.setText("     " + mid);
                 }
             }
-        } // else if ((maximumValueButton != null) && (source == maximumValueButton))
+        } else { // else if ((maximumValueButton != null) && (source == maximumValueButton))
+            super.actionPerformed(event);
+        }
+        
     }
 
     /**

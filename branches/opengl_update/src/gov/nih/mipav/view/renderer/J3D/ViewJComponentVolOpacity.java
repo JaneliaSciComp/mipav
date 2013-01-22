@@ -8,7 +8,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
-import gov.nih.mipav.view.renderer.WildMagic.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -56,7 +55,6 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
     /** DOCUMENT ME! */
     private RenderViewBase myParent;
-    private VolumeTriPlanarInterface m_kVolumeViewer;
 
     /** Opacity slider event count. */
     private int opacityCount;
@@ -66,6 +64,27 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Creates new component histogram LUT.
+     *
+     * @param  parent  Frame where histogram is to be displayed -- must implement ViewJComponentVolOpacityListener
+     * @param  _histo  histogram model
+     * @param  _image  image of the displayed histogram and associated LUT
+     */
+    public ViewJComponentVolOpacity(ViewJComponentVolOpacityListener parent, ModelHistogram _histo, ModelImage _image) {
+        super(parent, _histo, _image, new Dimension(450, 375));
+
+        setupMinMax();
+
+        ModelLUT lut = new ModelLUT(ModelLUT.GRAY, 256, new int[] { 4, 256 });
+
+        lutIndexBuffer = new int[256];
+        lut.exportIndexedLUT(lutIndexBuffer);
+        lut.disposeLocal();
+
+        linearMode();
+    }
+    
     /**
      * Creates new component histogram LUT.
      *
@@ -79,7 +98,6 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
         setupMinMax();
 
         myParent = renderOpacityPanel.getParentFrame();
-        m_kVolumeViewer = renderOpacityPanel.getParentVolumeViewer();
 
         ModelLUT lut = new ModelLUT(ModelLUT.GRAY, 256, new int[] { 4, 256 });
 

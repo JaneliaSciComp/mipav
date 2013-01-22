@@ -1272,6 +1272,8 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
         } 
 		else if (command.equals("Cancel")) {
 			setVisible(false);
+        } else {
+            super.actionPerformed(e);
         }
 	}
 

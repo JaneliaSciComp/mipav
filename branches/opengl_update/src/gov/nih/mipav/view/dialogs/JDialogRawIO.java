@@ -397,6 +397,8 @@ public class JDialogRawIO extends JDialogBase {
         } else if (source == cancelButton) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -629,7 +631,7 @@ public class JDialogRawIO extends JDialogBase {
         textOffset.addFocusListener(this);
         offsetPanel.add(textOffset);
 
-        checkboxEnd = new JCheckBox("Big endian", true);
+        checkboxEnd = new JCheckBox("Big endian", false);
         checkboxEnd.setFont(serif12);
 
         JPanel panelDims = new JPanel(new GridBagLayout());

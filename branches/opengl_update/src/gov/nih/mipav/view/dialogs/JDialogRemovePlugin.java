@@ -206,6 +206,8 @@ public class JDialogRemovePlugin extends JDialogBase implements ActionListener {
             dispose();
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

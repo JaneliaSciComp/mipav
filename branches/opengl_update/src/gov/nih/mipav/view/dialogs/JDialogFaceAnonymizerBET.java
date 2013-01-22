@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  mccreedy
  */
 public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -140,7 +140,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         parentFrame = theParentFrame;
         srcImage = im;
         faceOrientation = getFaceOrientation(srcImage);
-        loadDefaults();
         init();
     }
 
@@ -163,7 +162,10 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19014");
+            //MipavUtil.showHelp("19014");
+            MipavUtil.showWebHelp("Face_Anonymizer_(BET)#Applying_the_Face_Anonymizer_Algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -174,10 +176,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if ((algorithm instanceof AlgorithmFaceAnonymizerBET) && algorithm.isCompleted()) {
             insertScriptLine();
@@ -219,7 +217,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -242,7 +240,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

@@ -337,7 +337,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
                     m_iMaxIterations, m_iNumMinima, m_iInterp2, m_bDisplayTransform, m_fRotationRange,
                     m_fXScaleRange, m_fYScaleRange, m_iScaleSteps, m_iTranslationRange);
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         }
     }
 

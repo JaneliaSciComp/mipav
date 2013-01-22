@@ -374,7 +374,9 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
             }
     }   else if (command.equals("Cancel")) {
             dispose();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
 
 
@@ -389,9 +391,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmDEMRI3) {
             Preferences.debug("DEMRI3 elapsed: " + algorithm.getElapsedTime());
@@ -426,7 +425,7 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
         String defaultsString = min_constr[0] + delim;
         defaultsString += max_constr[0] + delim;

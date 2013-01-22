@@ -6,6 +6,8 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.dialogs.*;
 
 
@@ -229,10 +231,23 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         for ( int i = 0; i < imageA.getNDims(); i++ )
         {
             afResB[i] = imageB.getResolutions(0)[i];
-            if ( imageA.getUnitsOfMeasure()[i] != imageB.getUnitsOfMeasure()[1] )
+            if ( imageA.getUnitsOfMeasure()[i] != imageB.getUnitsOfMeasure()[i] )
             {
-                afResB[i] = (float)((Unit.getUnitFromLegacyNum( imageB.getUnitsOfMeasure()[i])).
+                
+                if (imageA.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
+                    // Assume units of measure are the same, so don't apply a conversion factor to afResB[i]
+                    // Don't change known to unknown units
+                    for (int j = 0; j < imageA.getFileInfo().length; j++) {
+                        imageA.getFileInfo()[j].setUnitsOfMeasure(imageB.getUnitsOfMeasure()[i], i);
+                    }  
+                }
+                else if (imageB.getUnitsOfMeasure()[i] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
+                 // Assume units of measure are the same, so don't apply a conversion factor to afResB[i]    
+                }
+                else {
+                    afResB[i] = (float)((Unit.getUnitFromLegacyNum( imageB.getUnitsOfMeasure()[i])).
                 		getConversionFactor(Unit.getUnitFromLegacyNum(imageA.getUnitsOfMeasure()[i])) * imageB.getResolutions(0)[i]);
+                }
             }
         }
         if ( imageB.getFileInfo() != null ) {

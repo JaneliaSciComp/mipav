@@ -18,6 +18,8 @@
 
 package WildMagic.ApplicationDemos;
 
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumePreRenderEffect;
+
 import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -28,15 +30,21 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.IridescenceEffect;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
@@ -78,6 +86,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	}
 
 	private WireframeState m_spkWireframe;
+	private CullState m_kCull;
 
 	private IridescenceEffect m_spkEffect;
 
@@ -186,8 +195,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 		Vector3f kCLoc = new Vector3f(0.0f, 0.0f, -8.0f);
 		Vector3f kCDir = new Vector3f(0.0f, 0.0f, 1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, 1.0f, 0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross(kCDir, kCUp);
+		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
 		m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
 		CreateScene();
@@ -212,15 +220,16 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	@Override
 	public void keyTyped(KeyEvent e) {
 		char ucKey = e.getKeyChar();
+		System.err.println( ucKey );
 		super.keyPressed(e);
 		float fInterpolateFactor;
 		if (ucKey == 'w' || ucKey == 'W')
 		{
-			m_spkWireframe.Enabled = !m_spkWireframe.Enabled;
-			if ( m_spkWireframe.Enabled )
-				m_spkWireframe.Fill = WireframeState.FillMode.FM_LINE;
-			else
-				m_spkWireframe.Fill = WireframeState.FillMode.FM_FILL;
+			m_spkWireframe.Enabled = true;
+			m_spkWireframe.Fill = ( m_spkWireframe.Fill == WireframeState.FillMode.FM_FILL ) ? 
+					WireframeState.FillMode.FM_LINE : ( m_spkWireframe.Fill == WireframeState.FillMode.FM_LINE ) ?
+							WireframeState.FillMode.FM_POINT : 	WireframeState.FillMode.FM_FILL;
+			m_spkScene.UpdateGS();
 			return;
 		}
 		switch (ucKey) {
@@ -262,6 +271,10 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 			m_bLeft = false;
 			m_bRight = true;
 			break;
+		case 'c':
+	        m_kCull.CullFace = CullState.CullMode.CT_FRONT;
+		case 'b':
+	        m_kCull.CullFace = CullState.CullMode.CT_BACK;
 		}
 		return;
 	}
@@ -287,6 +300,12 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	private void CreateScene() {
 		m_spkScene = new Node();
 		m_spkWireframe = new WireframeState();
+        m_spkScene.AttachGlobalState(m_spkWireframe);
+
+        m_kCull = new CullState();
+        m_kCull.CullFace = CullState.CullMode.CT_BACK;
+        m_kCull.FrontFace = CullState.FrontMode.FT_CCW;
+        m_spkScene.AttachGlobalState(m_kCull);
 
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
@@ -299,15 +318,13 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 				-0.707f, 0.707f, 0f), false));
 		m_spkScene.AttachChild(pkMesh);
 
-
 		m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
 		m_spkEffect.SetInterpolateFactor(0.5f);
 		int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_spkEffect.LoadPrograms(m_pkRenderer, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
 		}
 		pkMesh.AttachEffect(m_spkEffect);
-	}
-
+	}	
 }

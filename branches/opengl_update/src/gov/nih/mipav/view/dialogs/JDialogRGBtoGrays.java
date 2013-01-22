@@ -67,13 +67,6 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Calls the algorithm from the script parser.
-     *
-     * @param  event  Event that triggers function.
-     */
-    public void actionPerformed(ActionEvent event) { }
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

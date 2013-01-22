@@ -149,7 +149,10 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         } else if (source == cancelButton) {
             dispose();
         } else if (source == helpButton) {
-            MipavUtil.showHelp("10033");
+            //MipavUtil.showHelp("10033");
+            MipavUtil.showWebHelp("Registration:_Landmark-TPSpline#Applying_the_Registration:_Landmark-TPSpline_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

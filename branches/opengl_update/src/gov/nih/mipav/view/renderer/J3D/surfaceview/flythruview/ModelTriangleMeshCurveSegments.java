@@ -590,7 +590,7 @@ public class ModelTriangleMeshCurveSegments {
                     /* Add the distance between the current sample point and
                      * the previous sample point to the total length
                      */
-                    afTotalLength[iCurve] += akSamplePos[iSample].Distance(akSamplePos[iSample - 1]);
+                    afTotalLength[iCurve] += akSamplePos[iSample].distance(akSamplePos[iSample - 1]);
 
                     /* The length from the first sample point to the current
                      * sample point
@@ -850,9 +850,9 @@ public class ModelTriangleMeshCurveSegments {
                      * curve, both in the BSpline representation and the original voxel sample position representation
                      * are evaluated. The minimum distance is taken.
                      */
-                    kVertex0WM.Set(kVertex0.x, kVertex0.y, kVertex0.z);
+                    kVertex0WM.set(kVertex0.x, kVertex0.y, kVertex0.z);
                     fDist = Math.min(m_aakCurvePos[iCurve][iSample].distanceSquared(kVertex0),
-                                     akSamplePos[iSample].SquaredDistance(kVertex0WM));
+                                     akSamplePos[iSample].squaredDistance(kVertex0WM));
 
                     /* If the distance is within the maximim "width" of
                      * the tube at this point on the path is the triangle added to the sub-mesh.

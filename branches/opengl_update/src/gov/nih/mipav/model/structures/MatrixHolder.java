@@ -102,7 +102,7 @@ public class MatrixHolder extends ModelSerialCloneable {
          	tempMatrix = matrixMap.get(nextKey);
          	if (tempMatrix.isNIFTI() && idx < 2) {
          		composites[idx] = new TransMatrix(getCompositeMatrix(true));
-         		composites[idx].Mult(tempMatrix);
+         		composites[idx].mult(tempMatrix);
          		composites[idx].setIsNIFTI(true);
          		if (tempMatrix.isQform()) {
          			composites[idx].setIsQform(true);
@@ -164,7 +164,7 @@ public class MatrixHolder extends ModelSerialCloneable {
 
         // here we will dynamically create the composite matrix, with or without DICOM (scanner anatomical) if present
 
-        compositeMatrix.MakeIdentity();
+        compositeMatrix.identity();
 
         Set<String> keySet = matrixMap.keySet();
         String[] keys = keySet.toArray(new String[] { });
@@ -177,13 +177,13 @@ public class MatrixHolder extends ModelSerialCloneable {
             //   the correct size
             if (compositeMatrix.getDim() != tempMatrix.getDim()) {
             	compositeMatrix = new TransMatrix(tempMatrix.getDim(), TransMatrix.TRANSFORM_COMPOSITE);
-            	compositeMatrix.MakeIdentity();
+            	compositeMatrix.identity();
             }
             
             //do not include a nifti associated matrices (matrices loaded w\ a NIFTI image)
             if (((tempMatrix.getTransformID() != TransMatrix.TRANSFORM_SCANNER_ANATOMICAL) || useDICOM)
             		&& (!tempMatrix.isNIFTI())) {
-                compositeMatrix.Mult(tempMatrix);
+                compositeMatrix.mult(tempMatrix);
                 
             }
         }

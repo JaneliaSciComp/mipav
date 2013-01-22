@@ -17,6 +17,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
@@ -138,7 +139,11 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
     
     private float remapHighestValue;
     
-    
+    /** Checkbox for representing whether to copy all file info */
+    private JCheckBox copyAllInfoBox;
+
+    /** Whether all info in the image's FileInfo is copied */
+    private boolean copyAllInfo = true;
     
     
 	
@@ -262,6 +267,11 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
         remapGroup.add(radioSeparate);
         gbc.gridy = i+6;
         inputPanel.add(radioSeparate, gbc);
+        
+        copyAllInfoBox = new JCheckBox("Copy all file information");
+        copyAllInfoBox.setSelected(copyAllInfo);
+        gbc.gridy = i+7;
+        inputPanel.add(copyAllInfoBox);
         	
 		mainPanel.add(inputPanel);
 		OKCancelPanel = new JPanel();
@@ -324,7 +334,7 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
             //System.out.println("green channel image is " + imageG.getImageName());
             //System.out.println("blue channel image is " + imageB.getImageName());
             mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, commonMapping,
-                                              remapHighestValue, true);
+                                              remapHighestValue, true, copyAllInfo);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -448,6 +458,7 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
         setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
         setCommonMapping(scriptParameters.getParams().getBoolean("common_mapping"));
         setRemapHighestValue(scriptParameters.getParams().getInt("remap_highest_value"));
+        copyAllInfo = scriptParameters.getParams().getBoolean("copy_all_image_info");
 	}
 
 	
@@ -463,6 +474,7 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("common_mapping", commonMapping));
         scriptParameters.getParams().put(ParameterFactory.newParameter("remap_highest_value", remapHighestValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", copyAllInfo));
 	}
 
 	
@@ -483,7 +495,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 			dispose();
 		}
 		else if (command.equalsIgnoreCase("help")) {
-			MipavUtil.showHelp("U4008");
+			//MipavUtil.showHelp("U4008");
+		    MipavUtil.showWebHelp("4_D_tools#Convert_4D_to_RGB");
 		}
         else if (source == remapCheckBox) {
             if (remapCheckBox.isSelected()) {
@@ -496,6 +509,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
                 radioCommon.setEnabled(false);
                 radioSeparate.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(e);
         }
 	}
 	
@@ -612,6 +627,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
                 return false;
             }
         }
+        
+        copyAllInfo = copyAllInfoBox.isSelected();
 		
 		return true;
 	}

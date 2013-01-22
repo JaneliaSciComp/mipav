@@ -32,6 +32,7 @@ import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.SimpleBumpMapEffect;
 import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -110,7 +111,7 @@ implements GLEventListener, KeyListener
 			m_spkScene.SetChild(0,pkMesh);
 			m_spkScene.UpdateGS();
 			m_spkScene.UpdateRS();
-			UpdateBumpMap();
+			UpdateBumpMap(m_pkRenderer);
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
 		
@@ -123,7 +124,7 @@ implements GLEventListener, KeyListener
 
 		if (MoveObject())
 		{
-			UpdateBumpMap();
+			UpdateBumpMap(m_pkRenderer);
 			m_spkScene.UpdateGS();
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
@@ -166,8 +167,7 @@ implements GLEventListener, KeyListener
 			kCLoc = new Vector3f(0.0f,0.0f,3.0f);
 		}
 		Vector3f kCUp = new Vector3f(0.0f,1.0f,0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -176,7 +176,7 @@ implements GLEventListener, KeyListener
 		m_spkScene.UpdateGS();
 		m_spkScene.UpdateRS();
 
-		UpdateBumpMap();
+		UpdateBumpMap(m_pkRenderer);
 
 		// initial culling of scene
 		m_kCuller.SetCamera(m_spkCamera);
@@ -293,7 +293,7 @@ implements GLEventListener, KeyListener
 		if (m_bUseBumpMap)
 		{
 			Vector3f kLightDirection = new Vector3f(-1.0f,-1.0f,-1.0f);
-			kLightDirection.Normalize();
+			kLightDirection.normalize();
 			SimpleBumpMapEffect pkEffect = new SimpleBumpMapEffect("Bricks",
 					"BricksNormal",kLightDirection);
 			pkEffect.ComputeLightVectors(pkMesh);
@@ -312,18 +312,12 @@ implements GLEventListener, KeyListener
 	{
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
-		if (m_bUseBumpMap)
-		{
-			kAttr.SetNChannels(3);
-			kAttr.SetCChannels(0,3);
-			kAttr.SetTChannels(0,2);
-			kAttr.SetTChannels(1,2);
-		}
-		else
-		{
-			kAttr.SetTChannels(0,2);
-		}
-
+		kAttr.SetNChannels(3);
+		kAttr.SetCChannels(0,3);
+		kAttr.SetTChannels(0,2);
+		kAttr.SetTChannels(1,2);
+		
+		
 		StandardMesh kSM = new StandardMesh(kAttr);
 		TriMesh pkMesh = kSM.Torus(32,32,1.0f,0.4f);
 
@@ -363,7 +357,7 @@ implements GLEventListener, KeyListener
 		return pkMesh;
 	}
 
-	private void UpdateBumpMap ()
+	private void UpdateBumpMap (Renderer kRenderer)
 	{
 		if (m_bUseBumpMap)
 		{
@@ -373,7 +367,7 @@ implements GLEventListener, KeyListener
 			SimpleBumpMapEffect pkEffect =
 				(SimpleBumpMapEffect)pkMesh.GetEffect(0);
 			pkEffect.ComputeLightVectors(pkMesh);
-			pkMesh.VBuffer.Release();
+			pkMesh.Release(kRenderer);
 		}
 	}
 

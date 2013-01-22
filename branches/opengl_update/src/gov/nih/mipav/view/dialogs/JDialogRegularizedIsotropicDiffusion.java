@@ -99,8 +99,12 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10088");
-        } // end if()-else
+            //MipavUtil.showHelp("10088");
+            MipavUtil.showWebHelp(" Filters_(Spatial):_Regularized_Isotropic_(Nonlinear)_Diffusion#Applying_Regularized_Isotropic_.28Nonlinear.29_Diffusion");
+        } else { // end if()-else
+            super.actionPerformed(event);
+        }
+        
     } // end actionPerformed(...)
 
     /**

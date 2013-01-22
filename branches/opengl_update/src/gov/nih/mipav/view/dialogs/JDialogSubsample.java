@@ -173,7 +173,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10067");
+            //MipavUtil.showHelp("10067");
+            MipavUtil.showWebHelp("Subsampling_images");
         } else if (command.equals("Subsample by 2")) {
         	denom = 2;
         	for(int i = 0; i < dim; i++) {
@@ -316,6 +317,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 labelPaddedExtentZ.setEnabled(false);
             }
         	        	
+        } else {
+            super.actionPerformed(e);
         }
     }
 
@@ -539,7 +542,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
             if (processIndep || (image.getNDims() == 2)) {
                 xfrm = new TransMatrix(3);
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setZoom(Sx, Sy);
             } else {
                 oZres = image.getFileInfo(0).getResolutions()[2] * denom;
@@ -547,7 +550,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                          ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
 
                 xfrm = new TransMatrix(4);
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setZoom(Sx, Sy, Sz);
             }
         } // if (doVOI)
@@ -955,7 +958,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
             if (processIndep || (image.getNDims() == 2)) {
                 xfrm = new TransMatrix(3);
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setZoom(Sx, Sy);
             } else {
 
@@ -965,7 +968,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 Sz = ( (float) (newExtents[2]) * oZres) /
                 ( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
                 xfrm = new TransMatrix(4);
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setZoom(Sx, Sy, Sz);
             }
         } // if (doVOI)

@@ -82,10 +82,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogLoadProstateMask;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesClassification;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -308,13 +305,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
          */
         popup = new ViewJPopupVOI(this);
 
-        if (m_kParent.getActiveImage().getNDims() < 3) {
+        if (getActiveImage().getNDims() < 3) {
             popup.setEnabledPropagate(false);
         }
 
         popupPt = new ViewJPopupPt(this);
 
-        if (m_kParent.getActiveImage().getNDims() < 3) {
+        if (getActiveImage().getNDims() < 3) {
             popupPt.setEnabledGraph(false);
             popupPt.setEnabledProp(false);
         }
@@ -925,7 +922,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 return;
             }
             saveVOIs(command);
-            new JDialogBSmooth(m_kParent.getFrame(), getActiveImage(), getSlice());
+            new JDialogBSmooth(m_kParent.getFrame(), this, getActiveImage(), getSlice());
         } // Paint
         else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
@@ -1016,7 +1013,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }else if(command.equals(CustomUIBuilder.PARAM_VOI_EDIT_CIRCLE_DIAM.getActionCommand())) {
         	VOIManager voiManager = m_kVOIManagers.elementAt(m_iActive);
         	
-        	VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        	VOIVector kVOIs = getActiveImage().getVOIs();
         	VOIBase activeVOI = null;
             for ( int i = 0; i < kVOIs.size(); i++ )
             {
@@ -1036,20 +1033,20 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             Vector3f kMax = activeVOI.getImageBoundingBox()[1];
             int width = (int) ((kMax.X  - kMin.X ) + 0.5f);
 
-            float measuredWidth = (width) * m_kParent.getActiveImage().getResolutions(0)[0];
+            float measuredWidth = (width) * getActiveImage().getResolutions(0)[0];
             DecimalFormat nf = new DecimalFormat( "0.0#" );
             
-            String xUnitsString = Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
+            String xUnitsString = Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
             
             String measuredWidthString = String.valueOf(nf.format(measuredWidth));
             String widthString = String.valueOf(width);
         	
-        	new JDialogEditCircleDiameter((Component)m_kParent, widthString,measuredWidthString,xUnitsString, m_kParent.getActiveImage().getResolutions(0), activeVOI, voiManager);
+        	new JDialogEditCircleDiameter((Component)m_kParent, widthString,measuredWidthString,xUnitsString, getActiveImage().getResolutions(0), activeVOI, voiManager);
         	
         } else if(command.equals(CustomUIBuilder.PARAM_VOI_EDIT_SQUARE_LENGTH.getActionCommand())) {
         	VOIManager voiManager = m_kVOIManagers.elementAt(m_iActive);
         	
-        	VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        	VOIVector kVOIs = getActiveImage().getVOIs();
         	VOIBase activeVOI = null;
             for ( int i = 0; i < kVOIs.size(); i++ )
             {
@@ -1069,15 +1066,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             Vector3f kMax = activeVOI.getImageBoundingBox()[1];
             int width = (int) ((kMax.X  - kMin.X ) + 0.5f);
 
-            float measuredWidth = (width) * m_kParent.getActiveImage().getResolutions(0)[0];
+            float measuredWidth = (width) * getActiveImage().getResolutions(0)[0];
             DecimalFormat nf = new DecimalFormat( "0.0#" );
             
-            String xUnitsString = Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
+            String xUnitsString = Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure()[0]).getAbbrev();
             
             String measuredWidthString = String.valueOf(nf.format(measuredWidth));
             String widthString = String.valueOf(width);
         	
-        	new JDialogEditSquareLength((Component)m_kParent, widthString,measuredWidthString,xUnitsString, m_kParent.getActiveImage().getResolutions(0), activeVOI, voiManager);
+        	new JDialogEditSquareLength((Component)m_kParent, widthString,measuredWidthString,xUnitsString, getActiveImage().getResolutions(0), activeVOI, voiManager);
         	
         } else if (command.equals("ProstateMergedVOIs")) {
             saveMergedVOIs();
@@ -1097,7 +1094,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             loadProstateMask();
         } else if (command.equals("ProstateSegAuto")) {
         	prostateSegAuto();
-        } else if (command.equals("SaveDicomMatrix")) {
+        } else if ( command.equals("SemiAutoBSpline")) {
+        	prostateSemiAutoBSpline();
+        } else if ( command.equals("SemiAutoBSplineFuzzyC")) {
+        	prostateSemiAutoBSplineFuzzyC();
+        }else if (command.equals("SaveDicomMatrix")) {
             saveDicomMatrixInfo();
         }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
         	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
@@ -1122,7 +1123,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void addedCurve(VOIEvent added) {
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( added.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
     }
@@ -1133,7 +1134,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         newVOIselection.getVOI().addVOIListener(this);
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( newVOIselection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
         
@@ -1149,7 +1150,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void addVOI( VOIBase kNew, boolean bQuickLUT, boolean bUpdate, boolean isFinished )
     {
-        ModelImage kActive = m_kParent.getActiveImage();
+        ModelImage kActive = getActiveImage();
         if ( kActive != null )
         {
             addVOI( kActive, kNew, bQuickLUT, bUpdate, isFinished );
@@ -1222,13 +1223,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -1243,7 +1244,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void deleteSelectedVOI(boolean contoursOnly)
     {
-        ModelImage kActive = m_kParent.getActiveImage();
+        ModelImage kActive = getActiveImage();
         ViewVOIVector VOIs = kActive.getVOIs();
         for ( int i = VOIs.size() -1; i >= 0 ; i-- )
         {
@@ -1286,7 +1287,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kGroup.getCurves().remove(kOld);
             if ( kGroup.isEmpty() )
             {
-                m_kParent.getActiveImage().unregisterVOI(kGroup);
+                getActiveImage().unregisterVOI(kGroup);
                 if ( m_kImageA != null ) { m_kImageA.unregisterVOI(kGroup); }
                 if ( m_kImageB != null ) { m_kImageB.unregisterVOI(kGroup); }
             }
@@ -1433,8 +1434,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             selectAllVOIs(true);
             ScriptRecorder.getReference().addLine(new ActionSelectAllVOIs(getActiveImage()));
-        }
-        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
+        } else if(kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL.getActionCommand())) {
+            setSelectedVOI(m_kCurrentVOIGroup, true, false);
+        } else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
             selectAllVOIs(false);
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_GROUP.getActionCommand())) {
@@ -1443,11 +1445,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 return;
             }
             saveVOIs(kCommand);
-            m_kParent.getActiveImage().groupVOIs();
+            getActiveImage().groupVOIs();
             fireVOISelectionChange(null);
         } else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_UNGROUP.getActionCommand())) {
             saveVOIs(kCommand);
-            m_kParent.getActiveImage().ungroupVOIs();
+            getActiveImage().ungroupVOIs();
             fireVOISelectionChange(null);
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_DELETE.getActionCommand()) ) {
@@ -1468,7 +1470,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             setDefaultCursor();
         }
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SHOW_CONTOUR_BOUNDING_BOX.getActionCommand()) ) {
-        	VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        	VOIVector kVOIs = getActiveImage().getVOIs();
         	
             for ( int i = 0; i < kVOIs.size(); i++ )
             {
@@ -1586,6 +1588,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @see gov.nih.mipav.view.VOIHandlerInterface#getActiveImage()
      */
     public ModelImage getActiveImage() {
+    	if ( m_kParent.getActiveImage() == null )
+    	{
+    		return m_kImageA;
+    	}
         return m_kParent.getActiveImage();
     }
     
@@ -1636,6 +1642,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         return null;
     }
+    
+    /**
+     * Returns the number of VOIManagers controlled by this VOIHandler.
+     */
+    public int getVOIManagerNum()
+    {
+        return m_kVOIManagers.size();
+    }
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.VOIHandlerInterface#graph25VOI_CalcInten(boolean, boolean, float)
@@ -1656,7 +1670,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ViewUserInterface.getReference();
 
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
 
         if (kImage.getNDims() == 3) {
 
@@ -1716,7 +1730,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                     rgbIntensities,
                                     "Intensity Graph",
                                     v,
-                                    Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(2)).getAbbrev());
+                                    Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(2)).getAbbrev());
 
                             contourGraph
                             .setDefaultDirectory(ViewUserInterface
@@ -1788,7 +1802,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                     intensity,
                                     "Intensity Graph",
                                     v,
-                                    Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),
+                                    Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),
                                     null);
 
                             contourGraph
@@ -1925,7 +1939,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                                 intensity,
                                 "Intensity Graph",
                                 v,
-                                Unit.getUnitFromLegacyNum(m_kParent.getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),null);
+                                Unit.getUnitFromLegacyNum(getActiveImage().getUnitsOfMeasure(0)).getAbbrev(),null);
 
                         contourGraph
                         .setDefaultDirectory(ViewUserInterface
@@ -1972,7 +1986,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         boolean bCreated = true;
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            bCreated &= make3DVOI(bIntersection, m_kParent.getActiveImage(), kVolume, null, 
+            bCreated &= make3DVOI(bIntersection, getActiveImage(), kVolume, null, 
             		m_kVOIManagers.elementAt(i), i);
         }
         return bCreated;
@@ -2069,7 +2083,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             boolean bFirst = true;
             m_kActiveList = new Vector<VOIBase>();
-            VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+            VOIVector kVOIs = getActiveImage().getVOIs();
             for ( int i = 0; i < kVOIs.size(); i++ )
             {
                 VOI kCurrentGroup = kVOIs.get(i);
@@ -2083,11 +2097,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                         if ( bFirst )
                         {
                             bFirst = false;
-                            m_akBounds[0].Copy(kBounds[0]);
-                            m_akBounds[1].Copy(kBounds[1]);
+                            m_akBounds[0].copy(kBounds[0]);
+                            m_akBounds[1].copy(kBounds[1]);
                         }
-                        m_akBounds[0].Min(kBounds[0]);
-                        m_akBounds[1].Max(kBounds[1]);
+                        m_akBounds[0].min(kBounds[0]);
+                        m_akBounds[1].max(kBounds[1]);
                     }
                 }
             }
@@ -2125,7 +2139,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         
         advanceVOIUID();
-        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
+        short sID = (short)(getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
         m_kCurrentVOIGroup.addVOIListener(this);
         if (presetHue >= 0.0) {
@@ -2144,7 +2158,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_kCurrentVOIGroup = null;
         setPresetHue(presetHue);
         advanceVOIUID();
-        short sID = (short)(m_kParent.getActiveImage().getVOIs().getUniqueID());
+        short sID = (short)(getActiveImage().getVOIs().getUniqueID());
         m_kCurrentVOIGroup = new VOI( sID,  new String( "_" + sID ) );
         m_kCurrentVOIGroup.addVOIListener(this);
         m_kCurrentVOIGroup.setOpacity(1f);
@@ -2165,9 +2179,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kNew.setGroup(m_kCurrentVOIGroup);
         }
         kNew.getGroup().getCurves().add(kNew);
-        if (m_kParent.getActiveImage().isRegistered(kNew.getGroup()) == -1 )
+        if (getActiveImage().isRegistered(kNew.getGroup()) == -1 )
         {
-            m_kParent.getActiveImage().registerVOI(kNew.getGroup());
+            getActiveImage().registerVOI(kNew.getGroup());
         }
 
         if ( (m_kUndoCommands.size() > 0) && (m_kUndoCommands.lastElement() != null) && 
@@ -2228,15 +2242,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	}
         kLUT.update();
         Vector3f[] kBounds = kLUT.getImageBoundingBox();
-        m_akBounds[0].Copy(kBounds[0]);
-        m_akBounds[1].Copy(kBounds[1]);        
+        m_akBounds[0].copy(kBounds[0]);
+        m_akBounds[1].copy(kBounds[1]);        
         deleteVOI( kLUT );
-        if (m_kParent.getActiveImage().isColorImage() == false) {
-            quickLUT( m_akBounds, m_kParent.getActiveImage(), m_kParent.getActiveLUT() );
-            m_kParent.getActiveImage().notifyImageDisplayListeners(m_kParent.getActiveLUT(), true);            
+        if (getActiveImage().isColorImage() == false) {
+            quickLUT( m_akBounds, getActiveImage(), m_kParent.getActiveLUT() );
+            getActiveImage().notifyImageDisplayListeners(m_kParent.getActiveLUT(), true);            
         } else { // RGB image
-            quickRGB( m_akBounds, m_kParent.getActiveImage(), m_kParent.getActiveRGB() );
-            m_kParent.getActiveImage().notifyImageDisplayListeners(true, 1, m_kParent.getActiveRGB());
+            quickRGB( m_akBounds, getActiveImage(), m_kParent.getActiveRGB() );
+            getActiveImage().notifyImageDisplayListeners(true, 1, m_kParent.getActiveRGB());
         }
 
         if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
@@ -2258,13 +2272,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -2279,13 +2293,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -2352,17 +2366,26 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void selectAllVOIs(boolean bActive)
     {
-        VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
             kCurrentGroup.setAllActive(bActive);
             m_kCurrentVOIGroup = kCurrentGroup;
         }
-        if ( m_kParent != null && m_kParent.getActiveImage() != null &&
-        		m_kParent.getActiveImage().getParentFrame() != null )
+        if ( m_kParent != null && getActiveImage() != null &&
+        		getActiveImage().getParentFrame() != null )
         {
-        	m_kParent.getActiveImage().getParentFrame().toFront();
+            if(getActiveImage().getTriImageFrame() != null && 
+                    m_kParent.equals(getActiveImage().getTriImageFrame())) {
+                getActiveImage().getTriImageFrame().toFront();
+            } else {
+                getActiveImage().getParentFrame().toFront();
+            }
+        }
+        if ( m_kParent != null && m_kParent.getFrame() != null )
+        {
+        	m_kParent.getFrame().toFront();
         }
         updateDisplay();
     }
@@ -2374,7 +2397,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //System.err.println( "VOIManagerInterface.selectedVOI" );
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
         if ( m_kVOILogicalOperationsDialog != null )
@@ -2395,7 +2418,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if ( kManager == m_kVOIManagers.elementAt(i) )
             {
                 m_iActive = i;
-                if ( kActiveImage != m_kParent.getActiveImage() )
+                if ( kActiveImage != getActiveImage() )
                 {
                     m_kParent.setActiveImage( kActiveImage );
                 }
@@ -2553,11 +2576,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Called from the VOIManager.
      * Displays the Intensity Graph for the input VOIBase.
      * @param kVOI VOIBase to graph.
+     * @param m_iPlane the plane on which to show intensity info
      */
-    public void showIntensityGraph( VOIBase kVOI ) {
+    public void showIntensityInfo( VOIBase kVOI, int m_iPlane, boolean showGraph) {
         ViewJFrameGraph lineGraph;
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         int[] unitsOfMeasure = kImage.getUnitsOfMeasure();
         float[] resolutions = kImage.getResolutions(0);
 
@@ -2566,6 +2590,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         
         
         String lineName = kVOI.getName();
+        int sliceNum = kVOI.slice(m_iPlane);
+        int curveNum = kVOI.getContourID();
+        
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<ColorRGB> colors = new Vector<ColorRGB>();
 
@@ -2612,30 +2639,32 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             rgbStdDevIntenG = (float)Math.sqrt(rgbStdDevIntenG/pts);
             rgbStdDevIntenB = (float)Math.sqrt(rgbStdDevIntenB/pts);
 
-            if (kVOI.getGroup().getContourGraph() == null) {
-                ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbColors, "Intensity Graph", kVOI.getGroup(),
-                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev());
-
-                contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                contourGraph.setVisible(true);
-                kVOI.getGroup().setContourGraph(contourGraph);
-                contourGraph.setVOI(kVOI.getGroup());
-            } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
-                kVOI.getGroup().getContourGraph().saveNewFunction(rgbPos, rgbColors, 0);
+            if(showGraph) {
+                if (kVOI.getGroup().getContourGraph() == null) {
+                    ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbColors, "Intensity Graph", kVOI.getGroup(),
+                    		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev());
+    
+                    contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
+                    contourGraph.setVisible(true);
+                    kVOI.getGroup().setContourGraph(contourGraph);
+                    contourGraph.setVOI(kVOI.getGroup());
+                } else {
+                    kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
+                    kVOI.getGroup().getContourGraph().saveNewFunction(rgbPos, rgbColors, 0);
+                }
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tname\tmean \tstandard deviation\tlength " + "\n");
+                    "Line\tname\tslice\tnumber\tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference()
             .setDataText(
-                    "Red\t" + lineName + "\t" + rgbMeanIntenR + "\t"
+                    "Red\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenR + "\t"
                     + rgbStdDevIntenR + "\t" + dec.format(length) + "\n");
             ViewUserInterface.getReference().setDataText(
-                    "Green\t" + lineName + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
+                    "Green\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
                     + "\t" + dec.format(length) +"\n");
             ViewUserInterface.getReference().setDataText(
-                    "Blue\t" + lineName + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
+                    "Blue\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
                     + "\t" + dec.format(length) +"\n");
         } else {
             float[] pos = new float[pts];
@@ -2665,22 +2694,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             rgbStdDevIntenR = (float)Math.sqrt(rgbStdDevIntenR/pts);
 
-            if (kVOI.getGroup().getContourGraph() == null) {
-                lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", kVOI.getGroup(),
-                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
-                lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                lineGraph.setVisible(true);
-                kVOI.getGroup().setContourGraph(lineGraph);
-                lineGraph.setVOI(kVOI.getGroup());
-            } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
-                kVOI.getGroup().getContourGraph().replaceFunction(pos, inten, xyCoords, kVOI.getGroup(), 0);
+            if(showGraph) {
+                if (kVOI.getGroup().getContourGraph() == null) {
+                    lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", kVOI.getGroup(),
+                    		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
+                    lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
+                    lineGraph.setVisible(true);
+                    kVOI.getGroup().setContourGraph(lineGraph);
+                    lineGraph.setVOI(kVOI.getGroup());
+                } else {
+                    kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
+                    kVOI.getGroup().getContourGraph().replaceFunction(pos, inten, xyCoords, kVOI.getGroup(), 0);
+                }
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tname\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
+                    "Line\tname\tslice\tnumber\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference().setDataText(
-            		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
+            		"\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
         }
     }
     
@@ -2701,11 +2732,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Called from the VOIManager when the VOIBase that is currently being graphed has changed.
      * @param kVOI the modified VOIBase.
      */
-    public void updateGraph( VOIBase kVOI )
+    public void updateGraph( VOIBase kVOI, int m_iPlane)
     {
         if ( kVOI.getType() == VOI.LINE )
         {
-            showIntensityGraph(kVOI);
+            showIntensityInfo(kVOI, m_iPlane, true);
         }
         else if ( kVOI.getType() == VOI.POINT )
         {
@@ -2719,7 +2750,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //System.err.println( "VOIManagerInterface.vectorSelected" );
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }        
     }
@@ -2821,7 +2852,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             return;
         }
 
-        ViewVOIVector VOIs = m_kParent.getActiveImage().getVOIs();
+        ViewVOIVector VOIs = getActiveImage().getVOIs();
         for (int i = 0; i < VOIs.size(); i++) {
 
             if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
@@ -2906,7 +2937,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ViewVOIVector VOIs;
         int nVOI;
 
-        VOIs = m_kParent.getActiveImage().getVOIs();
+        VOIs = getActiveImage().getVOIs();
         nVOI = VOIs.size();
 
         for (int i = 0; i < nVOI; i++) {
@@ -2938,7 +2969,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         // Get the reference to the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
         copyList.clear();
-        VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
@@ -2962,9 +2993,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             iSize /= 4;
         }
         kActive.createMask(iSize);
-        boolean bMask = true;
+        boolean bMask = false;
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), 
+            bMask |= make3DVOI( false, kActive, kActive, kActive.getMask(), 
             		m_kVOIManagers.elementAt(i), i);
         }
         if ( !bMask )
@@ -3010,7 +3041,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         Vector<VOIBase> deleteList = new Vector<VOIBase>();
 
-        VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
@@ -3039,7 +3070,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         Vector<VOIBase> activeList = new Vector<VOIBase>();
 
-        VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
@@ -3134,7 +3165,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if ( m_kCurrentVOIGroup != null && m_kCurrentVOIGroup.isEmpty() )
         {
             short sID = (short)(kImage.getVOIs().getUniqueID());
-            m_kParent.getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
+            getActiveImage().unregisterVOI(m_kCurrentVOIGroup);
             String kName = kNew.getClass().getName();
             int index = kName.lastIndexOf('.') + 1;
             kName = kName.substring(index);
@@ -3176,7 +3207,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private int getActiveVOICount()
     {
-        ModelImage kActive = m_kParent.getActiveImage();
+        ModelImage kActive = getActiveImage();
         ViewVOIVector VOIs = kActive.getVOIs();
         int nActive = 0;
         for (int i = 0; i < VOIs.size(); i++) {
@@ -3222,7 +3253,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     		{
     			kVOIState.currentVOI = -1;
     		}        
-    		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+    		kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
             return kVOIState;
     	} catch ( OutOfMemoryError e )
     	{
@@ -3245,7 +3276,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         		{
         			kVOIState.currentVOI = -1;
         		}        
-        		kVOIState.currentCenter.Copy( m_kParent.getCenterPt() );
+        		kVOIState.currentCenter.copy( m_kParent.getCenterPt() );
                 return kVOIState;
         	} catch ( OutOfMemoryError e2 )
         	{
@@ -3280,7 +3311,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         String frameRefTimeString;
         int frameReferenceTime;
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         if(useFrameRefTime && !(kImage.getFileInfo(0) instanceof FileInfoDicom)) {
         	useFrameRefTime = false; //frame ref time is only defined for dicom images
         }
@@ -3463,7 +3494,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private void graphVOI()
     {
-        VOIVector kVOIs = m_kParent.getActiveImage().getVOIs();
+        VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
             VOI kCurrentGroup = kVOIs.get(i);
@@ -3472,7 +3503,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    showIntensityGraph( kCurrentVOI );
+                    showIntensityInfo( kCurrentVOI, kCurrentVOI.getPlane(), true );
                 }
             }
         }
@@ -3527,13 +3558,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -3565,7 +3596,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param quietMode if true indicates that warnings should not be displayed.
      */
     private void loadAllVOIs(boolean quietMode) {
-        ModelImage img = m_kParent.getActiveImage();
+        ModelImage img = getActiveImage();
 
         String fileDir = img.getFileInfo(0).getFileDirectory();
         String imageName;
@@ -3627,7 +3658,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int i, j;
         VOI[] VOIs;
         FileVOI fileVOI;
-        ModelImage currentImage = m_kParent.getActiveImage();
+        ModelImage currentImage = getActiveImage();
 
         try {
 
@@ -3761,7 +3792,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
             openVOI = new ViewOpenVOIUI();
-            VOI[] newVOIs = openVOI.open(m_kParent.getActiveImage(), doLabels);
+            VOI[] newVOIs = openVOI.open(getActiveImage(), doLabels);
             if ( newVOIs == null) {
                 return false;
             }
@@ -3794,7 +3825,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
             openVOI = new ViewOpenVOIUI();
-            VOI[] newVOIs = openVOI.openOtherOrientation(m_kParent.getActiveImage());
+            VOI[] newVOIs = openVOI.openOtherOrientation(getActiveImage());
             if ( newVOIs == null) {
                 return false;
             }
@@ -3826,7 +3857,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         
         try {
         	openPaint = new ViewOpenPaintUI();
-            BitSet paintBitmap = openPaint.open(m_kParent.getActiveImage());
+            BitSet paintBitmap = openPaint.open(getActiveImage());
         	if (paintBitmap == null) {
         		return false;
         	}
@@ -3917,13 +3948,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -3967,15 +3998,30 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private void pasteAll()
     {
+        int i;
+        int j;
+        int k;
+        int iPlane = 0;
+        short id;
+        float xCurve[];
+        float yCurve[];
+        float zCurve[];
+        VOIManager xManager = null;
+        VOIManager yManager = null;
+        VOIManager zManager = null;
+        int xIndex;
+        int yIndex;
+        int zIndex;
         // Get the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
-        for ( int i = 0; i < copyList.size(); i++ )
+        for (i = 0; i < copyList.size(); i++ )
         {
-            VOIBase kCurrentVOI = copyList.get(i); 
+            VOIBase kCurrentVOI = copyList.get(i);
             VOIManager kManager = m_kVOIManagers.elementAt(0);
-            for ( int j = 0; j < m_kVOIManagers.size(); j++ )
+            
+            for (j = 0; j < m_kVOIManagers.size(); j++ )
             {
-            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+            	iPlane = m_kVOIManagers.elementAt(j).getPlane();
             	//System.err.println( iPlane + " " + kCurrentVOI.getPlane() + " " + (iPlane & kCurrentVOI.getPlane()));
                 if ( iPlane == (iPlane & kCurrentVOI.getPlane()) )
                 {
@@ -3983,8 +4029,209 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     break;
                 }
             }
-            kManager.pasteAllVOI( kCurrentVOI );  
-        }
+            kManager.pasteAllVOI( kCurrentVOI ); 
+            /* In ViewJComponentTriImage if a rect3D is drawn in one window, then the same rect3d appears in the
+             * other 2 windows.
+             */
+            if ((m_kVOIManagers.size() == 3) &&
+                (m_kVOIManagers.elementAt(0).getComponent().toString().contains("ViewJComponentTriImage")) &&
+                (m_kVOIManagers.elementAt(1).getComponent().toString().contains("ViewJComponentTriImage")) &&
+                (m_kVOIManagers.elementAt(2).getComponent().toString().contains("ViewJComponentTriImage"))) {
+                VOI voiXY;
+                VOI voiZY;
+                VOI voiXZ;
+                float x[] = new float[2];
+                float y[] = new float[2];
+                float z[] = new float[2];
+                for (k = 0; k < 3; k++) {
+                    if (m_kVOIManagers.elementAt(k).getPlane() == 1) { // XPLANE
+                        xManager = m_kVOIManagers.elementAt(k);    
+                    }
+                    else if (m_kVOIManagers.elementAt(k).getPlane() == 2) { // YPLANE
+                        yManager = m_kVOIManagers.elementAt(k);
+                    }
+                    else {
+                        zManager = m_kVOIManagers.elementAt(k);
+                    }
+                }
+                kCurrentVOI.getBounds(x, y, z);
+                if (iPlane == 1) { // XPLANE
+                    x[0] = 0;
+                    x[1] = xManager.getLocalImage().getExtents()[2] - 1;
+                    if (yManager.getImage().getVOIs() != null) {
+                        id = (short)yManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXZ = new VOI(id, "VOIXZ", VOI.CONTOUR, 0.0f);
+                    voiXZ.setColor(Color.red);
+                    for (yIndex = Math.round(y[0]); yIndex <= Math.round(y[1]); yIndex++) {
+                        xCurve = new float[4];
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve[0] = x[0];
+                        zCurve[0] = z[0];
+                        yCurve[0] = yIndex;
+                        xCurve[1] = x[1];
+                        zCurve[1] = z[0];
+                        yCurve[1] = yIndex;
+                        xCurve[2] = x[1];
+                        zCurve[2] = z[1];
+                        yCurve[2] = yIndex;
+                        xCurve[3] = x[0];
+                        zCurve[3] = z[1];
+                        yCurve[3] = yIndex;
+                        voiXZ.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    yManager.getImage().registerVOI(voiXZ);
+                    if (zManager.getImage().getVOIs() != null) {
+                        id = (short)zManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXY = new VOI(id, "VOIXY", VOI.CONTOUR, 0.0f);
+                    voiXY.setColor(Color.red);
+                    for (zIndex = Math.round(z[0]); zIndex <= Math.round(z[1]); zIndex++) {
+                        xCurve = new float[4];
+                        yCurve = new float[4];
+                        zCurve = new float[4];
+                        xCurve[0] = x[0];
+                        yCurve[0] = y[0];
+                        zCurve[0] = zIndex;
+                        xCurve[1] = x[1];
+                        yCurve[1] = y[0];
+                        zCurve[1] = zIndex;
+                        xCurve[2] = x[1];
+                        yCurve[2] = y[1];
+                        zCurve[2] = zIndex;
+                        xCurve[3] = x[0];
+                        yCurve[3] = y[1];
+                        zCurve[3] = zIndex;
+                        voiXY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    zManager.getImage().registerVOI(voiXY);
+                }
+                else if (iPlane == 2) { // YPLANE
+                    y[0] = 0;
+                    y[1] = yManager.getLocalImage().getExtents()[2] - 1;
+                    if (xManager.getImage().getVOIs() != null) {
+                        id = (short)xManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiZY = new VOI(id, "voiZY", VOI.CONTOUR, 0.0f);
+                    voiZY.setColor(Color.red);
+                    for (xIndex = Math.round(x[0]); xIndex <= Math.round(x[1]); xIndex++) {
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve = new float[4];
+                        zCurve[0] = z[0];
+                        yCurve[0] = y[0];
+                        xCurve[0] = xIndex;
+                        zCurve[1] = z[1];
+                        yCurve[1] = y[0];
+                        xCurve[1] = xIndex;
+                        zCurve[2] = z[1];
+                        yCurve[2] = y[1];
+                        xCurve[2] = xIndex;
+                        zCurve[3] = z[0];
+                        yCurve[3] = y[1];
+                        xCurve[3] = xIndex;
+                        voiZY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    xManager.getImage().registerVOI(voiZY);
+                    if (zManager.getImage().getVOIs() != null) {
+                        id = (short)zManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXY = new VOI(id, "VOIXY", VOI.CONTOUR, 0.0f);
+                    voiXY.setColor(Color.red);
+                    for (zIndex = Math.round(z[0]); zIndex <= Math.round(z[1]); zIndex++) {
+                        xCurve = new float[4];
+                        yCurve = new float[4];
+                        zCurve = new float[4];
+                        xCurve[0] = x[0];
+                        yCurve[0] = y[0];
+                        zCurve[0] = zIndex;
+                        xCurve[1] = x[1];
+                        yCurve[1] = y[0];
+                        zCurve[1] = zIndex;
+                        xCurve[2] = x[1];
+                        yCurve[2] = y[1];
+                        zCurve[2] = zIndex;
+                        xCurve[3] = x[0];
+                        yCurve[3] = y[1];
+                        zCurve[3] = zIndex;
+                        voiXY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    zManager.getImage().registerVOI(voiXY);
+                }
+                else if (iPlane == 4) { // ZPLANE
+                    z[0] = 0;
+                    z[1] = zManager.getLocalImage().getExtents()[2]-1;
+                    if (xManager.getImage().getVOIs() != null) {
+                        id = (short)xManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiZY = new VOI(id, "voiZY", VOI.CONTOUR, 0.0f);
+                    voiZY.setColor(Color.red);
+                    for (xIndex = Math.round(x[0]); xIndex <= Math.round(x[1]); xIndex++) {
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve = new float[4];
+                        zCurve[0] = z[0];
+                        yCurve[0] = y[0];
+                        xCurve[0] = xIndex;
+                        zCurve[1] = z[1];
+                        yCurve[1] = y[0];
+                        xCurve[1] = xIndex;
+                        zCurve[2] = z[1];
+                        yCurve[2] = y[1];
+                        xCurve[2] = xIndex;
+                        zCurve[3] = z[0];
+                        yCurve[3] = y[1];
+                        xCurve[3] = xIndex;
+                        voiZY.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    xManager.getImage().registerVOI(voiZY);
+                    if (yManager.getImage().getVOIs() != null) {
+                        id = (short)yManager.getImage().getVOIs().size();
+                    }
+                    else {
+                        id = (short)0;
+                    }
+                    voiXZ = new VOI(id, "VOIXZ", VOI.CONTOUR, 0.0f);
+                    voiXZ.setColor(Color.red);
+                    for (yIndex = Math.round(y[0]); yIndex <= Math.round(y[1]); yIndex++) {
+                        xCurve = new float[4];
+                        zCurve = new float[4];
+                        yCurve = new float[4];
+                        xCurve[0] = x[0];
+                        zCurve[0] = z[0];
+                        yCurve[0] = yIndex;
+                        xCurve[1] = x[1];
+                        zCurve[1] = z[0];
+                        yCurve[1] = yIndex;
+                        xCurve[2] = x[1];
+                        zCurve[2] = z[1];
+                        yCurve[2] = yIndex;
+                        xCurve[3] = x[0];
+                        zCurve[3] = z[1];
+                        yCurve[3] = yIndex;
+                        voiXZ.importCurve(xCurve, yCurve, zCurve);
+                    }
+                    yManager.getImage().registerVOI(voiXZ);
+                }
+                
+            }
+        } // for ( int i = 0; i < copyList.size(); i++ )
     }
 
     private void pasteFromViewUserInterface()
@@ -4135,7 +4382,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
     	// prostateSegAutoDialog.validate();
     }
+    
+	private void prostateSemiAutoBSplineFuzzyC() {
+		final JDialogProstateSegmentationRegBSpline3D prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3D(
+				m_kParent.getFrame());
+		prostateSegAutoDialog.validate();
+	}
 
+	private void prostateSemiAutoBSpline() {
+		final JDialogProstateSegmentationRegBSpline3DFast prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3DFast(
+				m_kParent.getFrame());
+		prostateSegAutoDialog.validate();
+	}
     
     /**
      * method that performs the quick LUT operation
@@ -4319,7 +4577,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             if ( m_bGPURenderer )
             {                
-                m_kParent.getActiveImage().useMask(true); 
+                getActiveImage().useMask(true); 
             }
             else
             {
@@ -4346,7 +4604,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
         }
         if (m_kVOIDialog != null) {
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
     }
@@ -4360,7 +4618,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         String tmpImageName;
         String imageName;
         String voiDir;
-        ModelImage img = m_kParent.getActiveImage();
+        ModelImage img = getActiveImage();
         fileDir = img.getFileInfo(0).getFileDirectory();
 
         // if the image is a dicom image, then base the new directory name
@@ -4419,7 +4677,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private void saveAllVOIsTo(final String voiDir) {
         try {
 
-            ModelImage currentImage = m_kParent.getActiveImage();
+            ModelImage currentImage = getActiveImage();
             ViewVOIVector VOIs = currentImage.getVOIs();
 
             final File voiFileDir = new File(voiDir);
@@ -4525,7 +4783,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if (inverseDicomMatrix != null) {
                 for (int i = 0; i <= 3; i++) {
                     for (int j = 0; j <= 3; j++) {
-                        kOut.writeDouble(inverseDicomMatrix.Get(i, j));
+                        kOut.writeDouble(inverseDicomMatrix.get(i, j));
                     }
                 }
             }
@@ -4610,7 +4868,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ViewVOIVector VOIs;
         boolean foundLabel = false;
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         VOIs = kImage.getVOIs();
         nVOI = VOIs.size();
 
@@ -4687,7 +4945,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
 
-            ModelImage kImage = m_kParent.getActiveImage();
+            ModelImage kImage = getActiveImage();
             VOIs = kImage.getVOIs();
             nVOI = VOIs.size();
 
@@ -4740,7 +4998,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         boolean doPoint = false, doAnnotation = false;
 
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         VOIs = kImage.getVOIs();
         nVOI = VOIs.size();
 
@@ -4839,7 +5097,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         String directory;
 
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         ViewVOIVector VOIs = kImage.getVOIs();
         int nVOI = VOIs.size();
         boolean bSelected = false;
@@ -4875,7 +5133,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
             ObjectOutputStream objstream;
-            int numSlices = m_kParent.getActiveImage().getExtents().length > 2 ? m_kParent.getActiveImage().getExtents()[2] : 1;
+            int numSlices = getActiveImage().getExtents().length > 2 ? getActiveImage().getExtents()[2] : 1;
             for ( int z = 0; z < numSlices; z++ )
             {
             	for (int i = 0; i < nVOI; i++) {
@@ -4908,7 +5166,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         String directory;
 
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
 
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Import VOI Polygon");
@@ -4951,7 +5209,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         FilePaintBitmap filePaint;
         String extension = ".pbm";
         
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         BitSet paintBitmap = kImage.getParentFrame().getComponentImage().getPaintBitmap();
         if (paintBitmap == null) {
         	return;
@@ -4978,7 +5236,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         
         FilePaintBitmap filePaint;
         
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         BitSet paintBitmap = kImage.getParentFrame().getComponentImage().getPaintBitmap();
         if (paintBitmap == null) {
         	return;
@@ -5046,7 +5304,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         double buffer[];
         byte entryBytes[];
 
-        selectedImage = m_kParent.getActiveImage();
+        selectedImage = getActiveImage();
         VOIs = selectedImage.getVOIs();
         nVOI = VOIs.size();
 
@@ -5209,7 +5467,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         double buffer[];
         byte entryBytes[];
 
-        selectedImage = m_kParent.getActiveImage();
+        selectedImage = getActiveImage();
         VOIs = selectedImage.getVOIs();
         nVOI = VOIs.size();
 
@@ -5337,7 +5595,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int nVOI;
         ViewVOIVector VOIs;
 
-        ModelImage kImage = m_kParent.getActiveImage();
+        ModelImage kImage = getActiveImage();
         VOIs = kImage.getVOIs();
         nVOI = VOIs.size();
 
@@ -5434,7 +5692,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int nVOI;
         ViewVOIVector VOIs;
 
-        VOIs = m_kParent.getActiveImage().getVOIs();
+        VOIs = getActiveImage().getVOIs();
         nVOI = VOIs.size();
 
         Vector3f pt;
@@ -5450,7 +5708,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     if (((VOIPoint) (VOIs.VOIAt(i).getCurves().elementAt(j))).isActive()) {
                         pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves().elementAt(j))).exportPoint();
                         new JDialogPointArea(m_kParent.getFrame(),
-                                m_kParent.getActiveImage(), (int) pt.X, (int) pt.Y, true);
+                                getActiveImage(), (int) pt.X, (int) pt.Y, true);
                     }
                 }
             }
@@ -5529,7 +5787,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             if ( m_bGPURenderer )
             {
-                m_kParent.getActiveImage().useMask(false);
+                getActiveImage().useMask(false);
             }
             else
             {
@@ -5556,7 +5814,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
         }
         if (m_kVOIDialog != null) {
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
         updateDisplay();
     }
@@ -5589,7 +5847,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if (imageStatList == null) {
             
             if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() != 0)) {
-                imageStatList = new JDialogVOIStatistics(getActiveImage().getVOIs());
+                imageStatList = new JDialogVOIStatistics(getActiveImage(), getActiveImage().getVOIs());
                 imageStatList.setVisible(true);
             } else {
                 MipavUtil.displayError("A VOI must be present to use the statistics calculator");
@@ -5602,13 +5860,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     protected void showVOIProperties() {
         if (m_kVOIDialog == null) {
-            m_kVOIDialog = new JDialogVOIStats( this, m_kParent.getActiveImage(), m_kCurrentVOIGroup );
+            m_kVOIDialog = new JDialogVOIStats( this, getActiveImage(), m_kCurrentVOIGroup );
             addVOIUpdateListener(m_kVOIDialog);
         }
 
         if (m_kVOIDialog != null) {
             m_kVOIDialog.setVisible(true);
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, getActiveImage() );
         }
     }
 

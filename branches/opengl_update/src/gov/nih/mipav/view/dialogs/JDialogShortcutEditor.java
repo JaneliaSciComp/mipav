@@ -86,6 +86,8 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
             }
         } else if (e.getActionCommand().equals("AddShortcut")) {
             new ShortcutDialog();
+        } else {
+            super.actionPerformed(e);
         }
 
     }
@@ -490,6 +492,8 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
                 }
             } else if (command.equals("Cancel")) {
                 this.setVisible(false);
+            } else {
+                super.actionPerformed(e);
             }
 
         }

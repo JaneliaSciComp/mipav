@@ -60,10 +60,9 @@ public interface ScreenCoordinateListener
      */
     public float getZoomY();
     /**
-     * Converts local patient coordinate view (Axial, Coronal, Sagittal) of the image into the original file coordinate
-     * representation of the image. 
+     * Converts local patient coordinate view (Axial, Coronal, Sagittal) of the image into the screen coordinates.
      * @param kPt local patient (Axial, Coronal, Sagittal) coordinates.
-     * @return image file coordinate representation of the input point.
+     * @return screen coordinate representation of the input point.
      */
     public Vector3f patientToScreenVOI( Vector3f kPt );
     /**

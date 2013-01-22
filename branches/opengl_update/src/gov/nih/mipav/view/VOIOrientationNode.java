@@ -9,12 +9,12 @@ import javax.swing.tree.*;
 
 
 /**
- * This class is used to represent a VOIContour, VOIPoint, or other two-dimensional VOI object in a tree. 
- * This is a node of the overall VOI. It has a gov.nih.mipav.structure.VOI as its object.
+ * This class is used to represent the orientation of a set of VOI curves. 
+ * This is a node of the overall VOI. It has a gov.nih.mipav.structure.VOIBase set as its object.
  *
  * <p>Nodes in the tree are expanded by calling this class's explore method.</p>
  *
- * @author  David Parsons
+ * @author  Justin Senseney
  */
 public class VOIOrientationNode extends DefaultMutableTreeNode {
 
@@ -26,6 +26,9 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
     
     private String orientation;
 
+    /** Name of parent voi */
+    private String voiName;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -35,8 +38,9 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
      * @param  node     File for tree leaf.
      * @param  fNumber  The slice number of this VOI component
      */
-    public VOIOrientationNode(String orientation,Vector<VOIBase>[] sortedCurves) {
-    	this.orientation = orientation;
+    public VOIOrientationNode(String voiName, String orientation,Vector<VOIBase>[] sortedCurves) {
+    	this.voiName = voiName;
+        this.orientation = orientation;
         setUserObject(sortedCurves);
 
         // unless we drop in information about the VOIbase here...
@@ -87,6 +91,15 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
     @SuppressWarnings("unchecked")
     public Vector<VOIBase>[] getVOI() {
         return (Vector<VOIBase>[])super.getUserObject();
+    }
+
+    /**
+     * Returns the name of the parent voi
+     * 
+     * @return
+     */
+    public String getVOIname() {
+        return voiName;
     }
 
     /**

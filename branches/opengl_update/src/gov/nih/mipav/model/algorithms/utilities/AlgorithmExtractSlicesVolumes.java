@@ -15,7 +15,7 @@ import java.util.*;
  *
  * <p>Description: Extracts individual slices from 3D or 4D images and opens each slice in its own Frame</p>
  *
- * @author   ben link
+ * @author   Justin Senseney
  * @version  1.0
  */
 public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {

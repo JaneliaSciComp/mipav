@@ -123,6 +123,8 @@ public class JDialogGridOptions extends JDialogBase {
         } else if (command.equals("Close")) {
             setVisible(false);
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

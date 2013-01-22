@@ -217,17 +217,6 @@ public class TransMatrixd extends Matrix4d
     	return m_TransformID;
     }
 
-    /** method alias, @see Get */
-    public final double get(int i, int j) {
-        return Get(i, j);
-    }
-
-    /** method alias, but accepts double value. @see Set */
-    public final void set( int i, int j, double dValue )
-    {
-        Set(i, j, dValue);
-    }
-
     /** 
      * @note this doesn't conform to the Cloneable interface, because it returns
      * TransMatrixd instead of Object. 
@@ -247,7 +236,7 @@ public class TransMatrixd extends Matrix4d
         m_TransformID = rkTM.m_TransformID;
     	m_IsNIFTI = rkTM.m_IsNIFTI;
         m_IsQform = rkTM.m_IsQform;
-        super.Copy(rkTM);
+        super.copy(rkTM);
     }
 
 
@@ -262,7 +251,7 @@ public class TransMatrixd extends Matrix4d
         for (int i = 0; i < dim; i++) {
 
             for (int j = 0; j < dim; j++) {
-                Set(i, j, Double.valueOf((String) tok.nextElement()).doubleValue());
+            	set(i, j, Double.valueOf((String) tok.nextElement()).doubleValue());
             }
         }
     }
@@ -290,8 +279,6 @@ public class TransMatrixd extends Matrix4d
         TransMatrixd pmat = new TransMatrixd(4);
 
         Vector3d[] row = new Vector3d[3];
-        Vector3d pdum3 = new Vector3d();
-
         for (i = 0; i < 3; i++) {
             row[i] = new Vector3d();
         }
@@ -306,7 +293,7 @@ public class TransMatrixd extends Matrix4d
 
             for (j = 0; j < 4; j++) {
                 double val = locmat.get(i, j) / locmat.get(3, 3);
-                locmat.Set(i, j, val);
+                locmat.set(i, j, val);
             }
         }
 
@@ -316,12 +303,12 @@ public class TransMatrixd extends Matrix4d
 
         // zero out translation.
         for (i = 0; i < 3; i++) {
-            pmat.Set(i, 3, 0);
+            pmat.set(i, 3, 0);
         }
 
-        pmat.Set(3, 3, 1);
+        pmat.set(3, 3, 1);
 
-        if (pmat.Determinant() == 0.0) {
+        if (pmat.determinant() == 0.0) {
             return false;
         }
         // allocate args, if they haven't been:
@@ -331,52 +318,49 @@ public class TransMatrixd extends Matrix4d
         if (shear == null) shear = new Vector3d();
 
         // Next take care of translation (easy).
-        trans.Set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
+        trans.set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
         for (i = 0; i < 3; i++) {
-            locmat.Set(i, 3, 0);
+            locmat.set(i, 3, 0);
         }
 
         // Now get scale and shear.
         for (i = 0; i < 3; i++) {
-            row[i].X = locmat.Get(i, 0);
-            row[i].Y = locmat.Get(i, 1);
-            row[i].Z = locmat.Get(i, 2);
+            row[i].X = locmat.get(i, 0);
+            row[i].Y = locmat.get(i, 1);
+            row[i].Z = locmat.get(i, 2);
         }
 
         // Compute X scale factor and normalize first row.
-        scale.X = row[0].Length();
+        scale.X = row[0].length();
 
         // row[0] = *V3Scale(&row[0], 1.0);
-        row[0].Scale(1.0);
+        row[0].scale(1.0);
         // XXX Should this be row[0].Normalize()??
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
         // shear.X is XY, shear.Y is XZ, shear.Z is YZ
-        shear.X = row[0].Dot(row[1]);
+        shear.X = row[0].dot(row[1]);
         // row[1] += -shear.X * row[0]
-        pdum3.Scale(-shear.X, row[0]);
-        row[1].Add(pdum3);
+        row[1].scaleAdd(-shear.X, row[0], row[1]);
 
         // Now, compute Y scale and normalize 2nd row.
-        scale.Y = row[1].Length();
-        row[1].Scale(1.0);
+        scale.Y = row[1].length();
+        row[1].scale(1.0);
         // XXX Should this be row[1].Normalize()??
         shear.X /= scale.Y;
 
         // Compute XZ and YZ shears, orthogonalize 3rd row.
-        shear.Y = row[0].Dot(row[2]);
+        shear.Y = row[0].dot(row[2]);
         // row[2] += -shear.Y * row[0]
-        pdum3.Scale(-shear.Y, row[0]);
-        row[2].Add(pdum3);
+        row[2].scaleAdd(-shear.Y, row[0], row[2]);
 
-        shear.Z = row[1].Dot(row[2]);
+        shear.Z = row[1].dot(row[2]);
         // row[2] += -shear.Z * row[1]
-        pdum3.Scale(-shear.Z, row[1]);
-        row[2].Add(pdum3);
+        row[2].scaleAdd(-shear.Z, row[1], row[2]);
 
         // Next, get Z scale and normalize 3rd row.
-        scale.Z = row[2].Length();
-        row[2].Scale(1.0);
+        scale.Z = row[2].length();
+        row[2].scale(1.0);
         // XXX Should this be row[2].Normalize()??
         shear.Y /= scale.Z;
         shear.Z /= scale.Z;
@@ -384,10 +368,10 @@ public class TransMatrixd extends Matrix4d
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
         // is -1, then negate the matrix and the scaling factors.
-        pdum3.Cross( row[1], row[2] );
-        if (row[0].Dot(pdum3) < 0) {
+        Vector3d pdum3 = Vector3d.cross( row[1], row[2] );
+        if (row[0].dot(pdum3) < 0) {
 
-            scale.Neg();
+            scale.neg();
             for (i = 0; i < 3; i++) {
                 row[i].X *= -1;
                 row[i].Y *= -1;
@@ -592,7 +576,7 @@ public class TransMatrixd extends Matrix4d
             }
 
             if (composite) {
-                Mult(mat);
+                mult(mat);
             }
         } catch (IOException error) {
             MipavUtil.displayError("Matrix save error " + error);
@@ -676,7 +660,7 @@ public class TransMatrixd extends Matrix4d
             int dim = getDim();
             for (r = 0; r < dim; r++) {
                 for (c = 0; c < dim; c++) {
-                    raFile.writeBytes(Double.toString(Get(r, c)) + " ");
+                    raFile.writeBytes(Double.toString(get(r, c)) + " ");
                 }
                     
                 raFile.writeBytes("\n");
@@ -714,7 +698,7 @@ public class TransMatrixd extends Matrix4d
             for (int r = 0; r < 3; r++) {
                 
                 for (int c = 0; c < 4; c++) {
-                    raFile.writeBytes(Double.toString(Get(r, c)));
+                    raFile.writeBytes(Double.toString(get(r, c)));
                     if (r == 2 && c == 3) {
                         raFile.writeBytes(";");
                     } else {
@@ -744,7 +728,7 @@ public class TransMatrixd extends Matrix4d
          int dim = getDim();
          for (int r = 0; r < dim; r++) {
              for (int c = 0; c < dim; c++) {
-                 Set(r, c, newMatrix[r][c]);
+            	 set(r, c, newMatrix[r][c]);
              }
          }
      }
@@ -755,7 +739,7 @@ public class TransMatrixd extends Matrix4d
      */
      public void getColumn(int r, double[] column) {
          for (int c = 0; c < getDim(); c++) {
-             column[c] = Get(r, c);
+             column[c] = get(r, c);
          }
      }
 
@@ -774,7 +758,7 @@ public class TransMatrixd extends Matrix4d
         try {
             for (int r = i0; r <= i1; r++) {
                 for (int c = j0; c <= j1; c++) {
-                    Set(r, c, X[r-i0][c-j0]);
+                	set(r, c, X[r-i0][c-j0]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -793,7 +777,7 @@ public class TransMatrixd extends Matrix4d
         try {
             for (int r = 0; r < X.length; r++) {
                 for (int c = 0; c < X[0].length; c++) {
-                    Set(r, c, X[r][c]);
+                	set(r, c, X[r][c]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -819,14 +803,14 @@ public class TransMatrixd extends Matrix4d
         cosTheta = Math.cos((theta / 180.0) * Math.PI);
         sinTheta = Math.sin((theta / 180.0) * Math.PI);
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -839,19 +823,19 @@ public class TransMatrixd extends Matrix4d
     public void setRotate(Vector3d alpha, Vector3d beta, Vector3d gamma) {
         TransMatrixd axis_rot = new TransMatrixd(4);
 
-        axis_rot.Set(0, 0, alpha.X);
-        axis_rot.Set(0, 1, alpha.Y);
-        axis_rot.Set(0, 2, alpha.Z);
-        axis_rot.Set(1, 0, beta.X);
-        axis_rot.Set(1, 1, beta.Y);
-        axis_rot.Set(1, 2, beta.Z);
-        axis_rot.Set(2, 0, gamma.X);
-        axis_rot.Set(2, 1, gamma.Y);
-        axis_rot.Set(2, 2, gamma.Z);
-        axis_rot.Set(3, 3, 1);
+        axis_rot.set(0, 0, alpha.X);
+        axis_rot.set(0, 1, alpha.Y);
+        axis_rot.set(0, 2, alpha.Z);
+        axis_rot.set(1, 0, beta.X);
+        axis_rot.set(1, 1, beta.Y);
+        axis_rot.set(1, 2, beta.Z);
+        axis_rot.set(2, 0, gamma.X);
+        axis_rot.set(2, 1, gamma.Y);
+        axis_rot.set(2, 2, gamma.Z);
+        axis_rot.set(3, 3, 1);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -876,16 +860,16 @@ public class TransMatrixd extends Matrix4d
             sinTheta = Math.sin(thetaZ);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         tmpMatrix.Copy(axis_rot);
 
-        axis_rot.MakeZero();
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = Math.cos((thetaY / 180.0) * Math.PI);
@@ -895,15 +879,15 @@ public class TransMatrixd extends Matrix4d
             sinTheta = Math.sin(thetaY);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, 1);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 2, sinTheta);
-        axis_rot.Set(2, 0, -sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, 1);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 2, sinTheta);
+        axis_rot.set(2, 0, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
-        axis_rot.MakeZero();
+        tmpMatrix.mult(axis_rot);
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = Math.cos((thetaX / 180.0) * Math.PI);
@@ -913,16 +897,16 @@ public class TransMatrixd extends Matrix4d
             sinTheta = Math.sin(thetaX);
         }
 
-        axis_rot.Set(0, 0, 1);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(2, 1, sinTheta);
-        axis_rot.Set(1, 2, -sinTheta);
+        axis_rot.set(0, 0, 1);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(2, 1, sinTheta);
+        axis_rot.set(1, 2, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
+        tmpMatrix.mult(axis_rot);
         // compose with our current matrix.
-        Mult(tmpMatrix);
+        mult(tmpMatrix);
     }
 
     /**
@@ -1202,7 +1186,7 @@ public class TransMatrixd extends Matrix4d
             s += "  ";
 
             for (int j = 0; j < getDim(); j++) {
-                s += format.format(Get(i, j)); // format the number
+                s += format.format(get(i, j)); // format the number
                 s = s + "  ";
             }
 
@@ -1381,7 +1365,7 @@ public class TransMatrixd extends Matrix4d
      * @param  pt   3D double point to be transformed
      * @param  tPt  transformed point
      */
-    public final void transformAsPoint3Df(Vector3d pt, Vector3d tPt) {
+    public final void transformAsPoint3Dd(Vector3d pt, Vector3d tPt) {
 
         tPt.X = ((pt.X * M00) +
                          (pt.Y * M01) +
@@ -1624,9 +1608,9 @@ public class TransMatrixd extends Matrix4d
                     index = nextIndex;
                 }
                 if (tmpStr.indexOf(".") != -1) {
-                    matrix.Set(row, c, Double.valueOf(tmpStr).doubleValue());
+                    matrix.set(row, c, Double.valueOf(tmpStr).doubleValue());
                 } else {
-                    matrix.Set(row, c, Integer.valueOf(tmpStr).doubleValue());
+                    matrix.set(row, c, Integer.valueOf(tmpStr).doubleValue());
                 }
             }
 
@@ -1672,7 +1656,7 @@ public class TransMatrixd extends Matrix4d
 
         if (Math.abs(dDet) <= Mathd.ZERO_TOLERANCE)
         {
-            Copy(Matrix4d.ZERO);
+        	copy(Matrix4d.ZERO);
         }
 
         double dInvDet = 1.0/dDet;
@@ -1686,12 +1670,12 @@ public class TransMatrixd extends Matrix4d
         inverse_M21 *= dInvDet;
         inverse_M22 *= dInvDet;
         // Set 4x4, even though we're only using a 3x3
-        Set( inverse_M00, inverse_M01, inverse_M02, 0.0,
+        set( inverse_M00, inverse_M01, inverse_M02, 0.0,
              inverse_M10, inverse_M11, inverse_M12, 0.0,
              inverse_M20, inverse_M21, inverse_M22, 0.0, 
              0.0, 0.0, 0.0, 1.0);
         } else {
-            super.Inverse();
+            super.inverse();
         }
     }    
 
@@ -1716,7 +1700,7 @@ public class TransMatrixd extends Matrix4d
             s += "  ";
 
             for (j = 0; j < getDim(); j++) {
-                s += format.format(Get(i,j)); // format the number
+                s += format.format(get(i,j)); // format the number
                 s += "  ";
             }
 
@@ -1725,6 +1709,8 @@ public class TransMatrixd extends Matrix4d
 
         return s;
     }
+    
+    
 
 
 

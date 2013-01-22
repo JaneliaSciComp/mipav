@@ -52,7 +52,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
     	int len = transMatrix.getDim();
     	float [] tMat = new float [len * len];
     	
-    	transMatrix.GetData(tMat);
+    	transMatrix.getData(tMat);
     	
         ParameterTable parameters = new ParameterTable();
         try {
@@ -89,7 +89,7 @@ public class ActionChangeTransformInfo extends ActionImageProcessorBase {
         
         for (int i = 0; i < (nDims+1); i++) {
         	for (int j = 0; j < (nDims+1); j++, index++) {
-        		transMatrix.Set(i, j, tMat[index]);
+        		transMatrix.set(i, j, tMat[index]);
         	}
         }
        inputImage.getMatrixHolder().addMatrix(transMatrix);

@@ -237,8 +237,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
-        matrix.MultLeft(toOrigin);
-        matrix.Mult(fromOrigin);
+        matrix.multLeft(toOrigin).mult(fromOrigin);
         // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         return matrix;
@@ -323,8 +322,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
-        matrix.MultLeft(toOrigin);
-        matrix.Mult(fromOrigin);
+        matrix.multLeft(toOrigin).mult(fromOrigin);
         // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         // matrix.convertFromMatrix(mtx);
@@ -412,8 +410,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
-        matrix.MultLeft(toOrigin);
-        matrix.Mult(fromOrigin);
+        matrix.multLeft(toOrigin).mult(fromOrigin);
         // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         // matrix.convertFromMatrix(mtx);
@@ -511,9 +508,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         if (nDims <= 12) {
             TransMatrixd mat = convertToMatrix(point);
 
-            transX = mat.Get(0, 3) * sample;
-            transY = mat.Get(1, 3) * sample;
-            transZ = mat.Get(2, 3) * sample;
+            transX = mat.get(0, 3) * sample;
+            transY = mat.get(1, 3) * sample;
+            transZ = mat.get(2, 3) * sample;
         }
 
         if (nDims == 3) {

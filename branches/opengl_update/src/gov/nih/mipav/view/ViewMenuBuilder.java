@@ -6,9 +6,13 @@ import gov.nih.mipav.view.Preferences.OperatingSystem;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.MenuDragMouseEvent;
+import javax.swing.event.MenuDragMouseListener;
 
 
 /**
@@ -33,6 +37,9 @@ public class ViewMenuBuilder {
 
     /** Index for rebuilding quicklist. */
     private int quicklistIndex = 0;
+    
+    /** Menu dragging listener */
+    private final MenuDragOp op;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -45,6 +52,7 @@ public class ViewMenuBuilder {
     public ViewMenuBuilder(ActionListener al) {
         listener = al;
         menuItemVector = new Vector<MipavMenuItem>();
+        op = new MenuDragOp();
     }
 
     // ~ Methods
@@ -90,6 +98,7 @@ public class ViewMenuBuilder {
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
         menuEntry.add(menuName, gbc);
+        menuEntry.setName(text);
 
         if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
@@ -311,6 +320,7 @@ public class ViewMenuBuilder {
         }
 
         menu.setText(text);
+        menu.setName(text);
 
         if (iconPadding) {
 
@@ -628,7 +638,9 @@ public class ViewMenuBuilder {
 
         menuName.setText(text);
         menuName.setFont(MipavUtil.defaultMenuFont);
-
+        
+        menuEntry.setName(text);
+        
         int paddingX = 8;
 
         if (useIconPadding) {
@@ -914,6 +926,8 @@ public class ViewMenuBuilder {
                 this.fileMenu = menu;
             }
             
+            addMenuDragListener(menu, op);
+            
             return menu;
         } catch (OutOfMemoryError error) {
             System.gc();
@@ -921,7 +935,7 @@ public class ViewMenuBuilder {
             return null;
         }
     }
-
+    
     /**
      * Provides a method of setting the state of specified menu.
      * 
@@ -998,6 +1012,27 @@ public class ViewMenuBuilder {
 
     // ~ Inner Classes
     // --------------------------------------------------------------------------------------------------
+
+    /**
+     * Attaches a MenuDragMouseListener to <code>comp</code> and all of its
+     * sub-components (if comp is a JMenu/JMenuItem.
+     */
+    private void addMenuDragListener(Component comp, MenuDragMouseListener op) {
+         if(comp instanceof JMenuItem) {
+            ((JMenuItem)comp).addMenuDragMouseListener(op);
+            if(comp instanceof JMenu) {
+                JMenu compSub = (JMenu)comp;
+                for(int i=0; i<compSub.getMenuComponentCount(); i++) {
+                    addMenuDragListener(compSub.getMenuComponent(i), op);
+                }
+            }
+         } else if(comp instanceof JMenuBar) {
+             JMenuBar bar = (JMenuBar)comp;
+             for(int i=0; i<bar.getComponentCount(); i++) {
+                 addMenuDragListener(bar.getComponent(i), op);
+             }
+         }
+    }
 
     /**
      * QuickList class uses Preferences to build a list of the most recently opened images. the frame is passed in for
@@ -1105,6 +1140,293 @@ public class ViewMenuBuilder {
                 }
             }
         }
+    }
+
+    /**
+     * Class for listening to dragging events within a menu.
+     * 
+     * @author senseneyj
+     *
+     */
+    private class MenuDragOp implements MenuDragMouseListener {
+    
+        private int insideCount = 0;
+        
+        private boolean draggingGlobal = false;
+        
+        private MenuMouse menu = null;
+        
+        @Override
+        public void menuDragMouseDragged(MenuDragMouseEvent e) {
+            insideCount++;
+            if(insideCount > 10 && !draggingGlobal) {
+                if(e.getComponent().getParent() instanceof JMenu || e.getComponent().getParent() instanceof JPopupMenu) {
+                    int index = 0;
+                    JComponent parent = (JComponent)e.getComponent().getParent();
+                    if(e.getComponent().getParent() instanceof JMenu) {
+                        JMenu parentSub = (JMenu) e.getComponent().getParent();
+                        for(int i=0; i<parentSub.getMenuComponentCount(); i++) {
+                            if(parentSub.getMenuComponent(i) == e.getComponent()) {
+                                index = i;
+                                break;
+                            }
+                        }
+                    } else { //instanceof JPopupMenu
+                        JPopupMenu parentSub = (JPopupMenu) e.getComponent().getParent();
+                        int count = parentSub.getComponentCount();
+                        for(int i=0; i<count; i++) {
+                            if(parentSub.getComponent(i) == e.getComponent()) {
+                                index = i;
+                                break;
+                            }
+                        }
+                    }
+                    menu = new MenuMouse(e.getButton(), (JComponent) parent, index);
+                    draggingGlobal = true;
+                    java.awt.Toolkit.getDefaultToolkit().addAWTEventListener(menu, AWTEvent.MOUSE_EVENT_MASK);
+                } else {
+                    insideCount = 0;
+                    //menu = null;
+                }
+            }
+        }
+    
+        @Override
+        public void menuDragMouseEntered(MenuDragMouseEvent e) {
+            insideCount = 0;
+        }
+    
+        @Override
+        public void menuDragMouseExited(MenuDragMouseEvent e) {
+            insideCount = 0;
+        }
+    
+        @Override
+        public void menuDragMouseReleased(MenuDragMouseEvent e) {
+            insideCount = 0;
+        }
+        
+        /**
+         * Class for listening to mouse events after a candidate menu is being dragged.
+         * 
+         * @author senseneyj
+         *
+         */
+        private class MenuMouse implements MouseListener, AWTEventListener {
+    
+            private int button;
+            private JComponent parent; //either a JPopupMenu or a JMenu
+            private int index;
+            private ViewMenuBuilder build;
+    
+            public MenuMouse(int button, JComponent parent, int index) {
+                this.button = button;
+                this.parent = parent;
+                this.index = index;
+                build = new ViewMenuBuilder(ViewUserInterface.getReference());
+            }
+            
+            public void mouseClicked(MouseEvent e) {}
+    
+            public void mouseEntered(MouseEvent e) {}
+    
+            public void mouseExited(MouseEvent e) {}
+    
+            public void mousePressed(MouseEvent e) {}
+    
+            public void mouseReleased(MouseEvent e) {
+                if((button == e.getButton() || button == MouseEvent.NOBUTTON) && menu != null) {
+                    int downIndex = index;
+                    while(downIndex > 0) {
+                        if(testComponent(parent, downIndex) instanceof JMenuItem) {
+                            downIndex--;
+                        } else {
+                            break;
+                        }
+                    }
+                    int upIndex = index;
+                    int count = getCount(parent);
+                    while(upIndex < count) {
+                        if(testComponent(parent, upIndex) instanceof JMenuItem) {
+                            upIndex++;
+                        } else {
+                            break;
+                        }
+                    }
+                    JFrame frame = new JFrame();
+                    //JDialog dialog = new JDialog(frame);
+                    
+                    
+                    
+                    JPanel compPanel = new JPanel();
+                    BoxLayout y = new BoxLayout(compPanel, BoxLayout.Y_AXIS);
+                    compPanel.setLayout(y);
+                    final JMenuBar bar = new JMenuBar();
+                    y = new BoxLayout(bar, BoxLayout.Y_AXIS);
+                    bar.setLayout(y);
+                    bar.setFocusable(true);
+                    JMenu menu = new JMenu();
+                    
+                    int height = 4;
+                    int width = parent.getWidth()+5;
+                    
+                    try {
+                        for(int i=downIndex; i<upIndex; i++) {
+                            JMenuItem tempItem = getComponent(parent, i);
+                            height += tempItem.getHeight();
+                            JMenuItem newItem = buildItem(tempItem, menu);
+                            if(newItem instanceof JMenu) {
+                                newItem.setText(newItem.getText()+"  \u21b4"); //down arrow
+                            }
+                            bar.add(newItem);
+                        }
+                    } catch(Exception ex) {
+                        ex.printStackTrace();
+                        System.out.println("Invalid menu item count");
+                    }
+                    
+                    addMenuDragListener(bar, op);
+                    
+                    compPanel.setPreferredSize(new Dimension(width, height));
+                    compPanel.add(bar);
+                    String title = "MIPAV: ";
+                    if(parent instanceof JMenuItem) {
+                        title += ((JMenuItem) parent).getText();
+                    } else if(parent instanceof JPopupMenu) {
+                        title += ((JPopupMenu) parent).getInvoker().getName();
+                    } 
+                    compPanel.setBorder(MipavUtil.buildTitledBorder(title));
+                    compPanel.setFocusable(true);
+                    
+                    JPanel outerPanel = new JPanel();
+                    outerPanel.setPreferredSize(new Dimension(width, height));
+                    outerPanel.add(compPanel);
+                    
+                    frame.setTitle(title);
+                    frame.getContentPane().add(outerPanel);
+                    frame.pack();
+                    frame.setLocation(e.getLocationOnScreen());
+                    frame.setVisible(true);
+                    frame.setResizable(false);
+                    try {
+                        frame.setIconImage(MipavUtil.getIconImage("divinci.gif"));
+                    } catch (FileNotFoundException e1) {}
+                    frame.addWindowListener(new WindowListener() {
+                        
+                        public void windowActivated(WindowEvent arg0) {}
+
+                        @Override
+                        public void windowClosed(WindowEvent arg0) {
+                            ViewUserInterface.getReference().removeAloneMenu(bar);
+                        }
+                        public void windowClosing(WindowEvent arg0) {}
+                        public void windowDeactivated(WindowEvent arg0) {}
+                        public void windowDeiconified(WindowEvent arg0) {}
+                        public void windowIconified(WindowEvent arg0) {}
+                        public void windowOpened(WindowEvent arg0) {}
+                        
+                    });
+                    
+                    ViewUserInterface.getReference().addAloneMenu(bar);
+                }
+                dispose();
+            }
+            
+            private void dispose() {
+                java.awt.Toolkit.getDefaultToolkit().removeAWTEventListener(this);
+                draggingGlobal = false;
+                insideCount = 0;
+            }
+
+            private JMenuItem buildItem(JMenuItem tempItem, Object parentMenu) {
+                if(tempItem instanceof JMenu) {
+                    JMenu newMenu = new JMenu();
+                    
+                    JMenu menu = (JMenu)tempItem;
+                    newMenu.setName(menu.getName());
+                    newMenu.setText(menu.getText());
+                    newMenu.setFont(menu.getFont());
+                    //newMenu.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+                    ArrayList<JComponent> newMenuAr = new ArrayList<JComponent>();
+                    for(int i=0; i<menu.getMenuComponentCount(); i++) {
+                        if(menu.getMenuComponent(i) instanceof JMenuItem) {
+                            newMenuAr.add(buildItem((JMenuItem) menu.getMenuComponent(i), newMenu));
+                        }
+                    }
+                    newMenu = build.makeMenu(newMenu, false, newMenuAr.toArray(new JComponent[newMenuAr.size()]));
+                    newMenu.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                    for(ActionListener l : menu.getActionListeners()) {
+                        newMenu.addActionListener(l);
+                    }
+                    return newMenu;
+                } else {
+                    String name = tempItem.getName();
+                    if(name == null || (tempItem.getText() != null && name.length() < tempItem.getText().length())) {
+                        name = tempItem.getText();
+                    }
+                    Icon icon = tempItem.getIcon();
+                    boolean usePadding = false;
+                    String iconName = null;
+                    if(icon != null) {
+                        usePadding = true;
+                        try {
+                            iconName = icon.toString().substring(icon.toString().lastIndexOf('/')+1);
+                        } catch(Exception e) {
+                            iconName = icon.toString();
+                        }
+                    }
+                    JMenuItem newItem = build.buildMenuItem(name, tempItem.getActionCommand(), tempItem.getMnemonic(), iconName, usePadding);
+                    newItem.setEnabled(tempItem.isEnabled());
+                    newItem.setFont(tempItem.getFont());
+                    newItem.setMinimumSize(tempItem.getMinimumSize());
+                    newItem.setPreferredSize(tempItem.getPreferredSize());
+                    newItem.setMaximumSize(tempItem.getMaximumSize());
+                    newItem.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                    for(ActionListener l : tempItem.getActionListeners()) {
+                        newItem.addActionListener(l);
+                    }
+                    
+                    return newItem;
+                }
+            }
+    
+            @Override
+            public void eventDispatched(AWTEvent event) {
+                if(event instanceof MouseEvent) {
+                    if(event.getID() == MouseEvent.MOUSE_RELEASED) {
+                        mouseReleased((MouseEvent)event);
+                    }
+                }
+            }
+            
+        }
+        
+        private int getCount(JComponent comp) {
+            if(comp instanceof JMenu) {
+                return ((JMenu)comp).getMenuComponentCount();
+            } else { //instanceof JPopupMenu
+                return ((JPopupMenu)comp).getComponentCount();
+            }
+        }
+        
+        private JMenuItem getComponent(JComponent comp, int index) {
+            if(comp instanceof JMenu) {
+                return (JMenuItem) ((JMenu) comp).getMenuComponent(index);
+            } else { //instanceof JPopupMenu
+                return (JMenuItem) ((JPopupMenu)comp).getComponent(index);
+            }
+        }
+        
+        private Component testComponent(JComponent comp, int index) {
+            if(comp instanceof JMenu) {
+                return ((JMenu) comp).getMenuComponent(index);
+            } else if(comp instanceof JPopupMenu) {
+                return ((JPopupMenu)comp).getComponent(index);
+            } else {
+                return null;
+            }
+        }
+        
     }
 
     /**

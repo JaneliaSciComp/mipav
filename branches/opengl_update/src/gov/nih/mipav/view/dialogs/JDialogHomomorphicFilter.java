@@ -176,6 +176,8 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
             dispose();
         } else if (source == helpButton) {
             // MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

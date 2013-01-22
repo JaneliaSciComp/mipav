@@ -144,6 +144,8 @@ public class JDialogSmoothMesh extends JDialogBase {
         else if (source == OKButton) {
             setVariables();
             dispose();
+        } else {
+            super.actionPerformed(e);
         }
     }
 

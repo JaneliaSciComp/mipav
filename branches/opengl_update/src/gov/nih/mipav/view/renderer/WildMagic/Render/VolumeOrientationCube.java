@@ -51,8 +51,9 @@ public class VolumeOrientationCube extends VolumeObject
     	{
     		for ( int i = 0; i < m_akOrientationCube.length; i++ )
     		{
-    			kRenderer.ReleaseVBuffer(m_akOrientationCube[i].VBuffer);
-    			kRenderer.ReleaseIBuffer(m_akOrientationCube[i].IBuffer);
+            	kRenderer.ReleaseVAO( m_akOrientationCube[i] );
+    			//kRenderer.ReleaseVBuffer(m_akOrientationCube[i].VBuffer);
+    			//kRenderer.ReleaseIBuffer(m_akOrientationCube[i].IBuffer);
     			m_akOrientationCube[i].dispose();
     		}
     	}
@@ -161,7 +162,7 @@ public class VolumeOrientationCube extends VolumeObject
             for ( int j = 0; j < 4; j++ )
             {
                 akOutlineSquare[i].GetPosition3( j, kPos );
-                kPos.Sub(kHalf);
+                kPos.sub(kHalf);
                 akOutlineSquare[i].SetPosition3( j, kPos );
             }
             m_akOrientationCube[i] = new TriMesh( new VertexBuffer(akOutlineSquare[i]), kIndexBuffer );

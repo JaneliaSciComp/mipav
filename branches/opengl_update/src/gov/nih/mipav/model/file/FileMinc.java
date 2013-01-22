@@ -70,6 +70,10 @@ public class FileMinc extends FileBase {
      * change it, causing subtle side effects which must be carefully managed.
      */
     private int location = 0;
+    
+    private int newExtents[];
+    
+    private FileInfoMinc fileInfo;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -159,6 +163,10 @@ public class FileMinc extends FileBase {
         } catch (final EOFException eofe) {
             return false;
         }
+    }
+    
+    public FileInfoMinc getFileInfo() {
+        return fileInfo;
     }
 
     /**
@@ -547,6 +555,7 @@ public class FileMinc extends FileBase {
      * Reads a MINC image file and stores the data in file info.
      * 
      * @param one Flag indicating if only one image should be read in
+     * @param readData
      * 
      * @return The image.
      * 
@@ -554,10 +563,17 @@ public class FileMinc extends FileBase {
      * 
      * @see FileRaw
      */
-    public ModelImage readImage(final boolean one) throws IOException {
-        FileInfoMinc fileInfo = null;
+    public ModelImage readImage(final boolean one, boolean readData) throws IOException {
+        int i;
+        fileInfo = null;
+        float[] buffer = null;
+        int[] extents = null;
+        ModelImage image = null;
+        FileRaw rawFile = null;
 
-        fireProgressStateChanged(5);
+        if (readData) {
+            fireProgressStateChanged(5);
+        }
 
         try {
             fileInfo = readHeader();
@@ -566,44 +582,45 @@ public class FileMinc extends FileBase {
             throw error;
         }
 
-        fireProgressStateChanged(10);
-
-        float[] buffer;
-        int[] extents = null;
-        ModelImage image = null;
-        FileRaw rawFile;
-
-        try {
-
-            if (one) {
-                extents = new int[fileInfo.getExtents().length];
-
-                for (int i = 0; i < extents.length; i++) {
-                    extents[i] = fileInfo.getExtents()[i];
+        if (readData) {
+            fireProgressStateChanged(10);
+    
+            try {
+    
+                if (one) {
+                    extents = new int[fileInfo.getExtents().length];
+    
+                    for (i = 0; i < extents.length; i++) {
+                        extents[i] = fileInfo.getExtents()[i];
+                    }
+    
+                    image = new ModelImage(ModelStorageBase.FLOAT, new int[] {extents[0], extents[1]}, fileName);
+                } else {
+                    image = new ModelImage(ModelStorageBase.FLOAT, fileInfo.getExtents(), fileName);
                 }
-
-                image = new ModelImage(ModelStorageBase.FLOAT, new int[] {extents[0], extents[1]}, fileName);
-            } else {
-                image = new ModelImage(ModelStorageBase.FLOAT, fileInfo.getExtents(), fileName);
+    
+                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+    
+                buffer = new float[fileInfo.getExtents()[0] * fileInfo.getExtents()[1]];
+            } catch (final OutOfMemoryError error) {
+    
+                if (image != null) {
+                    image.disposeLocal();
+                }
+    
+                image = null;
+                buffer = null;
+                rawFile = null;
+                System.gc();
+                throw (error);
             }
+        } // if (readData)
 
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-
-            buffer = new float[fileInfo.getExtents()[0] * fileInfo.getExtents()[1]];
-        } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-            }
-
-            image = null;
-            buffer = null;
-            rawFile = null;
-            System.gc();
-            throw (error);
+        // set image orientation depending on which space variable was read in first
+        i = 0;
+        if (fileInfo.getDimElem(0).name.equals("time")) {
+            i = 1;
         }
-
-        // set image orientation depending on which variable was read in firs
         if (fileInfo.getDimElem(0).name.equals("zspace")) {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
         } else if (fileInfo.getDimElem(0).name.equals("xspace")) {
@@ -616,10 +633,14 @@ public class FileMinc extends FileBase {
         fileInfo.setResolutions(fileInfo.getImageOrientation());
         fileInfo.setUnits();
         fileInfo.setModality();
+        
+        if (!readData) {
+            return null;
+        }
 
         // ModelImage image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
         // for each variable, get its corresponding data - possibly after image
-        for (int i = 0; i < fileInfo.getVarArray().length; i++) {
+        for (i = 0; i < fileInfo.getVarArray().length; i++) {
 
             // at image tag, construct image
             if (fileInfo.getVarElem(i).name.equals("image")) {
@@ -682,7 +703,7 @@ public class FileMinc extends FileBase {
         if (image.getNDims() == 2) {
             fileInfo.setRescaleIntercept(rescaleIntercept[0]);
             fileInfo.setRescaleSlope(rescaleSlope[0]);
-            fileInfo.setStartLocations( (fileInfo).getConvertStartLocationsToDICOM(0));
+            fileInfo.setStartLocations( (fileInfo).getConvertStartLocationsToDICOM(0, 0));
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
 
@@ -692,19 +713,22 @@ public class FileMinc extends FileBase {
                 fireProgressStateChanged(Math.round(15 + ((float) k / image.getExtents()[2] * 10)));
                 fileInfo.setRescaleIntercept(rescaleIntercept[k]);
                 fileInfo.setRescaleSlope(rescaleSlope[k]);
-                fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
+                fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k, 0));
                 image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) {
             final FileInfoMinc fileInfo0 = (FileInfoMinc) fileInfo.clone();
 
-            for (int k = 0; k < image.getExtents()[2] * image.getExtents()[3]; k++) {
-                fireProgressStateChanged(Math
-                        .round(15 + ((float) k / (image.getExtents()[2] * image.getExtents()[3]) * 10)));
-                fileInfo.setRescaleIntercept(rescaleIntercept[k]);
-                fileInfo.setRescaleSlope(rescaleSlope[k]);
-                fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
-                image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
+            for (i = 0; i < image.getExtents()[3]; i++) {
+                for (int j = 0; j < image.getExtents()[2]; j++) {
+                    int k = j + i * image.getExtents()[2];
+                    fireProgressStateChanged(Math
+                            .round(15 + ((float) k / (image.getExtents()[2] * image.getExtents()[3]) * 10)));
+                    fileInfo.setRescaleIntercept(rescaleIntercept[k]);
+                    fileInfo.setRescaleSlope(rescaleSlope[k]);
+                    fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(j, i));
+                    image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
+                }
             }
         }
 
@@ -753,19 +777,19 @@ public class FileMinc extends FileBase {
                 if (one) {
 
                     if (fileInfo.getExtents().length == 3) {
-                        rawFile.readImage(buffer, fileInfo.getOffset()
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset()
                                 + (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac), fileInfo.getDataType());
                     } else if (fileInfo.getExtents().length == 4) {
                         rawFile
                                 .readImage(buffer,
-                                        fileInfo.getOffset()
+                                        (long)fileInfo.getOffset()
                                                 + (fileInfo.getExtents()[2] * fileInfo.getExtents()[3] / 2
                                                         * buffer.length * imgTypeFac), fileInfo.getDataType());
                     } else {
-                        rawFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
+                        rawFile.readImage(buffer, (long)fileInfo.getOffset(), fileInfo.getDataType());
                     }
                 } else {
-                    rawFile.readImage(buffer, fileInfo.getOffset() + (n * buffer.length * imgTypeFac), fileInfo
+                    rawFile.readImage(buffer, (long)fileInfo.getOffset() + (n * buffer.length * imgTypeFac), fileInfo
                             .getDataType());
                 }
 
@@ -890,277 +914,497 @@ public class FileMinc extends FileBase {
      * @see FileMinc
      */
     public void writeImage(final ModelImage _image, final FileWriteOptions options) throws IOException {
+        int zBeginOriginal; // first z slice to write
+        int zEndOriginal; // last z slice to write
+        int tBeginOriginal; // first t time to write
+        int tEndOriginal; // last t time to write
+        int zBegin = 0;
+        int zEnd = 0;
+        int tBegin = 0;
+        int tEnd = 0;
+        int seq = 0;
+        int index;
+        String modifiedFileName = null;
+        File file = null;
+        
         fireProgressStateChanged(5);
 
         raFile.setLength(0);
 
         ModelImage image = null;
         fireProgressStateChanged(10);
-
-        try {
-
-            image = new ModelImage(_image.getFileInfo()[0].getDataType(), _image.getFileInfo()[0].getExtents(), _image
-                    .getImageFileName());
-
-            image.copyFileTypeInfo(_image);
-
-            final FileInfoBase fileInfo = _image.getFileInfo(0);
-            final int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
-            int sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
-
-            final double[] mins = new double[nImages];
-            final double[] maxs = new double[nImages];
-            final double[] intercepts = new double[nImages];
-            final double[] slopes = new double[nImages];
-
-            double vmin, vmax; // volume min and max
-
-            if (fileInfo.getFileFormat() == FileUtility.MINC) {
-
-                // Valid_range see line 823 in FileInfoMinc!!!!!!!.
-                vmin = ((FileInfoMinc) (fileInfo)).vmin;
-                vmax = ((FileInfoMinc) (fileInfo)).vmax;
-            } else {
-                vmin = FileMinc.getDefaultMin(fileInfo);
-                vmax = FileMinc.getDefaultMax(fileInfo);
-            }
-
-            double slopeDivisor = vmax - vmin;
-
-            if (slopeDivisor == 0) {
-                slopeDivisor = 1;
-            }
-
-            int jp;
-            final float[] sliceData = new float[sliceSize];
-            double smin, smax; // slice min and max
-
-            for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
-                jp = j - options.getBeginSlice();
-
-                if ( (_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
-                        || (_image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
-                    slopes[jp] = 1.0;
-                    intercepts[jp] = 0.0;
-                    mins[jp] = vmin;
-                    maxs[jp] = vmax;
-                } else {
-
-                    _image.exportData(j * sliceSize, sliceSize, sliceData);
-                    smin = Double.MAX_VALUE;
-                    smax = -Double.MAX_VALUE;
-
-                    // calculate min max values per slice
-                    for (final float element : sliceData) {
-
-                        if (element < smin) {
-                            smin = element;
-                        }
-
-                        if (element > smax) {
-                            smax = element;
-                        }
-                    }
-
-                    mins[jp] = smin;
-                    maxs[jp] = smax;
-
-                    slopes[jp] = (smax - smin) / slopeDivisor;
-                    intercepts[jp] = smin - (slopes[jp] * vmin);
-                }
-            }
-
-            if ( !options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileUtility.MINC)) {
-                final FileInfoMinc fileInfoMinc = (FileInfoMinc) _image.getFileInfo(0);
-
-                writeHeader(fileInfoMinc);
-                fireProgressStateChanged(15);
-
-                // for each variable, get its corresponding data - possibly after image
-                for (int i = 0; i < fileInfoMinc.getVarArray().length; i++) {
-
-                    // at image tag, construct image
-                    if (fileInfoMinc.getVarElem(i).name.equals("image")) {
-                        FileRawChunk rawChunkFile;
-                        rawChunkFile = new FileRawChunk(raFile, fileInfoMinc);
-                        fireProgressStateChanged("Saving image(s) ...");
-                        sliceSize = fileInfoMinc.getExtents()[0] * fileInfoMinc.getExtents()[1];
-
-                        if (image.getNDims() == 3) {
-
-                            for (int j = 0; j < image.getExtents()[2]; j++) {
-                                _image.exportData(j * sliceSize, sliceSize, sliceData);
-                                fireProgressStateChanged(15 + Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1)
-                                        * 35));
-
-                                for (int k = 0; k < sliceSize; k++) {
-                                    sliceData[k] = (float) ( (sliceData[k] - intercepts[j]) / slopes[j]);
-                                }
-
-                                image.importData(j * sliceSize, sliceData, false);
-                            }
-
-                            for (int j = 0; j < image.getExtents()[2]; j++) {
-                                rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize, j);
-                                fireProgressStateChanged(50 + Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1)
-                                        * 50));
-                            }
-
-                            fireProgressStateChanged(100);
-
-                        } else {
-
-                            // TODO: is this correct? don't 2D/4D images need to be rescaled too?
-                            rawChunkFile.writeImage(image, 0, sliceSize, 0);
-                        }
-
-                        fireProgressStateChanged(100);
-
-                        location = fileInfoMinc.getVarElem(i).vsize;
-                        writePadding();
-                    } else if (fileInfoMinc.getVarElem(i).name.equals("image-min")) {
-                        location = fileInfoMinc.getVarElem(i).begin;
-                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
-
-                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            writeNextElem(new Double(mins[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
-                                    .getEndianess());
-                        }
-
-                        writePadding();
-
-                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
-                            location++;
-                            raFile.write((byte) 0);
-                        }
-                    } else if (fileInfoMinc.getVarElem(i).name.equals("image-max")) {
-                        location = fileInfoMinc.getVarElem(i).begin;
-                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
-
-                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            writeNextElem(new Double(maxs[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
-                                    .getEndianess());
-                        }
-
-                        writePadding();
-
-                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
-                            location++;
-                            raFile.write((byte) 0);
-                        }
-                    } else {
-
-                        // at all other tags both before & after image
-                        location = fileInfoMinc.getVarElem(i).begin;
-                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
-
-                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            writeNextElem(fileInfoMinc.getVarElem(i).values.elementAt(j),
-                                    fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc.getEndianess());
-                        }
-
-                        writePadding();
-
-                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
-                            location++;
-                            raFile.write((byte) 0);
-                        }
-                    }
-                }
-            } else {
-                final int[] extents = fileInfo.getExtents();
-
-                writeHeader(fileInfo, options);
-
-                // placeholder for location pointed to by rootvariable NC_VARIABLE
-                writeInt(0, endianess);
-
-                // placeholders for location pointed to by {x,y,z}space NC_VARIABLEs
-                for (int j = 0; j < fileInfo.getExtents().length; j++) {
-                    writeDouble(0, endianess);
-                }
-
-                fireProgressStateChanged(2);
-                fileInfo.setExtents(extents); // reset extents to proper value
-
-                FileRawChunk rawChunkFile;
-                rawChunkFile = new FileRawChunk(raFile, fileInfo);
-
-                fireProgressStateChanged("Rescaling data");
-                fireProgressStateChanged(10);
-
-                int count = 1;
-
-                for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
-                    jp = j - options.getBeginSlice();
-                    fireProgressStateChanged(10 + Math.round((float) count / (nImages - 1) * 40));
-                    _image.exportData(j * sliceSize, sliceSize, sliceData);
-
-                    for (int k = 0; k < sliceData.length; k++) {
-                        sliceData[k] = (float) ( (sliceData[k] - intercepts[jp]) / slopes[jp]);
-                    }
-
-                    image.importData(jp * sliceSize, sliceData, false);
-                    count++;
-                }
-
-                image.getFileInfo(0).setEndianess(FileBase.BIG_ENDIAN);
-                fireProgressStateChanged("Saving image(s) ...");
-                count = 1;
-
-                for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
-                    jp = j - options.getBeginSlice();
-
-                    // System.out.println(" j = " + j);
-                    rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize, jp);
-                    fireProgressStateChanged(50 + Math.round((float) count / (nImages - 1) * 50));
-                    count++;
-                }
-
-                location = imgBegin + imgSize; // important for proper alignment of min and max values of image
-                writePadding();
-
-                int m = 0;
-
-                for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
-                    writeDouble(maxs[m++], FileBase.BIG_ENDIAN);
-                }
-
-                m = 0;
-
-                for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
-                    writeDouble(mins[m++], FileBase.BIG_ENDIAN);
-                }
-
-                // write out placeholders values pointed to by NC_VARIABLEs of extracted dicom tag groups (if any)
-                final Enumeration<String> groupEnum = dicomConvertedTagTable.keys();
-
-                while (groupEnum.hasMoreElements()) {
-                    groupEnum.nextElement();
-                    writeInt(0, FileBase.BIG_ENDIAN);
-                }
-
-                // write out placeholder for the study variable (only written if a minc-supported modality)
-                if (FileMinc.getMincModality(fileInfo.getModality()) != null) {
-                    writeInt(0, FileBase.BIG_ENDIAN);
-                }
-
-                fireProgressStateChanged(100);
-            }
-        } catch (final OutOfMemoryError e) {
-            raFile.close();
-
-            if (image != null) {
-                image.disposeLocal();
-            }
-
-            throw new IOException("Out of memory in FileMinc writer.");
+            
+        if (_image.getNDims() >= 3) {
+            zBeginOriginal = options.getBeginSlice();
+            zEndOriginal = options.getEndSlice();
+        } else {
+            zBeginOriginal = 0;
+            zEndOriginal = 0;
         }
 
-        raFile.close();
+        if (_image.getNDims() == 4) {
+            tBeginOriginal = options.getBeginTime();
+            tEndOriginal = options.getEndTime();
+        } else {
+            tBeginOriginal = 0;
+            tEndOriginal = 0;
+        }
+        
+        if (!options.isMultiFile()) {
+            zBegin = zBeginOriginal;
+            zEnd = zEndOriginal;
+            tBegin = tBeginOriginal;
+            tEnd = tEndOriginal;
+        }
+        else if (_image.getNDims() == 4) {
+            zBegin = zBeginOriginal;
+            zEnd = zEndOriginal;
+            tBegin = tBeginOriginal;
+            tEnd = tBeginOriginal;
+        }
+        else if (_image.getNDims() == 3) {
+            zBegin = zBeginOriginal;
+            zEnd = zBeginOriginal;
+            tBegin = 0;
+            tEnd = 0;
+        }
+        
+        seq = options.getStartNumber();
+        
+        final FileInfoBase fileInfo = _image.getFileInfo(0);
+        final int nSlices = zEnd - zBegin + 1;
+        final int nVolumes = tEnd - tBegin + 1;
+        final int nImages = nSlices * nVolumes;
+        if (nVolumes > 1) {
+            newExtents = new int[4];
+            newExtents[0] = _image.getFileInfo()[0].getExtents()[0];
+            newExtents[1] = _image.getFileInfo()[0].getExtents()[1];
+            newExtents[2] = nSlices;
+            newExtents[3] = nVolumes;
+        }
+        else if (nSlices > 1) {
+            newExtents = new int[3];
+            newExtents[0] = _image.getFileInfo()[0].getExtents()[0];
+            newExtents[1] = _image.getFileInfo()[0].getExtents()[1];
+            newExtents[2] = nSlices;
+        }
+        else {
+            newExtents = new int[2];
+            newExtents[0] = _image.getFileInfo()[0].getExtents()[0];
+            newExtents[1] = _image.getFileInfo()[0].getExtents()[1];
+        }
+        image = new ModelImage(_image.getFileInfo()[0].getDataType(), newExtents, _image
+                .getImageFileName());
+        
+        image.copyFileTypeInfo(_image);
+        int sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+        int volSize = 0;
+        if (_image.getNDims() > 2) {
+            volSize = sliceSize * fileInfo.getExtents()[2];
+        }
 
+        final double[] mins = new double[nImages];
+        final double[] maxs = new double[nImages];
+        final double[] intercepts = new double[nImages];
+        final double[] slopes = new double[nImages];
+
+        double vmin, vmax; // volume min and max
+        
+        FileInfoMinc fileInfoMinc = null;
+        
+        if ( !options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileUtility.MINC)) {
+            fileInfoMinc = (FileInfoMinc) _image.getFileInfo(0);
+            fileInfoMinc.setExtents(newExtents);
+        }
+        
+        if (options.isMultiFile()) {
+            raFile.close();
+            file = new File(fileDir + fileName);
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+
+        while (true) {
+                
+            try {
+                    
+                if (options.isMultiFile()) {
+                    index = fileName.indexOf(".");
+                    if (index != -1) {
+                        
+                        if (fileName.length() > (index + 1))  {
+                            modifiedFileName = fileName.substring(0, index);
+                        }
+                    } else {
+                        modifiedFileName = new String(fileName);
+                    }
+                    if (options.getDigitNumber() == 1) {
+                        modifiedFileName += Integer.toString(seq);
+                    } else if (options.getDigitNumber() == 2) {
+
+                        if (seq < 10) {
+                            modifiedFileName += "0" + Integer.toString(seq);
+                        } else {
+                            modifiedFileName += Integer.toString(seq);
+                        }
+                    } else if (options.getDigitNumber() == 3) {
+
+                        if (seq < 10) {
+                            modifiedFileName += "00" + Integer.toString(seq);
+                        } else if (seq < 100) {
+                            modifiedFileName += "0" + Integer.toString(seq);
+                        } else {
+                            modifiedFileName += Integer.toString(seq);
+                        }
+                    } else if (options.getDigitNumber() == 4) {
+
+                        if (seq < 10) {
+                            modifiedFileName += "000" + Integer.toString(seq);
+                        } else if (seq < 100) {
+                            modifiedFileName += "00" + Integer.toString(seq);
+                        } else if (seq < 1000) {
+                            modifiedFileName += "0" + Integer.toString(seq);
+                        } else {
+                            modifiedFileName += Integer.toString(seq);
+                        }
+                    } 
+                    modifiedFileName = modifiedFileName + ".mnc";
+                    file = new File(fileDir + modifiedFileName);
+                    raFile = new RandomAccessFile(file, "rw");
+                    // Necessary so that if this is an overwritten file there isn't any
+                    // junk at the end
+                    raFile.setLength(0);
+                } // if (options.isMultiFile())
+                
+    
+                if (fileInfo.getFileFormat() == FileUtility.MINC) {
+    
+                    // Valid_range see line 823 in FileInfoMinc!!!!!!!.
+                    vmin = ((FileInfoMinc) (fileInfo)).vmin;
+                    vmax = ((FileInfoMinc) (fileInfo)).vmax;
+                } else {
+                    vmin = FileMinc.getDefaultMin(fileInfo);
+                    vmax = FileMinc.getDefaultMax(fileInfo);
+                }
+    
+                double slopeDivisor = vmax - vmin;
+    
+                if (slopeDivisor == 0) {
+                    slopeDivisor = 1;
+                }
+    
+                int jp;
+                final float[] sliceData = new float[sliceSize];
+                double smin, smax; // slice min and max
+    
+                for (int i = tBegin; i <= tEnd; i++) {
+                    for (int j = zBegin; j <= zEnd; j++) {
+                        jp = (j - zBegin) + nSlices*(i - tBegin);
+        
+                        if ( (_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT)
+                                || (_image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
+                            slopes[jp] = 1.0;
+                            intercepts[jp] = 0.0;
+                            mins[jp] = vmin;
+                            maxs[jp] = vmax;
+                        } else {
+        
+                            _image.exportData(i * volSize + j * sliceSize, sliceSize, sliceData);
+                            smin = Double.MAX_VALUE;
+                            smax = -Double.MAX_VALUE;
+        
+                            // calculate min max values per slice
+                            for (final float element : sliceData) {
+        
+                                if (element < smin) {
+                                    smin = element;
+                                }
+        
+                                if (element > smax) {
+                                    smax = element;
+                                }
+                            }
+        
+                            mins[jp] = smin;
+                            maxs[jp] = smax;
+        
+                            slopes[jp] = (smax - smin) / slopeDivisor;
+                            intercepts[jp] = smin - (slopes[jp] * vmin);
+                        }
+                    }
+                }
+    
+                if ( !options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileUtility.MINC)) {
+         
+                    writeHeader(fileInfoMinc);
+                    if (!options.isMultiFile()) {
+                        fireProgressStateChanged(15);
+                    }
+    
+                    // for each variable, get its corresponding data - possibly after image
+                    for (int i = 0; i < fileInfoMinc.getVarArray().length; i++) {
+    
+                        // at image tag, construct image
+                        if (fileInfoMinc.getVarElem(i).name.equals("image")) {
+                            FileRawChunk rawChunkFile;
+                            rawChunkFile = new FileRawChunk(raFile, fileInfoMinc);
+                            fireProgressStateChanged("Saving image(s) ...");
+                            
+                            if (image.getNDims() == 4) {
+                                for (int m = tBegin; m <= tEnd; m++) {
+                                    if (!options.isMultiFile()) {
+                                        fireProgressStateChanged(15 + Math.round((float) (m - tBegin) / nVolumes * 35)); 
+                                    }
+                                    for (int j = zBegin; j <= zEnd ; j++) {
+                                        _image.exportData(m*volSize + j*sliceSize, sliceSize, sliceData);
+                                        int pos = (j - zBegin)+ (m - tBegin) * nSlices;
+                                        
+                                        for (int k = 0; k < sliceSize; k++) {
+                                            sliceData[k] = (float)((sliceData[k] - intercepts[pos])/ slopes[pos]);
+                                        }
+                                        
+                                        image.importData((m - tBegin)* nSlices * sliceSize + (j -zBegin)* sliceSize,
+                                                sliceData, false);
+                                    }
+                                    
+                                }
+                                
+                                for (int m = 0 ; m < nVolumes; m++) {
+                                    if (!options.isMultiFile()) {
+                                        fireProgressStateChanged(50 + Math.round((float) m/nVolumes * 50)); 
+                                    }
+                                    for (int j = 0; j < nSlices; j++) {
+                                        int pos = j + m * nSlices; 
+                                        rawChunkFile.writeImage(image,m*nSlices*sliceSize+j*sliceSize, m*nSlices*sliceSize + (j+1)*sliceSize);
+                                    }
+                                }
+                            }
+                            else if (image.getNDims() == 3) {
+    
+                                for (int j = zBegin; j <= zEnd; j++) {
+                                    _image.exportData(tBegin*volSize + j * sliceSize, sliceSize, sliceData);
+                                    int pos = j - zBegin;
+                                    if (!options.isMultiFile()) {
+                                        fireProgressStateChanged(15 + Math.round((float) pos/ nSlices * 35));
+                                    }
+                                    for (int k = 0; k < sliceSize; k++) {
+                                        sliceData[k] = (float) ( (sliceData[k] - intercepts[pos]) / slopes[pos]);
+                                    }
+    
+                                    image.importData((j - zBegin) * sliceSize, sliceData, false);
+                                }
+    
+                                for (int j = 0; j < nSlices; j++) {
+                                    rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize);
+                                    if (!options.isMultiFile()) {
+                                        fireProgressStateChanged(50 + Math.round((float) j / nSlices * 50));
+                                    }
+                                }
+    
+    
+                            } else {
+                                _image.exportData(tBegin*volSize + zBegin*sliceSize, sliceSize, sliceData);
+                                for (int k = 0; k < sliceSize; k++) {
+                                    sliceData[k] = (float) ( (sliceData[k] - intercepts[0]) / slopes[0]);
+                                }
+    
+                                image.importData(0, sliceData, false);
+                                
+                                rawChunkFile.writeImage(image, 0, sliceSize);
+                                
+                            }
+    
+                            location = fileInfoMinc.getVarElem(i).vsize;
+                            writePadding();
+                        } else if (fileInfoMinc.getVarElem(i).name.equals("image-min")) {
+                            location = fileInfoMinc.getVarElem(i).begin;
+                            raFile.seek(fileInfoMinc.getVarElem(i).begin);
+    
+                            for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                                writeNextElem(new Double(mins[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
+                                        .getEndianess());
+                            }
+    
+                            writePadding();
+    
+                            while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
+                                location++;
+                                raFile.write((byte) 0);
+                            }
+                        } else if (fileInfoMinc.getVarElem(i).name.equals("image-max")) {
+                            location = fileInfoMinc.getVarElem(i).begin;
+                            raFile.seek(fileInfoMinc.getVarElem(i).begin);
+    
+                            for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                                writeNextElem(new Double(maxs[j]), fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc
+                                        .getEndianess());
+                            }
+    
+                            writePadding();
+    
+                            while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
+                                location++;
+                                raFile.write((byte) 0);
+                            }
+                        } else {
+    
+                            // at all other tags both before & after image
+                            location = fileInfoMinc.getVarElem(i).begin;
+                            raFile.seek(fileInfoMinc.getVarElem(i).begin);
+    
+                            for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                                writeNextElem(fileInfoMinc.getVarElem(i).values.elementAt(j),
+                                        fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc.getEndianess());
+                            }
+    
+                            writePadding();
+    
+                            while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
+                                location++;
+                                raFile.write((byte) 0);
+                            }
+                        }
+                    }
+                } else {
+                    //final int[] extents = fileInfo.getExtents();
+    
+                    writeHeader(fileInfo, options, nSlices, nVolumes);
+    
+                    // placeholder for location pointed to by rootvariable NC_VARIABLE
+                    writeInt(0, endianess);
+    
+                    // placeholders for location pointed to by {x,y,z}space NC_VARIABLEs
+                    for (int j = 0; j < newExtents.length; j++) {
+                        writeDouble(0, endianess);
+                    }
+        
+                    if (!options.isMultiFile()) {
+                        fireProgressStateChanged(2);
+                    }
+    
+                    FileRawChunk rawChunkFile;
+                    rawChunkFile = new FileRawChunk(raFile, fileInfo);
+    
+                    fireProgressStateChanged("Rescaling data");
+                    if (!options.isMultiFile()) {
+                        fireProgressStateChanged(10);
+                    }
+    
+                    int count = 1;
+    
+                    for (int i = tBegin; i <= tEnd; i++) {
+                        for (int j = zBegin; j <= zEnd; j++) {
+                            jp = (j - zBegin) + nSlices*(i - tBegin);
+                            if (!options.isMultiFile()) {
+                                fireProgressStateChanged(10 + Math.round((float) count / nImages * 40));
+                            }
+                            _image.exportData(i * volSize + j * sliceSize, sliceSize, sliceData);
+        
+                            for (int k = 0; k < sliceData.length; k++) {
+                                sliceData[k] = (float) ( (sliceData[k] - intercepts[jp]) / slopes[jp]);
+                            }
+        
+                            image.importData(jp * sliceSize, sliceData, false);
+                            count++;
+                        }
+                    }
+    
+                    image.getFileInfo(0).setEndianess(FileBase.BIG_ENDIAN);
+                    fireProgressStateChanged("Saving image(s) ...");
+                    count = 1;
+    
+                    for (int i = tBegin; i <= tEnd; i++) {
+                        for (int j = zBegin; j <= zEnd; j++) {
+                            jp = j - zBegin + nSlices*(i - tBegin);
+        
+                            // System.out.println(" j = " + j);
+                            rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize);
+                            if (!options.isMultiFile()) {
+                                fireProgressStateChanged(50 + Math.round((float) count / nImages * 50));
+                            }
+                            count++;
+                        }
+                    }
+    
+                    location = imgBegin + imgSize; // important for proper alignment of min and max values of image
+                    writePadding();
+    
+                    int m = 0;
+    
+                    for (int i = tBegin; i <= tEnd; i++) {
+                        for (int j = zBegin; j <= zEnd; j++) {
+                            writeDouble(maxs[m++], FileBase.BIG_ENDIAN);
+                        }
+                    }
+    
+                    m = 0;
+    
+                    for (int i = tBegin; i <= tEnd; i++) {
+                        for (int j = zBegin; j <= zEnd; j++) {
+                            writeDouble(mins[m++], FileBase.BIG_ENDIAN);
+                        }
+                    }
+    
+                    // write out placeholders values pointed to by NC_VARIABLEs of extracted dicom tag groups (if any)
+                    final Enumeration<String> groupEnum = dicomConvertedTagTable.keys();
+    
+                    while (groupEnum.hasMoreElements()) {
+                        groupEnum.nextElement();
+                        writeInt(0, FileBase.BIG_ENDIAN);
+                    }
+    
+                    // write out placeholder for the study variable (only written if a minc-supported modality)
+                    if (FileMinc.getMincModality(fileInfo.getModality()) != null) {
+                        writeInt(0, FileBase.BIG_ENDIAN);
+                    }
+    
+                }
+            } catch (final OutOfMemoryError e) {
+                raFile.close();
+    
+                if (image != null) {
+                    image.disposeLocal();
+                }
+    
+                throw new IOException("Out of memory in FileMinc writer.");
+            }
+            
+            raFile.close();
+    
+            if (!options.isMultiFile()) {
+                break;
+            }
+            else if (options.isMultiFile()) {
+                if (_image.getNDims() == 4) {
+                    if (tEnd == tEndOriginal) {
+                        break;
+                    } // if (tEnd == tEndOriginal)
+                    else {
+                        tBegin++;
+                        tEnd++;
+                        seq++;
+                        fireProgressStateChanged((100*(tEnd - tBeginOriginal))/(tEndOriginal - tBeginOriginal));
+                    }
+                } // if (_image.getNDims() == 4)
+                else { // _image.getNDims() == 3
+                    if (zEnd == zEndOriginal) {
+                        break;
+                    }
+                    else {
+                        zBegin++;
+                        zEnd++;
+                        seq++;
+                        fireProgressStateChanged((100*(zEnd - zBeginOriginal))/(zEndOriginal - zBeginOriginal));
+                    }
+                } // else _image.getNDims() == 3
+            } // else if (options.isMultiFile())
+    
+            
+        } // while (true)
         image.disposeLocal();
         image = null;
+        fireProgressStateChanged(100);
     }
 
     /**
@@ -1818,10 +2062,17 @@ public class FileMinc extends FileBase {
      * 
      * @throws IOException If an error is encountered while writing to the file
      */
-    private void writeHeader(final FileInfoBase fileInfo, final FileWriteOptions options) throws IOException {
+    private void writeHeader(final FileInfoBase fileInfo, final FileWriteOptions options, int nSlices, int nVolumes) throws IOException {
         int currentNonHeaderStartLocation = FileMinc.DEFAULT_NON_HEADER_START_LOCATION;
 
-        final int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
+        final int nImages = nVolumes * nSlices;
+        
+        if (nSlices == 1) {
+            currentNonHeaderStartLocation -= 384;
+        }
+        if (nVolumes > 1) {
+            currentNonHeaderStartLocation += 364;
+        } 
 
         endianess = FileBase.BIG_ENDIAN; // seems to always be big endian;
         // at least, that's what Display reads
@@ -1829,28 +2080,35 @@ public class FileMinc extends FileBase {
         writeInt(0, endianess); // number of records, don't know what means
 
         writeInt(FileInfoMinc.NC_DIMENSION, endianess); // dimension array
-        writeInt(fileInfo.getExtents().length, endianess); // number of dimensions
-
-        // orientation of the image.
-        switch (options.getAxisOrientation()[2]) {
-
-            case FileInfoBase.ORI_L2R_TYPE:
-            case FileInfoBase.ORI_R2L_TYPE:
-                writeName("xspace", 0, endianess);
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                writeName("yspace", 0, endianess);
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-            default:
-                writeName("zspace", 0, endianess);
+        writeInt(newExtents.length, endianess); // number of dimensions
+        
+        if (nVolumes > 1) {
+            writeName("time", 0, endianess);
+            writeInt(nVolumes, endianess);
         }
 
-        writeInt(nImages, endianess);
+        // orientation of the image.
+        if (nSlices > 1) {
+            switch (options.getAxisOrientation()[2]) {
+    
+                case FileInfoBase.ORI_L2R_TYPE:
+                case FileInfoBase.ORI_R2L_TYPE:
+                    writeName("xspace", 0, endianess);
+                    break;
+    
+                case FileInfoBase.ORI_A2P_TYPE:
+                case FileInfoBase.ORI_P2A_TYPE:
+                    writeName("yspace", 0, endianess);
+                    break;
+    
+                case FileInfoBase.ORI_I2S_TYPE:
+                case FileInfoBase.ORI_S2I_TYPE:
+                default:
+                    writeName("zspace", 0, endianess);
+            }
+    
+            writeInt(nSlices, endianess);
+        } // if (nSlices > 1)
 
         switch (options.getAxisOrientation()[1]) {
 
@@ -1994,18 +2252,26 @@ public class FileMinc extends FileBase {
             currentNonHeaderStartLocation += acquisitionVarSize;
         }
 
+        int adjust2D = 0;
+        if (nImages == 1) {
+            adjust2D = -1;
+        }
+        int adjust4D = 0;
+        if (nVolumes > 1) {
+            adjust4D = 1;
+        }
         if (mincModality != null && sliceThickness != 0) {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups + the study tag + the acquisition tag)
-            writeInt(9 + dicomConvertedTagTable.size(), endianess);
+            writeInt(9 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         } else if (mincModality != null || sliceThickness != 0) {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups + (either the the study tag OR the acquisition tag))
-            writeInt(8 + dicomConvertedTagTable.size(), endianess);
+            writeInt(8 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         } else {
             // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
             // groups) -- neither the study or acquisition tags
-            writeInt(7 + dicomConvertedTagTable.size(), endianess);
+            writeInt(7 + dicomConvertedTagTable.size() + adjust2D + adjust4D, endianess);
         }
 
         writeName("rootvariable", 0, endianess); // always in MINC files (not sure what it means)
@@ -2049,12 +2315,24 @@ public class FileMinc extends FileBase {
         final double xSpace = options.getXSpace();
         final double ySpace = options.getYSpace();
         double zSpace = 1;
+        double tSpace = 1;
+        int tAdjust = 0;
+        int zAdjust = 0;
+        
+        if (nVolumes > 1) {
+            tSpace = options.getTSpace();
+            writeSpace(tSpace, options.getTStart(), "time", endianess, true);
+            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+            writeInt(8, endianess);
+            writeInt(currentNonHeaderStartLocation + 4, endianess);
+            tAdjust = 8;
+        }
 
-        if (fileInfo.getExtents().length == 3) {
+        if (nSlices > 1) {
             zSpace = options.getZSpace();
         }
 
-        if (fileInfo.getExtents().length == 3) {
+        if (nSlices > 1) {
 
             switch (options.getAxisOrientation()[2]) {
 
@@ -2088,81 +2366,85 @@ public class FileMinc extends FileBase {
 
             writeInt(FileInfoMinc.NC_DOUBLE, endianess);
             writeInt(8, endianess);
-            writeInt(currentNonHeaderStartLocation + 4, endianess);
+            writeInt(currentNonHeaderStartLocation + 4 + tAdjust, endianess);
+            
+        } // if (nSlices > 1)
+        else {
+            zAdjust = -8;
+        }
+        
+        switch (options.getAxisOrientation()[1]) {
 
-            switch (options.getAxisOrientation()[1]) {
+            case FileInfoBase.ORI_L2R_TYPE:
+                writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+                break;
 
-                case FileInfoBase.ORI_L2R_TYPE:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
-                    break;
+            case FileInfoBase.ORI_R2L_TYPE:
+                writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
+                break;
 
-                case FileInfoBase.ORI_R2L_TYPE:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
-                    break;
+            case FileInfoBase.ORI_A2P_TYPE:
+                writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
+                break;
 
-                case FileInfoBase.ORI_A2P_TYPE:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
-                    break;
+            case FileInfoBase.ORI_P2A_TYPE:
+                writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+                break;
 
-                case FileInfoBase.ORI_P2A_TYPE:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
-                    break;
+            case FileInfoBase.ORI_I2S_TYPE:
+                writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
+                break;
 
-                case FileInfoBase.ORI_I2S_TYPE:
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
-                    break;
+            case FileInfoBase.ORI_S2I_TYPE:
+                writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
+                break;
 
-                case FileInfoBase.ORI_S2I_TYPE:
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
-                    break;
-
-                default:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
-            }
-
-            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-            writeInt(8, endianess);
-            writeInt(currentNonHeaderStartLocation + 12, endianess);
-
-            switch (options.getAxisOrientation()[0]) {
-
-                case FileInfoBase.ORI_L2R_TYPE:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
-                    break;
-
-                case FileInfoBase.ORI_R2L_TYPE:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
-                    break;
-
-                case FileInfoBase.ORI_A2P_TYPE:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
-                    break;
-
-                case FileInfoBase.ORI_P2A_TYPE:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
-                    break;
-
-                case FileInfoBase.ORI_I2S_TYPE:
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
-                    break;
-
-                case FileInfoBase.ORI_S2I_TYPE:
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
-                    break;
-
-                default:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
-            }
-
-            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-            writeInt(8, endianess);
-            writeInt(currentNonHeaderStartLocation + 20, endianess);
+            default:
+                writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
         }
 
-        writeName("image", 0, endianess);
-        writeInt(fileInfo.getExtents().length, endianess);
+        writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+        writeInt(8, endianess);
+        writeInt(currentNonHeaderStartLocation + 12 + + zAdjust + tAdjust, endianess);
 
-        for (int k = 0; k < fileInfo.getExtents().length; k++) {
+        switch (options.getAxisOrientation()[0]) {
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+                break;
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
+                break;
+
+            default:
+                writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+        }
+
+        writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+        writeInt(8, endianess);
+        writeInt(currentNonHeaderStartLocation + 20 + + zAdjust + tAdjust, endianess);
+
+        writeName("image", 0, endianess);
+        writeInt(newExtents.length, endianess);
+
+        for (int k = 0; k < newExtents.length; k++) {
             writeInt(k, endianess);
         }
 
@@ -2255,12 +2537,10 @@ public class FileMinc extends FileBase {
                         + " image data is not supported by the MINC file type.");
         }
 
-        if (fileInfo.getExtents().length == 3) {
-            writeInt(fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size, endianess);
-            writeInt(currentNonHeaderStartLocation + 28, endianess);
-            imgBegin = currentNonHeaderStartLocation + 28;
-            imgSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size;
-        }
+        writeInt(fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size, endianess);
+        writeInt(currentNonHeaderStartLocation + 28 + zAdjust + tAdjust, endianess);
+        imgBegin = currentNonHeaderStartLocation + 28 + zAdjust + tAdjust;
+        imgSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size;
 
         final int pad = getPadding(imgBegin + imgSize);
 
@@ -2317,7 +2597,7 @@ public class FileMinc extends FileBase {
         writeInt(imgBegin + imgSize + pad + (8 * nImages), endianess);
 
         int nextDataPortionLocation = imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages);
-
+        
         // write the image modality to the minc header
         if (mincModality != null) {
             writeName("study", 0, endianess);
@@ -2476,7 +2756,7 @@ public class FileMinc extends FileBase {
      * 
      * @param step Step, see above.
      * @param start Start, see above.
-     * @param space The string label used for the space ('xspace', 'yspace', or 'zspace')
+     * @param space The string label used for the space ('xspace', 'yspace', 'zspace', or 'time')
      * @param endianess Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
      * @param isNormal No longer used to determine the space direction comment. Consider removal.
      * 
@@ -2506,6 +2786,8 @@ public class FileMinc extends FileBase {
             writeName("Y increases from patient posterior to anterior", 1, endianess);
         } else if (space.equals("zspace")) {
             writeName("Z increases from patient inferior to superior", 1, endianess);
+        } else if (space.equals("time")) {
+            writeName("Time increases sequentially from 0", 1, endianess);
         }
 
         writeName("spacing", 0, endianess);
@@ -2524,8 +2806,13 @@ public class FileMinc extends FileBase {
         writeDouble(start, endianess);
         writeName("units", 0, endianess);
         writeInt(FileInfoMinc.NC_CHAR, endianess);
-        writeName("mm", 1, endianess); // should get this from file, but don't know what other measurements are -inches
-        // "in"?
+        if (space.equals("time")) {
+            writeName("sec", 1, endianess);
+        }
+        else {
+            writeName("mm", 1, endianess); // should get this from file, but don't know what other measurements are -inches
+                                           // "in"?
+        }
 
     }
 

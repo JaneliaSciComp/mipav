@@ -154,7 +154,7 @@ public class JDialogEditor extends JDialogBase {
      * @param  editorType  an array specifying how each of the old values are to be edited. Ie.,
      */
     public JDialogEditor(Dialog owner, Object tag, Object[] old, int[] editorType) {
-        super(owner, false);
+        super(owner, false, false);
         getContentPane().setLayout(new BorderLayout());
         this.key = tag;
 
@@ -246,6 +246,8 @@ public class JDialogEditor extends JDialogBase {
             dispose();
         } else if (command.equalsIgnoreCase("cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

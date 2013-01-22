@@ -188,8 +188,9 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akPlanes[i] != null )
                 {
-                	kRenderer.ReleaseVBuffer(m_akPlanes[i].VBuffer);
-                	kRenderer.ReleaseIBuffer(m_akPlanes[i].IBuffer);
+                	kRenderer.ReleaseVAO( m_akPlanes[i] );
+                	//kRenderer.ReleaseVBuffer(m_akPlanes[i].VBuffer);
+                	//kRenderer.ReleaseIBuffer(m_akPlanes[i].IBuffer);
                     m_akPlanes[i].dispose();
                     m_akPlanes[i] = null;
                 }
@@ -199,8 +200,9 @@ public class VolumeSlices extends VolumeObject
             {
                 if ( m_akBoundingBox[i] != null )
                 {
-                	kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
-                	kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
+                	kRenderer.ReleaseVAO( m_akBoundingBox[i] );
+                	//kRenderer.ReleaseVBuffer(m_akBoundingBox[i].VBuffer);
+                	//kRenderer.ReleaseIBuffer(m_akBoundingBox[i].IBuffer);
                     m_akBoundingBox[i].dispose();
                     m_akBoundingBox[i] = null;
                 }
@@ -418,7 +420,7 @@ public class VolumeSlices extends VolumeObject
         {
             m_akBoundingBox[iIndex].VBuffer.SetColor3(0, j, kColor );
         }
-        m_akBoundingBox[iIndex].VBuffer.Release();
+        m_akBoundingBox[iIndex].Reload(true);
     }
     
     
@@ -521,8 +523,8 @@ public class VolumeSlices extends VolumeObject
 
         for ( int i = 0; i < 3; i++ )
         {
-            m_akPlanes[i].VBuffer.Release();
-            m_akBoundingBox[i].VBuffer.Release();
+            m_akPlanes[i].Reload(true);
+            m_akBoundingBox[i].Reload(true);
         }
     }
 
@@ -650,8 +652,8 @@ public class VolumeSlices extends VolumeObject
             m_akBoundingBox[i].AttachEffect( m_kBoundingBoxShaderSolid[i] );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
-            m_akBoundingBox[i].VBuffer.SetShared(true);
-            m_akBoundingBox[i].IBuffer.SetShared(true);
+            //m_akBoundingBox[i].VBuffer.SetShared(true);
+            //m_akBoundingBox[i].IBuffer.SetShared(true);
         }
     }
 
@@ -691,8 +693,8 @@ public class VolumeSlices extends VolumeObject
             m_akPlanes[i] = kSM.Rectangle(2,2,1.0f,1.0f);
             m_akPlanes[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akPlanes[i]);
-            m_akPlanes[i].VBuffer.SetShared(true);
-            m_akPlanes[i].IBuffer.SetShared(true);
+            //m_akPlanes[i].VBuffer.SetShared(true);
+            //m_akPlanes[i].IBuffer.SetShared(true);
         }
     }
 }

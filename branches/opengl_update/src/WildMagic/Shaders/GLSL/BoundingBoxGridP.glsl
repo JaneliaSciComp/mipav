@@ -6,7 +6,11 @@ uniform vec3 volScale;
 uniform vec3 origin;
 uniform vec3 range;
 uniform vec3 plane;
-varying vec4 position;
+in vec4 position;
+
+in vec3 varTexCoord;
+in vec4 varColor;
+out vec4 fragColor;
 void p_BoundingBoxGridP ()
 {
     float marginSmall1 = 0.01;
@@ -62,33 +66,33 @@ void p_BoundingBoxGridP ()
     
     if ( (plane.x == -1) || (plane.x == 1) )
     {
-        fw = fwidth(gl_TexCoord[0].yz);
+        fw = fwidth(varTexCoord.yz);
         if ( (position.z < marginMedium1) || (position.z > marginMedium2.z) )
         {
             fuzz = fw * FrequencySmall.yz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.y);
         }
         else if ( (position.z < marginWide1) || (position.z > marginWide2.z) )
         {
             fuzz = fw * FrequencyLarge.yz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.y);
         }
         if ( (position.y < marginMedium1) || (position.y > marginMedium2.y) )
         {
             fuzz = fw * FrequencySmall.yz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.z);
         }
         else if ( (position.y < marginWide1) || (position.y > marginWide2.y) )
         {
             fuzz = fw * FrequencyLarge.yz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.z);
         }
         if ( position.z < marginSmall1 )
@@ -110,34 +114,34 @@ void p_BoundingBoxGridP ()
     }
     if ( (plane.y == -1) || (plane.y == 1) )
     {
-        fw = fwidth(gl_TexCoord[0].xz);
+        fw = fwidth(varTexCoord.xz);
 
         if ( (position.z < marginMedium1) || (position.z > marginMedium2.z) )
         {
             fuzz = fw * FrequencySmall.xz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.x);
         }
         else if ( (position.z < marginWide1) || (position.z > marginWide2.z) )
         {
             fuzz = fw * FrequencyLarge.xz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.x);
         }
         if ( (position.x < marginMedium1) || (position.x > marginMedium2.x) )
         {
             fuzz = fw * FrequencySmall.xz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.z);
         }
         else if ( (position.x < marginWide1) || (position.x > marginWide2.x) )
         {
             fuzz = fw * FrequencyLarge.xz * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.z);
         }
         if ( position.z < marginSmall1 )
@@ -159,34 +163,34 @@ void p_BoundingBoxGridP ()
     }
     if ( (plane.z == -1) || (plane.z == 1) )
     {
-        fw = fwidth(gl_TexCoord[0].xy);
+        fw = fwidth(varTexCoord.xy);
 
         if ( (position.x < marginMedium1) || (position.x > marginMedium2.x) )
         {
             fuzz = fw * FrequencySmall.xy * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.y);
         }
         else if ( (position.x < marginWide1) || (position.x > marginWide2.x) )
         {
             fuzz = fw * FrequencyLarge.xy * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.y);
         }
         if ( (position.y < marginMedium1) || (position.y > marginMedium2.y) )
         {
             fuzz = fw * FrequencySmall.xy * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencySmall  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencySmall  );
             checkPos = vec2(gridPos.x);
         }
         else if ( (position.y < marginWide1) || (position.y > marginWide2.y) )
         {
             fuzz = fw * FrequencyLarge.xy * 2.0;
             fuzzMax = max(fuzz.s,fuzz.t);
-            vec3 gridPos = fract( origin + gl_TexCoord[0].xyz * FrequencyLarge  );
+            vec3 gridPos = fract( origin + varTexCoord.xyz * FrequencyLarge  );
             checkPos = vec2(gridPos.x);
         }
         if ( position.x < marginSmall1 )
@@ -219,5 +223,5 @@ void p_BoundingBoxGridP ()
     {
         color = AvgColor;
     }
-    gl_FragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0);
 }

@@ -277,7 +277,10 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10017");
+            //MipavUtil.showHelp("10017");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Median#Applying_the_Median_Filter_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

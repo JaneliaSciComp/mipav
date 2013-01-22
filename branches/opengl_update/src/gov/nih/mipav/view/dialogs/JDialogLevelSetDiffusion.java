@@ -323,6 +323,8 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
             }
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

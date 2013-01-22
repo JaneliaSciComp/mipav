@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see      AlgorithmBrainSurfaceExtractor
  */
 public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface {
+        implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -146,7 +146,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
                                closeKernelPixels) + 1;
 
         init();
-        loadDefaults();
 
         fillHolesCB.setSelected(true); // set to true by default, always
     }
@@ -169,7 +168,10 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         } else if (eventSource == cancelButton){
             dispose();
         } else if (eventSource == helpButton) {
-            MipavUtil.showHelp("10090");
+            //MipavUtil.showHelp("10090");
+            MipavUtil.showWebHelp("Extract_Brain:_Extract_Brain_Surface_(BSE)");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -184,10 +186,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmBrainSurfaceExtractor) {
 
@@ -318,7 +316,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -349,7 +347,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);

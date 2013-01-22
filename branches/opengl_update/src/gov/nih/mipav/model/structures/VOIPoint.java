@@ -126,8 +126,8 @@ public class VOIPoint extends VOIBase {
         if ( m_kRotationInverse != null )
         {
             Vector3f kPos = new Vector3f( iX, iY, 0 );
-            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
-            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+            iX = Math.round((kPos.X * m_kRotationInverse.get(0, 0)) + (kPos.Y * m_kRotationInverse.get(0, 1)) + m_kRotationInverse.get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.get(1, 0)) + (kPos.Y * m_kRotationInverse.get(1, 1)) + m_kRotationInverse.get(1, 2));
         }
         Vector3f[] kBounds = getImageBoundingBox();
         if ( iX < kBounds[0].X || iX > kBounds[1].X ||
@@ -152,8 +152,8 @@ public class VOIPoint extends VOIBase {
         if ( m_kRotationInverse != null )
         {
             Vector3f kPos = new Vector3f( iX, iY, 0 );
-            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
-            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+            iX = Math.round((kPos.X * m_kRotationInverse.get(0, 0)) + (kPos.Y * m_kRotationInverse.get(0, 1)) + m_kRotationInverse.get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.get(1, 0)) + (kPos.Y * m_kRotationInverse.get(1, 1)) + m_kRotationInverse.get(1, 2));
         }
         Vector3f[] kBounds = getImageBoundingBox();
         if ( iX < kBounds[0].X || iX > kBounds[1].X ||
@@ -203,7 +203,7 @@ public class VOIPoint extends VOIBase {
      */
     @Override
 	public Vector3f getGeometricCenter() {     
-        gcPt.Copy( getPosition() );
+        gcPt.copy( getPosition() );
         return new Vector3f(gcPt);
     }
     
@@ -225,8 +225,8 @@ public class VOIPoint extends VOIBase {
         }
         Vector3f kPos = new Vector3f(elementAt(0));
 
-        int x = Math.round((kPos.X * m_kRotation.Get(0, 0)) + (kPos.Y * m_kRotation.Get(0, 1)) + m_kRotation.Get(0, 2));
-        int y = Math.round((kPos.X * m_kRotation.Get(1, 0)) + (kPos.Y * m_kRotation.Get(1, 1)) + m_kRotation.Get(1, 2));
+        int x = Math.round((kPos.X * m_kRotation.get(0, 0)) + (kPos.Y * m_kRotation.get(0, 1)) + m_kRotation.get(0, 2));
+        int y = Math.round((kPos.X * m_kRotation.get(1, 0)) + (kPos.Y * m_kRotation.get(1, 1)) + m_kRotation.get(1, 2));
         kPos.X = x;
         kPos.Y = y;
         return kPos;
@@ -318,15 +318,14 @@ public class VOIPoint extends VOIBase {
         if ( m_kRotationInverse != null )
         {
             Vector3f kPos = new Vector3f( iX, iY, 0 );
-            iX = Math.round((kPos.X * m_kRotationInverse.Get(0, 0)) + (kPos.Y * m_kRotationInverse.Get(0, 1)) + m_kRotationInverse.Get(0, 2));
-            iY = Math.round((kPos.X * m_kRotationInverse.Get(1, 0)) + (kPos.Y * m_kRotationInverse.Get(1, 1)) + m_kRotationInverse.Get(1, 2));
+            iX = Math.round((kPos.X * m_kRotationInverse.get(0, 0)) + (kPos.Y * m_kRotationInverse.get(0, 1)) + m_kRotationInverse.get(0, 2));
+            iY = Math.round((kPos.X * m_kRotationInverse.get(1, 0)) + (kPos.Y * m_kRotationInverse.get(1, 1)) + m_kRotationInverse.get(1, 2));
         }
         Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
         for ( int i = 0; i < size(); i++ )
         {
             Vector3f kPos = get(i);
-            Vector3f kDiff = new Vector3f();
-            kDiff.Sub( kPos, kVOIPoint );
+            Vector3f kDiff = Vector3f.sub( kPos, kVOIPoint );
             if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
             {
                 setNearPoint(i);

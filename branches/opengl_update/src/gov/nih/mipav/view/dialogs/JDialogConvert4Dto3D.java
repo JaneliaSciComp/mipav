@@ -3,22 +3,34 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConvert4Dto3D;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.*;
 
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
 
 /**
- * Dialog to call the AlgorithmConvert4Dto3D to convert the current image from a 4D one to a 3D one This dialog will not
- * be visible because it does not require user input at this time. It was made a dialog object because it may in the
- * future require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the
- * algorithms are executed in their own thread.** replaces image
+ * Dialog to call the AlgorithmConvert4Dto3D to convert the current image from a 4D one to a 3D one.
  */
 public class JDialogConvert4Dto3D extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
@@ -42,6 +54,12 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    /** Checkbox for representing whether to copy all file info */
+    private JCheckBox copyAllInfoBox;
+
+    /** Whether all info in the image's FileInfo is copied */
+    private boolean copyAllInfo = true;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -61,16 +79,62 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
         super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
+        
+        init();
     }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
     /**
+     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+     */
+    private void init() {
+        setForeground(Color.black);
+
+        setTitle("Convert from 3D to 4D");
+        getContentPane().setLayout(new BorderLayout());
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        mainPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JPanel optionsPanel = new JPanel(new GridLayout(1, 1));
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
+        
+        copyAllInfoBox = new JCheckBox("Copy all file information");
+        copyAllInfoBox.setEnabled(true);
+        optionsPanel.add(copyAllInfoBox);
+        
+        gbc.gridy++;
+        mainPanel.add(optionsPanel, gbc);
+        
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+        pack();
+        setResizable(true);
+        setVisible(true);
+
+        System.gc();
+    }
+    
+    /**
      * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", copyAllInfo));
     }
 
     /**
@@ -80,14 +144,8 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+        copyAllInfo = scriptParameters.getParams().getBoolean("copy_all_image_info");
     }
-
-    /**
-     * Calls run on the algorithm from the script parser.
-     * 
-     * @param event Event that triggers function
-     */
-    public void actionPerformed(final ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -150,7 +208,7 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
             System.gc();
 
             // Make algorithm
-            convert4Dto3DAlgo = new AlgorithmConvert4Dto3D(image);
+            convert4Dto3DAlgo = new AlgorithmConvert4Dto3D(image, copyAllInfo);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -241,6 +299,7 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
 
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterBoolean("copy_all_image_info", true));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();

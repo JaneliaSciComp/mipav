@@ -289,10 +289,13 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    	if ( imageFrames.elementAt(i) instanceof JFrame )
+                    	{
+                    		titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    		((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    		((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    		userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    	}
                     }
 
                     if (isRunInSeparateThread()) {
@@ -341,10 +344,13 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    	if ( imageFrames.elementAt(i) instanceof JFrame )
+                    	{
+                    		titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    		((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    		((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    		userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    	}
                     }
 
                     if (isRunInSeparateThread()) {
@@ -365,8 +371,10 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
             dispose();
         }
         else if (source == helpButton) {
-            MipavUtil.showHelp("10506");
-            
+            //MipavUtil.showHelp("10506");
+            MipavUtil.showWebHelp("Segmenting_Images_Using_Contours_and_Masks:_Using_contours_to_segment_a_VOI");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -398,7 +406,6 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                 image.registerVOI(resultVOI);
 
                 // Update frame
-                ((ViewJFrameBase) parentFrame).updateImages(true);
                 if ( voiManager != null )
                 {
                     voiManager.algorithmPerformed();
@@ -412,9 +419,12 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
-                ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-                userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+            	if ( imageFrames.elementAt(i) instanceof JFrame )
+            	{
+            		((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+            		((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+            		userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+            	}
             }
         }
         dispose();

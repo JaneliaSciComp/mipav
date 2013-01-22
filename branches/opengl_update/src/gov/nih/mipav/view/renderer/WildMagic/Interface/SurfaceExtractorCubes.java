@@ -266,6 +266,56 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 	 * Construct a level surface from the 3D image managed by the extractor.
 	 * @param   iLevel       the desired level value, in [min(image),max(image)]
 	 * @return  a triangle mesh that represents the level surface
+	 */
+	public TriMesh getLevelSurface(int iLevel) {
+		// The extraction assumes linear interpolation by decomposition of image domain into cubes.
+
+		// The extraction algorithm assumes that no vertex value in the
+		// image is the same as the selected level surface value.  Since
+		// the image contains integer values, then apply a small adjustment
+		// to the input level surface value in order to avoid this.
+		float fLevel = iLevel + 0.5f;
+		Vector<Vector3f> vertices = new Vector<Vector3f>();
+		Vector<TriangleKey> triangles = new Vector<TriangleKey>();
+		
+		super.ExtractContour(fLevel, vertices, triangles);
+
+		Vector<Vector3f> newVertices = new Vector<Vector3f>();
+		Vector<TriangleKey> newTriangles = new Vector<TriangleKey>();
+		super.MakeUnique(vertices, triangles, newVertices, newTriangles);
+
+		// pack vertices and triangle connectivity into arrays
+		int iVQuantity = newVertices.size();
+		int iTQuantity = newTriangles.size();
+
+		if ((iVQuantity == 0) || (iTQuantity == 0)) {
+			return null;
+		}
+
+		Vector3f[] akVertex = new Vector3f[iVQuantity];
+		for ( int i = 0; i < iVQuantity; i++ )
+		{
+			Vector3f kV = newVertices.elementAt(i);
+			akVertex[i] = new Vector3f(kV);
+		}
+
+		int[] aiConnect = new int[3 * iTQuantity];
+		int iIndex = 0;
+
+		for ( int i = 0; i < iTQuantity; i++ )
+		{
+			TriangleKey kT = newTriangles.elementAt(i);
+			aiConnect[iIndex++] = kT.V[0];
+			aiConnect[iIndex++] = kT.V[1];
+			aiConnect[iIndex++] = kT.V[2];
+		}
+		return new TriMesh(new VertexBuffer(akVertex), new IndexBuffer(aiConnect));
+	}
+
+	/**
+	 * Construct a level surface from the 3D image managed by the extractor.
+	 * @param   iLevel       the desired level value, in [min(image),max(image)]
+	 * @return  a triangle mesh that represents the level surface
 	public TriMesh getLevelSurface( int iLevel, Vector<int[]> kTriTable ) {
 		// The extraction assumes linear interpolation by decomposition of image domain into cubes.
 

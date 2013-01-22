@@ -2,17 +2,19 @@
 uniform float     CommonAlpha;
 uniform float     Threshold;
 uniform sampler3D BaseSampler;
+in vec3 varTexCoord;
+out vec4 fragColor;
 void p_VolumeTexturesP ()
 {
     // Sample the texture image.
-    gl_FragColor.rgb = texture3D(BaseSampler,gl_TexCoord[0].xyz).rgb;
-    if ( (gl_FragColor.r <= Threshold) && (gl_FragColor.g <= Threshold) && (gl_FragColor.b <= Threshold))
+    fragColor.rgb = texture(BaseSampler,varTexCoord, 0.0).rgb;
+    if ( (fragColor.r <= Threshold) && (fragColor.g <= Threshold) && (fragColor.b <= Threshold))
     {
-        gl_FragColor.a = 0.0;
+        fragColor.a = 0.0;
     }
     else
     {
-        gl_FragColor.a = CommonAlpha;
+        fragColor.a = CommonAlpha;
     }
 }
 //----------------------------------------------------------------------------

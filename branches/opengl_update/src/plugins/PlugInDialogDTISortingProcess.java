@@ -415,7 +415,9 @@ public class PlugInDialogDTISortingProcess extends JDialogScriptableBase impleme
 			setInterleaved(interleavedCheckbox.isSelected());
 			interleavedCheckbox.setEnabled(false);
 			callAlgorithm();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

@@ -369,7 +369,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("OAR19076");
+        	//MipavUtil.showHelp("OAR19076");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Optimized_Automatic_Registration_dialog_box_options");
         } else if (command.equals("AdvancedSettings")) {
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
@@ -490,7 +491,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
         } else if (command.equals("AdvancedHelp")) {
-        	MipavUtil.showHelp("OAR19078");
+        	//MipavUtil.showHelp("OAR19078");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Advanced_OAR_settings_for_Constrained_Optimized_Automatic_Registration_3D");
         }
         /* If the image is not processed as a color image, there are more
          * registration cost functions available for the user to choose: */
@@ -587,6 +589,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         else if (command.equals("BruteForceCancel")) {
             bruteForceDialog.setVisible(false);
             bruteForceDialog.dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
     }
@@ -617,6 +621,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         String comStr;
         DecimalFormat nf;
         ViewUserInterface UI = ViewUserInterface.getReference();
+        int xdimA = refImage.getExtents()[0];
+        int ydimA = refImage.getExtents()[1];
+        float xresA = refImage.getFileInfo(0).getResolutions()[0];
+        float yresA = refImage.getFileInfo(0).getResolutions()[1];
         
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
@@ -632,10 +640,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             if (reg2.isCompleted()) {
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
+                    
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     xfrm  = reg2.getTransform();
@@ -681,8 +686,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 xfrm.Inverse();
-                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
-                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
+                yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                    + xCen + ", " + yCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -706,7 +711,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
                 reg2.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mat");
+                                               refImage.getImageName() + ".mat", interp2, xresA, yresA, 0.0f, xdimA,
+                                               ydimA, 0, true, false, pad, null);
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat\n",Preferences.DEBUG_FILEIO);
 
@@ -742,11 +748,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             if (reg2E.isCompleted()) {
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
-
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     xfrm  = reg2E.getTransform();
 
@@ -791,8 +792,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 xfrm.Inverse();
-                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
-                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
+                yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
                                    + xCen + ", " + yCen + ")\n",Preferences.DEBUG_ALGORITHM);
                 if (resultImage != null) {
@@ -816,7 +817,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 matchImage.getMatrixHolder().addMatrix(resultMatrix);
 
                 reg2E.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mat");
+                                               refImage.getImageName() + ".mat", interp2, xresA, yresA, 0.0f, xdimA,
+                                               ydimA, 0, true, false, pad, null);
                 Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mat\n",Preferences.DEBUG_FILEIO);
 

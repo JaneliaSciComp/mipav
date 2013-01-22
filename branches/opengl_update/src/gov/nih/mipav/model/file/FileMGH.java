@@ -9,6 +9,8 @@ import java.io.*;
 
 import java.util.zip.*;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+
 
 /**
  * The class reads MGH files. The 4 by 4 matrix in MGH transforms x,y,z indexes to (right, anterior, superior)
@@ -730,7 +732,7 @@ public class FileMGH extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        int offset;
+        long offset;
 
         fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
 
@@ -767,7 +769,7 @@ public class FileMGH extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            offset = 284;
+            offset = 284L;
 
             if (one) {
 
@@ -803,8 +805,7 @@ public class FileMGH extends FileBase {
      * @see        FileRaw
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
-    	System.out.println("I am in here");
-        int offset;
+        long offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
             fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
@@ -819,7 +820,7 @@ public class FileMGH extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            offset = 284;
+            offset = 284L;
 
             rawFile.readImage(buffer, offset, dataType);
             rawFile.raFile.close();
@@ -1211,15 +1212,15 @@ public class FileMGH extends FileBase {
         TransMatrix M = new TransMatrix(mat.getDim());
 
         //array = mat.getMatrix(0, 2, 0, 2).getArray();
-        xi = mat.Get(0, 0);
-        xj = mat.Get(0, 1);
-        xk = mat.Get(0, 2);
-        yi = mat.Get(1, 0);
-        yj = mat.Get(1, 1);
-        yk = mat.Get(1, 2);
-        zi = mat.Get(2, 0);
-        zj = mat.Get(2, 1);
-        zk = mat.Get(2, 2);
+        xi = mat.get(0, 0);
+        xj = mat.get(0, 1);
+        xk = mat.get(0, 2);
+        yi = mat.get(1, 0);
+        yj = mat.get(1, 1);
+        yk = mat.get(1, 2);
+        zi = mat.get(2, 0);
+        zj = mat.get(2, 1);
+        zk = mat.get(2, 2);
 
         int izero = 0;
         int jzero = 0;
@@ -1519,7 +1520,7 @@ public class FileMGH extends FileBase {
         // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
         Q = new TransMatrix(mat);
         P = new TransMatrix(mat);
-        detQ = Q.Determinant();
+        detQ = Q.determinant();
 
         if (detQ == 0.0) {
             MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
@@ -1564,7 +1565,7 @@ public class FileMGH extends FileBase {
 //                     mat.set(2, 0, 0.0);
 //                     mat.set(2, 1, 0.0);
 //                     mat.set(2, 2, 0.0);
-                    P.MakeZero();
+                    P.makeZero();
 
 
                     for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
@@ -1575,14 +1576,14 @@ public class FileMGH extends FileBase {
                                 P.set(0, i - 1, p);
                                 P.set(1, j - 1, q);
                                 P.set(2, k - 1, r);
-                                detP = P.Determinant();
+                                detP = P.determinant();
 
                                 // sign of permutation doesn't match sign of Q
                                 if ((detP * detQ) <= 0.0) {
                                     continue;
                                 }
-
-                                M.Mult(P, Q);
+                                
+                                M.copy( Matrix4f.mult(P, Q) );
 
                                 // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
                                 // we want largest trace(M) == smallest angle == M nearest to I

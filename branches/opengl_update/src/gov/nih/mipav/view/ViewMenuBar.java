@@ -197,7 +197,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
                         // null, null, null),
-                        menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
+                        menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
+                        menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null, false),}),
                 menuBuilder.makeMenu("Fuzzy", false, new JMenuItem[] {
                 		menuBuilder.buildMenuItem("Edge extraction by FIRE operators", "fireEdgeExtraction", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
@@ -219,6 +220,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
+                menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
                         new JMenuItem[] {
@@ -263,7 +265,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Open", null, 0, null, false),
                         menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Skeletonize3D pot field", "Skeletonize3D", 0, null, false),
                         menuBuilder.buildMenuItem("Top hat", "topHat", 0, null, false),
                         menuBuilder.buildMenuItem("Ultimate erode", null, 0, null, false),}),
 
@@ -313,6 +314,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
+                        menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 
                         menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("Threshold using min/max", "threshMinMax", 0, null, false),
@@ -488,7 +490,8 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("About MIPAV", "About", 0, null, false),
                 menuBuilder.buildMenuItem("JVM information", "AboutJava", 0, null, false),
                 menuBuilder.buildMenuItem("MIPAV license", "License", 0, null, false), ViewMenuBar.separator,
-                menuBuilder.buildMenuItem("MIPAV help topics", "Help", 0, null, false), ViewMenuBar.separator,
+                menuBuilder.buildMenuItem("MIPAV help topics", "Help", 0, null, false), 
+                menuBuilder.buildMenuItem("Report a bug", "reportbug", 0, null, false), ViewMenuBar.separator,
                 menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, false),
                 menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, false),
                 menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0, null, false),
@@ -515,7 +518,9 @@ public class ViewMenuBar {
                                 0, null, false)}),
                         menuBuilder.makeMenu("DCE", false, new JMenuItem[] {
                                 menuBuilder.buildMenuItem("S2M2", "s2m2", 0, null, false),
-                                menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})})});
+                                menuBuilder.buildMenuItem("SM2", "sm2", 0, null, false)})}),
+                menuBuilder.buildMenuItem("Spectral clustering", "SpectralClustering", 0, null, false),
+                menuBuilder.buildMenuItem("Time fitting", "TimeFitting", 0, null, false)});
     }
 
     /**
@@ -660,7 +665,8 @@ public class ViewMenuBar {
                          menuBuilder.buildMenuItem("Remove slices", null, 0, null, false),
                          menuBuilder
                                  .buildMenuItem("Replace blanks with averages", "ReplaceBlankWithAvg", 0, null, false),
-                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),}),
+                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),
+                         menuBuilder.buildMenuItem("Swap slices", null, 0, null, false),}),
                 menuBuilder.makeMenu("4D volume tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
                         menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
@@ -672,6 +678,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Remove volumes", null, 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),
+                        menuBuilder.buildMenuItem("Swap volumes", null, 0, null, false),
                         menuBuilder.buildMenuItem("4D Image math", "4DImageCalculator", 0, null, false),}),
 
 
@@ -793,6 +800,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
                                 menuBuilder.makeMenu("Select VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, false),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, false),}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("VOI grouping", true, new JMenuItem[] {
@@ -880,7 +888,11 @@ public class ViewMenuBar {
                                                 menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
                                                         null, false),
                                                 menuBuilder.buildMenuItem("Open other orientation",
-                                                		"NewVOIOtherOrientation", 0, null, false)}),
+                                                		"NewVOIOtherOrientation", 0, null, false), 
+                                                menuBuilder.buildMenuItem("semi-auto B-Spline", "SemiAutoBSpline", 0,
+	                                                                null, false),
+	                                            menuBuilder.buildMenuItem("semi-auto B-Spline & Fuzzy-C", "SemiAutoBSplineFuzzyC", 0,
+                                                              null, false)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
@@ -964,6 +976,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Mean", false);
             menuBuilder.setMenuItemEnabled("Median", false);
@@ -996,7 +1009,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Principal component", false);
             menuBuilder.setMenuItemEnabled("Independent component", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
             
 
@@ -1041,6 +1053,7 @@ public class ViewMenuBar {
             if (ModelImage.isColorImage(type)) {
                 menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             }
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1056,6 +1069,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Remove volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
+            menuBuilder.setMenuItemEnabled("Swap volumes", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
@@ -1064,6 +1078,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nearly circle to circle", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1076,11 +1091,14 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices", false);
+            menuBuilder.setMenuItemEnabled("Swap slices", false);
+            menuBuilder.setMenuItemEnabled("Swap volumes", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Extract volume", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 4D volume", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
@@ -1117,7 +1135,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemSelected("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("4D tools", false);
@@ -1148,6 +1165,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Local normalization", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
@@ -1164,7 +1182,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Correct image spacing", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
-            menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
@@ -1175,6 +1192,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Color edge", false);
             menuBuilder.setMenuItemEnabled("Color saturation", false);
+            menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
 
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
@@ -1238,7 +1256,6 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Independent component", true);
         menuBuilder.setMenuItemEnabled("Quantify using mask", true);
         menuBuilder.setMenuItemEnabled("Shading correction", true);
-        menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", true);
         menuBuilder.setMenuItemEnabled("Skeletonize", true);
 
         // menuBuilder.setMenuItemEnabled("AFNI - Shear", true);
@@ -1299,6 +1316,8 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Anonymize face (BET)", true);
         menuBuilder.setMenuItemEnabled("Cine (movie)", true);
         menuBuilder.setMenuItemEnabled("Extract slices", true);
+        menuBuilder.setMenuItemEnabled("Swap slices", true);
+        menuBuilder.setMenuItemEnabled("Swap volumes", true);
         menuBuilder.setMenuItemEnabled("Replace slice", true);
         menuBuilder.setMenuItemEnabled("Brain tools", true);
         menuBuilder.setMenuItemEnabled("Light box", true);

@@ -33,7 +33,7 @@ import javax.swing.JCheckBox;
  * @author Matthew J. McAuliffe, Ph.D.
  * @see AlgorithmGaussianBlur
  */
-public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface,
+public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface,
         ActionDiscovery {
 
     // ~ Static fields/initializers
@@ -103,7 +103,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -126,7 +125,11 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10009");
+            // TODO: testing wiki help
+            //MipavUtil.showHelp("10009");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gaussian_Blur#Applying_the_Gaussian_Blur_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -142,9 +145,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      */
     public void algorithmPerformed(final AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
         final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
 
         if ( algorithm instanceof OpenCLAlgorithmGaussianBlur )
@@ -378,7 +378,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         final String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ( (defaultsString != null) && (outputOptionsPanel != null)) {
@@ -410,7 +410,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         final String delim = ",";
 
         String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;

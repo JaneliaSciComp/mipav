@@ -409,7 +409,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             current.setText(String.valueOf(brightness));
 
             // Change only the brightness and contrast of the current slice
-            if (previewImg != null) {
+            if (previewImg != null && previewImages.get(sourceTable.getSelectedRow()) != null) {
                 previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         } else if (source == contrastSlider) {
@@ -417,7 +417,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             current2.setText(String.valueOf(nfc.format(contrast)));
 
             // Change only the brightness and contrast of the current slice
-            if (previewImg != null) {
+            if (previewImg != null && previewImages.get(sourceTable.getSelectedRow()) != null) {
                 previewImages.get(sourceTable.getSelectedRow()).setSliceBrightness(brightness, contrast);
             }
         }
@@ -474,10 +474,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         getContentPane().add(buildLogPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtonPanel(), BorderLayout.SOUTH);
+        
+        this.setResizable(true);
         pack();
         validate();
-        this.setMinimumSize(this.getSize());
-        this.setResizable(true);
+        //this.setMinimumSize(this.getSize());
         // this.setSize(new Dimension(610, 537));
     }
 
@@ -543,6 +544,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         sourceTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
 
         listPane = WidgetFactory.buildScrollPane(sourceTable);
+        listPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         listPane.setBorder(buildTitledBorder(0 + " Data Structure(s) "));
 
         return listPane;
@@ -626,7 +628,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         if (origImage.is2DImage()) {
             // Creating a blank TransMatrix for resampling
             final TransMatrix percentSizer = new TransMatrix(4);
-            percentSizer.Set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            percentSizer.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
             // Resample image size based on percent inputted
             final AlgorithmTransform transformer = new AlgorithmTransform(origImage, percentSizer, 1,
@@ -3975,6 +3977,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 dataTypes = new ArrayList<XmlDataType>();
                 dataTypes.add(XmlDataType.IMAGING);
 
+                // TODO: filter out any data structures with 'Submission' flag set to no
                 iDataStructures = dataDictionaryProvider.getPublicDataStructureList(dataTypes);
                 iDataStructures = dataDictionaryProvider.getDataDictionary(iDataStructures).getDataStructure();
 

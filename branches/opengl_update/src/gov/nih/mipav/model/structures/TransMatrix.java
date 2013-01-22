@@ -213,17 +213,6 @@ public class TransMatrix extends Matrix4f
         return 4;
     }
 
-    /** method alias, @see Get */
-    public final float get(int i, int j) {
-        return Get(i, j);
-    }
-
-    /** method alias, but accepts double value. @see Set */
-    public final void set( int i, int j, double fValue )
-    {
-        Set(i, j, (float)fValue);
-    }
-
     /** 
      * @note this doesn't conform to the Cloneable interface, because it returns
      * TransMatrix instead of Object. 
@@ -243,7 +232,7 @@ public class TransMatrix extends Matrix4f
         m_TransformID = rkTM.m_TransformID;
     	m_IsNIFTI = rkTM.m_IsNIFTI;
         m_IsQform = rkTM.m_IsQform;
-        super.Copy(rkTM);
+        super.copy(rkTM);
     }
 
 
@@ -258,7 +247,7 @@ public class TransMatrix extends Matrix4f
         for (int i = 0; i < dim; i++) {
 
             for (int j = 0; j < dim; j++) {
-                Set(i, j, Float.valueOf((String) tok.nextElement()).floatValue());
+            	set(i, j, Float.valueOf((String) tok.nextElement()).floatValue());
             }
         }
     }
@@ -302,7 +291,7 @@ public class TransMatrix extends Matrix4f
 
             for (j = 0; j < 4; j++) {
                 float val = locmat.get(i, j) / locmat.get(3, 3);
-                locmat.Set(i, j, val);
+                locmat.set(i, j, val);
             }
         }
 
@@ -312,12 +301,12 @@ public class TransMatrix extends Matrix4f
 
         // zero out translation.
         for (i = 0; i < 3; i++) {
-            pmat.Set(i, 3, 0);
+            pmat.set(i, 3, 0);
         }
 
-        pmat.Set(3, 3, 1);
+        pmat.set(3, 3, 1);
 
-        if (pmat.Determinant() == 0.0) {
+        if (pmat.determinant() == 0.0) {
             return false;
         }
         // allocate args, if they haven't been:
@@ -327,52 +316,52 @@ public class TransMatrix extends Matrix4f
         if (shear == null) shear = new Vector3f();
 
         // Next take care of translation (easy).
-        trans.Set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
+        trans.set(locmat.get(0, 3), locmat.get(1, 3), locmat.get(2, 3));
         for (i = 0; i < 3; i++) {
-            locmat.Set(i, 3, 0);
+            locmat.set(i, 3, 0);
         }
 
         // Now get scale and shear.
         for (i = 0; i < 3; i++) {
-            row[i].X = locmat.Get(i, 0);
-            row[i].Y = locmat.Get(i, 1);
-            row[i].Z = locmat.Get(i, 2);
+            row[i].X = locmat.get(i, 0);
+            row[i].Y = locmat.get(i, 1);
+            row[i].Z = locmat.get(i, 2);
         }
 
         // Compute X scale factor and normalize first row.
-        scale.X = row[0].Length();
+        scale.X = row[0].length();
 
         // row[0] = *V3Scale(&row[0], 1.0);
-        row[0].Scale(1.0f);
+        row[0].scale(1.0f);
         // XXX Should this be row[0].Normalize()??
 
         // Compute XY shear factor and make 2nd row orthogonal to 1st.
         // shear.X is XY, shear.Y is XZ, shear.Z is YZ
-        shear.X = row[0].Dot(row[1]);
+        shear.X = row[0].dot(row[1]);
         // row[1] += -shear.X * row[0]
-        pdum3.Scale(-shear.X, row[0]);
-        row[1].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.X, row[0]);
+        row[1].add(pdum3);
 
         // Now, compute Y scale and normalize 2nd row.
-        scale.Y = row[1].Length();
-        row[1].Scale(1.0f);
+        scale.Y = row[1].length();
+        row[1].scale(1.0f);
         // XXX Should this be row[1].Normalize()??
         shear.X /= scale.Y;
 
         // Compute XZ and YZ shears, orthogonalize 3rd row.
-        shear.Y = row[0].Dot(row[2]);
+        shear.Y = row[0].dot(row[2]);
         // row[2] += -shear.Y * row[0]
-        pdum3.Scale(-shear.Y, row[0]);
-        row[2].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.Y, row[0]);
+        row[2].add(pdum3);
 
-        shear.Z = row[1].Dot(row[2]);
+        shear.Z = row[1].dot(row[2]);
         // row[2] += -shear.Z * row[1]
-        pdum3.Scale(-shear.Z, row[1]);
-        row[2].Add(pdum3);
+        pdum3 = Vector3f.scale(-shear.Z, row[1]);
+        row[2].add(pdum3);
 
         // Next, get Z scale and normalize 3rd row.
-        scale.Z = row[2].Length();
-        row[2].Scale(1.0f);
+        scale.Z = row[2].length();
+        row[2].scale(1.0f);
         // XXX Should this be row[2].Normalize()??
         shear.Y /= scale.Z;
         shear.Z /= scale.Z;
@@ -380,10 +369,10 @@ public class TransMatrix extends Matrix4f
         // At this point, the matrix (in rows[]) is orthonormal.
         // Check for a coordinate system flip.  If the determinant
         // is -1, then negate the matrix and the scaling factors.
-        pdum3.Cross( row[1], row[2] );
-        if (row[0].Dot(pdum3) < 0) {
+        pdum3 = Vector3f.cross( row[1], row[2] );
+        if (row[0].dot(pdum3) < 0) {
 
-            scale.Neg();
+            scale.neg();
             for (i = 0; i < 3; i++) {
                 row[i].X *= -1;
                 row[i].Y *= -1;
@@ -588,7 +577,147 @@ public class TransMatrix extends Matrix4f
             }
 
             if (composite) {
-                Mult(mat);
+                mult(mat);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
+        }
+        // this.print(4, 4);
+    }
+    
+    /**
+     * Reads transformation matrix to a text file.
+     *
+     * <p>This method reads two formats MIPAV format</p>
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * <optional message goes here>
+     * </pre>
+     *
+     * <p>Note the above is a homogenous transformation matrix</p>
+     *
+     * <p>FSL or alternate format supported </p>
+     * <pre>
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces
+     * 0  0  0  1             // matrix info separated by 2 spaces
+     * </pre>
+     * <p>also note integer values</p>
+     *
+     * @param  raFile     random access file pointer
+     * @param composite if true make a composite matrix of the by multipling
+     * this matrix with the one to be read from the file. If false replace
+     * this object matrix with a new matrix read from the file.
+     */
+    public void readMatrix(RandomAccessFile raFile, int interp[], float oXres[], float oYres[], float oZres[], 
+                           int oXdim[], int oYdim[], int oZdim[], boolean tVOI[], boolean clip[], boolean pad[], boolean composite) {
+        int i, r = 4, c = 4;
+        String str;
+        // is MNI transformation matrix, leaves out last row.
+        boolean isXFM = false;
+
+        if (raFile == null) return;
+
+        try {
+            str = raFile.readLine().trim();
+            if(str.equalsIgnoreCase("MNI Transform File")) {
+                isXFM = true;
+                //make sure that this is a linear transform type file
+                boolean isLinearTransform = false;
+                str = raFile.readLine().trim();
+                while(str != null) {
+                    if(str.equalsIgnoreCase("Transform_Type = Linear;")) {
+                        isLinearTransform = true;
+                        //read next line in which should be 
+                        // "Linear_Transform =" to set the file pointer to the next line
+                        raFile.readLine();
+                        break;
+                    }
+                    str = raFile.readLine().trim();
+                }
+                if(!isLinearTransform) {
+                    MipavUtil.displayError("Matrix file must be a linear transform type");
+                    return;
+                }
+                r = 4;
+                c = 4;
+            } else {
+                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
+                    r = 4;
+                    c = 4;
+                    raFile.seek(0);
+                } else {
+                    raFile.seek(0);
+                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
+                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
+                }
+            }
+            if ( r != c || ! (r == 3 || r == 4) ) {
+                MipavUtil.displayError("Matrix file must be a linear transform type, dimensions incompatible, must be 3 or 4.");
+                return;
+            }
+            
+            Matrix4f mat = null;
+            if (!composite) {
+                mat = this;
+            } else {
+                mat = new Matrix4f();
+            }
+            if(isXFM) {
+                for (i = 0; i < 3; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+                //Third row is already zero
+                mat.M33 = 1.0f;
+            } else {
+                for (i = 0; i < r; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+            }
+
+            if (composite) {
+                mult(mat);
+            }
+            str = raFile.readLine();
+            str = raFile.readLine();
+            if (str == null) {
+                return;
+            }
+            str = str.trim();
+            if (str.equals("Have transform parameters")) {
+                interp[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oXres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oYres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oZres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oXdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oYdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oZdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    tVOI[0] = true;
+                }
+                else {
+                    tVOI[0] = false;
+                }
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    clip[0] = true;
+                }
+                else {
+                    clip[0] = false;
+                }
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    pad[0] = true;
+                }
+                else {
+                    pad[0] = false;
+                }
             }
         } catch (IOException error) {
             MipavUtil.displayError("Matrix save error " + error);
@@ -674,6 +803,27 @@ public class TransMatrix extends Matrix4f
             return;
         }
     }
+    
+    /**
+     * Saves transformation matrix to a text file MIPAV format 
+     * @see saveMatrix(RandomAccessFile raFile, String message)
+     * @param  fileName  - file name, including the path
+     * @param  message   String, may be null for no message.
+     */
+    public void saveMatrix(String fileName, int interp, float oXres, float oYres, float oZres, int oXdim, 
+            int oYdim, int oZdim, boolean tVOI, boolean clip, boolean pad, String message) {
+
+        try {
+            File file = new File(fileName);
+            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            saveMatrix(raFile, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, tVOI, clip, pad, message);
+            raFile.close();
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+
+            return;
+        }
+    }
 
     /**
      * Saves transformation matrix to a text file MIPAV format
@@ -720,12 +870,104 @@ public class TransMatrix extends Matrix4f
             int dim = getDim();
             for (r = 0; r < dim; r++) {
                 for (c = 0; c < dim; c++) {
-                    raFile.writeBytes(Float.toString(Get(r, c)) + " ");
+                    raFile.writeBytes(Float.toString(get(r, c)) + " ");
                 }
                     
                 raFile.writeBytes("\n");
             }
             raFile.writeBytes("\n");
+            if (message != null) {
+                raFile.writeBytes(message);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
+        }
+    }
+    
+    /**
+     * Saves transformation matrix to a text file MIPAV format
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * \n // newline
+     * Have transform parameters
+     * 0 // 0 for trilinear interpolation, 2 for nearest neighbor, 3 for cubic bspline, 4 for quadratic bspline
+     * 0.5 // output x resolution
+     * 0.5 // output y resolution
+     * 0.2 // output z resolution
+     * 256 // output x dimension
+     * 256 // output y dimension
+     * 128 // output z dimension
+     * true // transformVOI (true or false)
+     * false // clip (true or false) output image range is clipped to input image range
+     * true // pad (true of false) output image is padded so that all of the original image is present
+     * <optional message goes here>
+     * </pre>
+     *
+     *
+     * @param  raFile  random access file pointer
+     * @param  interp
+     * @param  oXres
+     * @param  oYres
+     * @param  oZres
+     * @param  oXdim
+     * @param  oYdim
+     * @param  oZdim
+     * @param  tVOI
+     * @param  clip
+     * @param  pad
+     * @param  message  String, may be null for no message.
+     */
+    public void saveMatrix(RandomAccessFile raFile, int interp, float oXres, float oYres, float oZres, int oXdim, 
+                           int oYdim, int oZdim, boolean tVOI, boolean clip, boolean pad, String message) {
+        int r, c;
+
+        if (raFile == null) return;
+
+        try {
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of rows
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of columns
+            int dim = getDim();
+            for (r = 0; r < dim; r++) {
+                for (c = 0; c < dim; c++) {
+                    raFile.writeBytes(Float.toString(get(r, c)) + " ");
+                }
+                    
+                raFile.writeBytes("\n");
+            }
+            raFile.writeBytes("\n");
+            raFile.writeBytes("Have transform parameters\n");
+            raFile.writeBytes(Integer.toString(interp) + "\n");
+            raFile.writeBytes(Float.toString(oXres) + "\n");
+            raFile.writeBytes(Float.toString(oYres) + "\n");
+            raFile.writeBytes(Float.toString(oZres) + "\n");
+            raFile.writeBytes(Integer.toString(oXdim) + "\n");
+            raFile.writeBytes(Integer.toString(oYdim) + "\n");
+            raFile.writeBytes(Integer.toString(oZdim) + "\n");
+            if (tVOI) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
+            if (clip) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
+            if (pad) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
             if (message != null) {
                 raFile.writeBytes(message);
             }
@@ -758,7 +1000,7 @@ public class TransMatrix extends Matrix4f
             for (int r = 0; r < 3; r++) {
                 
                 for (int c = 0; c < 4; c++) {
-                    raFile.writeBytes(Float.toString(Get(r, c)));
+                    raFile.writeBytes(Float.toString(get(r, c)));
                     if (r == 2 && c == 3) {
                         raFile.writeBytes(";");
                     } else {
@@ -788,7 +1030,7 @@ public class TransMatrix extends Matrix4f
          int dim = getDim();
          for (int r = 0; r < dim; r++) {
              for (int c = 0; c < dim; c++) {
-                 Set(r, c, (float)newMatrix[r][c]);
+            	 set(r, c, (float)newMatrix[r][c]);
              }
          }
      }
@@ -799,8 +1041,14 @@ public class TransMatrix extends Matrix4f
      */
      public void getColumn(int r, double[] column) {
          for (int c = 0; c < getDim(); c++) {
-             column[c] = Get(r, c);
+             column[c] = get(r, c);
          }
+     }
+     
+     public TransMatrix set(int r, int c, double val)
+     {
+    	 set(r, c, (float)val);
+    	 return this;
      }
 
 
@@ -818,7 +1066,7 @@ public class TransMatrix extends Matrix4f
         try {
             for (int r = i0; r <= i1; r++) {
                 for (int c = j0; c <= j1; c++) {
-                    Set(r, c, (float)X[r-i0][c-j0]);
+                	set(r, c, (float)X[r-i0][c-j0]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -837,7 +1085,7 @@ public class TransMatrix extends Matrix4f
         try {
             for (int r = 0; r < X.length; r++) {
                 for (int c = 0; c < X[0].length; c++) {
-                    Set(r, c, (float)X[r][c]);
+                	set(r, c, (float)X[r][c]);
                 }
             }
         } catch(ArrayIndexOutOfBoundsException e) {
@@ -863,14 +1111,14 @@ public class TransMatrix extends Matrix4f
         cosTheta = (float)Math.cos((theta / 180.0) * Math.PI);
         sinTheta = (float)Math.sin((theta / 180.0) * Math.PI);
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -883,19 +1131,19 @@ public class TransMatrix extends Matrix4f
     public void setRotate(Vector3f alpha, Vector3f beta, Vector3f gamma) {
         TransMatrix axis_rot = new TransMatrix(4);
 
-        axis_rot.Set(0, 0, alpha.X);
-        axis_rot.Set(0, 1, alpha.Y);
-        axis_rot.Set(0, 2, alpha.Z);
-        axis_rot.Set(1, 0, beta.X);
-        axis_rot.Set(1, 1, beta.Y);
-        axis_rot.Set(1, 2, beta.Z);
-        axis_rot.Set(2, 0, gamma.X);
-        axis_rot.Set(2, 1, gamma.Y);
-        axis_rot.Set(2, 2, gamma.Z);
-        axis_rot.Set(3, 3, 1);
+        axis_rot.set(0, 0, alpha.X);
+        axis_rot.set(0, 1, alpha.Y);
+        axis_rot.set(0, 2, alpha.Z);
+        axis_rot.set(1, 0, beta.X);
+        axis_rot.set(1, 1, beta.Y);
+        axis_rot.set(1, 2, beta.Z);
+        axis_rot.set(2, 0, gamma.X);
+        axis_rot.set(2, 1, gamma.Y);
+        axis_rot.set(2, 2, gamma.Z);
+        axis_rot.set(3, 3, 1);
 
         // compose with our current matrix.
-        Mult(axis_rot);
+        mult(axis_rot);
     }
 
     /**
@@ -920,16 +1168,16 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaZ);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, 1);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 1, -sinTheta);
-        axis_rot.Set(1, 0, sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, 1);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 1, -sinTheta);
+        axis_rot.set(1, 0, sinTheta);
 
         tmpMatrix.Copy(axis_rot);
 
-        axis_rot.MakeZero();
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = (float)Math.cos((thetaY / 180.0) * Math.PI);
@@ -939,15 +1187,15 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaY);
         }
 
-        axis_rot.Set(0, 0, cosTheta);
-        axis_rot.Set(1, 1, 1);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(0, 2, sinTheta);
-        axis_rot.Set(2, 0, -sinTheta);
+        axis_rot.set(0, 0, cosTheta);
+        axis_rot.set(1, 1, 1);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(0, 2, sinTheta);
+        axis_rot.set(2, 0, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
-        axis_rot.MakeZero();
+        tmpMatrix.mult(axis_rot);
+        axis_rot.makeZero();
 
         if (degreeORradian == DEGREES) {
             cosTheta = (float)Math.cos((thetaX / 180.0) * Math.PI);
@@ -957,16 +1205,16 @@ public class TransMatrix extends Matrix4f
             sinTheta = (float)Math.sin(thetaX);
         }
 
-        axis_rot.Set(0, 0, 1);
-        axis_rot.Set(1, 1, cosTheta);
-        axis_rot.Set(2, 2, cosTheta);
-        axis_rot.Set(3, 3, 1);
-        axis_rot.Set(2, 1, sinTheta);
-        axis_rot.Set(1, 2, -sinTheta);
+        axis_rot.set(0, 0, 1);
+        axis_rot.set(1, 1, cosTheta);
+        axis_rot.set(2, 2, cosTheta);
+        axis_rot.set(3, 3, 1);
+        axis_rot.set(2, 1, sinTheta);
+        axis_rot.set(1, 2, -sinTheta);
 
-        tmpMatrix.Mult(axis_rot);
+        tmpMatrix.mult(axis_rot);
         // compose with our current matrix.
-        Mult(tmpMatrix);
+        mult(tmpMatrix);
     }
 
     /**
@@ -1246,7 +1494,7 @@ public class TransMatrix extends Matrix4f
             s += "  ";
 
             for (int j = 0; j < getDim(); j++) {
-                s += format.format(Get(i, j)); // format the number
+                s += format.format(get(i, j)); // format the number
                 s = s + "  ";
             }
 
@@ -1668,9 +1916,9 @@ public class TransMatrix extends Matrix4f
                     index = nextIndex;
                 }
                 if (tmpStr.indexOf(".") != -1) {
-                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Float.valueOf(tmpStr).floatValue());
                 } else {
-                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Integer.valueOf(tmpStr).floatValue());
                 }
             }
 
@@ -1724,9 +1972,9 @@ public class TransMatrix extends Matrix4f
                     index = nextIndex;
                 }
                 if (tmpStr.indexOf(".") != -1) {
-                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Float.valueOf(tmpStr).floatValue());
                 } else {
-                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
+                    matrix.set(row, c, Integer.valueOf(tmpStr).floatValue());
                 }
             }
 
@@ -1772,7 +2020,7 @@ public class TransMatrix extends Matrix4f
 
         if (Math.abs(fDet) <= Mathf.ZERO_TOLERANCE)
         {
-            Copy(Matrix4f.ZERO);
+            copy(Matrix4f.ZERO);
         }
 
         float fInvDet = 1.0f/fDet;
@@ -1786,12 +2034,12 @@ public class TransMatrix extends Matrix4f
         inverse_M21 *= fInvDet;
         inverse_M22 *= fInvDet;
         // Set 4x4, even though we're only using a 3x3
-        Set( inverse_M00, inverse_M01, inverse_M02, 0.0f,
+        set( inverse_M00, inverse_M01, inverse_M02, 0.0f,
              inverse_M10, inverse_M11, inverse_M12, 0.0f,
              inverse_M20, inverse_M21, inverse_M22, 0.0f, 
              0.0f, 0.0f, 0.0f, 1.0f);
         } else {
-            super.Inverse();
+            super.inverse();
         }
     }    
 
@@ -1816,7 +2064,7 @@ public class TransMatrix extends Matrix4f
             s += "  ";
 
             for (j = 0; j < getDim(); j++) {
-                s += format.format(Get(i,j)); // format the number
+                s += format.format(get(i,j)); // format the number
                 s += "  ";
             }
 

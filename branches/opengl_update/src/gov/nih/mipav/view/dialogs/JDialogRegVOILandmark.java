@@ -372,6 +372,8 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
             }
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

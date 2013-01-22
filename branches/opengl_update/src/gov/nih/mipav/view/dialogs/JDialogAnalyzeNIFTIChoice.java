@@ -119,6 +119,8 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
         	else {
         		zeroCheckBox.setEnabled(false);
         	}
+        } else {
+            super.actionPerformed(event);
         }
 
     }

@@ -432,7 +432,7 @@ public class VOI extends ModelSerialCloneable {
 	private int polarity = ADDITIVE;
 
 	/** If true this flag indicates that the VOI should be included (applied) when processing the image. */
-	private boolean process;
+	private boolean process = true;
 
 	/** Unique ID for saving & retrieving. */
 	private int UID;
@@ -1550,11 +1550,11 @@ public class VOI extends ModelSerialCloneable {
 			if ( bFirst )
 			{
 				bFirst = false;
-				akBounds[0].Copy(kBounds[0]);
-				akBounds[1].Copy(kBounds[1]);
+				akBounds[0].copy(kBounds[0]);
+				akBounds[1].copy(kBounds[1]);
 			}
-			akBounds[0].Min(kBounds[0]);
-			akBounds[1].Max(kBounds[1]);
+			akBounds[0].min(kBounds[0]);
+			akBounds[1].max(kBounds[1]);
 		}
 
 		x[0] = akBounds[0].X;
@@ -1838,12 +1838,16 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 	/**
-	 * Accessor that returns the process.
+	 * Accessor that returns whether voi is included in processing.
 	 *
 	 * @return  the process
 	 */
 	public boolean getProcess() {
-		return process;
+	    boolean anyProcess = process;
+        for (int i = 0; i < curves.size(); i++) {
+            anyProcess |= (curves.elementAt(i)).getProcess();
+        }
+        return anyProcess;
 	}
 
 	/**
@@ -1877,7 +1881,7 @@ public class VOI extends ModelSerialCloneable {
 		Vector<VOIBase> sliceCurves = new Vector<VOIBase>();      
 		for ( int i = 0; i < curves.size(); i++ )
 		{
-			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice(iPlane) == iSlice )
 			{
 				sliceCurves.add( curves.elementAt(i) );
 			}
@@ -1906,7 +1910,7 @@ public class VOI extends ModelSerialCloneable {
 		int sliceSize = 0;
 		for ( int i = 0; i < curves.size(); i++ )
 		{
-			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice(iPlane) == iSlice )
 			{
 				sliceSize++;
 			}
@@ -1954,9 +1958,14 @@ public class VOI extends ModelSerialCloneable {
 					kTemp[(int)curves.elementAt(i).elementAt(0).Z].add( curves.elementAt(i) );
 				}
 			}
+			else if (iPlane == VOIBase.NOT_A_PLANE) {
+			    if (curves.elementAt(i).getPlane() == VOIBase.NOT_A_PLANE) {
+			        System.err.println("Contour " + i + " does not lie on an X, Y, or Z plane");
+			    }
+			}
 			else if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
 			{
-				int slice = curves.elementAt(i).slice();
+				int slice = curves.elementAt(i).slice(iPlane);
 				kTemp[slice].add( curves.elementAt(i) );
 			}
 		}
@@ -2187,7 +2196,7 @@ public class VOI extends ModelSerialCloneable {
 			if ( curves.elementAt(i).isActive() )
 			{
 				if ( (curves.elementAt(i).getPlane() & VOIBase.ZPLANE) == VOIBase.ZPLANE && 
-					  curves.elementAt(i).slice() == iSlice )
+					  curves.elementAt(i).slice(VOIBase.ZPLANE) == iSlice )
 				{
 
 					polygons.add( ((VOIContour)curves.elementAt(i)).exportPolygon() );
@@ -2718,6 +2727,24 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	public void setProcess(boolean flag) {
 		this.process = flag;
+		for(int i=0; i<curves.size(); i++) {
+		    curves.get(i).setProcess(flag);
+		}
+	}
+	
+	/**
+     * Allows VOIBase's to set their parent's process flag without affecting other contours.  If not all
+     * contours are in the same state, this will not be set.
+     *
+     * @param  flag  the process flag
+     */
+	void notifyParentVOIProcess(boolean flag) {
+	    for(int i=0; i<curves.size(); i++) {
+            if(flag != curves.get(i).getProcess()) {
+                return; //only set if all contours are in same state
+            }
+        }
+	    this.process = flag;
 	}
 
 	/**
@@ -2761,7 +2788,7 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 	/**
-	 * Trims all active contours in the VOI based on the Preferences getTrimVoi and getTrimAdjacent values. 
+	 * Trims all active contours in the VOI based on the Preferences getTrim and getTrimAdjacent values. 
 	 */
 	public void trim()
 	{
@@ -3057,10 +3084,10 @@ public class VOI extends ModelSerialCloneable {
 		Object[] listeners = listenerList.getListenerList();
 		// Process the listeners last to first, notifying
 		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+		for (int i = listeners.length - 1; i >= 0; i--) {
 
-			if (listeners[i] == VOIListener.class) {
-				((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
+			if (listeners[i] instanceof VOIListener) {
+				((VOIListener) listeners[i]).selectedVOI(voiUpdate);
 			}
 		}
 	}

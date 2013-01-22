@@ -100,7 +100,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
             init();
             loadAxisDefaults = false;
-            loadDefaults();
             setVariables();
         }
         setForeground(Color.black);
@@ -124,7 +123,10 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4027");
+            //MipavUtil.showHelp("U4027");
+            MipavUtil.showWebHelp("Flipping_images");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -141,10 +143,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFlip) {
-            
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-                saveDefaults();
-            }
 
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
@@ -152,12 +150,15 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
-                ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+            	if ( imageFrames.elementAt(i) instanceof Frame )
+            	{
+            		((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+            		((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
-                    userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                }
+            		if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
+            			userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+            		}
+            	}
             }
 
             if (parentFrame != null) {
@@ -206,10 +207,13 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 	            titles = new String[imageFrames.size()];
 	
 	            for (int i = 0; i < imageFrames.size(); i++) {
-	                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-	                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-	                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-	                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	            	if ( imageFrames.elementAt(i) instanceof Frame )
+	            	{
+	            		titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+	            		((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	            		((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+	            		userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	            	}
 	            }
             }
 
@@ -263,7 +267,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
         String defaultsString = flipAxis + delim;
         defaultsString += flipObject + delim;
@@ -316,7 +320,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (optionsPanel != null)) {

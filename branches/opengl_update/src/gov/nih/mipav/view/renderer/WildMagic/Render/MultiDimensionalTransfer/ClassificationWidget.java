@@ -5,14 +5,21 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.Serializable;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
+import WildMagic.LibGraphics.Rendering.Light;
+import WildMagic.LibGraphics.Rendering.MaterialState;
+import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.Texture;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 /** 
  * This is the base class for the Multi-histogram widgets. 
@@ -58,17 +65,19 @@ public abstract class ClassificationWidget implements Serializable
 	/** The lower-sphere control point of the widget, controls the shape/size of the widget */
 	protected TriMesh m_kLowerSphere;
 	/** Left bounding edge of the canvas in world coordinates. */
-	protected int LEFT_EDGE = -1;
+	protected static int LEFT_EDGE = -1;
 	/** Right bounding edge of the canvas in world coordinates. */
-	protected int RIGHT_EDGE = 1;
+	protected static int RIGHT_EDGE = 1;
 	/** Bottom bounding edge of the canvas in world coordinates. */
-	protected int BOTTOM_EDGE = -1;
+	protected static int BOTTOM_EDGE = -1;
 	/** Top bounding edge of the canvas in world coordinates. */
-	protected int TOP_EDGE = 1;
+	protected static int TOP_EDGE = 1;
 	/** Radius of the sphere control points of the widget in world coordinates. */
-	protected float SPHERE_RADIUS = 0.04f;
+	protected static float SPHERE_RADIUS = 0.04f;
 	/** Mouse offset used for dragging the widget. Stored in screen (MouseEvent) coordinates */
-	protected Vector2f m_kMouseOffset = new Vector2f();
+	protected Vector2f m_kMouseOffset;
+	/** Shader effect state, for reading from disk: */
+	protected ClassificationWidgetState m_kWidgetState;
 
 	/** Default Constructor */
 	public ClassificationWidget () {}
@@ -98,6 +107,7 @@ public abstract class ClassificationWidget implements Serializable
 		m_kTMax = kTMax;
 		m_iWidth = iWidth;
 		m_iHeight = iHeight;
+		m_kMouseOffset = new Vector2f();
 	}
 
 	/**
@@ -106,27 +116,6 @@ public abstract class ClassificationWidget implements Serializable
 	public void clearPicked( )
 	{    
 		m_kPicked = null;         
-	}
-
-	/**
-	 * Clears or sets the current picked object, sets the outline color to red when picked, blue when not selected.
-	 * @param bPicked when true the widget is selected.
-	 */
-	public void setPicked( boolean bPicked )
-	{
-		for ( int i = 0; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
-		{
-			if ( bPicked )
-			{
-				m_kWidgetMesh.VBuffer.SetColor3(0, i, 1f,0f,0f);
-			}
-			else 
-			{
-				m_kWidgetMesh.VBuffer.SetColor3(0, i, 0f,0f,.5f);       
-				m_kPicked = null;         
-			}
-		}
-		m_kWidgetMesh.VBuffer.Release();
 	}
 
 	/**
@@ -161,12 +150,43 @@ public abstract class ClassificationWidget implements Serializable
 	}
 
 	/**
+	 * Returns the index of the color look-up table color map.
+	 * @return the index of the color look-up table color map.
+	 */
+	public int getLUTIndex( )
+	{
+		if ( m_kWidgetEfect != null )
+		{
+			return m_kWidgetEfect.GetLUTIndex( );
+		}
+		return -1;
+	}
+
+	/**
+	 * Returns the widget state read from file, so it can initialize a new shader effect.
+	 * @return
+	 */
+	public ClassificationWidgetState getSavedWidgetState()
+	{
+		return m_kWidgetState;
+	}
+
+	/**
 	 * Returns the current state of the widget shader effect.
 	 * @return the current state of the widget shader effect.
 	 */
 	public ClassificationWidgetState getState()
 	{
 		return m_kWidgetEfect.getState();
+	}
+
+	/**
+	 * Returns the type of widget (Circle, Triangle, Square).
+	 * @return the type of widget (Circle, Triangle, Square).
+	 */
+	public int getType()
+	{
+		return m_kWidgetEfect.getState().Type;
 	}
 
 	/**
@@ -184,7 +204,7 @@ public abstract class ClassificationWidget implements Serializable
 	 * @param iY current mouse y position (MouseEvent coordinates).
 	 * @return true if this widget or one of it's control points was picked.
 	 */
-	public abstract boolean Pick( int iX, int iY );
+	public abstract boolean Pick( Renderer kRenderer, int iX, int iY );
 
 
 	/**
@@ -194,7 +214,7 @@ public abstract class ClassificationWidget implements Serializable
 	 * @param bPicked input parameter from the derived classes, when true the derived class widget shape was picked.
 	 * @return true if this widget or one of it's control points was picked.
 	 */
-	public boolean Pick( int iX, int iY, boolean bPicked )
+	public boolean Pick( Renderer kRenderer, int iX, int iY, boolean bPicked )
 	{
 		// convert the input MouseEvent coordinates into object- or world-coordinates:
 		float fX = calcObjX(iX);
@@ -255,7 +275,7 @@ public abstract class ClassificationWidget implements Serializable
 				fX += m_kWidgetMesh.VBuffer.GetPosition3fX(i);
 				fY += m_kWidgetMesh.VBuffer.GetPosition3fY(i);
 			}
-			m_kWidgetMesh.VBuffer.Release();
+			m_kWidgetMesh.Release(kRenderer);
 			fX /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 			fY /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 
@@ -263,7 +283,8 @@ public abstract class ClassificationWidget implements Serializable
 			fY = calcScreenY(fY);
 			// Set the mouse offset as the current position of the mouse - the current center of the widget.
 			// used to translate the widget with the mouse during mouse drag events.
-			m_kMouseOffset.Set ( fX - iX, fY - iY );
+			m_kMouseOffset.set ( fX - iX, fY - iY );
+			setPicked(true);
 		}
 		return bPicked;
 	}
@@ -276,7 +297,10 @@ public abstract class ClassificationWidget implements Serializable
 	 */
 	public abstract void processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e );
 
-
+	/**
+	 * Sets the alpha value of the widget.
+	 * @param fAlpha
+	 */
 	public void setAlpha( float fAlpha )
 	{
 		if ( m_kWidgetEfect != null )
@@ -309,6 +333,12 @@ public abstract class ClassificationWidget implements Serializable
 		}
 	}
 
+	/**
+	 * Set the color look-up table for the widget.
+	 * @param kMap Texture map look-up table.
+	 * @param index index of the look-up table.
+	 * @param bReverse inverts the table when true.
+	 */
 	public void setLUT( Texture kMap, int index, boolean bReverse )
 	{
 		if ( m_kWidgetEfect != null )
@@ -317,62 +347,49 @@ public abstract class ClassificationWidget implements Serializable
 		}
 	}
 
-	public int getLUTIndex( )
+	/**
+	 * Clears or sets the current picked object, sets the outline color to red when picked, blue when not selected.
+	 * @param bPicked when true the widget is selected.
+	 */
+	public void setPicked( boolean bPicked )
 	{
-		if ( m_kWidgetEfect != null )
+		for ( int i = 0; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
 		{
-			return m_kWidgetEfect.GetLUTIndex( );
+			if ( bPicked )
+			{
+				m_kWidgetMesh.VBuffer.SetColor3(0, i, 1f,0f,0f);
+			}
+			else 
+			{
+				m_kWidgetMesh.VBuffer.SetColor3(0, i, 0f,0f,.5f);       
+				m_kPicked = null;         
+			}
 		}
-		return -1;
+		m_kWidgetMesh.Reload(true);
 	}
 
 	/**
+	 * Sets the ClassificationWidgetState of the widget.
+	 * @param state
+	 */
+	public void setState(ClassificationWidgetState state)
+	{
+		m_kWidgetEfect.setState(state);
+	}
+	
+	
+	/**
+	 * Sets the histogram Texture map for the widget shader effect.
+	 * @param kTexture
+	 */
+	public abstract void setTexture( Texture kTexture );
+
+
+    /**
 	 * Updates the ShaderEffect parameters for this widget.
 	 */
 	public abstract void updateDisplay();
-
-	/**
-	 * Read this object from disk.
-	 * @param in
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	private void readObject(java.io.ObjectInputStream in)
-	throws IOException, ClassNotFoundException
-	{
-		m_kTMin = (Vector2f)in.readObject();
-		m_kTMax = (Vector2f)in.readObject();
-		m_iWidth = in.readInt();
-		m_iHeight = in.readInt();
-	}
-
-	/**
-	 * Stream this object to disk.
-	 * @param out
-	 * @throws IOException
-	 */
-	private void writeObject(java.io.ObjectOutputStream out)
-	throws IOException 
-	{
-		out.writeObject(m_kTMin);
-		out.writeObject(m_kTMax);
-		out.writeInt(m_iWidth);
-		out.writeInt(m_iHeight);
-
-		out.writeObject( m_kWidgetMesh.IBuffer );
-		out.writeObject( m_kWidgetMesh.VBuffer );
-		out.writeObject(m_kWidgetEfect); 
-
-		out.writeObject( m_kUpperSphere.IBuffer );
-		out.writeObject( m_kUpperSphere.VBuffer );
-
-		out.writeObject( m_kLowerSphere.IBuffer );
-		out.writeObject( m_kLowerSphere.VBuffer );
-
-		out.writeObject( m_kMiddleSphere.IBuffer );
-		out.writeObject( m_kMiddleSphere.VBuffer );
-	}
-
+	
 	/**
 	 * Calculate the world X coordinates from input MouseEvent coordinates.
 	 * @param val input MouseEvent Coordinates.
@@ -464,5 +481,103 @@ public abstract class ClassificationWidget implements Serializable
 		fX /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 		fY /= m_kWidgetMesh.VBuffer.GetVertexQuantity();
 		return new Vector2f( fX, fY );
+	}
+
+	/**
+     * Read this object from disk:
+     * @param in
+     * @throws IOException
+     * @throws ClassNotFoundException
+	 */
+	private void readObject(java.io.ObjectInputStream in)
+    throws IOException, ClassNotFoundException
+    {
+        
+		m_kWidgetState = (ClassificationWidgetState)in.readObject();
+		
+		m_kTMin = (Vector2f)in.readObject();
+		m_kTMax = (Vector2f)in.readObject();
+		m_iWidth = in.readInt();
+		m_iHeight = in.readInt();
+				
+		m_kWidget = new Node();
+		IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
+		VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
+		m_kWidgetMesh = new TriMesh( kVBuffer, kIBuffer );     
+    		
+        m_kWidgetMesh.SetName("BottomTri");
+        m_kWidget.AttachChild(m_kWidgetMesh);
+
+        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
+        m_kOutline.AttachEffect( new VertexColor3Effect() );
+        m_kWidget.AttachChild(m_kOutline);
+        
+
+        // Create light and attach it to the Widget, it will
+        // be applied to all the spheres attached to the widget:
+        Light pointLight = new Light(Light.LightType.LT_POINT);
+        float fValue = .90f;
+        pointLight.Ambient = new ColorRGB(fValue,fValue,fValue);
+        fValue = 40f;
+        pointLight.Position = new Vector3f(+fValue,+fValue,+fValue);
+        pointLight.Diffuse = new ColorRGB(ColorRGB.WHITE);
+        pointLight.Specular = new ColorRGB(ColorRGB.WHITE);
+        m_kWidget.AttachLight(pointLight);
+        // Create the material to describe the shading for the sphere:
+        MaterialState kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,0f,1f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kUpperSphere = new TriMesh( kVBuffer, kIBuffer );
+        m_kUpperSphere.AttachGlobalState( kMaterial );
+        m_kUpperSphere.SetName("UpperSphere");
+        m_kWidget.AttachChild( m_kUpperSphere );
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
+        
+        
+        kMaterial = new MaterialState();
+        kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+        kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+        kMaterial.Diffuse = new ColorRGB(0f,1f,0f);
+        kMaterial.Specular = new ColorRGB(0.9f,0.9f,0.9f);
+        kMaterial.Shininess = 83.2f;
+        kIBuffer = (IndexBuffer)in.readObject();
+        kVBuffer = (VertexBuffer)in.readObject();
+        m_kMiddleSphere = new TriMesh( kVBuffer, kIBuffer );
+        m_kMiddleSphere.AttachGlobalState( kMaterial );
+        m_kMiddleSphere.SetName("MiddleSphere");
+        m_kWidget.AttachChild( m_kMiddleSphere );     
+
+		m_kMouseOffset = new Vector2f();
+    }
+	
+	/**
+	 * Stream this object to disk.
+	 * @param out
+	 * @throws IOException
+	 */
+	private void writeObject(java.io.ObjectOutputStream out)
+	throws IOException 
+	{
+		out.writeObject(m_kWidgetEfect.getState());
+		
+		out.writeObject(m_kTMin);
+		out.writeObject(m_kTMax);
+		out.writeInt(m_iWidth);
+		out.writeInt(m_iHeight);
+
+		out.writeObject( m_kWidgetMesh.IBuffer );
+		out.writeObject( m_kWidgetMesh.VBuffer );
+
+		out.writeObject( m_kUpperSphere.IBuffer );
+		out.writeObject( m_kUpperSphere.VBuffer );
+
+		out.writeObject( m_kMiddleSphere.IBuffer );
+		out.writeObject( m_kMiddleSphere.VBuffer );
 	}
 }

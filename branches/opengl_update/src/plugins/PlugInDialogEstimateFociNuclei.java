@@ -186,7 +186,9 @@ public class PlugInDialogEstimateFociNuclei extends JDialogScriptableBase implem
             }
         } else if (command.equals("Cancel")) {
             dispose();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
     
     

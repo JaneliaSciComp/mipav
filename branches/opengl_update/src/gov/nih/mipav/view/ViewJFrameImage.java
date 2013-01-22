@@ -14,6 +14,7 @@ import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
@@ -514,6 +515,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients, 0, 0, 0, 0, false)) {
+                
+                if (this.newFrameBeenCreated()) {
+                    return;
+                }
 
                 if ( (imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
                     removeControls();
@@ -1111,6 +1116,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogAnyTwoImagesSNR(this, getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
+        } else if (command.equals("waveletMultiscaleProducts")) {
+            new JDialogWaveletMultiscaleProducts(this, getActiveImage());
+        } else if (command.equals("LLE")) {
+            new JDialogLLE(this, getActiveImage());
         } else if (command.equals("fuzzyMin")) {
         	new JDialogFuzzyMinimization(this, getActiveImage());
         } else if (command.equals("FuzzMinDeAndChatterji")) {
@@ -1386,8 +1395,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogErode(this, getActiveImage());
         } else if (command.equals("Skeletonize")) {
             new JDialogSkeletonize(this, getActiveImage());
-        } else if (command.equals("Skeletonize3D")) {
-            new JDialogSkeletonize3D(this, getActiveImage());
         } else if(command.equals("SWI")) { 
             new JDialogSWI(this, getActiveImage());
         } else if (command.equals("Find edges")) {
@@ -1684,7 +1691,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogReorient(this, getActiveImage());
         } else if (command.equals("Extract slices")) {
             new JDialogExtractSlicesVolumes(this, getActiveImage());
-        } else if (command.equals("Remove slices")) {
+        } else if(command.equals("Swap slices")) {
+            new JDialogSwapSlicesVolumes(this, getActiveImage(), SwapMode.ThreeD);
+        } else if(command.equals("Swap volumes")) {
+            new JDialogSwapSlicesVolumes(this, getActiveImage(), SwapMode.FourD);
+        }else if (command.equals("Remove slices")) {
             new JDialogRemoveSlices(this, getActiveImage());
         } else if (command.equals("padding")) {
             new JDialogPadImages(this, getActiveImage());
@@ -1697,6 +1708,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Reslice - isotropic voxels")) {
             new JDialogReslice(this, getActiveImage());
         } else if (command.equals("Test algorithm")) { // new JDialogRegionGrow(this, getActiveImage());
+        } else if (command.equals("SCD")) {
+            new JDialogSCDSegmentation(this, getActiveImage());
         } else if (command.equals("threshMinMax")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
@@ -2261,7 +2274,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
+            MipavUtil.showWebHelp("MIPAV_Help");
         } else if (command.equals("MemoryAdjust")) {
             userInterface.memoryAllocation();
         } else if (command.equals("About")) {
@@ -2483,8 +2497,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogTreT2(this, getActiveImage());
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        } else if (command.equals("TimeFitting")) {
+            new JDialogTimeFitting();
         } else if (command.equals("KMeans")) {
             new JDialogKMeans();
+        } else if (command.equals("SpectralClustering")) {
+            new JDialogSpectralClustering();
         } else if (command.equals("HyperGraph")) {
             new JDialogHyperGraph(this);
         } else if (command.startsWith("PlugInImageJ")) {

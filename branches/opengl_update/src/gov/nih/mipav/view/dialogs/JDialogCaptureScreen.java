@@ -13,7 +13,6 @@ import java.awt.datatransfer.*;
 
 import java.io.*;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -25,7 +24,7 @@ import javax.swing.event.*;
  * created by MIPAV is fair game to draw upon, but clicking elsewhere on the screen will make MIPAV inactive and the
  * rectangle drawn invalid.
  */
-public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener, KeyListener{
+public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -49,6 +48,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
     /** Instructions on how to use screen capture, line 2. */
     private JLabel instructions2;
+    
+    /** Instructions on how to use screen capture, line 3. */
+	private JLabel instructions3;
 
     /** Mode - region or window */
     private WindowProperties mode;
@@ -95,13 +97,29 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** Active frame **/
     public ViewJFrameImage activeFrame;
     
-    /** Boolean to indicate whether or not this class is being used by the ImageAttacher class */
-    private boolean imageAttacher;
-    
     /** JTextField for the name of the file being attached */
-    private JTextField fileField;
+    private JTextField fileField = new JTextField(25);
     
-    public String fileName;
+    /** Boolean indicating if the OK button has been pressed when JDialogCaptureScreen is launched through the report bug form */
+    public boolean ok = false;
+
+    /** String to house the user inputed file name */
+	public String fileName;
+
+	/** The buffered image selected by the user */
+	public static BufferedImage currImage;
+	
+	/** The image selected by the user */
+	private Image imagePix;
+
+	/** Button for inserting the image into the body of a bug report */
+	private JButton insertButton;
+
+	/** Boolean indicating if the Insert button has been pressed */
+	public boolean insert;
+
+	/** Boolean indicating if JDialogCaptureScreen has been initialized through ReportBugBuilder */
+	private boolean imageAttacher;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -117,49 +135,57 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     
     public JDialogCaptureScreen(ViewJFrameImage parent, boolean bugReport) {
         super(parent, false);
+
         userInterface = ViewUserInterface.getReference();
         save = false;
         copy = false;
         display = false;
         mode = WindowProperties.REGION;
         imageAttacher = bugReport;
+        
+        
 
-        Frame[] frames = Frame.getFrames();
-
-        // Get count of JFrames, frames with GlassPanes that we can write on
-        // for the bounding box of a screen capture.
-        int count = 0;
-
-        for (int i = 0; i < frames.length; i++) {
-
-            if (frames[i] instanceof JFrame) {
-                count++;
-            }
-        }
-
-        myGlassPanes = new MyGlassPane[count];
-        oldPanes = new Component[count];
-        oldFrames = new JFrame[count];
-
-        // Save old frames so we can reset their glass panes at the end
-        int j = 0;
-
-        for (int i = 0; i < frames.length; i++) {
-
-            try {
-                JFrame test = (JFrame) frames[i];
-                test.addWindowListener(this);
-                test.addMouseListener(this);
-                oldPanes[j] = test.getGlassPane();
-                oldFrames[j] = test;
-                myGlassPanes[j] = new MyGlassPane();
-                test.setGlassPane(myGlassPanes[j]);
-                j++;
-            } catch (ClassCastException error) { }
-        }
-
-        init();
+	        Frame[] frames = Frame.getFrames();
+	
+	        // Get count of JFrames, frames with GlassPanes that we can write on
+	        // for the bounding box of a screen capture.
+	        int count = 0;
+	
+	        for (int i = 0; i < frames.length; i++) {
+	
+	            if (frames[i] instanceof JFrame) {
+	                count++;
+	            }
+	        }
+	
+	        myGlassPanes = new MyGlassPane[count];
+	        oldPanes = new Component[count];
+	        oldFrames = new JFrame[count];
+	
+	        // Save old frames so we can reset their glass panes at the end
+	        int j = 0;
+	
+	        for (int i = 0; i < frames.length; i++) {
+	
+	            try {
+	                JFrame test = (JFrame) frames[i];
+	                test.addWindowListener(this);
+	                test.addMouseListener(this);
+	                oldPanes[j] = test.getGlassPane();
+	                oldFrames[j] = test;
+	                myGlassPanes[j] = new MyGlassPane();
+	                test.setGlassPane(myGlassPanes[j]);
+	                j++;
+	            } catch (ClassCastException error) { }
+	        }
+	        if (imageAttacher == false) {
+	        	init();
+	        } else {
+	        	init(true);
+	        }
+	        
     }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -179,22 +205,31 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-
-        if (command.equals("OK")) {
+        if (command.equals("OK") ||  command.equals("Insert")) {
 
             if ((currentRectangle != null) && !currentRectangle.isEmpty() &&
                     (currentRectangle.x > -1) && (currentRectangle.y > -1)) {
+            	
+            	
+            	writeImage();
+            	if(imageAttacher) {
 
-            } 
-            
-            if (imageAttacher) {
-        		fileName = fileField.getText();
-        		if (fileName.length() == 0)
-        			JOptionPane.showMessageDialog(null, "You must name the attachment", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        		
-            if (writeImage()) {
-            		
+                	for (int i = 0; i < oldFrames.length; i++) {
+                        myGlassPanes[i].setVisible(false);
+                        oldFrames[i].setGlassPane(oldPanes[i]);
+                        oldFrames[i].removeWindowListener(this);
+                        oldFrames[i].removeMouseListener(this);
+                        myGlassPanes[i] = null;
+                    }
+                    myGlassPanes = null;
+                    dispose();
+                    System.gc();
+                }
+            	if (command.equals("Insert")) {
+            		insert = true;
+            	} else {
+            		ok = true;
+            	}
             		
                 	//commented the code below out in order to leave dialog up so that you can 
                 	//select multiple regions one after the other
@@ -213,6 +248,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
             } else {
                 MipavUtil.displayError("You must choose a region or window to capture.");
             }
+            
         } else if (command.equals("Cancel")) {
 
             for (int i = 0; i < oldFrames.length; i++) {
@@ -246,7 +282,10 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
             instructions.setText("Select the window you want to save.");
             instructions2.setText("Then press OK.");
             mode = WindowProperties.WINDOW;
+        } else {
+            super.actionPerformed(event);
         }
+            
 
     }
 
@@ -413,8 +452,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         saveOptions.add(copyCheck);
         saveOptions.add(displayCheck);
 
-        buildOKButton();
-        buildCancelButton();
+        OKButton = buildOKButton();
+        cancelButton = buildCancelButton();
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -461,31 +500,140 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(panel, BorderLayout.WEST);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        mainPanel.add(options, BorderLayout.EAST);
+        
+        getContentPane().add(mainPanel);
+        try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        //resizer.addComponentListener(this);
+        pack();
+        setVisible(true);
+    }
+    
+    
+    /**
+     * Initialize GUI for the bug report form. This form includes an instruction section, field for a file name, and
+     * Insert, Ok, and Cancel buttons.
+     */
+    public void init(boolean imageAttacher) {
+    	
+    	
+    	setTitle("Create New Image");
+        
+        currentRectangle = null;
+        for (int i = 0; i < myGlassPanes.length; i++) {
+            myGlassPanes[i].setVisible(true);
+        }
+
+        regionButton = new JRadioButton("Region");
+        regionButton.setFont(MipavUtil.font12);
+        regionButton.setForeground(Color.black);
+        regionButton.addActionListener(this);
+        regionButton.setActionCommand("Region");
+
+        windowButton = new JRadioButton("Window");
+        windowButton.setFont(MipavUtil.font12);
+        windowButton.setForeground(Color.black);
+        windowButton.addActionListener(this);
+        windowButton.setActionCommand("Window");
+
+        instructions = new JLabel("Draw a rectangle with the mouse around the");
+        instructions.setFont(MipavUtil.font12);
+        instructions.setForeground(Color.black);
+        instructions2 = new JLabel("region you want to save.  Then press OK.");
+        instructions2.setFont(MipavUtil.font12);
+        instructions2.setForeground(Color.black);
+        instructions3 = new JLabel("(Regions must originate within a MIPAV window.)");
+        instructions3.setFont(MipavUtil.font12);
+        instructions3.setForeground(Color.black);
+
+        insertButton = new JButton("Insert");
+        insertButton.addActionListener(this);
+        insertButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        insertButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        insertButton.setFont(serif12B);
+        
+        OKButton = buildOKButton();
+        cancelButton = buildCancelButton();
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+
+        JPanel instruction = new JPanel();
+        instruction.setLayout(new BoxLayout(instruction, BoxLayout.Y_AXIS));
+        instruction.add(instructions);
+        instruction.add(instructions2);
+        instruction.add(instructions3);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        panel.add(instruction, gbc);
+        gbc.gridy = 2;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        panel.add(regionButton, gbc);
+        gbc.gridy = 3;
+        panel.add(windowButton, gbc);
+        panel.setBorder(buildTitledBorder("Image options"));
+        regionButton.setSelected(true);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(insertButton);
+        buttonPanel.add(OKButton);
+        buttonPanel.add(cancelButton);
+
         JPanel attachmentOptions = new JPanel();
         attachmentOptions.setLayout(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weighty = 1;
         gbc.gridy = 2;
-        JLabel attachmentInstruction = new JLabel("Select the window or region you would like to attach. Press ctrl+c");
+        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. To attach the image");
         attachmentInstruction.setFont(MipavUtil.font12);
         attachmentInstruction.setForeground(Color.black);
         
-        JLabel attachmentInstruction2 = new JLabel("to copy the image to clipboard or enter a file name below and press");
+        JLabel attachmentInstruction2 = new JLabel("as a file, fill in the field below with a name and press the OK");
         attachmentInstruction2.setFont(MipavUtil.font12);
         attachmentInstruction2.setForeground(Color.black);
         
-        JLabel attachmentInstruction3 = new JLabel("the OK button to attach the image as a file. \n");
+        JLabel attachmentInstruction3 = new JLabel("button. To copy theimage to your clipboard and insert it into");
         attachmentInstruction3.setFont(MipavUtil.font12);
         attachmentInstruction3.setForeground(Color.black);
+        
+        JLabel attachmentInstruction4 = new JLabel("your description, press the Insert button. To do both, fill in");
+        attachmentInstruction4.setFont(MipavUtil.font12);
+        attachmentInstruction4.setForeground(Color.black);
+        
+        JLabel attachmentInstruction5 = new JLabel("a file name and press the Insert button.");
+        attachmentInstruction5.setFont(MipavUtil.font12);
+        attachmentInstruction5.setForeground(Color.black);
         
         attachmentOptions.add(attachmentInstruction, gbc);
         gbc.gridy = 3;
         attachmentOptions.add(attachmentInstruction2, gbc);
         gbc.gridy = 4;
         attachmentOptions.add(attachmentInstruction3, gbc);
+        gbc.gridy = 5;
+        attachmentOptions.add(attachmentInstruction4, gbc);
         gbc.gridy = 6;
-        fileField = new JTextField();
+        attachmentOptions.add(attachmentInstruction5, gbc);
+        gbc.gridy = 7;
         fileField.setPreferredSize(new Dimension(320, 20));
         attachmentOptions.add(fileField, gbc);
         attachmentOptions.setBorder(buildTitledBorder("Image Selection"));
@@ -493,14 +641,10 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(panel, BorderLayout.WEST);
+//        mainPanel.add(instruction, BorderLayout.NORTH);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        
-        if (!imageAttacher){
-        	mainPanel.add(options, BorderLayout.EAST);
-	    } else {
-	    	mainPanel.add(attachmentOptions, BorderLayout.EAST);
-	    }
+        mainPanel.add(attachmentOptions, BorderLayout.NORTH);
+
         
         getContentPane().add(mainPanel);
         try {
@@ -527,8 +671,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         ModelImage testImage = null;
         Robot robot;
         String imageName;
-        Image imagePix;
-
 
         try {
             robot = new Robot();
@@ -556,38 +698,39 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         }
 
 
-        try {
-            int[] extents = new int[2];
-            extents[0] = xDim; // RGB
-            extents[1] = yDim;
+        if (!imageAttacher) {
+	        try {
+	            int[] extents = new int[2];
+	            extents[0] = xDim; // RGB
+	            extents[1] = yDim;
+	
+	            imageName = activeFrame.getImageNameA() + "_screen_capture.tif";
+	            testImage = new ModelImage(ModelStorageBase.ARGB, extents, activeFrame.getImageNameA() + "_screen_capture");
+	            testImage.setImageName(imageName);
+	            testImage.getFileInfo()[0].setFileDirectory(activeFrame.getImageA().getFileInfo(0).getFileDirectory());
+	            buffer = new short[bufferSize];
+	        } catch (OutOfMemoryError error) {
+	            MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");
+	
+	            return false;
+	        }
 
-            imageName = activeFrame.getImageNameA() + "_screen_capture.tif";
-            testImage = new ModelImage(ModelStorageBase.ARGB, extents, activeFrame.getImageNameA() + "_screen_capture");
-            testImage.setImageName(imageName);
-            testImage.getFileInfo()[0].setFileDirectory(activeFrame.getImageA().getFileInfo(0).getFileDirectory());
-            buffer = new short[bufferSize];
-        } catch (OutOfMemoryError error) {
-            MipavUtil.displayError("JDialogScreenCapture: unable to allocate enough memory for RGB image");
+	        int i, k;
+	
+	        for (i = 0, k = 0; i < (xDim * yDim); i++, k += 4) {
+	            buffer[k] = (short) (255); // alpha
+	            buffer[k + 1] = (short) ((pixels[i] >> 16) & 0xFF); // Red
+	            buffer[k + 2] = (short) ((pixels[i] >> 8) & 0xFF); // Green
+	            buffer[k + 3] = (short) (pixels[i] & 0xFF); // Blue
+	        }
+	
+	        try {
+	            testImage.importData(0, buffer, true);
+	        } catch (IOException error) {
+	            MipavUtil.displayError("JDialogScreenCapture: Problems grabbing image!");
+	        }
 
-            return false;
-        }
-
-        int i, k;
-
-        for (i = 0, k = 0; i < (xDim * yDim); i++, k += 4) {
-            buffer[k] = (short) (255); // alpha
-            buffer[k + 1] = (short) ((pixels[i] >> 16) & 0xFF); // Red
-            buffer[k + 2] = (short) ((pixels[i] >> 8) & 0xFF); // Green
-            buffer[k + 3] = (short) (pixels[i] & 0xFF); // Blue
-        }
-
-        try {
-            testImage.importData(0, buffer, true);
-        } catch (IOException error) {
-            MipavUtil.displayError("JDialogScreenCapture: Problems grabbing image!");
-        }
-
-        testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
+	        testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
        	
 	        if (save) {
 	            String fileName;
@@ -639,22 +782,19 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	        if (display) {
 	            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
 	        } 
-	        if (imageAttacher) {
-	        	try {
-		        	BufferedImage currImage = (BufferedImage) imagePix;
-		        	File attachment;
-					attachment = File.createTempFile(fileName, ".png");
-					ImageIO.write(currImage, "png", attachment);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+        } else {
+        	fileName = fileField.getText();
+        	try {
+	        	currImage = (BufferedImage) imagePix;
+	        } catch (IllegalArgumentException e) {
+	           	
 	        }
+	    }
         return true;
     }
     
     /** changes an image to a Transferable*/
-	public static class ImageConverter implements Transferable{
+	private class ImageConverter implements Transferable{
 		private Image temp;
 		public ImageConverter(Image image){
 			temp = image;
@@ -947,27 +1087,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
 	@Override
 	public void componentShown(ComponentEvent e) {}
-
-	@Override
-	public void keyPressed(KeyEvent event) {
-		save = false;
-		display = false;
-		copy = true;
-		writeImage();
-		
-	}
-
-	@Override
-	public void keyReleased(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
+	
 
 }

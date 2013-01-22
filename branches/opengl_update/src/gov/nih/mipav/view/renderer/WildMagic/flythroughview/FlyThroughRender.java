@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
@@ -71,6 +72,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -6130870790192175575L;
+
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
+    
     /** 3D Layout of the ModelImage. */
     private ModelImage3DLayout m_kVolumeLayout = null;
     /** 3D Skeleton of the ModelImage. */
@@ -131,7 +136,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                              VolumeImage kVolumeImageB, Vector3f kTranslate  )
     {
         super();
-        m_kTranslate.Copy(kTranslate);
+        m_kTranslate.copy(kTranslate);
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                            m_eBuffering, m_eMultisampling,
@@ -139,7 +144,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
@@ -157,7 +163,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      */
     public void addSurface(TriMesh kSurface, Vector3f kCenter)
     {
-        m_kCenter.Copy(kCenter);
+        m_kCenter.copy(kCenter);
         m_kSurface = new TriMesh(kSurface);
         m_kSurface.AttachGlobalState(kSurface.GetGlobalState( GlobalState.StateType.MATERIAL ));
         SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );
@@ -315,7 +321,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 m_kSurface.VBuffer.GetColor3(0, i, m_akColorBackup[i]);
                 m_kSurface.VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
             }
-            m_kSurface.VBuffer.Release();
+            m_kSurface.Reload(true);
         }
         else if ( m_akColorBackup != null )
         {
@@ -323,7 +329,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             for (int i = 0; i < iVQuantity; i++) {
                 m_kSurface.VBuffer.SetColor3(0, i, m_akColorBackup[i]);
             }
-            m_kSurface.VBuffer.Release();
+            m_kSurface.Reload(true);
         }
         GetCanvas().display();
     }
@@ -457,10 +463,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
         Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-        Vector3f kCRight = new Vector3f();
-        kCRight.Cross( kCDir, kCUp );
-        Vector3f kCLoc = new Vector3f(kCDir);
-        kCLoc.Scale(-1.4f);
+        Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+        Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
         CreateScene();
@@ -659,7 +663,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         Vector3f kPositionScaled = m_spkCamera.GetLocation();
         m_kParent.translateSurface( "FlyThrough", kPositionScaled );
         Vector3f kVolumePt3 = m_kParent.getTranslateSurface( "FlyThrough" );
-        kVolumePt3.Sub( m_kTranslate );
+        kVolumePt3.sub( m_kTranslate );
         kVolumePt3.X *= 1.0f/m_fX;
         kVolumePt3.Y *= 1.0f/m_fY;
         kVolumePt3.Z *= 1.0f/m_fZ;
@@ -686,7 +690,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 m_pkRenderer.SetLight( 0, m_kLight );
             }
             String kLightType = new String("Light0Type");
-            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
+            ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(true);
             ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetLight(kLightType, new float[]{2,-1,-1,-1});
             ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetReverseFace(1);
             m_kLightShader.SetLight(kLightType, new float[]{2,-1,-1,-1});
@@ -718,19 +722,18 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             m_kControlFrame.updatePosition(behavior);
         }
         Vector3f kCDir = behavior.getViewDirection();
-        kCDir.Normalize();
+        kCDir.normalize();
         Vector3f kCUp = behavior.getViewUp();
-        kCUp.Normalize();
+        kCUp.normalize();
         Vector3f kCLoc = behavior.getViewPoint();
-        Vector3f kCRight = new Vector3f();
-        kCRight.UnitCross( kCDir, kCUp );
+        Vector3f kCRight = Vector3f.unitCross( kCDir, kCUp );
         Vector3f kPositionScaled = getPositionScaled(kCLoc);
         m_spkCamera.SetFrame(kPositionScaled,kCDir,kCUp,kCRight);
 
         if ( m_kLight != null )
         {
-            m_kLight.Position.Copy(kPositionScaled);
-            m_kLight.DVector.Copy(kCDir);
+            m_kLight.Position.copy(kPositionScaled);
+            m_kLight.DVector.copy(kCDir);
         }
 
         resetRenderBranchPath();
@@ -980,15 +983,14 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         if ( m_kFlyPathBehavior != null ) {
 
             Vector3f kCUp = m_kFlyPathBehavior.getViewUp();
-            kCUp.Normalize();
+            kCUp.normalize();
             Vector3f kCDir = m_kFlyPathBehavior.getViewDirection();
-            kCDir.Normalize();
-            Vector3f kCRight = new Vector3f();
-            kCRight.UnitCross( kCDir, kCUp );
+            kCDir.normalize();
+            Vector3f kCRight = Vector3f.unitCross( kCDir, kCUp );
 
-            kRotate.Mult( kCUp, kUp );
-            kRotate.Mult( kCDir, kDir );
-            kRotate.Mult( kCRight, kRight );
+            kRotate.mult( kCUp, kUp );
+            kRotate.mult( kCDir, kDir );
+            kRotate.mult( kCRight, kRight );
             m_spkCamera.SetFrame( m_spkCamera.GetLocation(), kDir, kUp, kRight);
             if ( m_kControlFrame != null )
             {
@@ -1036,26 +1038,23 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                     PickRecord kRecord = m_kPicker.GetClosestToZero();
                     // Get the normal vector for the picked point.
                     Vector3f kN0 = m_kSurface.VBuffer.GetNormal3( kRecord.iV0 );
-                    kN0.Scale(kRecord.B0);
+                    kN0.scale(kRecord.B0);
                     Vector3f kN1 = m_kSurface.VBuffer.GetNormal3( kRecord.iV1 );
-                    kN1.Scale( kRecord.B1);
+                    kN1.scale( kRecord.B1);
                     Vector3f kN2 = m_kSurface.VBuffer.GetNormal3( kRecord.iV2 );
-                    kN2.Scale( kRecord.B2 );
-                    Vector3f kNormal = new Vector3f();
-                    kNormal.Add( kN0, kN1 );
-                    kNormal.Add( kN2 );
-                    kNormal.Normalize();
+                    kN2.scale( kRecord.B2 );
+                    Vector3f kNormal = Vector3f.add( kN0, kN1 );
+                    kNormal.add( kN2 ).normalize();
 
                     // Get picked point.
                     Vector3f kP0 = m_kSurface.VBuffer.GetPosition3( kRecord.iV0 );
-                    kP0.Scale(kRecord.B0);
+                    kP0.scale(kRecord.B0);
                     Vector3f kP1 = m_kSurface.VBuffer.GetPosition3( kRecord.iV1 );
-                    kP1.Scale( kRecord.B1);
+                    kP1.scale( kRecord.B1);
                     Vector3f kP2 = m_kSurface.VBuffer.GetPosition3( kRecord.iV2 );
-                    kP2.Scale( kRecord.B2 );
-                    Vector3f kPoint = new Vector3f();
-                    kPoint.Add( kP0, kP1 );
-                    kPoint.Add( kP2 );
+                    kP2.scale( kRecord.B2 );
+                    Vector3f kPoint = Vector3f.add( kP0, kP1 );
+                    kPoint.add( kP2 );
 
                     createAnnotatePoint(kPoint);
 
@@ -1064,11 +1063,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                     // pointing in opposite directions.  If not, then the
                     // normal vector needs to be negated since the vertex
                     // ordering for the triangle mesh is not guaranteed.
-                    Vector3f kV = new Vector3f();
-                    kV.Sub(kPoint, m_spkCamera.GetLocation());
+                    Vector3f kV = Vector3f.sub(kPoint, m_spkCamera.GetLocation());
 
-                    if (kV.Dot(kNormal) > 0.0f) {
-                        kNormal.Neg();
+                    if (kV.dot(kNormal) > 0.0f) {
+                        kNormal.neg();
                     }
 
                     // Add the point to the annotation list.
@@ -1213,7 +1211,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_aiBranchIndexUnvisitedMin[iBranch] = iUnvisitedMin;
         m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
 
-        kLine.VBuffer.Release();
+        kLine.Reload(true);
     }
 
 }

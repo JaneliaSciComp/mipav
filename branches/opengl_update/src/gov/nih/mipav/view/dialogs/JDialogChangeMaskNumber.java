@@ -122,7 +122,9 @@ public class JDialogChangeMaskNumber extends JDialogBase {
 
 
 			dispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

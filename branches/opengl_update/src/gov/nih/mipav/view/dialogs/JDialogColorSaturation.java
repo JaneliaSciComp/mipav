@@ -94,6 +94,8 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
         
     }
@@ -109,10 +111,6 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmColorSaturation) {
             Preferences.debug("Color saturation: " + algorithm.getElapsedTime());
@@ -171,7 +169,7 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
 
         String defaultsString = String.valueOf(a);
         

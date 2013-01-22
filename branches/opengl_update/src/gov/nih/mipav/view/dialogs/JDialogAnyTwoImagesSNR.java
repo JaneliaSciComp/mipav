@@ -114,6 +114,8 @@ public class JDialogAnyTwoImagesSNR extends JDialogBase implements AlgorithmInte
         } else if (command.equals("Cancel")) {
            
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -214,6 +214,31 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         });
     }
 
+
+    /**
+     * builds and packs the frame. does <i>not</I> set it visible.
+     * 
+     * <p>
+     * install the panels of source directory, destination directory, the checkbox for approving the translation-table
+     * file and the panel containing the ok and cancel buttons. Installs the checkbox panel.
+     * </p>
+     * 
+     * @param srcImage input image
+     * @param voiList DOCUMENT ME!
+     */
+    public JDialogVOIStatistics( ModelImage srcImage, final VOIVector voiList) {
+        super(ViewUserInterface.getReference().getMainFrame(), false);
+
+        image = srcImage;
+        buildDialog(voiList);
+
+        this.addWindowListener(new WindowAdapter() {
+            public void windowClosing(final WindowEvent event) {
+                cleanUpAndDispose();
+            }
+        });
+    }
+
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
@@ -239,7 +264,10 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         } else if (source == cancelButton) {
             cleanUpAndDispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("GroupStat001");
+            //MipavUtil.showHelp("GroupStat001");
+            MipavUtil.showWebHelp("Calculating_statistics_on_VOI_groups");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 
@@ -693,7 +721,12 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         setJMenuBar(buildMenuEntries());
         buildToolBar();
         this.userInterface = ViewUserInterface.getReference();
-        image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
+        if ( image == null )
+        {
+        	// this function call won't work if the input image is not in a frame
+        	// use JDialogVOIStatistics(srcImage, voiList) in that case:
+        	image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
+        }
         
         // need to take out line VOIs, polyline VOIs, point VOIs
 
@@ -730,7 +763,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         
         outputOptionsPanel = new JPanelStatisticsOptions();
 
-        if (ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage().getNDims() == 2) {
+        if (image.getNDims() == 2) {
             outputOptionsPanel.setBySliceEnabled(false);
         }
 
@@ -1398,7 +1431,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
                 // intensity, or standard deviation of intensity, those properties were entered as Red,
                 // Green, Blue and we should display them differently.
                 if (calculator.isColor()
-                        && (VOIStatisticList.statisticDescription[k].indexOf("Intensity") != -1)) {
+                        && ((VOIStatisticList.statisticDescription[k].indexOf("Intensit") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Center of Mass") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Coefficient of skewness") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Coefficient of kurtosis") != -1) ||
+                        (VOIStatisticList.statisticDescription[k].indexOf("Mode Count") != -1))) {
                     String temp = "R: "
                             + properties.getProperty(VOIStatisticList.statisticDescription[k] + "Red"
                                     + end);

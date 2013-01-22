@@ -1,8 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 
 
-import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -13,7 +13,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.event.MouseEvent;
-import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -25,11 +24,9 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
-import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
@@ -52,6 +49,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
+    
 	/** Point indices of the puncture triangle. */
 	private int[] m_aiTriIndex = null;
 	/** puncture triangle color */
@@ -141,7 +141,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
 		m_kAnimator = kAnimator;
 		m_kVolumeImageA = kVolumeImageA;
@@ -161,7 +162,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
+        m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());     
 
 		m_kAnimator = kAnimator;
 		m_kVolumeImageA = kVolumeImageA;
@@ -478,10 +480,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
 		Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
-		Vector3f kCLoc = new Vector3f(kCDir);
-		kCLoc.Scale(-1.4f);
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+		Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -862,33 +862,28 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		Vector3f kP0 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV0 );
 		Vector3f kP1 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV1 );
 		Vector3f kP2 = m_kCortical.getCylinder().VBuffer.GetPosition3( kPickPoint.iV2 );
-		Vector3f kP0mB0 = new Vector3f();
-		kP0mB0.Scale( kPickPoint.B0, kP0 );
-		Vector3f kP1mB1 = new Vector3f();
-		kP1mB1.Scale( kPickPoint.B1, kP1 );
-		Vector3f kP2mB2 = new Vector3f();
-		kP2mB2.Scale( kPickPoint.B2, kP2 );
-		Vector3f kPoint = new Vector3f();
-		kPoint.Add( kP0mB0, kP1mB1 );
-		kPoint.Add( kP2mB2 );
+		Vector3f kP0mB0 = Vector3f.scale( kPickPoint.B0, kP0 );
+		Vector3f kP1mB1 = Vector3f.scale( kPickPoint.B1, kP1 );
+		Vector3f kP2mB2 = Vector3f.scale( kPickPoint.B2, kP2 );
+		Vector3f kPoint = Vector3f.add( kP0mB0, kP1mB1 );
+		kPoint.add( kP2mB2 );
 
 		float fDistance = Float.MAX_VALUE;
 		float fMinDistance = Float.MAX_VALUE;
 
-		Vector3f kDiff = new Vector3f();
-		kDiff.Sub( kPoint, kP0 );
-		fDistance = kDiff.SquaredLength();
+		Vector3f kDiff = Vector3f.sub( kPoint, kP0 );
+		fDistance = kDiff.squaredLength();
 		if (fDistance < fMinDistance) {
 			fMinDistance = fDistance;
 		}
 
-		kDiff.Sub( kPoint, kP1 );
-		fDistance = kDiff.SquaredLength();
+		kDiff = Vector3f.sub( kPoint, kP1 );
+		fDistance = kDiff.squaredLength();
 		if (fDistance < fMinDistance) {
 			fMinDistance = fDistance;
 		}
-		kDiff.Sub( kPoint, kP2 );
-		fDistance = kDiff.SquaredLength();
+		kDiff = Vector3f.sub( kPoint, kP2 );
+		fDistance = kDiff.squaredLength();
 		if (fDistance < fMinDistance) {
 			fMinDistance = fDistance;
 		}
@@ -1036,9 +1031,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		}
 
 
-		m_kCortical.getMesh().VBuffer.Release();
-		m_kCortical.getSphere().VBuffer.Release();
-		m_kCortical.getCylinder().VBuffer.Release();
+		m_kCortical.getMesh().Reload(true);
+		m_kCortical.getSphere().Reload(true);
+		m_kCortical.getCylinder().Reload(true);
 	}
 
 	/**
@@ -1068,9 +1063,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 			m_akTriColors = null;
 			m_aiTriIndex = null;
 
-			m_kCortical.getMesh().VBuffer.Release();
-			m_kCortical.getSphere().VBuffer.Release();
-			m_kCortical.getCylinder().VBuffer.Release();
+			m_kCortical.getMesh().Reload(true);
+			m_kCortical.getSphere().Reload(true);
+			m_kCortical.getCylinder().Reload(true);
 		}
 	}
 
@@ -1147,8 +1142,8 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		    m_kCylinder.GetMesh().VBuffer.SetColor3( 0, i, fRed, fGreen, fBlue );
 		}
 		m_kCortical.updateMesh(false);
-		m_kSphere.GetMesh().VBuffer.Release();
-		m_kCylinder.GetMesh().VBuffer.Release();
+		m_kSphere.GetMesh().Reload(true);
+		m_kCylinder.GetMesh().Reload(true);
 	}
 
 

@@ -2400,6 +2400,7 @@ public class FileNRRD extends FileBase {
      * file list. Only the one file directory (currently) supported.
      *
      * @param      one  flag indicating one image of a 3D dataset should be read in.
+     * @param      doHeader
      *
      * @exception  IOException  if there is an error reading the file
      *
@@ -2407,12 +2408,14 @@ public class FileNRRD extends FileBase {
      *
      * @see        FileRaw
      */
-    public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        int offset;
+    public ModelImage readImage(boolean one, boolean doHeader) throws IOException, OutOfMemoryError {
+        long offset;
         int linesFound;
         int i;
         byte[] buf = new byte[1];
-        fileInfo = new FileInfoNRRD(fileName, fileDir, FileUtility.NRRD);
+        if (doHeader) {
+            fileInfo = new FileInfoNRRD(fileName, fileDir, FileUtility.NRRD);
+        }
 
         long dataSize;
         FileInputStream fis;
@@ -2437,8 +2440,10 @@ public class FileNRRD extends FileBase {
         int[] newUnits;
         String[] newLabels = null;
 
-        if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
-            throw (new IOException(" NRRD header file error"));
+        if (doHeader) {
+            if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
+                throw (new IOException(" NRRD header file error"));
+            }
         }
       
         if (autoSequence || fileNameSequence) {
@@ -2648,9 +2653,9 @@ public class FileNRRD extends FileBase {
 
                 // Do byte skipping after decompression
                 if (skippedBytes >= 0) {
-                    offset = (int) (offset1 + skippedBytes);
+                    offset = (offset1 + skippedBytes);
                 } else { // skippedBytes < 0
-                    offset = (int) (fileLength - dataSize);
+                    offset = (fileLength - dataSize);
                 } // else skippedBytes < 0
 
                 try { // Construct a FileRaw to actually read the image.
@@ -2743,7 +2748,7 @@ public class FileNRRD extends FileBase {
 
             // Do byte skipping after decompression
             if (skippedBytes >= 0) {
-                offset = (int) (offset1 + skippedBytes);
+                offset = (offset1 + skippedBytes);
             } else { // skippedBytes < 0
                 dataSize = imgExtents[0] * imgExtents[1];
 
@@ -2791,7 +2796,7 @@ public class FileNRRD extends FileBase {
                     dataSize *= 2;
                 }
 
-                offset = (int) (fileLength - dataSize);
+                offset = (fileLength - dataSize);
             } // else skippedBytes < 0
 
             try {
@@ -2806,6 +2811,7 @@ public class FileNRRD extends FileBase {
                     image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
                                            fileInfo.getFileName());
                 } else {
+                    
                     image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName());
                 }
             } catch (OutOfMemoryError error) {
@@ -3077,6 +3083,14 @@ public class FileNRRD extends FileBase {
         return tempString;
     }
 
+   /**
+    * 
+    * @param fileInfo
+    */
+    public void setFileInfo(FileInfoNRRD fileInfo) {
+       this.fileInfo = fileInfo;
+   }
+    
     /**
      * DOCUMENT ME!
      *
@@ -3166,7 +3180,8 @@ public class FileNRRD extends FileBase {
      * write NRRD header
      * @return
      */
-    private boolean writeHeader(ModelImage image, String fhName, String fDir, FileWriteOptions options) throws IOException {
+    private boolean writeHeader(ModelImage image, String fhName, String fDir, int beginSlice, int endSlice,
+                                int beginTime, int endTime) throws IOException {
     	String fileHeaderName = "";
     	String lineString = "";
     	FileInfoBase fInfo;
@@ -3190,6 +3205,7 @@ public class FileNRRD extends FileBase {
     	String spaceUnitsOfMeasString = "";
     	boolean isTime = false;
     	boolean orientationsKnown = true;
+    	int tempExtents[];
     	
     	//header filename
     	if (oneFile) {
@@ -3230,12 +3246,39 @@ public class FileNRRD extends FileBase {
     		typeString = "float";
     	}
     	
+    	//per axis info
+        dimension = image.getNDims();
+        extents = image.getFileInfo(0).getExtents();
+        if (dimension == 4 && (beginTime == endTime)) {
+            tempExtents = image.getFileInfo(0).getExtents();
+            extents = new int[3];
+            extents[0] = tempExtents[0];
+            extents[1] = tempExtents[1];
+            tempExtents = null;
+            extents[2] = endSlice - beginSlice +1;
+            dimension = dimension - 1;
+        }
+        else if (dimension == 3 && (beginSlice == endSlice)) {
+            tempExtents = image.getFileInfo(0).getExtents();
+            extents = new int[2];
+            extents[0] = tempExtents[0];
+            extents[1] = tempExtents[1];
+            tempExtents = null;
+            dimension = dimension - 1;
+        }
+        if ((image.getNDims() == 4) && (endTime > beginTime)) {
+            extents[3] = endTime - beginTime + 1;
+            extents[2] = endSlice - beginSlice + 1;
+        }
+        else if ((image.getNDims() == 3) && (endSlice > beginSlice)) {
+            extents[2] = endSlice - beginSlice + 1;
+        }
     	
         res = image.getFileInfo(0).getResolutions();
         //orientation info
     	if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE) {
     		spaceString = "left-posterior-superior";
-    		if(image.getNDims() == 4) {
+    		if(dimension == 4) {
     			if(image.getUnitsOfMeasure().length >= 4) {
 	    			if(image.getUnitsOfMeasure(3) == Unit.HOURS.getLegacyNum() || 
 	    					image.getUnitsOfMeasure(3) == Unit.HZ.getLegacyNum() ||
@@ -3262,7 +3305,7 @@ public class FileNRRD extends FileBase {
             	}
             }
                    
-            if(orientationsKnown && image.getNDims() >= 3) {
+            if(orientationsKnown && dimension >= 3) {
             	float value = 0;
             	if(axisOrients[0] == FileInfoBase.ORI_R2L_TYPE) {
  				   value = Math.abs(res[0]);
@@ -3272,7 +3315,7 @@ public class FileNRRD extends FileBase {
  					   value = -value;
  				   }
  			   	}
-            	if (image.getNDims() == 3) {
+            	if (dimension == 3) {
             	    sb.append("(" + value + ",0,0) ");
             	}
             	else {
@@ -3286,7 +3329,7 @@ public class FileNRRD extends FileBase {
 					   value = -value;
 				   }
  			    }
-        		if (image.getNDims() == 3) {
+        		if (dimension == 3) {
         		    sb.append("(0," + value + ",0) ");
         		}
         		else {
@@ -3301,18 +3344,16 @@ public class FileNRRD extends FileBase {
   					   value = -value;
   				   }
         		}
-        		if (image.getNDims() == 3) {
+        		if (dimension == 3) {
         		    sb.append("(0,0," + value + ") ");
         		}
         		else {
         			sb.append("(0,0," + value + ",0) ");	
         		}
         	
-        		if(image.getNDims() == 4) {
-        			if(!options.isMultiFile()) {
-        				value = Math.abs(res[3]);
-        				sb.append("(0,0,0," + value + ") ");
-        			}
+        		if(dimension == 4) {
+    				value = Math.abs(res[3]);
+    				sb.append("(0,0,0," + value + ") ");
         		}
 
                 spaceDirectionsString = sb.toString();
@@ -3330,7 +3371,7 @@ public class FileNRRD extends FileBase {
 			}else if(axisOrients[1] == FileInfoBase.ORI_S2I_TYPE) {
 				origin[1] = Math.abs(origin[1]);
 			}
-            if(image.getNDims() > 2) {
+            if(dimension > 2) {
             	if(axisOrients[2] == FileInfoBase.ORI_A2P_TYPE) {
             		origin[2] = -Math.abs(origin[2]);
  			   	}else if (axisOrients[2] == FileInfoBase.ORI_P2A_TYPE) {
@@ -3340,7 +3381,7 @@ public class FileNRRD extends FileBase {
 
             sb = new StringBuffer();
             sb.append("(");
-            for (int i = 0; (i < image.getNDims()); i++) {
+            for (int i = 0; (i < dimension); i++) {
             	if(i == 0) {
             		sb.append(new Float(origin[i]).toString());
             	}else {
@@ -3351,41 +3392,24 @@ public class FileNRRD extends FileBase {
     		spaceOriginString = sb.toString();
     	} // if(image.getAxisOrientation()[0] != FileInfoBase.ORI_UNKNOWN_TYPE)
     	
-    	//per axis info
-    	dimension = image.getNDims();
-    	extents = image.getFileInfo(0).getExtents();
-    	
     	if(dimension == 2) {
     		kindsString = "space space";
     		sizesString = extents[0] + " " + extents[1];
     		spacingsString = res[0] + " " + res[1];
     	} else if(dimension == 3) {
-    		if(!options.isMultiFile()) {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
-    			kindsString = "space space space";
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2];
-    		}else {
-    			kindsString = "space space";
-    			sizesString = extents[0] + " " + extents[1];
-    			spacingsString = res[0] + " " + res[1];
-    		}
+			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
+			kindsString = "space space space";
+			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
+			spacingsString = res[0] + " " + res[1] + " " + res[2];
     	} else if(dimension == 4) {
-    		if(!options.isMultiFile()) {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
-    			if(isTime) {
-    				kindsString = "space space space time";
-    			}else {
-    				kindsString = "space space space domain";
-    			}
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
-    		}else {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
-    			kindsString = "space space space";
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2];
-    		}
+			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
+			if(isTime) {
+				kindsString = "space space space time";
+			}else {
+				kindsString = "space space space domain";
+			}
+			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
+			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
     	}
     	
     	//space units of measure
@@ -3393,7 +3417,7 @@ public class FileNRRD extends FileBase {
     	StringBuffer sb = new StringBuffer();
     	String s = "";
     	if(spaceUnitsOfMeas[0] != Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-	    	for(int i=0;(i<spaceUnitsOfMeas.length) && (i < image.getNDims());i++) {
+	    	for(int i=0;(i<spaceUnitsOfMeas.length) && (i < dimension);i++) {
 	    		if(spaceUnitsOfMeas[i] == Unit.MILLIMETERS.getLegacyNum()) {
 	    			s = "\"mm\"";
 	    		} else if (spaceUnitsOfMeas[i] == Unit.INCHES.getLegacyNum()) {
@@ -3448,11 +3472,6 @@ public class FileNRRD extends FileBase {
     			spaceDirectionsString = "none " + spaceDirectionsString;
     		}
     	}
-    	
-    	//multifile option
-    	if(options.isMultiFile()) {
-    		dimension = dimension - 1;
-    	}
 
     	//endianess
     	endianess = fInfo.getEndianess();
@@ -3485,7 +3504,7 @@ public class FileNRRD extends FileBase {
         lineString = "encoding: " + encodingString + "\n";
         raFile.writeBytes(lineString);
         
-        if(!orientationsKnown || image.getNDims() > 3) {
+        if(!orientationsKnown || dimension > 3) {
         	lineString = "spacings: " + spacingsString + "\n";
         	raFile.writeBytes(lineString);
         }
@@ -3503,7 +3522,7 @@ public class FileNRRD extends FileBase {
             raFile.writeBytes(lineString);
         }
         
-        if(orientationsKnown && image.getNDims() >= 3) {
+        if(orientationsKnown && dimension >= 3) {
 	        if(!spaceDirectionsString.equals("")) {
 	        	lineString = "space directions: " + spaceDirectionsString + "\n";
 	            raFile.writeBytes(lineString);
@@ -3546,6 +3565,10 @@ public class FileNRRD extends FileBase {
         int index;
     	String suffix;
         suffix = FileUtility.getExtension(fileName);
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+        int beginTime = options.getBeginTime();
+        int endTime = options.getEndTime();
     	
         if (suffix.equalsIgnoreCase(".nrrd")) {
             oneFile = true;
@@ -3616,7 +3639,7 @@ public class FileNRRD extends FileBase {
                 }
         	}
         } else {
-        	writeHeader(image,fhName,fileDir,options);
+        	writeHeader(image,fhName,fileDir, beginSlice, endSlice, beginTime, endTime);
         	if (oneFile) {
         		FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
@@ -3695,7 +3718,7 @@ public class FileNRRD extends FileBase {
                 }
             }
 
-            writeHeader(img, headerName, headerDir, options);
+            writeHeader(img, headerName, headerDir, beginSlice, endSlice, 0, 0);
 
         } // end for loop
     }
@@ -3716,6 +3739,8 @@ public class FileNRRD extends FileBase {
     private void writeHeader4DTo3D(ModelImage image, String fileName, String fileDir, FileWriteOptions options)
             throws IOException {
         int k, seq;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
         int beginTime = options.getBeginTime();
         int endTime = options.getEndTime();
         String origName = new String(fileName);
@@ -3755,7 +3780,7 @@ public class FileNRRD extends FileBase {
             }
             // write header with image, # of images per, and 1 time slice
 
-            writeHeader(image, fileName, fileDir, options);
+            writeHeader(image, fileName, fileDir, beginSlice, endSlice, k, k);
 
         } // end for loop
 

@@ -96,7 +96,8 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".IDS", FileUtility.ICS);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.INTERFILE, new FileTypeInfo("Interfile", ".hdr"));
-        // .hdr used by analyze, interfile and nifti
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.INTERFILE_MULTIFILE, new FileTypeInfo("Interfile multifile", ".hdr"));
+        // .hdr used by analyze, interfile  and nifti
         FileTypeTable.FILE_EXT_TABLE.put(".hdr", FileUtility.UNDEFINED);
         FileTypeTable.FILE_EXT_TABLE.put(".HDR", FileUtility.UNDEFINED);
         
@@ -164,6 +165,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".CT", FileUtility.MICRO_CAT);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MINC, new FileTypeInfo("MINC", ".mnc"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.MINC_MULTIFILE, new FileTypeInfo("MINC multifile", ".mnc"));
         // TODO: should this be undefined since .mnc can be both minc1 and minc2?
         FileTypeTable.FILE_EXT_TABLE.put(".mnc", FileUtility.MINC);
         FileTypeTable.FILE_EXT_TABLE.put(".MNC", FileUtility.MINC);
@@ -179,8 +181,15 @@ public class FileTypeTable {
                 .put(FileUtility.NIFTI_MULTIFILE, new FileTypeInfo("NIFTI multifile", ".nii,.img"));
         FileTypeTable.FILE_EXT_TABLE.put(".nii", FileUtility.NIFTI);
         FileTypeTable.FILE_EXT_TABLE.put(".NII", FileUtility.NIFTI);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.METAIMAGE, new FileTypeInfo("MetaImage", ".mhd,.mha,.raw"));
+        FileTypeTable.FILE_EXT_TABLE.put(".mhd", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".MHD", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".mha", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".MHA", FileUtility.METAIMAGE);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.NRRD, new FileTypeInfo("NRRD", ".nrrd,.nhdr"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.NRRD_MULTIFILE, new FileTypeInfo("NRRD multifile", ".nrrd,.nhdr"));
         FileTypeTable.FILE_EXT_TABLE.put(".nrrd", FileUtility.NRRD);
         FileTypeTable.FILE_EXT_TABLE.put(".nhdr", FileUtility.NRRD);
         FileTypeTable.FILE_EXT_TABLE.put(".NRRD", FileUtility.NRRD);
@@ -250,6 +259,8 @@ public class FileTypeTable {
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PARREC, new FileTypeInfo("Philips PARREC",
                 ".par,.rec,.parv2,.frec"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PARREC_MULTIFILE, new FileTypeInfo("PARREC multifile",
+                ".par,.rec,.parv2,.frec"));
         FileTypeTable.FILE_EXT_TABLE.put(".par", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".parv2", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".rec", FileUtility.PARREC);
@@ -260,6 +271,8 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".REC", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".FREC", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".fREC", FileUtility.PARREC);
+        FileTypeTable.FILE_EXT_TABLE.put(".SPAR", FileUtility.SPAR);
+        FileTypeTable.FILE_EXT_TABLE.put(".SDAT", FileUtility.SPAR);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.SURFACEREF_XML, new FileTypeInfo("Surface Reference XML", ""));
 

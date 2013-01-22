@@ -117,6 +117,8 @@ public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterfac
 
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

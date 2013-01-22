@@ -222,6 +222,8 @@ public class JDialogAnimate extends JDialogBase {
             // Choose the color of the frame surrounding each z slice
             colorChooser = new ViewJColorChooser(parentFrame, "Pick border color", new OkBorderListener(),
                                                  new CancelListener());
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -244,7 +246,7 @@ public class JDialogAnimate extends JDialogBase {
         int boxIndex = 0;
         int interp = 0;
 
-        xfrm.MakeIdentity();
+        xfrm.identity();
 
         // Hide dialog
         setVisible(false);

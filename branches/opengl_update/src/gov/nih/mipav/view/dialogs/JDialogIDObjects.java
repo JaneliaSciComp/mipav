@@ -120,7 +120,10 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor011IDO");
+        	//MipavUtil.showHelp("Mor011IDO");
+        	MipavUtil.showWebHelp("Morphology#ID_objects");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

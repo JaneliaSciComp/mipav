@@ -1896,9 +1896,9 @@ public class AlgorithmRegELSUNCOAR35D extends AlgorithmBase {
                 		tMat.set(i, j, tMatd.get(i, j));
                 	}
                 }
-                trans[0][iNumber] = tMat.Get(0, 3);
-                trans[1][iNumber] = tMat.Get(1, 3);
-                trans[2][iNumber] = tMat.Get(2, 3);
+                trans[0][iNumber] = tMat.get(0, 3);
+                trans[1][iNumber] = tMat.get(1, 3);
+                trans[2][iNumber] = tMat.get(2, 3);
             } // if (doGraph)
 
             answer.matrix.Inverse();

@@ -134,7 +134,8 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4055");
+            //MipavUtil.showHelp("U4055");
+            MipavUtil.showWebHelp("Slice_tools#Insert_Missing_Slices");
         } else if ((source == average) || (source == blank) || (source == original) || (source == adjacentUp) ||
                        (source == adjacentDown)) {
 
@@ -143,6 +144,8 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             } else {
                 comboBoxImage.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

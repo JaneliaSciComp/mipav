@@ -193,8 +193,11 @@ public class JDialogCrop extends JDialogScriptableBase implements
 		} else if (source == cancelButton) {
 			dispose();
 		} else if (source == helpButton) {
-			MipavUtil.showHelp("U4021");
-		}
+			//MipavUtil.showHelp("U4021");
+		    MipavUtil.showWebHelp("Cropping_images");
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	// ************************************************************************

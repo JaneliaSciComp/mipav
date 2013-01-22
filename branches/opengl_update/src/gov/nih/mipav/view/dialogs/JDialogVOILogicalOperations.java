@@ -60,7 +60,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.VOIFrameNode;
 import gov.nih.mipav.view.VOIGroupNode;
 import gov.nih.mipav.view.VOIHandlerInterface;
-import gov.nih.mipav.view.VOINode;
+import gov.nih.mipav.view.VOIContourNode;
 import gov.nih.mipav.view.VOIOrientationNode;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -178,7 +178,8 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	public JDialogVOILogicalOperations(VOIHandlerInterface voiHandler,VOIVector voiList) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
 
-        image = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        // VOIHandlerInterface getActiveImage returns the correct image. 
+        image = voiHandler.getActiveImage();
         this.voiHandler = voiHandler;
 
         
@@ -392,7 +393,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             VOIBase voiBase = null;
 
             Enumeration<VOIFrameNode> voiNodeEnum = null;
-            VOINode currentVOINode = null;
+            VOIContourNode currentVOINode = null;
             Enumeration<TreeNode> voiFrameEnum = null;
 
             Vector<TreePath> treePaths = new Vector<TreePath>();
@@ -440,11 +441,11 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                                     while (voiNodeEnum.hasMoreElements()) {
                                         
                                         VOIFrameNode currentFrameNode = voiNodeEnum.nextElement();
-                                        Enumeration<VOINode> voiFrameEnum2 = currentFrameNode.children();
+                                        Enumeration<VOIContourNode> voiFrameEnum2 = currentFrameNode.children();
                                         
                                         // find the child that matches this selected contour
                                         while (voiFrameEnum2.hasMoreElements()) {
-                                            currentVOINode = (VOINode) voiFrameEnum2.nextElement();
+                                            currentVOINode = (VOIContourNode) voiFrameEnum2.nextElement();
 
                                             if (currentVOINode.getVOI().equals(voiBase)) {
                                                 treePaths.addElement(new TreePath(new Object[] {
@@ -674,7 +675,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	        			
 	        			for(int c=0;c<contourCount;c++) {
 	        				
-	        				VOINode contourNode = (VOINode)selectedVOIModel.getChild(frameNode, c);
+	        				VOIContourNode contourNode = (VOIContourNode)selectedVOIModel.getChild(frameNode, c);
 	        				VOIBase contour = contourNode.getVOI();
 	        				
 	        				voi.importCurve(contour);
@@ -691,7 +692,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         			
         			for(int c=0;c<contourCount;c++) {
         				
-        				VOINode contourNode = (VOINode)selectedVOIModel.getChild(frameNode, c);
+        				VOIContourNode contourNode = (VOIContourNode)selectedVOIModel.getChild(frameNode, c);
         				VOIBase contour = contourNode.getVOI();
         				
         				voi.importCurve(contour);
@@ -838,7 +839,9 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 				 clonedImage = null;
 			 }
 			cleanUpAndDispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	
@@ -854,9 +857,9 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	 
 	  private void printTree( TreeModel model, Object parent )
 	    {
-	        if ( model.isLeaf(parent) && parent instanceof VOINode )
+	        if ( model.isLeaf(parent) && parent instanceof VOIContourNode )
 	        {
-	            VOIBase contour = ((VOINode)parent).getVOI();
+	            VOIBase contour = ((VOIContourNode)parent).getVOI();
 	            if ( contour != null )
 	            {
 	                contour.setActive(false);
@@ -895,8 +898,8 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	            Object[] leadObjects = leadPath.getPath();
 	            //int curveIndex = 0;
 
-	            if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
-	                VOIBase leadBase = ((VOINode) leadObjects[leadObjects.length - 1]).getVOI();
+	            if (leadObjects[leadObjects.length - 1] instanceof VOIContourNode) {
+	                VOIBase leadBase = ((VOIContourNode) leadObjects[leadObjects.length - 1]).getVOI();
 	                //VOI leadVOI = ((VOIGroupNode)((VOIFrameNode) ((VOINode) leadObjects[leadObjects.length - 1]).getParent()).getParent()).getVOIgroup();
 
 	                if ((image.getNDims() > 2)) {
@@ -1109,7 +1112,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	                setFont(MipavUtil.font10);
 	                setIcon(null);
 
-	            } else if (value instanceof VOINode) {
+	            } else if (value instanceof VOIContourNode) {
 	                setIcon(null);
 	                setBorder(null);
 	                setFont(MipavUtil.font12);
@@ -1256,7 +1259,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 		            VOIOrientationNode aOrientationNode,bOrientationNode;
 		        	VOIFrameNode aFrameNode,bFrameNode;
 		        	//VOIFrameNode bFrameNode2;
-		        	VOINode aNode,bNode;
+		        	VOIContourNode aNode,bNode;
 		        	// VOINode bNode2;
 		        	aFrameNode = null;
 		        	bFrameNode = null;
@@ -1274,9 +1277,9 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
 		        	}else if(pathCount == 5) {
 		        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
-			        	aNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+			        	aNode = (VOIContourNode)(((TreePath)selectedValues[0]).getPathComponent(4));
 			        	bFrameNode = (VOIFrameNode)aFrameNode.clone();
-			        	bNode = (VOINode)aNode.clone();
+			        	bNode = (VOIContourNode)aNode.clone();
 		        	}
 		        	
 		        			
@@ -1331,7 +1334,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	            						int c=0;
 		            					for(int i=0;i<contourCount;i++) {
 		            						
-		            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+		            						selectedVOIModel.insertNodeInto((VOIContourNode)((VOIContourNode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
 		            						c++;
 		            					}
 	            						c1++;
@@ -1344,7 +1347,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	            					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, bFrameCount);
 	            					int c=0;
 	            					for(int i=0;i<contourCount;i++) {
-	            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+	            						selectedVOIModel.insertNodeInto((VOIContourNode)((VOIContourNode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
 	            						c++;
 	            					}
 	            					
@@ -1374,7 +1377,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
             	VOIOrientationNode aOrientationNode,bOrientationNode;
             	VOIFrameNode aFrameNode,bFrameNode,bFrameNode2;
-            	VOINode aNode,bNode,bNode2;
+            	VOIContourNode aNode,bNode,bNode2;
 
             	aFrameNode = null;
 	        	bFrameNode = null;
@@ -1392,9 +1395,9 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 
 	        	}else if(pathCount == 5) {
 	        		aFrameNode = (VOIFrameNode)(((TreePath)selectedValues[0]).getPathComponent(3));
-		        	aNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+		        	aNode = (VOIContourNode)(((TreePath)selectedValues[0]).getPathComponent(4));
 		        	bFrameNode = (VOIFrameNode)aFrameNode.clone();
-		        	bNode = (VOINode)aNode.clone();
+		        	bNode = (VOIContourNode)aNode.clone();
 	        	}
 	        	
 	        	
@@ -1426,7 +1429,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             					//int childCount3 = bFrameNode2.getChildCount();
             					boolean found3 = false;
             					for(int m=0;m<childCount3;m++) {
-            						bNode2 = (VOINode)selectedVOIModel.getChild(bFrameNode2, m);
+            						bNode2 = (VOIContourNode)selectedVOIModel.getChild(bFrameNode2, m);
             						if(bNode2.getName().equals(aNode.getName())) {
                 						found3 = true;
                 						break;
@@ -1443,7 +1446,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
                 					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, bFrameCount);
                 					int c=0;
                 					for(int i=0;i<contourCount;i++) {
-                						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+                						selectedVOIModel.insertNodeInto((VOIContourNode)((VOIContourNode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
                 						c++;
                 					}
                 					
@@ -1470,7 +1473,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             						int c=0;
 	            					for(int i=0;i<contourCount;i++) {
 	            						
-	            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+	            						selectedVOIModel.insertNodeInto((VOIContourNode)((VOIContourNode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
 	            						c++;
 	            					}
             						c1++;
@@ -1482,7 +1485,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
             					selectedVOIModel.insertNodeInto(bFrameNode, bOrientationNode, contourCount);
             					int c=0;
             					for(int i=0;i<contourCount;i++) {
-            						selectedVOIModel.insertNodeInto((VOINode)((VOINode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
+            						selectedVOIModel.insertNodeInto((VOIContourNode)((VOIContourNode)selectedVOIModel.getChild(aFrameNode,i)).clone(), bFrameNode, c);
             						c++;
             					}
             					
@@ -1562,7 +1565,7 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
         	   
            }else if(pathCount == 5) {
         	   VOIGroupNode bGroupNode = (VOIGroupNode)(((TreePath)selectedValues[0]).getPathComponent(1));
-        	   VOINode bNode = (VOINode)(((TreePath)selectedValues[0]).getPathComponent(4));
+        	   VOIContourNode bNode = (VOIContourNode)(((TreePath)selectedValues[0]).getPathComponent(4));
         	   selectedVOIModel.removeNodeFromParent(bNode);
         	   selectedVOIModel.reload();
         	   

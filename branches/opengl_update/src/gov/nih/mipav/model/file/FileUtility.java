@@ -42,225 +42,249 @@ public class FileUtility {
 
     /** extension: .bmp. */
     public static final int BMP = 6;
+    
+    /** Bmp multifile */
+    public static final int BMP_MULTIFILE = 7;
 
     /**
      * Bruker file format. Reads a BRUKER file by first reading in the d3proc header file, second the reco header file,
      * third the acqp file int the same directory or up one or two two parent directories, and finally the 2dseq binary
      * file.
      */
-    public static final int BRUKER = 7;
+    public static final int BRUKER = 8;
 
     /**
      * Cheshire file type (a kind of Analyze). extension: .imc Can also have .img extension
      */
-    public static final int CHESHIRE = 8;
+    public static final int CHESHIRE = 9;
 
     /** Cheshire overlay file type. Contains VOIs. extension: .oly */
-    public static final int CHESHIRE_OVERLAY = 9;
+    public static final int CHESHIRE_OVERLAY = 10;
 
     /**
      * Used by FreeSurfer software. extension: -.info or -.info~ for header file -.nnn for slice data file where nnn is
      * the slice number
      */
-    public static final int COR = 10;
+    public static final int COR = 11;
 
     /** extension: .cur. */
-    public static final int CUR = 11;
+    public static final int CUR = 12;
 
     /** extension: .dib. */
-    public static final int DIB = 12;
+    public static final int DIB = 13;
 
     /** Digital Imaging and COmmunications in Medicine file type. Fully implemented versions 2 & 3. extension: .dcm */
-    public static final int DICOM = 13;
+    public static final int DICOM = 14;
 
     /** Gatan's Digital Micrograph version 3 file format. extension: .dm3 */
-    public static final int DM3 = 14;
+    public static final int DM3 = 15;
 
     /** FITS file type. extension: .fits */
-    public static final int FITS = 15;
+    public static final int FITS = 16;
 
     /** GE Genesis 5X and LX. extension: .sig */
-    public static final int GE_GENESIS = 16;
+    public static final int GE_GENESIS = 17;
 
     /** Multiple files of type GE_GENESIS */
-    public static final int GE_GENESIS_MULTIFILE = 17;
+    public static final int GE_GENESIS_MULTIFILE = 18;
 
     /** GE Signa 4.x. */
-    public static final int GE_SIGNA4X = 18;
+    public static final int GE_SIGNA4X = 19;
 
     /** Multiple files of type GE_SIGNA4X */
-    public static final int GE_SIGNA4X_MULTIFILE = 19;
+    public static final int GE_SIGNA4X_MULTIFILE = 20;
 
     /** extension: .gif. */
-    public static final int GIF = 20;
+    public static final int GIF = 21;
 
     /** extension: .ico. */
-    public static final int ICO = 21;
+    public static final int ICO = 22;
 
     /** Image Cytometry Standard. extension: .ics, .ids */
-    public static final int ICS = 22;
+    public static final int ICS = 23;
 
     /** Interfile file format used in Nuclear Medicine. extension: .hdr */
-    public static final int INTERFILE = 23;
+    public static final int INTERFILE = 24;
+    
+    /** Multiple files of type INTERFILE */
+    public static final int INTERFILE_MULTIFILE = 25;
 
     /** Java Image Manangement Interface file type. */
-    public static final int JIMI = 24;
+    public static final int JIMI = 26;
 
     /** extension: .jpeg, .jpg. */
-    public static final int JPEG = 25;
+    public static final int JPEG = 27;
 
     /** Used by the Zeiss LSM 510 Dataserver. extension: .lsm */
-    public static final int LSM = 26;
+    public static final int LSM = 28;
 
     /** Used by the Zeiss LSM 510 Dataserver. */
-    public static final int LSM_MULTIFILE = 27;
+    public static final int LSM_MULTIFILE = 29;
 
     /** Siemens MAGNETOM VISION. extension: .ima */
-    public static final int MAGNETOM_VISION = 28;
+    public static final int MAGNETOM_VISION = 30;
 
     /** Multiple files of type MAGNETOM_VISION */
-    public static final int MAGNETOM_VISION_MULTIFILE = 29;
+    public static final int MAGNETOM_VISION_MULTIFILE = 31;
 
     /** Benes Trus special file type. extension: .map */
-    public static final int MAP = 30;
+    public static final int MAP = 32;
 
     /** extension: .bin. */
-    public static final int MEDIVISION = 31;
+    public static final int MEDIVISION = 33;
 
     /** MGH/MGZ volume format. */
-    public static final int MGH = 32;
+    public static final int MGH = 34;
 
     /** Micro CT format for small animal imaging. extension: .log, .ct */
-    public static final int MICRO_CAT = 33;
+    public static final int MICRO_CAT = 35;
 
     /**
      * MINC file type. MINC is a medical imaging oriented extension of the NetCDF file format. NetCDF stands for
      * 'Network Common Data Form'. extension: .mnc
      */
-    public static final int MINC = 34;
+    public static final int MINC = 36;
+    
+    /** Multiple files of type MINC. */
+    public static final int MINC_MULTIFILE = 37;
 
     /** Not presently implemented. */
-    public static final int MIPAV = 35;
+    public static final int MIPAV = 38;
 
     /** extension: .mrc. */
-    public static final int MRC = 36;
+    public static final int MRC = 39;
 
     /** NIFTI format. extension: .img, .hdr, .nii */
-    public static final int NIFTI = 37;
+    public static final int NIFTI = 40;
 
     /** NIFTI multi-file format. */
-    public static final int NIFTI_MULTIFILE = 38;
+    public static final int NIFTI_MULTIFILE = 41;
 
     /** Nearly raw raster data. */
-    public static final int NRRD = 39;
+    public static final int NRRD = 42;
+    
+    /** Nearly raw raster data. */
+    public static final int NRRD_MULTIFILE = 43;
 
     /** Washington University OSM dataset structure. extension: .wu */
-    public static final int OSM = 40;
+    public static final int OSM = 44;
 
     /** extension: .pcx. */
-    public static final int PCX = 41;
+    public static final int PCX = 45;
 
     /** extension: .pic. */
-    public static final int PIC = 42;
+    public static final int PIC = 46;
 
     /** extension: .pict. */
-    public static final int PICT = 43;
+    public static final int PICT = 47;
 
     /** extension: .png. */
-    public static final int PNG = 44;
+    public static final int PNG = 48;
 
     /** extension: .psd. */
-    public static final int PSD = 45;
+    public static final int PSD = 49;
 
     /** Quicktime file type. extension: .mov, .qt */
-    public static final int QT = 46;
+    public static final int QT = 50;
 
     /** RAW image data, no header. extension: .raw */
-    public static final int RAW = 47;
+    public static final int RAW = 51;
 
     /** RAW MULTIFLE image data, no header. */
-    public static final int RAW_MULTIFILE = 48;
+    public static final int RAW_MULTIFILE = 52;
 
     /**
      * SPM file format. SPM99 and SPM2 are slight variants of analyze with the same .img, .hdr file extensions. The user
      * could also change the extension .img to .spm to indicate SPM. The header extension would remain .hdr
      */
-    public static final int SPM = 49;
+    public static final int SPM = 53;
 
     /** MetaMorph Stack (STK) file type. extension: .stk */
-    public static final int STK = 50;
+    public static final int STK = 54;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACE_XML = 51;
+    public static final int SURFACE_XML = 55;
 
     /** extension: .tga. */
-    public static final int TGA = 52;
+    public static final int TGA = 56;
 
     /** TIFF file; tagged header. extension: .tif, .tiff */
-    public static final int TIFF = 53;
+    public static final int TIFF = 57;
 
     /** Multiple files of TIFF images. */
-    public static final int TIFF_MULTIFILE = 54;
+    public static final int TIFF_MULTIFILE = 58;
 
     /** Optical coherence tomography. extension: .tmg */
-    public static final int TMG = 55;
+    public static final int TMG = 59;
 
     /** VOI file, used to read VOIs. extension: .voi */
-    public static final int VOI_FILE = 56;
+    public static final int VOI_FILE = 60;
 
     /** extension: .xbm. */
-    public static final int XBM = 57;
+    public static final int XBM = 61;
 
     /** MIPAV XML file format. mipav xml image format. extension: .xml */
-    public static final int XML = 58;
+    public static final int XML = 62;
 
     /** MIPAV XML file format. */
-    public static final int XML_MULTIFILE = 59;
+    public static final int XML_MULTIFILE = 63;
 
     /** extension: .xpm. */
-    public static final int XPM = 60;
+    public static final int XPM = 64;
 
     /** extension: "par","parv2","rec","frec". */
-    public static final int PARREC = 61;
+    public static final int PARREC = 65;
+    
+    /** extension: "par","parv2","rec","frec". */
+    public static final int PARREC_MULTIFILE = 66;
+    
+    /** SPAR file format for use with PARREC images */
+    public static final int SPAR = 67;
 
     /** MIPAV Surface XML file format. extension: .xml */
-    public static final int SURFACEREF_XML = 62;
+    public static final int SURFACEREF_XML = 68;
 
     /** MINC 2.0 (HDF5) */
-    public static final int MINC_HDF = 63;
+    public static final int MINC_HDF = 69;
 
     /** Improvision OpenLab LIFF .liff */
     /** Do not confuse with Leica image file format .lif */
-    public static final int LIFF = 64;
+    public static final int LIFF = 70;
 
     /** Extension: .hdr for header, .bfloat for data */
-    public static final int BFLOAT = 65;
+    public static final int BFLOAT = 71;
 
     /** Extension: .hdr for header, .img for data */
-    public static final int SIEMENSTEXT = 66;
+    public static final int SIEMENSTEXT = 72;
 
     /** Zeiss ZVI has extension .zvi */
-    public static final int ZVI = 67;
+    public static final int ZVI = 73;
 
-    public static final int JP2 = 68;
+    public static final int JP2 = 74;
     
     /** extension .mat */
-    public static final int MATLAB = 69;
+    public static final int MATLAB = 75;
     
     /** Vista file extension .v */
-    public static final int VISTA = 70;
+    public static final int VISTA = 76;
+
     
-    /** Bmp multifile */
-    public static final int BMP_MULTIFILE = 71;
+    /** Metaimage files are either
+     *  separate .mhd header and .raw image data files or
+     *  combined .mha header and image data file
+     */
+    public static final int METAIMAGE = 77;
+    
+    
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
-            "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
+            "biorad", "bmp", "bmp multifile", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
             "GE genesis", "GE genisis multifile", "GE signa4x", "GE Signa4x multifile", "gif", "ico", "ics",
-            "interfile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision", "Megnatom vision multifile", "map",
-            "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "osm", "pcx",
-            "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
-            "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml",
-            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "bmp multifile"};
+            "interfile", "interfile multifile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision", "Megnatom vision multifile", "map",
+            "medivision", "mgh", "micro cat", "minc", "minc multifile", "mipav", "mrc", "nifti", "nifti multifile", "nrrd",
+            "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
+            "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
+            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage"};
 
     
 
@@ -1766,6 +1790,7 @@ public class FileUtility {
                 break;
 
             case FileUtility.PARREC:
+            case FileUtility.PARREC_MULTIFILE:
                 // TODO: what about extension case? need to support other parrec extensions
                 final String parFileName = fileInfo.getFileName();
                 final String recFileName = parFileName.replaceFirst(".par", ".rec");

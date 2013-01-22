@@ -29,18 +29,34 @@ public class FileInfoZVI extends FileInfoBase {
     double cameraFrameScalingFactor = Double.NaN;
     double cameraLiveScalingFactor = Double.NaN;
     double cameraFramePixelDistance = Double.NaN;
+    String channelName0 = null;
+    String channelName1 = null;
+    String channelName2 = null;
+    String channelName3 = null;
+    int channelNameChannel0;
+    int channelNameChannel1;
+    int channelNameChannel2;
+    int channelNameChannel3;
     // Exposure time in milliseconds
     // A different exposure time seen for each channel
     double exposureTime0 = Double.NaN;
     double exposureTime1 = Double.NaN;
     double exposureTime2 = Double.NaN;
     double exposureTime3 = Double.NaN;
+    int exposureTimeChannel0;
+    int exposureTimeChannel1;
+    int exposureTimeChannel2;
+    int exposureTimeChannel3;
     int apotomeProcessingMode = Integer.MIN_VALUE;
     // A different apotome grid position is seen for each channel
     int apotomeGridPosition0 = Integer.MIN_VALUE;
     int apotomeGridPosition1 = Integer.MIN_VALUE;
     int apotomeGridPosition2 = Integer.MIN_VALUE;
     int apotomeGridPosition3 = Integer.MIN_VALUE;
+    int apotomeGridPositionChannel0;
+    int apotomeGridPositionChannel1;
+    int apotomeGridPositionChannel2;
+    int apotomeGridPositionChannel3;
     int apotomeFullPhaseShift = Integer.MIN_VALUE;
     double apotomeFilterStrength = Double.NaN;
     int apotomeCamFilterHarmonics = Integer.MIN_VALUE;
@@ -74,6 +90,10 @@ public class FileInfoZVI extends FileInfoBase {
     int reflectorPosition1 = Integer.MIN_VALUE;
     int reflectorPosition2 = Integer.MIN_VALUE;
     int reflectorPosition3 = Integer.MIN_VALUE;
+    int reflectorPositionChannel0;
+    int reflectorPositionChannel1;
+    int reflectorPositionChannel2;
+    int reflectorPositionChannel3;
     double reflectorMagnification = Double.NaN;
     int transmittedLightShutter = Integer.MIN_VALUE;
     int reflectedLightShutter = Integer.MIN_VALUE;
@@ -84,9 +104,15 @@ public class FileInfoZVI extends FileInfoBase {
     int multichannelColor1 = Integer.MIN_VALUE;
     int multichannelColor2 = Integer.MIN_VALUE;
     int multichannelColor3 = Integer.MIN_VALUE;
+    int multichannelColorChannel0;
+    int multichannelColorChannel1;
+    int multichannelColorChannel2;
+    int multichannelColorChannel3;
     double multichannelWeight = Double.NaN;
     double stagePositionX = Double.NaN;
     double stagePositionY = Double.NaN;
+    double originalStagePositionX = Double.NaN;
+    double originalStagePositionY = Double.NaN;
     double scaleWidth = Double.NaN;
     double scaleHeight = Double.NaN;
     int cameraFrameStartLeft = Integer.MIN_VALUE;
@@ -118,10 +144,18 @@ public class FileInfoZVI extends FileInfoBase {
     int excitationWavelength1 = Integer.MIN_VALUE;
     int excitationWavelength2 = Integer.MIN_VALUE;
     int excitationWavelength3 = Integer.MIN_VALUE;
+    int excitationWavelengthChannel0;
+    int excitationWavelengthChannel1;
+    int excitationWavelengthChannel2;
+    int excitationWavelengthChannel3;
     int emissionWavelength0 = Integer.MIN_VALUE;
     int emissionWavelength1 = Integer.MIN_VALUE;
     int emissionWavelength2 = Integer.MIN_VALUE;
     int emissionWavelength3 = Integer.MIN_VALUE;
+    int emissionWavelengthChannel0;
+    int emissionWavelengthChannel1;
+    int emissionWavelengthChannel2;
+    int emissionWavelengthChannel3;
     String cameraImageAcquisitionTime0 = null;
     String cameraImageAcquisitionTime1 = null;
     String cameraImageAcquisitionTime2 = null;
@@ -132,6 +166,48 @@ public class FileInfoZVI extends FileInfoBase {
     String imageRelativeTime3 = null;
     String fileDate = null;
     int fileSize = Integer.MIN_VALUE;
+    int channel0 = Integer.MIN_VALUE;
+    int channel1 = Integer.MIN_VALUE;
+    int channel2 = Integer.MIN_VALUE;
+    int channel3 = Integer.MIN_VALUE;
+    int axioCamAnalogGainEnable = Integer.MIN_VALUE;
+    int cameraShutterLiveEnable = Integer.MIN_VALUE;
+    double axioCamSaturation = Double.NaN;
+    int condenserContrast = Integer.MIN_VALUE;
+    double condenserNumericalAperture = Double.NaN;
+    String stageCalibrated = null;
+    double optovar = Double.NaN;
+    int cameraBitDepth = Integer.MIN_VALUE;
+    int externalShutter1 = Integer.MIN_VALUE;
+    String documentType = null;
+    String IDTagFileName = null;
+    String userID = null;
+    String userName = null;
+    String userCity = null;
+    String userAddress = null;
+    String userPhone = null;
+    String userFax = null;
+    String userCountry = null;
+    String userCompany = null;
+    String userCompanyLogo = null;
+    String deviceScalingName = null;
+    String camera = null;
+    String microscopeName = null;
+    String objectiveID = null;
+    String objectiveName = null;
+    String reflectorID = null;
+    String reflector = null;
+    String reference = null;
+    String fileLink = null;
+    String fileID;
+    String lastModifiedBy = null;
+    String title = null;
+    String apotomeGridName = null;
+    String apotomeFilterName = null;
+    String apotomeCamPhaseAngles = null;
+    String apotomeCamGenericCameraName = null;
+    String documentSubtype =  null;
+    String comments = null;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -183,72 +259,104 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Stage position Y = " + stagePositionY + "\n");
         }
         
+        if (!Double.isNaN(originalStagePositionX)) {
+            dialog.append("Original stage position X = " + originalStagePositionX + "\n");
+        }
+        
+        if (!Double.isNaN(originalStagePositionY)) {
+            dialog.append("Original stage position Y = " + originalStagePositionY + "\n");
+        }
+        
+        if (channelName0 != null) {
+            dialog.append("Channel " + channelNameChannel0 + " channel name = " + channelName0 + "\n");
+        }
+        
+        if (channelName1 != null) {
+            dialog.append("Channel " + channelNameChannel1 + " channel name = " + channelName1 + "\n");
+        }
+        
+        if (channelName2 != null) {
+            dialog.append("Channel " + channelNameChannel2 + " channel name = " + channelName2 + "\n");
+        }
+        
+        if (channelName3 != null) {
+            dialog.append("Channel " + channelNameChannel3 + " channel name = " + channelName3 + "\n");
+        }
+        
         if (excitationWavelength0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 excitation wavelength = " + excitationWavelength0 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel0 + " excitation wavelength = " + excitationWavelength0 + "\n");
         }
         
         if (excitationWavelength1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 excitation wavelength = " + excitationWavelength1 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel1 + " excitation wavelength = " + excitationWavelength1 + "\n");
         }
         
         if (excitationWavelength2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 excitation wavelength = " + excitationWavelength2 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel2 + " excitation wavelength = " + excitationWavelength2 + "\n");
         }
         
         if (excitationWavelength3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 excitation wavelength = " + excitationWavelength3 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel3 + " excitation wavelength = " + excitationWavelength3 + "\n");
         }
         
         if (emissionWavelength0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 emission wavelength = " + emissionWavelength0 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel0 + " emission wavelength = " + emissionWavelength0 + "\n");
         }
         
         if (emissionWavelength1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 emission wavelength = " + emissionWavelength1 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel1 + " emission wavelength = " + emissionWavelength1 + "\n");
         }
         
         if (emissionWavelength2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 emission wavelength = " + emissionWavelength2 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel2 + " emission wavelength = " + emissionWavelength2 + "\n");
         }
         
         if (emissionWavelength3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 emission wavelength = " + emissionWavelength3 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel3 + " emission wavelength = " + emissionWavelength3 + "\n");
         }
         
         if (!Double.isNaN(blackValue0)) {
-            dialog.append("Channel 0 black value = " + blackValue0 + "\n");
+            dialog.append("Channel " + channel0 + " black value = " + blackValue0 + "\n");
         }
         
         if (!Double.isNaN(blackValue1)) {
-            dialog.append("Channel 1 black value = " + blackValue1 + "\n");
+            dialog.append("Channel " + channel1 + " black value = " + blackValue1 + "\n");
         }
         
         if (!Double.isNaN(blackValue2)) {
-            dialog.append("Channel 2 black value = " + blackValue2 + "\n");
+            dialog.append("Channel " + channel2 + " black value = " + blackValue2 + "\n");
         }
         
         if (!Double.isNaN(blackValue3)) {
-            dialog.append("Channel 3 black value = " + blackValue3 + "\n");
+            dialog.append("Channel " + channel3 + " black value = " + blackValue3 + "\n");
         }
         
         if (!Double.isNaN(whiteValue0)) {
-            dialog.append("Channel 0 white value = " + whiteValue0 + "\n");
+            dialog.append("Channel " + channel0 + " white value = " + whiteValue0 + "\n");
         }
         
         if (!Double.isNaN(whiteValue1)) {
-            dialog.append("Channel 1 white value = " + whiteValue1 + "\n");
+            dialog.append("Channel " + channel1 + " white value = " + whiteValue1 + "\n");
         }
         
         if (!Double.isNaN(whiteValue2)) {
-            dialog.append("Channel 2 white value = " + whiteValue2 + "\n");
+            dialog.append("Channel " + channel2 + " white value = " + whiteValue2 + "\n");
         }
         
         if (!Double.isNaN(whiteValue3)) {
-            dialog.append("Channel 3 white value = " + whiteValue3 + "\n");
+            dialog.append("Channel " + channel3 + " white value = " + whiteValue3 + "\n");
         }
         
         if (!Double.isNaN(gammaValue)) {
             dialog.append("Gamma value = " + gammaValue + "\n");
+        }
+        
+        if (camera != null) {
+            dialog.append("Camera = " + camera + "\n");
+        }
+        
+        if (cameraBitDepth != Integer.MIN_VALUE) {
+            dialog.append("Camera bit depth = " + cameraBitDepth + "\n");
         }
         
         if (cameraFrameStartLeft != Integer.MIN_VALUE) {
@@ -275,6 +383,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Camera binning = " + cameraBinning + "\n");
         }
         
+        if (deviceScalingName != null) {
+            dialog.append("Device scaling name = " + deviceScalingName + "\n");
+        }
+        
         if (!Double.isNaN(cameraFrameScalingFactor)) {
             dialog.append("Camera frame scaling factor = " + cameraFrameScalingFactor + "\n");
         }
@@ -288,43 +400,56 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (!Double.isNaN(exposureTime0)) {
-            dialog.append("Channel 0 exposure time = " + exposureTime0 + " milliseconds\n");
+            if (exposureTimeChannel0 != Integer.MIN_VALUE) {
+                dialog.append("Channel " + exposureTimeChannel0 + " exposure time = " + exposureTime0 + " milliseconds\n");
+            }
+            else {
+                dialog.append("Exposure time = " + exposureTime0 + " milliseconds\n");    
+            }
         }
         
         if (!Double.isNaN(exposureTime1)) {
-            dialog.append("Channel 1 exposure time = " + exposureTime1 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel1 + " exposure time = " + exposureTime1 + " milliseconds\n");
         }
         
         if (!Double.isNaN(exposureTime2)) {
-            dialog.append("Channel 2 exposure time = " + exposureTime2 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel2 + " exposure time = " + exposureTime2 + " milliseconds\n");
         }
         
         if (!Double.isNaN(exposureTime3)) {
-            dialog.append("Channel 3 exposure time = " + exposureTime3 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel3 + " exposure time = " + exposureTime3 + " milliseconds\n");
         }
         
         if (apotomeProcessingMode != Integer.MIN_VALUE) {
             dialog.append("Apotome processing mode = " + apotomeProcessingMode + "\n");
         }
         
+        if (apotomeGridName != null) {
+            dialog.append("Apotome grid name = " + apotomeGridName + "\n");
+        }
+        
         if (apotomeGridPosition0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 apotome grid position = " + apotomeGridPosition0 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel0 + " apotome grid position = " + apotomeGridPosition0 + "\n");
         }
         
         if (apotomeGridPosition1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 apotome grid position = " + apotomeGridPosition1 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel1 + " apotome grid position = " + apotomeGridPosition1 + "\n");
         }
         
         if (apotomeGridPosition2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 apotome grid position = " + apotomeGridPosition2 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel2 + " apotome grid position = " + apotomeGridPosition2 + "\n");
         }
         
         if (apotomeGridPosition3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 apotome grid position = " + apotomeGridPosition3 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel3 + " apotome grid position = " + apotomeGridPosition3 + "\n");
         }
         
         if (apotomeFullPhaseShift != Integer.MIN_VALUE) {
             dialog.append("Apotome full phase shift = " + apotomeFullPhaseShift + "\n");
+        }
+        
+        if (apotomeFilterName != null) {
+            dialog.append("Apotome filter name = " + apotomeFilterName + "\n");
         }
         
         if (!Double.isNaN(apotomeFilterStrength)) {
@@ -339,6 +464,14 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Apotome grating period = " + apotomeGratingPeriod + "\n");    
         }
         
+        if (apotomeCamGenericCameraName !=  null) {
+            dialog.append("Apotome cam generic camera name = " + apotomeCamGenericCameraName + "\n");
+        }
+        
+        if (apotomeCamPhaseAngles != null) {
+            dialog.append("Apotome cam phase angles = " + apotomeCamPhaseAngles + "\n");
+        }
+        
         if (apotomeCamNormalize != Integer.MIN_VALUE) {
             dialog.append("Apotome cam normalize = " + apotomeCamNormalize + "\n");
         }
@@ -349,6 +482,10 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (apotomeAutoShutterUsed != Integer.MIN_VALUE) {
             dialog.append("Apotome auto shutter used = " + apotomeAutoShutterUsed + "\n");
+        }
+        
+        if (microscopeName != null) {
+            dialog.append("Microscope name = " + microscopeName + "\n");
         }
         
         if (microscopeType != Integer.MIN_VALUE) {
@@ -373,6 +510,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (microscopePort != Integer.MIN_VALUE) {
             dialog.append("Microscope port = " + microscopePort + "\n");
+        }
+        
+        if (objectiveName != null) {
+            dialog.append("Objective name = " + objectiveName + "\n");
+        }
+        
+        if (objectiveID != null) {
+            dialog.append("Objective ID = " + objectiveID + "\n");
         }
         
         if (!Double.isNaN(ocularTotalMagnification)) {
@@ -439,20 +584,33 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Contrast manager mode = " + contrastManagerMode + "\n");   
         }
         
+        if (reflector != null) {
+            dialog.append("Reflector = " + reflector + "\n");
+        }
+        
+        if (reflectorID != null) {
+            dialog.append("Reflector ID = " + reflectorID + "\n");
+        }
+        
         if (reflectorPosition0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 reflector position = " + reflectorPosition0 + "\n");
+            if (reflectorPositionChannel0 != Integer.MIN_VALUE) {
+                dialog.append("Channel " + reflectorPositionChannel0 + " reflector position = " + reflectorPosition0 + "\n");
+            }
+            else {
+                dialog.append("Reflector position = " + reflectorPosition0 + "\n");    
+            }
         }
         
         if (reflectorPosition1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 reflector position = " + reflectorPosition1 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel1 + " reflector position = " + reflectorPosition1 + "\n");
         }
         
         if (reflectorPosition2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 reflector position = " + reflectorPosition2 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel2 + " reflector position = " + reflectorPosition2 + "\n");
         }
         
         if (reflectorPosition3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 reflector position = " + reflectorPosition3 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel3 + " reflector position = " + reflectorPosition3 + "\n");
         }
         
         if (!Double.isNaN(reflectorMagnification)) {
@@ -484,19 +642,19 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (multichannelColor0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 multichannel color = " + multichannelColor0 + "\n");
+            dialog.append("Channel " + multichannelColorChannel0 + " multichannel color = " + multichannelColor0 + "\n");
         }
         
         if (multichannelColor1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 multichannel color = " + multichannelColor1 + "\n");
+            dialog.append("Channel " + multichannelColorChannel1 + " multichannel color = " + multichannelColor1 + "\n");
         }
         
         if (multichannelColor2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 multichannel color = " + multichannelColor2 + "\n");
+            dialog.append("Channel " + multichannelColorChannel2 + " multichannel color = " + multichannelColor2 + "\n");
         }
         
         if (multichannelColor3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 multichannel color = " + multichannelColor3 + "\n");
+            dialog.append("Channel " + multichannelColorChannel3 + " multichannel color = " + multichannelColor3 + "\n");
         }
         
         if (!Double.isNaN(multichannelWeight)) {
@@ -551,6 +709,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Axio cam NIR mode = " + axioCamNIRMode + "\n");
         }
         
+        if (axioCamAnalogGainEnable != Integer.MIN_VALUE) {
+            dialog.append("Axio cam analog gain enable = " + axioCamAnalogGainEnable + "\n");
+        }
+        
         if (axioCamShutterControl != Integer.MIN_VALUE) {
             dialog.append("Axio cam shutter control = " + axioCamShutterControl + "\n");
         }
@@ -563,6 +725,34 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Axio cam delay time = " + axioCamDelayTime + "\n");
         }
         
+        if (cameraShutterLiveEnable != Integer.MIN_VALUE) {
+            dialog.append("Camera shutter live enable = " + cameraShutterLiveEnable + "\n");
+        }
+        
+        if (externalShutter1 != Integer.MIN_VALUE) {
+            dialog.append("External shutter 1 = " + externalShutter1 + "\n");
+        }
+        
+        if (!Double.isNaN(axioCamSaturation)) {
+            dialog.append("Axio cam saturation = " + axioCamSaturation + "\n");
+        }
+        
+        if (condenserContrast != Integer.MIN_VALUE) {
+            dialog.append("Condenser contrast = " + condenserContrast + "\n");
+        }
+        
+        if (!Double.isNaN(condenserNumericalAperture)) {
+            dialog.append("Condenser numerical aperture = " + condenserNumericalAperture + "\n");
+        }
+        
+        if (stageCalibrated != null) {
+            dialog.append(stageCalibrated + "\n");
+        }
+        
+        if (!Double.isNaN(optovar)) {
+            dialog.append("Optovar = " + optovar + "\n");
+        }
+        
         if (objectType != Integer.MIN_VALUE) {
             dialog.append("Object type = " + objectType + "\n");
         }
@@ -572,35 +762,47 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (cameraImageAcquisitionTime0 != null) {
-            dialog.append("Channel 0 camera image acquisition time = " + cameraImageAcquisitionTime0 + "\n");
+            dialog.append("Channel " + channel0 + " camera image acquisition time = " + cameraImageAcquisitionTime0 + "\n");
         }
         
         if (cameraImageAcquisitionTime1 != null) {
-            dialog.append("Channel 1 camera image acquisition time = " + cameraImageAcquisitionTime1 + "\n");
+            dialog.append("Channel " + channel1 + " camera image acquisition time = " + cameraImageAcquisitionTime1 + "\n");
         }
         
         if (cameraImageAcquisitionTime2 != null) {
-            dialog.append("Channel 2 camera image acquisition time = " + cameraImageAcquisitionTime2 + "\n");
+            dialog.append("Channel " + channel2 + " camera image acquisition time = " + cameraImageAcquisitionTime2 + "\n");
         }
         
         if (cameraImageAcquisitionTime3 != null) {
-            dialog.append("Channel 3 camera image acquisition time = " + cameraImageAcquisitionTime3 + "\n");
+            dialog.append("Channel " + channel3 + " camera image acquisition time = " + cameraImageAcquisitionTime3 + "\n");
         }
         
         if (imageRelativeTime0 != null) {
-            dialog.append("Channel 0 image relative time = " + imageRelativeTime0 + "\n");
+            dialog.append("Channel " + channel0 + " image relative time = " + imageRelativeTime0 + "\n");
         }
         
         if (imageRelativeTime1 != null) {
-            dialog.append("Channel 1 image relative time = " + imageRelativeTime1 + "\n");
+            dialog.append("Channel " + channel1 + " image relative time = " + imageRelativeTime1 + "\n");
         }
         
         if (imageRelativeTime2 != null) {
-            dialog.append("Channel 2 image relative time = " + imageRelativeTime2 + "\n");
+            dialog.append("Channel " + channel2 + " image relative time = " + imageRelativeTime2 + "\n");
         }
         
         if (imageRelativeTime3 != null) {
-            dialog.append("Channel 3 image relative time = " + imageRelativeTime3 + "\n");
+            dialog.append("Channel " + channel3 + " image relative time = " + imageRelativeTime3 + "\n");
+        }
+        
+        if (title != null) {
+            dialog.append("Title = " + title + "\n");
+        }
+        
+        if (IDTagFileName != null) {
+            dialog.append("File name = " + IDTagFileName + "\n");
+        }
+        
+        if (comments != null) {
+            dialog.append("Comments = " + comments + "\n");
         }
         
         if (fileDate != null) {
@@ -609,6 +811,66 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (fileSize != Integer.MIN_VALUE) {
             dialog.append("File size = " + fileSize + "\n");
+        }
+        
+        if (fileLink != null) {
+            dialog.append("File link = " + fileLink + "\n");
+        }
+        
+        if (fileID != null) {
+            dialog.append("File ID = " + fileID + "\n");
+        }
+        
+        if (reference != null) {
+            dialog.append("Reference = " + reference + "\n");
+        }
+        
+        if (lastModifiedBy != null) {
+            dialog.append("Last modified by = " + lastModifiedBy + "\n");
+        }
+        
+        if (documentType != null) {
+            dialog.append("Document type = " + documentType + "\n");
+        }
+        
+        if (documentSubtype != null) {
+            dialog.append("Document subtype = " + documentSubtype + "\n");
+        }
+        
+        if (userID != null) {
+            dialog.append("User ID = " + userID + "\n");
+        }
+        
+        if (userName != null) {
+            dialog.append("User name = " + userName + "\n");
+        }
+        
+        if (userCity != null) {
+            dialog.append("User city = " + userCity + "\n");
+        }
+        
+        if (userAddress != null) {
+            dialog.append("User address = " + userAddress + "\n");
+        }
+        
+        if (userPhone != null) {
+            dialog.append("User phone = " + userPhone + "\n");
+        }
+        
+        if (userFax != null) {
+            dialog.append("User fax = " + userFax + "\n");
+        }
+        
+        if (userCountry != null) {
+            dialog.append("User country = " + userCountry + "\n");
+        }
+        
+        if (userCompany != null) {
+            dialog.append("User company = " + userCompany + "\n");
+        }
+        
+        if (userCompanyLogo != null) {
+            dialog.append("User company logo = " + userCompanyLogo + "\n");
         }
     }
     
@@ -668,19 +930,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.cameraFramePixelDistance = cameraFramePixelDistance;
     }
     
-    public void setExposureTime0(double exposureTime0) {
+    public void setExposureTime0(int exposureTimeChannel0, double exposureTime0) {
+        this.exposureTimeChannel0 = exposureTimeChannel0;
         this.exposureTime0 = exposureTime0;
     }
     
-    public void setExposureTime1(double exposureTime1) {
+    public void setExposureTime1(int exposureTimeChannel1, double exposureTime1) {
+        this.exposureTimeChannel1 = exposureTimeChannel1;
         this.exposureTime1 = exposureTime1;
     }
     
-    public void setExposureTime2(double exposureTime2) {
+    public void setExposureTime2(int exposureTimeChannel2, double exposureTime2) {
+        this.exposureTimeChannel2 = exposureTimeChannel2;
         this.exposureTime2 = exposureTime2;
     }
     
-    public void setExposureTime3(double exposureTime3) {
+    public void setExposureTime3(int exposureTimeChannel3, double exposureTime3) {
+        this.exposureTimeChannel3 = exposureTimeChannel3;
         this.exposureTime3 = exposureTime3;
     }
     
@@ -688,19 +954,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.apotomeProcessingMode = apotomeProcessingMode;
     }
     
-    public void setApotomeGridPosition0(int apotomeGridPosition0) {
+    public void setApotomeGridPosition0(int apotomeGridPositionChannel0, int apotomeGridPosition0) {
+        this.apotomeGridPositionChannel0 = apotomeGridPositionChannel0;
         this.apotomeGridPosition0 = apotomeGridPosition0;    
     }
     
-    public void setApotomeGridPosition1(int apotomeGridPosition1) {
+    public void setApotomeGridPosition1(int apotomeGridPositionChannel1, int apotomeGridPosition1) {
+        this.apotomeGridPositionChannel1 = apotomeGridPositionChannel1;
         this.apotomeGridPosition1 = apotomeGridPosition1;    
     }
     
-    public void setApotomeGridPosition2(int apotomeGridPosition2) {
+    public void setApotomeGridPosition2(int apotomeGridPositionChannel2, int apotomeGridPosition2) {
+        this.apotomeGridPositionChannel2 = apotomeGridPositionChannel2;
         this.apotomeGridPosition2 = apotomeGridPosition2;    
     }
     
-    public void setApotomeGridPosition3(int apotomeGridPosition3) {
+    public void setApotomeGridPosition3(int apotomeGridPositionChannel3, int apotomeGridPosition3) {
+        this.apotomeGridPositionChannel3 = apotomeGridPositionChannel3;
         this.apotomeGridPosition3 = apotomeGridPosition3;    
     }
     
@@ -804,19 +1074,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.contrastManagerMode = contrastManagerMode;
     }
     
-    public void setReflectorPosition0(int reflectorPosition0) {
+    public void setReflectorPosition0(int reflectorPositionChannel0, int reflectorPosition0) {
+        this.reflectorPositionChannel0 = reflectorPositionChannel0;
         this.reflectorPosition0 = reflectorPosition0;
     }
     
-    public void setReflectorPosition1(int reflectorPosition1) {
+    public void setReflectorPosition1(int reflectorPositionChannel1, int reflectorPosition1) {
+        this.reflectorPositionChannel1 = reflectorPositionChannel1;
         this.reflectorPosition1 = reflectorPosition1;
     }
     
-    public void setReflectorPosition2(int reflectorPosition2) {
+    public void setReflectorPosition2(int reflectorPositionChannel2, int reflectorPosition2) {
+        this.reflectorPositionChannel2 = reflectorPositionChannel2;
         this.reflectorPosition2 = reflectorPosition2;
     }
     
-    public void setReflectorPosition3(int reflectorPosition3) {
+    public void setReflectorPosition3(int reflectorPositionChannel3, int reflectorPosition3) {
+        this.reflectorPositionChannel3 = reflectorPositionChannel3;
         this.reflectorPosition3 = reflectorPosition3;
     }
     
@@ -840,19 +1114,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.transmittedLightHalogenLampMode = transmittedLightHalogenLampMode;
     }
     
-    public void setMultichannelColor0(int multichannelColor0) {
+    public void setMultichannelColor0(int multichannelColorChannel0, int multichannelColor0) {
+        this.multichannelColorChannel0 = multichannelColorChannel0;
         this.multichannelColor0 = multichannelColor0;
     }
     
-    public void setMultichannelColor1(int multichannelColor1) {
+    public void setMultichannelColor1(int multichannelColorChannel1, int multichannelColor1) {
+        this.multichannelColorChannel1 = multichannelColorChannel1;
         this.multichannelColor1 = multichannelColor1;
     }
     
-    public void setMultichannelColor2(int multichannelColor2) {
+    public void setMultichannelColor2(int multichannelColorChannel2, int multichannelColor2) {
+        this.multichannelColorChannel2 = multichannelColorChannel2;
         this.multichannelColor2 = multichannelColor2;
     }
     
-    public void setMultichannelColor3(int multichannelColor3) {
+    public void setMultichannelColor3(int multichannelColorChannel3, int multichannelColor3) {
+        this.multichannelColorChannel3 = multichannelColorChannel3;
         this.multichannelColor3 = multichannelColor3;
     }
     
@@ -866,6 +1144,14 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setStagePositionY(double stagePositionY) {
         this.stagePositionY = stagePositionY;
+    }
+    
+    public void setOriginalStagePositionX(double originalStagePositionX) {
+        this.originalStagePositionX = originalStagePositionX;
+    }
+    
+    public void setOriginalStagePositionY(double originalStagePositionY) {
+        this.originalStagePositionY = originalStagePositionY;
     }
     
     public void setScaleWidth(double scaleWidth) {
@@ -984,35 +1270,63 @@ public class FileInfoZVI extends FileInfoBase {
         this.imageMemoryUsage = imageMemoryUsage;
     }
     
-    public void setExcitationWavelength0(int excitationWavelength0) {
+    public void setChannelName0(int channelNameChannel0, String channelName0) {
+        this.channelNameChannel0 = channelNameChannel0;
+        this.channelName0 = channelName0;
+    }
+    
+    public void setChannelName1(int channelNameChannel1, String channelName1) {
+        this.channelNameChannel1 = channelNameChannel1;
+        this.channelName1 = channelName1;
+    }
+    
+    public void setChannelName2(int channelNameChannel2, String channelName2) {
+        this.channelNameChannel2 = channelNameChannel2;
+        this.channelName2 = channelName2;
+    }
+    
+    public void setChannelName3(int channelNameChannel3, String channelName3) {
+        this.channelNameChannel3 = channelNameChannel3;
+        this.channelName3 = channelName3;
+    }
+    
+    public void setExcitationWavelength0(int excitationWavelengthChannel0, int excitationWavelength0) {
+        this.excitationWavelengthChannel0 = excitationWavelengthChannel0;
         this.excitationWavelength0 = excitationWavelength0;
     }
     
-    public void setExcitationWavelength1(int excitationWavelength1) {
+    public void setExcitationWavelength1(int excitationWavelengthChannel1, int excitationWavelength1) {
+        this.excitationWavelengthChannel1 = excitationWavelengthChannel1;
         this.excitationWavelength1 = excitationWavelength1;
     }
     
-    public void setExcitationWavelength2(int excitationWavelength2) {
+    public void setExcitationWavelength2(int excitationWavelengthChannel2, int excitationWavelength2) {
+        this.excitationWavelengthChannel2 = excitationWavelengthChannel2;
         this.excitationWavelength2 = excitationWavelength2;
     }
     
-    public void setExcitationWavelength3(int excitationWavelength3) {
+    public void setExcitationWavelength3(int excitationWavelengthChannel3, int excitationWavelength3) {
+        this.excitationWavelengthChannel3 = excitationWavelengthChannel3;
         this.excitationWavelength3 = excitationWavelength3;
     }
     
-    public void setEmissionWavelength0(int emissionWavelength0) {
+    public void setEmissionWavelength0(int emissionWavelengthChannel0, int emissionWavelength0) {
+        this.emissionWavelengthChannel0 = emissionWavelengthChannel0;
         this.emissionWavelength0 = emissionWavelength0;
     }
     
-    public void setEmissionWavelength1(int emissionWavelength1) {
+    public void setEmissionWavelength1(int emissionWavelengthChannel1, int emissionWavelength1) {
+        this.emissionWavelengthChannel1 = emissionWavelengthChannel1;
         this.emissionWavelength1 = emissionWavelength1;
     }
     
-    public void setEmissionWavelength2(int emissionWavelength2) {
+    public void setEmissionWavelength2(int emissionWavelengthChannel2, int emissionWavelength2) {
+        this.emissionWavelengthChannel2 = emissionWavelengthChannel2;
         this.emissionWavelength2 = emissionWavelength2;
     }
     
-    public void setEmissionWavelength3(int emissionWavelength3) {
+    public void setEmissionWavelength3(int emissionWavelengthChannel3, int emissionWavelength3) {
+        this.emissionWavelengthChannel3 = emissionWavelengthChannel3;
         this.emissionWavelength3 = emissionWavelength3;
     }
     
@@ -1055,4 +1369,173 @@ public class FileInfoZVI extends FileInfoBase {
     public void setFileSize(int fileSize) {
         this.fileSize = fileSize;
     }
+    
+    public void setChannel0(int channel0) {
+        this.channel0 = channel0;
+    }
+    
+    public void setChannel1(int channel1) {
+        this.channel1 = channel1;
+    }
+    
+    public void setChannel2(int channel2) {
+        this.channel2 = channel2;
+    }
+    
+    public void setChannel3(int channel3) {
+        this.channel3 = channel3;
+    }
+    
+    public void setAxioCamAnalogGainEnable(int axioCamAnalogGainEnable) {
+        this.axioCamAnalogGainEnable = axioCamAnalogGainEnable;
+    }
+    
+    public void setCameraShutterLiveEnable(int cameraShutterLiveEnable) {
+        this.cameraShutterLiveEnable = cameraShutterLiveEnable;
+    }
+    
+    public void setAxioCamSaturation(double axioCamSaturation) {
+        this.axioCamSaturation = axioCamSaturation;
+    }
+    
+    public void setCondenserContrast(int condenserContrast) {
+        this.condenserContrast = condenserContrast;
+    }
+    
+    public void setCondenserNumericalAperture(double condenserNumericalAperture) {
+        this.condenserNumericalAperture = condenserNumericalAperture;
+    }
+    
+    public void setStageCalibrated(String stageCalibrated) {
+        this.stageCalibrated = stageCalibrated;
+    }
+    
+    public void setOptovar(double optovar) {
+        this.optovar = optovar;
+    }
+    
+    public void setCameraBitDepth(int cameraBitDepth) {
+        this.cameraBitDepth = cameraBitDepth;
+    }
+    
+    public void setExternalShutter1(int externalShutter1) {
+        this.externalShutter1 = externalShutter1;
+    }
+    
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
+    }
+    
+    public void setFilename(String IDTagFileName) {
+        this.IDTagFileName = IDTagFileName;
+    }
+    
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+    
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+    
+    public void setUserCity(String userCity) {
+        this.userCity = userCity;
+    }
+    
+    public void setUserAddress(String userAddress) {
+        this.userAddress = userAddress;
+    }
+    
+    public void setUserPhone(String userPhone) {
+        this.userPhone = userPhone;
+    }
+    
+    public void setUserFax(String userFax) {
+        this.userFax = userFax;
+    }
+    
+    public void setUserCountry(String userCountry) {
+        this.userCountry = userCountry;
+    }
+    
+    public void setUserCompany(String userCompany) {
+        this.userCompany = userCompany;
+    }
+    
+    public void setUserCompanyLogo(String userCompanyLogo) {
+        this.userCompanyLogo = userCompanyLogo;
+    }
+    
+    public void setDeviceScalingName(String deviceScalingName) {
+        this.deviceScalingName = deviceScalingName;
+    }
+    
+    public void setCamera(String camera) {
+        this.camera = camera;
+    }
+    
+    public void setMicroscopeName(String microscopeName) {
+        this.microscopeName = microscopeName;
+    }
+    
+    public void setObjectiveID(String objectiveID) {
+        this.objectiveID = objectiveID;
+    }
+    
+    public void setObjectiveName(String objectiveName) {
+        this.objectiveName = objectiveName;
+    }
+    
+    public void setReflectorID(String reflectorID) {
+        this.reflectorID = reflectorID;
+    }
+    
+    public void setReflector(String reflector) {
+        this.reflector = reflector;
+    }
+    
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+    
+    public void setFileLink(String fileLink) {
+        this.fileLink = fileLink;
+    }
+    
+    public void setFileID(String fileID) {
+        this.fileID = fileID;
+    }
+    
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    
+    public void setApotomeGridName(String apotomeGridName) {
+        this.apotomeGridName = apotomeGridName;
+    }
+    
+    public void setApotomeFilterName(String apotomeFilterName) {
+        this.apotomeFilterName = apotomeFilterName;
+    }
+    
+    public void setApotomeCamPhaseAngles(String apotomeCamPhaseAngles) {
+        this.apotomeCamPhaseAngles = apotomeCamPhaseAngles;
+    }
+    
+    public void setApotomeCamGenericCameraName(String apotomeCamGenericCameraName) {
+        this.apotomeCamGenericCameraName = apotomeCamGenericCameraName;
+    }
+    
+    public void setDocumentSubtype(String documentSubtype) {
+        this.documentSubtype = documentSubtype;
+    }
+    
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
+
 }

@@ -136,7 +136,9 @@ public class PlugInDialogDicomDataElementsGenerator extends JDialogBase implemen
 		 }else if(command.equalsIgnoreCase("cancel")) {
 			 dispose();
 			 
-		 }
+		 } else {
+	            super.actionPerformed(e);
+	        }
 
 	}
 	

@@ -23,26 +23,13 @@ import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Polypoint;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
-//import com.mentorgen.tools.profile.runtime.Profile;
-
-
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
 import javax.media.opengl.awt.GLCanvas;
-import com.jogamp.opengl.util.Animator;
 
 public class ImageRegistrationGPU extends JavaApplication3D
 //implements GLEventListener, KeyListener
@@ -133,14 +120,13 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
-        GetCanvas().getContext().setSynchronized(true);  
+        GetCanvas().getContext().setSwapInterval(0);  
+        //GetCanvas().getContext().setSynchronized(true);  
         m_kTarget = kTarget;
         m_kMoving = kMoving;
         String kExternalDirs = MipavInitGPU.getExternalDirs();        
-        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-        VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-        PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-        CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
+        ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );     
+        m_pkRenderer.SetExternalDir(kExternalDirs);
     } 
     
     public static ImageRegistrationGPU create( ModelSimpleImage kTarget, ModelSimpleImage kMoving )
@@ -234,10 +220,10 @@ public class ImageRegistrationGPU extends JavaApplication3D
             kMat.M11 = kTransform.M11;
             kMat.M12 = 0;
             kMat.M13 = kTransform.M12;
-            kMat.Transpose();
+            kMat.transpose();
             return kMat;            
         }
-        kTransform.Transpose();
+        kTransform.transpose();
         return kTransform;
     }
     
@@ -293,14 +279,14 @@ public class ImageRegistrationGPU extends JavaApplication3D
         cleanUp();
         if ( m_kTextureA != null )
         {
-            m_kTextureA.Release();
+            m_kTextureA.Release(m_pkRenderer);
             m_kTextureA.GetImage().dispose();
             m_kTextureA.dispose();
             m_kTextureA = null;
         }
         if ( m_kTextureB != null )
         {
-            m_kTextureB.Release();
+            m_kTextureB.Release(m_pkRenderer);
             m_kTextureB.GetImage().dispose();
             m_kTextureB.dispose();
             m_kTextureB = null;
@@ -358,9 +344,6 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
     
         ImageCatalog.GetActive().dispose();
-        VertexProgramCatalog.GetActive().dispose();     
-        PixelProgramCatalog.GetActive().dispose();
-        CompiledProgramCatalog.GetActive().dispose();
                 
         super.dispose();
     }
@@ -512,21 +495,21 @@ public class ImageRegistrationGPU extends JavaApplication3D
     public void setFromOrigin( TransMatrix kFromOrigin )
     {
         m_kFromOrigin = convertTo4D(kFromOrigin);
-        m_kFromOriginInv.Inverse(m_kFromOrigin);
+        m_kFromOriginInv.copy(m_kFromOrigin).inverse();
         
     }
     
     public void setToOrigin( TransMatrix kToOrigin ) 
     {
         m_kToOrigin = convertTo4D(kToOrigin);
-        m_kToOriginInv.Inverse(m_kToOrigin);
+        m_kToOriginInv.copy(m_kToOrigin).inverse();
     }
 
     public void setTransform( TransMatrix kTransform )
     {
         if ( kTransform.getDim() == 3 )
         {
-            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.identity();
             m_kImageTransform.M00 = kTransform.M00;
             m_kImageTransform.M01 = kTransform.M01;
             m_kImageTransform.M02 = 0;
@@ -540,7 +523,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
         else
         {
-            m_kImageTransform.Copy(kTransform);
+            m_kImageTransform.copy(kTransform);
         }
         if ( m_kImageEffectDual != null )
         {
@@ -602,7 +585,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     {
         if ( kTransform.getDim() == 3 )
         {
-            m_kImageTransformd.MakeIdentity();
+            m_kImageTransformd.identity();
             m_kImageTransformd.M00 = kTransform.M00;
             m_kImageTransformd.M01 = kTransform.M01;
             m_kImageTransformd.M02 = 0;
@@ -616,7 +599,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         }
         else
         {
-            m_kImageTransformd.Copy(kTransform);
+            m_kImageTransformd.copy(kTransform);
         }
         if ( m_kImageEffectDual != null )
         {
@@ -697,12 +680,12 @@ public class ImageRegistrationGPU extends JavaApplication3D
 
         // generate geometry
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.0f; afChannels[iIndex++] = 0.5f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
-        
+        pkVB.SetPosition( afChannels );
         
         m_kBracketPoints = new Polypoint( pkVB );        
         AlphaState kAlpha = new AlphaState();
@@ -728,7 +711,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         float fU, fV;
         int i0, i1;
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         
         for (i1 = 0; i1 < iHeight; i1++)
@@ -744,6 +727,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 //System.err.println( ((2.0f*fU-1.0f)) + " " + ((2.0f*fV-1.0f)));
             }
         }
+        pkVB.SetPosition( afChannels );
         m_kHistogramPoints2D = new Polypoint( pkVB );
         m_kEntropyPoints2D = new Polypoint( pkVB );
         
@@ -777,7 +761,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
         float fU, fV, fW;
         int i0, i1, i2;
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         
         for (i2 = 0; i2 < iDepth; i2++ )
@@ -795,6 +779,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 }
             }
         }
+        pkVB.SetPosition( afChannels );
         
         m_kImagePointsDual = new Polypoint( pkVB );
         m_kAlpha = new AlphaState();
@@ -806,7 +791,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_kImagePointsDual.UpdateRS();    
         
 
-        return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
+        return m_pkRenderer.LoadVAO( m_kImagePointsDual );
+        //return m_pkRenderer.LoadVBuffer( pkVB.GetAttributes(), pkVB.GetAttributes(), pkVB );
     }
     
     
@@ -1237,12 +1223,13 @@ public class ImageRegistrationGPU extends JavaApplication3D
 
         // generate geometry
 
-        float[] afChannels = pkVB.GetData();
+        float[] afChannels = new float[iVQuantity];
         int iIndex = 0;
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -1.0f; afChannels[iIndex++] = 0.0f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = -0.34f; afChannels[iIndex++] = 0.3f;        
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.34f; afChannels[iIndex++] = 0.7f;  
         afChannels[iIndex++] = 0; afChannels[iIndex++] = 0.95f; afChannels[iIndex++] = 1.0f;
+        pkVB.SetPosition( afChannels );
         
         
         m_kTransformPoints = new Polypoint( pkVB );        

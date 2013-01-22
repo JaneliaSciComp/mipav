@@ -127,7 +127,10 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("U4043");
+        	//MipavUtil.showHelp("U4043");
+        	MipavUtil.showWebHelp("Quantify_Mask");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

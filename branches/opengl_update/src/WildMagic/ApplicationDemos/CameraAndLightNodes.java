@@ -156,8 +156,7 @@ implements GLEventListener, KeyListener
 		Vector3f kCLoc = new Vector3f(0.0f,-100.0f,5.0f);
 		Vector3f kCDir = new Vector3f(0.0f,1.0f,0.0f);
 		Vector3f kCUp = new Vector3f(0.0f,0.0f,1.0f);
-		Vector3f kCRight = new Vector3f();
-		kCRight.Cross( kCDir, kCUp );
+		Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 		CreateScene();
@@ -413,9 +412,9 @@ implements GLEventListener, KeyListener
 	{
 		Vector3f kLocation = m_spkCNode.Local.GetTranslate();
 		Vector3f kDirection = new Vector3f();
-		m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
-		kDirection.Scale(m_fTrnSpeed);
-		kLocation.Sub( kDirection );
+		m_spkCNode.Local.GetRotate().getColumn(0, kDirection);
+		kDirection.scale(m_fTrnSpeed);
+		kLocation.sub( kDirection );
 		m_spkCNode.Local.SetTranslate(kLocation);
 		m_spkCNode.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -431,9 +430,9 @@ implements GLEventListener, KeyListener
 	{
 		Vector3f kLocation = m_spkCNode.Local.GetTranslate();
 		Vector3f kDirection = new Vector3f();
-		m_spkCNode.Local.GetRotate().GetColumn(0, kDirection);
-		kDirection.Scale(m_fTrnSpeed);
-		kLocation.Add( kDirection );
+		m_spkCNode.Local.GetRotate().getColumn(0, kDirection);
+		kDirection.scale(m_fTrnSpeed);
+		kLocation.add( kDirection );
 		m_spkCNode.Local.SetTranslate(kLocation);
 		m_spkCNode.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -448,9 +447,9 @@ implements GLEventListener, KeyListener
 	protected void TurnLeft ()
 	{
 		Vector3f kUp = new Vector3f();
-		m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
+		m_spkCNode.Local.GetRotate().getColumn(1, kUp);
 		Matrix3f kNewRotate = new Matrix3f(kUp,m_fRotSpeed);
-		kNewRotate.Mult( m_spkCNode.Local.GetRotate() );
+		kNewRotate.mult( m_spkCNode.Local.GetRotate() );
 		m_spkCNode.Local.SetRotate(kNewRotate);
 		m_spkCNode.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);
@@ -461,9 +460,9 @@ implements GLEventListener, KeyListener
 	protected void TurnRight ()
 	{
 		Vector3f kUp = new Vector3f();
-		m_spkCNode.Local.GetRotate().GetColumn(1, kUp);
+		m_spkCNode.Local.GetRotate().getColumn(1, kUp);
 		Matrix3f kNewRotate = new Matrix3f(kUp,-m_fRotSpeed);
-		kNewRotate.Mult( m_spkCNode.Local.GetRotate() );
+		kNewRotate.mult( m_spkCNode.Local.GetRotate() );
 		m_spkCNode.Local.SetRotate(kNewRotate);
 		m_spkCNode.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);

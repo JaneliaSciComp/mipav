@@ -449,6 +449,8 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
             }
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

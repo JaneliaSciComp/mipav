@@ -166,7 +166,10 @@ public class JDialogClose extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor005Cl1");
+        	//MipavUtil.showHelp("Mor005Cl1");
+            MipavUtil.showWebHelp("Morphology#Applying_the_closing");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

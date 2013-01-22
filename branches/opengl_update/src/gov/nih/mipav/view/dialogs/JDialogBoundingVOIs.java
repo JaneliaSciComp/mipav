@@ -198,7 +198,6 @@ public class JDialogBoundingVOIs extends JDialogBase {
             }
 
             // Update frame
-            ((ViewJFrameBase) parentFrame).updateImages(true);
             if ( voiManager != null )
             {
                 voiManager.algorithmPerformed();
@@ -227,6 +226,8 @@ public class JDialogBoundingVOIs extends JDialogBase {
         }
         else if (source == helpButton) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

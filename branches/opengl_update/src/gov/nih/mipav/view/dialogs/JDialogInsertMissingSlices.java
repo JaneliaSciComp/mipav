@@ -123,7 +123,10 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("U4053");
+        	//MipavUtil.showHelp("U4053");
+            MipavUtil.showWebHelp("Slice_tools#Insert_Missing_Slices");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

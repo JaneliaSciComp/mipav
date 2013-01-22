@@ -114,12 +114,4 @@ public class PlugInDialogDTIOpenListFile extends JDialogBase implements Algorith
 
 	}
 
-	/**
-	 * action performed
-	 */
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
 }

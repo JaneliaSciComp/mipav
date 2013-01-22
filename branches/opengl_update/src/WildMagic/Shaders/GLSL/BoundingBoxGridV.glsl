@@ -1,18 +1,23 @@
 //----------------------------------------------------------------------------
 uniform mat4 WVPMatrix;
-varying vec4 position;
+in vec3 inPosition;
+in vec4 inColor0;
+in vec3 inTexcoord0;
+out vec3 varTexCoord;
+out vec4 varColor;
+out vec4 position;
 void v_BoundingBoxGridV ()
 {
     // Transform the position from model space to clip space.
-    gl_Position = WVPMatrix * gl_Vertex;
+    gl_Position = WVPMatrix * vec4(inPosition, 1.0);
     
     // Pass through the vertex color.
-    gl_FrontColor = gl_Color;
+    varColor = inColor0;
 
     // Pass through the texture coordinate.
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+    varTexCoord = inTexcoord0;
 
-    position.xyz = gl_Vertex.xyz;
+    position.xyz = inPosition.xyz;
     position.w = gl_Position.w;
 }
 //----------------------------------------------------------------------------

@@ -644,21 +644,18 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         int yDim = image.getExtents()[1] - 1;
         int zDim = image.getExtents()[2] - 1;
 
-        Vector3f kScale = new Vector3f();
         // update the vertices
         for (int i = 0; i < m_iVQuantity; i++) {
         	Vector3f kVertex = m_akVertex[i];
 
             // tangential update
-        	kScale.Scale( c1Factor, m_akSTangent[i] );
-            kVertex.Add(kScale, kVertex);
+        	kVertex.scaleAdd( c1Factor, m_akSTangent[i], kVertex );
 
             // normal update
             float fUpdate2 = update2(i);
             update3(i);
 
-        	kScale.Scale( fUpdate2, m_akSNormal[i] );
-            kVertex.Add(kScale, kVertex);
+        	kVertex.scaleAdd( fUpdate2, m_akSNormal[i], kVertex );
 
             // uVal, vVal, and wVal go from about -0.5 to 0.5.
             kVertex.X += oldUVal;
@@ -707,8 +704,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             Edge kE = (Edge) kEntry.getKey();
             Vector3f kP0 = m_akVertex[kE.m_i0];
             Vector3f kP1 = m_akVertex[kE.m_i1];
-            kEdge.Sub(kP1, kP0);
-            m_fMeanEdgeLength += kEdge.Length();
+            kEdge.copy(kP1).sub(kP0);
+            m_fMeanEdgeLength += kEdge.length();
         }
 
         m_fMeanEdgeLength /= m_kEMap.size();
@@ -728,7 +725,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         int i;
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVMean[i].Set(0.0f, 0.0f, 0.0f);
+            m_akVMean[i].set(0.0f, 0.0f, 0.0f);
         }
 
         Vector3f kS = new Vector3f();
@@ -740,18 +737,18 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             UnorderedSetInt kAdj = m_akAdjacent[i];
 
             for (int j = 0; j < kAdj.getQuantity(); j++) {
-                m_akVMean[i].Add(m_akVertex[kAdj.get(j)]);
+                m_akVMean[i].add(m_akVertex[kAdj.get(j)]);
             }
 
-            m_akVMean[i].Scale(1.0f / kAdj.getQuantity());
+            m_akVMean[i].scale(1.0f / kAdj.getQuantity());
 
             // compute the normal and tangential components of mean-vertex
-            kS.Sub(m_akVMean[i], m_akVertex[i]);
-            m_akSNormal[i].Scale(kS.Dot(m_akVNormal[i]), m_akVNormal[i]);
-            m_akSTangent[i].Sub(kS, m_akSNormal[i]);
+            kS.copy(m_akVMean[i]).sub(m_akVertex[i]);
+            m_akSNormal[i].copy(m_akVNormal[i]).scale(kS.dot(m_akVNormal[i]));
+            m_akSTangent[i].copy(kS).sub(m_akSNormal[i]);
 
             // compute the curvature
-            float fLength = m_akSNormal[i].Length();
+            float fLength = m_akSNormal[i].length();
             m_afCurvature[i] = ((2.0f * fLength) * fInvMeanLength) * fInvMeanLength;
 
             if (m_afCurvature[i] < fMinCurvature) {
@@ -778,12 +775,8 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         int i;
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVNormal[i].Set(0.0f, 0.0f, 0.0f);
+            m_akVNormal[i].set(0.0f, 0.0f, 0.0f);
         }
-
-        Vector3f kEdge1 = new Vector3f();
-        Vector3f kEdge2 = new Vector3f();
-        Vector3f kNormal = new Vector3f();
 
         for (int iT = 0; iT < m_iTQuantity; iT++) {
 
@@ -796,18 +789,18 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             Vector3f kP2 = m_akVertex[iP2];
 
             // compute the triangle normal
-            kEdge1.Sub(kP1, kP0);
-            kEdge2.Sub(kP2, kP0);
-            kNormal.Cross(kEdge1, kEdge2);
+            Vector3f kEdge1 = Vector3f.sub(kP1, kP0);
+            Vector3f kEdge2 = Vector3f.sub(kP2, kP0);
+            Vector3f kNormal = Vector3f.cross(kEdge1, kEdge2);
 
             // the triangle normal partially contributes to each vertex normal
-            m_akVNormal[iP0].Add(kNormal);
-            m_akVNormal[iP1].Add(kNormal);
-            m_akVNormal[iP2].Add(kNormal);
+            m_akVNormal[iP0].add(kNormal);
+            m_akVNormal[iP1].add(kNormal);
+            m_akVNormal[iP2].add(kNormal);
         }
 
         for (i = 0; i < m_iVQuantity; i++) {
-            m_akVNormal[i].Normalize();
+            m_akVNormal[i].normalize();
         }
     }
 
@@ -875,7 +868,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         kQFit = new AlgorithmQuadraticFit(kPts);
 
         // get the orientation matrix
-        m_kRotate.Copy(kQFit.getOrient());
+        m_kRotate.copy(kQFit.getOrient());
 
         // compute the semi-axis lengths
         m_afLength[0] = kQFit.getConstant() / kQFit.getDiagonal(0);
@@ -1096,12 +1089,12 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             m_akAdjacent[i] = new UnorderedSetInt(6, 1);
         }
 
-        m_akVertex[0].Set(+1.0f, 0.0f, 0.0f);
-        m_akVertex[1].Set(-1.0f, 0.0f, 0.0f);
-        m_akVertex[2].Set(0.0f, +1.0f, 0.0f);
-        m_akVertex[3].Set(0.0f, -1.0f, 0.0f);
-        m_akVertex[4].Set(0.0f, 0.0f, +1.0f);
-        m_akVertex[5].Set(0.0f, 0.0f, -1.0f);
+        m_akVertex[0].set(+1.0f, 0.0f, 0.0f);
+        m_akVertex[1].set(-1.0f, 0.0f, 0.0f);
+        m_akVertex[2].set(0.0f, +1.0f, 0.0f);
+        m_akVertex[3].set(0.0f, -1.0f, 0.0f);
+        m_akVertex[4].set(0.0f, 0.0f, +1.0f);
+        m_akVertex[5].set(0.0f, 0.0f, -1.0f);
 
         m_aiConnect[0] = 4;
         m_aiConnect[1] = 0;
@@ -1160,11 +1153,11 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
                 Vector3f kP0 = m_akVertex[kE.m_i0];
                 Vector3f kP1 = m_akVertex[kE.m_i1];
                 Vector3f kPMid = m_akVertex[iPNext];
-                kPMid.Add(kP0, kP1);
+                kPMid.copy(kP0).add(kP1);
 
                 float fInvLen = 1.0f /
                                     (float) Math.sqrt((kPMid.X * kPMid.X) + (kPMid.Y * kPMid.Y) + (kPMid.Z * kPMid.Z));
-                kPMid.Scale(fInvLen);
+                kPMid.scale(fInvLen);
                 kEntry.setValue(new Integer(iPNext));
                 iPNext++;
             }
@@ -1262,13 +1255,13 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             m_akVertex[i].Z *= m_afLength[2];
 
             // Transform for equal reslution units
-            m_kRotate.Mult(m_akVertex[i], m_akVertex[i]);
+            m_kRotate.mult(m_akVertex[i], m_akVertex[i]);
 
             // Correct for unequal resolution units
             m_akVertex[i].X *= resXFactor;
             m_akVertex[i].Y *= resYFactor;
             m_akVertex[i].Z *= resZFactor;
-            m_akVertex[i].Add(m_kCenter);
+            m_akVertex[i].add(m_kCenter);
         }
     }
 

@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmHaralickTexture
  */
 public class JDialogHaralickTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -249,7 +249,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -271,7 +270,10 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Haral1001");
+            //MipavUtil.showHelp("Haral1001");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Haralick_Texture");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -397,7 +399,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -440,7 +442,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

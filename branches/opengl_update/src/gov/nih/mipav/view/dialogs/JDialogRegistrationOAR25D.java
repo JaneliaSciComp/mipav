@@ -35,7 +35,7 @@ import javax.swing.*;
  * @see     AlgorithmRegOAR25D2
  */
 public class JDialogRegistrationOAR25D extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -231,7 +231,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
         UI = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -254,7 +253,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("OAR19076");
+        	//MipavUtil.showHelp("OAR19076");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Optimized_Automatic_Registration_dialog_box_options");
         } else if (command.equals("AdvancedSettings")) {
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
@@ -330,7 +330,10 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
         } else if (command.equals("AdvancedHelp")) {
-        	MipavUtil.showHelp("OAR19078");
+        	//MipavUtil.showHelp("OAR19078");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Advanced_OAR_settings_for_Constrained_Optimized_Automatic_Registration_3D");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -352,11 +355,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         float[][] posT = null;
 
         if (algorithm instanceof AlgorithmRegOAR25D2) {
-
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && !isScriptRunning()) {
-                saveDefaults();
-            }
-
+            
             if (algorithm.isCompleted()) {
                 matchImage.clearMask();
 
@@ -442,10 +441,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         }
         
         if (algorithm instanceof AlgorithmRegELSUNCOAR25D) {
-
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && !isScriptRunning()) {
-                saveDefaults();
-            }
 
             if (algorithm.isCompleted()) {
                 matchImage.clearMask();
@@ -640,7 +635,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((weightRadio != null) && (defaultsString != null)) {
@@ -813,7 +808,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
 
         if (weightRadio != null) {
             String defaultsString = new String(weighted + "," + getParameterString(","));

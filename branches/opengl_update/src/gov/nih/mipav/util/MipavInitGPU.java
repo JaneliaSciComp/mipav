@@ -5,10 +5,7 @@ package gov.nih.mipav.util;
 import java.net.URL;
 
 import gov.nih.mipav.view.icons.PlaceHolder;
-import WildMagic.LibGraphics.Shaders.CompiledProgramCatalog;
 import WildMagic.LibGraphics.Shaders.ImageCatalog;
-import WildMagic.LibGraphics.Shaders.PixelProgramCatalog;
-import WildMagic.LibGraphics.Shaders.VertexProgramCatalog;
 
 
 public class MipavInitGPU {
@@ -20,19 +17,13 @@ public class MipavInitGPU {
             IsInit = true;                   
             String kExternalDirs = getExternalDirs();        
             ImageCatalog.SetActive( new ImageCatalog("Main", kExternalDirs) );      
-            VertexProgramCatalog.SetActive(new VertexProgramCatalog("Main", kExternalDirs));       
-            PixelProgramCatalog.SetActive(new PixelProgramCatalog("Main", kExternalDirs));
-            CompiledProgramCatalog.SetActive(new CompiledProgramCatalog());
         }
     }   
     public static void RemoveGPU()
     {
         if ( IsInit )
         {     
-            ImageCatalog.GetActive().dispose();      
-            VertexProgramCatalog.GetActive().dispose();      
-            PixelProgramCatalog.GetActive().dispose();      
-            CompiledProgramCatalog.GetActive().dispose();      
+            ImageCatalog.GetActive().dispose();        
             IsInit = false;                   
         }
     }

@@ -12,7 +12,7 @@ import gov.nih.mipav.view.*;
  *
  * @author   senseneyj
  * @see      NLConstrainedEngine
- * @version  0.1
+ * @version  1.0
  */
 public class FitLorentz extends NLFittedFunction {	
 	
@@ -27,12 +27,13 @@ public class FitLorentz extends NLFittedFunction {
     /**Amplitude parameter*/
     private double amp;
     
-    /**Center parameter*/
-    private double xInit;
+    /** Statistical median */
+    private double xMedian;
     
-    /**Gamma parameter*/
+    /** half width at half maximum*/
     private double gamma;
     
+    /** Iterations performed */
     private int iters;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -45,11 +46,20 @@ public class FitLorentz extends NLFittedFunction {
         // nPoints data points, 3 coefficients, and exponential fitting
         super(5, 3);
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
         
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -57,16 +67,14 @@ public class FitLorentz extends NLFittedFunction {
         // internalScaling = true;
         // Suppress diagnostic messages
         outputMes = false;
-        
-        testData();
     }
 
     /**
      * FitLorentz.
      *
      * @param  nPoints  number of points in the function
-     * @param  xData    DOCUMENT ME!
-     * @param  yData    DOCUMENT ME!
+     * @param  xData    values along x-axis
+     * @param  yData    values along y-axis
      */
     public FitLorentz(int nPoints, double[] xData, double[] yData) {
 
@@ -76,16 +84,21 @@ public class FitLorentz extends NLFittedFunction {
         this.xSeries = xData;
         this.ySeries = yData;
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        
-        // The default is internalScaling = false
-        // To make internalScaling = true and have the columns of the
-        // Jacobian scaled to have unit length include the following line.
-        // internalScaling = true;
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
+
         // Suppress diagnostic messages
         outputMes = false;    
         
@@ -99,8 +112,8 @@ public class FitLorentz extends NLFittedFunction {
      * Constructs new fit lorentz distribution.
      *
      * @param  nPoints  Number of points in the function
-     * @param  xData    DOCUMENT ME!
-     * @param  yData    DOCUMENT ME!
+     * @param  xData    values along x-axis
+     * @param  yData    values along y-axis
      */
     public FitLorentz(int nPoints, float[] xData, float[] yData) {
     	
@@ -117,11 +130,20 @@ public class FitLorentz extends NLFittedFunction {
         	ySeries[i] = yData[i];
         }
         
-        bounds = 0; // bounds = 0 means unconstrained
+        bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
+        bl = new double[3];
+        bu = new double[3];
+        bl[0] = -Double.MAX_VALUE;
+        bu[0] = Double.MAX_VALUE;
+        bl[1] = -Double.MAX_VALUE;
+        bu[1] = Double.MAX_VALUE;
+        // gamma = half-width at half-maximum must be positive
+        bl[2] = Double.MIN_VALUE;
+        bu[2] = Double.MAX_VALUE;
 
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -141,7 +163,6 @@ public class FitLorentz extends NLFittedFunction {
     /**
      * Apply small Gaussian kernel to smooth out data.  Note should not be called if doing data comparison.
      */
-    @SuppressWarnings("unused")
     private double[] applyKernel() {
     	
         int size = 7;
@@ -201,20 +222,18 @@ public class FitLorentz extends NLFittedFunction {
     		}		
     	}
     	
-    	//estimate xInit
+    	//estimate xMedian
     	int maxIndex = 0;
     	double totalDataCount = 0;
-    	int numIndexWithData = 0;
     	for(int i=dataStart; i<ySeries.length; i++) {
     		if(ySeries[i] > ySeries[maxIndex]) {
     			maxIndex = i;
     		}
     		if(ySeries[i] > 0) {
-    			numIndexWithData++;
     			totalDataCount += ySeries[i];
     		}
     	}	
-    	xInit = xSeries[maxIndex];
+    	xMedian = xSeries[maxIndex];
     	
     	//determine location of end data
     	dataEnd = 0;
@@ -275,24 +294,23 @@ public class FitLorentz extends NLFittedFunction {
     	amp = ySeries[maxIndex];
     	
     	a[0] = amp;
-    	a[1] = xInit;
+    	a[1] = xMedian;
     	a[2] = gamma;
     }
     
     /**
-     * Starts the analysis. For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
-     * sign and take the one with the lowest chi-squared value.
+     * Starts the analysis. 
      */
     public void driver() {
         
     	boolean converged = false;
     	iters = 0;
     	
-    	System.out.println("Initial guess\tAmp: "+amp+"\txInit: "+xInit+"\tGamma: "+gamma);
+    	System.out.println("Initial guess\tAmp: "+amp+"\txMedian: "+xMedian+"\tGamma: "+gamma);
     	
     	while(!converged && iters < MAX_ITR) {
     		double oldAmp = amp;
-        	double oldXInit = xInit;
+        	double oldXMedian = xMedian;
         	double oldSigma = gamma;
     	
 	    	Matrix jacobian = generateJacobian();
@@ -304,20 +322,20 @@ public class FitLorentz extends NLFittedFunction {
 	    	Matrix dLambda = lhs.solve(rhs);
 	    	
 	    	amp = amp + dLambda.get(0, 0);
-	    	xInit = xInit + dLambda.get(1, 0);
+	    	xMedian = xMedian + dLambda.get(1, 0);
 	    	gamma = gamma + dLambda.get(2, 0);
 	    	
-	    	System.out.println("Iteration "+iters+"\tAmp: "+amp+"\txInit: "+xInit+"\tGamma: "+gamma);
+	    	System.out.println("Iteration "+iters+"\tAmp: "+amp+"\txMedian: "+xMedian+"\tGamma: "+gamma);
 	    	
 	    	if(Math.abs(Math.abs(oldAmp - amp) / ((oldAmp + amp) / 2)) < EPSILON && 
-	    			Math.abs(Math.abs(oldXInit - xInit) / ((oldXInit + xInit) / 2)) < EPSILON && 
+	    			Math.abs(Math.abs(oldXMedian - xMedian) / ((oldXMedian + xMedian) / 2)) < EPSILON && 
 	    			Math.abs(Math.abs(oldSigma - gamma) / ((oldSigma + gamma) / 2)) < EPSILON && iters > MIN_ITR) {
 	    		converged = true;    		
 	    		Preferences.debug("Converged after "+iters+" iterations.", Preferences.DEBUG_ALGORITHM);
 	    		System.out.println("Converged after "+iters+" iterations.");
 	    	} else {
 	    		oldAmp = amp;
-	    		oldXInit = xInit;
+	    		oldXMedian = xMedian;
 	    		oldSigma = gamma;
 	    		iters++;
 	    	}
@@ -333,7 +351,7 @@ public class FitLorentz extends NLFittedFunction {
     	
     	//a already initialized in super constructor, used to hold parameters for output
     	a[0] = amp;
-    	a[1] = xInit;
+    	a[1] = xMedian;
     	a[2] = gamma;
     	
     }
@@ -360,7 +378,7 @@ public class FitLorentz extends NLFittedFunction {
 	}
 
 	/**
-     * Display results of displaying exponential fitting parameters.
+     * Display results of displaying lorentz fitting parameters.
      */
     public void displayResults() {
     	ViewJFrameMessageGraph messageGraph = new ViewJFrameMessageGraph("Fitting Data");
@@ -371,14 +389,13 @@ public class FitLorentz extends NLFittedFunction {
 
         messageGraph.append("Valid for data from "+xSeries[dataStart]+" to "+xSeries[dataEnd]+" in "+(dataEnd-dataStart)+" parts\n\n");
         
-        messageGraph.append("Fitting of gaussian function\n");
-        messageGraph.append(" y = .5 * " + amp + " * exp(sqrt(x-" + xInit +
-                            ")/(" + gamma + "^3))\n");
+        messageGraph.append("Fitting of Lorentz function\n");
+        messageGraph.append(" y = (amp * (gamma/PI))/(gamma*gamma + (x - xMedian)*(x - xMedian))\n"); ;
         messageGraph.append("\n");
         
         messageGraph.append("amp: " + amp + "\n"); 
-        messageGraph.append("Xo: " + xInit + "\n");
-        messageGraph.append("sigma: " + gamma + "\n\n");
+        messageGraph.append("xMedian: " + xMedian + "\n");
+        messageGraph.append("gamma: " + gamma + "\n\n");
         
         if (messageGraph.isVisible() == false) {
         	messageGraph.setLocation(100, 50);
@@ -388,23 +405,16 @@ public class FitLorentz extends NLFittedFunction {
     }
     
     public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
-    	// not used
-    }
-
-    /**
-     * Test data to test fitting of gaussian.
-     */
-    private void testData() {
+    	// not used since explicit derivs are calculated, see driver()
     }
     
     /**
-     * Gaussian evaluated at a point with given parameters
+     * Lorentz distribution evaluated at a point with given parameters
      */
     private double lorentz(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
-    	
-    	double f = amp*Math.exp(exp);
-    	
+        double num = gamma/Math.PI;
+        double denom = gamma*gamma + (x - xMedian)*(x - xMedian);
+        double f = amp * num /denom;
     	return f;
     }
     
@@ -412,24 +422,20 @@ public class FitLorentz extends NLFittedFunction {
      * Partial derivative of Lorentz distribution with respect to A.
      */
     private double dLdA(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
-    	
-    	double f = Math.exp(exp);
-    	
-    	return f;
-    	
+        double num = gamma/Math.PI;
+        double denom = gamma*gamma + (x - xMedian)*(x - xMedian);
+        double f = num /denom;
+        return f;
     }
     
     /**
-     * Partial derivative of Lorentz distribution with respect to x.
+     * Partial derivative of Lorentz distribution with respect to xMedian.
      */
-    private double dLdxInit(double x) {
-    	double exp = -.5*Math.pow(x-xInit, -.5) / (Math.pow(gamma, 3));
+    private double dLdxMedian(double x) {
     	
-    	double coeff = (amp * (x-xInit))/(Math.pow(gamma, 2));
-    	
-    	double f = coeff*Math.exp(exp);
-    	
+    	double num = 2.0 * amp * gamma * (x - xMedian)/Math.PI;
+    	double denom = gamma*gamma + (x - xMedian)*(x - xMedian);
+    	double f = num/(denom * denom);
     	return f;
     }
     
@@ -437,13 +443,10 @@ public class FitLorentz extends NLFittedFunction {
      * Partial derivative of Lorentz distribution with respect to gamma.
      */
     private double dLdgamma(double x) {
-    	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
-    	
-    	double coeff = (amp/3 * Math.pow(x-xInit, .5))/(Math.pow(gamma, 4));
-    	
-    	double f = coeff*Math.exp(exp);
-    	
-    	return f;
+        double num = (amp/Math.PI)*((x-xMedian)*(x-xMedian) - gamma*gamma);
+        double denom = gamma*gamma + (x - xMedian)*(x - xMedian);
+        double f = num/(denom * denom);
+        return f;
     }
     
     /**
@@ -453,7 +456,7 @@ public class FitLorentz extends NLFittedFunction {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dLdA(xSeries[i]));
-    		jacobian.set(i-dataStart, 1, dLdxInit(xSeries[i]));
+    		jacobian.set(i-dataStart, 1, dLdxMedian(xSeries[i]));
     		jacobian.set(i-dataStart, 2, dLdgamma(xSeries[i]));
     	}
     	

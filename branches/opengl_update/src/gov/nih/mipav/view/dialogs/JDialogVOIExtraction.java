@@ -48,13 +48,6 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Does nothing.
-     *
-     * @param  event  Event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) { }
-
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************

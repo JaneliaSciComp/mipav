@@ -115,6 +115,8 @@ public class JDialogFilterChoice extends JDialogBase {
             for (int i = 0; i < checkImages.length; i++) {
                 checkImages[i].setSelected(false);
             }
+        } else {
+            super.actionPerformed(e);
         }
     }
 

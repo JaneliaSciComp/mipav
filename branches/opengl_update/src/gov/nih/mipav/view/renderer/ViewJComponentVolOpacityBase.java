@@ -98,6 +98,8 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
 
     /** The container of this histogram component. */
     protected JPanelVolOpacityBase parentPanel;
+    
+    protected ViewJComponentVolOpacityListener parentListener;
 
     /** DOCUMENT ME! */
     protected int[] pixBuffer;
@@ -137,6 +139,31 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         setHistogramInfo(image, histo);
 
         parentPanel.setAdjustersEnabled(false);
+
+        addMouseMotionListener(this);
+        addMouseListener(this);
+    }
+    
+
+    /**
+     * @param parent ViewJComponentVolOpacityListener -- container displaying this clas
+     * @param histo histogram
+     * @param image input modelImage
+     * @param compDim widht and height of component
+     */
+    public ViewJComponentVolOpacityBase(ViewJComponentVolOpacityListener parent, ModelHistogram histo, ModelImage image,
+                                        Dimension compDim) {
+
+        componentDim = compDim;
+        setSize(componentDim.width, componentDim.height);
+        dim = new Dimension(256, 256);
+        transferFunction = new TransferFunction();
+
+
+        parentListener = parent;
+        setHistogramInfo(image, histo);
+
+        parentListener.setAdjustersEnabled(false);
 
         addMouseMotionListener(this);
         addMouseListener(this);
@@ -247,7 +274,14 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         transferFunction.addPoint(max, 0);
 
         tfActiveIndex = INACTIVE;
-        parentPanel.setAdjustersEnabled(false);
+        if ( parentPanel != null )
+        {
+        	parentPanel.setAdjustersEnabled(false);
+        }
+        if ( parentListener != null )
+        {
+        	parentListener.setAdjustersEnabled(false);
+        }
 
         showHistogram();
     }
@@ -303,7 +337,14 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         transferFunction.addPoint(max, 0);
 
         tfActiveIndex = INACTIVE;
-        parentPanel.setAdjustersEnabled(false);
+        if ( parentPanel != null )
+        {
+        	parentPanel.setAdjustersEnabled(false);
+        }
+        if ( parentListener != null )
+        {
+        	parentListener.setAdjustersEnabled(false);
+        }
 
         showHistogram();
     }
@@ -355,7 +396,15 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
                 offsetMouseX = (int) convertFnPtToScreenSpaceX(transferFunction.getPoint(tfActiveIndex + 1).X) - 1;
             }
 
-            parentPanel.setAdjustersEnabled(true); // user is adjusting a non-endpoint, so enable adjustment components
+            // user is adjusting a non-endpoint, so enable adjustment components
+            if ( parentPanel != null )
+            {
+            	parentPanel.setAdjustersEnabled(true);
+            }
+            if ( parentListener != null )
+            {
+            	parentListener.setAdjustersEnabled(true);
+            }
         } else {
 
             // do not allow transfer function endpoints to move off histogram bounds
@@ -365,20 +414,40 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
                 offsetMouseX = dim.width - 1;
             }
 
-            parentPanel.setAdjustersEnabled(false); // user is adjusting an endpoint, so disable adjustment components
+            // user is adjusting an endpoint, so disable adjustment components
+            if ( parentPanel != null )
+            {
+            	parentPanel.setAdjustersEnabled(false);
+            }
+            if ( parentListener != null )
+            {
+            	parentListener.setAdjustersEnabled(false);
+            }
         }
 
         transferFunction.replacePoint(convertScreenSpaceXToFnPt(offsetMouseX), offsetMouseY, tfActiveIndex);
-
-        if (parentPanel instanceof JPanelVolOpacity) {
-            ((JPanelVolOpacity) parentPanel).updateSlider(this);
-        } else if (parentPanel instanceof JPanelVolOpacityRGB) {
-            ((JPanelVolOpacityRGB) parentPanel).updateSlider(this);
+        if ( parentPanel != null )
+        {
+        	if (parentPanel instanceof JPanelVolOpacity) {
+        		((JPanelVolOpacity) parentPanel).updateSlider(this);
+        	} else if (parentPanel instanceof JPanelVolOpacityRGB) {
+        		((JPanelVolOpacityRGB) parentPanel).updateSlider(this);
+        	}
+        }
+        if ( parentListener!= null )
+        {
+        	parentListener.updateSlider(this);        	
         }
 
         showHistogram();
-        
-        parentPanel.update();
+        if ( parentPanel != null )
+        {        	
+        	parentPanel.update();
+        }
+        if ( parentListener != null )
+        {
+        	parentListener.update();
+        }
 
         return;
     }
@@ -477,8 +546,15 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
             int y_point = (int) transferFunction.getPoint(i).Y;
 
             if (MipavMath.distance(offsetMouseX, x_point, offsetMouseY, y_point) < 5) {
-                parentPanel.setAdjustersEnabled(!transferFunction.isEndpoint(i)); // user is adjusting a non-endpoint,
-                                                                                  // so enable adjustment components
+                // user is adjusting a non-endpoint, so enable adjustment components
+                if ( parentPanel != null )
+                {
+                	parentPanel.setAdjustersEnabled(!transferFunction.isEndpoint(i));
+                }
+                if ( parentListener != null )
+                {
+                	parentListener.setAdjustersEnabled(!transferFunction.isEndpoint(i));
+                }
                 addPointFlag = false; // user has clicked on a point, and is therefore not adding one (might be
                                       // preparing to drag the point)
                 tfActiveIndex = i;
@@ -492,19 +568,39 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         if (addPointFlag == true) {
             transferFunction.insertPoint(convertedFunctionPoint, offsetMouseY, newPointIndex + 1);
 
-            parentPanel.setAdjustersEnabled(!transferFunction.isEndpoint(newPointIndex + 1));
+            if ( parentPanel != null )
+            {
+            	parentPanel.setAdjustersEnabled(!transferFunction.isEndpoint(newPointIndex + 1));
+            }
+            if ( parentListener != null )
+            {
+            	parentListener.setAdjustersEnabled(!transferFunction.isEndpoint(newPointIndex + 1));
+            }
             tfActiveIndex = newPointIndex + 1;
         } else if (mouseEvent.isShiftDown() == true) {
             transferFunction.removePoint(tfActiveIndex);
 
-            parentPanel.setAdjustersEnabled(false);
+            if ( parentPanel != null )
+            {
+            	parentPanel.setAdjustersEnabled(false);
+            }
+            if ( parentListener != null )
+            {
+            	parentListener.setAdjustersEnabled(false);
+            }
             tfActiveIndex = INACTIVE;
         }
-
-        if (parentPanel instanceof JPanelVolOpacity) {
-            ((JPanelVolOpacity) parentPanel).updateSlider(this);
-        } else if (parentPanel instanceof JPanelVolOpacityRGB) {
-            ((JPanelVolOpacityRGB) parentPanel).updateSlider(this);
+        if (parentPanel != null )
+        {
+        	if (parentPanel instanceof JPanelVolOpacity) {
+        		((JPanelVolOpacity) parentPanel).updateSlider(this);
+        	} else if (parentPanel instanceof JPanelVolOpacityRGB) {
+        		((JPanelVolOpacityRGB) parentPanel).updateSlider(this);
+        	}
+        }
+        if ( parentListener != null )
+        {
+        	parentListener.updateSlider(this);
         }
 
         showHistogram();
@@ -653,7 +749,14 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         }
 
         tfActiveIndex = INACTIVE;
-        parentPanel.setAdjustersEnabled(false);
+        if ( parentPanel != null )
+        {
+        	parentPanel.setAdjustersEnabled(false);
+        }
+        if ( parentListener != null )
+        {
+        	parentListener.setAdjustersEnabled(false);
+        }
         showHistogram();
     }
 

@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
+import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -25,6 +26,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
+import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.*;
 
 import java.awt.BasicStroke;
@@ -34,13 +36,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.BitSet;
@@ -368,6 +364,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** used in the popup menu when the user right-clicks over a voi intensity line. */
 	public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
 
+	/** Used for angle searches in line VOI creation */
+    private static final double[] PI_SEARCH = {Math.tan(Math.PI/24), Math.tan((3*Math.PI)/24), Math.tan((5*Math.PI)/24), Math.tan((7*Math.PI)/24), Math.tan((9*Math.PI)/24), Math.tan((11*Math.PI)/24)};
+    private static final double[] PI_MULT = {0, Math.tan((2*Math.PI)/24), Math.tan((4*Math.PI)/24), Math.tan((6*Math.PI)/24), Math.tan((8*Math.PI)/24), Math.tan((10*Math.PI)/24)};
+	
 	private static final int NONE = -1;
 	private static final int TEXT = 0;
 	private static final int POINT = 1;
@@ -406,7 +406,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** Last/current mouse position. */
 	private float m_fMouseX, m_fMouseY;
 	/** Local orientation of the displayed image, used in the volume renderer and tri-planar views. */
-	private int m_iPlaneOrientation;
+	private int[] m_aiAxisOrder;
+	private boolean[] m_abAxisFlip;
 	/** ImageA and ImageB */
 	private ModelImage[] m_akImages = new ModelImage[2];
 	/** Current active image. */
@@ -514,7 +515,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
 		{
-			m_kParent.showIntensityGraph( m_kCurrentVOI );
+			m_kParent.showIntensityInfo( m_kCurrentVOI, m_iPlane, true );
 		}else if(command.equals("VOIProperties")) {
 			m_kParent.showVOIProperties();
 		}
@@ -709,7 +710,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public void draw( VOIBase kVOI, float[] resolutions, int[] unitsOfMeasure, 
 			int slice, Graphics g, boolean bShowAllPoints ) 
 	{
-		if (g == null) {
+	    if (g == null) {
 			MipavUtil.displayError("Draw VOI: grapics = null");
 			return;
 		}
@@ -805,6 +806,14 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		return m_kComponent;
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public ModelImage getImage() {
+	    return m_kImageActive;
+	}
 
 	/**
 	 * Returns a ModelImage in the local image space, if a local ModelImage has already been created it is returned.
@@ -812,13 +821,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 */
 	public ModelImage getLocalImage()
 	{
-		if ( m_iPlaneOrientation == FileInfoBase.UNKNOWN_ORIENT )
+		if ( defaultOrientation() )
 		{
 			m_kLocalImage = m_kImageActive;
 			return m_kLocalImage;
 		}
-		int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
-		boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
+		int[] aiAxisOrder = m_aiAxisOrder;
+		boolean[] abAxisFlip = m_abAxisFlip;
 
 		if ( m_kLocalImage != null )
 		{
@@ -909,6 +918,48 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 
 	/**
+	 * Initialize the VOIManager.
+	 * @param kImageA imageA.
+	 * @param kImageB imageB.
+	 * @param kComponent ViewJComponentEditImage this VOIManager is attached to.
+	 * @param kContext ScreenCoordinateListener for converting between screen coordinates and image file coordinates.
+	 * @param iOrientation orientation of the ViewJComponentEditImage.
+	 */
+	public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+			ScreenCoordinateListener kContext, int[] aiAxisOrder, boolean[] abAxisFlip )
+	{
+		if ( kFrame != null )
+		{
+			kFrame.addKeyListener(this);
+		}
+		m_akImages[0] = kImageA;
+		m_akImages[1] = kImageB;
+		if ( kImageA != null )
+		{
+			m_kImageActive = kImageA;
+		}
+		else
+		{
+			m_kImageActive = kImageB;
+		}
+		setCanvas(kComponent);
+		setDrawingContext(kContext);
+
+		m_aiAxisOrder = aiAxisOrder;
+		m_abAxisFlip = abAxisFlip;
+		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
+		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
+		
+		int iPlane = m_aiAxisOrder[2];
+		switch ( iPlane )
+		{
+		case 0: m_iPlane = VOIBase.XPLANE; break;
+		case 1: m_iPlane = VOIBase.YPLANE; break;
+		case 2: m_iPlane = VOIBase.ZPLANE; break;
+		}
+	}
+
+	/**
 	 * Returns true if the VOIManager is currently drawing a VOI, or if the defaultPointer button in the
 	 * VOIManagerInterface is selected.
 	 * @return
@@ -942,11 +993,73 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		case KeyEvent.VK_DOWN:   m_kParent.moveVOI("MoveDown", m_kDrawingContext.getZoomY()*m_kDrawingContext.getResolutionY()); return;
 		case KeyEvent.VK_LEFT:   m_kParent.moveVOI("MoveLeft", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
 		case KeyEvent.VK_RIGHT:  m_kParent.moveVOI("MoveRight", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
+		case KeyEvent.VK_M:     
+		    VOIVector vec = m_kImageActive.getVOIs();
+		    VOIVector vecProcess = new VOIVector();
+		    for(int i=0; i<vec.size(); i++) {
+		        if(vec.get(i).getCurveType() == VOI.LINE || 
+		                vec.get(i).getCurveType() == VOI.PROTRACTOR) {
+		            VOI v = vec.get(i);
+		            if(v.isActive()) {
+    		            for(int j=0; j<v.getCurves().size(); j++) {
+    		                if(vec.get(i).getCurves().get(j).isActive()) {
+    		                    m_kParent.showIntensityInfo(vec.get(i).getCurves().get(j), m_iPlane, false);
+    		                }
+    		            }
+		            }
+		        } else {
+		            for(int j=0; j<vec.get(i).getCurves().size(); j++) {
+		                if(vec.get(i).getCurves().get(j).isActive()) {
+		                    if(!vecProcess.contains(vec.get(i))) {
+		                        vecProcess.add(vec.get(i));
+		                    }
+		                    vec.get(i).getCurves().get(j).setProcess(true);
+		                } else {
+		                    vec.get(i).getCurves().get(j).setProcess(false);
+		                }
+		            }
+		        }
+		    }
+		    
+		    if(vecProcess.size() > 0) {
+		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
+                measure.getListPanel().setSelectedList(true);
+                measure.callVOIAlgo(vecProcess, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
+		    } else { //no VOIs to process so do whole image analysis
+		        VOIVector wholeImageVec = new VOIVector();
+		        VOI wholeImage = new VOI((short) 0, "wholeImage", VOI.CONTOUR, 0.0f);
+		        int slice = m_kImageActive.getParentFrame().getComponentImage().getSlice();
+		        int xDim = m_kImageActive.getExtents()[0]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+		        int yDim = m_kImageActive.getExtents()[1]-2; //TODO: Change to xDim-1 when bug 539 is fixed
+		        
+	            Vector3f orig = new Vector3f(0, 0, slice);
+	            Vector3f cornerX = new Vector3f(xDim-2, 0, slice);
+	            Vector3f cornerXY = new Vector3f(xDim-2, yDim-2, slice);
+	            Vector3f cornerY = new Vector3f(0, yDim-2, slice);
+	            Vector<Vector3f> points = new Vector<Vector3f>();
+	            points.add(orig);
+	            points.add(cornerX);
+	            points.add(cornerXY);
+	            points.add(cornerY);
+	            VOIContour wholeSlice = new VOIContour(true, true, points);
+	            wholeImage.importCurve(wholeSlice);
+	            wholeSlice.setGroup(wholeImage);
+	            wholeSlice.setProcess(true);
+
+		        wholeImageVec.add(wholeImage);
+		        m_kImageActive.registerVOI(wholeImage);
+		        
+		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
+                measure.getListPanel().setSelectedList(true);
+                measure.callVOIAlgo(wholeImageVec, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
+                
+                m_kImageActive.unregisterVOI(wholeImage);
+		    }
+		    return;
 		}
 		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 		String command = Preferences.getShortcutCommand(ks);
 		if (command != null) {
-			//m_kParent.doVOI( command );
 			m_kParent.actionPerformed(new ActionEvent(ks, 0, command));
 		}
 	}
@@ -987,7 +1100,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.KeyListener#keyTyped(java.awt.event.KeyEvent)
 	 */
-	public void keyTyped(KeyEvent e){}
+	public void keyTyped(KeyEvent e) {}
 
 	/**
 	 * Called from VOIManagerInterface. Initializes the livewire.
@@ -1232,7 +1345,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				else if ( selectVOI( kEvent ) != null )
 				{
 					Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
-					m_kMouseOffset.Set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
+					m_kMouseOffset.set ( kGC.X - kEvent.getX(), kGC.Y - kEvent.getY(), 0 );
 					m_kParent.updateDisplay();
 				}
 			}
@@ -1464,15 +1577,15 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				{
 					Vector3f kPos = kVOI.elementAt( i );
 					Vector3f kLocal = m_kDrawingContext.fileToScreenVOI( kPos );
-					kLocal.Add( kDiff );
+					kLocal.add( kDiff );
 					Vector3f kVolumePt = new Vector3f();
 					m_kDrawingContext.screenToFileVOI( kLocal, kVolumePt );
-					kVolumeDiff.Sub( kVolumePt, kPos );
+					kVolumeDiff.copy( kVolumePt ).sub( kPos );
 					kVOI.set( i, kVolumePt );
 				}
 				else
 				{
-					kVOI.elementAt(i).Add(kVolumeDiff);
+					kVOI.elementAt(i).add(kVolumeDiff);
 				}
 			}
 			kVOI.update(kVolumeDiff);
@@ -1481,12 +1594,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 			Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 			Vector3f kTemp = new Vector3f( kScreenMin );
-			kScreenMin.Min( kScreenMax );
-			kScreenMax.Max( kTemp );
+			kScreenMin.min( kScreenMax );
+			kScreenMax.max( kTemp );
 
 			if ( kVOI.getGroup().getContourGraph() != null )
 			{
-				m_kParent.updateGraph(kVOI);
+				m_kParent.updateGraph(kVOI, m_iPlane);
 			}
 		}
 	}
@@ -1508,6 +1621,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		m_kCurrentVOI = null;
 	}
+	
+	
 
 	/**
 	 * Called from VOIManagerInterface. Pastes the input VOI onto the current slice.
@@ -1552,10 +1667,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		VOIBase backupVOI = kVOI.clone();
 
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(backupVOI) ).add( getBoundingBoxLowerLeft(backupVOI) ).add( getBoundingBoxLowerRight(backupVOI) ).scale( 0.25f );
 
 		Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
 
@@ -1563,9 +1675,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < backupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -1595,10 +1705,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		VOIBase backupVOI = kVOI.clone();
 
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(backupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(backupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(backupVOI) ).add( getBoundingBoxLowerLeft(backupVOI) ).add( getBoundingBoxLowerRight(backupVOI) ).scale( 0.25f );
 
 		Vector3f kScreenScale = new Vector3f( xScale, yScale, 1 );
 
@@ -1606,9 +1713,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < backupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( backupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -1701,13 +1806,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public boolean testMove( Vector3f kDiff, Vector3f[] akMinMax, boolean bUseMouse )
 	{            
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( akMinMax[0] );
-		kScreenMin.Add(kDiff);
+		kScreenMin.add(kDiff);
 
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( akMinMax[1] );
-		kScreenMax.Add(kDiff);
+		kScreenMax.add(kDiff);
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		if ( bUseMouse && !kScreenMin.equals(kScreenMax) && 
 				(m_fMouseX < kScreenMin.X || m_fMouseX > kScreenMax.X ||
@@ -1722,8 +1827,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			return false;
 		}         
-		akMinMax[0].Copy( kTestMin );
-		akMinMax[1].Copy( kTestMax );
+		akMinMax[0].copy( kTestMin );
+		akMinMax[1].copy( kTestMax );
 		return true;
 	}
 
@@ -2158,7 +2263,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{            
 				int iSlice = m_kDrawingContext.getSlice();
 
-
 				Vector<Vector3f> kPositions = new Vector<Vector3f>();
 				kPositions.add( new Vector3f (m_fMouseX, fYStart, iSlice));
 				kPositions.add( new Vector3f (iX, fYStart, iSlice));
@@ -2309,8 +2413,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 			else
 			{
-				Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
-				setPosition( m_kCurrentVOI, 1, kNewPoint );
+			    Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
+				setPosition( m_kCurrentVOI, 1, kNewPoint, mouseEvent.isControlDown());
 			}
 
 			m_fMouseX = iX;
@@ -2323,10 +2427,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 				Vector3f kStart = new Vector3f( m_fMouseX, fYStart, m_kDrawingContext.getSlice());
 				Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice());
-				Vector3f kMiddle = new Vector3f();
-				kMiddle.Sub( kEnd, kStart );
-				kMiddle.Scale( .4f );
-				kMiddle.Add(kStart);
+				Vector3f kMiddle = Vector3f.sub( kEnd, kStart );
+				kMiddle.scale( .4f );
+				kMiddle.add(kStart);
 
 
 				Vector<Vector3f> kPositions = new Vector<Vector3f>();
@@ -2340,10 +2443,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				Vector3f kStart = m_kDrawingContext.fileToScreenVOI(m_kCurrentVOI.get(1));
 				Vector3f kEnd = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
-				Vector3f kMiddle = new Vector3f();
-				kMiddle.Sub( kEnd, kStart );
-				kMiddle.Scale( .4f );
-				kMiddle.Add(kStart);
+				Vector3f kMiddle = Vector3f.sub( kEnd, kStart );
+				kMiddle.scale( .4f );
+				kMiddle.add(kStart);
 
 				setPosition( m_kCurrentVOI, 0, kMiddle );
 				setPosition( m_kCurrentVOI, 2, kEnd );
@@ -2376,6 +2478,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+    /**
+	 * Checks the axisOrder and axisFlip data members. If they do not change the volume orientation
+	 * then the default orientation is true, otherwise the default orientation is false.
+	 * @return true if this orientation matches the default image orientation, false if it changes the image orientation.
+	 */
+	private boolean defaultOrientation()
+	{
+		return ( (m_aiAxisOrder[0] == 0) && (m_aiAxisOrder[1] == 1) && (m_aiAxisOrder[2] == 2) &&
+				 (m_abAxisFlip[0] == false) && (m_abAxisFlip[1] == false) && (m_abAxisFlip[2] == false) );
+	}
+	
 	/** Draw the VOIText arror on screen.
 	 * @param kVOI
 	 * @param g2d
@@ -2648,10 +2761,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		boolean drawAngle = Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE);
 
 		if (drawAngle) {
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kFileEnd, kFileStart );
-			kDiff.Normalize();
-			double theta = (float)(Math.acos(kDiff.Dot(Vector3f.UNIT_X)) * 180f/Math.PI);
+			Vector3f kDiff = Vector3f.sub( kFileEnd, kFileStart );
+			kDiff.normalize();
+			double theta = (float)(Math.acos(kDiff.dot(Vector3f.UNIT_X)) * 180f/Math.PI);
 
 			String tmpString2 = String.valueOf(theta);
 			int i = tmpString2.indexOf('.');
@@ -3188,8 +3300,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 				Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 				Vector3f kTemp = new Vector3f( kScreenMin );
-				kScreenMin.Min( kScreenMax );
-				kScreenMax.Max( kTemp );
+				kScreenMin.min( kScreenMax );
+				kScreenMax.max( kTemp );
 
 				x0 = (int) (kScreenMin.X + 0.5);
 				x1 = (int) (kScreenMax.X + 0.5);
@@ -3825,14 +3937,18 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param g Graphics.
 	 */
 	private void drawVOIText( VOIText kVOI, Graphics g) {
+	    int xS2 = 0;
+	    int yS2 = 0;
 
 		Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
 		int xS = Math.round(kScreen.X);
 		int yS = Math.round(kScreen.Y);
 
-		kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
-		int xS2 = Math.round(kScreen.X);
-		int yS2 = Math.round(kScreen.Y);
+		if (kVOI.size() > 1) {
+    		kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
+    		xS2 = Math.round(kScreen.X);
+    		yS2 = Math.round(kScreen.Y);
+		}
 
 		int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
 		
@@ -3924,12 +4040,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private Vector3f fileCoordinatesToPatient( Vector3f volumePt )
 	{       
 		Vector3f kPatient = new Vector3f();
-		MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImageActive, m_iPlaneOrientation );
+		MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 		// axisFlip represents whether to invert the axes after they are reordered
-		final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-		if ( axisFlip[0] ) kPatient.X += 1;
-		if ( axisFlip[1] ) kPatient.Y += 1;
-		//if ( axisFlip[2] ) kPatient.Z += 1;
+		if ( m_abAxisFlip[0] ) kPatient.X += 1;
+		if ( m_abAxisFlip[1] ) kPatient.Y += 1;
 		return kPatient;
 	}
 
@@ -3942,9 +4056,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
 		Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
-		Vector3f kLeftMid = new Vector3f();
-		kLeftMid.Add( kUpperLeft, kLowerLeft );
-		kLeftMid.Scale( 0.5f );
+		Vector3f kLeftMid = Vector3f.add( kUpperLeft, kLowerLeft );
+		kLeftMid.scale( 0.5f );
 		return kLeftMid;
 	}
 	/**
@@ -3957,8 +4070,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMin.X, kScreenMax.Y, kScreenMin.Z );
 	}
@@ -3972,9 +4085,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kLowerLeft = getBoundingBoxLowerLeft( kVOI );
 		Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-		Vector3f kLowerMid = new Vector3f();
-		kLowerMid.Add( kLowerLeft, kLowerRight );
-		kLowerMid.Scale( 0.5f );
+		Vector3f kLowerMid = Vector3f.add( kLowerLeft, kLowerRight );
+		kLowerMid.scale( 0.5f );
 		return kLowerMid;
 	}
 	/**
@@ -3987,8 +4099,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMax );
 	}
@@ -4002,9 +4114,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
 		Vector3f kLowerRight = getBoundingBoxLowerRight( kVOI );
-		Vector3f kRightMid = new Vector3f();
-		kRightMid.Add( kUpperRight, kLowerRight );
-		kRightMid.Scale( 0.5f );
+		Vector3f kRightMid = Vector3f.add( kUpperRight, kLowerRight );
+		kRightMid.scale( 0.5f );
 		return kRightMid;
 	}
 
@@ -4018,8 +4129,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMin );
 	}
@@ -4033,9 +4144,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{
 		Vector3f kUpperLeft = getBoundingBoxUpperLeft( kVOI );
 		Vector3f kUpperRight = getBoundingBoxUpperRight( kVOI );
-		Vector3f kUpperMid = new Vector3f();
-		kUpperMid.Add( kUpperLeft, kUpperRight );
-		kUpperMid.Scale( 0.5f );
+		Vector3f kUpperMid = Vector3f.add( kUpperLeft, kUpperRight );
+		kUpperMid.scale( 0.5f );
 		return kUpperMid;
 	}
 
@@ -4049,8 +4159,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kScreenMin = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[0] );
 		Vector3f kScreenMax = m_kDrawingContext.fileToScreenVOI( kVOI.getImageBoundingBox()[1] );
 		Vector3f kTemp = new Vector3f( kScreenMin );
-		kScreenMin.Min( kScreenMax );
-		kScreenMax.Max( kTemp );
+		kScreenMin.min( kScreenMax );
+		kScreenMax.max( kTemp );
 
 		return new Vector3f( kScreenMax.X, kScreenMin.Y, kScreenMin.Z );
 	}
@@ -4332,7 +4442,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
 				m_abInitLevelSet[iSlice] = true;
 			} catch (IOException error) {
-				MipavUtil.displayError("Error while trying to retrieve RGB data.");
+				MipavUtil.displayError("Error while trying to retrieve black and white data.");
 			}
 		}
 	}
@@ -4451,12 +4561,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		int iX = kEvent.getX();
 		int iY = kEvent.getY();
-		setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
+		setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice(), kEvent.isControlDown()); 
 		m_kParent.setCursor(MipavUtil.crosshairCursor); 
 		m_kParent.updateDisplay();
 		if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
 		{
-			m_kParent.updateGraph(m_kCurrentVOI);
+			m_kParent.updateGraph(m_kCurrentVOI, m_iPlane);
 		}
 	}
 
@@ -4487,50 +4597,49 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			Vector3f kTopMid = getBoundingBoxUpperMiddle( kVOI );
 			Vector3f kLeftMid = getBoundingBoxLeftMiddle( kVOI );
 
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kUpperLeft, kVOIPoint );
+			Vector3f kDiff = Vector3f.sub( kUpperLeft, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_LEFT);
 				return true;
 			}
-			kDiff.Sub( kUpperRight, kVOIPoint );
+			kDiff = Vector3f.sub( kUpperRight, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_RIGHT);
 				return true;
 			}
-			kDiff.Sub( kLowerLeft, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerLeft, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_LEFT);
 				return true;
 			}
-			kDiff.Sub( kLowerRight, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerRight, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_RIGHT);
 				return true;
 			}
-			kDiff.Sub( kLowerMid, kVOIPoint );
+			kDiff = Vector3f.sub( kLowerMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LOWER_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kRightMid, kVOIPoint );
+			kDiff = Vector3f.sub( kRightMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.RIGHT_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kTopMid, kVOIPoint );
+			kDiff = Vector3f.sub( kTopMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.UPPER_MIDDLE);
 				return true;
 			}
-			kDiff.Sub( kLeftMid, kVOIPoint );
+			kDiff = Vector3f.sub( kLeftMid, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearBoundPoint(VOIBase.LEFT_MIDDLE);
@@ -4586,8 +4695,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			Vector3f kFilePos = kVOI.get(i);
 			Vector3f kPos = m_kDrawingContext.fileToScreenVOI(kFilePos);
-			Vector3f kDiff = new Vector3f();
-			kDiff.Sub( kPos, kVOIPoint );
+			Vector3f kDiff = Vector3f.sub( kPos, kVOIPoint );
 			if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
 			{
 				kVOI.setNearPoint(i);
@@ -4668,11 +4776,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{       
 		Vector3f volumePt = new Vector3f();
 		// axisFlip represents whether to invert the axes after they are reordered
-		final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-		if ( axisFlip[0] ) patientPt.X -= 1;
-		if ( axisFlip[1] ) patientPt.Y -= 1;
-		//if ( axisFlip[2] ) patientPt.Z -= 1;
-		MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, m_iPlaneOrientation );
+		if ( m_abAxisFlip[0] ) patientPt.X -= 1;
+		if ( m_abAxisFlip[1] ) patientPt.Y -= 1;
+		MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 		return volumePt;
 	}
 
@@ -4717,8 +4823,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 				Vector3f kGC = m_kDrawingContext.fileToScreenVOI( m_kCurrentVOI.getAverage() );
 				Vector3f kNewGC = new Vector3f( kEvent.getX() + m_kMouseOffset.X, kEvent.getY() + m_kMouseOffset.Y, kGC.Z );
-				Vector3f kDiff = new Vector3f();
-				kDiff.Sub( kNewGC, kGC );
+				Vector3f kDiff = Vector3f.sub( kNewGC, kGC );
 				m_kParent.moveVOI( this, kDiff, m_iPlane, bTempFirstDrag, true );
 				m_fMouseX = kEvent.getX();
 				m_fMouseY = kEvent.getY();
@@ -5008,10 +5113,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			return;
 		}
 		Vector3f kScreenCenter = new Vector3f( getBoundingBoxUpperLeft(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxUpperRight(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerLeft(m_kBackupVOI) );
-		kScreenCenter.Add( getBoundingBoxLowerRight(m_kBackupVOI) );
-		kScreenCenter.Scale( 0.25f );
+		kScreenCenter.add( getBoundingBoxUpperRight(m_kBackupVOI) ).add( getBoundingBoxLowerLeft(m_kBackupVOI) ).add( getBoundingBoxLowerRight(m_kBackupVOI) ).scale( 0.25f );
 
 		float xScale = (iX-kScreenCenter.X) / (kScreenBound.X-kScreenCenter.X);
 		float yScale = (iY-kScreenCenter.Y) / (kScreenBound.Y-kScreenCenter.Y);
@@ -5049,9 +5151,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = 0; i < m_kBackupVOI.size(); i++ )
 		{
 			Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( m_kBackupVOI.elementAt(i) );
-			kScreen.Sub(kScreenCenter);
-			kScreen.Mult( kScreenScale );
-			kScreen.Add(kScreenCenter);
+			kScreen.sub(kScreenCenter).mult( kScreenScale ).add(kScreenCenter);
 			Vector3f kVolumePt = new Vector3f();
 			if ( m_kDrawingContext.screenToFileVOI( kScreen, kVolumePt ) )
 			{
@@ -5070,7 +5170,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kParent.updateDisplay();
 		if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
 		{
-			m_kParent.updateGraph(m_kCurrentVOI);
+			m_kParent.updateGraph(m_kCurrentVOI, m_iPlane);
 		}
 	}
 	/**
@@ -5291,6 +5391,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = kVOIs.size()-1; i >=0; i-- )
 		{
 			VOI kVOI = kVOIs.get(i);
+			if(kVOI.getCurves() == null) 
+			{
+			    continue;
+			}
 			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
 			{
 				VOIBase kVOI3D = kVOI.getCurves().get(j);
@@ -5369,6 +5473,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		return m_kCurrentVOI;
 	}
+	
 	private void setCanvas (Component kComponent)
 	{
 		m_kComponent = kComponent;
@@ -5376,28 +5481,51 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kComponent.addMouseListener( this );
 		m_kComponent.addMouseMotionListener( this );
 	}
+	
 	private void setDrawingContext( ScreenCoordinateListener kContext )
 	{
 		m_kDrawingContext = kContext;
 	}
+	
 	private void setOrientation( int iOrientation )
 	{
-		m_iPlaneOrientation = iOrientation;
-		m_aiLocalImageExtents = m_kImageActive.getExtents( m_iPlaneOrientation );
+		m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation );
+		m_abAxisFlip = MipavCoordinateSystems.getAxisFlip( m_kImageActive, iOrientation );
+		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
 		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
 	}
-	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
+	
+	
+	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ) 
 	{
-		setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
+	    setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ), false);
+	}
+	
+	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ, boolean isCtrlDown )
+	{
+		setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ), isCtrlDown);
 	}
 
 
-	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos )
+	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos) 
+	{
+	    setPosition( kVOI, iPos, kPos, false);
+	}
+	
+	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos, boolean isCtrlDown)
 	{
 		if ( kVOI.isFixed() )
 		{
 			return;
 		}       
+		
+		if(isCtrlDown) //opp to control drawing method using shift key
+		{
+		    if(kVOI.getType() == VOI.LINE) 
+		    {
+		        kPos = straightenLineVOI(kPos, kVOI);
+		    }
+		}
 
 		Vector3f kVolumePt = new Vector3f();
 		if ( iPos < kVOI.size() )
@@ -5420,7 +5548,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 						kVOI.elementAt(0).Y = kVolumePt.Y;
 						kVOI.elementAt(0).Z = kVolumePt.Z;
 					}
-				}                
+				} 
+				
 				kVOI.set( iPos, kVolumePt );
 
 				kVOI.setSelectedPoint( iPos );
@@ -5496,17 +5625,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		for ( int i = kVOIs.size()-1; i >=0; i-- )
 		{
 			VOI kVOI = kVOIs.elementAt(i);
-			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+			if(kVOI.getCurves() != null) 
 			{
-				VOIBase kVOI3D = kVOI.getCurves().get(j);
-				if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
-						(m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
-						contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
-				{
-					m_iNearStatus = NearNone;
-					m_kParent.setCursor(MipavUtil.moveCursor);
-					return;
-				}
+    			for ( int j = kVOI.getCurves().size()-1; j >= 0; j-- )
+    			{
+    				VOIBase kVOI3D = kVOI.getCurves().get(j);
+    				if ( (m_iPlane == (m_iPlane & kVOI3D.getPlane())) &&
+    						(m_kDrawingContext.getSlice() == getSlice( kVOI3D )) && 
+    						contains( kVOI3D, iX, iY, m_kDrawingContext.getSlice() ) )
+    				{
+    					m_iNearStatus = NearNone;
+    					m_kParent.setCursor(MipavUtil.moveCursor);
+    					return;
+    				}
+    			}
 			}
 		}
 		m_iNearStatus = NearNone;
@@ -5547,7 +5679,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kVolumePt = new Vector3f();
 		m_kDrawingContext.screenToFileVOI( (int)startPtX, (int)startPtY, m_kDrawingContext.getSlice(), kVolumePt );
 		Vector3f kPatientPt = new Vector3f();
-		MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+		MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 
 		startPtX = kPatientPt.X;
 		startPtY = kPatientPt.Y;        
@@ -5748,7 +5880,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			//Vector<Vector3f> kPositions = new Vector<Vector3f>();
 			for ( int i = 0; i < levelSetStack.size(); i++ )
 			{
-				kPatientPt.Set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_kDrawingContext.getSlice() );
+				kPatientPt.set( levelSetStack.getPointX(i), levelSetStack.getPointY(i), m_kDrawingContext.getSlice() );
 				kScreenPt = m_kDrawingContext.patientToScreenVOI( kPatientPt );
 				//kPositions.add( kScreenPt );
 				kVolumePt = new Vector3f();
@@ -5897,7 +6029,34 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kSplitVOI = null;
 	}
 
-
+	/**
+     * Modifies <code>kPos</code> to form an angle with its origin point that is a multiple of 15 degrees. 
+     */
+    private Vector3f straightenLineVOI(Vector3f kPos, VOIBase kOld) {
+        int i=0;
+        float subY = Math.abs(kPos.Y-kOld.elementAt(0).Y);
+        float subX = Math.abs(kPos.X-kOld.elementAt(0).X);
+        double comp = subY / subX;
+        
+        for(;i<PI_SEARCH.length; i++) {
+            if(comp < PI_SEARCH[i]) {
+                break;
+            }
+        }
+        
+        if(i < PI_SEARCH.length) {
+            if(kPos.Y > kOld.elementAt(0).Y) {
+                kPos.Y = kOld.elementAt(0).Y + (float) (subX*PI_MULT[i]);
+            } else {
+                kPos.Y = kOld.elementAt(0).Y - (float) (subX*PI_MULT[i]);
+            }
+        } else {
+            kPos.X = (int) kOld.elementAt(0).X;
+        }
+        
+        return kPos;
+    }
+	
 	private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
 	{
 		Vector3f kVolumePt0 = new Vector3f();

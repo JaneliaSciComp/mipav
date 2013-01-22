@@ -11,17 +11,23 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.table.TableModel;
+import javax.swing.text.JTextComponent;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 /**
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
  * dialogs. It also implements all the listeners except for the action listener.
  *
- * @version  1.0 Aug 1, 1998
+ * @version  2.0 Aug 1, 2012
+ * @author   Justin Senseney
  * @author   Neva Cherniavsky
  * @author   Matthew J. McAuliffe, Ph.D.
  */
@@ -38,6 +44,24 @@ public abstract class JDialogBase extends JDialog
 
     /** NEW indicates a new image is created after the algorithm is run. */
     protected static final int NEW = 1;
+
+    /** Loads default for this dialog */
+    private static final String LOAD_DEFAULT = "LoadDefault";
+
+    /** Loads profile for this dialog */
+    private static final String LOAD_PROFILE = "LoadProfile";
+
+    /** Saves default for this dialog */
+    private static final String SAVE_DEFAULT = "SaveDefault";
+
+    /** Saves profile for this dialog */
+    private static final String SAVE_PROFILE = "SaveProfile";
+
+    /** Displays help this dialog */
+    protected static final String HELP = "Help";
+
+    /** Access about mipav panel */
+    private static final String ABOUT_MIPAV = "AboutMIPAV";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -93,6 +117,12 @@ public abstract class JDialogBase extends JDialog
     protected ViewJProgressBar progressBar;
     
     protected VOIManagerInterface voiManager;
+
+    /** JMenuBar for loading/saving defaults */
+    protected JMenuBar bar;
+ 
+    /** List of existing default profiles for this dialog */
+    private ArrayList<String> profiles;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -124,6 +154,8 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        createMenu();
     }
 
     /**
@@ -148,6 +180,19 @@ public abstract class JDialogBase extends JDialog
      *                 diposed of.
      */
     public JDialogBase(Frame parent, boolean modal) {
+        this(parent, modal, true);
+    }
+    
+    /**
+     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
+     * window listener to all dialogs.
+     *
+     * @param  parent  Parent frame.
+     * @param  modal   Modality of the dialog; <code>true</code> means the user can't do anything until this dialog is
+     *                 diposed of.
+     * @param displayMenu Whether menu should be displayed to user for loading/saving defaults
+     */
+    public JDialogBase(Frame parent, boolean modal, boolean displayMenu) {
         super(parent, modal);
         parentFrame = parent;
         serif12 = MipavUtil.font12;
@@ -169,6 +214,10 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        if(displayMenu) {
+            createMenu();
+        }
     }
 
     /**
@@ -182,7 +231,23 @@ public abstract class JDialogBase extends JDialog
      *                 diposed of.
      */
     public JDialogBase(Dialog parent, boolean modal) {
+        this(parent, modal, true);
+    }
+    
+    /**
+     * Constructor that forwards the parent dialog whether or not the dialog is modal. Also adds this as a window
+     * listener to all dialogs.
+     *
+     * @param  parent  Parent Dialog. Unlike the <code>JDialog(Frame, boolean)</code> constructor, this method merely
+     *                 forwards the parent/owner to the super-class, and not store a reference locally. a higher level,
+     *                 but does not store the
+     * @param  modal   Modality of the dialog; <code>true</code> means the user can't do anything until this dialog is
+     *                 diposed of.
+     * @param displayMenu Whether menu should be displayed to user for loading/saving defaults
+     */
+    public JDialogBase(Dialog parent, boolean modal, boolean displayMenu) {
         super(parent, modal);
+        
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addWindowListener(this);
@@ -203,6 +268,37 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        if(displayMenu) {
+            createMenu();
+        }
+    }   
+    
+    private void createMenu() {
+        bar = new JMenuBar();
+        ViewMenuBuilder builder = new ViewMenuBuilder(this);
+        JMenu load = builder.makeMenu("Load", false, new JMenuItem[] {
+                ViewMenuBuilder.buildMenuItem("Load default", LOAD_DEFAULT, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, this, null, false)});
+        JMenu save = builder.makeMenu("Save", false, new JMenuItem[] {
+                ViewMenuBuilder.buildMenuItem("Save default", SAVE_DEFAULT, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, this, null, false)});
+        JMenu help =  builder.makeMenu("Help", false, new JMenuItem[] {
+                ViewMenuBuilder.buildMenuItem("Help...", HELP, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, this, null, false)});
+        
+        bar.add(load);
+        bar.add(save);
+        bar.add(help);
+        
+        Window w = SwingUtilities.getWindowAncestor(getContentPane());
+        if(w instanceof JFrame) {
+            ((JFrame) w).setJMenuBar(bar);
+        } else {
+            getContentPane().add(bar, BorderLayout.NORTH);
+        }
+        
+        bar.setVisible(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -372,6 +468,7 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setPixelPadValue(info.getPixelPadValue());
                 fileInfo[i].setPhotometric(info.getPhotometric());
                 
+                
                 fileInfo[i].setUnitsOfMeasure(units);
                 fileInfo[i].setResolutions(res);
                 
@@ -382,6 +479,62 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
             }
         }
+    }
+
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        
+        if(e.getActionCommand().equals(ABOUT_MIPAV)) {
+            
+        } else if(e.getActionCommand().equals(LOAD_PROFILE)) {
+            boolean success = false;
+            if(profiles == null) {
+                profiles = loadProfiles();
+            }
+            
+            if(profiles.size() > 0) {
+                Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
+                if(select != null) {
+                    success = loadDefaults(select.toString());
+                }
+                if(!success) {
+                    JOptionPane.showMessageDialog(this, "Profile loading not successful.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No available profiles");
+            }
+            
+        } else if(e.getActionCommand().equals(LOAD_DEFAULT)) {
+            loadDefaults();
+//            boolean success = loadDefaults();
+//            if(!success) {
+//                JOptionPane.showMessageDialog(this, "Profile loading not successful.");
+//            }
+        } else if(e.getActionCommand().equals(SAVE_PROFILE)) {
+            int doSave = JOptionPane.NO_OPTION;
+            String str = String.valueOf(0);
+            while(doSave == JOptionPane.NO_OPTION) {
+                str = JOptionPane.showInputDialog(this, "Name the profile");
+                if(str != null && str.length() == 0) {
+                    doSave = JOptionPane.NO_OPTION;
+                } else if(Preferences.getProperty(getClass().getName()+str) != null) {
+                    doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
+                } else {
+                    doSave = JOptionPane.YES_OPTION;
+                }
+            }
+            if(doSave == JOptionPane.YES_OPTION && str != null) {
+                saveDefaults(str);
+                if(profiles != null) {
+                    profiles.add(str);
+                }
+            }
+        } else if(e.getActionCommand().equals(SAVE_DEFAULT)) {
+            saveDefaults();
+        } 
     }
 
     /**
@@ -397,6 +550,40 @@ public abstract class JDialogBase extends JDialog
      * @param  event FocusEvent
      */
     public void focusLost(FocusEvent event) { }
+
+    private String getComponentName(Component comp, String longName, String profile) {
+        String name = null;
+        
+        try {
+        
+            Field[] f = this.getClass().getDeclaredFields();
+            
+            Class c = comp.getClass();
+            
+            for(int i=0; i<f.length; i++) {
+                
+                java.lang.reflect.Type t = f[i].getType();
+                if(t instanceof Class && c.equals(((Class)t))) {  
+                    if(!f[i].isAccessible()) {
+                        f[i].setAccessible(true);
+                    }
+                    Object obj = f[i].get(this);
+                    if(obj.equals(comp)) {
+                        name = f[i].getName();
+                        break;
+                    }
+                }
+            }
+        } catch(Exception e) {
+            //likely security manager issue
+        }
+        
+        if(name != null) {
+            return getClass().getName()+profile+"."+name;
+        } else {
+            return longName;
+        }
+    }
 
     /**
      * Accessor that returns whether or not the dialog has been cancelled.
@@ -422,6 +609,154 @@ public abstract class JDialogBase extends JDialog
      * @param  event  ItemEvent
      */
     public void itemStateChanged(ItemEvent event) { }
+    
+    
+    private boolean loadComponents(Component comp, String name, String profile) {
+        
+        String prop = null;
+        if(!(comp instanceof JTable)) {    //jtable uses custom naming scheme
+            prop = Preferences.getProperty(getComponentName(comp, name, profile));
+        }
+        
+        boolean load = true;        
+        
+        if((prop == null || prop.toString().equals(SAVE_DEFAULT)) && comp instanceof Container) {
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                String subName = compAr[i].getName();
+                try {
+                    if(subName == null || subName.length() == 0) {
+                        subName = String.valueOf(i);
+                    }
+                    load &= loadComponents(compAr[i], name+"."+subName, profile);
+                
+                } catch (Exception e) {
+                    Preferences.debug(name+"."+subName+" property could not be loaded", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                    
+                    return false;
+                }
+            }
+        } else if(comp instanceof JToggleButton) { //checkbox and radio buttons
+            JToggleButton button = (JToggleButton)comp;
+            boolean b = Boolean.valueOf(prop);
+            button.setSelected(b);
+        } else if(comp instanceof JTextComponent) { //textfield, editorpane, textarea, textpane, and passwordfield
+            JTextComponent text = (JTextComponent)comp;
+            text.setText(prop);
+        } else if(comp instanceof JSlider) {
+            JSlider slider = (JSlider)comp;
+            slider.setValue(Integer.valueOf(prop));
+        } else if(comp instanceof JSpinner) {
+            JSpinner spinner = (JSpinner)comp;
+            spinner.setValue(prop);
+        } else if(comp instanceof JComboBox) {
+            JComboBox combo = (JComboBox)comp;
+            String[] itemSplit = prop.split(",");
+            if(prop.contains(":")) {
+                for(int i=0; i<itemSplit.length; i++) {
+                    String[] objSplit = itemSplit[i].split(":");
+                    boolean found = false;
+                    for(int j=0; j<combo.getItemCount(); j++) {
+                        if(combo.getItemAt(j).toString().equals(objSplit[1].trim())) {
+                            combo.setSelectedIndex(j);
+                            found = true;
+                        }
+                    }
+                    if(!found) {
+                        int index = Integer.valueOf(objSplit[0].trim());
+                        if(index < combo.getItemCount()) {
+                            combo.setSelectedIndex(index);
+                        }
+                    }
+                }
+            }
+        } else if(comp instanceof JColorChooser) {
+            JColorChooser color = (JColorChooser)comp;
+            Color c = new Color(Integer.valueOf(prop));
+            color.setColor(c);
+        } else if(comp instanceof JTable) {
+            JTable table = (JTable) comp;
+            TableModel model = table.getModel();
+            for(int i=0; i<table.getRowCount(); i++) {
+                for(int j=0; j<table.getColumnCount(); j++) {
+                    if(model.isCellEditable(i, j)) {
+                        Object obj = Preferences.getProperty(getComponentName(comp, name, profile)+":"+i+","+j);
+                        if(obj != null) {
+                            table.setValueAt(obj, i, j);
+                        }
+                    }
+                }
+            }
+        } else if(comp instanceof JTree) {
+            JTree tree = (JTree) comp;
+            String[] split = prop.split(",");
+            int[] rows = new int[split.length];
+            for(int i=0; i<rows.length; i++) {
+                rows[i] = Integer.valueOf(split[i].trim());
+            }
+            tree.setSelectionRows(rows);
+        } else if(comp instanceof JList) {
+            JList list = (JList)comp;
+            String[] split = prop.split(",");
+            int[] rows = new int[split.length];
+            for(int i=0; i<rows.length; i++) {
+                rows[i] = Integer.valueOf(split[i].trim());
+            }
+            list.setSelectedIndices(rows);
+        } 
+        
+        
+        return load;
+    }
+
+    /**
+     * Loads the defaults of profile 0.
+     */
+    public void loadDefaults() {
+        loadDefaults(String.valueOf(0));
+    }
+    
+    /**
+     * Loads default values for gui components in the dialog.
+     * 
+     */
+    public boolean loadDefaults(String profileStr) {
+        String nameStart = new String();
+        Object obj = Preferences.getProperty(getClass().getName()+profileStr);
+        if(obj == null || obj.toString().length() == 0) {
+            Preferences.debug("No defaults available for this dialog: "+this.getName(), Preferences.DEBUG_MINOR);
+            return false;
+        } else {
+            nameStart = getClass().getName()+profileStr;
+        }
+        
+        boolean success = loadComponents(this, nameStart, profileStr);
+        if(!success) {
+            Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
+        }
+        return success;
+    }
+    
+    /**
+     * Loads profile names that are available for the dialog
+     * 
+     * @return
+     */
+    private ArrayList<String> loadProfiles() {
+        ArrayList<String> profiles = new ArrayList<String>();
+        for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
+            if(objSet.getValue().equals(SAVE_DEFAULT)) {
+                try {
+                    profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
+                } catch(Exception e) {
+                    Preferences.debug(objSet.getKey().toString()+" profile could not be loaded.", Preferences.DEBUG_MINOR);
+                }
+            }
+        }
+        
+        return profiles;
+    }
 
     /**
      * Makes a string of a floating point number with a specific number of decimal points.
@@ -446,7 +781,107 @@ public abstract class JDialogBase extends JDialog
             return (String.valueOf(number));
         }
     }
+    
+    private void saveComponents(Component comp, String name, String profile) {
+        if(!comp.isEnabled() || !comp.isVisible()) {
+            return;
+        }
+        
+        
+        if(comp instanceof JToggleButton) { //checkbox and radio buttons
+            JToggleButton button = (JToggleButton)comp;
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(button.isSelected()));
+        } else if(comp instanceof JTextComponent) { //textfield, editorpane, textarea, textpane, and passwordfield
+            JTextComponent text = (JTextComponent)comp;
+            if(text.getText().trim().length() > 0) {
+                Preferences.setProperty(getComponentName(comp, name, profile), text.getText());
+            }
+        } else if(comp instanceof JSlider) {
+            JSlider slider = (JSlider)comp;
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(slider.getValue()));
+        } else if(comp instanceof JSpinner) {
+            JSpinner spinner = (JSpinner)comp;
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(spinner.getValue()));
+        } else if(comp instanceof JComboBox) {
+            JComboBox combo = (JComboBox)comp;
+            StringBuffer buffer = new StringBuffer();
+            Object[] obj = combo.getSelectedObjects();
+            
+            if(obj != null) {
+                for(int i=0; i<obj.length; i++) {
+                    buffer.append(i).append(":").append(obj[i]).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+                Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());    
+            }
+        } else if(comp instanceof JColorChooser) {
+            JColorChooser color = (JColorChooser)comp;
+            if(color.getColor() != null) {
+                Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(color.getColor().getRGB()));
+            }
+        } else if(comp instanceof JTable) {
+            JTable table = (JTable) comp;
+            TableModel model = table.getModel();
+            String subName = getComponentName(comp, name, profile);
+            for(int i=0; i<table.getRowCount(); i++) {
+                for(int j=0; j<table.getColumnCount(); j++) {
+                    if(model.isCellEditable(i, j) && table.getValueAt(i, j) != null) {
+                        Preferences.setProperty(subName+":"+i+","+j, String.valueOf(table.getValueAt(i, j)));
+                    }
+                }
+            }
+        } else if(comp instanceof JTree) {
+            JTree tree = (JTree) comp;
+            int[] rows = tree.getSelectionRows();
+            StringBuffer buffer = new StringBuffer();
+            if(rows != null) {
+                for(int i=0; i<rows.length; i++) {
+                    buffer.append(i).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+            }
+            Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());
+        } else if(comp instanceof JList) {
+            JList list = (JList)comp;
+            int[] rows = list.getSelectedIndices();
+            StringBuffer buffer = new StringBuffer();
+            if(rows != null) {
+                for(int i=0; i<rows.length; i++) {
+                    buffer.append(i).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+            }
+            Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());
+        } else if(comp instanceof Container) {
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                try {
+                    saveComponents(compAr[i], name, profile);
+                } catch (Exception e) {
+                    Preferences.debug(name+"."+compAr[i]+" property could not be saved", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                }
+            }
+        }
+        
+    }
 
+    /**
+     * Saves the defaults of profile 0.
+     */
+    public void saveDefaults() {
+        saveDefaults(String.valueOf(0));
+    }
+    
+    /**
+     * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile name.
+     */
+    public void saveDefaults(String profile) {
+        Preferences.setProperty(getClass().getName()+profile, SAVE_DEFAULT);
+        
+        saveComponents(this, getClass().getName()+profile, profile);
+    }
+    
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
      *
@@ -461,6 +896,13 @@ public abstract class JDialogBase extends JDialog
      */
     public void setSeparateThread(boolean flag) {
         runInSeparateThread = flag;
+    }
+
+    /**
+     * @param bar whether the menu bar is visible
+     */
+    public void setVisibleMenuBar(boolean visible) {
+        bar.setVisible(visible);
     }
 
     /**
@@ -486,6 +928,10 @@ public abstract class JDialogBase extends JDialog
             // center of the screen. its not noticable if the dialog is already
             // centered, but if the user has moved the dialog, it is annoying to see.
             MipavUtil.centerOnScreen(this);
+        }
+        
+        if(bar != null) {
+            bar.setVisible(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
         }
 
         super.setVisible(status);

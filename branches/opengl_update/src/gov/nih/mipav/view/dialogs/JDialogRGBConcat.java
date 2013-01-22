@@ -156,7 +156,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4015");
+            //MipavUtil.showHelp("U4015");
+            MipavUtil.showWebHelp("Converting_image_datasets_to_different_data_types#Concatenate-RGB");
         } else if (source == cBoxRemap) {
             if (cBoxRemap.isSelected()) {
                 textRemap.setEnabled(true);
@@ -168,6 +169,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 radioCommon.setEnabled(false);
                 radioSeparate.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -321,7 +324,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
                 // Make algorithm
                 mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, commonMapping,
-                                                  remapHighestValue, true);
+                                                  remapHighestValue, true, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -365,7 +368,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // Make the algorithm class
                 // Make algorithm
                 mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType.getLegacyNum(), remapMode, commonMapping,
-                                                  remapHighestValue, true);
+                                                  remapHighestValue, true, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

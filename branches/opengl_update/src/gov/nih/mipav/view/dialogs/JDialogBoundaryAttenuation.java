@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  Evan McCreedy
  */
 public class JDialogBoundaryAttenuation extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,7 +92,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
 
         init();
 
-        loadDefaults();
         setVisible(true);
     }
 
@@ -113,6 +112,8 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -124,10 +125,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
     public void algorithmPerformed(AlgorithmBase algo) {
 
         if (algo.isCompleted()) {
-
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-                saveDefaults();
-            }
 
             // show dest image
             destImage = attenuationAlgo.getResultImage();
@@ -163,7 +160,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -185,7 +182,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

@@ -26,46 +26,46 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float alphaMax = 255.0f;
+    private double alphaMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float alphaMin = 0.0f;
+    private double alphaMin = 0.0;
 
     /** DOCUMENT ME! */
-    private float blueMax = 255.0f;
+    private double blueMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float blueMin = 0.0f;
+    private double blueMin = 0.0;
 
     /** DOCUMENT ME! */
     private boolean clip;
 
     /** DOCUMENT ME! */
-    private float greenMax = 255.0f;
+    private double greenMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float greenMin = 0.0f;
+    private double greenMin = 0.0;
 
     /** DOCUMENT ME! */
-    private float inputMax;
+    private double inputMax;
 
     /** DOCUMENT ME! */
-    private float inputMin;
+    private double inputMin;
 
     /** DOCUMENT ME! */
-    private float redMax = 255.0f;
+    private double redMax = 255.0;
 
     /** DOCUMENT ME! */
-    private float redMin = 0.0f;
+    private double redMin = 0.0;
 
     /** DOCUMENT ME! */
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
-    private float[][] wt = null;
+    private double[][] wt = null;
 
     /** DOCUMENT ME! */
     private int xD, yD, zD;
@@ -90,25 +90,25 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         wt = null;
         super.finalize();
     }
-
+    
     /**
      * 2D heptic Lagrangian function.
      *
-     * @param   x  float point index
-     * @param   y  float point index
+     * @param   x  double point index
+     * @param   y  double point index
      *
      * @return  the heptic Lagrangian interpolated data point
      */
-    public float hepticLagrangian2D(float x, float y) {
+    public double hepticLagrangian2D(double x, double y) {
 
         int xbase, ybase;
         int j0, j1;
         int l0, l1;
         int ix, iy;
-        float diffX, diffY;
-        float sum;
+        double diffX, diffY;
+        double sum;
         int indexX, indexY;
-        float ySum;
+        double ySum;
 
         xbase = (int) x;
         ybase = (int) y;
@@ -117,7 +117,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         indexX = (int) (999.0 * diffX);
         indexY = (int) (999.0 * diffY);
 
-        sum = 0.0f;
+        sum = 0.0;
 
         for (ix = 0, j0 = xbase - 3; j0 <= (xbase + 4); ix++, j0++) {
             l0 = xD; // xdim - 1
@@ -130,7 +130,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                 l0 = 0;
             }
 
-            ySum = 0.0f;
+            ySum = 0.0;
 
             for (iy = 0, j1 = ybase - 3; j1 <= (ybase + 4); iy++, j1++) {
                 l1 = yD; // ydim-1;
@@ -155,24 +155,24 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
 
         return sum;
     }
-
+    
     /**
      * 2D heptic Lagrangian function for color.
      *
-     * @param   x  float point index
-     * @param   y  float point index
+     * @param   x  double point index
+     * @param   y  double point index
      *
      * @return  the heptic Lagrangian interpolated data point
      */
-    public float[] hepticLagrangian2DC(float x, float y) {
+    public double[] hepticLagrangian2DC(double x, double y) {
 
         int xbase, ybase;
         int j0, j1;
         int l0, l1;
         int ix, iy;
-        float diffX, diffY;
-        float[] ySum = new float[4];
-        float[] sum = new float[4];
+        double diffX, diffY;
+        double[] ySum = new double[4];
+        double[] sum = new double[4];
         int offset;
         int indexX, indexY;
 
@@ -183,10 +183,10 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         indexX = (int) (999.0 * diffX);
         indexY = (int) (999.0 * diffY);
 
-        sum[0] = 0.0f;
-        sum[1] = 0.0f;
-        sum[2] = 0.0f;
-        sum[3] = 0.0f;
+        sum[0] = 0.0;
+        sum[1] = 0.0;
+        sum[2] = 0.0;
+        sum[3] = 0.0;
 
         for (ix = 0, j0 = xbase - 3; j0 <= (xbase + 4); ix++, j0++) {
             l0 = xD; // xdim - 1
@@ -199,10 +199,10 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                 l0 = 0;
             }
 
-            ySum[0] = 0.0f;
-            ySum[1] = 0.0f;
-            ySum[2] = 0.0f;
-            ySum[3] = 0.0f;
+            ySum[0] = 0.0;
+            ySum[1] = 0.0;
+            ySum[2] = 0.0;
+            ySum[3] = 0.0;
 
             for (iy = 0, j1 = ybase - 3; j1 <= (ybase + 4); iy++, j1++) {
                 l1 = yD; // ydim-1;
@@ -238,26 +238,26 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
 
         return sum;
     }
-
+    
     /**
      * 3D heptic Lagrangian function.
      *
-     * @param   x  float point index
-     * @param   y  float point index
-     * @param   z  float point index
+     * @param   x  double point index
+     * @param   y  double point index
+     * @param   z  double point index
      *
      * @return  the hepticLagrangian3D interpolated data point
      */
-    public final float hepticLagrangian3D(float x, float y, float z) {
+    public final double hepticLagrangian3D(double x, double y, double z) {
 
         int xbase, ybase, zbase;
         int j0, j1, j2;
         int l0, l1, l2;
         int ix, iy, iz;
         int indexX, indexY, indexZ;
-        float diffX, diffY, diffZ;
-        float sum;
-        float ySum, zSum;
+        double diffX, diffY, diffZ;
+        double sum;
+        double ySum, zSum;
         int offset;
 
         xbase = (int) x;
@@ -272,7 +272,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
 
         // 15% - 20% faster since Math.max and Math.min are function calls
         // I also replaced the Math.abs but saw no speed improvement.
-        sum = 0.0f;
+        sum = 0.0;
 
         for (ix = 0, j0 = xbase - 3; j0 <= (xbase + 4); ix++, j0++) {
             l0 = xD; // xdim - 1
@@ -285,7 +285,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                 l0 = 0;
             }
 
-            ySum = 0.0f;
+            ySum = 0.0;
 
             for (iy = 0, j1 = ybase - 3; j1 <= (ybase + 4); iy++, j1++) {
                 l1 = yD; // ydim-1;
@@ -298,7 +298,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                     l1 = 0;
                 }
 
-                zSum = 0.0f;
+                zSum = 0.0;
                 offset = (l1 * xdim) + l0;
 
                 for (iz = 0, j2 = zbase - 3; j2 <= (zbase + 4); iz++, j2++) {
@@ -327,28 +327,28 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
 
         return sum;
     }
-
+    
     /**
      * 3D heptic Lagrangian function for color (3 channel images).
      *
-     * @param   x  float point index
-     * @param   y  float point index
-     * @param   z  float point index
+     * @param   x  double point index
+     * @param   y  double point index
+     * @param   z  double point index
      *
      * @return  the hepticLagrangian3D interpolated data point
      */
-    public float[] hepticLagrangian3DC(float x, float y, float z) {
+    public double[] hepticLagrangian3DC(double x, double y, double z) {
 
         int xbase, ybase, zbase;
         int j0, j1, j2;
         int l0, l1, l2;
         int ix, iy, iz;
-        float diffX, diffY, diffZ;
-        float[] sum = new float[4];
+        double diffX, diffY, diffZ;
+        double[] sum = new double[4];
         int offset, offset2;
         int indexX, indexY, indexZ;
-        float[] ySum = new float[4];
-        float[] zSum = new float[4];
+        double[] ySum = new double[4];
+        double[] zSum = new double[4];
 
         xbase = (int) x;
         ybase = (int) y;
@@ -360,10 +360,10 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         indexY = (int) (999.0 * diffY);
         indexZ = (int) (999.0 * diffZ);
 
-        sum[0] = 0.0f;
-        sum[1] = 0.0f;
-        sum[2] = 0.0f;
-        sum[3] = 0.0f;
+        sum[0] = 0.0;
+        sum[1] = 0.0;
+        sum[2] = 0.f;
+        sum[3] = 0.0;
 
         for (ix = 0, j0 = xbase - 3; j0 <= (xbase + 4); ix++, j0++) {
             l0 = xD; // xdim - 1
@@ -376,10 +376,10 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                 l0 = 0;
             }
 
-            ySum[0] = 0.0f;
-            ySum[1] = 0.0f;
-            ySum[2] = 0.0f;
-            ySum[3] = 0.0f;
+            ySum[0] = 0.0;
+            ySum[1] = 0.0;
+            ySum[2] = 0.0;
+            ySum[3] = 0.0;
 
             for (iy = 0, j1 = ybase - 3; j1 <= (ybase + 4); iy++, j1++) {
                 l1 = yD; // ydim-1;
@@ -392,10 +392,10 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
                     l1 = 0;
                 }
 
-                zSum[0] = 0.0f;
-                zSum[1] = 0.0f;
-                zSum[2] = 0.0f;
-                zSum[3] = 0.0f;
+                zSum[0] = 0.0;
+                zSum[1] = 0.0;
+                zSum[2] = 0.0;
+                zSum[3] = 0.0;
                 offset = (l1 * xdim) + l0;
 
                 for (iz = 0, j2 = zbase - 3; j2 <= (zbase + 4); iz++, j2++) {
@@ -452,7 +452,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DHepticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup2DHepticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -462,19 +462,19 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         this.clip = clip;
         xD = xdim - 1;
         yD = ydim - 1;
-        wt = new float[8][1000];
+        wt = new double[8][1000];
 
         for (i = 0; i < 1000; i++) {
             arg = i / 999.0;
-            wt[0][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
-            wt[1][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
-            wt[2][i] = (float) ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
-            wt[3][i] = (float) ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
+            wt[0][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
+            wt[1][i] = ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
+            wt[2][i] = ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
+            wt[3][i] = ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
                                     144.0);
-            wt[4][i] = (float) ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
-            wt[5][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
-            wt[6][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
-            wt[7][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
+            wt[4][i] = ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
+            wt[5][i] = ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
+            wt[6][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
+            wt[7][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
         }
 
         if (clip) {
@@ -502,7 +502,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup2DHepticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup2DHepticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
@@ -516,19 +516,19 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         this.clip = clip;
         xD = xdim - 1;
         yD = ydim - 1;
-        wt = new float[8][1000];
+        wt = new double[8][1000];
 
         for (i = 0; i < 1000; i++) {
             arg = i / 999.0;
-            wt[0][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
-            wt[1][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
-            wt[2][i] = (float) ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
-            wt[3][i] = (float) ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
+            wt[0][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
+            wt[1][i] = ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
+            wt[2][i] = ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
+            wt[3][i] = ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
                                     144.0);
-            wt[4][i] = (float) ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
-            wt[5][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
-            wt[6][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
-            wt[7][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
+            wt[4][i] = ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
+            wt[5][i] = ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
+            wt[6][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
+            wt[7][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
         }
 
         if (clip) {
@@ -585,7 +585,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  extents  vol extents (xdim, ydim, zdim)
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DHepticLagrangian(float[] vol, int[] extents, boolean clip) {
+    public void setup3DHepticLagrangian(double[] vol, int[] extents, boolean clip) {
         int i;
         double arg;
 
@@ -598,19 +598,19 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         yD = ydim - 1;
         zD = zdim - 1;
         sliceSize = xdim * ydim;
-        wt = new float[8][1000];
+        wt = new double[8][1000];
 
         for (i = 0; i < 1000; i++) {
             arg = i / 999.0;
-            wt[0][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
-            wt[1][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
-            wt[2][i] = (float) ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
-            wt[3][i] = (float) ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
+            wt[0][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
+            wt[1][i] = ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
+            wt[2][i] = ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
+            wt[3][i] = ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
                                     144.0);
-            wt[4][i] = (float) ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
-            wt[5][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
-            wt[6][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
-            wt[7][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
+            wt[4][i] = ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
+            wt[5][i] = ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
+            wt[6][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
+            wt[7][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
         }
 
         if (clip) {
@@ -638,7 +638,7 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
      * @param  argbMax  maximum possible color value
      * @param  clip     if true clip output to range of input image
      */
-    public void setup3DHepticLagrangianC(float[] vol, int[] extents, float argbMax, boolean clip) {
+    public void setup3DHepticLagrangianC(double[] vol, int[] extents, float argbMax, boolean clip) {
         int i;
         double arg;
 
@@ -655,19 +655,19 @@ public class AlgorithmHepticLagrangian extends AlgorithmBase {
         yD = ydim - 1;
         zD = zdim - 1;
         sliceSize = xdim * ydim;
-        wt = new float[8][1000];
+        wt = new double[8][1000];
 
         for (i = 0; i < 1000; i++) {
             arg = i / 999.0;
-            wt[0][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
-            wt[1][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
-            wt[2][i] = (float) ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
-            wt[3][i] = (float) ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
+            wt[0][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg - 3.0) * (4.0 - arg)) / 5040.0);
+            wt[1][i] = ((arg * ((arg * arg) - 1.0) * (arg - 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 720.0);
+            wt[2][i] = ((arg * (arg - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 240.0);
+            wt[3][i] = ((((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (arg - 4.0)) /
                                     144.0);
-            wt[4][i] = (float) ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
-            wt[5][i] = (float) ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
-            wt[6][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
-            wt[7][i] = (float) ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
+            wt[4][i] = ((arg * (arg + 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0) * (4.0 - arg)) / 144.0);
+            wt[5][i] = ((arg * ((arg * arg) - 1.0) * (arg + 2.0) * ((arg * arg) - 9.0) * (arg - 4.0)) / 240.0);
+            wt[6][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * (arg + 3.0) * (4.0 - arg)) / 720.0);
+            wt[7][i] = ((arg * ((arg * arg) - 1.0) * ((arg * arg) - 4.0) * ((arg * arg) - 9.0)) / 5040.0);
         }
 
         if (clip) {

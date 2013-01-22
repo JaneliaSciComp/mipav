@@ -280,7 +280,10 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (source == helpButton) {
-             MipavUtil.showHelp("FilFr010");
+             //MipavUtil.showHelp("FilFr010");
+             MipavUtil.showWebHelp("Filters_(Frequency)");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

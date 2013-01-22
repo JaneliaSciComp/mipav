@@ -168,6 +168,8 @@ public class PlugInDialogMTry534d extends JDialogScriptableBase implements Algor
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

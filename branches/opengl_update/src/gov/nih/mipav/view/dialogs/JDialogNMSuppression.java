@@ -83,7 +83,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         userInterface = ViewUserInterface.getReference();
         image = im;
         init();
-        loadDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -104,7 +103,10 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10021");
+            //MipavUtil.showHelp("10021");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Nonmaximum_Suppression#Applying_the_Nonmaximum_Suppression_algorithm");
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 
@@ -169,7 +171,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         }
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
+            legacySaveDefaults();
         }
      // save the completion status for later
         setComplete(algorithm.isCompleted());
@@ -208,7 +210,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -241,7 +243,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
 
         String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + delim;

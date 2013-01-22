@@ -11,35 +11,33 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 
 /**
- * @author pandyan
+ * @author senseneyj
  * This algorithm concats multiple 2D images of same type to a 3D image
  *
  */
-public class AlgorithmConcatMult2Dto3D extends AlgorithmBase {
-	
-	
-	
-	
-	
-	/** array of 2D images **/
-	private ModelImage[] images;
-	
-	/** final 3D image **/
-	private ModelImage destImage;
-	
+public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
 
 	/**
-	 * comstructor
+	 * constructor
 	 * @param images
 	 * @param destImage
+	 * @param copyAllInfo 
 	 */
-	public AlgorithmConcatMult2Dto3D(ModelImage[] images, ModelImage destImage) {
+	public AlgorithmConcatMult2Dto3D(ModelImage[] images, ModelImage destImage, boolean copyAllInfo) {
 		this.images = images;
 		this.destImage = destImage;
 		
-		
+		this.copyAllInfo = copyAllInfo;
 	}
 	
+	/**
+     * constructor
+     * @param images
+     * @param destImage
+     */
+    public AlgorithmConcatMult2Dto3D(ModelImage[] images, ModelImage destImage) {
+        this(images, destImage, false);
+    }
 	
 	
 	public void runAlgorithm() {
@@ -60,9 +58,7 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmBase {
 	        int length = cFactor * xDim * yDim;
 	        
 	        buffer = new float[length];
-	        
-	        
-	     
+
 	        for(int i=0;i<images.length;i++) {
 	        	ModelImage img = images[i];
 	        	img.exportData(0, buffer.length, buffer);
@@ -71,6 +67,8 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmBase {
 	        }
 	        
 	        destImage.calcMinMax();
+	        
+	        destImage.setExtents(new int[]{xDim, yDim, images.length});
 	        
 	        float[] resols = new float[3];
 	        float[] origins = new float[3];
@@ -83,74 +81,52 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmBase {
 	        origins[0] = images[0].getFileInfo()[0].getOrigin(0);
 	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
 	        origins[2] = 0;
-
 	        
-	        
-	        boolean isFileInfoDicom = true;
-	        for(int i=0;i<images.length;i++) {
-	        	if(!(images[i].getFileInfo()[0] instanceof FileInfoDicom)) {
-	        		isFileInfoDicom = false;
-	        		break;
-	        	}
-	        }
-	        FileInfoBase[] fileInfo = null;
-	        FileInfoDicom[] fileInfoDicom = null;
-	        
+	         FileInfoBase destFileInfo[] = null;
+	         int numInfos = destImage.getExtents()[2];
+	         int j;
 
-	        if (isFileInfoDicom) {
-	            fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
-	            
-	 
-		        for(int i=0;i<images.length;i++) {
-		        	ModelImage img = images[i];
-		        	fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) img.getFileInfo()[0]).clone());
-		        	fileInfoDicom[i].setResolutions(resols);
-		            fileInfoDicom[i].setOrigin(origins);
-		        }
+	         destFileInfo = new FileInfoBase[numInfos];
 
-	            destImage.setFileInfo(fileInfoDicom);
+	         if(copyAllInfo) {  
+	             int sliceCounter = 0; //Keeps track of every slice to populate tag
+                   for (int z = 0; z <destImage.getExtents()[2] ; z++) {
+                       fireProgressStateChanged((100 * sliceCounter)/(destImage.getExtents()[2]));
+                       
+                       if(images[z].isDicomImage()) {
+                           copyDicomInfo(destFileInfo, images[z].getFileInfo(0), resols, 0, z, sliceCounter); 
+                           
+                       } else {
+                           destFileInfo[sliceCounter] = (FileInfoBase) images[z].getFileInfo(0).clone();
+                           copyBaseInfo(destFileInfo, images[z].getFileInfo(0), resols, sliceCounter); //used for copying resolution inof
+                       }
+                       sliceCounter++; 
+                   }
+	               
+	               destImage.setFileInfo(destFileInfo);
+	         } else {
+	             destFileInfo = destImage.getFileInfo();
 
-	        } else {
-	            fileInfo = destImage.getFileInfo();
-	            int[] units = new int[3];
-	            units[0] = images[0].getFileInfo()[0].getUnitsOfMeasure()[0];
-	            units[1] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
-	            units[2] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
-	            for (int i = 0; i < destImage.getExtents()[2]; i++) {
-	                fileInfo[i].setModality(images[0].getFileInfo()[0].getModality());
-	                fileInfo[i].setFileDirectory(images[0].getFileInfo()[0].getFileDirectory());
-	                fileInfo[i].setEndianess(images[0].getFileInfo()[0].getEndianess());
-	                fileInfo[i].setUnitsOfMeasure(units);
-	                fileInfo[i].setResolutions(resols);
-	                fileInfo[i].setExtents(destImage.getExtents());
-	                fileInfo[i].setMax(destImage.getMax());
-	                fileInfo[i].setMin(destImage.getMin());
-	                fileInfo[i].setImageOrientation(images[0].getImageOrientation());
-	                fileInfo[i].setPixelPadValue(images[0].getFileInfo()[0].getPixelPadValue());
-	                fileInfo[i].setPhotometric(images[0].getFileInfo()[0].getPhotometric());
-	                fileInfo[i].setAxisOrientation(images[0].getAxisOrientation());
-	            }
-	            
-	            
+	             for (int i = 0; i < destImage.getExtents()[2]; i++) {
+	                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[2]));
+	                 copyBaseInfo(destFileInfo, images[i].getFileInfo()[0], resols, i);
+	             }
 
-		        for(int i=0;i<images.length;i++) {
-		        	ModelImage img = images[i];
-	        		if(img.getFileInfo()[0] instanceof FileInfoImageXML) {
-	        			if (((FileInfoImageXML) img.getFileInfo()[0]).getPSetHashtable() != null) {
-	                        ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML) img.getFileInfo()[0]).getPSetHashtable());
-	                    }
-	        		}
-		        
-		       
-		        }
-		        
-
-
-	        }
+	             int counter = 0;
+	             for(int i=0;i<images.length;i++) {
+	                 ModelImage img = images[i];
+	          
+                     if(img.getFileInfo()[0] instanceof FileInfoImageXML) {
+                         if (((FileInfoImageXML) img.getFileInfo()[0]).getPSetHashtable() != null) {
+                             ((FileInfoImageXML) destFileInfo[counter]).setPSetHashtable(((FileInfoImageXML) img.getFileInfo()[0]).getPSetHashtable());
+                         }
+                     }
+                     counter++;
+                 }
+             }
 
 	        setCompleted(true);
-	        fileInfo = null;
-	        fileInfoDicom = null;
+	        destFileInfo = null;
 
 		}catch(Exception e) {
 			e.printStackTrace();

@@ -471,7 +471,10 @@ public class JDialogMemoryAllocation extends JDialogBase {
             maxHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
             OKButton.doClick();
         } else if (ae.getActionCommand().equals("Help")) {
-            MipavUtil.showHelp("10091");
+            //MipavUtil.showHelp("10091");
+            MipavUtil.showWebHelp("Allocating_Memory_in_MIPAV");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

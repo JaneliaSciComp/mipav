@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmNonlocalMeansFilter
  */
 public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface, ActionDiscovery {
+        implements AlgorithmInterface, ScriptableActionInterface, LegacyDialogDefaultsInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -129,7 +129,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -162,6 +161,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
             }
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 
@@ -176,10 +177,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmNonlocalMeansFilter) {
             image.clearMask();
@@ -271,7 +268,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (newImage != null)) {
@@ -307,7 +304,7 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);

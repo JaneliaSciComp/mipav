@@ -29,7 +29,7 @@ import javax.swing.*;
 *
 */  
 public class JDialogDemonsLite extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
+	implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface  {
     
     private     AlgorithmDemonsLite 	algo = null;
     private     ModelImage              image;                // source image
@@ -87,7 +87,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
         }
         image = im;
 		userInterface = ((ViewJFrameBase)(parentFrame)).getUserInterface();	    
-		loadDefaults();
         init();
 	}
 	
@@ -347,7 +346,7 @@ public class JDialogDemonsLite extends JDialogScriptableBase
  	/**
      *  Loads the default settings from Preferences to set up the dialog
      */
-	public void loadDefaults() {
+	public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -376,7 +375,7 @@ public class JDialogDemonsLite extends JDialogScriptableBase
      * Saves the default settings into the Preferences file
      */
 	
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String( getParameterString(",") );
         //System.out.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(),defaultsString);
@@ -400,6 +399,9 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
+        
+		} else {
+            super.actionPerformed(event);
         }
 		
     }
@@ -415,10 +417,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
     *   @param algorithm   Algorithm that caused the event.
     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-                
-		if (Preferences.isPreference(Preferences.PREF_SAVE_DEFAULTS) && this.getOwner() != null && !isScriptRunning()) {
-			saveDefaults();
-		}
 	           
 		if ( algorithm instanceof AlgorithmDemonsLite) {
             image.clearMask();

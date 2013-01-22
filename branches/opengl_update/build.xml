@@ -259,10 +259,10 @@
     <target name="copyjars"
             description="Copy all of the project jars for running the project."
             depends="init">
-        <!-- copy the help jar to the compilation directory -->
+        <!-- copy the help jar to the compilation directory
         <copy todir="${dir.dest}/help">
             <fileset file="${dir.source}/help/mipav_help.jar"/>
-        </copy>
+        </copy>-->
 
         <copy todir="${dir.dest}/lib">
             <fileset dir="${dir.source}/lib" excludes=".svn"/>
@@ -300,7 +300,7 @@
             <jvmarg value="-server"/>
             <classpath>
                 <pathelement path="${dir.dest}"/>
-                <pathelement location="${dir.dest}/help/mipav_help.jar"/>
+                <!--<pathelement location="${dir.dest}/help/mipav_help.jar"/>-->
             </classpath>
             <arg line="${project.run.args}"/>
         </java>

@@ -269,6 +269,8 @@ public class JDialogThresholdLUT extends JDialogBase {
         } else if (command.equals("Cancel")) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

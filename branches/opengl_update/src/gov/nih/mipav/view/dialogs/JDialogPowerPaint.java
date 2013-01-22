@@ -363,7 +363,8 @@ public class JDialogPowerPaint extends JDialogBase
         if (command.equals("Close")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("PT0007");
+            //MipavUtil.showHelp("PT0007");
+            MipavUtil.showWebHelp("Segmenting_Images_Using_Contours_and_Masks:_Advanced_paint_and_Power_Paint_tools");
         } else if (command.equals("GrowRegion")) {
 
             if (getMouseInput != GROWREGION) {
@@ -484,8 +485,10 @@ public class JDialogPowerPaint extends JDialogBase
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeMouseListener(this);
                 }
             }
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     /**
      * Accessor that returns the image.

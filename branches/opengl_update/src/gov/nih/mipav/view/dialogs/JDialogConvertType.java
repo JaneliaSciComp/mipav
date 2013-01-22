@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class JDialogConvertType extends JDialogScriptableBase
-        implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
+        implements AlgorithmInterface, ItemListener, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,7 +187,6 @@ public class JDialogConvertType extends JDialogScriptableBase
         image = _image;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -210,7 +209,8 @@ public class JDialogConvertType extends JDialogScriptableBase
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4013");
+            //MipavUtil.showHelp("U4013");
+            MipavUtil.showWebHelp("Converting_image_datasets_to_different_data_types");
         } else if (command.equals("FullRange")) {
 
             // if using full range, then reset the
@@ -250,8 +250,10 @@ public class JDialogConvertType extends JDialogScriptableBase
             } else {
                 textInEnd.requestFocus();
                 textInEnd.selectAll();
-            }
-
+            } 
+ 
+        } else {
+            super.actionPerformed(event);
         }
 
     } // end actionPerformed()
@@ -267,10 +269,6 @@ public class JDialogConvertType extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmChangeType) {
 
@@ -724,7 +722,7 @@ public class JDialogConvertType extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (newImage != null)) {
@@ -818,7 +816,7 @@ public class JDialogConvertType extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

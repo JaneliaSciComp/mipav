@@ -180,7 +180,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4039");
+            //MipavUtil.showHelp("U4039");
+            MipavUtil.showWebHelp("Adding_noise_to_images");
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

@@ -588,7 +588,9 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 			nameValueSeq.setText(keyToNameSeq.get(tagName));
 			propertyValueSeq.setText(keyToValueSeq.get(tagName));
 			sequenceInformationPanel.updateUI();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 	}
 	
 	/**

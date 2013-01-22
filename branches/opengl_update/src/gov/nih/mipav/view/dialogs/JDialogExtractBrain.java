@@ -24,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -176,7 +176,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
 
         centerOfMass = computeCenter(image, orientation, useSphere);
         setVariables();
@@ -318,7 +317,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             kQFit = new AlgorithmQuadraticFit(kLess);
 
             // rescale from [-1,1]^3 to voxel coordinates
-            centerPt.Scale(fBMax, kQFit.getCenter());
+            centerPt.copy(kQFit.getCenter()).scale(fBMax);
 
             if (centerPt.X >= img.getExtents()[0]) {
                 centerPt.X = img.getExtents()[0] / 2;
@@ -476,7 +475,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10045");
+            //MipavUtil.showHelp("10045");
+            MipavUtil.showWebHelp("Extract_Brain:_Extract_Brain_Surface_(BET)");
         } else if (source == secondStageCheckBox) {
 
             if (secondStageCheckBox.isSelected()) {
@@ -486,6 +486,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                 erosionLabel.setEnabled(false);
                 erosionTF.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -500,10 +502,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmBrainExtractor) {
 
@@ -659,7 +657,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if (defaultsString != null) {
@@ -716,7 +714,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }

@@ -172,7 +172,9 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			dispose();
 		} else if (command.equals("Help")) {
 
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	// ************************************************************************
@@ -300,16 +302,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 
 	/**
-	 * Sets the minimum value.
-	 * @param i index
+	 * Sets the minimum value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param x Value to set minimum value to.
 	 */
 	public void setMin(int i, float x) {
 		minIntensity[i] = x;
 	}
 	/**
-	 * Sets the maximum value.
-	 * @param i index
+	 * Sets the maximum value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param x Value to set maximum value to.
 	 */
 	public void setMax(int i, float x) {
@@ -317,16 +319,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 	
 	/**
-	 * Sets the minimum Red value.
-	 * @param i index
+	 * Sets the minimum Red value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param minR Value to set minimum Red value to.
 	 */
 	public void setMinR(int i, float minR) {
 		minIntensityR[i] = minR;
 	}
 	/**
-	 * Sets the maximum Red value.
-	 * @param i index
+	 * Sets the maximum Red value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param maxR Value to set maximum Red value to.
 	 */
 	public void setMaxR(int i, float maxR) {
@@ -334,16 +336,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 	
 	/**
-	 * Sets the minimum Green value.
-	 * @param i index
+	 * Sets the minimum Green value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param minG Value to set minimum Green value to.
 	 */
 	public void setMinG(int i, float minG) {
 		minIntensityG[i] = minG;
 	}
 	/**
-	 * Sets the maximum Green value.
-	 * @param i index
+	 * Sets the maximum Green value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param maxG Value to set maximum Green value to.
 	 */
 	public void setMaxG(int i, float maxG) {
@@ -351,16 +353,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 	
 	/**
-	 * Sets the minimum Blue value.
-	 * @param i index
+	 * Sets the minimum Blue value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param minB Value to set minimum Blue value to.
 	 */
 	public void setMinB(int i, float minB) {
 		minIntensityB[i] = minB;
 	}
 	/**
-	 * Sets the maximumBlue  value.
-	 * @param i index
+	 * Sets the maximumBlue value for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param maxB Value to set maximum Blue value to.
 	 */
 	public void setMaxB(int i, float maxB) {
@@ -368,8 +370,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 
 	/**
-	 * Sets the start slice.
-	 * @param i index
+	 * Sets the start slice for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param start value.
 	 */
 	public void setStartSlice( int i, int start )
@@ -377,8 +379,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		startSlice[i] = start;
 	}
 	/**
-	 * Sets the end slice.
-	 * @param i index
+	 * Sets the end slice for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param end value.
 	 */
 	public void setEndSlice( int i, int end )
@@ -387,8 +389,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 
 	/**
-	 * Sets the window size.
-	 * @param i index
+	 * Sets the window size for X, Y, or Z processing.
+	 * @param i index (X, Y, or Z)
 	 * @param size, new window size.
 	 */
 	public void setWindow( int i, int size )
@@ -397,7 +399,7 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	}
 
 	/**
-	 * Turns computing the maximum projection on for index i.
+	 * Turns computing the maximum projection on for X, Y, or Z processing.
 	 * @param i index representing (X,Y,Z) projection.
 	 * @param compute when true the computation is turned on.
 	 */
@@ -406,7 +408,7 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 		maximum[i] = compute;
 	}
 	/**
-	 * Turns computing the minimum projection on for index i.
+	 * Turns computing the minimum projection on for X, Y, or Z processing.
 	 * @param i index representing (X,Y,Z) projection.
 	 * @param compute when true the computation is turned on.
 	 */

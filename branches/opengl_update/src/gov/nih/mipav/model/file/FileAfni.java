@@ -1466,28 +1466,28 @@ public class FileAfni extends FileBase {
             Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n", Preferences.DEBUG_FILEIO);
 
             
-            Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
-            Tr13 = (iYres * rr.Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
-            Tr23 = (iZres * rr.Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
+            Tr03 = (iXres * rr.X) - (Talx * xfrm.get(0, 0)) - (Taly * xfrm.get(0, 1)) - (Talz * xfrm.get(0, 2));
+            Tr13 = (iYres * rr.Y) - (Talx * xfrm.get(1, 0)) - (Taly * xfrm.get(1, 1)) - (Talz * xfrm.get(1, 2));
+            Tr23 = (iZres * rr.Z) - (Talx * xfrm.get(2, 0)) - (Taly * xfrm.get(2, 1)) - (Talz * xfrm.get(2, 2));
 
             /*
              * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty + xfrm.Get(1, 2)
              * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
              */
             A = new JamaMatrix(3, 3, 0.0);
-            A.set(0, 0, xfrm.Get(0, 0));
-            A.set(0, 1, xfrm.Get(0, 1));
-            A.set(0, 2, xfrm.Get(0, 2));
-            A.set(1, 0, xfrm.Get(1, 0));
-            A.set(1, 1, xfrm.Get(1, 1));
-            A.set(1, 2, xfrm.Get(1, 2));
-            A.set(2, 0, xfrm.Get(2, 0));
-            A.set(2, 1, xfrm.Get(2, 1));
-            A.set(2, 2, xfrm.Get(2, 2));
+            A.set(0, 0, xfrm.get(0, 0));
+            A.set(0, 1, xfrm.get(0, 1));
+            A.set(0, 2, xfrm.get(0, 2));
+            A.set(1, 0, xfrm.get(1, 0));
+            A.set(1, 1, xfrm.get(1, 1));
+            A.set(1, 2, xfrm.get(1, 2));
+            A.set(2, 0, xfrm.get(2, 0));
+            A.set(2, 1, xfrm.get(2, 1));
+            A.set(2, 2, xfrm.get(2, 2));
             b = new JamaMatrix(3, 1, 0.0);
-            b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-            b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-            b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+            b.set(0, 0, Tr03 - xfrm.get(0, 3));
+            b.set(1, 0, Tr13 - xfrm.get(1, 3));
+            b.set(2, 0, Tr23 - xfrm.get(2, 3));
             X = A.solve(b);
             Tx = X.get(0, 0);
             Ty = X.get(1, 0);
@@ -1503,20 +1503,20 @@ public class FileAfni extends FileBase {
              * T23)/iZres Wish to find i,j,k from X,Y,ZThat is, wish to find TCenter.X,TCenter.Y,TCenter.Z from
              * rr.X,rr.Y,rr.Z */
             
-            translation.X = (float) xfrm.Get(0, 3);
-            translation.Y = (float) xfrm.Get(1, 3);
-            translation.Z = (float) xfrm.Get(2, 3);
+            translation.X = (float) xfrm.get(0, 3);
+            translation.Y = (float) xfrm.get(1, 3);
+            translation.Z = (float) xfrm.get(2, 3);
 
             A = new JamaMatrix(3, 3, 0.0);
-            A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
-            A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
-            A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
-            A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
-            A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
-            A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
-            A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
-            A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
-            A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
+            A.set(0, 0, oXres * xfrm.get(0, 0) / iXres);
+            A.set(0, 1, oYres * xfrm.get(0, 1) / iXres);
+            A.set(0, 2, oZres * xfrm.get(0, 2) / iXres);
+            A.set(1, 0, oXres * xfrm.get(1, 0) / iYres);
+            A.set(1, 1, oYres * xfrm.get(1, 1) / iYres);
+            A.set(1, 2, oZres * xfrm.get(1, 2) / iYres);
+            A.set(2, 0, oXres * xfrm.get(2, 0) / iZres);
+            A.set(2, 1, oYres * xfrm.get(2, 1) / iZres);
+            A.set(2, 2, oZres * xfrm.get(2, 2) / iZres);
             b = new JamaMatrix(3, 1, 0.0);
 
             /* b.set(0,0,rr.X - xfrm.Get(0, 3)/iXres);
@@ -1529,9 +1529,9 @@ public class FileAfni extends FileBase {
                               "\n", Preferences.DEBUG_FILEIO);
 
             // Find the new pc inferior edge in the new coordinates
-            b.set(0, 0, pcDicom.X - (xfrm.Get(0, 3) / iXres));
-            b.set(1, 0, pcDicom.Y - (xfrm.Get(1, 3) / iYres));
-            b.set(2, 0, pcDicom.Z - (xfrm.Get(2, 3) / iZres));
+            b.set(0, 0, pcDicom.X - (xfrm.get(0, 3) / iXres));
+            b.set(1, 0, pcDicom.Y - (xfrm.get(1, 3) / iYres));
+            b.set(2, 0, pcDicom.Z - (xfrm.get(2, 3) / iZres));
             X = A.solve(b);
             pcDicom.X = (float) (X.get(0, 0));
             pcDicom.Y = (float) (X.get(1, 0));
@@ -1786,24 +1786,24 @@ public class FileAfni extends FileBase {
                 Preferences.debug("Talx = " + Talx + " Taly = " + Taly + " Talz = " + Talz + "\n", Preferences.DEBUG_FILEIO);
 
                 
-                Tr03 = (iXres * rr.X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
-                Tr13 = (iYres * rr.Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
-                Tr23 = (iZres * rr.Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
+                Tr03 = (iXres * rr.X) - (Talx * xfrm.get(0, 0)) - (Taly * xfrm.get(0, 1)) - (Talz * xfrm.get(0, 2));
+                Tr13 = (iYres * rr.Y) - (Talx * xfrm.get(1, 0)) - (Taly * xfrm.get(1, 1)) - (Talz * xfrm.get(1, 2));
+                Tr23 = (iZres * rr.Z) - (Talx * xfrm.get(2, 0)) - (Taly * xfrm.get(2, 1)) - (Talz * xfrm.get(2, 2));
 
                 /*
                  *       Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3)      Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1)
                  * Ty + xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3)      Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, xfrm.Get(0, 0));
-                A.set(0, 1, xfrm.Get(0, 1));
-                A.set(0, 2, xfrm.Get(0, 2));
-                A.set(1, 0, xfrm.Get(1, 0));
-                A.set(1, 1, xfrm.Get(1, 1));
-                A.set(1, 2, xfrm.Get(1, 2));
-                A.set(2, 0, xfrm.Get(2, 0));
-                A.set(2, 1, xfrm.Get(2, 1));
-                A.set(2, 2, xfrm.Get(2, 2));
+                A.set(0, 0, xfrm.get(0, 0));
+                A.set(0, 1, xfrm.get(0, 1));
+                A.set(0, 2, xfrm.get(0, 2));
+                A.set(1, 0, xfrm.get(1, 0));
+                A.set(1, 1, xfrm.get(1, 1));
+                A.set(1, 2, xfrm.get(1, 2));
+                A.set(2, 0, xfrm.get(2, 0));
+                A.set(2, 1, xfrm.get(2, 1));
+                A.set(2, 2, xfrm.get(2, 2));
                 b = new JamaMatrix(3, 1, 0.0);
 
                 /* b.set(0,0,rr.X - xfrm.Get(0, 3)/iXres);
@@ -1816,9 +1816,9 @@ public class FileAfni extends FileBase {
                 Preferences.debug("Transformed Talairach origin = " + TCenter.X + "  " + TCenter.Y + "  " + TCenter.Z +
                                   "\n", Preferences.DEBUG_FILEIO);
 
-                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+                b.set(0, 0, Tr03 - xfrm.get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.get(2, 3));
                 X = A.solve(b);
                 Tx = X.get(0, 0);
                 Ty = X.get(1, 0);
@@ -1833,21 +1833,21 @@ public class FileAfni extends FileBase {
                 
 
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
-                A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
-                A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
-                A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
-                A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
-                A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
-                A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
-                A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
-                A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
+                A.set(0, 0, oXres * xfrm.get(0, 0) / iXres);
+                A.set(0, 1, oYres * xfrm.get(0, 1) / iXres);
+                A.set(0, 2, oZres * xfrm.get(0, 2) / iXres);
+                A.set(1, 0, oXres * xfrm.get(1, 0) / iYres);
+                A.set(1, 1, oYres * xfrm.get(1, 1) / iYres);
+                A.set(1, 2, oZres * xfrm.get(1, 2) / iYres);
+                A.set(2, 0, oXres * xfrm.get(2, 0) / iZres);
+                A.set(2, 1, oYres * xfrm.get(2, 1) / iZres);
+                A.set(2, 2, oZres * xfrm.get(2, 2) / iZres);
                 b = new JamaMatrix(3, 1, 0.0);
 
                 // Find the new pc inferior edge in the new coordinates
-                b.set(0, 0, pcDicom.X - (xfrm.Get(0, 3) / iXres));
-                b.set(1, 0, pcDicom.Y - (xfrm.Get(1, 3) / iYres));
-                b.set(2, 0, pcDicom.Z - (xfrm.Get(2, 3) / iZres));
+                b.set(0, 0, pcDicom.X - (xfrm.get(0, 3) / iXres));
+                b.set(1, 0, pcDicom.Y - (xfrm.get(1, 3) / iYres));
+                b.set(2, 0, pcDicom.Z - (xfrm.get(2, 3) / iZres));
                 X = A.solve(b);
                 pcDicom.X = (float) (X.get(0, 0));
                 pcDicom.Y = (float) (X.get(1, 0));
@@ -2185,7 +2185,7 @@ public class FileAfni extends FileBase {
 
                 Preferences.debug("svec rr = " + rrArray[i].X + "," + rrArray[i].Y + "," + rrArray[i].Z + "\n",
                 		Preferences.DEBUG_FILEIO);
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
 
                 // Since our interpolation routines are doing a output to input mapping, create the mbac
@@ -2213,28 +2213,28 @@ public class FileAfni extends FileBase {
                 Preferences.debug("topX = " + topX[i] + " topY = " + topY[i] + " topZ = " + topZ[i] + "\n",
                 		Preferences.DEBUG_FILEIO);
                 
-                Tr03 = (iXres * rrArray[i].X) - (Talx * xfrm.Get(0, 0)) - (Taly * xfrm.Get(0, 1)) - (Talz * xfrm.Get(0, 2));
-                Tr13 = (iYres * rrArray[i].Y) - (Talx * xfrm.Get(1, 0)) - (Taly * xfrm.Get(1, 1)) - (Talz * xfrm.Get(1, 2));
-                Tr23 = (iZres * rrArray[i].Z) - (Talx * xfrm.Get(2, 0)) - (Taly * xfrm.Get(2, 1)) - (Talz * xfrm.Get(2, 2));
+                Tr03 = (iXres * rrArray[i].X) - (Talx * xfrm.get(0, 0)) - (Taly * xfrm.get(0, 1)) - (Talz * xfrm.get(0, 2));
+                Tr13 = (iYres * rrArray[i].Y) - (Talx * xfrm.get(1, 0)) - (Taly * xfrm.get(1, 1)) - (Talz * xfrm.get(1, 2));
+                Tr23 = (iZres * rrArray[i].Z) - (Talx * xfrm.get(2, 0)) - (Taly * xfrm.get(2, 1)) - (Talz * xfrm.get(2, 2));
 
                 /*
                  * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 = xfrm.Get(1, 0) * Tx + xfrm.Get(1, 1) * Ty +
                  * xfrm.Get(1, 2) * Tz + xfrm.Get(1, 3) Tr23 = xfrm.Get(2, 2) * Tx + xfrm.Get(2, 1) * Ty + xfrm.Get(2, 2) * Tz + xfrm.Get(2, 3)
                  */
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, xfrm.Get(0, 0));
-                A.set(0, 1, xfrm.Get(0, 1));
-                A.set(0, 2, xfrm.Get(0, 2));
-                A.set(1, 0, xfrm.Get(1, 0));
-                A.set(1, 1, xfrm.Get(1, 1));
-                A.set(1, 2, xfrm.Get(1, 2));
-                A.set(2, 0, xfrm.Get(2, 0));
-                A.set(2, 1, xfrm.Get(2, 1));
-                A.set(2, 2, xfrm.Get(2, 2));
+                A.set(0, 0, xfrm.get(0, 0));
+                A.set(0, 1, xfrm.get(0, 1));
+                A.set(0, 2, xfrm.get(0, 2));
+                A.set(1, 0, xfrm.get(1, 0));
+                A.set(1, 1, xfrm.get(1, 1));
+                A.set(1, 2, xfrm.get(1, 2));
+                A.set(2, 0, xfrm.get(2, 0));
+                A.set(2, 1, xfrm.get(2, 1));
+                A.set(2, 2, xfrm.get(2, 2));
                 b = new JamaMatrix(3, 1, 0.0);
-                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+                b.set(0, 0, Tr03 - xfrm.get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.get(2, 3));
                 X = A.solve(b);
                 Tx = X.get(0, 0);
                 Ty = X.get(1, 0);
@@ -2245,15 +2245,15 @@ public class FileAfni extends FileBase {
                                             oZres, oXdim, botX[i], botY[i], botZ[i], topX[i], topY[i], topZ[i]);
                 
                 A = new JamaMatrix(3, 3, 0.0);
-                A.set(0, 0, oXres * xfrm.Get(0, 0) / iXres);
-                A.set(0, 1, oYres * xfrm.Get(0, 1) / iXres);
-                A.set(0, 2, oZres * xfrm.Get(0, 2) / iXres);
-                A.set(1, 0, oXres * xfrm.Get(1, 0) / iYres);
-                A.set(1, 1, oYres * xfrm.Get(1, 1) / iYres);
-                A.set(1, 2, oZres * xfrm.Get(1, 2) / iYres);
-                A.set(2, 0, oXres * xfrm.Get(2, 0) / iZres);
-                A.set(2, 1, oYres * xfrm.Get(2, 1) / iZres);
-                A.set(2, 2, oZres * xfrm.Get(2, 2) / iZres);
+                A.set(0, 0, oXres * xfrm.get(0, 0) / iXres);
+                A.set(0, 1, oYres * xfrm.get(0, 1) / iXres);
+                A.set(0, 2, oZres * xfrm.get(0, 2) / iXres);
+                A.set(1, 0, oXres * xfrm.get(1, 0) / iYres);
+                A.set(1, 1, oYres * xfrm.get(1, 1) / iYres);
+                A.set(1, 2, oZres * xfrm.get(1, 2) / iYres);
+                A.set(2, 0, oXres * xfrm.get(2, 0) / iZres);
+                A.set(2, 1, oYres * xfrm.get(2, 1) / iZres);
+                A.set(2, 2, oZres * xfrm.get(2, 2) / iZres);
                 b = new JamaMatrix(3, 1, 0.0);
 
                 /*b.set(0,0,rrArray[i].X - xfrm.Get(0, 3)/iXres);
@@ -8156,18 +8156,18 @@ public class FileAfni extends FileBase {
 
         int mod = oXdim / 50;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         int position1, position2;
         float b1, b2;
@@ -8290,18 +8290,18 @@ public class FileAfni extends FileBase {
 
         int mod = oXdim / 50;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         int position1, position2;
         float b1, b2;

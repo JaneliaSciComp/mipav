@@ -16,80 +16,80 @@ public class AlgorithmBSpline extends AlgorithmBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Blending matrix for a 4th degree Bspline. */
-    private static float[][] mat4 = {
-        { 0.04166667f, -0.16666667f, 0.25f, -0.16666667f, 0.04166667f },
-        { 0.45833333f, -0.50000000f, -0.25f, 0.50000000f, -0.16666667f },
-        { 0.45833333f, 0.50000000f, -0.25f, -0.50000000f, 0.25000000f },
-        { 0.04166667f, 0.16666667f, 0.25f, 0.16666667f, -0.16666667f },
-        { 0f, 0f, 0f, 0, 0.04166667f }
+    private static double[][] mat4 = {
+        { 0.04166666666666667, -0.1666666666666667, 0.25, -0.1666666666666667, 0.04166666666666667 },
+        { 0.4583333333333333, -0.50000000, -0.25, 0.50000000, -0.1666666666666667 },
+        { 0.4583333333333333, 0.50000000, -0.25, -0.50000000, 0.25000000 },
+        { 0.04166666666666667, 0.1666666666666667, 0.25, 0.1666666666666667, -0.1666666666666667 },
+        { 0.0, 0.0, 0.0, 0.0, 0.04166666666666667 }
     };
 
     /** Blending matrix for 3rd degree B spline. */
-    private static float[][] mat3 = {
-        { 0.16666667f, -0.5f, 0.5f, -0.16666667f },
-        { 0.66666667f, 0, -1, 0.5f },
-        { 0.16666667f, 0.5f, 0.5f, -0.5f },
-        { 0, 0, 0, 0.16666667f }
+    private static double[][] mat3 = {
+        { 0.1666666666666667, -0.5, 0.5, -0.1666666666666667 },
+        { 0.6666666666666667, 0, -1, 0.5 },
+        { 0.1666666666666667, 0.5, 0.5, -0.5 },
+        { 0.0, 0.0, 0.0, 0.1666666666666667 }
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float[][] coeff = null;
+    private double[][] coeff = null;
 
     /** DOCUMENT ME! */
     private int degree = -1;
 
     /** DOCUMENT ME! */
-    private float[] dt = new float[5];
+    private double[] dt = new double[5];
     
     /** DOCUMENT ME! */
     private double[] dt_double = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] dx = new float[5];
+    private double[] dx = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] dy = new float[5];
+    private double[] dy = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] dz = new float[5];
+    private double[] dz = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] geoms = new float[5];
+    private double[] geoms = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] geomx = new float[5];
+    private double[] geomx = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] geomy = new float[5];
+    private double[] geomy = new double[5];
 
     /** DOCUMENT ME! */
-    private float[] geomz = new float[5];
+    private double[] geomz = new double[5];
 
     /** Global variables used for 2D and 3D Bspline. */
-    private float[] inter = null; // new float[xdim*ydim*zdim];
+    private double[] inter = null; // new double[xdim*ydim*zdim];
 
     /** DOCUMENT ME! */
-    private float[] interA = null;
+    private double[] interA = null;
 
     /** DOCUMENT ME! */
-    private float[] interB = null;
+    private double[] interB = null;
 
     /** DOCUMENT ME! */
-    private float[] interG = null;
+    private double[] interG = null;
 
     /** DOCUMENT ME! */
-    private float[] interR = null;
+    private double[] interR = null;
 
     /** DOCUMENT ME! */
-    private float[][] mat = null; // new float[degree+1][degree+1];
+    private double[][] mat = null; // new double[degree+1][degree+1];
 
     /** DOCUMENT ME! */
     private int sliceSize;
 
     /** DOCUMENT ME! */
-    private float[] volume = null;
+    private double[] volume = null;
 
     /** DOCUMENT ME! */
     private int xBaseOld = -1;
@@ -117,29 +117,29 @@ public class AlgorithmBSpline extends AlgorithmBase {
     public AlgorithmBSpline() { }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * This method can also be used to calculate derivatives of the Bspline.
      *
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
      *
      * @return  the Bspline interpolated data point
      */
-    public float bSpline2D(int orderDx, int orderDy, float x, float y) {
+    public double bSpline2D(int orderDx, int orderDy, double x, double y) {
 
         int i, j;
         int i0, i1, j0, j1;
         int k0, k1;
         int l0, l1;
         int xbase, ybase;
-        float xdiff, ydiff;
-        float result;
-        float sum;
+        double xdiff, ydiff;
+        double result;
+        double sum;
         int iindex;
-        float matj0i0;
+        double matj0i0;
         int kx, ky;
 
         // set base indices and compute partial tensor product (if necessary)
@@ -202,7 +202,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         ydiff = y - ybase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
 
         for (int d = 0; d < orderDx; d++) {
             dx[d] = 0;
@@ -237,30 +237,30 @@ public class AlgorithmBSpline extends AlgorithmBase {
         return result;
 
     }
-
+    
     /**
      * This method can also be used to calculate derivatives of the Bspline.
      *
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
      *
      * @return  the Bspline interpolated data point
      */
-    public float[] bSpline2DC(int orderDx, int orderDy, float x, float y) {
+    public double[] bSpline2DC(int orderDx, int orderDy, double x, double y) {
 
         int i, j;
         int i0, i1, j0, j1;
         int k0, k1;
         int l0, l1;
         int xbase, ybase;
-        float xdiff, ydiff;
-        float[] result = new float[4];
-        float sumA, sumR, sumG, sumB;
+        double xdiff, ydiff;
+        double[] result = new double[4];
+        double sumA, sumR, sumG, sumB;
         int iindexA, iindexR, iindexG, iindexB;
         int tmpIndex;
-        float matj0i0;
+        double matj0i0;
         int kx, ky;
 
         // set base indices and compute partial tensor product (if necessary)
@@ -336,7 +336,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         ydiff = y - ybase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
 
         for (int d = 0; d < orderDx; d++) {
             dx[d] = 0;
@@ -380,7 +380,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         return result;
 
     }
-
+    
     /**
      * 3D graph Bspline for black and white. This method can also be used to calculate derivatives of the Bspline.
      * WARNING - programmer must call setup3DBSpline before using this function!!!
@@ -388,26 +388,26 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
      * @param   orderDz  derivative order in z direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
-     * @param   z        float point index along the Bspline indicating pointof interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
+     * @param   z        double point index along the Bspline indicating pointof interest
      *
      * @return  the Bspline interpolated data point
      */
 
-    public float bSpline3D(int orderDx, int orderDy, int orderDz, float x, float y, float z) {
+    public double bSpline3D(int orderDx, int orderDy, int orderDz, double x, double y, double z) {
         int i, j, k;
         int iindex;
         int i0, i1, i2, j0, j1, j2, k0, k1, k2, l0, l1, l2;
 
         int xbase, ybase, zbase;
         int kx, ky, kz; // optimizers
-        float xdiff, ydiff, zdiff;
-        float result;
-        float sum;
+        double xdiff, ydiff, zdiff;
+        double result;
+        double sum;
 
         int yOffset;
-        float matj0i0, matj1i1; // optimizers
+        double matj0i0, matj1i1; // optimizers
 
         // set base indices and compute partial tensor product (if necessary)
         xbase = (int) x;
@@ -492,7 +492,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         zdiff = z - zbase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
         int d;
 
         for (d = 0; d < orderDx; d++) {
@@ -541,7 +541,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
         return result;
     }
-
+    
     /**
      * 3D graph Bspline for color. This method can also be used to calculate derivatives of the Bspline. WARNING -
      * programmer must call setup3DBSpline before using this function!!!
@@ -549,27 +549,27 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param   orderDx  derivative order in x direction (n <= 4 )
      * @param   orderDy  derivative order in y direction (n <= 4 )
      * @param   orderDz  derivative order in z direction (n <= 4 )
-     * @param   x        float point index along the Bspline indicating point of interest
-     * @param   y        float point index along the Bspline indicating point of interest
-     * @param   z        float point index along the Bspline indicating point of interest
+     * @param   x        double point index along the Bspline indicating point of interest
+     * @param   y        double point index along the Bspline indicating point of interest
+     * @param   z        double point index along the Bspline indicating point of interest
      *
      * @return  the Bspline interpolated data point
      */
 
-    public float[] bSpline3DC(int orderDx, int orderDy, int orderDz, float x, float y, float z) {
+    public double[] bSpline3DC(int orderDx, int orderDy, int orderDz, double x, double y, double z) {
         int i, j, k;
         int iindexA, iindexR, iindexG, iindexB;
         int i0, i1, i2, j0, j1, j2, k0, k1, k2, l0, l1, l2;
 
         int xbase, ybase, zbase;
         int kx, ky, kz; // optimizers
-        float xdiff, ydiff, zdiff;
-        float[] result = new float[4];
-        float sumA, sumR, sumG, sumB;
+        double xdiff, ydiff, zdiff;
+        double[] result = new double[4];
+        double sumA, sumR, sumG, sumB;
         int tmpIndex;
 
         int yOffset;
-        float matj0i0, matj1i1; // optimizers
+        double matj0i0, matj1i1; // optimizers
 
         // set base indices and compute partial tensor product (if necessary)
         xbase = (int) x;
@@ -667,7 +667,7 @@ public class AlgorithmBSpline extends AlgorithmBase {
         zdiff = z - zbase;
 
         // compute polynomial terms
-        float temp = 1;
+        double temp = 1;
         int d;
 
         for (d = 0; d < orderDx; d++) {
@@ -1128,14 +1128,14 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup2DBSpline(float[] vol, int[] extents, int _degree) {
+    public void setup2DBSpline(double[] vol, int[] extents, int _degree) {
         volume = vol;
         xdim = extents[0];
         ydim = extents[1];
         degree = _degree;
-        inter = new float[(degree + 1) * (degree + 1)];
-        coeff = new float[degree + 1][degree + 1];
-        mat = new float[degree + 1][degree + 1];
+        inter = new double[(degree + 1) * (degree + 1)];
+        coeff = new double[degree + 1][degree + 1];
+        mat = new double[degree + 1][degree + 1];
 
         // construct array of polynomial coefficients
         for (int r = 0; r <= degree; r++) {
@@ -1169,17 +1169,17 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup2DBSplineC(float[] vol, int[] extents, int _degree) {
+    public void setup2DBSplineC(double[] vol, int[] extents, int _degree) {
         volume = vol;
         xdim = extents[0];
         ydim = extents[1];
         degree = _degree;
-        interA = new float[(degree + 1) * (degree + 1)];
-        interR = new float[(degree + 1) * (degree + 1)];
-        interG = new float[(degree + 1) * (degree + 1)];
-        interB = new float[(degree + 1) * (degree + 1)];
-        coeff = new float[degree + 1][degree + 1];
-        mat = new float[degree + 1][degree + 1];
+        interA = new double[(degree + 1) * (degree + 1)];
+        interR = new double[(degree + 1) * (degree + 1)];
+        interG = new double[(degree + 1) * (degree + 1)];
+        interB = new double[(degree + 1) * (degree + 1)];
+        coeff = new double[degree + 1][degree + 1];
+        mat = new double[degree + 1][degree + 1];
 
         // construct array of polynomial coefficients
         for (int r = 0; r <= degree; r++) {
@@ -1213,16 +1213,16 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim, zDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup3DBSpline(float[] vol, int[] extents, int _degree) {
+    public void setup3DBSpline(double[] vol, int[] extents, int _degree) {
         volume = vol;
         xdim = extents[0];
         ydim = extents[1];
         zdim = extents[2];
         sliceSize = xdim * ydim;
         degree = _degree;
-        inter = new float[(degree + 1) * (degree + 1) * (degree + 1)];
-        coeff = new float[degree + 1][degree + 1];
-        mat = new float[degree + 1][degree + 1];
+        inter = new double[(degree + 1) * (degree + 1) * (degree + 1)];
+        coeff = new double[degree + 1][degree + 1];
+        mat = new double[degree + 1][degree + 1];
 
         // construct array of polynomial coefficients
         for (int r = 0; r <= degree; r++) {
@@ -1256,19 +1256,19 @@ public class AlgorithmBSpline extends AlgorithmBase {
      * @param  extents  vol extents (xDim,yDim, zDim)
      * @param  _degree  degree of spline (3 or 4)
      */
-    public void setup3DBSplineC(float[] vol, int[] extents, int _degree) {
+    public void setup3DBSplineC(double[] vol, int[] extents, int _degree) {
         volume = vol;
         xdim = extents[0];
         ydim = extents[1];
         zdim = extents[2];
         sliceSize = xdim * ydim;
         degree = _degree;
-        interA = new float[(degree + 1) * (degree + 1) * (degree + 1)];
-        interR = new float[(degree + 1) * (degree + 1) * (degree + 1)];
-        interG = new float[(degree + 1) * (degree + 1) * (degree + 1)];
-        interB = new float[(degree + 1) * (degree + 1) * (degree + 1)];
-        coeff = new float[degree + 1][degree + 1];
-        mat = new float[degree + 1][degree + 1];
+        interA = new double[(degree + 1) * (degree + 1) * (degree + 1)];
+        interR = new double[(degree + 1) * (degree + 1) * (degree + 1)];
+        interG = new double[(degree + 1) * (degree + 1) * (degree + 1)];
+        interB = new double[(degree + 1) * (degree + 1) * (degree + 1)];
+        coeff = new double[degree + 1][degree + 1];
+        mat = new double[degree + 1][degree + 1];
 
         // construct array of polynomial coefficients
         for (int r = 0; r <= degree; r++) {

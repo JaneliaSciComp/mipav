@@ -6,14 +6,18 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
 import java.lang.*;
+
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 /**
  * The class reads and writes PAR/REC files.
  *
@@ -54,7 +58,6 @@ public class FilePARREC extends FileBase {
     /** file info **/
     private FileInfoPARREC outInfo;
     
-    
     /** vol map **/
     private HashMap<String,String> VolMap;
     
@@ -70,30 +73,28 @@ public class FilePARREC extends FileBase {
     /** slices **/
     private Vector<String> Slices;
     
-  /**version**/
+    /**version**/
     private String version;
     
-    /**exam name**/
+    private String patientName = "";
     
+    /**exam name**/
     private String examName = "";
     
     /**protocol name**/
-    
     private String protocolName = "";
     
     /**patient position **/
-    
     private String patientPosition = "";
-    
     
     private String foldover = "";
     
     private int sliceOrientPos;
+    
     /**bFactorIndex**/
-    
     private int bValuePos;
- /**bFactorIndex**/
     
+    /**bFactorIndex**/
     private int gradPos;
     
     private int sliceOrientIndex;
@@ -101,21 +102,9 @@ public class FilePARREC extends FileBase {
     private int bValueIndex;
     
     private int gradIndex;
-    
-    
-/**counter**/
-    
-    private int counter = 0;
-    
-    
 
-    /**bvalues**/
-    //private String [] stringBvalueArray = new String[Slices.size()/numSlices];
-    
-    /**gradients**/
-   // private String [] stringGradientArray = new String[Slices.size()/numSlices];
-    
-  
+    /**counter**/   
+    private int counter = 0;
     
     /** floating point value = raw value/scaleSlope + rescaleIntercept/(rescaleSlope*scaleSlope) **/
     private float rescaleIntercept[];
@@ -135,10 +124,7 @@ public class FilePARREC extends FileBase {
     
     /** num vols in 4d dataset **/
     private int numVolumes;
-    
-    
 
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -211,6 +197,14 @@ public class FilePARREC extends FileBase {
         try {
             super.finalize();
         } catch (Throwable er) { }
+    }
+    
+    /**
+     * 
+     * @param image
+     */
+    public void setImage(ModelImage image) {
+        this.image = image;
     }
     
     
@@ -399,6 +393,7 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
+        updateTransformMatrix(fileInfo, image);
         //updateStartLocations(image.getFileInfo());
 
 
@@ -407,7 +402,7 @@ public class FilePARREC extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            int offset = (int) Math.abs(vox_offset); //?? used to read one slice?
+            long offset = (long) Math.abs(vox_offset); //?? used to read one slice?
 
             rawFile.readImage(image, offset);
 
@@ -427,6 +422,96 @@ public class FilePARREC extends FileBase {
         return image;
     }
 
+
+    private void updateTransformMatrix(FileInfoPARREC fileInfo, ModelImage image) {
+        TransMatrix toScanner = new TransMatrix(4);
+        
+        double[] sliceAng = fileInfo.getSliceAngulation();
+        double[] offCentre = fileInfo.getOffCentre();
+        TransMatrix trans = makeTranslationMatrix(offCentre);
+        TransMatrix rot = makeRotationMatrix(image.getExtents(), sliceAng);
+        rot.mult(trans);
+        
+        image.setMatrix(ConvertToMIPAVConvention(rot));
+    }
+    
+    /**
+     * Converts translation matrix to mipav specific format
+     */
+    public static TransMatrix ConvertToMIPAVConvention(TransMatrix mat){
+        //float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
+        TransMatrix mipavMat = new TransMatrix(4);
+        mipavMat.set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        //mat.Transpose();
+        mipavMat.mult(mat);
+        mipavMat.mult(mipavMat);
+        return mipavMat;
+    }
+    
+    /**
+     * Makes rotation matrix based on image off-centres that were stored in header and converted to orientation-specific values.
+     */
+    public static TransMatrix makeTranslationMatrix(double[] translations){
+        TransMatrix finalTrans = new TransMatrix(4);
+        for(int i = 0; i < 3; i++){
+            finalTrans.set(i,i,1);
+            finalTrans.set(3,i,translations[i]);
+        }
+        finalTrans.set(3,3,1);      
+        
+        return finalTrans;
+    }
+    
+    /**
+     * Makes rotation matrix based on image angulations that were stored in header and converted to orientation-specific values.
+     */
+    public static TransMatrix makeRotationMatrix(int[] size, double[] rotations){
+        float[] center = new float[3];
+        for( int i=0; i<3; i++){
+            center[i] = (size[i]+1.0f)/2;
+        }
+        TransMatrix transCenter = new TransMatrix(4);
+        for(int i = 0; i < 3; i++){
+            transCenter.set(i,i,1);
+            transCenter.set(3,i,-1*center[i]);
+        }
+        transCenter.set(3,3,1);
+        
+        TransMatrix transHome = new TransMatrix(4,4);
+        for(int i = 0; i < 3; i++){
+            transHome.set(i,i,1);
+            transHome.set(3,i,center[i]);
+        }
+        transHome.set(3,3,1);
+        
+        double[] thetas = new double[3];
+        for(int i = 0; i < 3; i++){ 
+            thetas[i] = Math.toRadians(rotations[i]);
+        }
+        
+        TransMatrix rotX = new TransMatrix(4), rotY = new TransMatrix(4), rotZ = new TransMatrix(4);
+        rotX.set(0,0,1);    rotX.set(0,1,0);                    rotX.set(0,2,0);                        rotX.set(0,3,0);
+        rotX.set(1,0,0);    rotX.set(1,1,Math.cos(thetas[0]));  rotX.set(1,2,-1*Math.sin(thetas[0]));   rotX.set(1,3,0);
+        rotX.set(2,0,0);    rotX.set(2,1,Math.sin(thetas[0]));  rotX.set(2,2,Math.cos(thetas[0]));      rotX.set(2,3,0);
+        rotX.set(3,0,0);    rotX.set(3,1,0);                    rotX.set(3,2,0);                        rotX.set(3,3,1);
+
+        rotY.set(0,0,Math.cos(thetas[1]));  rotY.set(0,1,0);    rotY.set(0,2,-1*(Math.sin(thetas[1]))); rotY.set(0,3,0);
+        rotY.set(1,0,0);                    rotY.set(1,1,1);    rotY.set(1,2,0);                        rotY.set(1,3,0);
+        rotY.set(2,0,Math.sin(thetas[1]));  rotY.set(2,1,0);    rotY.set(2,2,Math.cos(thetas[1]));      rotY.set(2,3,0);
+        rotY.set(3,0,0);                    rotY.set(3,1,0);    rotY.set(3,2,0);                        rotY.set(3,3,1);
+        
+        rotZ.set(0,0,Math.cos(thetas[2]));      rotZ.set(0,1,Math.sin(thetas[2]));  rotZ.set(0,2,0);    rotZ.set(0,3,0);
+        rotZ.set(1,0,-1*Math.sin(thetas[2]));   rotZ.set(1,1,Math.cos(thetas[2]));  rotZ.set(1,2,0);    rotZ.set(1,3,0);
+        rotZ.set(2,0,0);                        rotZ.set(2,1,0);                    rotZ.set(2,2,1);    rotZ.set(2,3,0);
+        rotZ.set(3,0,0);                        rotZ.set(3,1,0);                    rotZ.set(3,2,0);    rotZ.set(3,3,1);
+
+        transCenter.mult(rotX);
+        transCenter.mult(rotY);
+        transCenter.mult(rotZ);
+        transCenter.mult(transHome);
+        
+        return transCenter;
+    }
 
     /**
      * Returns the FileInfoAnalyze read from the file.
@@ -618,94 +703,93 @@ public class FilePARREC extends FileBase {
              
                     break;
                 case '.' : // scan file variable
-                        if(nextLine.contains("Examination name")){
-                            String examNameLine = nextLine.trim();
-                            int examNameInd = examNameLine.indexOf(":");
-                            int examNameLineLength = examNameLine.length();
-                            
-                            for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
-                                int examIndex = (examNameInd+1)+i;
-                                char examLetter= examNameLine.charAt(examIndex);
-                                examName =examName + examLetter;
-                                examName = examName.trim();
-                              
-                            }
-                            fileInfo.setExamName(examName);
+                    if(nextLine.contains("Patient name")) {
+                        String patientNameLine = nextLine.trim();
+                        int patientNameInd = patientNameLine.indexOf(":");
+                        int patientNameLineLength = patientNameLine.length();
+                        
+                        for (int i = 0 ; i < patientNameLineLength-(patientNameInd+1); i++) {
+                            int patientIndex = (patientNameInd+1)+i;
+                            char patientLetter= patientNameLine.charAt(patientIndex);
+                            patientName =patientName + patientLetter;
+                            patientName = patientName.trim();
+                          
                         }
-                   
-                       if(nextLine.contains("Protocol name")){
-                           String protocolNameLine = nextLine.trim();
-                           int protocolNameInd = protocolNameLine.indexOf(":");
-                           int protocolNameLineLength = protocolNameLine.length();
-                           for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
-                               int protocolIndex = (protocolNameInd+1)+i;
-                               char protocolLetter= protocolNameLine.charAt(protocolIndex);
-                               protocolName =protocolName + protocolLetter;
-                               protocolName = protocolName.trim();                            
-                          }
-                           fileInfo.setProtocolName(protocolName);
-                           
+                        fileInfo.setPatientName(patientName);
+                    } 
+                    if(nextLine.contains("Examination name")) {
+                        String examNameLine = nextLine.trim();
+                        int examNameInd = examNameLine.indexOf(":");
+                        int examNameLineLength = examNameLine.length();
+                        
+                        for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
+                            int examIndex = (examNameInd+1)+i;
+                            char examLetter= examNameLine.charAt(examIndex);
+                            examName =examName + examLetter;
+                            examName = examName.trim();
+                          
+                        }
+                        fileInfo.setExamName(examName);
+                    } else if(nextLine.contains("Protocol name")) {
+                       String protocolNameLine = nextLine.trim();
+                       int protocolNameInd = protocolNameLine.indexOf(":");
+                       int protocolNameLineLength = protocolNameLine.length();
+                       for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
+                           int protocolIndex = (protocolNameInd+1)+i;
+                           char protocolLetter= protocolNameLine.charAt(protocolIndex);
+                           protocolName =protocolName + protocolLetter;
+                           protocolName = protocolName.trim();                            
                        }
-                                                  
-                        //Determine date of exam
-                        if(nextLine.contains("Examination date/time")){
+                       fileInfo.setProtocolName(protocolName);
+                       
+                   } else if(nextLine.contains("Examination date/time")){ //Determine date of exam
                         int ind = nextLine.indexOf(":");
                         String date = nextLine.substring(ind+1,nextLine.indexOf("/",ind));
                         date = date.trim();
                         fileInfo.setDate(date);
+                   } else if(nextLine.contains("Patient position")){
+                        String patientPositionLine = nextLine.trim();
+                        int patientPositionInd = patientPositionLine.indexOf(":");
+                        int patientPositionLineLength = patientPositionLine.length();
+                        for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
+                            int positionIndex = (patientPositionInd+1)+i;
+                            char positionLetter= patientPositionLine.charAt(positionIndex);
+                            patientPosition =patientPosition + positionLetter;
+                            patientPosition = patientPosition.trim();                            
+                       }
+                        fileInfo.setPatientPosition(patientPosition);
+                    } else if(nextLine.contains("Preparation direction")){
+                        String foldoverLine = nextLine.trim();
+                        int foldoverInd = foldoverLine.indexOf(":");
+                        int foldoverLineLength = foldoverLine.length();
+                        for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
+                            int foldoverIndex = (foldoverInd+1)+i;
+                            char foldoverLetter= foldoverLine.charAt(foldoverIndex);
+                            foldover = foldover + foldoverLetter;
+                            foldover = foldover.trim();                            
+                       }
+                        fileInfo.setPreparationDirection(foldover);
+                    } else if(nextLine.contains("Angulation midslice")){
+                        String info = nextLine.substring(nextLine.indexOf(":")+1);
+                        info=info.trim();
+                        double [] sliceAng = new double[3];
+                        sliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        info = info.substring(info.indexOf(' ')+1, info.length()).trim();
+                        sliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        sliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                        fileInfo.setSliceAngulation(sliceAng);
+    
+                    } else if(nextLine.contains("Off Centre midslice")){
+                        String info = nextLine.substring(nextLine.indexOf(":")+1);
+                        info=info.trim();
+                        double [] offCentre = new double[3];
+                        offCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
+                        offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                        fileInfo.setOffCentre(offCentre);   
                     }
-                        if(nextLine.contains("Patient position")){
-                            String patientPositionLine = nextLine.trim();
-                            int patientPositionInd = patientPositionLine.indexOf(":");
-                            int patientPositionLineLength = patientPositionLine.length();
-                            for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
-                                int positionIndex = (patientPositionInd+1)+i;
-                                char positionLetter= patientPositionLine.charAt(positionIndex);
-                                patientPosition =patientPosition + positionLetter;
-                                patientPosition = patientPosition.trim();                            
-                           }
-                            fileInfo.setPatientPosition(patientPosition);
-                        }
-                        
-                        if(nextLine.contains("Preparation direction")){
-                            String foldoverLine = nextLine.trim();
-                            int foldoverInd = foldoverLine.indexOf(":");
-                            int foldoverLineLength = foldoverLine.length();
-                            for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
-                                int foldoverIndex = (foldoverInd+1)+i;
-                                char foldoverLetter= foldoverLine.charAt(foldoverIndex);
-                                foldover = foldover + foldoverLetter;
-                                foldover = foldover.trim();                            
-                           }
-                            fileInfo.setPreparationDirection(foldover);
-                        }
-                        
-                        
-                        //Checks to see if examination is DTI to extract angulation and off centre to determine gradients
-                        if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
-                            if(nextLine.contains("Angulation midslice")){
-                            String info = nextLine.substring(nextLine.indexOf(":")+1);
-                            info=info.trim();
-                            double [] sliceAng = new double[3];
-                            sliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();
-                            sliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            sliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
-                            fileInfo.setSliceAngulation(sliceAng);
-
-                        }
-                        
-                        if(nextLine.contains("Off Centre midslice")){
-                            String info = nextLine.substring(nextLine.indexOf(":")+1);
-                            info=info.trim();
-                            double [] offCentre = new double[3];
-                            offCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
-                            offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
-                            fileInfo.setOffCentre(offCentre);   
-                        }
-                    }  
+                    
 
                 	fileInfo.setGeneralInfoList(nextLine);
                     String []tags = nextLine.split(":");
@@ -713,7 +797,7 @@ public class FilePARREC extends FileBase {
                     String key;
                     if(tags.length < 2) {
                     	key = "";
-                    }else {
+                    } else {
                     	key = tags[1].trim();
                     }
                     String stgTag = (String)VolMap.get(tag);
@@ -750,7 +834,7 @@ public class FilePARREC extends FileBase {
         fileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE);
         for(int j=0;j<3;j++)
             fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(),j);
-        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(),3);
+        fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(),3);
 
 
         String s;
@@ -898,10 +982,7 @@ public class FilePARREC extends FileBase {
         }       
 
 
-        @SuppressWarnings("unused")
-        float slicethk=0;
-        @SuppressWarnings("unused")
-        float slicegap =0;
+        float slicethk=0, slicegap=0;
         int ori=0;
         int dim1=0, dim2=0;
 
@@ -919,9 +1000,9 @@ public class FilePARREC extends FileBase {
         if(s!=null) {
             ss = s.trim().split("\\s+");
             if(ss.length==3) {
-                fovRL = Float.valueOf(ss[0]);
+                fovRL = Float.valueOf(ss[2]);
                 fovIS = Float.valueOf(ss[1]);
-                fovAP = Float.valueOf(ss[2]);
+                fovAP = Float.valueOf(ss[0]);
             } else {
                 Preferences.debug("FilePARREC:readHeader. FOV doesn't make sense: "+s+ "\n", Preferences.DEBUG_FILEIO);
                 return false;
@@ -935,15 +1016,26 @@ public class FilePARREC extends FileBase {
         s= (String)VolParameters.get("scn_pix_bits");
         if(s!=null)
 			bpp=Integer.valueOf(s).intValue();
+        
+        float repetitionTime = -1.0f;
+        s = (String)VolParameters.get("scn_rep_time");
+        if (s != null) {
+            repetitionTime = Float.valueOf(s).floatValue();
+        }
 
         int idx =0;
         rescaleIntercept = new float[Slices.size()];
         rescaleSlope = new float[Slices.size()];
         scaleSlope = new float[Slices.size()];
+        float resInit = 0.0f;
+        float[] res1 = new float[Slices.size()];
+        float[] res2 = new float[Slices.size()];
         for (int j = 0; j < Slices.size(); j++) {
             rescaleIntercept[j] = 0.0f;
             rescaleSlope[j] = 1.0f;
             scaleSlope[j] = 1.0f;
+            res1[j] = resInit;
+            res2[j] = resInit;
         }
         for(int j=0;j<SliceParameters.size();j++) {
             String tag = (String)SliceParameters.get(j);
@@ -964,8 +1056,11 @@ public class FilePARREC extends FileBase {
                 rescaleSlope[0] = Float.valueOf(values[idx]);
             } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
                 scaleSlope[0] = Float.valueOf(values[idx]);
+            } else if(tag.compareToIgnoreCase("#  pixel spacing (x,y) (in mm)              (2*float)")==0) {
+                res1[0] = Float.valueOf(values[idx]);
+                res2[0] = Float.valueOf(values[idx+1]);
             }
-            
+       
             Integer I = (Integer)SliceMap.get(tag);
             if(I==null) {
                 Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n", Preferences.DEBUG_FILEIO);
@@ -987,7 +1082,7 @@ public class FilePARREC extends FileBase {
         }
         
         
-        // Let's parse the other slices for rescaleIntercept, rescaleSlope, and scaleSlope:
+        // Let's parse the other slices for rescaleIntercept, rescaleSlope, scaleSlope, and resolutions:
         for (int i = 1; i < Slices.size(); i++) {
             sl = (String)Slices.get(i);
             values = sl.split("\\s+");
@@ -1000,6 +1095,9 @@ public class FilePARREC extends FileBase {
                     rescaleSlope[i] = Float.valueOf(values[idx]);
                 } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
                     scaleSlope[i] = Float.valueOf(values[idx]);
+                } else if(tag.compareToIgnoreCase("#  pixel spacing (x,y) (in mm)              (2*float)")==0) {
+                    res1[i] = Float.valueOf(values[idx]);
+                    res2[i] = Float.valueOf(values[idx+1]);
                 }
                 
                 Integer I = (Integer)SliceMap.get(tag);
@@ -1085,15 +1183,26 @@ public class FilePARREC extends FileBase {
             Extents = new int[] { dim1, dim2, numSlices};
 
         }
-        //Extents[0] = 4;
-        /*fileInfo.setExtents(dim1,0);
-        fileInfo.setExtents(dim2,1);
-        fileInfo.setExtents(numSlices,2);
-        fileInfo.setExtents(numVolumes,3);*/
+
         fileInfo.setExtents(Extents);
         fileInfo.setVolParameters(VolParameters);
         
-
+        boolean res1Cons = res1[0] != resInit, res2Cons = res2[0] != resInit;
+        float res1Val = res1[0];
+        for(int i=0; i<res1.length; i++) {
+            if(res1[i] != res1Val) {
+                res1Cons = false;
+                break;
+            }
+        }
+        
+        float res2Val = res2[0];
+        for(int i=0; i<res2.length; i++) {
+            if(res2[i] != res2Val) {
+                res2Cons = false;
+                break;
+            }
+        }
 
         switch(ori) {
             case 1: //TRA
@@ -1101,23 +1210,45 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
-                fileInfo.setResolutions(fovRL/dim1,0);
-                fileInfo.setResolutions(fovAP/dim2,1);
-                fileInfo.setResolutions(fovIS/numSlices,2);
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovRL/dim1,0);
+                    fileInfo.setResolutions(fovAP/dim2,1);
+                }
+                fileInfo.setResolutions(fovIS/numSlices,2);                
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
 //                fileInfo.setSliceThickness(fov2/numSlices);
                 break;
             case 2: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
-                fileInfo.setResolutions(fovAP/dim1,0);
-                fileInfo.setResolutions(fovIS/dim2,1);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovAP/dim1,0);
+                    fileInfo.setResolutions(fovIS/dim2,1);
+                }
                 fileInfo.setResolutions(fovRL/numSlices,2);
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
                 //fileInfo.setSliceThickness(fov3/numSlices);
                 break;
             case 3: //COR
@@ -1125,11 +1256,22 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
-                fileInfo.setResolutions(fovRL/dim1,0);
-                fileInfo.setResolutions(fovIS/dim2,1);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovRL/dim1,0);
+                    fileInfo.setResolutions(fovIS/dim2,1);
+                }
                 fileInfo.setResolutions(fovAP/numSlices,2);
-                if(numVolumes>1)
-                    fileInfo.setResolutions(1,3);
+                if(numVolumes>1) {
+                    if (repetitionTime > 0.0f) {
+                        fileInfo.setResolutions(repetitionTime, 3);
+                    }
+                    else {
+                        fileInfo.setResolutions(1,3);
+                    }
+                }     
 //                fileInfo.setSliceThickness(fov1/numSlices);
                 break;
 
@@ -1138,6 +1280,33 @@ public class FilePARREC extends FileBase {
                 return false;
 
         }
+        
+        double[] sliceAngle = fileInfo.getSliceAngulation();
+        double[] offCentre = fileInfo.getOffCentre();
+        
+        if(sliceAngle != null && offCentre != null) {
+            switch(fileInfo.getImageOrientation()) {
+            
+            case FileInfoBase.AXIAL:
+                sliceAngle = new double[]{sliceAngle[2], sliceAngle[0], sliceAngle[1]};
+                offCentre = new double[]{offCentre[2], offCentre[0], offCentre[1]};
+                break;
+                
+            case FileInfoBase.SAGITTAL:
+                sliceAngle = new double[]{sliceAngle[0], -sliceAngle[1], -sliceAngle[2]};
+                offCentre = new double[]{offCentre[0], -offCentre[1], -offCentre[2]};
+                break;
+                
+            case FileInfoBase.CORONAL:
+                sliceAngle = new double[]{sliceAngle[2], -sliceAngle[1], sliceAngle[0]};
+                offCentre = new double[]{offCentre[2], -offCentre[1], offCentre[0]};
+                break;       
+            }
+            
+            fileInfo.setSliceAngulation(sliceAngle);
+            fileInfo.setOffCentre(offCentre);
+        }
+        
         float []o;
         if(numVolumes>1) {
             o = new float[4];
@@ -1146,8 +1315,8 @@ public class FilePARREC extends FileBase {
             o = new float[3];
             for(int j=0;j<3;j++) o[j]=0;
         }
+        
         fileInfo.setOrigin(o);
-
         
         
 
@@ -1214,6 +1383,7 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
+        updateTransformMatrix(fileInfo, image);
 //        updateStartLocations(image.getFileInfo());	
 
 
@@ -1224,7 +1394,7 @@ public class FilePARREC extends FileBase {
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
 
             if (one) {
 
@@ -1474,6 +1644,10 @@ public class FilePARREC extends FileBase {
             fileInfo.setUnitsOfMeasure(units, 0);
             fileInfo.setUnitsOfMeasure(units, 1);
         }
+        
+        if (image != null) {
+            updateTransformMatrix(fileInfo, image);
+        }
 
 
         try { // Construct a FileRaw to actually read the image.
@@ -1481,7 +1655,7 @@ public class FilePARREC extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
-            int offset = (int) Math.abs(vox_offset);
+            long offset = (long) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
             rawFile.raFile.close();
 
@@ -1514,14 +1688,89 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileRaw
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        int k, seq;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+        int beginTime = options.getBeginTime();
+        int endTime = options.getEndTime();
+        String headerFileName = fileNames[0];
+        int headerIndex = fileNames[0].lastIndexOf(".");
+        String baseHeaderName = fileNames[0].substring(0, headerIndex);
+        String headerSuffix = fileNames[0].substring(headerIndex);
+        int dataIndex = fileNames[1].lastIndexOf(".");
+        String dataFileName = fileNames[1];
+        String baseDataName = fileNames[1].substring(0, dataIndex);
+        String dataSuffix = fileNames[1].substring(dataIndex);
+        int optionsFileNameIndex;
+        String optionsFileName;
+        if (options.isMultiFile() && image.getNDims() == 4) {
+            for (k = beginTime, seq = options.getStartNumber(); k <= endTime; k++, seq++) {
 
-    	writeHeader(image, options);
+                if (options.getDigitNumber() == 1) {
+                    headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                    dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                } else if (options.getDigitNumber() == 2) {
+
+                    if (seq < 10) {
+                       headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                       dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                } else if (options.getDigitNumber() == 3) {
+
+                    if (seq < 10) {
+                        headerFileName = baseHeaderName + "00" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "00" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 100) {
+                        headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                } else if (options.getDigitNumber() == 4) {
+
+                    if (seq < 10) {
+                        headerFileName = baseHeaderName + "000" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "000" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 100) {
+                        headerFileName = baseHeaderName + "00" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "00" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 1000) {
+                        headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                }
+                // write header with image, # of images per, and 1 time slice
+
+                writeHeader(image, headerFileName, beginSlice, endSlice, k, k);
+                optionsFileNameIndex = dataFileName.lastIndexOf("\\");
+                optionsFileName = dataFileName.substring(optionsFileNameIndex+1);
+                FileInfoXML tempInfo = new FileInfoImageXML(optionsFileName, options.getFileDirectory(), FileUtility.RAW);
+                tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+                FileRaw rawFile = new FileRaw(dataFileName, "", tempInfo, FileBase.READ_WRITE);
+                linkProgress(rawFile);
+                rawFile.writeImage(image, beginSlice, endSlice, k, k);
+
+            } // end for loop
+
+            
+        }
+        else {
+    	    writeHeader(image, fileNames[0], beginSlice, endSlice, beginTime, endTime);
+    	    FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+            tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+            FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
+            linkProgress(rawFile);
+            rawFile.writeImage(image, options);
+        }
     	
-    	FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
-    	tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
-        FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
-        linkProgress(rawFile);
-        rawFile.writeImage(image, options);
+    	
     }
 
 
@@ -1674,7 +1923,7 @@ public class FilePARREC extends FileBase {
                 fileInfo.setUnitsOfMeasure(units, 0);
                 fileInfo.setUnitsOfMeasure(units, 1);
                 fileInfo.setUnitsOfMeasure(units, 2);
-                fileInfo.setUnitsOfMeasure(units, 3);
+                fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 3);
             }
 
             for (int i = 0; i < (extents[2] * extents[3]); i++) {
@@ -1779,7 +2028,19 @@ public class FilePARREC extends FileBase {
 
 
     //todo: monitor options for cropped data
-    public void writeHeader(ModelImage writeImage, FileWriteOptions options) throws IOException {
+    /**
+     * 
+     * @param writeImage
+     * @param headerFileName
+     * @param beginSlice
+     * @param endSlice
+     * @param beginTime
+     * @param endTime
+     * @throws IOException
+     */
+    public void writeHeader(ModelImage writeImage, String headerFileName, int beginSlice, int endSlice,
+                            int beginTime, int endTime) throws IOException {
+        int loc;
     	@SuppressWarnings("unused")
         int bpp=0;
     	@SuppressWarnings("unused")
@@ -1812,9 +2073,8 @@ public class FilePARREC extends FileBase {
         int []extents = outInfo.getExtents();
         String version = outInfo.getVersion();
         //Set the number of slices
-        extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
         
-        PrintStream fp = new PrintStream(new File(fileNames[0]));
+        PrintStream fp = new PrintStream(new File(headerFileName));
         fp.println("# === DATA DESCRIPTION FILE ======================================================");
         fp.println("#");
         fp.println("# CAUTION - Investigational device.");
@@ -1850,7 +2110,7 @@ public class FilePARREC extends FileBase {
         for(int i=0;i<generalInfoList.size();i++) {
         	String info = generalInfoList.get(i);
         	if (info.indexOf("Max. number of slices/locations") >= 0) {
-        		info = ".    Max. number of slices/locations    :   " + String.valueOf(extents[2]);
+        		info = ".    Max. number of slices/locations    :   " + String.valueOf(endSlice - beginSlice + 1);
         	}
         	fp.println(info);
         }
@@ -2341,7 +2601,7 @@ public class FilePARREC extends FileBase {
         	}
         	Integer I = (Integer)SliceMap.get(info);
             if(I==null) {
-                Preferences.debug("FilePARREC:wirteHeader. Bad slice info;"+info + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("FilePARREC:writeHeader. Bad slice info;"+info + "\n", Preferences.DEBUG_FILEIO);
                 return;
             }
             idx += I.intValue();
@@ -2415,37 +2675,37 @@ public class FilePARREC extends FileBase {
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
         
-        int totalSlices = extents[2];
-        if (extents.length > 3) {
-        	totalSlices = totalSlices * extents[3];
-        }
-        for (int i = 0; i < totalSlices; i++) {
-            FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
-            String tag = fileInfoPR.getSliceInfo();
-            if ((xyIndex >= 0) || (orIndex >= 0)) {
-            	String[] values = tag.split("\\s+");
-            	if (xyIndex >= 0) {
-            	    values[xyIndex] = String.valueOf(extents[0]);
-            	    values[xyIndex+1] = String.valueOf(extents[1]);
-            	}
-            	if (orIndex >= 0) {
-            		if (writeImage.getImageOrientation() == FileInfoBase.AXIAL) {
-            			values[orIndex] = String.valueOf(1);
-            		}
-            		else if (writeImage.getImageOrientation() == FileInfoBase.SAGITTAL) {
-            			values[orIndex] = String.valueOf(2);
-            		}
-            		else if (writeImage.getImageOrientation() == FileInfoBase.CORONAL) {
-            			values[orIndex] = String.valueOf(3);
-            		}
-            	}
-            	tag = values[0] + "  ";
-            	for (int j = 1; j < values.length-1; j++) {
-            	    tag += values[j] + "  ";	
-            	}
-            	tag = tag + values[values.length-1];
-            }   
-            fp.println(tag);
+        
+        for (int i = beginTime; i <= endTime; i++) {
+            for (int j = beginSlice; j <= endSlice; j++) {
+                loc = j + i*extents[2];
+                FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(loc);
+                String tag = fileInfoPR.getSliceInfo();
+                if ((xyIndex >= 0) || (orIndex >= 0)) {
+                	String[] values = tag.split("\\s+");
+                	if (xyIndex >= 0) {
+                	    values[xyIndex] = String.valueOf(extents[0]);
+                	    values[xyIndex+1] = String.valueOf(extents[1]);
+                	}
+                	if (orIndex >= 0) {
+                		if (writeImage.getImageOrientation() == FileInfoBase.AXIAL) {
+                			values[orIndex] = String.valueOf(1);
+                		}
+                		else if (writeImage.getImageOrientation() == FileInfoBase.SAGITTAL) {
+                			values[orIndex] = String.valueOf(2);
+                		}
+                		else if (writeImage.getImageOrientation() == FileInfoBase.CORONAL) {
+                			values[orIndex] = String.valueOf(3);
+                		}
+                	}
+                	tag = values[0] + "  ";
+                	for (int k = 1; k < values.length-1; k++) {
+                	    tag += values[k] + "  ";	
+                	}
+                	tag = tag + values[values.length-1];
+                }   
+                fp.println(tag);
+            }
         }
         
         

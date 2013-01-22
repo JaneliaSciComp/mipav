@@ -2,10 +2,10 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
 import gov.nih.mipav.view.CustomUIBuilder;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentGraphAxes;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
@@ -19,12 +19,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -34,6 +36,8 @@ import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 
@@ -52,6 +56,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 	/** Color button for changing color. */
 	protected JButton colorButton;
+	/** Save the current multi-histogram widgets to file. */
+	protected JButton saveButton;
+	/** Read new multi-histogram widgets from file. */
+	protected JButton loadButton;
 	/** Alpha blend slider. */
 	protected JSlider alphaSlider;
 	/** Boundary emphasis slider slider. */
@@ -103,6 +111,22 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(colorButton),
 					new CancelListener());
 		}
+		else if ( source == saveButton )
+		{
+			String fileName = getMultiHistogramFile(true);
+			if ( fileName != null )
+			{
+				saveMultiHistograms(fileName);
+			}
+		}
+		else if ( source == loadButton )
+		{
+			String fileName = getMultiHistogramFile(false);
+			if ( fileName != null )
+			{
+				loadMultiHistograms(fileName);
+			}
+		}
 		else if ( event.getActionCommand().equals("CircleWidget") )
 		{
 			m_kMultiHistogram.setWidget( "Circle" );
@@ -117,6 +141,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		{
 			m_kMultiHistogram.setWidget( "Triangle" );
 			updateHelp(Triangle);
+		}
+		else if ( event.getActionCommand().equals("ClearAll") )
+		{
+			m_kMultiHistogram.clearAllWidgets();
 		}
 		else
 		{
@@ -174,15 +202,16 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * @param  frameHeight  int height
 	 */
 	public void resizePanel(int panelWidth, int frameHeight) {
-		if ( m_kMultiHistogram != null )
-		{
-			int iWidth = Math.max( panelWidth, m_kMultiHistogram.GetWidth() );
-			int iHeight = Math.max( frameHeight - 40, m_kMultiHistogram.GetHeight() );
-			scroller.setPreferredSize(new Dimension(iWidth, iHeight));
-			scroller.setSize(new Dimension(iWidth, iHeight));
-			scroller.revalidate();
-			histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
-		}
+		
+		int iWidth = Math.max( panelWidth, 256 );
+		int iHeight = Math.max( frameHeight - 40, 256 );
+		scroller.setPreferredSize(new Dimension(iWidth, iHeight));
+		scroller.setSize(new Dimension(iWidth, iHeight));
+		scroller.revalidate();
+
+		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
+				iWidth - 256 - 105, 256, "Gradient Magnitude", 0 );
+		histogramPanel.add( gmAxis, BorderLayout.EAST );
 	}
 
 	/* (non-Javadoc)
@@ -240,12 +269,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * Initializes GUI components.
 	 */
 	private void init( boolean useBoundaryEmphasis ) {
-		GridBagConstraints kGBC = new GridBagConstraints();
 		GridBagLayout kGrid = new GridBagLayout();
+		GridBagConstraints kGBC = new GridBagConstraints();
 		kGBC.gridx = 0;
 		kGBC.gridy = 0;
 		kGBC.insets = new Insets(5,5,5,5);
 		kGBC.anchor = GridBagConstraints.WEST;
+		kGBC.weightx = .8;
 		JPanel buttonPanel = new JPanel( kGrid );
 		buttonPanel.setBorder(buildTitledBorder("Options"));
 		buttonPanel.add( new JLabel( "Select Widget Type: "), kGBC );
@@ -268,7 +298,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kGroup.add(kSquare);
 		m_kGroup.add(kTriangle);
 		kSquare.setSelected(true);
-
+		
+		
+		kGBC = new GridBagConstraints();
+		kGBC.gridx = 0;
+		kGBC.gridy = 0;
+		kGBC.insets = new Insets(5,5,5,5);
+		kGBC.anchor = GridBagConstraints.WEST;
 		kGBC.gridx = 0;
 		kGBC.gridy++;
 		alphaSlider = new JSlider();
@@ -288,23 +324,50 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		kGBC.gridx++;
 		kGBC.gridwidth = 2;
 		buttonPanel.add( boundaryEmphasisSlider, kGBC );
+		kGBC.gridx = 0;
+		kGBC.gridy++;
+		JButton clearAll = new JButton("Clear All");
+		clearAll.addActionListener(this);
+		clearAll.setActionCommand("ClearAll");
+		buttonPanel.add( clearAll, kGBC );
 
+		
 		histogramPanel = new JPanel(new BorderLayout());
 		histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));
-		JPanel canvasPanel = new JPanel(new BorderLayout());
-		canvasPanel.add(m_kMultiHistogram.GetCanvas(), BorderLayout.CENTER);
-		canvasPanel.setPreferredSize(new Dimension(256, 256));
-		canvasPanel.setBackground(Color.white);
-		histogramPanel.add( canvasPanel, BorderLayout.CENTER );
+		histogramPanel.add( m_kMultiHistogram.getContainingPanel(), BorderLayout.CENTER );
 		imageAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.X_AXIS, ViewJComponentGraphAxes.TOP, 
 				256 + 160, 50, "Image Intensities", 80 );
 		histogramPanel.add( imageAxis, BorderLayout.SOUTH );
 		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
 				80, 256, "Gradient Magnitude", 0 );
-		histogramPanel.add( gmAxis, BorderLayout.EAST );
+		//histogramPanel.add( gmAxis, BorderLayout.EAST );
 		histogramPanel.add( new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS, ViewJComponentGraphAxes.RIGHT, 
 				80, 256, null, 0 ), BorderLayout.WEST);
-
+				
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		/*
+		gbc.gridx = 0; gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		//gbc.anchor = GridBagConstraints.EAST;
+		histogramPanel = new JPanel(new GridBagLayout());
+		histogramPanel.setBorder(buildTitledBorder("2D Histogram Visualization Tool"));
+		histogramPanel.add( m_kMultiHistogram.getContainingPanel(), gbc );
+		imageAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.X_AXIS, ViewJComponentGraphAxes.TOP, 
+				256 + 20, 50, "Image Intensities", 10 );
+		gbc.gridx = 0; gbc.gridy = 1;
+		histogramPanel.add( imageAxis, gbc );
+		
+		gbc = new GridBagConstraints();
+		gbc.gridx = 1; gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+		gmAxis = new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS,  ViewJComponentGraphAxes.LEFT, 
+				80, 256, "Gradient Magnitude", 0 );
+		gbc.gridx = 1;
+		histogramPanel.add( gmAxis, gbc );
+		*/
+		
 		// Scroll panel that hold the control panel layout in order to use JScrollPane
 		scrollPanel = new JPanel(new BorderLayout());
 
@@ -313,7 +376,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		mainPanel = new JPanel(new BorderLayout());
 
 		helpPanel.setBorder(buildTitledBorder("Help"));
-		GridBagConstraints gbc = new GridBagConstraints();
+		gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.insets = new Insets(5,5,5,5);
@@ -334,22 +397,16 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 
 		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
-
 		JToolBar lutToolBar = toolBarObj.buildLUTToolBarTop();
 		colorButton = toolBarObj.buildButton( "", "Change histogram color", CustomUIBuilder.PARAM_PAINT_COLOR.getIconBase() );
-		/*
-		colorButton = new JButton();
-		colorButton.setToolTipText("Change histogram color");
-		colorButton.addActionListener(this);
-		colorButton.setBackground(Color.white);
-		colorButton.setEnabled(true);   
-		colorButton.setBorderPainted(false);
-		colorButton.setFocusPainted(true);
-		colorButton.setMargin(new Insets(0, 0, 0, 0)); */
+		saveButton = toolBarObj.buildButton( "save", "Save histograms", "save" );
+		loadButton = toolBarObj.buildButton( "load", "Change histogram color", "open" );
 		lutToolBar.add( colorButton );
+		lutToolBar.add( saveButton );
+		lutToolBar.add( loadButton );
+		lutToolBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		Box contentBox = new Box(BoxLayout.Y_AXIS);
-		contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		contentBox.add(lutToolBar);
 		contentBox.add(histogramPanel);
 		contentBox.add(buttonPanel);
@@ -358,7 +415,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		scrollPanel.add(contentBox, BorderLayout.NORTH);
 
 
-		mainPanel.add(scroller, BorderLayout.NORTH);
+		mainPanel.add(scroller, BorderLayout.CENTER);
 	}
 	private void updateHelp( int iType )
 	{
@@ -394,12 +451,65 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			if ( components.length > 5 )
 			{
 				((JLabel)helpPanel.getComponent(0)).setText( "- To insert a new widget, right-mouse click in the 2D Histogram ");
-				((JLabel)helpPanel.getComponent(1)).setText( "- To move the triangle, drag the bottom blue control point ");
-				((JLabel)helpPanel.getComponent(2)).setText( "- To resize the triangle, drag the top blue control point ");
-				((JLabel)helpPanel.getComponent(3)).setText( "- To shear the triangle, drag inside the triangle ");
-				((JLabel)helpPanel.getComponent(4)).setText( "- To control intensity distribution, drag the green control point");
-				((JLabel)helpPanel.getComponent(5)).setText( "- To delete a widget, select it and then press the delete key");
+				((JLabel)helpPanel.getComponent(1)).setText( "- To move the triangle, drag the interior of the widget ");
+				((JLabel)helpPanel.getComponent(2)).setText( "- To resize the triangle, drag any of the blue control points ");
+				((JLabel)helpPanel.getComponent(3)).setText( "- To control intensity distribution, drag the green control point");
+				((JLabel)helpPanel.getComponent(4)).setText( "- To delete a widget, select it and then press the delete key");
+				((JLabel)helpPanel.getComponent(5)).setText( "");
 			}
 		}
 	}
+
+    private String getMultiHistogramFile(boolean bSave) {
+        final JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(false);
+
+        // TODO: Use FileNameExtensionFilter introduced in 1.6
+        FileNameExtensionFilter kFileExtFilter = new FileNameExtensionFilter( "multi-histogram", "mh" );
+        chooser.addChoosableFileFilter(kFileExtFilter);
+
+        final FileFilter kFileFilter = new FileFilter() {
+            public boolean accept(File f) {
+                if (f.getName().toLowerCase().endsWith(".mh")) {
+                    return true;
+                }
+				return false;
+            }
+
+            public String getDescription() {
+                return "multi-histogram";
+            }
+        };
+        chooser.addChoosableFileFilter(kFileFilter);
+
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+
+        if (bSave && JFileChooser.APPROVE_OPTION != chooser.showSaveDialog(null)) {
+            return null;
+        }
+        else if (!bSave && JFileChooser.APPROVE_OPTION != chooser.showOpenDialog(null)) {
+            return null;
+        }
+        String kFile = chooser.getSelectedFile().getName();
+        final String kDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+        chooser.setVisible(false);
+        if ( !kFile.endsWith(".mh")) {
+            kFile = kFile.concat(".mh");
+        }
+        return new String(kDir + kFile);
+    }
+    
+    private void loadMultiHistograms(String fileName)
+    {
+    	m_kMultiHistogram.load(fileName);    	
+    }
+    
+    private void saveMultiHistograms(String fileName)
+    {
+    	m_kMultiHistogram.save(fileName);
+    }
 }

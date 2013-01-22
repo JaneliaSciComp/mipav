@@ -325,7 +325,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 				    fileRaw = new FileRaw(filename, dir, fileInfo, FileBase.READ);
 
 					//read in raw slice data into buffer
-					fileRaw.readImage(buffer, fileInfo.getOffset(), type);
+					fileRaw.readImage(buffer, (long)fileInfo.getOffset(), type);
 
 					//import buffer into destImage
 	                destImage.importData((buffer.length * slice), buffer, false);
@@ -476,7 +476,7 @@ public class PlugInAlgorithmDTISaveRawVolumes extends AlgorithmBase {
 				    fileRaw = new FileRaw(filename, dir, fileInfo, FileBase.READ);
 
 					//read in raw slice data into buffer
-					fileRaw.readImage(buffer, fileInfo.getOffset(), type);
+					fileRaw.readImage(buffer, (long)fileInfo.getOffset(), type);
 
 					//import buffer into destImage
 	                destImage.importData((buffer.length * volSlice), buffer, false);

@@ -280,7 +280,7 @@ public class AlgorithmArcLength extends AlgorithmBase {
         else
         {
             Vector3f pt = bSpline.bSplineJetXYZ(1, q, xPoints, yPoints, zPoints); // calc 1st deriv.
-            speed = pt.Length();            
+            speed = pt.length();            
         }
         return speed;
     }

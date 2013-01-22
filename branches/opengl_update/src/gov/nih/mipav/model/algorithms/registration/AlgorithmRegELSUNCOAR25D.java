@@ -1706,8 +1706,8 @@ public class AlgorithmRegELSUNCOAR25D extends AlgorithmBase {
                 		tMat.set(i, j, tMatd.get(i, j));
                 	}
                 }
-                trans[0][iNumber] = tMat.Get(0, 2);
-                trans[1][iNumber] = tMat.Get(1, 2);
+                trans[0][iNumber] = tMat.get(0, 2);
+                trans[1][iNumber] = tMat.get(1, 2);
             } // if (doGraph)
 
             answer.matrixd.Inverse();

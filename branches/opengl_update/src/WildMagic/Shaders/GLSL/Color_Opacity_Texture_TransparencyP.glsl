@@ -16,42 +16,50 @@ uniform float ShowSurface;
 uniform float ZSlice;
 uniform float UseZSlice;
 
+in vec3 varTexCoord;
+#if __VERSION__ > 150
+layout(location = 0) out vec4     outFragData0;
+layout(location = 1) out vec4     outFragData1;
+#else
+out vec4     outFragData0;
+out vec4     outFragData1;
+#endif
 void p_Color_Opacity_Texture_TransparencyP()
 {
-    vec3 texCoord = gl_TexCoord[0].xyz;
+    vec3 texCoord = varTexCoord.xyz;
     if ( UseZSlice != 0.0 )
     {
         texCoord.z = ZSlice;
     }
     vec4 kOutputColor = vec4(0.0);
-    vec4 color = texture3D(bVolumeImageA, texCoord );
+    vec4 color = texture(bVolumeImageA, texCoord, 0.0 );
     if ( IsColorA != 0.0 )
     {
         if ( ColorLUTOnA.x != 0.0 )
         {
-            kOutputColor.r = texture1D(cColorMapA,color.r).r;
+            kOutputColor.r = texture(cColorMapA,color.r, 0.0).r;
         }
         if ( ColorLUTOnA.y != 0.0 )
         {
-            kOutputColor.g = texture1D(cColorMapA,color.g).g;
+            kOutputColor.g = texture(cColorMapA,color.g, 0.0).g;
         }
         if ( ColorLUTOnA.z != 0.0 )
         {
-            kOutputColor.b = texture1D(cColorMapA,color.b).b;
+            kOutputColor.b = texture(cColorMapA,color.b, 0.0).b;
         }
     }
     else
     {
-        kOutputColor.rgb = texture1D(cColorMapA, color.r).rgb;
+        kOutputColor.rgb = texture(cColorMapA, color.r, 0.0).rgb;
     }
     if ( ABBlend != 1.0 )
     {
-        color = texture3D(jVolumeImageB, texCoord );
+        color = texture(jVolumeImageB, texCoord, 0.0 );
         if ( IsColorB != 0.0 )
         {
             if ( ColorLUTOnB.x != 0.0 )
             {
-                kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).r;
+                kOutputColor.r = ABBlend * kOutputColor.r + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).r;
             }
             else
             {
@@ -59,7 +67,7 @@ void p_Color_Opacity_Texture_TransparencyP()
             }
             if ( ColorLUTOnB.y != 0.0 )
             {
-                kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture1D(kColorMapB, color.g).g;
+                kOutputColor.g = ABBlend * kOutputColor.g + (1.0 - ABBlend) * texture(kColorMapB, color.g, 0.0).g;
             }
             else
             {
@@ -67,7 +75,7 @@ void p_Color_Opacity_Texture_TransparencyP()
             }
             if ( ColorLUTOnB.z != 0.0 )
             {
-                kOutputColor.b = ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture1D(kColorMapB, color.b).b;
+                kOutputColor.b = ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture(kColorMapB, color.b, 0.0).b;
             }
             else
             {
@@ -76,13 +84,13 @@ void p_Color_Opacity_Texture_TransparencyP()
         }
         else
         {
-            kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture1D(kColorMapB, color.r).rgb;
+            kOutputColor.rgb = ABBlend * kOutputColor.rgb + (1.0 - ABBlend) * texture(kColorMapB, color.r, 0.0).rgb;
         }
     }
 
     if ( ShowSurface != 0.0 )
     {
-        vec4 surfaceColor = texture3D(iSurfaceImage, texCoord);
+        vec4 surfaceColor = texture(iSurfaceImage, texCoord, 0.0);
         if ( (surfaceColor.r != 0) || (surfaceColor.g != 0) || (surfaceColor.b != 0))
         {
             kOutputColor.rgb = surfaceColor.rgb;
@@ -91,7 +99,7 @@ void p_Color_Opacity_Texture_TransparencyP()
     
     kOutputColor.a = Blend;
 
-    gl_FragData[0] = vec4(kOutputColor.rgb * kOutputColor.a, kOutputColor.a);
-    gl_FragData[1] = vec4(1.0);
+    outFragData0 = vec4(kOutputColor.rgb * kOutputColor.a, kOutputColor.a);
+    outFragData1 = vec4(1.0);
 }
 //----------------------------------------------------------------------------

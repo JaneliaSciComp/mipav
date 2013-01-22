@@ -540,7 +540,8 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
         } else if (event.getActionCommand().equals("CloseColocalize")) {
             close();
         } else if (event.getActionCommand().equals("AboutColocalize")) {
-            MipavUtil.showHelp("10052");
+            //MipavUtil.showHelp("10052");
+            MipavUtil.showWebHelp("Microscopy_Colocalization_Orthogonal_Regression");
         } else if (command.equals("DisplayLUT")) {
 
             if (destImage.getHistoLUTFrame() == null) {

@@ -186,7 +186,8 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4059");
+            //MipavUtil.showHelp("U4059");
+            MipavUtil.showWebHelp("Inserting_slices_into_image_datasets#Removing_images_.28slices.29_from_datasets");
         } else if (command.equals("Check")) {
 
             for (i = 0; i < nSlices; i++) {
@@ -211,6 +212,8 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
             }
         } else if (command.equals("Script")) {
             callAlgorithm();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

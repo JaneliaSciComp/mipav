@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.algorithms.AlgorithmHistogram;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
@@ -9,7 +10,9 @@ import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.JamaMatrix;
 
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -122,6 +125,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Tells whether the ViewMenuBuilder should allow Close Image(B) after loading image B. */
     private boolean enableCloseImageB = true;
+    
+    private boolean newFrameCreated = false;
 
     /** Green channel value of the paint color. */
     private int green;
@@ -727,6 +732,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public boolean canCloseImageBAfterLoad() {
         return enableCloseImageB;
     }
+    
+    public boolean newFrameBeenCreated() {
+        return newFrameCreated;
+    }
 
     /**
      * Closes both image A and image B (if it exists). It ensures the images are un-registered from the main-frame then
@@ -1101,7 +1110,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 userInterface.setDefaultDirectory(file.getParent());
                 userInterface.setLoad(true);
                 fileIO.setQuiet(isQuiet);
-                imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, null, true); // read
+                
+                imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, imageA.getFileInfo(0), true); // read
                 // image!
             } else if (obj instanceof ModelImage) {
                 imageB = (ModelImage) obj;
@@ -1209,11 +1219,36 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
         if (imageA != imageA_back) {
             // Create new frame with imageA
+            // Put commands for newFrame here since commands in ViewJFrameImage under loadImage work on the
+            // original frame and not the newFrame.
 
             final ViewJFrameImage newFrame = new ViewJFrameImage(imageA, null, null, false);
             newFrame.setImageB(imageB);
             newFrame.enableImageB(true);
-            enableCloseImageB = true;
+            newFrameCreated = true;
+            ViewControlsImage controls = new ViewControlsImage(newFrame); // Build controls used in this frame
+            ViewMenuBuilder menuBuilder = new ViewMenuBuilder(newFrame);
+            ViewJComponentEditImage componentImage = newFrame.getComponentImage();
+            componentImage.setTimeSlice(0);
+            componentImage.setSlice( (imageB.getExtents()[2] - 1) / 2);
+            ButtonGroup VOIGroup = new ButtonGroup();
+            VOIManagerInterface voiManager = new VOIManagerInterface(newFrame, imageA, imageB, 1, false, VOIGroup);
+            voiManager.getVOIManager(0).init(newFrame, imageA, imageB, componentImage, componentImage,
+                    componentImage.getOrientation());
+            voiManager.getToolBar().setVisible(true);
+            componentImage.setVOIManager(voiManager.getVOIManager(0));
+            boolean showImage = true;
+            boolean showPaint = true;
+            boolean showScript = true;
+            controls.buildToolbar(showImage, voiManager.getToolBar(), VOIGroup, voiManager.getPointerButton(),
+                    showPaint, showScript);
+            menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
+            newFrame.updateImages(true);
+            newFrame.setActiveImage(ViewJFrameBase.IMAGE_B); // set image B to active by default, for convenience of user
+            newFrame.controls.setActiveImage(ViewJFrameBase.IMAGE_B); // set the controls to show that image B is active
+            newFrame.setControls();
+            newFrame.setTitle();
         } else {
             // imgA is not new, so keep the same ViewJFrameImage, which is imgA's frame
             // because image A was not changed, we will just set either the untouched
@@ -2761,7 +2796,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             }
 
             fileHistoLUT.writeLUTandTransferFunction();
-
+            Preferences.setDefaultDisplay(DefaultDisplay.LUT);
+            
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
         }
@@ -4079,10 +4115,175 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 max = (float) img.getMax();
             }
 
-            final float imgMin = (float) img.getMin();
-            final float imgMax = (float) img.getMax();
+            float imgMin = (float) img.getMin();
+            float imgMax = (float) img.getMax();
+            
+            float[] x = new float[4];
+            float[] y = new float[4];
+            
+            switch(Preferences.getDefaultDisplay()) {
+            
+            case LUT:
+                try {
+                    ModelLUT subLUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+                    FileHistoLUT fileLUT = new FileHistoLUT("userdefine.lut", Preferences.getPreferencesDir(), subLUT);
+                    fileLUT.setImg(img);
+                    fileLUT.readLUTandTransferFunction(true);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    float[] xSub = new float[subLUT.getTransferFunction().size()];
+                    float[] ySub = new float[subLUT.getTransferFunction().size()];
+                    subLUT.getTransferFunction().exportArrays(xSub, ySub);
+                    newLUT.getTransferFunction().importArrays(xSub, ySub, subLUT.getTransferFunction().size());
+                    break;
+                } catch(Exception e) {
+                    Preferences.debug("Default LUT could not be loaded", Preferences.DEBUG_FILEIO);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
+                }
+                
+            
+            case ImageJ:
+                int bins = 1024;
+                
+                int[] dimExtents = new int[]{bins};
+    
+                ModelHistogram histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
+    
+                AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, img, true);
+    
+                histoAlgo.setRunningInSeparateThread(false);
+                histoAlgo.run();
+                
+                int[] histoBuffer = histoAlgo.getHistoBuffer();
+                int totalPix = histogram.getTotalPixels();
+                boolean secondPeak = false;
+                int belowTwoLoc = -1;
+                for(int i=0; i<histoBuffer.length; i++) {
+                	if(histoBuffer[i] < .002*totalPix) {
+                		belowTwoLoc = i;
+                		break;
+                	}
+                }
+                
+                if(belowTwoLoc != -1) {
+                	for(int i=belowTwoLoc; i<histoBuffer.length; i++) {
+                		if(histoBuffer[i] > .02*totalPix) {
+                			secondPeak = true;
+                			break;
+                		}
+                	}
+                }
+                
+                if(!secondPeak) {
+                	belowTwoLoc = 0;
+                }
+                
+                double pixCache = 0;
+                for(int i=belowTwoLoc; i<histoBuffer.length; i++) {
+                    pixCache += histoBuffer[i];
+                    if(pixCache/totalPix > .05) {
+                        imgMin = imgMin + i*((imgMax-imgMin)/bins);
+                        break;
+                    }
+                }
+                
+                pixCache = 0;
+                for(int i=histoBuffer.length-1; i>=0; i--) {
+                    pixCache += histoBuffer[i];
+                    if(pixCache/totalPix > .05) {
+                        imgMax = imgMax - (bins-i)*((imgMax-imgMin)/bins);
+                        break;
+                    }
+                }
+                
+                newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                break;
+                
+            case MinMax:
+                float minPref = min;
+                float maxPref = max;
+                
+                try {
+                    final String minString = Preferences.getProperty(Preferences.PREF_MIN);
+                    final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
+                    
+                    minPref = Float.valueOf(minString);
+                    maxPref = Float.valueOf(maxString);
+                    
+                    if(minPref < min || maxPref > max || minPref > max || maxPref < min) {
+                    	Preferences.debug("Default min/max are not applicable to this dataset", Preferences.DEBUG_FILEIO);
+                    	newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    	break;
+                    }
+                } catch(Exception e) {
+                    Preferences.debug("Default min/max could not be loaded", Preferences.DEBUG_FILEIO);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
+                }
 
-            newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                y[1] = 255.0f;
+                x[1] = minPref;
+
+                y[2] = 0;
+                x[2] = maxPref;
+
+                newLUT.getTransferFunction().importArrays(x, y, 4);
+                
+                break;
+                
+            case WindowLevel:
+                float level = min;
+                float window = 1;
+                
+                try {
+                    final String levelText = Preferences.getProperty(Preferences.PREF_LEVEL);
+                    final String windowText = Preferences.getProperty(Preferences.PREF_WINDOW);
+                   
+                    level = Float.valueOf(levelText);
+                    window = Float.valueOf(windowText);
+                } catch(Exception e) {
+                    Preferences.debug("Default win/level could not be loaded", Preferences.DEBUG_FILEIO);
+                    newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                    
+                    break;
+                }
+                
+                
+
+                if (window == 0) {
+                    window = 1;
+                }
+                
+                x[2] = level + (window / 2);
+
+                if (x[2] > imgMax) {
+                    y[2] = 255.0f * (x[2] - imgMax) / window;
+                    x[2] = imgMax;
+                } else {
+                    y[2] = 0.0f;
+                }
+
+                x[1] = level - (window / 2);
+
+                if (x[1] < imgMin) {
+                    y[1] = 255.0f - (255.0f * (imgMin - x[1]) / window);
+                    x[1] = imgMin;
+                } else {
+                    y[1] = 255.0f;
+                }
+
+                newLUT.getTransferFunction().importArrays(x, y, 4);
+                break;
+                
+            case Default:
+            case Mipav:
+
+                newLUT.resetTransferLine(min, imgMin, max, imgMax);
+                
+                break;
+            }
         }
 
         return newLUT;
@@ -5337,12 +5538,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             // Remember this is an output to input mapping so find the translation needed
             // to map the transformed Talairach center to the original dicom ordered functional
             // image rr
-            final double Tr03 = rr.X - (TalairachCenter.X * xfrm.Get(0, 0)) - (TalairachCenter.Y * xfrm.Get(0, 1))
-                    - (TalairachCenter.Z * xfrm.Get(0, 2));
-            final double Tr13 = rr.Y - (TalairachCenter.X * xfrm.Get(1, 0)) - (TalairachCenter.Y * xfrm.Get(1, 1))
-                    - (TalairachCenter.Z * xfrm.Get(1, 2));
-            final double Tr23 = rr.Z - (TalairachCenter.X * xfrm.Get(2, 0)) - (TalairachCenter.Y * xfrm.Get(2, 1))
-                    - (TalairachCenter.Z * xfrm.Get(2, 2));
+            final double Tr03 = rr.X - (TalairachCenter.X * xfrm.get(0, 0)) - (TalairachCenter.Y * xfrm.get(0, 1))
+                    - (TalairachCenter.Z * xfrm.get(0, 2));
+            final double Tr13 = rr.Y - (TalairachCenter.X * xfrm.get(1, 0)) - (TalairachCenter.Y * xfrm.get(1, 1))
+                    - (TalairachCenter.Z * xfrm.get(1, 2));
+            final double Tr23 = rr.Z - (TalairachCenter.X * xfrm.get(2, 0)) - (TalairachCenter.Y * xfrm.get(2, 1))
+                    - (TalairachCenter.Z * xfrm.get(2, 2));
 
             /*
              * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
@@ -5351,21 +5552,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
              */
             final JamaMatrix A = new JamaMatrix(3, 3);
 
-            A.set(0, 0, xfrm.Get(0, 0));
-            A.set(0, 1, xfrm.Get(0, 1));
-            A.set(0, 2, xfrm.Get(0, 2));
-            A.set(1, 0, xfrm.Get(1, 0));
-            A.set(1, 1, xfrm.Get(1, 1));
-            A.set(1, 2, xfrm.Get(1, 2));
-            A.set(2, 0, xfrm.Get(2, 0));
-            A.set(2, 1, xfrm.Get(2, 1));
-            A.set(2, 2, xfrm.Get(2, 2));
+            A.set(0, 0, xfrm.get(0, 0));
+            A.set(0, 1, xfrm.get(0, 1));
+            A.set(0, 2, xfrm.get(0, 2));
+            A.set(1, 0, xfrm.get(1, 0));
+            A.set(1, 1, xfrm.get(1, 1));
+            A.set(1, 2, xfrm.get(1, 2));
+            A.set(2, 0, xfrm.get(2, 0));
+            A.set(2, 1, xfrm.get(2, 1));
+            A.set(2, 2, xfrm.get(2, 2));
 
             final JamaMatrix b = new JamaMatrix(3, 1);
 
-            b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-            b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-            b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+            b.set(0, 0, Tr03 - xfrm.get(0, 3));
+            b.set(1, 0, Tr13 - xfrm.get(1, 3));
+            b.set(2, 0, Tr23 - xfrm.get(2, 3));
 
             final JamaMatrix X = A.solve(b);
             final double Tx = X.get(0, 0);
@@ -5570,16 +5771,16 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
                 afniProgressBar.setMessage("Talairach transformation pass #" + j);
 
-                xfrm.MakeIdentity();
+                xfrm.identity();
                 xfrm.setTranslate(center.X, center.Y, center.Z);
                 xfrm.setRotate(alphaArray[i], betaArray[i], gammaArray[i]);
 
-                final double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.Get(0, 0))
-                        - (TalairachCenter.Y * xfrm.Get(0, 1)) - (TalairachCenter.Z * xfrm.Get(0, 2));
-                final double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.Get(1, 0))
-                        - (TalairachCenter.Y * xfrm.Get(1, 1)) - (TalairachCenter.Z * xfrm.Get(1, 2));
-                final double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.Get(2, 0))
-                        - (TalairachCenter.Y * xfrm.Get(2, 1)) - (TalairachCenter.Z * xfrm.Get(2, 2));
+                final double Tr03 = rrArray[i].X - (TalairachCenter.X * xfrm.get(0, 0))
+                        - (TalairachCenter.Y * xfrm.get(0, 1)) - (TalairachCenter.Z * xfrm.get(0, 2));
+                final double Tr13 = rrArray[i].Y - (TalairachCenter.X * xfrm.get(1, 0))
+                        - (TalairachCenter.Y * xfrm.get(1, 1)) - (TalairachCenter.Z * xfrm.get(1, 2));
+                final double Tr23 = rrArray[i].Z - (TalairachCenter.X * xfrm.get(2, 0))
+                        - (TalairachCenter.Y * xfrm.get(2, 1)) - (TalairachCenter.Z * xfrm.get(2, 2));
 
                 /*
                  * Tr03 = xfrm.Get(0, 0) * Tx + xfrm.Get(0, 1) * Ty + xfrm.Get(0, 2) * Tz + xfrm.Get(0, 3) Tr13 =
@@ -5588,21 +5789,21 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                  */
                 final JamaMatrix A = new JamaMatrix(3, 3);
 
-                A.set(0, 0, xfrm.Get(0, 0));
-                A.set(0, 1, xfrm.Get(0, 1));
-                A.set(0, 2, xfrm.Get(0, 2));
-                A.set(1, 0, xfrm.Get(1, 0));
-                A.set(1, 1, xfrm.Get(1, 1));
-                A.set(1, 2, xfrm.Get(1, 2));
-                A.set(2, 0, xfrm.Get(2, 0));
-                A.set(2, 1, xfrm.Get(2, 1));
-                A.set(2, 2, xfrm.Get(2, 2));
+                A.set(0, 0, xfrm.get(0, 0));
+                A.set(0, 1, xfrm.get(0, 1));
+                A.set(0, 2, xfrm.get(0, 2));
+                A.set(1, 0, xfrm.get(1, 0));
+                A.set(1, 1, xfrm.get(1, 1));
+                A.set(1, 2, xfrm.get(1, 2));
+                A.set(2, 0, xfrm.get(2, 0));
+                A.set(2, 1, xfrm.get(2, 1));
+                A.set(2, 2, xfrm.get(2, 2));
 
                 final JamaMatrix b = new JamaMatrix(3, 1);
 
-                b.set(0, 0, Tr03 - xfrm.Get(0, 3));
-                b.set(1, 0, Tr13 - xfrm.Get(1, 3));
-                b.set(2, 0, Tr23 - xfrm.Get(2, 3));
+                b.set(0, 0, Tr03 - xfrm.get(0, 3));
+                b.set(1, 0, Tr13 - xfrm.get(1, 3));
+                b.set(2, 0, Tr23 - xfrm.get(2, 3));
 
                 final JamaMatrix X = A.solve(b);
                 final double Tx = X.get(0, 0);
@@ -5758,18 +5959,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         final int mod = oXdim / 50;
         int tLast;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         tLast = Math.max(1, iTdim);
 
@@ -6597,18 +6798,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         final int mod = oXdim / 50;
         int tLast;
 
-        T00 = xfrm.Get(0, 0);
-        T01 = xfrm.Get(0, 1);
-        T02 = xfrm.Get(0, 2);
-        T03 = xfrm.Get(0, 3);
-        T10 = xfrm.Get(1, 0);
-        T11 = xfrm.Get(1, 1);
-        T12 = xfrm.Get(1, 2);
-        T13 = xfrm.Get(1, 3);
-        T20 = xfrm.Get(2, 0);
-        T21 = xfrm.Get(2, 1);
-        T22 = xfrm.Get(2, 2);
-        T23 = xfrm.Get(2, 3);
+        T00 = xfrm.get(0, 0);
+        T01 = xfrm.get(0, 1);
+        T02 = xfrm.get(0, 2);
+        T03 = xfrm.get(0, 3);
+        T10 = xfrm.get(1, 0);
+        T11 = xfrm.get(1, 1);
+        T12 = xfrm.get(1, 2);
+        T13 = xfrm.get(1, 3);
+        T20 = xfrm.get(2, 0);
+        T21 = xfrm.get(2, 1);
+        T22 = xfrm.get(2, 2);
+        T23 = xfrm.get(2, 3);
 
         tLast = Math.max(1, iTdim);
 

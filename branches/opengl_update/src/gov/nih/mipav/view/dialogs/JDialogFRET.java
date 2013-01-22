@@ -177,7 +177,8 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10095");
+            //MipavUtil.showHelp("10095");
+            MipavUtil.showWebHelp("Microscopy:_Fluorescent_Resonance_Energy_Transfer_(FRET)_Bleed_Through_and_Efficiency#FRET_Bleed_Through_dialog_box");
         } else if (command.equals("Cancel")) {
 
             if (image.getNDims() == 2) {
@@ -224,6 +225,8 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
                 }
 
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

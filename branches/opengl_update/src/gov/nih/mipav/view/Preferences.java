@@ -23,6 +23,43 @@ public class Preferences {
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
+    /**
+     * Defines options for interpolating displayed image slices.
+     * 
+     * @author senseneyj
+     *
+     */
+    public enum InterpolateDisplay {
+        /** Displays using nearest-neighbor */
+        NEAREST("Nearest neighbor", RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR),
+        /** Bilinear interpolation */
+        BILINEAR("Bilinear", RenderingHints.VALUE_INTERPOLATION_BILINEAR),
+        /** Bicubic interpolation */
+        BICUBIC("Bicubic", RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        
+        /** The rendering hint provided to Graphics2D in creating this interpolation. */
+        private final RenderingHints renderingHint;
+        
+        /** The format of complex display */
+        private String str;
+
+        InterpolateDisplay(String str, Object renderingHintObj) {
+            this.renderingHint = new RenderingHints(RenderingHints.KEY_INTERPOLATION, renderingHintObj);
+            this.str = str;
+        }
+        
+        /**
+         * @return the renderingHint
+         */
+        public RenderingHints getRenderingHint() {
+            return renderingHint;
+        }
+        
+        public String toString() {
+            return str;
+        }
+    }
+    
 	/**
 	 * Defines options for displaying pixel values of complex images.
 	 * 
@@ -66,11 +103,16 @@ public class Preferences {
      */
     public enum DefaultDisplay {
         /** Lookuptable table and associated transfer function */
-        LUT("LUT and transfer function"),
+        LUT("LUT & transfer function default"),
         /** Window and level settings (will also be reflected as transfer function */
-        WindowLevel("Window & level"),
+        WindowLevel("Window & level default"),
         /** Minimum and maximum settings  */
-        MinMax("Min & max");
+        MinMax("Min & max default"),
+        /** MIPAV default setting */
+        Mipav("MIPAV default setting"),
+        Default("Default"), //for backwards compatibility
+        /**ImageJ default setting */
+        ImageJ("ImageJ default setting");
         
         /** The format of default display */
         private String str;
@@ -422,8 +464,8 @@ public class Preferences {
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
     
-    /** Constant that indicates whether or not an image is interpolated on display */
-    public static final String PREF_INTERPOLATE_DISPLAY = "InterpolateDisplay";
+    /** Constant that indicates the mode of image interpolation used for display */
+    public static final String PREF_INTERPOLATE_MODE = "InterpolateMode";
     
     /** Constant that indicates whether image is updated in real-time on histogram changes */
     public static final String PREF_HISTOGRAM_DISPLAY = "HistogramDisplay";
@@ -675,8 +717,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_VOI, "0.3");
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_MASK, "0");
         Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false, false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir")
-                + File.separator + "mipav.log");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, preferencesDir + File.separatorChar + "exceptions.txt");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
@@ -701,7 +742,7 @@ public class Preferences {
         /** Medical Formats(*.dcm; *.ima; *.img; *.mnc; *.sig; *.xml; *.head) */
         Preferences.defaultProps.setProperty(Preferences.PREF_FILENAME_FILTER, "8"); // 8 = ViewImageFileFilter.TECH
         Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_XML_THUMBNAIL, "false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_FLIP_NIFTI_READ, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_ALL_ON_SAVE, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_OVERWRITE_STATISTICS, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_LAST_X_IMAGES, "");
@@ -727,10 +768,10 @@ public class Preferences {
         // location
 
         // look and feel properties
-        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Mipav.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, "true");
         
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
@@ -741,6 +782,7 @@ public class Preferences {
         
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_DEFAULTS, "true");
 
         // performance information properties
         Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED,
@@ -1083,6 +1125,21 @@ public class Preferences {
             complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
         }
         return ComplexDisplay.valueOf(complexDisplay); 
+    }
+    
+    /** 
+     * Returns how pixel values are interpolated for displayed slices.  Default is nearest neighbor.
+     */
+    public static InterpolateDisplay getInterpolateDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String interpolateDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
+        if(interpolateDisplay == null) {
+            interpolateDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
+        }
+        
+        return InterpolateDisplay.valueOf(interpolateDisplay);
     }
 
     /**
@@ -1639,6 +1696,13 @@ public class Preferences {
         }
 
         return images;
+    }
+
+    /**
+     * @return the mipavProps
+     */
+    public static Properties getMipavProps() {
+        return mipavProps;
     }
 
     /**
@@ -2259,6 +2323,21 @@ public class Preferences {
     }
 
     /**
+     * Maintained for backwards compatibility.  If interpolation mode is equal to nearest neighbor,
+     * then returns false, otherwise returns true.
+     * 
+     * @return
+     */
+    public static boolean isInterpolateDisplay() {
+        InterpolateDisplay interp = Preferences.getInterpolateDisplay();
+        if(interp.equals(InterpolateDisplay.NEAREST)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Indicates whether multi-threading should be enabled for algorithms.  Most algorithms check this before
      * launching highly-parallel processes (such as FFT).
      * 
@@ -2273,25 +2352,6 @@ public class Preferences {
             mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
         }
         if (Boolean.valueOf(mtEnabled)) {
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * Indicates whether image displays should be interpolated
-     * 
-     * @return true if image interpolation is enabled
-     */
-    public static boolean isInterpolateDisplay() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-        String inEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
-        if (inEnabled == null) {
-            inEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
-        }
-        if (Boolean.valueOf(inEnabled)) {
             return true;
         }
         return false;
@@ -2486,6 +2546,7 @@ public class Preferences {
     /**
      * Saves the last used parameters for the given dialog.
      * 
+     * @deprecated This string should be created using JDialogBase.saveDefaults();
      * @param dialogName String the name of the dialog
      * @param defaultsString String the String to save for this dialog
      */
@@ -2644,6 +2705,19 @@ public class Preferences {
             Preferences.setProperty(Preferences.PREF_DEBUG, str);
         }
     }
+    
+    /**
+     * Sets the default display mode for 2D/3D image display.
+     * 
+     * @param display the DefaultDisplay type
+     */
+    public static void setDefaultDisplay(DefaultDisplay display) {
+        if(display == null) {
+            return;
+        }
+        
+        Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, display.name());
+    }
 
     /**
      * Sets the user-configured columns that indicate the DICOM tags that are displayed in the DICOM browser table.
@@ -2708,6 +2782,19 @@ public class Preferences {
         } else {
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, imageDirectory.getParent());
         }
+    }
+
+    /**
+     * Sets the display interpolation mode for 2D image display.
+     * 
+     * @param interp the InterpolateDisplay type
+     */
+    public static void setInterpolationMode(InterpolateDisplay interp) {
+        if(interp == null) {
+            return;
+        }
+        
+        Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, interp.name());
     }
 
     /**
@@ -3010,6 +3097,7 @@ public class Preferences {
         Preferences.defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
         Preferences.defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
+        Preferences.defaultShortcutTable.put("measureVOI", KeyStroke.getKeyStroke('M', 0, false));
 
         for (int i = 0; i < 9; i++) {
             Preferences.defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i + 1)

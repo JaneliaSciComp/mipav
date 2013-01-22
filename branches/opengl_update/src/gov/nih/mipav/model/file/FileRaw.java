@@ -255,7 +255,7 @@ public class FileRaw extends FileBase {
      * @see        FileInfoXML
      * @see        FileRawChunk
      */
-    public void readImage(ModelImage image, int offset) throws IOException {
+    public void readImage(ModelImage image, long offset) throws IOException {
         int i, k;
         int ii;
         int[] extents;
@@ -313,9 +313,16 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.BOOLEAN:
                     try {
-                        fileRW.readImage(ModelStorageBase.BOOLEAN,
-                                        (k * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
-                                         bufferSize);
+                        if (shiftToDivide == 3) {
+                            fileRW.readImage(ModelStorageBase.BOOLEAN,
+                                            (k * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
+                                             bufferSize);
+                        }
+                        else if (shiftToDivide == 6) {
+                            fileRW.readImage(ModelStorageBase.BOOLEAN,
+                                    (8 * k * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
+                                     bufferSize);    
+                        }
 
                         image.importData(k * bufferSize, fileRW.getBitSetBuffer(), false);
                     } catch (IOException error) {
@@ -326,7 +333,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.BYTE:
                     try {
-                        fileRW.readImage(ModelStorageBase.BYTE, (k * bufferSize) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.BYTE, (((long)k) * bufferSize) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getByteBuffer(), false);
                     } catch (IOException error) {
@@ -337,7 +344,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.UBYTE:
                     try {
-                        fileRW.readImage(ModelStorageBase.UBYTE, (k * bufferSize) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.UBYTE, (((long)k) * bufferSize) + offset, bufferSize);
 
                         image.importUData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
@@ -348,7 +355,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.SHORT:
                     try {
-                        fileRW.readImage(ModelStorageBase.SHORT, (k * bufferSize * 2) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.SHORT, (((long)k) * bufferSize * 2) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
@@ -359,7 +366,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.USHORT:
                     try {
-                        fileRW.readImage(ModelStorageBase.USHORT, (k * bufferSize * 2) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.USHORT, (((long)k) * bufferSize * 2) + offset, bufferSize);
 
                         image.importUData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
@@ -370,7 +377,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.INTEGER:
                     try {
-                        fileRW.readImage(ModelStorageBase.INTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.INTEGER, (((long)k) * bufferSize * 4) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getIntBuffer(), false);
                     } catch (IOException error) {
@@ -381,7 +388,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.UINTEGER:
                     try {
-                        fileRW.readImage(ModelStorageBase.UINTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.UINTEGER, (((long)k) * bufferSize * 4) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getIntBuffer(), false);
                     } catch (IOException error) {
@@ -392,7 +399,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.LONG:
                     try {
-                        fileRW.readImage(ModelStorageBase.LONG, (k * bufferSize * 8) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.LONG, (((long)k) * bufferSize * 8) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getLongBuffer(), false);
                     } catch (IOException error) {
@@ -403,7 +410,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.FLOAT:
                     try {
-                        fileRW.readImage(ModelStorageBase.FLOAT, (k * bufferSize * 4) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.FLOAT, (((long)k) * bufferSize * 4) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getFloatBuffer(), false);
                     } catch (IOException error) {
@@ -414,7 +421,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.DOUBLE:
                     try {
-                        fileRW.readImage(ModelStorageBase.DOUBLE, (k * bufferSize * 8) + offset, bufferSize);
+                        fileRW.readImage(ModelStorageBase.DOUBLE, (((long)k) * bufferSize * 8) + offset, bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getDoubleBuffer(), false);
                     } catch (IOException error) {
@@ -425,7 +432,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB, (k * bufferSize * numColors) + offset,
+                        fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numColors) + offset,
                                                                  bufferSize * numColors);
 
                         if (numColors == 2) {
@@ -533,7 +540,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB_USHORT:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (k * bufferSize * 2 * numColors) + offset,
+                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numColors) + offset,
                                                                         bufferSize * numColors);
 
                         short[] shortBuffer = new short[4 * extents[0] * extents[1]];
@@ -643,7 +650,7 @@ public class FileRaw extends FileBase {
                     
                 case ModelStorageBase.ARGB_FLOAT:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (k * bufferSize * 4 * numColors) + offset,
+                        fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numColors) + offset,
                                                                         bufferSize * numColors);
 
                         float[] floatBuffer = new float[4 * extents[0] * extents[1]];
@@ -753,7 +760,7 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.COMPLEX:
                     try {
-                        fileRW.readImage(ModelStorageBase.COMPLEX, (k * bufferSize * 8) + offset, bufferSize * 2);
+                        fileRW.readImage(ModelStorageBase.COMPLEX, (((long)k) * bufferSize * 8) + offset, bufferSize * 2);
 
                         float[] realBuffer = new float[bufferSize];
                         float[] imagBuffer = new float[bufferSize];
@@ -773,7 +780,7 @@ public class FileRaw extends FileBase {
                     
                 case ModelStorageBase.DCOMPLEX:
                     try {
-                        fileRW.readImage(ModelStorageBase.DCOMPLEX, (k * bufferSize * 16) + offset, bufferSize * 2);
+                        fileRW.readImage(ModelStorageBase.DCOMPLEX, (((long)k) * bufferSize * 16) + offset, bufferSize * 2);
 
                         double[] realBuffer = new double[bufferSize];
                         double[] imagBuffer = new double[bufferSize];
@@ -821,7 +828,7 @@ public class FileRaw extends FileBase {
          * @see        FileRawChunk
          */
         public void readFloatImage(ModelImage image, int originalDataType, float scaleFactor[], 
-                                   float offsetAdjustment[], int offset) throws IOException {
+                                   float offsetAdjustment[], long offset) throws IOException {
             int i, k;
             int ii;
             int[] extents;
@@ -886,7 +893,7 @@ public class FileRaw extends FileBase {
                     case ModelStorageBase.BOOLEAN:
                         try {
                             fileRW.readImage(ModelStorageBase.BOOLEAN,
-                                            (k * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
+                                            (((long)k) * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
                                              bufferSize);
                             for (i = 0; i < bufferSize; i++) {
                                 if (fileRW.getBitSetBuffer().get(i)) {
@@ -906,7 +913,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.BYTE:
                         try {
-                            fileRW.readImage(ModelStorageBase.BYTE, (k * bufferSize) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.BYTE, (((long)k) * bufferSize) + offset, bufferSize);
                             byte buf[] = fileRW.getByteBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -921,7 +928,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.UBYTE:
                         try {
-                            fileRW.readImage(ModelStorageBase.UBYTE, (k * bufferSize) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.UBYTE, (((long)k) * bufferSize) + offset, bufferSize);
                             short buf[] = fileRW.getShortBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -936,7 +943,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.SHORT:
                         try {
-                            fileRW.readImage(ModelStorageBase.SHORT, (k * bufferSize * 2) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.SHORT, (((long)k) * bufferSize * 2) + offset, bufferSize);
                             short buf[] = fileRW.getShortBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -951,7 +958,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.USHORT:
                         try {
-                            fileRW.readImage(ModelStorageBase.USHORT, (k * bufferSize * 2) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.USHORT, (((long)k) * bufferSize * 2) + offset, bufferSize);
                             short buf[] = fileRW.getShortBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * (buf[i] & 0xffff) + offsetAdjustment[k];
@@ -966,7 +973,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.INTEGER:
                         try {
-                            fileRW.readImage(ModelStorageBase.INTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.INTEGER, (((long)k) * bufferSize * 4) + offset, bufferSize);
                             int buf[] = fileRW.getIntBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -981,7 +988,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.UINTEGER:
                         try {
-                            fileRW.readImage(ModelStorageBase.UINTEGER, (k * bufferSize * 4) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.UINTEGER, (((long)k) * bufferSize * 4) + offset, bufferSize);
                             int buf[] = fileRW.getIntBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * (buf[i] & 0xFFFFFFFFL) + offsetAdjustment[k];
@@ -996,7 +1003,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.LONG:
                         try {
-                            fileRW.readImage(ModelStorageBase.LONG, (k * bufferSize * 8) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.LONG, (((long)k) * bufferSize * 8) + offset, bufferSize);
                             long buf[] = fileRW.getLongBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -1011,7 +1018,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.FLOAT:
                         try {
-                            fileRW.readImage(ModelStorageBase.FLOAT, (k * bufferSize * 4) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.FLOAT, (((long)k) * bufferSize * 4) + offset, bufferSize);
                             float buf[] = fileRW.getFloatBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 buf[i] = scaleFactor[k] * buf[i] + offsetAdjustment[k];
@@ -1026,7 +1033,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.DOUBLE:
                         try {
-                            fileRW.readImage(ModelStorageBase.DOUBLE, (k * bufferSize * 8) + offset, bufferSize);
+                            fileRW.readImage(ModelStorageBase.DOUBLE, (((long)k) * bufferSize * 8) + offset, bufferSize);
                             double buf[] = fileRW.getDoubleBuffer();
                             for (i = 0; i < bufferSize; i++) {
                                 floatBuffer[i] = (float)(scaleFactor[k] * buf[i] + offsetAdjustment[k]);
@@ -1041,7 +1048,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.ARGB:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB, (k * bufferSize * numColors) + offset,
+                            fileRW.readImage(ModelStorageBase.ARGB, (((long)k) * bufferSize * numColors) + offset,
                                                                      bufferSize * numColors);
 
                             if (numColors == 2) {
@@ -1156,7 +1163,7 @@ public class FileRaw extends FileBase {
 
                     case ModelStorageBase.ARGB_USHORT:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB_USHORT, (k * bufferSize * 2 * numColors) + offset,
+                            fileRW.readImage(ModelStorageBase.ARGB_USHORT, (((long)k) * bufferSize * 2 * numColors) + offset,
                                                                             bufferSize * numColors);
                             
                             if (numColors == 2) {
@@ -1273,7 +1280,7 @@ public class FileRaw extends FileBase {
                         
                     case ModelStorageBase.ARGB_FLOAT:
                         try {
-                            fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (k * bufferSize * 4 * numColors) + offset,
+                            fileRW.readImage(ModelStorageBase.ARGB_FLOAT, (((long)k) * bufferSize * 4 * numColors) + offset,
                                                                             bufferSize * numColors);
                             
                             if (numColors == 2) {
@@ -1413,7 +1420,7 @@ public class FileRaw extends FileBase {
      * @see        FileInfoXML
      * @see        FileRawChunk
      */
-    public void readImage(float[] buffer, int offset, int imageType) throws IOException {
+    public void readImage(float[] buffer, long offset, int imageType) throws IOException {
         int i;
         int ii;
         int bufferSize = buffer.length;
@@ -1953,7 +1960,7 @@ public class FileRaw extends FileBase {
      * @see        FileInfoXML
      * @see        FileRawChunk
      */
-    public void readImage(double[] buffer, int offset) throws IOException {
+    public void readImage(double[] buffer, long offset) throws IOException {
     	int bufferSize = buffer.length;
     	try {
             fileRW.readImage(ModelStorageBase.DOUBLE, offset, bufferSize);
@@ -1980,7 +1987,7 @@ public class FileRaw extends FileBase {
      * @see        FileInfoXML
      * @see        FileRawChunk
      */
-    public void readImage(short[] buffer, int offset, int imageType) throws IOException {
+    public void readImage(short[] buffer, long offset, int imageType) throws IOException {
         int i;
         int ii;
         int bufferSize = buffer.length;
@@ -2307,7 +2314,7 @@ public class FileRaw extends FileBase {
      * @see        FileInfoXML
      * @see        FileRawChunk
      */
-    public void readImage(int[] buffer, int offset, int imageType) throws IOException {
+    public void readImage(int[] buffer, long offset, int imageType) throws IOException {
         int i;
         int ii;
         int bufferSize = buffer.length;
@@ -2797,9 +2804,109 @@ public class FileRaw extends FileBase {
                     try {
                     	
                         fileRW.writeImage(image, (t * offset) + (k * bufferSize),
-                                          (t * offset) + (k * bufferSize) + bufferSize, 0);
+                                          (t * offset) + (k * bufferSize) + bufferSize);
                     	
                     	
+                    } catch (IOException error) {
+
+                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                            raFile.close();
+                        }
+
+                        throw error;
+                    }
+                }
+            }
+
+            fireProgressStateChanged(100);
+            
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                raFile.close();
+            }
+
+            return;
+        } catch (OutOfMemoryError error) {
+
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                raFile.close();
+            }
+
+            throw error;
+        }
+    }
+    
+    /**
+     * This method writes a raw image file.
+     *
+     * @param      image    image model where the data is stored.
+     * @param      beginSlice
+     * @param      endSlice
+     * @param      beginTimePeriod
+     * @param      endTimePeriod
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public void writeImage(ModelImage image, int beginSlice, int endSlice, int beginTimePeriod, int endTimePeriod) throws IOException {
+        int i, k;
+        int[] extents;
+        @SuppressWarnings("unused")
+        int nBuffers;
+        int bufferSize;
+        int offset = 0;
+
+        // System.err.println("Compression type set to: " + compressionType);
+
+        try {
+            extents = new int[image.getNDims()];
+
+            for (i = 0; i < image.getNDims(); i++) {
+                extents[i] = image.getExtents()[i];
+            }
+
+            if (image.getNDims() > 1) {
+                bufferSize = extents[0] * extents[1];
+            } else {
+                bufferSize = extents[0];
+            }
+
+            // Right now, because we don't use nBuffers, this code doesn't do
+            // anything.  However, it will be needed in the future.
+            if (image.getNDims() == 5) {
+                nBuffers = extents[4] * extents[3] * extents[2];
+                offset = extents[3] * extents[2] * extents[1] * extents[0];
+            } else if (image.getNDims() == 4) {
+                nBuffers = extents[3] * extents[2];
+                offset = extents[2] * extents[1] * extents[0];
+            } else if (image.getNDims() == 3) {
+                nBuffers = extents[2];
+                offset = extents[1] * extents[0];
+            } else {
+                nBuffers = 1;
+            }
+
+            nImages = endSlice - beginSlice + 1; // nImages to be written
+            nTimePeriods = endTimePeriod - beginTimePeriod + 1;
+
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                if(zeroLengthFlag) {
+                    raFile.setLength(0);
+                }
+                raFile.seek(startPosition);
+            }
+
+            fireProgressStateChanged(0);
+
+            for (int t = beginTimePeriod; t <= endTimePeriod; t++) {
+
+                for (k = beginSlice; k <= endSlice; k++) {
+                    fireProgressStateChanged(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) * 100));
+
+                    try {
+                        
+                        fileRW.writeImage(image, (t * offset) + (k * bufferSize),
+                                          (t * offset) + (k * bufferSize) + bufferSize);
+                        
+                        
                     } catch (IOException error) {
 
                         if (compressionType == FileInfoBase.COMPRESSION_NONE) {
@@ -2922,7 +3029,7 @@ public class FileRaw extends FileBase {
 
 
             try {
-                fileRW.writeImage(image, k * bufferSize, (k * bufferSize) + bufferSize, 0);
+                fileRW.writeImage(image, k * bufferSize, (k * bufferSize) + bufferSize);
 
                 if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                     raFile.close();
@@ -2951,18 +3058,22 @@ public class FileRaw extends FileBase {
 
         int[] extents;
         int volSize = 0;
+        int sliceSize;
 
         int beginTimePeriod = options.getBeginTime();
         int endTimePeriod = options.getEndTime();
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
 
         extents = image.getExtents();
 
         volSize = extents[2] * extents[1] * extents[0];
+        sliceSize = extents[1] * extents[0];
 
         this.nTimePeriods = endTimePeriod - beginTimePeriod + 1;
 
         this.nImages = extents[2];
-        dataFileName = new String[extents[2]];
+        dataFileName = new String[nTimePeriods];
 
 
         String fileName = options.getFileName();
@@ -3033,7 +3144,7 @@ public class FileRaw extends FileBase {
 
             // write the given start/end point in the image to a file
             try {
-                fileRW.writeImage(image, t * volSize, (t * volSize) + volSize, 0);
+                fileRW.writeImage(image, t * volSize + beginSlice * sliceSize, (t * volSize) + (endSlice + 1) * sliceSize);
 
                 if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                     raFile.close();

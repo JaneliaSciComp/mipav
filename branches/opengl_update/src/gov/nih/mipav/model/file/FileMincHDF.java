@@ -368,7 +368,7 @@ public class FileMincHDF extends FileBase {
                 final String attrName = attr.getName();
 
                 if (attrName.equals(FileMincHDF.ATTR_DIM_UNITS)) {
-                    units[dimReorderIndexes[i]] = (Unit.getUnit( ((String[]) attr.getValue())[0])).getLegacyNum();
+                    units[dimReorderIndexes[i]] = (getUnitFromString(((String[]) attr.getValue())[0])).getLegacyNum();
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_START)) {
                     mincStartLoc[dimReorderIndexes[i]] = ((double[]) attr.getValue())[0];
                 } else if (attrName.equals(FileMincHDF.ATTR_DIM_LENGTH)) {
@@ -552,6 +552,7 @@ public class FileMincHDF extends FileBase {
         double[] imageMin = null;
         int numImages = 1;
         int numVols = 1;
+        int sliceSize;
         // some minc2 images will only have 1 image min and 1 image max....in this case the minMaxDimOrder is not
         // set..so it is false
         // TODO: make this work for 4D images
@@ -689,7 +690,7 @@ public class FileMincHDF extends FileBase {
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
 
                 final long[] dims = imageData.getDims();
-                final int[] selectedIndex = imageData.getSelectedIndex();
+                int[] selectedIndex = imageData.getSelectedIndex();
 
                 // set of the size of the slice of data we want to read in each time
                 final long[] selected = imageData.getSelectedDims();
@@ -711,7 +712,18 @@ public class FileMincHDF extends FileBase {
 
                     for (int di = 0; di < dims.length; di++) {
                         final int mipavOrder = getMipavOrderFromDimNode(dimStrings[di]);
-                        selectedIndex[mipavOrder] = di;
+                        try {
+                            selectedIndex[mipavOrder] = di;
+                        }
+                        catch(ArrayIndexOutOfBoundsException e) {
+                            int len = selectedIndex.length;
+                            int itemp[] = new int[len];
+                            for (int j = 0; j < len; j++) {
+                                itemp[j] = selectedIndex[j];
+                            }
+                            selectedIndex = new int[len+1];
+                            selectedIndex[mipavOrder] = di;
+                        }
                         selected[mipavOrder] = dims[mipavOrder];
 
                         selected[selectedIndex[3]] = 1;
@@ -720,48 +732,36 @@ public class FileMincHDF extends FileBase {
 
                 Object data = null;
 
-                final long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
+                int numParts;
+                if (is4D) {
+                    numParts = numVols;
+                    sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+                }
+                else {
+                    numParts = numImages;
+                    sliceSize = imageData.getWidth() * imageData.getHeight();
+                }
+                
+                // start dims array seems important for 3D images, but not 4D. 3D reading requires incrementing it
+                long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
 
-                final int sliceSize = imageData.getWidth() * imageData.getHeight();
-
-                int sliceCounter = 0;
-                int volCounter = 0;
-                int counter = 0;
-
-                for (int j = 0; j < numImages; j++) {
+                for (int j = 0; j < numParts; j++) {
                     if (is4D) {
-                        if (j != 0 && j % fileInfo.getExtents()[3] == 0) {
-                            start[1] = sliceCounter;
-                            sliceCounter++;
-                        }
-                        if (volCounter >= numVols) {
-                            volCounter = 0;
-                        }
-                        start[0] = volCounter;
                         data = imageData.read();
 
                         if (fileInfo.getDataType() == ModelStorageBase.SHORT
                                 || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (short[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (short[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
                                 || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (int[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (int[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
                                 || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (byte[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (byte[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (float[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (float[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (double[]) data, false);
-                        }
-                        volCounter++;
-                        if (j != 0 && j % numVols == 0) {
-                            counter++;
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (double[])data, false);
                         }
                     } else {
                         start[0] = j;
@@ -782,7 +782,7 @@ public class FileMincHDF extends FileBase {
                         }
                     }
 
-                    fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
+                    fireProgressStateChanged(Math.round(5 + ((float) j / numParts) * 95));
                 }
             }
 
@@ -855,9 +855,9 @@ public class FileMincHDF extends FileBase {
                     dirCosines2[m][2] = dirCosines[m][2];
                 }
                 final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
-                final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                //final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
                 fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step2, dirCosines2,
-                        isCentered2, 0, mincStartLoc2));
+                        isCentered2, 0, mincStartLoc));
 
             } else {
                 fileInfos[0].setStartLocations(fileInfos[0].getConvertStartLocationsToDICOM(step, dirCosines,
@@ -885,9 +885,9 @@ public class FileMincHDF extends FileBase {
                         dirCosines2[m][2] = dirCosines[m][2];
                     }
                     final boolean[] isCentered2 = {isCentered[0], isCentered[1], isCentered[2]};
-                    final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
+                    //final double[] mincStartLoc2 = {mincStartLoc[0], mincStartLoc[1], mincStartLoc[2]};
                     fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step2, dirCosines2,
-                            isCentered2, i, mincStartLoc2));
+                            isCentered2, i, mincStartLoc));
 
                 } else {
                     fileInfos[i].setStartLocations(fileInfos[i].getConvertStartLocationsToDICOM(step, dirCosines,
@@ -2341,6 +2341,27 @@ public class FileMincHDF extends FileBase {
         }
 
         return order;
+    }
+    
+    /**
+     * Return the proper unit based on a given unit string (abbrevation or full word).
+     * @param val The unit name or abbreviation.
+     * @return The proper unit for the given string, or Unit.UNKNOWN_MEASURE if not recognized.
+     */
+    public static final Unit getUnitFromString(String val) {
+        Unit u = Unit.getUnit(val);
+        if (u == Unit.UNKNOWN_MEASURE) {
+            u = Unit.getUnitFromAbbrev(val);
+            
+            if (u == Unit.UNKNOWN_MEASURE) {
+                // some minc files use 's' for seconds instead of the 'sec' that we use
+                if (val.equalsIgnoreCase("s")) {
+                    u = Unit.SECONDS;
+                }
+            }
+        }
+        
+        return u;
     }
 
     public class HDFNode extends DefaultMutableTreeNode {

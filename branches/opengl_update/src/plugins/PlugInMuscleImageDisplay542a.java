@@ -530,9 +530,11 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
         	close();
     	} else if(command.equals(DialogPrompt.HELP)) {
     		if(imageType.equals(ImageType.Thigh)) {
-    			MipavUtil.showHelp("MS00001");
+    			//MipavUtil.showHelp("MS00001");
+    			MipavUtil.showWebHelp("Muscle_Segmentation#Applying_the_algorithm");
     		} else { //image is of type abdomen
-    			MipavUtil.showHelp("MS00050");
+    			//MipavUtil.showHelp("MS00050");
+    			MipavUtil.showWebHelp("Muscle_Segmentation#Applying_the_algorithm");
     		}
     	} else {
     		super.actionPerformed(e);
@@ -3009,9 +3011,11 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 	        	}
 	        } else if (command.equals(HELP)) {
 	        	if(imageType.equals(ImageType.Thigh))
-	        		MipavUtil.showHelp("MS00040");
+	        		//MipavUtil.showHelp("MS00040");
+	        	    MipavUtil.showWebHelp("Muscle_Segmentation#Applying_the_algorithm");
 	        	else //image is of type abdomen
-	        		MipavUtil.showHelp("MS00080");
+	        		//MipavUtil.showHelp("MS00080");
+	        	    MipavUtil.showWebHelp("Muscle_Segmentation#Applying_the_algorithm");
 	        } else if (command.equals(LOAD_VOI)) {
 	        	String text = ((JButton)e.getSource()).getText();
 	        	VOIVector vec = getActiveImage().getVOIs();
@@ -3878,6 +3882,8 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 				} else if(e.getSource().equals(browseText)) {
 					textFileDir = setDirLoc(textFileDir);
 					textDirField.setText(textFileDir);
+				} else {
+				    super.actionPerformed(e);
 				}
 			}
 			

@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmKernelRegression
  */
 public class JDialogKernelRegression extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -227,7 +227,6 @@ public class JDialogKernelRegression extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -452,6 +451,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             else {
                 textLesserEqual.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -466,10 +467,6 @@ public class JDialogKernelRegression extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmKernelRegression) {
             image.clearMask();
@@ -576,7 +573,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (newImage != null)) {
@@ -796,7 +793,7 @@ public class JDialogKernelRegression extends JDialogScriptableBase
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);

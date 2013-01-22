@@ -271,6 +271,8 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

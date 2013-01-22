@@ -528,6 +528,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -544,19 +546,18 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
         boolean pad = false;
+        int xdimA = refImage.getExtents()[0];
+        int ydimA = refImage.getExtents()[1];
+        int zdimA = refImage.getExtents()[2];
+        float xresA = refImage.getFileInfo(0).getResolutions()[0];
+        float yresA = refImage.getFileInfo(0).getResolutions()[1];
+        float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
         if (algorithm instanceof AlgorithmConstrainedOAR3D) {
 
             if (reg3.isCompleted()) {
-
+              
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    int zdimA = refImage.getExtents()[2];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    float zresA = refImage.getFileInfo(0).getResolutions()[2];
-
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     transform = new AlgorithmTransform(matchImage, reg3.getTransform(), interp2, xresA, yresA, zresA,
                                                        xdimA, ydimA, zdimA, true, false, pad);
@@ -628,7 +629,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with number or Z angles in coarse sampling " + numCoarseZ + ".\n";
                 reg3.getTransform().saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mtx", message);
+                                               refImage.getImageName() + ".mtx", interp2, xresA, yresA, zresA,
+                                               xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 
@@ -662,12 +664,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             if (reg3E.isCompleted()) {
 
                 if (displayTransform) {
-                    int xdimA = refImage.getExtents()[0];
-                    int ydimA = refImage.getExtents()[1];
-                    int zdimA = refImage.getExtents()[2];
-                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    float zresA = refImage.getFileInfo(0).getResolutions()[2];
+                    
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     transform = new AlgorithmTransform(matchImage, reg3E.getTransform(), interp2, xresA, yresA, zresA,
@@ -740,7 +737,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with number or Z angles in coarse sampling " + numCoarseZ + ".\n";
                 reg3E.getTransform().saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
-                                               refImage.getImageName() + ".mtx", message);
+                                               refImage.getImageName() + ".mtx", interp2, xresA, yresA, zresA,
+                                               xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 

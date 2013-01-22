@@ -182,9 +182,12 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4017");
+            //MipavUtil.showHelp("U4017");
+            MipavUtil.showWebHelp("Converting_image_datasets_to_different_data_types#Converting_RGB_datasets_to_grayscale_datasets");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

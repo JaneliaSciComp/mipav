@@ -490,7 +490,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("Identity")) {
             final TransMatrix newMatrix = new TransMatrix(image.getNDims() + 1);
 
-            newMatrix.MakeIdentity();
+            newMatrix.identity();
 
             updateMatrixFields(newMatrix);
 
@@ -556,6 +556,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         } else if (command.equals("PasteMatrix")) {
             updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
+        } else {
+            super.actionPerformed(event);
         }
 
     }
@@ -765,7 +767,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             new JDialogOrientMatrix(parentFrame, this);
         } catch (final IOException error) {
             MipavUtil.displayError("Matrix read error");
-            fileTransMatrix.MakeIdentity();
+            fileTransMatrix.identity();
         }
     }
 
@@ -792,8 +794,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 for (int i = 0; i < matrix.length; i++) {
 
                     for (int j = 0; j < matrix[i].length; j++) {
-                        matrix[i][j] = newMatrix.Get(i, j);
-                        textMatrix[i][j].setText(String.valueOf(newMatrix.Get(i, j)));
+                        matrix[i][j] = newMatrix.get(i, j);
+                        textMatrix[i][j].setText(String.valueOf(newMatrix.get(i, j)));
                     }
                 }
             } else {
@@ -3265,7 +3267,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             for (int i = 0; i < dim; i++) {
 
                 for (int j = 0; j < dim; j++) {
-                    textMatrix[i][j].setText(Double.toString(newMatrix.Get(i, j)));
+                    textMatrix[i][j].setText(Double.toString(newMatrix.get(i, j)));
                     textMatrix[i][j].setCaretPosition(0);
                 }
             }

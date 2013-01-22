@@ -183,6 +183,14 @@ public class FileIO {
                 fType = FileUtility.MAGNETOM_VISION_MULTIFILE;
             } else if (fileType == FileUtility.BMP){
                 fType = FileUtility.BMP_MULTIFILE;
+            } else if (fileType == FileUtility.PARREC) {
+                fType = FileUtility.PARREC_MULTIFILE;
+            } else if (fileType == FileUtility.NRRD) {
+                fType = FileUtility.NRRD_MULTIFILE;
+            } else if (fileType == FileUtility.INTERFILE) {
+                fType = FileUtility.INTERFILE_MULTIFILE;
+            } else if (fileType == FileUtility.MINC) {
+                fType = FileUtility.MINC_MULTIFILE;
             }
         }
 
@@ -402,8 +410,7 @@ public class FileIO {
         int nImages = 0;
         int nListImages;
         
-        int dtiSliceCounter = 0;
-        boolean dtiSub = false;
+        int dtiSliceCounter = -1;
         String studyDescription = null;
         String seriesDescription = null;
         String scannerType = null;
@@ -592,7 +599,7 @@ public class FileIO {
         final int[] orient = new int[3]; // for FileInfoBase values. eg:FileInfoBase.ORI_S2I_TYPE;
         int pBarVal = 0;
         
-        boolean validInstanceSort = false, validOriSort = false;
+        boolean validInstanceSort = false, validOriSort = false, validOri4DSort = false;
 
         if ( !refFileInfo.isMultiFrame()) {
 
@@ -608,8 +615,8 @@ public class FileIO {
             // the sorting has been done) as needed, depending on sorting.
             indices = new int[nListImages];
 
-            int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
-            final int[] rint = new int[nListImages]; // sorted image instance values.
+            final int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
+            final int[] zOri4D = new int[nListImages]; //sorted image orientation values taking into account overlapping time zones
             final int[] zInst = new int[nListImages]; //sorted image instance values
             final float[] zOrients = new float[nListImages]; // image orientation values as read in.
             final float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
@@ -713,7 +720,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             // instance numbers used in case improper DICOM and position and orientation info not given
                             instanceNums[nImages] = savedFileInfos[nImages].instanceNumber;
                             zOri[nImages] = nImages;
-                            rint[nImages] = nImages;
+                            zInst[nImages] = nImages;
                             nImages++;
                         }
                     } else {
@@ -731,7 +738,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         // instance numbers used in case improper DICOM and position and orientation info not given
                         instanceNums[nImages] = savedFileInfos[nImages].instanceNumber;
                         zOri[nImages] = nImages;
-                        rint[nImages] = nImages;
+                        zInst[nImages] = nImages;
                         nImages++;
                     }
                 } catch (final IOException error) {
@@ -792,176 +799,27 @@ nList:      for (int i = 0; i < nListImages; i++) {
              // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
                 // instance number  
-                if (!(validInstanceSort = FileIO.sort(instanceNums, rint, nImages))) {
+                if (!(validInstanceSort = FileIO.sort(instanceNums, zInst, nImages))) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
                 } else {
-                    for(int i=0; i<zInst.length; i++) {
-                        zInst[i] = rint[i];
-                    }
                     
                     refFileInfo = (FileInfoDicom) imageFile.getFileInfo();
                     FileDicomTagTable tagTable =  refFileInfo.getTagTable();
                     studyDescription = (String) tagTable.getValue("0008,1030");
                     seriesDescription = (String) tagTable.getValue("0008,103E");
                     scannerType = (String) tagTable.getValue("0008,0070");
-
+    
                     if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
-                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
-                        //Sorts DWI images based on gradient values corresponding to each volume in the series
-                      if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
-                          if ((String) tagTable.getValue("0018,9089") != null){
-                              dtiSliceCounter = 0;
-                              int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
-                              ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
-                              
-                              for (int i = 0; i < instanceNums.length; i++) {
-                                  String savedFileGradFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9089");
-                                  String savedFileGradSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9089");
-                                  String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0018,9089");
-                                  String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9087");
-                                  String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
-                                  String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
-                                  if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
-                                      //Stores order of gradients
-                                      IndexVolArrayList.add(dtiSliceCounter,i);
-                                      dtiSliceCounter++;
-                                  }
-                                  else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                      dtiSliceCounter2++;
-                                  }
-                              }
-
-                              //Checks for incomplete DWI series                                  
-                              if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
-                                  dtiSub = true; //Not complete DWI series
-                                  indices = zInst; 
-                                  }
-                                  
-                              else{
-                                  int rintCounter = 0;
-                                  int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
-                                  float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                     for (int i = 0; i <tVolumeNum; i++) {
-                                         for (int j=0; j< IndexVolArrayList.size(); j++){
-                                             //rint populated by ordering of instance nums based on volume order
-                                             zInst[rintCounter] = IndexVolArrayList.get(j) + i;
-                                             rintCounter++;                                            
-                                         }
-                                     }
-                                     indices = zInst;                                  
-                              }
-                           }
-                         }// if PHILIPS Note: New sort method may need to be 
-                            //added for different versions of Philips DWI dicom data sets. See GE code
-                      else if (scannerType != null && scannerType.toUpperCase().contains("GE")) {  
-                          if ((String) tagTable.getValue("0019,10BB") != null && (String) tagTable.getValue("0019,10BC") != null
-                                  && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
-                              dtiSliceCounter = 0;
-                              int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
-                              int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads 
-                              ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
-                              for (int i = 0; i < instanceNums.length; i++) {
-                                  String savedFileGradFirst = (String)savedFileInfos[0].getTagTable().getValue("0019,10BB")+
-                                          (String)savedFileInfos[0].getTagTable().getValue("0019,10BC")+
-                                          (String)savedFileInfos[0].getTagTable().getValue("0019,10BD") ;
-                                  String savedFileGradSecond = (String)savedFileInfos[1].getTagTable().getValue("0019,10BB")+
-                                  (String)savedFileInfos[1].getTagTable().getValue("0019,10BC")+
-                                  (String)savedFileInfos[1].getTagTable().getValue("0019,10BD") ;
-                                  String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0019,10BB")+
-                                  (String)savedFileInfos[i].getTagTable().getValue("0019,10BC")+
-                                  (String)savedFileInfos[i].getTagTable().getValue("0019,10BD") ;
-                                  String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
-                                  String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
-                                  String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
-                                  if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
-                                      //Stores order of gradients
-                                      IndexVolArrayList.add(dtiSliceCounter,i);
-                                      dtiSliceCounter++;
-                                  }
-                                  else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                      dtiSliceCounter2++;
-                                  }
-                              }
-                              if (dtiSliceCounter != 1 && dtiSliceCounter != 0 &&
-                                      (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")!= null && 
-                                      (String)savedFileInfos[dtiSliceCounter+1].getTagTable().getValue("0019,10BB")!= null){
-                                  if( dtiSliceCounter != dtiSliceCounter2){
-                                      for (int i = 0; i < dtiSliceCounter; i++){
-                                           String savedFileGrad1SecondVol = (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")+
-                                          (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BC")+
-                                          (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BD");
-                                           String savedFileGradISecondVol = (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BB")+
-                                           (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BC")+
-                                           (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BD");
-                                           String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
-                                           String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
-                                           if(savedFileGrad1SecondVol.equals(savedFileGradISecondVol) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                               dtiSliceCounter3++;   
-                                           }
-                                      }
-                                      if (dtiSliceCounter == dtiSliceCounter3){
-                                          isDTISort = true;
-                                          int rintCounter = 0;
-                                          int tVolumeNum = instanceNums.length/dtiSliceCounter;
-                                          float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                             for (int i = 0; i <tVolumeNum; i++) {
-                                                 for (int j=0; j< IndexVolArrayList.size(); j++){
-                                                     //rint populated by ordering of instance nums based on volume order
-                                                     zInst[rintCounter] = IndexVolArrayList.get(j) + (i*IndexVolArrayList.size());
-                                                     rintCounter++;                                            
-                                                 }
-                                             }
-                                             indices = zInst;                                  
-                                      }
-                                      else{
-                                          dtiSub = true; //Not complete DWI series
-                                          indices = zInst;   
-                                      }
-                                  }
-
-                                  else if (dtiSliceCounter == dtiSliceCounter2){
-                                      isDTISort = true;
-                                      int rintCounter = 0;
-                                      int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
-                                      float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                         for (int i = 0; i <tVolumeNum; i++) {
-                                             for (int j=0; j< IndexVolArrayList.size(); j++){
-                                                 //rint populated by ordering of instance nums based on volume order
-                                                 zInst[rintCounter] = IndexVolArrayList.get(j) + i;
-                                                 rintCounter++;                                            
-                                             }
-                                         }
-                                         indices = zInst;                                   
-                                  }
-                                  else{
-                                      dtiSub = true; //Not complete DWI series
-                                      indices = zInst;   
-                                  }
-
-                              }
-                              else{
-                                  dtiSub = true; //Not complete DWI series
-                                  indices = zInst;   
-                              }
-
-                           }  
-                      }// If GE
-                      
-                      //For DTI dicom data not aquired from GE or Philips scanners
-                      else{
-                          indices = zInst;
-                        }
-                      }// If DTI
-              
-                else{
-                  indices = zInst;
+                        (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+                        //sortDti sets indices values
+                        dtiSliceCounter = sortDtiDicomData(studyDescription, seriesDescription, scannerType, tagTable, savedFileInfos, indices, instanceNums.length, zInst);
+                    } 
                 }
-              }
                 
                 //always try to generate validOriSort, if a validOriSort that trumps a validInstanceSort
 
-                if ( (nImages > 1 && isDTISort == false)) {// && !validInstanceSort) {
+                if ( (nImages > 1 && !isDTISort)) {// && !validInstanceSort) {
                     // sort so that zOrients is now in ascending order.
                     // zOri[i] represents where in the image buffer image
                     // number i should be stored; so that if the images were
@@ -970,136 +828,134 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     if (!(validOriSort = FileIO.sort(zOrients, zOri, nImages))) {
                         Preferences.debug("FileIO: orientation number sort failed\n", Preferences.DEBUG_FILEIO);
                         System.err.println("FileIO: instance number sort failed on " + fileList[0]);
-                    }
-                    //for(int i=0; i<savedFileInfos.length; i++) {
-                    //    fileList[i] = savedFileInfos[i].getFileName();
-                    //}
-                    
-                    // Follow-on ordering:
-                    // pre-order the orientation numbers to match the instance
-                    // numbers. This is done to accomodate 4D dicom sets.
-                    // To describe the algo: I and L value lists which are
-                    // independant of each other, and M, which is a copy of L.
-                    // a & b are index lists for I and L, respectivly.
-                    // L[b[z]] = M[a[z]]
-                    // we copy the values of M, using order a, into L, using
-                    // order b, thereby making L mimic I.
-                    // we do this here with zOrients/zOri to make zOrient match
-                    // the ordering of the Instance numbers.
-                    final float[] lima = new float[zOrients.length]; // temp
+                        
+                        // Follow-on ordering if not a valid orientation sort:
+                        // pre-order the orientation numbers to *****match the instance
+                        // numbers**** (this is not a valid way to do 4D ordering). This is done to accomodate 4D dicom sets.
+                        // To describe the algo: I and L value lists which are
+                        // independant of each other, and M, which is a copy of L.
+                        // a & b are index lists for I and L, respectivly.
+                        // L[b[z]] = M[a[z]]
+                        // we copy the values of M, using order a, into L, using
+                        // order b, thereby making L mimic I.
+                        // we do this here with zOrients/zOri to make zOrient match
+                        // the ordering of the Instance numbers.
+                        final float[] lima = new float[zOrients.length]; // temp
 
-                    System.arraycopy(zOrients, 0, lima, 0, zOrients.length);
+                        System.arraycopy(zOrients, 0, lima, 0, zOrients.length);
 
-                    for (int z = 0; z < nImages; z++) {
-                        zOrients[zOri[z]] = lima[rint[z]]; // copy z-location
-                    }
+                        for (int z = 0; z < nImages; z++) {
+                            zOrients[zOri[z]] = lima[zInst[z]]; // copy z-location
+                        }
 
-                    for(int i=0; i<rint.length; i++) {
-                        zOri[i] = rint[i]; // copy the indexing
+                        for(int i=0; i<zInst.length; i++) {
+                            zOri4D[i] = zInst[i]; // copy the indexing
+                        }
+                            
+                        FileIO.sort(zOrients, zOri4D, nImages); // now sort by orientation
+
+                        // Rely on ******image instance number******* (this is not a valid way to do 4D ordering) and position information.
+                        // Build a list for all images at a particular location,
+                        // although at different times, as judged by ******image instance******.
+                        // Create a list for all possible times in the imageset:
+                        Vector<Vector<OrientStatus>> timezonesList = new Vector<Vector<OrientStatus>>();
+
+                        // Hold the original list of orients and indices:
+                        Vector<OrientStatus> orientsList = new Vector<OrientStatus>(nImages); // original index list
+
+                        for (int k = 0; k < nImages; k++) { // load original list vector
+
+                            final OrientStatus oriReference = new OrientStatus(zOri4D[k], zOrients[k]);
+
+                            orientsList.add(oriReference);
+                        }
+
+                        // each times list has a list of the images of different
+                        // locations taken at the same time (in the same time-zone)
+                        // we check on different times by going through the list of
+                        // images and looking for the next lowest image instance
+                        // with the same z location. essentially, we
+                        // pass through the orientation list multiple times,
+                        // filling a single zone with each pass.
+                        Vector<OrientStatus> tz;
+                        OrientStatus ref0, refi;
+
+                        while (orientsList.size() > 0) {
+                            tz = new Vector<OrientStatus>(); // create a new timezone
+                            ref0 = orientsList.remove(0);
+                            tz.add(ref0); // remove 1st orient, put in timezone
+                            Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
+                                    + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
+                            Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
+
+                            for (final Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
+                                refi = e.nextElement();
+                                Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
+                                        Preferences.DEBUG_FILEIO);
+
+                                if ( !refi.equals(ref0)) {
+                                    ref0 = null;
+                                    ref0 = refi;
+                                    tz.add(refi);
+                                    Preferences.debug("...Accepting ", Preferences.DEBUG_FILEIO);
+
+                                    if (orientsList.remove(refi)) {
+                                        Preferences.debug(" .... Successfully removed " + refi.getIndex(),
+                                                Preferences.DEBUG_FILEIO);
+                                    }
+
+                                    Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation()
+                                            + "\n", Preferences.DEBUG_FILEIO);
+
+                                } else {
+                                    Preferences.debug("\n", Preferences.DEBUG_FILEIO);
+                                }
+                            }
+
+                            orientsClone.clear();
+                            orientsClone = null;
+                            timezonesList.add(tz);
+                            tz = null;
+                        }
+
+                        orientsList.clear();
+                        orientsList = null;
+
+                        // new ordering for all timezones.
+                        try {
+                            int t = 0;
+
+                            for (final Vector<OrientStatus> vector : timezonesList) {
+                                Preferences.debug("Timezone\n", Preferences.DEBUG_FILEIO);
+
+                                for (final OrientStatus ref : vector) {
+                                    final int k = ref.getIndex();
+
+                                    // concatenate the sublists into one ordering list.
+                                    zOri4D[k] = t;
+                                    zOrients[k] = ref.getLocation();
+                                    Preferences.debug("reordering: (" + k + "): " + zOri4D[k] + "..." + zOrients[k] + "\n",
+                                            Preferences.DEBUG_FILEIO);
+                                    t++;
+                                }
+                            }
+
+                            Preferences.debug("4D, translation passes!  " + t + " slices!\n", Preferences.DEBUG_FILEIO);
+                        } catch (final ArrayIndexOutOfBoundsException enumTooFar) {
+                            Preferences.debug("NOT 4D, and DICOM translation fail!\n", Preferences.DEBUG_FILEIO);
+                        }
+
+                        timezonesList.clear();
+                        timezonesList = null;
+                        validOri4DSort = true;
+                        System.gc();
+                    } else {
+                        Preferences.debug("Valid orientation sort found\n", Preferences.DEBUG_FILEIO);
                     }
                         
-                    FileIO.sort(zOrients, zOri, nImages); // now sort by orientation
-
-                    // Rely on image instance number and position information.
-                    // Build a list for all images at a particular location,
-                    // although at different times, as judged by image instance.
-                    // Create a list for all possible times in the imageset:
-                    Vector<Vector<OrientStatus>> timezonesList = new Vector<Vector<OrientStatus>>();
-
-                    // Hold the original list of orients and indices:
-                    Vector<OrientStatus> orientsList = new Vector<OrientStatus>(nImages); // original index list
-
-                    for (int k = 0; k < nImages; k++) { // load original list vector
-
-                        final OrientStatus oriReference = new OrientStatus(zOri[k], zOrients[k]);
-
-                        orientsList.add(oriReference);
-                    }
-
-                    // each times list has a list of the images of different
-                    // locations taken at the same time (in the same time-zone)
-                    // we check on different times by going through the list of
-                    // images and looking for the next lowest image instance
-                    // with the same z location. essentially, we
-                    // pass through the orientation list multiple times,
-                    // filling a single zone with each pass.
-                    Vector<OrientStatus> tz;
-                    OrientStatus ref0, refi;
-
-                    while (orientsList.size() > 0) {
-                        tz = new Vector<OrientStatus>(); // create a new timezone
-                        ref0 = orientsList.remove(0);
-                        tz.add(ref0); // remove 1st orient, put in timezone
-                        Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
-                                + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
-                        Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
-
-                        for (final Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
-                            refi = e.nextElement();
-                            Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
-                                    Preferences.DEBUG_FILEIO);
-
-                            if ( !refi.equals(ref0)) {
-                                ref0 = null;
-                                ref0 = refi;
-                                tz.add(refi);
-                                Preferences.debug("...Accepting ", Preferences.DEBUG_FILEIO);
-
-                                if (orientsList.remove(refi)) {
-                                    Preferences.debug(" .... Successfully removed " + refi.getIndex(),
-                                            Preferences.DEBUG_FILEIO);
-                                }
-
-                                Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation()
-                                        + "\n", Preferences.DEBUG_FILEIO);
-
-                            } else {
-                                Preferences.debug("\n", Preferences.DEBUG_FILEIO);
-                            }
-                        }
-
-                        orientsClone.clear();
-                        orientsClone = null;
-                        timezonesList.add(tz);
-                        tz = null;
-                    }
-
-                    orientsList.clear();
-                    orientsList = null;
-
-                    // new ordering for all timezones.
-                    try {
-                        int t = 0;
-
-                        for (final Vector<OrientStatus> vector : timezonesList) {
-                            Preferences.debug("Timezone\n", Preferences.DEBUG_FILEIO);
-
-                            for (final OrientStatus ref : vector) {
-                                final int k = ref.getIndex();
-
-                                // concatenate the sublists into one ordering list.
-                                zOri[k] = t;
-                                zOrients[k] = ref.getLocation();
-                                Preferences.debug("reordering: (" + k + "): " + zOri[k] + "..." + zOrients[k] + "\n",
-                                        Preferences.DEBUG_FILEIO);
-                                t++;
-                            }
-                        }
-
-                        Preferences.debug("4D, translation passes!  " + t + " slices!\n", Preferences.DEBUG_FILEIO);
-                    } catch (final ArrayIndexOutOfBoundsException enumTooFar) {
-                        Preferences.debug("NOT 4D, and DICOM translation fail!\n", Preferences.DEBUG_FILEIO);
-                    }
-
-                    timezonesList.clear();
-                    timezonesList = null;
-                    validOriSort = true;
-                    System.gc();
-                } else {
-                    Preferences.debug("Not a 4D Dataset\n", Preferences.DEBUG_FILEIO);
-                }
-                // System.out.println (" Dicom matrix = \n" + matrix + "\n");
-                // System.out.println (" valid = " + valid);
+                } // end of oriSort
+                    
+                    
 
             } // end of performSort
 
@@ -1162,24 +1018,32 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 orientation = FileInfoBase.CORONAL;
             } else if ( (zCos > xCos) && (zCos > yCos)) {
                 orientation = FileInfoBase.AXIAL;
-            } else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) { //fallback methods, these should not be reached
+            } else if (!validInstanceSort) { // xLocation, yLocation, and zLocation were probably undefined and instance numbers equal.
                 orientation = FileInfoBase.AXIAL;
-                indices = rint;
+                validOriSort = true;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
-            } else { // xLocation, yLocation, and zLocation were probably undefined and instance numbers equal.
+            }  else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) { //fallback method to using instance number
                 orientation = FileInfoBase.AXIAL;
-                indices = zOri;
+                validInstanceSort = true;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
+            } else {
+                Preferences.debug("FileIO: Dicom orientation information could not be determined.  \n", Preferences.DEBUG_FILEIO);
             }
             
             if(validOriSort) {
                 indices = zOri;
             } else if(validInstanceSort) {
                 indices = zInst;
+            } else if(validOri4DSort) { 
+                indices = zOri4D;
+            } else { //valid sorting could not be determined, order by file ordering
+                for(int i=0; i<indices.length; i++) {
+                    indices[i] = i;
+                }
             }
 
             // problems if we reach this point!
@@ -1208,8 +1072,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         sliceDim*timeDim == nImages) {
                 extents[3] = timeDim;
                 extents[2] = sliceDim;
-            } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSub ==false || 
-                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSub ==false) {
+            } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0 || 
+                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0) {
                 if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
                     extents[2] = dtiSliceCounter;
                     extents[3] = nImages / dtiSliceCounter;
@@ -1334,12 +1198,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 start = i;
                 location = i;
             } else {
-                filename = fileList[i];
                 start = 0;
+                location = i;
                 if(performSort) {
-                    location = indices[i];
+                    filename = fileList[indices[i]];
                 } else {
-                    location = i;
+                    filename = fileList[i];
                 }
 
 
@@ -1365,7 +1229,11 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 FileInfoDicom curFileInfo;
                 
                 if ( !multiframe) {
-                    curFileInfo = savedFileInfos[i];
+                    if(performSort) {
+                        curFileInfo = savedFileInfos[indices[i]];
+                    } else {
+                        curFileInfo = savedFileInfos[i];
+                    }
                 } else {
                     FileDicomTagTable table = refFileInfo.getTagTable();
                     refFileInfo.setTagTable(null);
@@ -1536,7 +1404,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 // image.getFileInfo(m).setTransformID(FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL);
                 // }
             } catch (final RuntimeException rte) {
-                invMatrix.MakeIdentity();
+                invMatrix.identity();
                 // MipavUtil.displayError("Error = " + rte);
             }
         }
@@ -1890,6 +1758,149 @@ nList:      for (int i = 0; i < nListImages; i++) {
         }
         
         return image;
+    }
+
+    private int sortDtiDicomData(String studyDescription, String seriesDescription, String scannerType, FileDicomTagTable tagTable, FileInfoDicom[] savedFileInfos, int[] indices, int instanceNumsLength, int[] zInst) {
+      //Sorts DWI images based on gradient values corresponding to each volume in the series
+        int dtiSliceCounter = -1;
+        if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
+            if ((String) tagTable.getValue("0018,9089") != null){
+                dtiSliceCounter = 0;
+                int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
+                ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
+                
+                for (int i = 0; i < instanceNumsLength; i++) {
+                    String savedFileGradFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9089");
+                    String savedFileGradSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9089");
+                    String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0018,9089");
+                    String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9087");
+                    String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
+                    String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
+                    if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                        //Stores order of gradients
+                        IndexVolArrayList.add(dtiSliceCounter,i);
+                        dtiSliceCounter++;
+                    }
+                    else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
+                        dtiSliceCounter2++;
+                    }
+                }
+
+                //Checks for incomplete DWI series                                  
+                if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
+                    dtiSliceCounter = -1; //Not complete DWI series
+                    }
+                    
+                else{
+                    int rintCounter = 0;
+                    int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
+                       for (int i = 0; i <tVolumeNum; i++) {
+                           for (int j=0; j< IndexVolArrayList.size(); j++){
+                               //rint populated by ordering of instance nums based on volume order
+                               zInst[rintCounter] = IndexVolArrayList.get(j) + i;
+                               rintCounter++;                                            
+                           }
+                       }                                
+                }
+             }
+           }// if PHILIPS Note: New sort method may need to be 
+              //added for different versions of Philips DWI dicom data sets. See GE code
+        else if (scannerType != null && scannerType.toUpperCase().contains("GE")) {  
+            if ((String) tagTable.getValue("0019,10BB") != null && (String) tagTable.getValue("0019,10BC") != null
+                    && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
+                dtiSliceCounter = 0;
+                int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
+                int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads 
+                ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
+                for (int i = 0; i < instanceNumsLength; i++) {
+                    String savedFileGradFirst = (String)savedFileInfos[0].getTagTable().getValue("0019,10BB")+
+                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BC")+
+                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BD") ;
+                    String savedFileGradSecond = (String)savedFileInfos[1].getTagTable().getValue("0019,10BB")+
+                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BC")+
+                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BD") ;
+                    String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0019,10BB")+
+                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BC")+
+                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BD") ;
+                    String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
+                    String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
+                    String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
+                    if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                        //Stores order of gradients
+                        IndexVolArrayList.add(dtiSliceCounter,i);
+                        dtiSliceCounter++;
+                    }
+                    else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
+                        dtiSliceCounter2++;
+                    }
+                }
+                if (dtiSliceCounter != 1 && dtiSliceCounter != 0 &&
+                        (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")!= null && 
+                        (String)savedFileInfos[dtiSliceCounter+1].getTagTable().getValue("0019,10BB")!= null){
+                    if( dtiSliceCounter != dtiSliceCounter2){
+                        for (int i = 0; i < dtiSliceCounter; i++){
+                             String savedFileGrad1SecondVol = (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")+
+                            (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BC")+
+                            (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BD");
+                             String savedFileGradISecondVol = (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BB")+
+                             (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BC")+
+                             (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BD");
+                             String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
+                             String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
+                             if(savedFileGrad1SecondVol.equals(savedFileGradISecondVol) && savedFilebvalSecond.equals(savedFilebvalI)){
+                                 dtiSliceCounter3++;   
+                             }
+                        }
+                        if (dtiSliceCounter == dtiSliceCounter3){
+                            isDTISort = true;
+                            int rintCounter = 0;
+                            int tVolumeNum = instanceNumsLength/dtiSliceCounter;
+                            float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
+                               for (int i = 0; i <tVolumeNum; i++) {
+                                   for (int j=0; j< IndexVolArrayList.size(); j++){
+                                       //rint populated by ordering of instance nums based on volume order
+                                       zInst[rintCounter] = IndexVolArrayList.get(j) + (i*IndexVolArrayList.size());
+                                       rintCounter++;                                            
+                                   }
+                               }                              
+                        }
+                        else{
+                            dtiSliceCounter = -1; //Not complete DWI series
+                        }
+                    }
+
+                    else if (dtiSliceCounter == dtiSliceCounter2){
+                        isDTISort = true;
+                        int rintCounter = 0;
+                        int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
+                           for (int i = 0; i <tVolumeNum; i++) {
+                               for (int j=0; j< IndexVolArrayList.size(); j++){
+                                   //rint populated by ordering of instance nums based on volume order
+                                   zInst[rintCounter] = IndexVolArrayList.get(j) + i;
+                                   rintCounter++;                                            
+                               }
+                           }                                  
+                    } else {
+                        dtiSliceCounter = -1; //Not complete DWI series 
+                    }
+
+                } else {
+                    dtiSliceCounter = -1; //Not complete DWI series 
+                }
+
+             }  
+        } else{ //For DTI dicom data not aquired from GE or Philips scanners
+            dtiSliceCounter = -1;
+        }
+        
+        if(dtiSliceCounter != -1) {
+            for(int i=0; i<indices.length; i++) {
+                indices[i] = zInst[i];
+            }
+        }
+        
+        return dtiSliceCounter;
+        
     }
 
     /**
@@ -2447,9 +2458,17 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     }
 
                     break;
+                    
+                case FileUtility.METAIMAGE:
+                    image = readMetaImage(fileName, fileDir, one);
+                    break;
 
                 case FileUtility.NRRD:
                     image = readNRRD(fileName, fileDir, one);
+                    break;
+                    
+                case FileUtility.NRRD_MULTIFILE:;
+                    image = readNRRDMulti(fileName, fileDir);
                     break;
 
                 case FileUtility.SPM:
@@ -2493,9 +2512,15 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 case FileUtility.MINC:
                     image = readMinc(fileName, fileDir, one);
                     break;
+                    
+                case FileUtility.MINC_MULTIFILE:
+                    image = readMincMulti(fileName, fileDir);
+                    break;
+                    
                 case FileUtility.MINC_HDF:
                     image = readMincHDF(fileName, fileDir, one);
                     break;
+                    
                 case FileUtility.AFNI:
                     image = readAfni(fileName, fileDir, loadB);
                     break;
@@ -2506,6 +2531,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                 case FileUtility.INTERFILE:
                     image = readInterfile(fileName, fileDir, one);
+                    break;
+                    
+                case FileUtility.INTERFILE_MULTIFILE:
+                    image = readInterfileMulti(fileName, fileDir);
                     break;
 
                 case FileUtility.BIORAD:
@@ -2571,6 +2600,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 case FileUtility.PARREC:
                     image = readPARREC(fileName, fileDir, one);
                     break;
+                    
+                case FileUtility.PARREC_MULTIFILE:
+                    image = readPARRECMulti(fileName, fileDir);
+                    break;
 
                 case FileUtility.ZVI:
                     image = readZVI(fileName, fileDir, one);
@@ -2582,6 +2615,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                 case FileUtility.VISTA:
                     image = readVista(fileName, fileDir, one);
+                    break;
+                    
+                case FileUtility.SPAR:
+                    image = readSpar(fileInfo, fileName, fileDir, one);
                     break;
 
                 default:
@@ -3531,8 +3568,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
             // System.err.println("FileType: " + fileType);
 
             options.setDefault(true); // this would already be set.... hrmm....
-        } else { // otherwise, get the file-type from the file-info.
-
+        } else if(options.getFileType() != FileUtility.UNDEFINED) {  // otherwise, get the file-type from the options, if it has been set
+            fileType = options.getFileType();
+        } else { //else get the file-type from the file info
             fileType = image.getFileInfo(0).getFileFormat();
         }
         
@@ -4675,23 +4713,23 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
             }
 
-            // updates menubar for each image
-            final Vector<Frame> imageFrames = UI.getImageFrameVector();
-
-            if (imageFrames.size() < 1) {
-                UI.buildMenu();
-                UI.setControls();
-            } else {
-                UI.buildMenu();
-
-                for (i = 0; i < imageFrames.size(); i++) {
-
-                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-                    }
-                }
-
-                UI.getActiveImageFrame().setControls();
+            // updates menubar for each image when in interactive mode
+            if(!quiet) {
+	            if (UI.getImageFrameVector().size() < 1) {
+	                UI.buildMenu();
+	                UI.setControls();
+	            } else {
+	                UI.buildMenu();
+	
+	                for (i = 0; i < UI.getImageFrameVector().size(); i++) {
+	
+	                    if (UI.getImageFrameVector().elementAt(i) instanceof ViewJFrameImage) {
+	                        ((ViewJFrameImage) (UI.getImageFrameVector().elementAt(i))).updateMenubar();
+	                    }
+	                }
+	
+	                UI.getActiveImageFrame().setControls();
+	            }
             }
         }
 
@@ -7196,11 +7234,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private ModelImage readInterfile(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileInterfile imageFile;
+        boolean readData = true;
 
         try {
             imageFile = new FileInterfile(fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage(one);
+            image = imageFile.readImage(one, readData);
             // LUT = imageFile.getModelLUT();
         } catch (final IOException error) {
 
@@ -7238,6 +7277,330 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         imageFile.finalize();
         imageFile = null;
+        return image;
+
+    }
+    
+    /**
+     * Reads a multi Interfile file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readInterfileMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        ModelImage tempImage = null;
+        FileInterfile imageFile = null;
+        FileInfoBase fileInfo;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readInterfile(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        
+
+        try {
+            // if one of the images has the wrong extents, the following must be changed.
+            // (ei., too many images!)
+            // for simplicity of setup, read in the first file hdr
+            imageFile = new FileInterfile(fileList[0], fileDir);
+            imageFile.readImage(false, false);
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header portion of interfile file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileInterfile(fileList[i], fileDir);
+
+                imageFile.readImage(false, false);
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent interfile image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent interfile image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent interfile image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent interfile image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfo.setExtents(imgExtents); // set image extents to proper value!
+                fileInfo.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                tempImage = imageFile.readImage(false, true);
+                
+                try {
+                    tempImage.exportData(0, length, buffer);
+                }
+                catch (IOException e) {
+                    if (!quiet) {
+                        MipavUtil.displayError("IOException on tempImage.exportData");
+                    }
+                    e.printStackTrace();
+
+                    if (image != null) {
+                        image.disposeLocal();
+                        image = null;
+                    }
+
+                    System.gc();
+
+                    return null;
+                    
+                }
+                tempImage.disposeLocal();
+                tempImage = null;
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
         return image;
 
     }
@@ -8390,11 +8753,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private ModelImage readMinc(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileMinc imageFile;
+        boolean readData = true;
 
         try {
             imageFile = new FileMinc(fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage(one);
+            image = imageFile.readImage(one, readData);
         } catch (final IOException error) {
 
             if (image != null) {
@@ -8433,6 +8797,331 @@ nList:      for (int i = 0; i < nListImages; i++) {
         imageFile.finalize();
         imageFile = null;
         return image;
+    }
+    
+    /**
+     * Reads a multi Minc file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readMincMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        ModelImage tempImage = null;
+        FileMinc imageFile = null;
+        FileInfoBase fileInfo;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readMinc(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        
+
+        try {
+            // if one of the images has the wrong extents, the following must be changed.
+            // (ei., too many images!)
+            // for simplicity of setup, read in the first file hdr
+            imageFile = new FileMinc(fileList[0], fileDir);
+            imageFile.readImage(false, false);
+            
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header portion of Minc file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = imageFile.getFileInfo();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileMinc(fileList[i], fileDir);
+
+                imageFile.readImage(false, false);
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = imageFile.getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent Minc image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent Minc image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent Minc image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent Minc image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfo.setExtents(imgExtents); // set image extents to proper value!
+                fileInfo.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                tempImage = imageFile.readImage(false, true);
+                
+                try {
+                    tempImage.exportData(0, length, buffer);
+                }
+                catch (IOException e) {
+                    if (!quiet) {
+                        MipavUtil.displayError("IOException on tempImage.exportData");
+                    }
+                    e.printStackTrace();
+
+                    if (image != null) {
+                        image.disposeLocal();
+                        image = null;
+                    }
+
+                    System.gc();
+
+                    return null;
+                    
+                }
+                tempImage.disposeLocal();
+                tempImage = null;
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
     }
 
     private ModelImage readMincHDF(final String fileName, final String fileDir, final boolean one) {
@@ -8623,6 +9312,68 @@ nList:      for (int i = 0; i < nListImages; i++) {
             } else {
                 image = imageFile.readImage(one, false);
             }
+
+        } catch (final IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+        imageFile.finalize();
+        imageFile = null;
+
+        return image;
+    }
+    
+    /**
+     * Reads a MetaImage file by calling the read method of the file. if so, calls that method instead.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readMetaImage(final String fileName, final String fileDir, final boolean one) {
+        ModelImage image = null;
+        FileMetaImage imageFile;
+
+        try {
+            imageFile = new FileMetaImage(fileName, fileDir);
+            if ( !quiet) {
+                createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            }
+            
+            image = imageFile.readImage(one);
 
         } catch (final IOException error) {
 
@@ -8998,11 +9749,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private ModelImage readNRRD(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileNRRD imageFile;
+        boolean doHeader = true;
 
         try {
             imageFile = new FileNRRD(fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage(one);
+            image = imageFile.readImage(one, doHeader);
         } catch (final IOException error) {
 
             if (image != null) {
@@ -9041,6 +9793,648 @@ nList:      for (int i = 0; i < nListImages; i++) {
         imageFile = null;
         return image;
     }
+    
+    /**
+     * Reads a multi NRRD file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readNRRDMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FileNRRD imageFile = null;
+        FileInfoBase fileInfo;
+        FileInfoBase fileInfoMulti;
+        ModelImage tempImage;
+        FileInfoNRRD fileInfoNRRD;
+        boolean doHeader = false;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readNRRD(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        // if one of the images has the wrong extents, the following must be changed.
+        // (ei., too many images!)
+        // for simplicity of setup, read in the first file hdr
+        imageFile = new FileNRRD(fileList[0], fileDir);
+        fileInfoNRRD = new FileInfoNRRD(fileList[0], fileDir, FileUtility.NRRD);
+        imageFile.setFileInfo(fileInfoNRRD);
+
+        try {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
+                throw (new IOException(" NRRD header file error"));
+            }
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        fileInfoMulti = (FileInfoBase)fileInfo.clone();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileNRRD(fileList[i], fileDir);
+                fileInfoNRRD = new FileInfoNRRD(fileList[0], fileDir, FileUtility.NRRD);
+                imageFile.setFileInfo(fileInfoNRRD);
+
+                if ( ! (imageFile).readHeader(fileList[i], fileDir)) {
+                    throw (new IOException(" NRRD header file error"));
+                }
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent NRRD image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfoMulti.setExtents(imgExtents); // set image extents to proper value!
+                fileInfoMulti.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                imageFile.setFileInfo((FileInfoNRRD)fileInfo);
+                tempImage = (imageFile).readImage(false, doHeader);
+               
+                try {
+                    tempImage.exportData(0, length, buffer);
+                }
+                catch (IOException e) {
+                    if (!quiet) {
+                        MipavUtil.displayError("IOException on tempImage.exportData");
+                    }
+                    e.printStackTrace();
+
+                    if (image != null) {
+                        image.disposeLocal();
+                        image = null;
+                    }
+
+                    System.gc();
+
+                    return null;
+                    
+                }
+                tempImage.disposeLocal();
+                tempImage = null;
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfoMulti, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfoMulti, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }
+    
+    /**
+     * Reads a multi NRRD file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+   /* private ModelImage readNRRDMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FileNRRD imageFile = null;
+        FileInfoBase fileInfo;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readAnalyze(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        // if one of the images has the wrong extents, the following must be changed.
+        // (ei., too many images!)
+        // for simplicity of setup, read in the first file hdr
+        imageFile = new FileNRRD(fileList[0], fileDir);
+
+        try {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
+                throw (new IOException(" NRRD header file error"));
+            }
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileNRRD(fileList[i], fileDir);
+
+                if ( ! (imageFile).readHeader(fileList[i], fileDir)) {
+                    throw (new IOException(" NRRD header file error"));
+                }
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent analyze image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfo.setExtents(imgExtents); // set image extents to proper value!
+                fileInfo.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                (imageFile).readImage(buffer);
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }*/
 
     /**
      * Reads in a single GE Genesis type file.
@@ -9413,6 +10807,314 @@ nList:      for (int i = 0; i < nListImages; i++) {
         imageFile = null;
         return image;
     }
+    
+    /**
+     * Reads a multi PARREC file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readPARRECMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FilePARREC imageFile = null;
+        FileInfoBase fileInfo;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readPARREC(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        // if one of the images has the wrong extents, the following must be changed.
+        // (ei., too many images!)
+        // for simplicity of setup, read in the first file hdr
+        imageFile = new FilePARREC(fileList[0], fileDir);
+
+        try {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
+                throw (new IOException(" PARREC header file error"));
+            }
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FilePARREC(fileList[i], fileDir);
+
+                if ( ! (imageFile).readHeader(fileList[i], fileDir)) {
+                    throw (new IOException(" PARREC header file error"));
+                }
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent PARREC image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent PARREC image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent PARREC image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent PARREC image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfo.setExtents(imgExtents); // set image extents to proper value!
+                fileInfo.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                imageFile.setImage(image);
+                (imageFile).readImage(buffer);
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }
+    
+    
 
     /**
      * Reads a QT file by calling the read method of the file.
@@ -9513,7 +11215,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         try {
             imageFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
 
-            imageFile.readImage(image, fileInfo.getOffset());
+            imageFile.readImage(image, (long)fileInfo.getOffset());
         } catch (final IOException error) {
 
             if (image != null) {
@@ -9678,7 +11380,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             try {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
                 progressBar.updateValue((int) ( ((float) m / (float) nImages) * 100.0f), false);
-                imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
+                imageFile.readImage(buffer, (long)fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
                 imageFile.finalize();
                 imageFile = null;
@@ -9723,6 +11425,59 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         return image;
 
+    }
+    
+    /**
+     * Reads a Spar file by calling the read method of the file. 
+     * @param fileInfo 
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readSpar(FileInfoBase fileInfo, final String fileName, final String fileDir, final boolean one) {
+        ModelImage image = null;
+        FileSpar imageFile;
+        
+        try {
+            imageFile = new FileSpar(fileInfo, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (final IOException error) {
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+        imageFile.finalize();
+        imageFile = null;
+        return image;
     }
 
     /**
@@ -11337,6 +13092,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             FileInfoDicom fileDicom, final FileInfoBase originalFileInfo, final int originalImageDataType,
             final TransMatrix originalImageMatrix, final double originalImageMin, final double originalImageMax,
             final boolean originalIsDicom, final boolean originalIsColor) {
+        int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
@@ -11461,6 +13217,94 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             patientOrientationString.length());
                 }
             }
+            
+            // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
+            float resols[] = image.getFileInfo()[0].getResolutions();
+            float origin[] = image.getFileInfo()[0].getOrigin();
+            int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
+            boolean set;
+
+            for (i = 0; i < 2; i++) {
+                set = true;
+                if (units[i] == Unit.CENTIMETERS.getLegacyNum()) {}
+                else if (units[i] == Unit.INCHES.getLegacyNum()) {
+                    resols[i] = 2.54f * resols[i];
+                    origin[i] = 2.54f * origin[i];
+                } else if (units[i] == Unit.MILS.getLegacyNum()) {
+                    resols[i] = 2.54e-3f * resols[i];
+                    origin[i] = 2.54e-3f * origin[i];
+                } else if (units[i] == Unit.MILLIMETERS.getLegacyNum()) {
+                    resols[i] = 0.1f * resols[i];
+                    origin[i] = 0.1f * origin[i];
+                } else if (units[i] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[i] = 1.0e-8f * resols[i];
+                    origin[i] = 1.0e-8f * origin[i];
+                } else if (units[i] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-7f * resols[i];
+                    origin[i] = 1.0e-7f * origin[i];
+                } else if (units[i] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-4f * resols[i];
+                    origin[i] = 1.0e-4f * origin[i];
+                } else if (units[i] == Unit.METERS.getLegacyNum()) {
+                    resols[i] = 1.0e2f * resols[i];
+                    origin[i] = 1.0e2f * origin[i];
+                } else if (units[i] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e5f * resols[i];
+                    origin[i] = 1.0e5f * origin[i];
+                } else if (units[i] == Unit.MILES.getLegacyNum()) {
+                    resols[i] = 1.6093e5f * resols[i];
+                    origin[i] = 1.6093e5f * origin[i];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    if (i == 0) {
+                        fileDicom.getTagTable().setValue("0018,602C", new Double((double)resols[0]), 8);
+                    }
+                    else if (i == 1) {
+                        fileDicom.getTagTable().setValue("0018,602E", new Double((double)resols[1]), 8);    
+                    }
+                }
+            } // for (i = 0; i < 2; i++)
+            
+            // Distances in DICOM are in millimeters for "0018,0088".
+            if (image.getNDims() >= 3) {
+                set = true;
+                if (units[2] == Unit.MILLIMETERS.getLegacyNum()) { }
+                else if (units[2] == Unit.INCHES.getLegacyNum()) {
+                    resols[2] = 25.4f * resols[2];
+                    origin[2] = 25.4f * origin[2];
+                } else if (units[2] == Unit.MILS.getLegacyNum()) {
+                    resols[2] = 2.54e-2f * resols[2];
+                    origin[2] = 2.54e-2f * origin[2];
+                } else if (units[2] == Unit.CENTIMETERS.getLegacyNum()) {
+                    resols[2] = 10.0f * resols[2];
+                    origin[2] = 10.0f * origin[2];
+                } else if (units[2] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[2] = 1.0e-7f * resols[2];
+                    origin[2] = 1.0e-7f * origin[2];
+                } else if (units[2] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-6f * resols[2];
+                    origin[2] = 1.0e-6f * origin[2];
+                } else if (units[2] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-3f * resols[2];
+                    origin[2] = 1.0e-3f * origin[2];
+                } else if (units[2] == Unit.METERS.getLegacyNum()) {
+                    resols[2] = 1.0e3f * resols[2];
+                    origin[2] = 1.0e3f * origin[2];
+                } else if (units[2] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e6f * resols[2];
+                    origin[2] = 1.0e6f * origin[2];
+                } else if (units[2] == Unit.MILES.getLegacyNum()) {
+                    resols[2] = 1.6093e6f * resols[2];
+                    origin[2] = 1.6093e6f * origin[2];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    fileDicom.getTagTable().setValue("0018,0088", new Double((double)resols[2]), 8);
+                }
+            } // if (image.getNDims() >= 3)
 
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (originalFileInfo.getDataType() == ModelStorageBase.SHORT)
@@ -11498,14 +13342,22 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 fileDicom.getTagTable().setValue("0028,0102", new Short((short) 0), 2);
                 fileDicom.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 fileDicom.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
-            } else if ( (image.getType() == ModelStorageBase.ARGB) || (image.getType() == ModelStorageBase.ARGB_USHORT)
-                    || (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+                fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+            } else if (image.getType() == ModelStorageBase.ARGB) {
                 fileDicom.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 fileDicom.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
                 fileDicom.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
                 fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                fileDicom.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                fileDicom.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                fileDicom.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+                fileDicom.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+                fileDicom.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+                fileDicom.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (originalFileInfo.getDataType() == ModelStorageBase.FLOAT)) // this
                     // is
                     // new
@@ -11560,7 +13412,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 TransMatrix matrix = fileDicom.getPatientOrientation();
                 if (matrix != null) {
                     final TransMatrix transposeMatrix = new TransMatrix(4);
-                    for (int i = 0; i < 4; i++) {
+                    for (i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
                             transposeMatrix.set(i, j, matrix.get(j, i));
                         }
@@ -11632,7 +13484,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 APIndex = 1;
                 ISIndex = 2;
                 increaseRes = true;
-                for (int i = 0; i <= 2; i++) {
+                for (i = 0; i <= 2; i++) {
                     if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                         RLIndex = i;
                     } else if (originalFileInfo.getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
@@ -11893,7 +13745,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
      */
     private boolean writeDicom(ModelImage image, final FileWriteOptions options) {
 
-        //int i;
+        int i;
         int index;
         String prefix = "";
         String fileSuffix = "";
@@ -12029,6 +13881,94 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             patientOrientationString.length());
                 }
             }
+            // Distances in DICOM are in centimeters for "0018,602C" and "0018,602E".
+            float resols[] = image.getFileInfo()[0].getResolutions();
+            float origin[] = image.getFileInfo()[0].getOrigin();
+            int units[] = image.getFileInfo()[0].getUnitsOfMeasure();
+            boolean set;
+
+            for (i = 0; i < 2; i++) {
+                set = true;
+                if (units[i] == Unit.CENTIMETERS.getLegacyNum()) { }
+                else if (units[i] == Unit.INCHES.getLegacyNum()) {
+                    resols[i] = 2.54f * resols[i];
+                    origin[i] = 2.54f * origin[i];
+                } else if (units[i] == Unit.MILS.getLegacyNum()) {
+                    resols[i] = 2.54e-3f * resols[i];
+                    origin[i] = 2.54e-3f * origin[i];
+                } else if (units[i] == Unit.MILLIMETERS.getLegacyNum()) {
+                    resols[i] = 0.1f * resols[i];
+                    origin[i] = 0.1f * origin[i];
+                } else if (units[i] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[i] = 1.0e-8f * resols[i];
+                    origin[i] = 1.0e-8f * origin[i];
+                } else if (units[i] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-7f * resols[i];
+                    origin[i] = 1.0e-7f * origin[i];
+                } else if (units[i] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e-4f * resols[i];
+                    origin[i] = 1.0e-4f * origin[i];
+                } else if (units[i] == Unit.METERS.getLegacyNum()) {
+                    resols[i] = 1.0e2f * resols[i];
+                    origin[i] = 1.0e2f * origin[i];
+                } else if (units[i] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[i] = 1.0e5f * resols[i];
+                    origin[i] = 1.0e5f * origin[i];
+                } else if (units[i] == Unit.MILES.getLegacyNum()) {
+                    resols[i] = 1.6093e5f * resols[i];
+                    origin[i] = 1.6093e5f * origin[i];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    if (i == 0) {
+                        myFileInfo.getTagTable().setValue("0018,602C", new Double((double)resols[0]), 8);
+                    }
+                    else if (i == 1) {
+                        myFileInfo.getTagTable().setValue("0018,602E", new Double((double)resols[1]), 8);    
+                    }
+                }
+            } // for (i = 0; i < 2; i++)
+            
+            // Distances in DICOM are in millimeters for "0018,0088".
+            if (image.getNDims() >= 3) {
+                set = true;
+                if (units[2] == Unit.MILLIMETERS.getLegacyNum()) { }
+                else if (units[2] == Unit.INCHES.getLegacyNum()) {
+                    resols[2] = 25.4f * resols[2];
+                    origin[2] = 25.4f * origin[2];
+                } else if (units[2] == Unit.MILS.getLegacyNum()) {
+                    resols[2] = 2.54e-2f * resols[2];
+                    origin[2] = 2.54e-2f * origin[2];
+                } else if (units[2] == Unit.CENTIMETERS.getLegacyNum()) {
+                    resols[2] = 10.0f * resols[2];
+                    origin[2] = 10.0f * origin[2];
+                } else if (units[2] == Unit.ANGSTROMS.getLegacyNum()) {
+                    resols[2] = 1.0e-7f * resols[2];
+                    origin[2] = 1.0e-7f * origin[2];
+                } else if (units[2] == Unit.NANOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-6f * resols[2];
+                    origin[2] = 1.0e-6f * origin[2];
+                } else if (units[2] == Unit.MICROMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e-3f * resols[2];
+                    origin[2] = 1.0e-3f * origin[2];
+                } else if (units[2] == Unit.METERS.getLegacyNum()) {
+                    resols[2] = 1.0e3f * resols[2];
+                    origin[2] = 1.0e3f * origin[2];
+                } else if (units[2] == Unit.KILOMETERS.getLegacyNum()) {
+                    resols[2] = 1.0e6f * resols[2];
+                    origin[2] = 1.0e6f * origin[2];
+                } else if (units[2] == Unit.MILES.getLegacyNum()) {
+                    resols[2] = 1.6093e6f * resols[2];
+                    origin[2] = 1.6093e6f * origin[2];
+                } else {
+                    set = false;
+                }
+                if (set) {
+                    myFileInfo.getTagTable().setValue("0018,0088", new Double((double)resols[2]), 8);
+                }
+            } // if (image.getNDims() >= 3)
+            
             if ( (image.getType() == ModelStorageBase.SHORT) || (image.getType() == ModelStorageBase.USHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.SHORT)
                     || (image.getFileInfo(0).getDataType() == ModelStorageBase.USHORT)) {
@@ -12065,13 +14005,22 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 0), 2);
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("MONOCHROME2")); // photometric
-            } else if (image.isColorImage()) {
+                myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
+            } else if (image.getType() == ModelStorageBase.ARGB) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 8), 2);
                 myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 7), 2);
                 myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
                 myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
                 myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+            } else if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+                myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0101", new Short((short) 16), 2);
+                myFileInfo.getTagTable().setValue("0028,0102", new Short((short) 15), 2);
+                myFileInfo.getTagTable().setValue("0028,0002", new Short((short) 3), 2); // samples per pixel
+                myFileInfo.getTagTable().setValue("0028,0004", new String("RGB")); // photometric
+                myFileInfo.getTagTable().setValue("0028,0006", new Short((short) 0), 2); // planar Config
+                myFileInfo.getTagTable().setValue("0028,0103", new Short((short) 0), 2);
             } else if ( ( (image.getType() == ModelStorageBase.FLOAT) || (image.getFileInfo(0).getDataType() == ModelStorageBase.FLOAT)) // 7/8/2008
                     && (myFileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 myFileInfo.getTagTable().setValue("0028,0100", new Short((short) 16), 2);
@@ -12116,7 +14065,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             if (image.getNDims() > 2) {
                 //create as many file-infos as dicom frames exist in the image
                 int fBaseLength = image.getExtents()[2];
-                for(int i=3; i<image.getExtents().length; i++) {
+                for(i=3; i<image.getExtents().length; i++) {
                     fBaseLength *= image.getExtents()[i];
                 }
                 final FileInfoBase[] fBase = new FileInfoBase[fBaseLength];
@@ -12124,7 +14073,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
                 if (matrix != null) {
                     final TransMatrix transposeMatrix = new TransMatrix(4);
-                    for (int i = 0; i < 4; i++) {
+                    for (i = 0; i < 4; i++) {
                         for (int j = 0; j < 4; j++) {
                             transposeMatrix.set(i, j, matrix.get(j, i));
                         }
@@ -12197,7 +14146,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 APIndex = 1;
                 ISIndex = 2;
                 increaseRes = true;
-                for (int i = 0; i <= 2; i++) {
+                for (i = 0; i <= 2; i++) {
                     if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_R2L_TYPE) {
                         RLIndex = i;
                     } else if (image.getFileInfo()[0].getAxisOrientation()[i] == FileInfoBase.ORI_L2R_TYPE) {
@@ -12427,7 +14376,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             if ( !myFileInfo.isMultiFrame() && !options.doEnhanced()) {
                 final String sopUID = ((String) ((FileInfoDicom) image.getFileInfo(0)).getTagTable().get("0008,0018")
                         .getValue(true)).toString();
-                for (int i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
+                for (i = options.getBeginSlice(); i <= options.getEndSlice(); i++) {
                     progressBar.updateValue(Math.round((float) i / (options.getEndSlice()) * 100), false);
 
                     myFileInfo = (FileInfoDicom) image.getFileInfo(i);
@@ -12554,7 +14503,6 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
             FileInfoDicom[][] infoAr) {
         long time = System.currentTimeMillis();
-        System.out.println("Oute");
         //create sequence ordered by current slice number
         FileDicomSQ seqBase = new FileDicomSQ(); //this is the 5200,9230 sequence
         seqBase.setWriteAsUnknownLength(true); //sequences containing enhanced dicom data always given known length
@@ -12598,10 +14546,35 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 outerItem.setWriteAsUnknownLength(false);
             }
         }
-        System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
+       
         //insert constructed sequence into tag table
         myFileInfo.getTagTable().setValue("0028,0008", tDim*zDim);
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
+        if (myFileInfo.getTagTable().get("0002,0002") == null) {
+            final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface
+                    .getReference().getMainFrame());
+
+            if (choice.okayPressed()) {
+                String str = choice.dicomType() + " ";
+                myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+            }
+        }
+        else {
+            FileDicomTag tag =  myFileInfo.getTagTable().get("0002,0002");
+            String str = (String)tag.getValue(true);
+            if (!(str.trim().equals(DICOM_Constants.UID_EnhancedMRStorage) 
+                    || str.trim().equals(DICOM_Constants.UID_EnhancedCTStorage) 
+                    || str.trim().equals(DICOM_Constants.UID_EnhancedXAStorage))) {
+                final JDialogEnhancedDicomChoice choice = new JDialogEnhancedDicomChoice(ViewUserInterface
+                        .getReference().getMainFrame());
+
+                if (choice.okayPressed()) {
+                    str = choice.dicomType() + " ";
+                    myFileInfo.getTagTable().setValue("0002,0002", str, str.length());
+                }
+            }
+        }
+        System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
     }
 
     /**
@@ -12921,12 +14894,6 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private boolean writeMinc(final ModelImage image, FileWriteOptions options) {
         FileMinc mincFile;
         FileInfoBase fileInfo;
-
-        if (image.getNDims() != 3) {
-            MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
-
-            return false;
-        }
 
         try { // Construct a new file object
 

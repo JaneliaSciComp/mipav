@@ -33,7 +33,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmLaplacian
  */
-public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -109,7 +109,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -130,7 +129,10 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10013");
+            //MipavUtil.showHelp("10013");
+            MipavUtil.showWebHelp("Filters_(Spatial)_Laplacian#Applying_the_Laplacian_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
 
     }
@@ -148,9 +150,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     public void algorithmPerformed(AlgorithmBase algorithm) {
         Preferences.debug("Laplacian: " + algorithm.getElapsedTime());
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
         if ( algorithm instanceof OpenCLAlgorithmLaplacian )
         {
         	if ( algorithm.isCompleted() )
@@ -285,7 +284,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
-    public void loadDefaults() {
+    public void legacyLoadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
         if ((defaultsString != null) && (outputPanel != null)) {
@@ -319,7 +318,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
 
         String defaultsString = outputPanel.isProcessWholeImageSet() + delim;

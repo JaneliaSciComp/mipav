@@ -127,11 +127,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private TransMatrix fileTransMatrix;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** source image */
+    private ModelImage image; 
 
-    /** DOCUMENT ME! */
-    private int interp = 0;
+    /** Interpolation method */
+    private int interp = AlgorithmTransform.TRILINEAR;
 
     private float fillValue = 0.0f;
 
@@ -285,6 +285,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private int outOfBoundsIndex = 0;
 
     private AlgorithmTPSpline spline = null;
+    
+    private int fileInterp[] = new int[1];
+    private float fileXres[] = new float[1];
+    private float fileYres[] = new float[1];
+    private float fileZres[] = new float[1];
+    private int fileXdim[] = new int[1];
+    private int fileYdim[] = new int[1];
+    private int fileZdim[] = new int[1];
+    private boolean filetVOI[] = new boolean[1];
+    private boolean fileClip[] = new boolean[1];
+    private boolean filePad[] = new boolean[1];
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -347,7 +358,10 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Transform010");
+            //MipavUtil.showHelp("Transform010");
+            MipavUtil.showWebHelp("Transform");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -1082,7 +1096,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     public TransMatrix readTransformMatrixFile(final String fileName) {
     	
         final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
-        matrix.MakeIdentity();
+        matrix.identity();
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
@@ -1108,7 +1122,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 raFile.close();
             } else {
                 spline = null;
-                matrix.readMatrix(raFile, false);
+                matrix.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim, 
+                                  filetVOI, fileClip, filePad, false);
                 raFile.close();
                 fileTransMatrix = matrix;
             }
@@ -1119,7 +1134,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (final IOException error) {
             MipavUtil.displayError("Matrix read error");
-            fileTransMatrix.MakeIdentity();
+            fileTransMatrix.identity();
         }
         
         return fileTransMatrix;
@@ -1404,19 +1419,42 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if ( (image.getNDims() == 2) || (do25D)) {
-            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres, Preferences.DEBUG_SCRIPTING);
-            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n", Preferences.DEBUG_SCRIPTING);
-            Preferences.debug("xfrm = " + xfrm, Preferences.DEBUG_SCRIPTING);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
-                    doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            if (fileXdim[0] != 0) {
+                algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileXdim[0],
+                        fileYdim[0], filetVOI[0], fileClip[0], filePad[0]);    
+            }
+            else {
+                Preferences.debug("oXres, oYres = " + oXres + ", " + oYres, Preferences.DEBUG_SCRIPTING);
+                Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n", Preferences.DEBUG_SCRIPTING);
+                Preferences.debug("xfrm = " + xfrm, Preferences.DEBUG_SCRIPTING);
+                algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                        doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            }
         } else { // ((image.getNDims() >= 3) && (!do25D))
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
-                    doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-            algoTrans.setUseScannerAnatomical(isSATransform);
+            if (fileXdim[0] != 0) {
+                algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileZres[0], fileXdim[0],
+                                  fileYdim[0], fileZdim[0], filetVOI[0], fileClip[0], filePad[0]);
+                Preferences.debug("Enhanced .mtx matrix used in supplying transform parameters\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileInterp[0] = " + fileInterp[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileXres[0] = " + fileXres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileYres[0] = " + fileYres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileZres[0] = " + fileZres[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileXdim[0] = " + fileXdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileYdim[0] = " + fileYdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileZdim[0] = " + fileZdim[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("filetVOI[0] = " + filetVOI[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fileClip[0] = " + fileClip[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("filePad[0] = " + filePad[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
+                        doVOI, doClip, doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.setUseScannerAnatomical(isSATransform);
+            }
         }
 
         // This is very important. Adding this object as a listener allows
@@ -1671,8 +1709,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 if (transformSource.equals("file")) {
                     final String matrixFile = scriptParameters.getParams().getString("transform_file");
                     readTransformMatrixFile(matrixFile);
-                    transMat.MakeIdentity();
-                    transMat.Mult(fileTransMatrix);
+                    transMat.identity();
+                    transMat.mult(fileTransMatrix);
                     xfrm = transMat;
                 } else if (transformSource.equals("user")) {
                     final double[][] xMat = new double[4][4];
@@ -1683,7 +1721,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     transMat.copyMatrix(xMat);
                     xfrm = transMat;
                 } else if (transformSource.equals("self")) {
-                    transMat.MakeIdentity();
+                    transMat.identity();
                     xfrm = transMat;
                     if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
                         isSATransform = true;
@@ -1691,9 +1729,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                     final TransMatrix imageMatrix = image.getMatrix();
 
-                    xfrm.Mult(imageMatrix);
+                    xfrm.mult(imageMatrix);
                 } else if (transformSource.equals("none")) {
-                    transMat.MakeIdentity();
+                    transMat.identity();
                     xfrm = transMat;
                 }
             }
@@ -3500,7 +3538,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             // right handed to left handed or left handed to right handed
             // coordinate systems
-            rh_lhMatrix.Set(2, 2, -1);
+            rh_lhMatrix.set(2, 2, -1);
 
             // p.223 Foley, Van Dam ...
             // Flipping only z axis
@@ -3509,8 +3547,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // 0 0 -1 0
             // 0 0 0 1
 
-            wcMatrix.Set(1, 1, -1);
-            wcMatrix.Set(2, 2, -1);
+            wcMatrix.set(1, 1, -1);
+            wcMatrix.set(2, 2, -1);
 
             // Flipping y and z axes
             // Left handed cooordinates will remain left handed and right handed will remain right handed
@@ -3526,15 +3564,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 // change from both the "left-hand" and world coordinate system.
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.Mult(rh_lhMatrix);
-                mat.Mult(wcMatrix);
+                mat.mult(rh_lhMatrix).mult(wcMatrix);
                 mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.Mult(rkMatrix);
+                mat.mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.Mult(wcMatrix);
-                mat.Mult(rh_lhMatrix);
+                mat.mult(wcMatrix).mult(rh_lhMatrix);
                 mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 // mat.print();
@@ -3542,26 +3578,26 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             } else if (bWcSystem == true) { // Change just from the world coordinate system
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.Mult(wcMatrix);
+                mat.mult(wcMatrix);
                 mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.Mult(rkMatrix);
+                mat.mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.Mult(wcMatrix);
+                mat.mult(wcMatrix);
                 mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
             } else if (bLeftHandSystem == true) { // Change just from the "left-hand" system
 
                 mat.setTranslate(cPtRS.X, cPtRS.Y, cPtRS.Z);
-                mat.Mult(rh_lhMatrix);
+                mat.mult(rh_lhMatrix);
                 mat.setTranslate( -cPtRS.X, -cPtRS.Y, -cPtRS.Z);
 
-                mat.Mult(rkMatrix);
+                mat.mult(rkMatrix);
 
                 mat.setTranslate(cPt.X, cPt.Y, cPt.Z);
-                mat.Mult(rh_lhMatrix);
+                mat.mult(rh_lhMatrix);
                 mat.setTranslate( -cPt.X, -cPt.Y, -cPt.Z);
 
                 return mat;
@@ -3684,7 +3720,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             xfrm = new TransMatrix(4);
         }
 
-        xfrm.MakeIdentity();
+        xfrm.identity();
 
         iXres = image.getFileInfo(0).getResolutions()[0];
         iYres = image.getFileInfo(0).getResolutions()[1];
@@ -3861,7 +3897,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     "Matrix loaded from Transform dialog:\n");
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
                     reorientCoordSystem(fileTransMatrix).toString());
-            xfrm.Mult(reorientCoordSystem(fileTransMatrix));
+            xfrm.mult(reorientCoordSystem(fileTransMatrix));
         } else if (userDefinedMatrix.isSelected()) { // user matrix
             spline = null;
             // user stuff
@@ -4026,24 +4062,24 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
 
             if ( !do25D) {
-                xfrm.Mult(imageMatrix);
+                xfrm.mult(imageMatrix);
             } else {
                 final TransMatrix xfrm25 = new TransMatrix(3);
-                xfrm25.Set(0, 0, imageMatrix.Get(0, 0));
-                xfrm25.Set(0, 1, imageMatrix.Get(0, 1));
-                xfrm25.Set(0, 2, imageMatrix.Get(0, 3));
-                xfrm25.Set(1, 0, imageMatrix.Get(1, 0));
-                xfrm25.Set(1, 1, imageMatrix.Get(1, 1));
-                xfrm25.Set(1, 2, imageMatrix.Get(1, 3));
-                xfrm25.Set(2, 0, 0.0f);
-                xfrm25.Set(2, 1, 0.0f);
-                xfrm25.Set(2, 2, 1.0f);
+                xfrm25.set(0, 0, imageMatrix.get(0, 0));
+                xfrm25.set(0, 1, imageMatrix.get(0, 1));
+                xfrm25.set(0, 2, imageMatrix.get(0, 3));
+                xfrm25.set(1, 0, imageMatrix.get(1, 0));
+                xfrm25.set(1, 1, imageMatrix.get(1, 1));
+                xfrm25.set(1, 2, imageMatrix.get(1, 3));
+                xfrm25.set(2, 0, 0.0f);
+                xfrm25.set(2, 1, 0.0f);
+                xfrm25.set(2, 2, 1.0f);
 
-                xfrm.Mult(xfrm25);
+                xfrm.mult(xfrm25);
             }
         } else if (noTransform.isSelected()) { // no transform
             spline = null;
-            xfrm.MakeIdentity();
+            xfrm.identity();
         }
 
         // if ((no transformation) OR (user input transformation))

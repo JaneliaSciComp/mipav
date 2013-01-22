@@ -551,7 +551,9 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     }   else if (command.equals("Cancel")) {
     	    componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
 
 
@@ -567,9 +569,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
     	int i;
-    	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmSM2) {
             Preferences.debug("SM2 elapsed: " + algorithm.getElapsedTime());
@@ -611,7 +610,7 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     /**
      * Saves the default settings into the Preferences file.
      */
-    public void saveDefaults() {
+    public void legacySaveDefaults() {
         String delim = ",";
         String defaultsString = tissueImage.getImageFileName() + delim;
         defaultsString = min_constr[0] + delim;

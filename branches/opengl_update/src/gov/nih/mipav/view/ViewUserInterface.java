@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-
 import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.util.ThreadUtil;
 
@@ -13,6 +12,8 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.Argument.InstanceArgument;
+import gov.nih.mipav.view.Argument.StaticArgument;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
@@ -28,15 +29,18 @@ import ij.ImageStack;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -44,14 +48,16 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
- * frames presently being displayed and keeps a hash table of all the images (ModelImage) open in the applicaiton. In
+ * frames presently being displayed and keeps a hash table of all the images (ModelImage) open in the application. In
  * addition, this class keeps a reference to the main MIPAV frame and the message frame with much of the imaging results
  * are output.
  * 
- * @version 1.0 June 1, 2005
+ * @version 1.1 June 1, 2012
+ * @author   Justin Senseney
+ * @author   Matthew McAuliffe, Ph.D.
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener,
-        CommandLineParser {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, 
+                                            ScriptRecordingListener, CommandLineParser {
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
@@ -201,6 +207,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Stores the plugins menu so that it can be removed/updated when plugins are installed. */
     private JMenu pluginsMenu = null;
+    
+    /** Stores all stand-alone menus that have been created by the user. */
+    protected Vector<JMenuBar> aloneMenu = new Vector<JMenuBar>();
 
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = ViewUserInterface.OPENING_STR;
@@ -220,6 +229,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** if user selects to open images as tiles, then this counter tells us how many tile sheets there are* */
     private int numTileSheets = 0;
 
+    /** Exception logging file */
+	private static File exceptions;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -230,20 +242,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * class is allowed to be instantiated in a single VM.
      */
     protected ViewUserInterface() {
-        imageFrameVector = new Vector<Frame>();
-        imageHashtable = new CustomHashtable<ModelImage>();
-        initPrefsFile();
-
-        // Read preference file
-        initUsingPreferences();
-        if ( !GraphicsEnvironment.isHeadless()) {
-            mainFrame = new JFrame();
-            initializeGui();
-        }
-
-        // listen to the script recorder so that we can pass along changes in the script recorder status to the script
-        // toolbars of individual images
-        ScriptRecorder.getReference().addScriptRecordingListener(this);
+        this(false);
     }
 
     /**
@@ -416,6 +415,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             aboutJavaDialog.setLocation(100, 50);
             aboutJavaDialog.setVisible(true);
         }
+    }
+    
+    /**
+     * Adds a standalone menu to the user interface.
+     * 
+     * @param menu the standalone JMenu
+     * @return whether addition to the vector was successful
+     */
+    public boolean addAloneMenu(JMenuBar menu) {
+        return aloneMenu.add(menu);
     }
 
     // ************************************************************************
@@ -901,7 +910,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("DataProvenance")) {
             aboutDataProvenance();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
+            MipavUtil.showWebHelp("MIPAV_Help");
         } else if (command.equals("MemoryUsage")) {
             memoryFrame();
         } else if (command.equals("MemoryAdjust")) {
@@ -971,8 +981,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
+        } else if (command.equals("TimeFitting")) {
+            new JDialogTimeFitting();
         } else if (command.equals("KMeans")) {
             new JDialogKMeans();
+        } else if (command.equals("SpectralClustering")) {
+            new JDialogSpectralClustering();
         }
 
     }
@@ -1089,6 +1103,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         openingMenuBar.add(pluginsMenu);
         openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
+       
     }
 
     /**
@@ -1975,9 +1990,81 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         mainFrame.pack();
         mainFrame.toFront();
-
+        
+        ImageTransferHandler transfer = new ImageTransferHandler();
+        
+        mainFrame.setTransferHandler(transfer);
+        
         mainFrame.setFocusable(true);
         mainFrame.addKeyListener(this);
+    }
+    
+    /**
+     * Handles drag and drop events to the main mipav gui.
+     * 
+     * @author senseneyj
+     *
+     */
+    private class ImageTransferHandler extends TransferHandler {
+        
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#canImport(javax.swing.TransferHandler.TransferSupport)
+         */
+        @Override
+        public boolean canImport(TransferSupport transfer) {
+            if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                return true;
+            }          
+            return false;
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
+         */
+        @Override
+        public boolean importData(TransferSupport transfer) {
+            if (!canImport(transfer)) {
+                return false;
+            }
+            
+            Transferable t = transfer.getTransferable();
+
+            try {
+                List<File> list = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
+                
+                List<File> revList = resolveFileList(list.toArray(new File[list.size()]));
+
+                for (File f : revList) {
+                    boolean multiFile = getLastStackFlag();
+                    openImageFrame(f.getAbsolutePath(), multiFile);
+                }
+            } catch (Exception e) {
+                return false;
+            }
+
+            return true;
+        
+        }
+        
+        private List<File> resolveFileList(File[] fileAr) {
+            ArrayList<File> newList = new ArrayList<File>();
+            boolean addSlice = false;
+            for(File f : fileAr) {
+                if(f.isDirectory()) {
+                    newList.addAll(resolveFileList(f.listFiles()));
+                } else {
+                    if(getLastStackFlag() && !addSlice) {
+                        newList.add(f);
+                        addSlice = true;
+                    } else if (!getLastStackFlag()) {
+                        newList.add(f);
+                    }
+                }
+            }
+            
+            return newList;
+        }
+        
     }
 
     /**
@@ -2544,7 +2631,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         setDefaultDirectory(System.getProperty("user.dir"));
                                     } else {
                                         Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                        System.out.println("Can not find " + imgName);
+                                        System.out.println("Can not find1 " + imgName);
                                         printUsageAndExit(c);
                                     }
                                 }
@@ -2552,10 +2639,23 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
                                 if (checkFile.exists()) {
                                     setDefaultDirectory(System.getProperty("user.dir"));
-                                } else {
-                                    Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find " + imgName);
-                                    printUsageAndExit(c);
+                                } else { //try current working directory
+                                    System.out.println("user.dir is "+System.getProperty("user.dir"));
+                                    try {
+                                        System.out.println("File(\".\") is "+new File(".").getCanonicalPath());
+                                        checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
+                                        if(checkFile.exists()) {
+                                            setDefaultDirectory(new File(".").getCanonicalPath());
+                                        } else {
+                                            Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                            System.out.println("Can not find2A " + imgName);
+                                            printUsageAndExit(c);
+                                        }
+                                    } catch (IOException e) {
+                                        Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                        System.out.println("Can not find2B " + imgName);
+                                        printUsageAndExit(c);
+                                    }
                                 }
                             }
                             imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
@@ -2569,7 +2669,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     imageList.add(new OpenFileInfo(dir, name, isMulti));
                                 } else {
                                     Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find " + imgName);
+                                    System.out.println("Can not find3 " + imgName);
                                     printUsageAndExit(c);
                                 }
                             } else {
@@ -2585,7 +2685,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                             imageList.add(new OpenFileInfo(dir, name, isMulti));
                                         } else {
                                             Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                            System.out.println("Can not find " + imgName);
+                                            System.out.println("Can not find4 " + imgName);
                                             printUsageAndExit(c);
                                         }
                                     }
@@ -2593,10 +2693,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     checkFile = new File(imgName);
                                     if (checkFile.exists()) {
                                         imageList.add(new OpenFileInfo(dir, name, isMulti));
-                                    } else {
-                                        Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                        System.out.println("Can not find " + imgName);
-                                        printUsageAndExit(c);
+                                    } else { //try current directory
+                                        try {
+                                            checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
+                                            if(checkFile.exists()) {
+                                                setDefaultDirectory(new File(".").getCanonicalPath());
+                                            } else {
+                                                Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                                System.out.println("Can not find5A " + imgName);
+                                                printUsageAndExit(c);
+                                            }
+                                        } catch (IOException e) {
+                                            Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                            System.out.println("Can not find5B " + imgName);
+                                            printUsageAndExit(c);
+                                        }
                                     }
                                 }
 
@@ -2741,6 +2852,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         imageFrameVector.insertElementAt(frame, 0);
 
+        if(frame instanceof ActionListener) {
+            for(int i=0; i<aloneMenu.size(); i++) {
+                setMenuActionListeners(aloneMenu.get(i), (ActionListener) frame);
+            }
+        }
+        
         if (frame instanceof ViewJFrameBase) {
             ((ViewJFrameBase) frame).setControls();
             // ((ViewJFrameBase) frame).addKeyListener(this);
@@ -2748,6 +2865,33 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         setTitle(frame.getTitle());
         // mainFrame.setTitle("MIPAV: " + frame.getTitle());
+    }
+    
+    private void setMenuActionListeners(Component comp, ActionListener frame) {
+        if(comp instanceof JMenu) {
+            JMenu menu = (JMenu)comp;
+            for(int i=0; i<menu.getMenuComponentCount(); i++) {
+                if(menu.getMenuComponent(i) instanceof JMenuItem) {
+                    setMenuActionListeners((JMenuItem)menu.getMenuComponent(i), frame);
+                }
+            }
+        } else if(comp instanceof JMenuBar) {
+            JMenuBar bar = (JMenuBar)comp;
+            for(int i=0; i<bar.getComponentCount(); i++) {
+                setMenuActionListeners(bar.getComponent(i), frame);
+            }
+        }
+        
+        if(comp instanceof JMenuItem) {
+            JMenuItem menuItem = (JMenuItem) comp;
+            for(ActionListener al : menuItem.getActionListeners()) {
+                if(al instanceof Frame) {
+                    menuItem.removeActionListener(al);
+                }
+            }
+            menuItem.addActionListener(frame);
+        }
+       
     }
 
     /**
@@ -2814,6 +2958,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         return newName;
     }
+    
+    /**
+     * Removes the stand-alone menu from the user interface.
+     * 
+     * @param menu the menu to be removed.
+     */
+    public boolean removeAloneMenu(JMenuBar menu) {
+        return aloneMenu.remove(menu);
+    }
 
     /**
      * Method sets the parameter frame to top and active.
@@ -2834,6 +2987,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (index < 0) {
             return;
+        }
+        
+        if(frame instanceof ActionListener) {
+            for(int i=0; i<aloneMenu.size(); i++) {
+                setMenuActionListeners(aloneMenu.get(i), (ActionListener) frame);
+            }
         }
 
         registerFrame(frame); // Put it at the top
@@ -3095,7 +3254,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * </p>
      */
     public void showLicense() {
-        showLicense("MIPAV license", "license.html");
+        showLicense("MIPAV license", "license/license.html");
     }
 
     /**
@@ -3418,6 +3577,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
 
+            if (LogStdStreams.logStream != null) {
+                LogStdStreams.logStream.close();
+            }
+            if(exceptions != null) {
+                exceptions.delete();    
+            }
             mainFrame.setVisible(false);
             mainFrame.dispose();
             System.exit(0); // close the application
@@ -3670,6 +3835,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         messageField.setBackground(new Color(215, 215, 215));
         messageField.setText(title);
         messageField.setPreferredSize(new Dimension(500, messageField.getPreferredSize().height));
+        messageField.setTransferHandler(new ImageTransferHandler());
 
         return messageField;
     }
@@ -3964,6 +4130,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (Preferences.is(Preferences.PREF_DATA_PROVENANCE)) {
 
             ProvenanceRecorder.getReference().startRecording();
+        }
+
+        if(Preferences.is(Preferences.PREF_LOGGING_ENABLED)) {
+            exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+            
+            if (exceptions.exists()) {
+            	exceptions.delete();
+            	exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+            }
+
+    		LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date() + "\n\n", true, true);
         }
 
         initPrefsTrim();
@@ -4277,6 +4454,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return actionList;
     }
 
+    /**
+     * @return the exceptions
+     */
+    public static File getExceptions() {
+        return exceptions;
+    }
+
     public static String getOutputDir() {
         return outputDir;
     }
@@ -4398,6 +4582,147 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          */
         public void setRawImageInfo(final RawImageInfo rI) {
             this.rawInfo = rI;
+        }
+    }
+    
+    /**
+     * Required by the CommandLineParser interface. Processes MIPAV command line arguments that DO NOT require
+     * MIPAV to have already been initialized. In cases like the plugins directory, it is specifically
+     * required that MIPAV has not been initialized yet. Returns the next argument to be processed (finished 
+     * if returns args.length)
+     */
+    public static int parseStaticArguments(String[] args, int initArg) {
+        int i = 0;
+        String arg;
+        boolean prefDirCommandDone = false;
+        
+        ViewUserInterface.setProvidedUserDefaultDir(false);
+
+        ViewUserInterface.setUserDefaultDir("");
+        
+        if (args.length == 0) {
+            return args.length;
+        }
+        
+parse:  while (i < args.length) {
+            arg = args[i];
+
+            if (arg.startsWith("-")) {
+                
+              //parse commands which do not require an initialized mipav
+                StaticArgument c = StaticArgument.getArgument(arg);
+                if(c == null) {
+                    i++;
+                    continue parse;
+                }
+                
+                switch(c) {
+                
+                case Help:
+                    ViewUserInterface.printUsageAndExit();
+                    break;
+                
+                case InputDir:
+                    ViewUserInterface.setProvidedUserDefaultDir(true);
+                    ViewUserInterface.setUserDefaultDir(args[ ++i]);
+                    
+                    if (ViewUserInterface.getUserDefaultDir() == null || ViewUserInterface.getUserDefaultDir().trim().equals("")) {
+                        Preferences.debug("In argument -"+c+", "+"directory is null");
+                        ViewUserInterface.printUsageAndExit(c);
+                    } else {
+                        // check that there is a trailng slash at the end of the defaultDir...if not, add one
+                        if ( ! (ViewUserInterface.getUserDefaultDir().charAt(ViewUserInterface.getUserDefaultDir().length() - 1) == File.separatorChar)) {
+                            ViewUserInterface.setUserDefaultDir(ViewUserInterface.getUserDefaultDir() + File.separator);
+                        }
+                        // now check if this is a valid path
+                        final File checkDefaultDir = new File(ViewUserInterface.getUserDefaultDir());
+                        if ( !checkDefaultDir.exists()) {
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getUserDefaultDir()+" does not exist");
+                            ViewUserInterface.printUsageAndExit(c);
+                        }
+                    }
+                    break;
+                    
+                case OutputDir:
+                    ViewUserInterface.setProvidedOutputDir(true);
+                    ViewUserInterface.setOutputDir(args[ ++i]);            
+                    
+                    if (ViewUserInterface.getOutputDir() == null || ViewUserInterface.getOutputDir().trim().equals("")) {
+                        ViewUserInterface.setProvidedOutputDir(false);
+                        ViewUserInterface.printUsageAndExit(c);
+                    } else {
+                        // check that there is a trailng slash at the end of the defaultDir...if not, add one
+                        if ( ! (ViewUserInterface.getOutputDir().charAt(ViewUserInterface.getOutputDir().length() - 1) == File.separatorChar)) {
+                            ViewUserInterface.setOutputDir(ViewUserInterface.getOutputDir() + File.separator);
+                        }
+                        // now check if this is a valid path
+                        final File checkOutputDir = new File(ViewUserInterface.getOutputDir());
+                        if ( !checkOutputDir.exists()) {
+                            ViewUserInterface.setProvidedOutputDir(false);
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getOutputDir()+" does not exist");
+                            ViewUserInterface.printUsageAndExit();
+                        }
+                    }
+                    break;
+                
+                
+                case PluginDir:
+                    String secPluginsDir = args[ ++i];
+                    File f = new File(secPluginsDir);
+                    if(f.exists() && f.isDirectory() && f.canRead()) {
+                        ViewUserInterface.setSecondaryPluginsDir(f);
+                    }else {
+                        Preferences.debug("In argument -"+c+", "+secPluginsDir+" is not a valid readable directory", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                
+                case HomeDir:
+                    Preferences.debug("HomeDir command is not currently usable, is only System.getProperty(\"user.home\")");
+                    break;
+                
+                case PreferencesDir:
+                    prefDirCommandDone = true;
+                    String prefDir = args[++i];
+                    f = new File(prefDir);
+                    if(f.exists() && f.isDirectory() && f.canRead() && f.canWrite()) {
+                        Preferences.setPreferencesFileDirectory(prefDir);
+                    } else {
+                        Preferences.debug("In argument -"+c+", "+prefDir+" is not a writable existing directory.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                    
+                case PreferencesName:
+                    if(!prefDirCommandDone) {
+                        checkPrefDirCommand(args, initArg);
+                    }
+                    String prefName = args[++i];
+                    f = new File(prefName);
+                    if(!f.exists() || (f.canRead() && f.canWrite())) {
+                        Preferences.setPreferencesFileName(prefName);
+                    } else {
+                        Preferences.debug("In argument -"+c+", "+prefName+" is not in a readable and/or writable location.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                }
+            }
+            i++;
+        }
+        return 0;
+    }
+
+    /**
+     * If the preferences name command is about to be performed before an existing preferences directory command,
+     * this guarantees that the directory command will be executed first.
+     */
+    public static void checkPrefDirCommand(String[] args, int initArg) {
+        for(int i=0; i<args.length; i++) {
+            if(StaticArgument.getArgument(args[i], true) == StaticArgument.PreferencesDir) {
+                String[] argSub = new String[]{args[i], args[i+1]};
+                parseStaticArguments(argSub, 0);
+            }
         }
     }
 

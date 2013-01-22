@@ -321,7 +321,10 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase implements Algo
                 //componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10097");
+            //MipavUtil.showHelp("10097");
+            MipavUtil.showWebHelp("Microscopy:_Fluorescence_Resonance_Energy_Transfer_(FRET)-Acceptor#Applying_the_FRET_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 
