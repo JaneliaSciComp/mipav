@@ -94,9 +94,9 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         int maxGreen = (int)Math.round(srcImage.getMaxG());
         int minBlue = (int)Math.round(srcImage.getMinB());
         int maxBlue = (int)Math.round(srcImage.getMaxB());
-        int r;
-        int g;
-        int b;
+        int r = 0;
+        int g = 0;
+        int b = 0;
         
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -168,7 +168,6 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         int oldCandidates;
         int numObjects;
         int idObject[][][] = new int[highRedBound-lowRedBound+1][highGreenBound-lowGreenBound+1][highBlueBound-lowBlueBound+1];
-        boolean objectFound;
         boolean objectGrow;
         int numBins = 0;
         double totr;
@@ -177,6 +176,10 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         int minr = 0;
         int ming = 0;
         int minb = 0;
+        int oldObjects;
+        boolean growObject;
+        
+        int objectHalf;
         
         try {
             srcImage.exportRGBData(1, 0, sliceSize, redBuffer);
@@ -209,7 +212,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         Preferences.debug("lowRedBound = " + lowRedBound + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("highRedBound = " + highRedBound + "\n", Preferences.DEBUG_ALGORITHM);
         for (r = lowRedBound; r <= highRedBound; r++) {
-            Preferences.debug("r = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+            //Preferences.debug("r = " + r + "\n", Preferences.DEBUG_ALGORITHM);
             lowRed = r - initialSideHalf;
             highRed = r + initialSideHalf;
             for (g = lowGreenBound; g <= highGreenBound; g++) {
@@ -269,22 +272,26 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
                                                 } // if ((ys != y) || (xs != x))
                                             } // for (xs = Math.max(x-1,0); xs <= Math.min(x+1, xDim-1); xs++)
                                         } // for (ys = Math.max(y-1,0); ys <= Math.min(y+1, yDim-1); ys++)
-                                        pixelConnectedness = ((double)connectedNeighbors)/((double)numNeighbors);
-                                        connectednessSum += pixelConnectedness;
-                                        localRedMean = ((double)localRedSum)/((double)connectedNeighbors);
-                                        localGreenMean = ((double)localGreenSum)/((double)connectedNeighbors);
-                                        localBlueMean = ((double)localBlueSum)/((double)connectedNeighbors);
-                                        localSum = 0.0;
-                                        for (i = 0; i < connectedNeighbors; i++) {
-                                            delta = localRed[i] - localRedMean;
-                                            localSum += delta * delta;
-                                            delta = localGreen[i] - localGreenMean;
-                                            localSum += delta * delta;
-                                            delta = localBlue[i] - localBlueMean;
-                                            localSum += delta * delta;
-                                        }
-                                        pixelDispersionMeasure = Math.sqrt(localSum)/connectedNeighbors;
-                                        localDispersionMeasureSum += pixelDispersionMeasure;
+                                        if (connectedNeighbors > 0) {
+                                            pixelConnectedness = ((double)connectedNeighbors)/((double)numNeighbors);
+                                            connectednessSum += pixelConnectedness;
+                                            if (connectedNeighbors > 1) {
+                                                localRedMean = ((double)localRedSum)/((double)connectedNeighbors);
+                                                localGreenMean = ((double)localGreenSum)/((double)connectedNeighbors);
+                                                localBlueMean = ((double)localBlueSum)/((double)connectedNeighbors);
+                                                localSum = 0.0;
+                                                for (i = 0; i < connectedNeighbors; i++) {
+                                                    delta = localRed[i] - localRedMean;
+                                                    localSum += delta * delta;
+                                                    delta = localGreen[i] - localGreenMean;
+                                                    localSum += delta * delta;
+                                                    delta = localBlue[i] - localBlueMean;
+                                                    localSum += delta * delta;
+                                                }
+                                                pixelDispersionMeasure = Math.sqrt(localSum)/connectedNeighbors;
+                                                localDispersionMeasureSum += pixelDispersionMeasure;
+                                            } // if (connectedNeighbors > 1)
+                                        } // if (connectedNeighbors > 0)
                                     } // if ((blue >= lowBlue) && (blue <= highBlue))
                                 } // if ((green >= lowGreen) && (green <= highGreen))
                             } // if ((red >= lowRed) && (red <= highRed))
@@ -320,7 +327,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         nCandidates = 0;
         Preferences.debug("Section 2\n", Preferences.DEBUG_ALGORITHM);
         for (r = 0; r <= highRedBound - lowRedBound; r++) {
-            Preferences.debug("r = " + r + "\n", Preferences.DEBUG_ALGORITHM);
+            //Preferences.debug("r = " + r + "\n", Preferences.DEBUG_ALGORITHM);
             for (g = 0; g <= highGreenBound - lowGreenBound; g++) {
                 for (b = 0; b <= highBlueBound - lowBlueBound; b++) {
                     localMaximum[r][g][b] = true;
@@ -348,7 +355,8 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
             for (r = 0; r <= highRedBound - lowRedBound; r++) {
                 for (g = 0; g <= highGreenBound - lowGreenBound; g++) {
                     for (b = 0; b <= highBlueBound - lowBlueBound; b++) {
-                        if (!localMaximum[r][g][b]) {
+                        if (!localMaximum[r][g][b] && idObject[r][g][b] == 0) {
+                            idObject[r][g][b] = -1;
                             for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1); rx++) {
                                 for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1); gx++) {
                                     for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1); bx++) {
@@ -367,49 +375,48 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
             }
         } // while (nCandidates < oldCandidates)
         
-        objectFound = true;
+        oldObjects = -1;
         numObjects = 0;
+        growObject = true;
         Preferences.debug("Section 4\n", Preferences.DEBUG_ALGORITHM);
-        while (objectFound) {
-            Preferences.debug("numObjects = " + numObjects + "\n", Preferences.DEBUG_ALGORITHM);
-            objectFound = false;
-            for (r = 0; (r <= highRedBound - lowRedBound) && (!objectFound); r++) {
-                for (g = 0; (g <= highGreenBound - lowGreenBound) && (!objectFound); g++) {
-                    for (b = 0; (b <= highBlueBound - lowBlueBound) && (!objectFound); b++) {
+        
+        while (numObjects > oldObjects || growObject) {
+            oldObjects = numObjects;
+            growObject = false;
+            for (r = 0; (r <= highRedBound - lowRedBound); r++) {
+                for (g = 0; (g <= highGreenBound - lowGreenBound); g++) {
+                    for (b = 0; (b <= highBlueBound - lowBlueBound); b++) {
                         if (localMaximum[r][g][b]  && idObject[r][g][b] == 0) {
                             numObjects++;
-                            objectFound = true;
-                            idObject[r][g][b] = numObjects;
-                        }
-                    }
-                }
-            }
-            
-            if (objectFound) {
-                objectGrow = true;
-                while (objectGrow) {
-                    objectGrow = false;
-                    for (r = 0; r <= highRedBound - lowRedBound; r++) {
-                        for (g = 0; g <= highGreenBound - lowGreenBound; g++) {
-                            for (b = 0; b <= highBlueBound - lowBlueBound; b++) {
-                                if (idObject[r][g][b] == numObjects) {
-                                    for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1); rx++) {
-                                        for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1); gx++) {
-                                            for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1); bx++) {
-                                                if (localMaximum[rx][gx][bx] && idObject[rx][gx][bx] == 0) {
-                                                    idObject[rx][gx][bx] = numObjects;
-                                                    objectGrow = true;
-                                                }
-                                            }
+                            idObject[r][g][b] = numObjects; 
+                            for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1); rx++) {
+                                for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1); gx++) {
+                                    for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1); bx++) {
+                                        if (localMaximum[rx][gx][bx] && idObject[rx][gx][bx] == 0 &&
+                                                (SCD[r][g][b] == SCD[rx][gx][bx])) {
+                                            idObject[rx][gx][bx] = numObjects;
                                         }
                                     }
                                 }
                             }
-                        }
-                    } 
-                } // while (objectGrow)
-            } // if (objectFound)
-        } // while (objectFound)
+                        } // if (localMaximum[r][g][b]  && idObject[r][g][b] == 0)
+                        else if (localMaximum[r][g][b] && idObject[r][g][b] > 0) {
+                            for (rx = Math.max(0, r-1); rx <= Math.min(highRedBound - lowRedBound, r+1); rx++) {
+                                for (gx = Math.max(0, g-1); gx <= Math.min(highGreenBound - lowGreenBound, g+1); gx++) {
+                                    for (bx = Math.max(0, b-1); bx <= Math.min(highBlueBound - lowBlueBound, b+1); bx++) {
+                                        if (localMaximum[rx][gx][bx] && idObject[rx][gx][bx] == 0 &&
+                                                (SCD[r][g][b] == SCD[rx][gx][bx])) {
+                                            idObject[rx][gx][bx] = idObject[r][g][b];
+                                            growObject = true;
+                                        }
+                                    }
+                                }
+                            }    
+                        } // else if (localMaximum[r][g][b] && idObject[r][g][b] > 0)
+                    } // for (b = 0; (b <= highBlueBound - lowBlueBound); b++) 
+                } // for (g = 0; (g <= highGreenBound - lowGreenBound); g++)
+            } // for (r = 0; (r <= highRedBound - lowRedBound); r++)
+        } // (while numObjects > oldObjects)
         
         nCandidates = numObjects;
         Preferences.debug("Final nCandidates = " + nCandidates + "\n", Preferences.DEBUG_ALGORITHM);
@@ -423,7 +430,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         newCandidateSCD = new double[nCandidates];
         
         Preferences.debug("Section 5\n", Preferences.DEBUG_ALGORITHM);
-        for (i = 1; i <= nCandidates; i++) {
+        for (i = 0; i < nCandidates; i++) {
             Preferences.debug("i = "+ i + "\n", Preferences.DEBUG_ALGORITHM);
             numBins = 0;
             totr = 0.0;
@@ -473,7 +480,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
             candidateBlue[i] = (short)(minb + lowBlueBound);
             candidateSideHalf[i] = initialSideHalf;
             candidateSCD[i] = SCD[candidateRed[i] - lowRedBound][candidateGreen[i] - lowGreenBound][candidateBlue[i] - lowBlueBound];
-        } // for (i = 1; i <= nCandidates; i++)
+        } // for (i = 0; i < nCandidates; i++)
         
         Preferences.debug("Section 6\n", Preferences.DEBUG_ALGORITHM);
         
@@ -690,12 +697,13 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
                         }
                     } // for (k = 0; k < i; k++)
                     objectiveFunctionJ = candidateSCD[j] * minEuclideanSquared;
-                    if (objectiveFunctionJ > maxObjectiveFunctionJ) {
+                    if (objectiveFunctionJ >= maxObjectiveFunctionJ) {
                         maxObjectiveFunctionJ = objectiveFunctionJ;
                         colorClass[i] = j;
                     }
                 } // if (!candidateChosen[j])
             } // for (j = 0; j < nCandidates; j++)
+            candidateChosen[colorClass[i]] = true;
         } // for (i = 1; i < numClasses; i++)
         
         for (y = 0; y < yDim; y++) {
