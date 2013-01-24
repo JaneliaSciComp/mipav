@@ -63,8 +63,8 @@ implements StreamInterface
         SetPShader(0,kPShader);
         
         kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
+        kPShader.SetTexture( 0, kTexA, "BaseSampler" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "BaseSampler" );
     }
 
 
@@ -85,8 +85,8 @@ implements StreamInterface
         SetPShader(0,kPShader);
         
         kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
+        kPShader.SetTexture( 0, kTexA, "BaseSampler" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "BaseSampler" );
     }
 
     public VolumeHistogramEffect ( Texture kTexA, Texture kTexB, 
@@ -106,10 +106,10 @@ implements StreamInterface
         SetPShader(0,kPShader);
         
         kPShader.SetTextureQuantity(2);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-        kPShader.SetTexture( 1, kTexB );
-        kPShader.SetImageName( 1, kTexB.GetName() );
+        kPShader.SetTexture( 0, kTexA, "imageA" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "imageA" );
+        kPShader.SetTexture( 1, kTexB, "imageB" );
+        kPShader.SetImageName( 1, kTexB.GetName(), "imageB" );
         
         /*
         kPShader.SetTextureQuantity(1);

@@ -83,14 +83,14 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         if ( kImageA != null )
         {
             m_kPPixelLighting.SetTextureQuantity(4);
-            m_kPPixelLighting.SetImageName(0,"VolumeImageA");
-            m_kPPixelLighting.SetTexture(0, kImageA.GetVolumeTarget() );
-            m_kPPixelLighting.SetImageName(1, "ColorMapA");
-            m_kPPixelLighting.SetTexture(1, kImageA.GetColorMapTarget() );
-            m_kPPixelLighting.SetImageName(2,"VolumeImageNew");
-            m_kPPixelLighting.SetTexture(2, m_kVolumeTextureNew );
-            m_kPPixelLighting.SetImageName(3, "ColorMapNew");
-            m_kPPixelLighting.SetTexture(3, m_kVolumeLUTNew );
+            m_kPPixelLighting.SetImageName(0,"VolumeImageA", "bVolumeImageA");
+            m_kPPixelLighting.SetTexture(0, kImageA.GetVolumeTarget(), "bVolumeImageA" );
+            m_kPPixelLighting.SetImageName(1, "ColorMapA", "cColorMapA");
+            m_kPPixelLighting.SetTexture(1, kImageA.GetColorMapTarget(), "cColorMapA" );
+            m_kPPixelLighting.SetImageName(2,"VolumeImageNew", "fVolumeImageNew");
+            m_kPPixelLighting.SetTexture(2, m_kVolumeTextureNew, "fVolumeImageNew" );
+            m_kPPixelLighting.SetImageName(3, "ColorMapNew", "gColorMapNew");
+            m_kPPixelLighting.SetTexture(3, m_kVolumeLUTNew, "gColorMapNew" );
         }
         m_kVShader.set(0, m_kVVertexLighting);
         m_kPShader.set(0, m_kPVertexLighting);

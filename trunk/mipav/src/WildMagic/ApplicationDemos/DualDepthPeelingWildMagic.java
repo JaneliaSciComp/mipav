@@ -218,13 +218,10 @@ public class DualDepthPeelingWildMagic extends DemoBase
         m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
         
 
-        if ( !m_bShared )
-        {			
-        	CreateScene();
-        	// initial update of objects
-        	m_spkScene.UpdateGS();
-        	m_spkScene.UpdateRS();
-		}
+        CreateScene();
+        // initial update of objects
+        m_spkScene.UpdateGS();
+        m_spkScene.UpdateRS();
 
         // initial culling of scene
         m_kCuller.SetCamera(m_spkCamera);
@@ -263,7 +260,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
 
             m_pkRenderer.ReleaseResources( m_pkPlane );
     	}
-    	
+    	System.err.println( "CreateRenderTarget" );
     	
         m_kFBO = new OpenGLFrameBuffer(m_eFormat,m_eDepth,m_eStencil,
                 m_eBuffering,m_eMultisampling,m_pkRenderer, kDrawable);
@@ -400,6 +397,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
 
 		System.err.println("compiling mesh...\n");
 		m_kDragon = g_model.compileModelVB();
+		System.err.println("...done\n");
 
 		float[] modelMin = new float[3];
 		float[] modelMax = new float[3];

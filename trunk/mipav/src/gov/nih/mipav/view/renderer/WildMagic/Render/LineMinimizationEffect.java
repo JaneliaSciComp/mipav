@@ -75,8 +75,8 @@ public class LineMinimizationEffect extends ShaderEffect
         */
 
         kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexBracket );
-        kPShader.SetImageName( 0, kTexBracket.GetName() );
+        kPShader.SetTexture( 0, kTexBracket, "bracketImage" );
+        kPShader.SetImageName( 0, kTexBracket.GetName(), "bracketImage" );
     }
     
 
@@ -93,10 +93,10 @@ public class LineMinimizationEffect extends ShaderEffect
         SetPShader(0,kPShader);
 
         kPShader.SetTextureQuantity(2);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-        kPShader.SetTexture( 1, kTexB );
-        kPShader.SetImageName( 1, kTexB.GetName() );
+        kPShader.SetTexture( 0, kTexA, "bracketImage" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "bracketImage" );
+        kPShader.SetTexture( 1, kTexB, "entropy" );
+        kPShader.SetImageName( 1, kTexB.GetName(), "entropy" );
     }
     
     public LineMinimizationEffect ( Texture kTexA, Texture kTexB, Texture kTexBracket,
@@ -114,12 +114,12 @@ public class LineMinimizationEffect extends ShaderEffect
         SetPShader(0,kPShader);
         
         kPShader.SetTextureQuantity(3);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
-        kPShader.SetTexture( 1, kTexB );
-        kPShader.SetImageName( 1, kTexB.GetName() );
-        kPShader.SetTexture( 2, kTexBracket );
-        kPShader.SetImageName( 2, kTexBracket.GetName() );
+        kPShader.SetTexture( 0, kTexA, "imageA" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "imageA" );
+        kPShader.SetTexture( 1, kTexB, "imageB" );
+        kPShader.SetImageName( 1, kTexB.GetName(), "imageB" );
+        kPShader.SetTexture( 2, kTexBracket, "transformImage" );
+        kPShader.SetImageName( 2, kTexBracket.GetName(), "transformImage" );
         
         m_fMin1 = fMinA;
         m_fScale1 = 1;
