@@ -41,9 +41,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     /** String to contain the full user inputed bug description*/
     private String description;
     
-    /** String to contain the user inputed operating platform */
-    private String platform;
-    
     /** String to contain the user inputed operating system. */
     private String os;
     
@@ -77,7 +74,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	private JTextPane descriptionField = new JTextPane();
 	
 	/** Text area for user inputed bug title */
-	private JTextArea summaryField = new JTextArea();
+	private JTextField summaryField = new JTextField(30);
 	
 	/** Text field for user inputed name */
 	private JTextField nameField = new JTextField(25);
@@ -85,14 +82,11 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	/** Text field for user inputed email */
     private JTextField emailField = new JTextField(25);
     
-    /** Text field for the user inputed operating platform */
-    private JTextField standardPlatform = new JTextField(25);
+    /** Text field for the user inputed operating system. */
+    private JTextField standardOS = new JTextField(25);
     
-    /** Text field for the user inputed operating system. Pre-populated using the system properties */
-    private JTextField standardOS = new JTextField(System.getProperties().getProperty("os.name"),25);
-    
-    /** Text field for the user inputed mipav version. Pre-populated using mipav utilities */
-    private JTextField standardVersion = new JTextField(MipavUtil.getVersion(),25);
+    /** Text field for the user inputed mipav version. */
+    private JTextField standardVersion = new JTextField(25);
 	
     /** Text field for the user inputed urgency of the bug */
     private JTextField standardUrgency = new JTextField(25);
@@ -146,6 +140,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      * 
      */
     private void init(){
+        loadFieldDefaults();
     	displayReportForm();
     }
 
@@ -169,15 +164,15 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			name = nameField.getText();
 			email = emailField.getText();
 			version = standardVersion.getText();
-			platform = standardPlatform.getText();
 			os = standardOS.getText();
 			urgency = standardUrgency.getText();
 			String tempEmail = emailField.getText();
 			if (!tempEmail.contains("@") || !tempEmail.contains(".") || tempEmail.charAt(tempEmail.length() - 1) == '.' || tempEmail.charAt(0) == '@' || tempEmail.contains("@.")){
 				JOptionPane.showMessageDialog(null, "This is not a valid email address.", "Error", JOptionPane.ERROR_MESSAGE);
-			} else if (name.length() == 0 || email.length() == 0 || version.length() == 0 || platform.length() == 0 || os.length() == 0 || urgency.length() == 0 || description.length() == 0 || summary.length() == 0){
+			} else if (name.length() == 0 || email.length() == 0 || version.length() == 0 || os.length() == 0 || urgency.length() == 0 || description.length() == 0 || summary.length() == 0){
 				JOptionPane.showMessageDialog(null, "You must fill out all sections on this form.", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
+			    saveFieldDefaults();
 				sendReport();
 				frame.setVisible(false);
 			}
@@ -248,6 +243,11 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
 		try {
 			bugReport = new File(Preferences.getPreferencesDir() + File.separatorChar + "bugReport.txt");
+			
+			if (bugReport.exists()) {
+			    Preferences.debug("Found existing bugReport.txt.  Deleting it.", Preferences.DEBUG_MINOR);
+			    bugReport.delete();
+			}
 
 			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport, true));
 			report.write("New Bug Report:");
@@ -264,8 +264,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.write("Product: MIPAV");
 			report.newLine();
 			report.write("Version: " + version);
-			report.newLine();
-			report.write("Platform: " + platform);
 			report.newLine();
 			report.write("OS: " + os);
 			report.newLine();
@@ -362,7 +360,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			final Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
 			String host = "mailfwd.nih.gov";
 			Properties properties = System.getProperties();
-			properties.put("mail.host", host);
+			properties.put("mail.smtp.host", host);
 			Session session = Session.getDefaultInstance(properties);
 			MimeMessage report = new MimeMessage(session);
 			report.setFrom(from);
@@ -372,6 +370,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.setSubject("New " + bugTypeString + " Bug Report " + date);
 			BodyPart reportSummary = new MimeBodyPart();
 			reportSummary.setText(summary + "\n\n" + description);
+			reportSummary.setHeader("Content-Type", "UTF-8");
 			Multipart parts = new MimeMultipart();
 			parts.addBodyPart(reportSummary);
 					
@@ -380,6 +379,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			DataSource source = new FileDataSource(file);
 			reportSummary.setDataHandler(new DataHandler(source));
 			reportSummary.setFileName("bugReport.txt");
+			reportSummary.setHeader("Content-Type", source.getContentType());
+			reportSummary.setHeader("Content-ID", "bugReport.txt");
 			parts.addBodyPart(reportSummary);
 			
 			reportSummary = new MimeBodyPart();
@@ -387,6 +388,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			source = new FileDataSource(file);
 			reportSummary.setDataHandler(new DataHandler(source));
 			reportSummary.setFileName("exceptions.txt");
+			reportSummary.setHeader("Content-Type", source.getContentType());
+			reportSummary.setHeader("Content-ID", "exceptions.txt");
 			parts.addBodyPart(reportSummary);
 					
 			for (int x = 0; x < fileNames.size(); x++) {
@@ -395,9 +398,11 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				source = new FileDataSource(file);
 				reportSummary.setDataHandler(new DataHandler(source));
 				reportSummary.setFileName(fileNames.get(x));
+				reportSummary.setHeader("Content-Type", source.getContentType());
+	            reportSummary.setHeader("Content-ID", fileNames.get(x));
 				parts.addBodyPart(reportSummary);
 			}
-					
+			
 			report.setContent(parts);
 					
 			Transport.send(report);
@@ -411,12 +416,15 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			}
 			frame.dispose();
 		} catch (MessagingException e) {
-				e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			MipavUtil.displayError("Unable to send bug email to the MIPAV team:\n" + e.getLocalizedMessage() + "\n\nPlease email the details of the bug to bug@mipav.cit.nih.gov.\nThe details should be saved in $HOMEDIR/mipav/bugReport.txt");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			MipavUtil.displayError("Unable to send bug email to the MIPAV team:\n" + e.getLocalizedMessage() + "\n\nPlease email the details of the bug to bug@mipav.cit.nih.gov.\nThe details should be saved in $HOMEDIR/mipav/bugReport.txt");
+		} catch (Exception e) {
+		    e.printStackTrace();
+            MipavUtil.displayError("Unable to send bug email to the MIPAV team:\n" + e.getLocalizedMessage() + "\n\nPlease email the details of the bug to bug@mipav.cit.nih.gov.\nThe details should be saved in $HOMEDIR/mipav/bugReport.txt");
 		}
-		
 	}
 	
 	/**
@@ -440,10 +448,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
         
         JLabel summaryInstructions = new JLabel("Title");
-    	summaryField.setLineWrap(true);
-    	summaryField.setWrapStyleWord(true);
-    	JScrollPane summaryScroll = new JScrollPane(summaryField);
-    	summaryScroll.setPreferredSize(new Dimension(400, 20));
     	summaryInstructions.setFont(MipavUtil.font12);
         summaryInstructions.setForeground(Color.black);
         
@@ -463,7 +467,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	gbc.fill = GridBagConstraints.VERTICAL;
     	descriptions.add(summaryInstructions, gbc);
     	gbc.gridy = 4;
-    	descriptions.add(summaryScroll, gbc);
+    	descriptions.add(summaryField, gbc);
     	gbc.gridy = 5;
     	descriptions.add(descInstructions, gbc);
     	gbc.gridy = 6;
@@ -498,10 +502,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	versionLabel.setFont(MipavUtil.font12);
     	versionLabel.setForeground(Color.black);
     	
-    	JLabel platformLabel = new JLabel("Platform you are operating (ex. PC)");
-    	platformLabel.setFont(MipavUtil.font12);
-    	platformLabel.setForeground(Color.black);
-    	
     	JLabel osLabel = new JLabel("Operating System you are using");
     	osLabel.setFont(MipavUtil.font12);
     	osLabel.setForeground(Color.black);
@@ -522,16 +522,12 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	gbc.fill = GridBagConstraints.NONE;
     	standardUserInput.add(standardVersion, gbc);
     	gbc.gridy = 2;
-    	standardUserInput.add(platformLabel, gbc);
-    	gbc.gridy = 3;
-    	standardUserInput.add(standardPlatform, gbc);
-    	gbc.gridy = 4;
     	standardUserInput.add(osLabel, gbc);
-    	gbc.gridy = 5;
+    	gbc.gridy = 3;
     	standardUserInput.add(standardOS, gbc);
-    	gbc.gridy = 6;
+    	gbc.gridy = 4;
     	standardUserInput.add(urgencyLabel, gbc);
-    	gbc.gridy = 7;
+    	gbc.gridy = 5;
     	standardUserInput.add(standardUrgency, gbc);
     	
     	JPanel sidePanel = new JPanel();
@@ -667,4 +663,32 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		}		
 	}
 
+	/**
+	 * Tries to set the bug report field defaults based on system properties or last-entered data.
+	 */
+	private void loadFieldDefaults() {
+	    String str = Preferences.getProperty(Preferences.PREF_BUG_REPORT_NAME);
+	    if (str != null) {
+	        nameField.setText(str);
+	    }
+	    str = Preferences.getProperty(Preferences.PREF_BUG_REPORT_EMAIL);
+        if (str != null) {
+            emailField.setText(str);
+        }
+	    standardOS.setText(System.getProperties().getProperty("os.name") + " - " + System.getProperty("os.arch"));
+	    standardVersion.setText(MipavUtil.getVersion());
+	    str = Preferences.getProperty(Preferences.PREF_BUG_REPORT_URGENCY);
+        if (str != null) {
+            standardUrgency.setText(str);
+        }
+	}
+	
+	/**
+	 * Saves the last-entered bug report field text for loading the next time the dialog is used.
+	 */
+	private void saveFieldDefaults() {
+	    Preferences.setProperty(Preferences.PREF_BUG_REPORT_NAME, name);
+	    Preferences.setProperty(Preferences.PREF_BUG_REPORT_EMAIL, email);
+	    Preferences.setProperty(Preferences.PREF_BUG_REPORT_URGENCY, urgency);
+	}
 }

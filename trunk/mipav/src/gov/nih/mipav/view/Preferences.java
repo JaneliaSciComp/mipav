@@ -650,6 +650,12 @@ public class Preferences {
     public static final String PREF_FITBIR_PLUGIN_CSV_DIR = "FITBIRCSVDir";
     
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
+    
+    public static final String PREF_BUG_REPORT_NAME = "BugReportName";
+    
+    public static final String PREF_BUG_REPORT_EMAIL = "BugReportEmail";
+    
+    public static final String PREF_BUG_REPORT_URGENCY = "BugReportUrgency";
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
