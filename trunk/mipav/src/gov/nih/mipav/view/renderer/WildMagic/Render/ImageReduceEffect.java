@@ -25,8 +25,8 @@ public class ImageReduceEffect extends ShaderEffect
         SetPShader(0,kPShader);
         
         kPShader.SetTextureQuantity(1);
-        kPShader.SetTexture( 0, kTexA );
-        kPShader.SetImageName( 0, kTexA.GetName() );
+        kPShader.SetTexture( 0, kTexA, "imageA" );
+        kPShader.SetImageName( 0, kTexA.GetName(), "imageA" );
     }
     
     public void OnLoadPrograms (int iPass, Program pkVProgram,

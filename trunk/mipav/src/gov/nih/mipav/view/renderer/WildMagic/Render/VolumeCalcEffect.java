@@ -44,17 +44,16 @@ public class VolumeCalcEffect extends VolumeClipEffect
      * fn creates the first-pass shader.
      * @param kVolumeImageA the shared volume data and textures.
      */
-    public VolumeCalcEffect ( VolumeImage kVolumeImage, Texture kTexture, String kShaderName, boolean bPostFix )
+    public VolumeCalcEffect ( VolumeImage kVolumeImage, Texture kTexture )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
         SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true));
-        String kName = kShaderName + (bPostFix ? kVolumeImage.GetPostfix() : "");
-        PixelShader kPShader = new PixelShader(kName, false);
+        PixelShader kPShader = new PixelShader("SurfaceExtract_P2", false);
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(1);
-        kPShader.SetImageName(0,kTexture.GetImage().GetName());
-        kPShader.SetTexture(0, kTexture );
+        kPShader.SetImageName(0,kTexture.GetImage().GetName(), "VolumeExtract");
+        kPShader.SetTexture(0, kTexture, "VolumeExtract" );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         m_afMinMax[0] = (float)kVolumeImage.GetImage().getMin();
         m_afMinMax[1] = (float)kVolumeImage.GetImage().getMax();
@@ -74,8 +73,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
         PixelShader kPShader = new PixelShader("CropClipped", false);
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(1);
-        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
-        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
+        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName(), "volImage");
+        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget(), "volImage" );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;
@@ -98,10 +97,10 @@ public class VolumeCalcEffect extends VolumeClipEffect
         PixelShader kPShader = new PixelShader("SurfaceExtract", true );
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(2);
-        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
-        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
-        kPShader.SetImageName(1,kVolumeImage.GetColorMapTarget().GetImage().GetName());
-        kPShader.SetTexture(1, kVolumeImage.GetColorMapTarget() );
+        kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName(), "bVolumeImageA");
+        kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget(), "bVolumeImageA" );
+        kPShader.SetImageName(1,kVolumeImage.GetColorMapTarget().GetImage().GetName(), "cColorMapA");
+        kPShader.SetTexture(1, kVolumeImage.GetColorMapTarget(), "cColorMapA" );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;

@@ -218,7 +218,7 @@ implements GLEventListener, KeyListener
 				"VolumeExtract2" );
 		m_pkVolumeCalcTarget2 = new Texture();
 		m_pkVolumeCalcTarget2.SetImage(m_kCalcImage2);
-		m_spkEffect2 = new VolumeCalcEffect( m_kVolumeImage, m_pkVolumeCalcTarget2, "SurfaceExtract_P2", false );
+		m_spkEffect2 = new VolumeCalcEffect( m_kVolumeImage, m_pkVolumeCalcTarget2);
 		m_pkPlane.AttachEffect(m_spkEffect2);
 		m_pkRenderer.LoadResources(m_pkPlane);
 		m_spkEffect2.SetStepSize(fStep, fStep, fStep);
@@ -232,7 +232,7 @@ implements GLEventListener, KeyListener
 				"VolumeExtract" );
 		m_pkVolumeCalcTarget = new Texture();
 		m_pkVolumeCalcTarget.SetImage(m_kCalcImage);
-		m_spkEffect2 = new VolumeCalcEffect( m_kVolumeImage, m_pkVolumeCalcTarget, "SurfaceExtract_P2", false );
+		m_spkEffect2 = new VolumeCalcEffect( m_kVolumeImage, m_pkVolumeCalcTarget);
 		m_pkPlane.AttachEffect(m_spkEffect2);
 		m_pkRenderer.LoadResources(m_pkPlane);
 		(m_spkEffect2).SetStepSize(fStep, fStep, fStep);

@@ -932,8 +932,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         OpenGLFrameBuffer kTempBracket;
         for ( int i = 0; i < 100; i++ )
         {
-            m_kCalcTransform.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
-            m_kImageLineMinPass2a.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            //m_kCalcTransform.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            //m_kImageLineMinPass2a.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
             
             // 1. Create the transform matrix based on the current bracket.
             m_pkRenderer.Resize(m_kTransformOut.GetTarget(0).GetImage().GetBound(0),

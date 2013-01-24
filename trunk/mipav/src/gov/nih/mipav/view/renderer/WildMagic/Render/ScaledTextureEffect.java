@@ -23,7 +23,7 @@ public class ScaledTextureEffect extends ShaderEffect
         m_kPShader.set(0, new PixelShader("ScaledTextureP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
+        m_kPShader.get(0).SetImageName(0,rkBaseName, "BaseSampler");
     
         m_fScale = fVal;
     }

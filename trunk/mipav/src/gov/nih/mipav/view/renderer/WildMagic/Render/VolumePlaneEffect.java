@@ -248,20 +248,20 @@ implements StreamInterface
 
         kPShader.SetTextureQuantity(5);
         int iTex = 0;
-        kPShader.SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
+        kPShader.SetImageName(iTex,m_kVolumeImageA.GetVolumeTarget().GetName(), "bVolumeImageA");
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget(), "bVolumeImageA" );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName(), "cColorMapA" );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget(), "cColorMapA" );
         
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget() );
+        kPShader.SetImageName(iTex, m_kVolumeImageA.GetSurfaceTarget().GetName(), "iSurfaceImage" );
+        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetSurfaceTarget(), "iSurfaceImage" );
 
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            kPShader.SetImageName(iTex,"VolumeImageB");
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
-            kPShader.SetImageName(iTex, "ColorMapB");
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
+            kPShader.SetImageName(iTex,"VolumeImageB", "jVolumeImageB");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget(), "jVolumeImageB" );
+            kPShader.SetImageName(iTex, "ColorMapB", "kColorMapB");
+            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget(), "kColorMapB" );
         }
     }
 }
