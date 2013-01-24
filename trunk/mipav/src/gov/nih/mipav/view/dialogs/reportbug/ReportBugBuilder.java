@@ -9,6 +9,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
 
 import java.io.*;
+import java.net.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -55,12 +56,12 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     
     /** Type of bug encountered */
     private String bugTypeString = "Unexpected Output";
-    
+
     /** Date and time of submission */
     private Date dateHolder = new Date();;
     DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
     private String date = dateFormat.format(dateHolder);
-
+    
 	/** Version of MIPAV running */
 	private String version;
 
@@ -121,6 +122,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	/** Icon used to insert images into the bug description */
 	private Icon icon;
     
+	/** URL of the page we use to actually send the bug report email. */
+	private static final String BUG_MAIL_URL = "http://mipav.cit.nih.gov/report_bug.php";
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -173,7 +176,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				JOptionPane.showMessageDialog(null, "You must fill out all sections on this form.", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
 			    saveFieldDefaults();
-				sendReport();
+				//TODO
+			    //sendReport();
+			    sendReportWeb();
 				frame.setVisible(false);
 			}
 		} else if (command.equals("Cancel")){
@@ -221,7 +226,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      * Pulls system specifications from the user's computer and then compiles all appropriate fields together into a text document
      *
      */
-	private void compileReport(){
+	private String compileReport(){
+	    String reportStr = new String();
+	    
 		String osArch = System.getProperties().getProperty("os.arch");	    
 	    String osName = System.getProperties().getProperty("os.name");	    
 	    String osVersion = System.getProperties().getProperty("os.version");	    
@@ -241,7 +248,72 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	    String sunDesktop = System.getProperties().getProperty("sun.desktop");
 	    String fileSeparator = System.getProperties().getProperty("file.separator");
 
-		try {
+	    reportStr += "New Bug Report:";
+	    reportStr += "\n";
+	    reportStr += summary;
+	    reportStr += "\n";
+	    reportStr += "\n";
+	    reportStr += "Date: " + date.toString();
+	    reportStr += "\n";
+	    reportStr += "Name: " + name;
+	    reportStr += "\n";
+	    reportStr += "Email: " + email;
+        reportStr += "\n";
+        reportStr += "Product: MIPAV";
+        reportStr += "\n";
+        reportStr += "Version: " + version;
+        reportStr += "\n";
+        reportStr += "OS: " + os;
+        reportStr += "\n";
+        reportStr += "Urgency: " + urgency;
+        reportStr += "\n";
+        reportStr += "\n";
+        reportStr += "Detailed description:";
+        reportStr += "\n";
+        reportStr += description;
+        reportStr += "\n";
+        reportStr += "\n";
+        reportStr += "System specifications:";
+        reportStr += "\n";
+        reportStr += "os.arch = " + osArch;
+        reportStr += "\n";
+        reportStr += "os.name = " + osName;
+        reportStr += "\n";
+        reportStr += "os.version = " + osVersion;
+        reportStr += "\n";
+        reportStr += "java.version = " + javaVersion;
+        reportStr += "\n";
+        reportStr += "java.vendor = " + javaVendor;
+        reportStr += "\n";
+        reportStr += "java.vendorUrl = " + javaVendorUrl;
+        reportStr += "\n";
+        reportStr += "java.runtime.name = " + javaRuntimeName;
+        reportStr += "\n";
+        reportStr += "java.runtime.version = " + javaRuntimeVersion;
+        reportStr += "\n";
+        reportStr += "java.vm.name = " + javaVmName;
+        reportStr += "\n";
+        reportStr += "java.vm.version = " + javaVmVersion;
+        reportStr += "\n";
+        reportStr += "java.vm.vendor = " + javaVmVendor;
+        reportStr += "\n";
+        reportStr += "java.vm.info = " + javaInfo;
+        reportStr += "\n";
+        reportStr += "java.awt.graphicsenv = " + javaAwtGraphicsEnv;
+        reportStr += "\n";
+        reportStr += "java.specifications.name = " + javaSpecName;
+        reportStr += "\n";
+        reportStr += "java.specifications.version = " + javaSpecVersion;
+        reportStr += "\n";
+        reportStr += "sun.cpu.endian = " + sunCpu;
+        reportStr += "\n";
+        reportStr += "sun.desktop = " + sunDesktop;
+        reportStr += "\n";
+        reportStr += "file.separator = " + fileSeparator;
+        
+        return reportStr;
+	    
+		/*try {
 			bugReport = new File(Preferences.getPreferencesDir() + File.separatorChar + "bugReport.txt");
 			
 			if (bugReport.exists()) {
@@ -318,7 +390,23 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 	
+		}*/
+	}
+	
+	private String loadExceptionsFile() {
+	    String fileContents = new String();
+	    
+	    try {
+	        File file = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+    	    if (file.exists()) {
+    	        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+    	        fileContents += in.readLine() + "\n";
+    	    }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return fileContents;
 	}
 	
     /**
@@ -345,6 +433,41 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				}
 			}
 		}
+	}
+	
+	// TODO
+	private void sendReportWeb() {
+	    String urlVarStr = new String();
+	    try {
+	        urlVarStr += "bug_type=" + URLEncoder.encode(bugTypeString, "UTF-8");
+    	    urlVarStr += "&";
+    	    urlVarStr += "bug_summary=" + URLEncoder.encode(summary, "UTF-8");
+            urlVarStr += "&";
+    	    urlVarStr += "bug_desc=" + URLEncoder.encode(description, "UTF-8");
+    	    urlVarStr += "&";
+    	    urlVarStr += "bug_report_text=" + URLEncoder.encode(compileReport(), "UTF-8");
+    	    urlVarStr += "&";
+    	    urlVarStr += "bug_exceptions=" + URLEncoder.encode(loadExceptionsFile(), "UTF-8");
+    	    urlVarStr += "&";
+    	    urlVarStr += "bug_other_info=";
+	    } catch (UnsupportedEncodingException e) {
+	        e.printStackTrace();
+	        MipavUtil.displayError("Unable to encode bug report data");
+	    }
+
+	    // use vars passed to a web page to send the bug email
+	    try {
+            URI mailURI = new URI(BUG_MAIL_URL + "?" + urlVarStr);
+            Desktop.getDesktop().browse(mailURI);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
+            return;
+        }
 	}
 
 	/**
@@ -536,7 +659,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	sidePanel.add(standardUserInput, BorderLayout.CENTER);
     	sidePanel.setBorder(buildTitledBorder("Information"));
 
-    	JPanel imageCapture = new JPanel();
+    	// TODO: removed until we figure out a good way to pass these attachments/screen caps to the mailer URL
+    	/*JPanel imageCapture = new JPanel();
     	imageCapture.setLayout(new BorderLayout());
     	JButton browse = new JButton("Browse");
     	browse.setMinimumSize(MipavUtil.defaultButtonSize);
@@ -567,7 +691,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	attachedImages.setWrapStyleWord(true);
         JScrollPane attachedScroll = new JScrollPane(attachedImages);
         attachedScroll.setPreferredSize(new Dimension(400,100));
-    	imageCapture.add(attachedScroll, BorderLayout.CENTER);
+    	imageCapture.add(attachedScroll, BorderLayout.CENTER);*/
     	
     	OKButton = new JButton("Submit");
         OKButton.addActionListener(this);
@@ -581,7 +705,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	tempPanel.add(OKButton);
         tempPanel.add(cancelButton);
         buttonPanel.setLayout(new BorderLayout());
-    	buttonPanel.add(imageCapture, BorderLayout.NORTH);
+    	//buttonPanel.add(imageCapture, BorderLayout.NORTH);
     	buttonPanel.add(tempPanel, BorderLayout.SOUTH);
     	
     	JPanel mainPanel = new JPanel();
