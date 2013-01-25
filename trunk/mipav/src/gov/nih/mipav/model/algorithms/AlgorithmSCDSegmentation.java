@@ -212,6 +212,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         
         Preferences.debug("Section 1\n", Preferences.DEBUG_ALGORITHM);
         for (r = lowRedBound; r <= highRedBound; r++) {
+            fireProgressStateChanged((90 * (r - lowRedBound))/(highRedBound - lowRedBound));
             lowRed = r - initialSideHalf;
             highRed = r + initialSideHalf;
             for (g = lowGreenBound; g <= highGreenBound; g++) {
@@ -461,6 +462,12 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         
         
         Preferences.debug("Final nCandidates = " + nCandidates + "\n", Preferences.DEBUG_ALGORITHM);
+        if (numClasses > nCandidates) {
+            numClasses = nCandidates;
+            Preferences.debug("The number of classes is being reduced to the maximum possible value of " + numClasses + "\n",
+                              Preferences.DEBUG_ALGORITHM);
+            System.out.println("The number of classes is being reduced to the maximum possible value of " + numClasses);
+        }
         candidatesToGrow = nCandidates;
         candidateRed = new short[nCandidates];
         candidateGreen = new short[nCandidates];
