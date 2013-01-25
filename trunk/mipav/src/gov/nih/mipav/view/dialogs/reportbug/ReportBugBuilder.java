@@ -459,6 +459,30 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	    try {
             URI mailURI = new URI(BUG_MAIL_URL + "?" + urlVarStr);
             Desktop.getDesktop().browse(mailURI);
+            
+	    	/*byte[] varBytes = urlVarStr.getBytes("UTF-8");
+	    	URL url = new URL(BUG_MAIL_URL);
+		    
+	    	HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+		    connection.setDoInput(false);
+		    connection.setDoOutput(true);
+		    connection.setInstanceFollowRedirects(true);
+		    connection.setRequestMethod("POST");
+		    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+		    connection.setRequestProperty("charset", "UTF-8");
+		    connection.setRequestProperty("Content-Type", Integer.toString(varBytes.length));
+		    connection.setUseCaches(false);
+		    
+		    connection.connect();
+		    DataOutputStream out = new DataOutputStream(connection.getOutputStream());
+		    out.write(varBytes);
+		    out.flush();
+		    out.close();
+		    connection.disconnect();*/
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
+            return;
         } catch (URISyntaxException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
