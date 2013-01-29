@@ -526,7 +526,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      */
     public void init(boolean imageAttacher) {
     	
-    	
     	setTitle("Create New Image");
         
         currentRectangle = null;
@@ -546,23 +545,12 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         windowButton.addActionListener(this);
         windowButton.setActionCommand("Window");
 
-        instructions = new JLabel("Draw a rectangle with the mouse around the");
-        instructions.setFont(MipavUtil.font12);
-        instructions.setForeground(Color.black);
-        instructions2 = new JLabel("region you want to save.  Then press OK.");
-        instructions2.setFont(MipavUtil.font12);
-        instructions2.setForeground(Color.black);
-        instructions3 = new JLabel("(Regions must originate within a MIPAV window.)");
-        instructions3.setFont(MipavUtil.font12);
-        instructions3.setForeground(Color.black);
-
         insertButton = new JButton("Insert");
         insertButton.addActionListener(this);
         insertButton.setMinimumSize(MipavUtil.defaultButtonSize);
         insertButton.setPreferredSize(MipavUtil.defaultButtonSize);
         insertButton.setFont(serif12B);
         
-        OKButton = buildOKButton();
         cancelButton = buildCancelButton();
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -571,31 +559,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
-        JPanel instruction = new JPanel();
-        instruction.setLayout(new BoxLayout(instruction, BoxLayout.Y_AXIS));
-        instruction.add(instructions);
-        instruction.add(instructions2);
-        instruction.add(instructions3);
-
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridBagLayout());
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weighty = 1;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        panel.add(instruction, gbc);
-        gbc.gridy = 2;
-        gbc.weighty = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(regionButton, gbc);
-        gbc.gridy = 3;
-        panel.add(windowButton, gbc);
-        panel.setBorder(buildTitledBorder("Image options"));
-        regionButton.setSelected(true);
-
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(insertButton);
-        buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
         JPanel attachmentOptions = new JPanel();
@@ -604,40 +569,18 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         gbc.gridy = 0;
         gbc.weighty = 1;
         gbc.gridy = 2;
-        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. To attach the image");
-        attachmentInstruction.setFont(MipavUtil.font12);
-        attachmentInstruction.setForeground(Color.black);
+        JLabel attachmentInstructions = new JLabel("<html>Select the region you would like to capture and attach.<br/>" +
+                "Click and drag inside of any window or dialog within MIPAV.<br/><br/>" + 
+                "If you would like to give the attachment a specific name,<br/>" + 
+                "enter it in the field below.</html>");
+        attachmentInstructions.setFont(MipavUtil.font12);
+        attachmentInstructions.setForeground(Color.black);
         
-        JLabel attachmentInstruction2 = new JLabel("as a file, fill in the field below with a name and press the OK");
-        attachmentInstruction2.setFont(MipavUtil.font12);
-        attachmentInstruction2.setForeground(Color.black);
-        
-        JLabel attachmentInstruction3 = new JLabel("button. To copy theimage to your clipboard and insert it into");
-        attachmentInstruction3.setFont(MipavUtil.font12);
-        attachmentInstruction3.setForeground(Color.black);
-        
-        JLabel attachmentInstruction4 = new JLabel("your description, press the Insert button. To do both, fill in");
-        attachmentInstruction4.setFont(MipavUtil.font12);
-        attachmentInstruction4.setForeground(Color.black);
-        
-        JLabel attachmentInstruction5 = new JLabel("a file name and press the Insert button.");
-        attachmentInstruction5.setFont(MipavUtil.font12);
-        attachmentInstruction5.setForeground(Color.black);
-        
-        attachmentOptions.add(attachmentInstruction, gbc);
+        attachmentOptions.add(attachmentInstructions, gbc);
         gbc.gridy = 3;
-        attachmentOptions.add(attachmentInstruction2, gbc);
-        gbc.gridy = 4;
-        attachmentOptions.add(attachmentInstruction3, gbc);
-        gbc.gridy = 5;
-        attachmentOptions.add(attachmentInstruction4, gbc);
-        gbc.gridy = 6;
-        attachmentOptions.add(attachmentInstruction5, gbc);
-        gbc.gridy = 7;
         fileField.setPreferredSize(new Dimension(320, 20));
         attachmentOptions.add(fileField, gbc);
         attachmentOptions.setBorder(buildTitledBorder("Image Selection"));
-        
         
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
