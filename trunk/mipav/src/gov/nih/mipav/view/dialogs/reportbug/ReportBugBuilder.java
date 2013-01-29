@@ -24,6 +24,9 @@ import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
 
+import org.apache.commons.codec.binary.*;
+
+
 public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
 	//~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -118,9 +121,12 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
 	/** Dialog used for taking screen captures */
 	private JDialogCaptureScreen screenCapture;
+	
+	/** Hack-ish boolean to avoid double adding screen captures to the attachment list. */
+	private boolean isScreenCapAttached;
 
 	/** Icon used to insert images into the bug description */
-	private Icon icon;
+	//private Icon icon;
     
 	/** URL of the page we use to actually send the bug report email. */
 	private static final String BUG_MAIL_URL = "http://mipav.cit.nih.gov/report_bug.php";
@@ -176,8 +182,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				JOptionPane.showMessageDialog(null, "You must fill out all sections on this form.", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
 			    saveFieldDefaults();
-				//TODO
-			    //sendReport();
 			    sendReportWeb();
 				frame.setVisible(false);
 			}
@@ -186,6 +190,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			System.gc();
 			frame.setVisible(false);
 		} else if (command.equals("Create New Image")){
+		    // we haven't added this new screen capture yet
+		    isScreenCapAttached = false;
+		    
 			screenCapture = new JDialogCaptureScreen(null, true);
 			screenCapture.addWindowListener(this);
 		} else if (command.equals("Browse")) {
@@ -312,101 +319,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
         reportStr += "file.separator = " + fileSeparator;
         
         return reportStr;
-	    
-		/*try {
-			bugReport = new File(Preferences.getPreferencesDir() + File.separatorChar + "bugReport.txt");
-			
-			if (bugReport.exists()) {
-			    Preferences.debug("Found existing bugReport.txt.  Deleting it.", Preferences.DEBUG_MINOR);
-			    bugReport.delete();
-			}
-
-			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport, true));
-			report.write("New Bug Report:");
-			report.newLine();
-			report.write(summary);
-			report.newLine();
-			report.newLine();
-			report.write("Date: " + date.toString());
-			report.newLine();
-			report.write("Name: " + name);
-			report.newLine();
-			report.write("Email: " + email);
-			report.newLine();
-			report.write("Product: MIPAV");
-			report.newLine();
-			report.write("Version: " + version);
-			report.newLine();
-			report.write("OS: " + os);
-			report.newLine();
-			report.write("Urgency: " + urgency);
-			report.newLine();
-			report.newLine();
-			report.write("Detailed description:");
-			report.newLine();
-			report.write(description);
-			report.newLine();
-			report.newLine();
-			report.write("System specifications:");
-			report.newLine();
-			report.write("os.arch = " + osArch);
-			report.newLine();
-			report.write("os.name = " + osName);
-			report.newLine();
-			report.write("os.version = " + osVersion);
-			report.newLine();
-			report.write("java.version = " + javaVersion);
-			report.newLine();
-			report.write("java.vendor = " + javaVendor);
-			report.newLine();
-			report.write("java.vendorUrl = " + javaVendorUrl);
-			report.newLine();
-			report.write("java.runtime.name = " + javaRuntimeName);
-			report.newLine();
-			report.write("java.runtime.version = " + javaRuntimeVersion);
-			report.newLine();
-			report.write("java.vm.name = " + javaVmName);
-			report.newLine();
-			report.write("java.vm.version = " + javaVmVersion);
-			report.newLine();
-			report.write("java.vm.vendor = " + javaVmVendor);
-			report.newLine();
-			report.write("java.vm.info = " + javaInfo);
-			report.newLine();
-			report.write("java.awt.graphicsenv = " + javaAwtGraphicsEnv);
-			report.newLine();
-			report.write("java.specifications.name = " + javaSpecName);
-			report.newLine();
-			report.write("java.specifications.version = " + javaSpecVersion);
-			report.newLine();
-			report.write("sun.cpu.endian = " + sunCpu);
-			report.newLine();
-			report.write("sun.desktop = " + sunDesktop);
-			report.newLine();
-			report.write("file.separator = " + fileSeparator);
-			report.flush();
-			report.close();
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-	}
-	
-	private String loadExceptionsFile() {
-	    String fileContents = new String();
-	    
-	    try {
-	        File file = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
-    	    if (file.exists()) {
-    	        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-    	        fileContents += in.readLine() + "\n";
-    	    }
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	    }
-	    
-	    return fileContents;
 	}
 	
     /**
@@ -435,21 +347,60 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		}
 	}
 	
-	// TODO
 	private void sendReportWeb() {
 	    String urlVarStr = new String();
 	    try {
-	        urlVarStr += "bug_type=" + URLEncoder.encode(bugTypeString, "UTF-8");
-    	    urlVarStr += "&";
-    	    urlVarStr += "bug_summary=" + URLEncoder.encode(summary, "UTF-8");
+	        urlVarStr += URLEncoder.encode("bug_email", "UTF-8") + "=" + URLEncoder.encode(email, "UTF-8");
+            
             urlVarStr += "&";
-    	    urlVarStr += "bug_desc=" + URLEncoder.encode(description, "UTF-8");
+	        urlVarStr += URLEncoder.encode("bug_type", "UTF-8") + "=" + URLEncoder.encode(bugTypeString, "UTF-8");
+    	    
+	        urlVarStr += "&";
+    	    urlVarStr += URLEncoder.encode("bug_summary", "UTF-8") + "=" + URLEncoder.encode(summary, "UTF-8");
+            
     	    urlVarStr += "&";
-    	    urlVarStr += "bug_report_text=" + URLEncoder.encode(compileReport(), "UTF-8");
+    	    urlVarStr += URLEncoder.encode("bug_desc", "UTF-8") + "=" + URLEncoder.encode(description, "UTF-8");
+    	    
     	    urlVarStr += "&";
-    	    urlVarStr += "bug_exceptions=" + URLEncoder.encode(loadExceptionsFile(), "UTF-8");
-    	    urlVarStr += "&";
-    	    urlVarStr += "bug_other_info=";
+    	    urlVarStr += URLEncoder.encode("bug_report_text", "UTF-8") + "=" + URLEncoder.encode(compileReport(), "UTF-8");
+    	    
+    	    File file = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+    	    if (file.exists()) {
+    	        try {
+    	            byte[] fileContents = new byte[(int)file.length()];
+                    DataInputStream dis = new DataInputStream(new FileInputStream(file));
+                    dis.readFully(fileContents);
+                    dis.close();
+                    
+                    urlVarStr += "&";
+                    urlVarStr += URLEncoder.encode("bug_log_file", "UTF-8") + "=" + Base64.encodeBase64URLSafeString(fileContents);
+                } catch (IOException e) {
+                    Preferences.debug("Unable to read and attach bug report file: " + file.getAbsolutePath(), Preferences.DEBUG_FILEIO);
+                    e.printStackTrace();
+                }
+    	    }
+    	    
+    	    for (int x = 0; x < fileNames.size(); x++) {
+    	        file = new File(filePaths.get(x));
+    	        if (file.exists()) {
+    	            try {
+    	                byte[] fileContents = new byte[(int)file.length()];
+        	            DataInputStream dis = new DataInputStream(new FileInputStream(file));
+        	            dis.readFully(fileContents);
+        	            dis.close();
+        	            
+        	            urlVarStr += "&";
+                        urlVarStr += URLEncoder.encode("bug_other_file_name_" + (x+1), "UTF-8") + "=" + URLEncoder.encode(fileNames.get(x), "UTF-8");
+        	            urlVarStr += "&";
+        	            //System.err.println("File name:\t" + fileNames.get(x));
+        	            //System.err.println("File base64:\t" + Base64.encodeBase64URLSafeString(fileContents));
+                        urlVarStr += URLEncoder.encode("bug_other_file_contents_" + (x+1), "UTF-8") + "=" + Base64.encodeBase64URLSafeString(fileContents);
+    	            } catch (IOException e) {
+    	                Preferences.debug("Unable to read and attach bug report file: " + file.getAbsolutePath(), Preferences.DEBUG_FILEIO);
+    	                e.printStackTrace();
+    	            }
+    	        }
+            }
 	    } catch (UnsupportedEncodingException e) {
 	        e.printStackTrace();
 	        MipavUtil.displayError("Unable to encode bug report data");
@@ -457,20 +408,21 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
 	    // use vars passed to a web page to send the bug email
 	    try {
-            URI mailURI = new URI(BUG_MAIL_URL + "?" + urlVarStr);
-            Desktop.getDesktop().browse(mailURI);
+            //URI mailURI = new URI(BUG_MAIL_URL + "?" + urlVarStr);
+            //Desktop.getDesktop().browse(mailURI);
             
-	    	/*byte[] varBytes = urlVarStr.getBytes("UTF-8");
+	    	byte[] varBytes = urlVarStr.getBytes("UTF-8");
 	    	URL url = new URL(BUG_MAIL_URL);
 		    
 	    	HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-		    connection.setDoInput(false);
+		    connection.setDoInput(true);
 		    connection.setDoOutput(true);
 		    connection.setInstanceFollowRedirects(true);
 		    connection.setRequestMethod("POST");
 		    connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 		    connection.setRequestProperty("charset", "UTF-8");
-		    connection.setRequestProperty("Content-Type", Integer.toString(varBytes.length));
+		    connection.setRequestProperty("Content-Length", Integer.toString(varBytes.length));
+		    connection.setRequestProperty("Content-Language", "en-US");
 		    connection.setUseCaches(false);
 		    
 		    connection.connect();
@@ -478,15 +430,34 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		    out.write(varBytes);
 		    out.flush();
 		    out.close();
-		    connection.disconnect();*/
+		    
+		    // debugging info back from the web server.
+		    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		    //System.out.println("Resp code: " + connection.getResponseCode());
+		    //System.out.println("Resp msg: " + connection.getResponseMessage());
+		    String inputLine;
+		    //String successLine = "Bug report successfully sent to mccreedy@mail.nih.gov.  Thank you!";
+		    //String failureLine = "Bug report not successfully sent! Please contact mccreedy@mail.nih.gov from your usual email client.";
+		    String successLine = "Bug report successfully sent to bug@mipav.cit.nih.gov.  Thank you!";
+            String failureLine = "Bug report not successfully sent! Please contact bug@mipav.cit.nih.gov from your usual email client.";
+		    while ((inputLine = in.readLine()) != null) {
+		        //System.out.print(inputLine + "\n");
+		        if (inputLine.equalsIgnoreCase(successLine)) {
+		            MipavUtil.displayInfo(inputLine);
+		        } else if (inputLine.equalsIgnoreCase(failureLine)) {
+		            MipavUtil.displayError(inputLine);
+		        }
+		    }
+		    in.close();
+		    connection.disconnect();
         } catch (MalformedURLException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
             return;
-        } catch (URISyntaxException e) {
+        /*} catch (URISyntaxException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
-            return;
+            return;*/
         } catch (IOException e) {
             e.printStackTrace();
             MipavUtil.displayError("Unable to open bug report mailer URL: " + BUG_MAIL_URL);
@@ -683,8 +654,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	sidePanel.add(standardUserInput, BorderLayout.CENTER);
     	sidePanel.setBorder(buildTitledBorder("Information"));
 
-    	// TODO: removed until we figure out a good way to pass these attachments/screen caps to the mailer URL
-    	/*JPanel imageCapture = new JPanel();
+    	JPanel imageCapture = new JPanel();
     	imageCapture.setLayout(new BorderLayout());
     	JButton browse = new JButton("Browse");
     	browse.setMinimumSize(MipavUtil.defaultButtonSize);
@@ -715,7 +685,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	attachedImages.setWrapStyleWord(true);
         JScrollPane attachedScroll = new JScrollPane(attachedImages);
         attachedScroll.setPreferredSize(new Dimension(400,100));
-    	imageCapture.add(attachedScroll, BorderLayout.CENTER);*/
+    	imageCapture.add(attachedScroll, BorderLayout.CENTER);
     	
     	OKButton = new JButton("Submit");
         OKButton.addActionListener(this);
@@ -729,7 +699,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	tempPanel.add(OKButton);
         tempPanel.add(cancelButton);
         buttonPanel.setLayout(new BorderLayout());
-    	//buttonPanel.add(imageCapture, BorderLayout.NORTH);
+    	buttonPanel.add(imageCapture, BorderLayout.NORTH);
     	buttonPanel.add(tempPanel, BorderLayout.SOUTH);
     	
     	JPanel mainPanel = new JPanel();
@@ -744,7 +714,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	try {
 			frame.setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		frame.pack();
@@ -762,49 +731,38 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      * @param  event  Event that triggered this function.
      */
 	public void windowClosed(WindowEvent event){
-		if(event.getSource().equals(screenCapture)){
-			if(screenCapture.ok) {
-				try {
-					if (JDialogCaptureScreen.currImage == null)
-						MipavUtil.displayError("You must select a region to save.");
-					else if (screenCapture.fileName.length() > 0) {
-						attachmentName = screenCapture.fileName + ".png";
-						image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
-						ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
-						fileNames.add(attachmentName);
-						filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
-						attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
-						
-						image.deleteOnExit();
-					}
-					else {
-						MipavUtil.displayError("You must name your image.");
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			else if(screenCapture.insert){
+	    // boolean hack to get around double-calls to this method on closing.
+		if(event.getSource().equals(screenCapture) && !isScreenCapAttached){
+			if(screenCapture.insert){
 				try {
 					if (JDialogCaptureScreen.currImage == null)
 						MipavUtil.displayError("You must select a region to insert.");
 					else {
-						icon = new ImageIcon(JDialogCaptureScreen.currImage);
-						descriptionField.insertIcon(icon);
-						attachmentName = screenCapture.fileName + ".png";
+						// stop inserting images into description (they don't save in a plain-text message anyway).
+					    //icon = new ImageIcon(JDialogCaptureScreen.currImage);
+						//descriptionField.insertIcon(icon);
+					    
+					    // avoid collisions by putting a timestamp into the image name
+					    long ts = System.currentTimeMillis();
+					    
+						attachmentName = screenCapture.fileName + "_" + ts + ".png";
 						
-						if(screenCapture.fileName.length() > 0) {
-							image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
-							ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
-							fileNames.add(attachmentName);
-							filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
-							attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
-							image.deleteOnExit();
+						// attach the screen capture with an auto-generated name if one wasn't specified
+						if(screenCapture.fileName.length() == 0) {
+						    attachmentName = "screenCapture_" + ts + ".png"; 
 						}
+						
+					    String screenCapFilePath = Preferences.getPreferencesDir() + File.separator + attachmentName;
+						image = new File(screenCapFilePath);
+						ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
+						fileNames.add(attachmentName);
+						filePaths.add(screenCapFilePath);
+						attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
+						image.deleteOnExit();
+						
+						isScreenCapAttached = true;
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
