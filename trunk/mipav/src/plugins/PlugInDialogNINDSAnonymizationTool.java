@@ -6,7 +6,7 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -103,7 +103,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
      */
     public void init() {
         setForeground(Color.black);
-        setTitle("NINDS Anonymization Tool (External)" + " v2.2");
+        setTitle("NINDS Anonymization Tool (External)" + " v2.3");
 
         mainPanelGridBagLayout = new GridBagLayout();
         mainPanelConstraints = new GridBagConstraints();
@@ -114,19 +114,19 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         // input directory
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         inputDirectoryLabel = new JLabel(" Input Directory : ");
         mainPanel.add(inputDirectoryLabel, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        inputDirectoryTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        inputDirectoryTextField = new JTextField(25);
         mainPanel.add(inputDirectoryTextField, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 0;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         inputDirectoryBrowseButton = new JButton("Browse");
         inputDirectoryBrowseButton.addActionListener(this);
         inputDirectoryBrowseButton.setActionCommand("inputDirectoryBrowse");
@@ -135,19 +135,19 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         // output directory
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         outputDirectoryLabel = new JLabel(" Output Directory : ");
         mainPanel.add(outputDirectoryLabel, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        outputDirectoryTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        outputDirectoryTextField = new JTextField(25);
         mainPanel.add(outputDirectoryTextField, mainPanelConstraints);
 
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 1;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         outputDirectoryBrowseButton = new JButton("Browse");
         outputDirectoryBrowseButton.addActionListener(this);
         outputDirectoryBrowseButton.setActionCommand("outputDirectoryBrowse");
@@ -156,19 +156,19 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         // Input blinding file
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
         inputBlindingFileLabel = new JLabel("Input Blinding File (csv)");
         mainPanel.add(inputBlindingFileLabel, mainPanelConstraints);
         		
 		mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
-        inputBlindingFileTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        inputBlindingFileTextField = new JTextField(25);
         mainPanel.add(inputBlindingFileTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 2;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
         inputBlindingFileBrowseButton = new JButton("Browse");
         inputBlindingFileBrowseButton.addActionListener(this);
         inputBlindingFileBrowseButton.setActionCommand("inputBlindingFileBrowse");
@@ -177,7 +177,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         //csv file
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
         selectCSVFileRadioButton = new JRadioButton("Select CSV file: ");
         selectCSVFileRadioButton.setSelected(true);
         selectCSVFileRadioButton.addActionListener(this);
@@ -187,13 +187,13 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 		
 		mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
-        csvFilePathTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 0);
+        csvFilePathTextField = new JTextField(25);
         mainPanel.add(csvFilePathTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 3;
-        mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(40, 5, 15, 5);
         selectCSVFileBrowseButton = new JButton("Browse");
         selectCSVFileBrowseButton.addActionListener(this);
         selectCSVFileBrowseButton.setActionCommand("selectCSVFileBrowse");
@@ -201,7 +201,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 4;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
         createNewCSVFileRadioButton = new JRadioButton("Create new CSV file: ");
         createNewCSVFileRadioButton.addActionListener(this);
         createNewCSVFileRadioButton.setActionCommand("createCSV");
@@ -210,21 +210,21 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 		
 		mainPanelConstraints.gridx = 0;
 	    mainPanelConstraints.gridy = 5;
-	    mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+	    //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
 	    csvDirLabel = new JLabel("CSV file directory: ");
 	    csvDirLabel.setEnabled(false);
 	    mainPanel.add(csvDirLabel, mainPanelConstraints);
 	    
 	    mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        csvDirTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        csvDirTextField = new JTextField(25);
         csvDirTextField.setEnabled(false);
         mainPanel.add(csvDirTextField, mainPanelConstraints);
         
         mainPanelConstraints.gridx = 2;
         mainPanelConstraints.gridy = 5;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         selectCSVDirBrowseButton = new JButton("Browse");
         selectCSVDirBrowseButton.addActionListener(this);
         selectCSVDirBrowseButton.setActionCommand("selectCSVDirBrowse");
@@ -233,15 +233,15 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         
         mainPanelConstraints.gridx = 0;
 	    mainPanelConstraints.gridy = 6;
-	    mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+	    //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
 	    csvNameLabel = new JLabel("             CSV file name: ");
 	    csvNameLabel.setEnabled(false);
 	    mainPanel.add(csvNameLabel, mainPanelConstraints);
         
 	    mainPanelConstraints.gridx = 1;
         mainPanelConstraints.gridy = 6;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
-        csvNameTextField = new JTextField(55);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 0);
+        csvNameTextField = new JTextField(25);
         csvNameTextField.setEnabled(false);
         mainPanel.add(csvNameTextField, mainPanelConstraints);
         
@@ -249,7 +249,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 8;
         mainPanelConstraints.gridwidth = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         errorMessageLabel = new JLabel(" ");
         errorMessageLabel.setForeground(Color.RED);
         mainPanelConstraints.anchor = GridBagConstraints.CENTER;
@@ -259,7 +259,7 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 9;
         mainPanelConstraints.gridwidth = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
         outputMessageLabel = new JLabel(" ");
         mainPanel.add(outputMessageLabel, mainPanelConstraints);
         mainPanelConstraints.anchor = GridBagConstraints.WEST;
@@ -269,8 +269,8 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         mainPanelConstraints.gridx = 0;
         mainPanelConstraints.gridy = 10;
         mainPanelConstraints.gridwidth = 3;
-        mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
-        outputTextArea = new JTextArea(15, 70);
+        //mainPanelConstraints.insets = new Insets(15, 5, 15, 5);
+        outputTextArea = new JTextArea(10, 30);
         outputTextArea.setEditable(false);
         outputTextArea.setBackground(Color.lightGray);
         outputTextArea.setBorder(new LineBorder(Color.black));
@@ -280,21 +280,32 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
         scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
         mainPanel.add(scrollPane, mainPanelConstraints);
         
-               
         // ok,cancel
-        OKCancelPanel = new JPanel();
+        OKCancelPanel = new JPanel(new FlowLayout());
         buildOKButton();
         OKButton.setActionCommand(OK);
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+        OKCancelPanel.add(OKButton);
         buildCancelButton();
         cancelButton.setActionCommand("cancel");
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+        OKCancelPanel.add(cancelButton);
 
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
-
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        getContentPane().add(mainPanel, gbc);
+        gbc.gridy++;
+        getContentPane().add(OKCancelPanel, gbc);
+        
+        //getContentPane().add(mainPanel, BorderLayout.CENTER);
+        //getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        
+        validate();
+        setMinimumSize(new Dimension(getPreferredSize().width + 40, getPreferredSize().height + 40));
+        
         pack();
-        setResizable(false);
+        setResizable(true);
         setVisible(true);
     }
 
@@ -438,9 +449,8 @@ public class PlugInDialogNINDSAnonymizationTool extends JDialogStandaloneScripta
 		}else if (command.equalsIgnoreCase("cancel")) {
             if (alg != null) {
                 alg.setAlgCanceled(true);
-            } else {
-                dispose();
             }
+            windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         } else if (command.equals(OK)) {
             outputTextArea.setText("");
             outputMessageLabel.setText(" ");
