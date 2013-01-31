@@ -24,6 +24,8 @@ import javax.swing.border.*;
  * panel. In addition to the JPanelColorHisoRGB, the panel hold the gradient magnitude hisogram control panel.
  *
  * @version  1.0
+ * @deprecated
+ * @see JPanelVolumeOpacity
  */
 public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
 
@@ -96,6 +98,8 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
      * @param  theParentFrame  Model RGB
      * @param  _imageA         Model of imageA
      * @param  _imageB         Model of imageB
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacityRGB(RenderViewBase theParentFrame, ModelImage _imageA, ModelImage _imageB) {
         super(theParentFrame);
@@ -158,6 +162,8 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
      * @param  theParentFrame  Model RGB
      * @param  _imageA         Model of imageA
      * @param  _imageB         Model of imageB
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacityRGB(VolumeTriPlanarInterface theParentFrame, ModelImage _imageA, ModelImage _imageB) {
         super(theParentFrame);

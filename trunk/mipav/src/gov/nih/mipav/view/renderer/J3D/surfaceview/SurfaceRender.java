@@ -16,6 +16,8 @@ import gov.nih.mipav.view.renderer.J3D.volumeview.VolumeRenderer;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.FileNotFoundException;
 import java.util.EventObject;
 
@@ -43,7 +45,7 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
  * @see JDialogView
  * @see JDialogMouseRecorder
  */
-public class SurfaceRender extends RenderViewBase implements KeyListener {
+public class SurfaceRender extends RenderViewBase implements KeyListener, PropertyChangeListener {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -270,7 +272,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     private BranchGroup volBG;
 
     /** Volume opacity control dialog. */
-    private JPanelVolOpacityBase volOpacityPanel;
+    private JPanelVolumeOpacity volOpacityPanel;
 
     /** Volume render branch group. */
     private BranchGroup volRenderBG;
@@ -403,11 +405,8 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         viewPanel = new JPanelView(this);
         _pBar.updateValueImmed(20);
 
-        if (imageA.isColorImage()) {
-            volOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
-        } else {
-            volOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
-        }
+        volOpacityPanel = new JPanelVolumeOpacity(imageA, imageB);
+        volOpacityPanel.addPropertyChangeListener(this);
 
         _pBar.updateValueImmed(25);
 
@@ -1163,7 +1162,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * 
      * @return volOpacityPanel volume opacity dialog box.
      */
-    public JPanelVolOpacityBase getVolOpacityPanel() {
+    public JPanelVolumeOpacity getVolOpacityPanel() {
         return volOpacityPanel;
     }
 
@@ -1702,7 +1701,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     public void setRayBasedRender(final VolumeRenderer _rayBasedRender) {
         rayBasedRender = _rayBasedRender;
         clipPanel.setRayBasedRender(_rayBasedRender);
-        volOpacityPanel.setRayBasedRender(_rayBasedRender);
         surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
         sculptorPanel.setVolumeSculptor(_rayBasedRender);
     }
@@ -3468,5 +3466,11 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
                 }
         }
     }
+
+	@Override
+	public void propertyChange(PropertyChangeEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 
 }

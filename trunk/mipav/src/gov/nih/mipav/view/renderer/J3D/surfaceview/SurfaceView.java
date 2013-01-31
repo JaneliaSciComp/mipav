@@ -909,7 +909,7 @@ public class SurfaceView extends SurfaceRender {
      * 
      * @return volOpacityPanel volume opacity dialog box.
      */
-    public JPanelVolOpacityBase getVolOpacityPanel() {
+    public JPanelVolumeOpacity getVolOpacityPanel() {
         return null;
     }
 

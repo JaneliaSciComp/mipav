@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -2178,6 +2179,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  }
 	  }
 
+
+	  public boolean getGradientMagnitude()
+	  {
+		  return m_kVolumeRayCast.GetGradientMagnitude();
+	  }
+
 	  /**
 	   * Enables/Disables Gradient Magnitude filter.
 	   * @param bShow gradient magnitude filter on/off
@@ -2233,7 +2240,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	   * @param kLUT the new LUT.
 	   * @param kRGBT the new ModelRGB (for color images).
 	   */
-	  public void setLUTNew( String kSurfaceName, ModelLUT kLUT, ModelRGB kRGBT )
+	  public void setLUTNew( String kSurfaceName, ModelStorageBase kLUT )
 	  {
 		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		  {
@@ -2241,7 +2248,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  {
 				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				  {
-					  ((VolumeSurface)(m_kDisplayList.get(i))).SetLUTNew(kLUT, kRGBT);
+					  ((VolumeSurface)(m_kDisplayList.get(i))).SetLUTNew(kLUT);
 				  }
 			  }
 		  }

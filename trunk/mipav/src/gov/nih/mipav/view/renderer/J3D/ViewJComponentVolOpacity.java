@@ -338,6 +338,6 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
             max = (float) image.getMax();
         }
 
-        range = (int) (max - min);
+        range = (int) Math.max(1, max - min);
     }
 }

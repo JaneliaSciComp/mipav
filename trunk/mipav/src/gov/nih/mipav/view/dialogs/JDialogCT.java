@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -98,23 +99,23 @@ public class JDialogCT extends JDialogBase implements ItemListener {
 
     /** DOCUMENT ME! */
     private int vertebraeMin, vertebraeMax;
+    
+    private ModelLUT LUT;
+    private ViewJPanelHistoLUT histoPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Creates new dialog and sets up GUI components.
-     *
-     * @param  theParentFrame  Parent frame.
-     */
-    public JDialogCT(Frame theParentFrame) {
-        super(theParentFrame, false);
+    public JDialogCT(ViewJPanelHistoLUT _histoPanel, ModelLUT _lut) {
+        super(false);
+        histoPanel = _histoPanel;
+        LUT = _lut;
 
         int levelTemp, windowTemp;
 
-        origNPts = ((ViewJFrameHistoLUT) (parentFrame)).getTransferLine().size();
+        origNPts = LUT.getTransferFunction().size();
         origX = new float[origNPts];
         origY = new float[origNPts];
-        ((ViewJFrameHistoLUT) (parentFrame)).getTransferLine().exportArrays(origX, origY);
+        LUT.getTransferFunction().exportArrays(origX, origY);
 
         setForeground(Color.black);
         cancelFlag = false;
@@ -275,7 +276,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
         getContentPane().add(contentBox);
 
         pack();
-        ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(mediastinumMin, mediastinumMax);
+        ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(mediastinumMin, mediastinumMax);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -297,10 +298,8 @@ public class JDialogCT extends JDialogBase implements ItemListener {
         if (command.equals("Close")) {
             dispose();
         } else if (command.equals("Cancel")) {
-            ((ViewJFrameHistoLUT) (parentFrame)).getTransferLine().importArrays(origX, origY, origNPts);
-            ((ViewJFrameHistoLUT) (parentFrame)).setLinearLUT();
-            ((ViewJFrameHistoLUT) (parentFrame)).setLUT(((ViewJFrameHistoLUT) (parentFrame)).getLUT());
-            ((ViewJFrameHistoLUT) (parentFrame)).updateFrames(false);
+        	LUT.getTransferFunction().importArrays(origX, origY, origNPts);
+            histoPanel.updateFrames(false);
             dispose();
 
         } else if (command.equals("Set")) {
@@ -311,42 +310,42 @@ public class JDialogCT extends JDialogBase implements ItemListener {
                 abdomenLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 abdomenMin = levelTemp - (windowTemp / 2);
                 abdomenMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(abdomenMin, abdomenMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(abdomenMin, abdomenMax);
             } else if (radioHead.isSelected()) {
                 levelTemp = Integer.valueOf(minText.getText()).intValue();
                 windowTemp = Integer.valueOf(maxText.getText()).intValue();
                 headLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 headMin = levelTemp - (windowTemp / 2);
                 headMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(headMin, headMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(headMin, headMax);
             } else if (radioLung.isSelected()) {
                 levelTemp = Integer.valueOf(minText.getText()).intValue();
                 windowTemp = Integer.valueOf(maxText.getText()).intValue();
                 lungLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 lungMin = levelTemp - (windowTemp / 2);
                 lungMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(lungMin, lungMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(lungMin, lungMax);
             } else if (radioMediastinum.isSelected()) {
                 levelTemp = Integer.valueOf(minText.getText()).intValue();
                 windowTemp = Integer.valueOf(maxText.getText()).intValue();
                 mediastinumLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 mediastinumMin = levelTemp - (windowTemp / 2);
                 mediastinumMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(mediastinumMin, mediastinumMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(mediastinumMin, mediastinumMax);
             } else if (radioSpine.isSelected()) {
                 levelTemp = Integer.valueOf(minText.getText()).intValue();
                 windowTemp = Integer.valueOf(maxText.getText()).intValue();
                 spineLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 spineMin = levelTemp - (windowTemp / 2);
                 spineMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(spineMin, spineMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(spineMin, spineMax);
             } else if (radioVertebrae.isSelected()) {
                 levelTemp = Integer.valueOf(minText.getText()).intValue();
                 windowTemp = Integer.valueOf(maxText.getText()).intValue();
                 vertebraeLabel.setText("(" + levelTemp + "," + windowTemp + ")");
                 vertebraeMin = levelTemp - (windowTemp / 2);
                 vertebraeMax = levelTemp + (windowTemp / 2);
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(vertebraeMin, vertebraeMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(vertebraeMin, vertebraeMax);
             }
         } else if (command.equals("Reset")) {
             abdomenMin = -75;
@@ -358,7 +357,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioAbdomen.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(abdomenMin, abdomenMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(abdomenMin, abdomenMax);
             }
 
             headMin = -25;
@@ -370,7 +369,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioHead.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(headMin, headMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(headMin, headMax);
             }
 
             lungMin = -1550;
@@ -382,7 +381,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioLung.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(lungMin, lungMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(lungMin, lungMax);
             }
 
             mediastinumMin = -175;
@@ -394,7 +393,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioMediastinum.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(mediastinumMin, mediastinumMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(mediastinumMin, mediastinumMax);
             }
 
             spineMin = -110;
@@ -406,7 +405,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioSpine.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(spineMin, spineMax);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(spineMin, spineMax);
             }
 
             vertebraeMin = -620;
@@ -418,7 +417,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
             if (radioVertebrae.isSelected()) {
                 minText.setText("" + levelTemp + "");
                 maxText.setText("" + windowTemp + "");
-                ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(levelTemp, windowTemp);
+                ((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(levelTemp, windowTemp);
             }
 
         } else {
@@ -466,43 +465,33 @@ public class JDialogCT extends JDialogBase implements ItemListener {
         int levelTemp, windowTemp;
 
         if (radioAbdomen.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-75, 175);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(abdomenMin, abdomenMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(abdomenMin, abdomenMax);
             levelTemp = (abdomenMax + abdomenMin) / 2;
             windowTemp = abdomenMax - abdomenMin;
             minText.setText("" + levelTemp + "");
             maxText.setText("" + windowTemp + "");
         } else if (radioHead.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-25, 125);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(headMin, headMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(headMin, headMax);
             levelTemp = (headMax + headMin) / 2;
             windowTemp = headMax - headMin;
             minText.setText("" + levelTemp + "");
             maxText.setText("" + windowTemp + "");
         } else if (radioLung.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-1550, 450);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(lungMin, lungMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(lungMin, lungMax);
             levelTemp = (lungMax + lungMin) / 2;
             windowTemp = lungMax - lungMin;
             minText.setText("" + levelTemp + "");
             maxText.setText("" + windowTemp + "");
 
         } else if (radioMediastinum.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-175, 275);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(mediastinumMin, mediastinumMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(mediastinumMin, mediastinumMax);
             levelTemp = (mediastinumMax + mediastinumMin) / 2;
             windowTemp = mediastinumMax - mediastinumMin;
             minText.setText("" + levelTemp + "");
             maxText.setText("" + windowTemp + "");
 
         } else if (radioSpine.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-110, 190);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(spineMin, spineMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(spineMin, spineMax);
             levelTemp = (spineMax + spineMin) / 2;
             windowTemp = spineMax - spineMin;
             minText.setText("" + levelTemp + "");
@@ -510,9 +499,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
 
 
         } else if (radioVertebrae.isSelected()) {
-
-            // ((ViewJFrameHistoLUT)(parentFrame)).setCTMode(-620, 1680);
-            ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(vertebraeMin, vertebraeMax);
+        	((ViewJComponentHistoLUT)histoPanel.getHistoLUTComponent()).ctMode(vertebraeMin, vertebraeMax);
             levelTemp = (vertebraeMax + vertebraeMin) / 2;
             windowTemp = vertebraeMax - vertebraeMin;
             minText.setText("" + levelTemp + "");

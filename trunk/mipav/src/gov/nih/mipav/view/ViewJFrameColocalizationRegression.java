@@ -544,18 +544,14 @@ public class ViewJFrameColocalizationRegression extends ViewJFrameBase implement
             MipavUtil.showWebHelp("Microscopy_Colocalization_Orthogonal_Regression");
         } else if (command.equals("DisplayLUT")) {
 
-            if (destImage.getHistoLUTFrame() == null) {
-                JDialogHistogramLUT histogramDialog = null;
-
+            if (destImage.getHistogramFrame() == null) {
                 try {
-                    histogramDialog = new JDialogHistogramLUT(this, destImage, null, LUTdest, null);
+                    JFrameHistogram histogramDialog = new JFrameHistogram(this, destImage, null, LUTdest, null);
+                    histogramDialog.setColocalizationRegFrame(this);
+                    histogramDialog.histogramLUT(true,true);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                 }
-
-                histogramDialog.setColocalizationRegFrame(true);
-                histogramDialog.histogramLUT(true);
-
             }
         } else if (command.equals("Brightness")) {
 

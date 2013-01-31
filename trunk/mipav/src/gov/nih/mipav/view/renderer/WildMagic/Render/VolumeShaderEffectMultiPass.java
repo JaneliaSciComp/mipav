@@ -472,6 +472,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         //System.err.println( kColor.A );
     }
     
+    public boolean GetGradientMagnitude()
+    {
+    	return m_bGradientMag;
+    }
 
     /** 
      * Enables/Disables gradient magnitude filter.

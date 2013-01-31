@@ -96,7 +96,7 @@ public class JPanelBrainSurfaceFlattener extends JPanelRendererJ3D implements Vi
     private JTextField m_kNumLonText = new JTextField("13", 3);
 
     /** DOCUMENT ME! */
-    private JPanelHistoLUT m_kPanelBrainsurfaceFlattenerLUT = null;
+    private JFrameHistogram m_kPanelBrainsurfaceFlattenerLUT = null;
 
     /** DOCUMENT ME! */
     private ViewJFrameVolumeView m_kParentFrame;
@@ -318,6 +318,12 @@ public class JPanelBrainSurfaceFlattener extends JPanelRendererJ3D implements Vi
         if (m_kLUTa != null) {
             m_kLUTa = null;
         }
+        
+        if (m_kPanelBrainsurfaceFlattenerLUT != null )
+        {
+        	m_kPanelBrainsurfaceFlattenerLUT.disposeLocal();
+        	m_kPanelBrainsurfaceFlattenerLUT = null;
+        }
     }
 
     /**
@@ -451,10 +457,10 @@ public class JPanelBrainSurfaceFlattener extends JPanelRendererJ3D implements Vi
         m_kLUTa.resetTransferLine(fMin, fMin, fMax, fMax);
 
         /* Create LUT panel: */
-        m_kPanelBrainsurfaceFlattenerLUT = new JPanelHistoLUT(m_kLUTImageA, null, m_kLUTa, null, true);
-
+        m_kPanelBrainsurfaceFlattenerLUT = new JFrameHistogram(m_kParentFrame, m_kLUTImageA, null, m_kLUTa, null);
+        m_kPanelBrainsurfaceFlattenerLUT.histogramLUT(true, false);
         JPanel brainsurfaceFlattenerLUTPanel = new JPanel();
-        brainsurfaceFlattenerLUTPanel.add(m_kPanelBrainsurfaceFlattenerLUT.getMainPanel());
+        brainsurfaceFlattenerLUTPanel.add(m_kPanelBrainsurfaceFlattenerLUT.getContainingPanel());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;

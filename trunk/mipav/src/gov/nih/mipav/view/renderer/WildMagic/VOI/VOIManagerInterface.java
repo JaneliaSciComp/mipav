@@ -2246,18 +2246,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         m_akBounds[1].copy(kBounds[1]);        
         deleteVOI( kLUT );
         if (getActiveImage().isColorImage() == false) {
-            quickLUT( m_akBounds, getActiveImage(), m_kParent.getActiveLUT() );
-            getActiveImage().notifyImageDisplayListeners(m_kParent.getActiveLUT(), true);            
+            quickLUT( m_akBounds, getActiveImage(), m_kParent.getActiveLUT() );           
         } else { // RGB image
             quickRGB( m_akBounds, getActiveImage(), m_kParent.getActiveRGB() );
-            getActiveImage().notifyImageDisplayListeners(true, 1, m_kParent.getActiveRGB());
         }
 
-        if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
-            getActiveImage().getHistoRGBFrame().update();
-        } else if (getActiveImage().getHistoLUTFrame() != null) {
-            getActiveImage().getHistoLUTFrame().update();
-        }    
+        if ( getActiveImage().getHistogramFrame() != null )
+        {
+            getActiveImage().getHistogramFrame().redrawFrames();
+        }
 
         toolbarBuilder.getVOIColorButton().setBackground( currentColor );
         m_kCurrentVOIGroup = saveGroup;

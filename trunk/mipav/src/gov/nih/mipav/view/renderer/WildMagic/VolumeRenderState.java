@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -105,9 +106,8 @@ public class VolumeRenderState implements Serializable
     public String OtherImageDirectory;
     public String OtherImageName;
     public boolean UseOtherImage;
-    public ModelLUT OtherLUT;
+    public ModelStorageBase OtherLUT;
     public TransferFunction OtherTransfer;
-    public ModelRGB OtherRGB;
     public TransferFunction OtherRed;
     public TransferFunction OtherGreen;
     public TransferFunction OtherBlue;

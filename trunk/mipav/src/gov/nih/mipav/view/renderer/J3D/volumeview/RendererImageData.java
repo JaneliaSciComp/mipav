@@ -227,9 +227,93 @@ public class RendererImageData {
      * @param bForceShow boolean Flag set if the color mapping must be performed even if nothing else changed.
      * 
      * @return boolean True if renderer is up-to-date; false if an error occurred.
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public boolean updateRenderer(final Renderer kRayTracer, final ModelRGB kIntensityRGB,
             final JPanelVolOpacityRGB volOpacityObj, final int iTimeSlice, final boolean bUpdatedTimeSlice,
+            final boolean bForceShow) {
+
+        try {
+            final RendererInterfaceColor kRayTracerColor = (RendererInterfaceColor) kRayTracer;
+
+            // Get the time slice of data from the volume.
+            if (bUpdatedTimeSlice || !kRayTracer.hasInputData() || kRayTracer.reloadInputData()) {
+                m_kImage.exportData(iTimeSlice * m_afData.length, m_afData.length, m_afData);
+            }
+
+            // Compute a default map for colors to intensity.
+            final RendererMapColor kMapColorToIntensity = new RendererMapColor();
+            kMapColorToIntensity.setScales(1.0f, 1.0f, 1.0f);
+
+            // Assign this map if not already done so.
+            if ( !kRayTracerColor.hasInputMap()) {
+                kRayTracerColor.setInputMap(kMapColorToIntensity);
+            }
+
+            // Compute normals from gradient of intensity.
+            if (kRayTracer.usesNormals()) {
+
+                if (bUpdatedTimeSlice || !kRayTracer.hasNormals()) {
+
+                    float[] afIntensity = new float[m_iNumVoxels];
+
+                    for (int i = 0; i < m_iNumVoxels; i++) {
+                        afIntensity[i] = kMapColorToIntensity.mapValue(m_afData[ (4 * i) + 1], m_afData[ (4 * i) + 2],
+                                m_afData[ (4 * i) + 3]);
+                    }
+
+                    kRayTracer.setNormals(RenderViewBase.getNormals());
+
+                    // kRayTracer.setNormals(createImageNormals(afIntensity));
+                    afIntensity = null;
+                }
+            }
+
+            // Update the RGBA channels for the color-based renderers which
+            // derive their data from opacity mapping of input colors.
+            if (bUpdatedTimeSlice || bForceShow || !kRayTracer.hasInputData()) {
+
+                if (null == m_acImageR) {
+                    m_acImageR = new byte[m_iNumVoxels];
+                }
+
+                if (null == m_acImageG) {
+                    m_acImageG = new byte[m_iNumVoxels];
+                }
+
+                if (null == m_acImageB) {
+                    m_acImageB = new byte[m_iNumVoxels];
+                }
+
+                if (null == m_acImageA) {
+                    m_acImageA = new byte[m_iNumVoxels];
+                }
+
+                // If the input intensity map for the color image is not
+                // defined, then define one here. If it is defined and
+                // changes, then remember the one specified.
+                if ( (m_kIntensityRGB != kIntensityRGB) && (null != kIntensityRGB)) {
+                    m_kIntensityRGB = kIntensityRGB;
+                } else if (null == m_kIntensityRGB) {
+                    m_kIntensityRGB = new ModelRGB(new int[] {4, 256});
+                }
+
+                computeImageBytes(m_afData, m_kIntensityRGB, kMapColorToIntensity, volOpacityObj);
+
+                kRayTracerColor.setInput(m_acImageR, m_acImageG, m_acImageB, m_acImageA);
+            }
+        } catch (final IOException error) {
+            MipavUtil.displayError("" + error);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean updateRenderer(final Renderer kRayTracer, final ModelRGB kIntensityRGB,
+            final JPanelVolumeOpacity volOpacityObj, final int iTimeSlice, final boolean bUpdatedTimeSlice,
             final boolean bForceShow) {
 
         try {
@@ -431,6 +515,8 @@ public class RendererImageData {
      * @param kIntensityRGB ModelRGB Input transfer function for each RGB channel.
      * @param kMapColorToIntensity RendererMapColor Map to convert RGB channel valeus to intensity.
      * @param volOpacityObj opacity map to apply to values.
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     private void computeImageBytes(final float[] afData, final ModelRGB kIntensityRGB,
             final RendererMapColor kMapColorToIntensity, final JPanelVolOpacityRGB volOpacityObj) {
@@ -503,6 +589,159 @@ public class RendererImageData {
             tfRedGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.RED);
             tfGreenGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.GREEN);
             tfBlueGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.BLUE);
+        }
+
+        pixGM_R = 0;
+        pixGM_G = 0;
+        pixGM_B = 0;
+        opacityValA_R = 0;
+        opacityValA_G = 0;
+        opacityValA_B = 0;
+
+        for (int i = 0; i < iNumVoxels; i++) {
+
+            // Get the original sample values for each channel.
+            int iA = (int) afData[iIndex++];
+            int iR = (int) afData[iIndex++];
+            int iG = (int) afData[iIndex++];
+            int iB = (int) afData[iIndex++];
+
+            if ( (tfRed != null) && (tfGreen != null) && (tfBlue != null)) {
+                opacityValA_R = MipavMath.round(tfRed.getRemappedValue(iR, 255));
+                opacityValA_G = MipavMath.round(tfGreen.getRemappedValue(iG, 255));
+                opacityValA_B = MipavMath.round(tfBlue.getRemappedValue(iB, 255));
+            }
+
+            if (gmMode) {
+                pixGM_R = tfRedGM.getRemappedValue(iR, 256) / 255.0f;
+                pixGM_G = tfGreenGM.getRemappedValue(iG, 256) / 255.0f;
+                pixGM_B = tfBlueGM.getRemappedValue(iB, 256) / 255.0f;
+            } else {
+                pixGM_R = 1;
+                pixGM_G = 1;
+                pixGM_B = 1;
+            }
+
+            // Clip RGB channels values to be in [0,255] range.
+            if (iR < 0) {
+                iR = 0;
+            } else if (iR > 255) {
+                iR = 255;
+            }
+
+            if (iG < 0) {
+                iG = 0;
+            } else if (iG > 255) {
+                iG = 255;
+            }
+
+            if (iB < 0) {
+                iB = 0;
+            } else if (iB > 255) {
+                iB = 255;
+            }
+
+            // Use RGB channel values to determine opacity.
+            iA = (int) ( ( ( (opacityValA_R * pixGM_R) + (opacityValA_G * pixGM_G) + (opacityValA_B * pixGM_B)) * 0.333333f) + 0.5f);
+
+            if (iA < 0) {
+                iA = 0;
+            } else if (iA > 255) {
+                iA = 255;
+            }
+
+            redMapped = (aiIntensityRGB[(int) ( (iR + offsetAR) * normColorA)] & 0x00ff0000) >> 16;
+            greenMapped = (aiIntensityRGB[(int) ( (iG + offsetAG) * normColorA)] & 0x0000ff00) >> 8;
+            blueMapped = (aiIntensityRGB[(int) ( (iB + offsetAB) * normColorA)] & 0x000000ff);
+
+            // Create a 32-bit ARGB value combining each channel, but
+            // only after mapping the RGB channels through their intensity
+            // transfer functions. Apply the mask to allow only those
+            // bits enabled to be written.
+            int iARGB = (iA << 24) | ((int) redMapped << 16) | ((int) greenMapped << 8) | (int) blueMapped;
+            iARGB &= iColorMask;
+
+            // Separate out each channel again into separate byte images.
+            m_acImageA[i] = (byte) ( (iARGB & 0xff000000) >> 24);
+            m_acImageR[i] = (byte) ( (iARGB & 0x00ff0000) >> 16);
+            m_acImageG[i] = (byte) ( (iARGB & 0x0000ff00) >> 8);
+            m_acImageB[i] = (byte) (iARGB & 0x000000ff);
+        }
+
+        aiIntensityRGB = null;
+    }
+
+    private void computeImageBytes(final float[] afData, final ModelRGB kIntensityRGB,
+            final RendererMapColor kMapColorToIntensity, final JPanelVolumeOpacity volOpacityObj) {
+
+        // Setup bits mask to enable which colors can be selected for rendering.
+        final int iColorMask = 0xff000000 | (kIntensityRGB.getROn() ? 0x00ff0000 : 0)
+                | (kIntensityRGB.getGOn() ? 0x0000ff00 : 0) | (kIntensityRGB.getBOn() ? 0x000000ff : 0);
+
+        // Access the intensity map for the color imge channels.
+        int[] aiIntensityRGB = kIntensityRGB.exportIndexedRGB();
+
+        final int iNumVoxels = afData.length / 4;
+
+        float redMapped, greenMapped, blueMapped;
+
+        // Even through the ARGB image is stored in a float array,
+        // each component value should be in the [0,255] range.
+        int iIndex = 0;
+
+        float pixGM_R = 0, pixGM_G = 0, pixGM_B = 0;
+        int opacityValA_R = 0, opacityValA_G = 0, opacityValA_B = 0;
+
+        float maxColorA = 255;
+        float normColorA = 1;
+        float offsetAR = 0.0f;
+        float offsetAG = 0.0f;
+        float offsetAB = 0.0f;
+
+        final boolean gmMode = volOpacityObj.isGradientMagnitudeOpacityEnabled();
+
+        if (m_kImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            maxColorA = (float) m_kImage.getMaxR();
+            maxColorA = Math.max((float) m_kImage.getMaxG(), maxColorA);
+            maxColorA = Math.max((float) m_kImage.getMaxB(), maxColorA);
+        } else if (m_kImage.getType() == ModelStorageBase.ARGB_FLOAT) {
+
+            if (m_kImage.getMinR() < 0.0) {
+                maxColorA = (float) (m_kImage.getMaxR() - m_kImage.getMinR());
+                offsetAR = (float) ( -m_kImage.getMinR());
+            } else {
+                maxColorA = (float) m_kImage.getMaxR();
+            }
+
+            if (m_kImage.getMinG() < 0.0) {
+                maxColorA = Math.max((float) (m_kImage.getMaxG() - m_kImage.getMinG()), maxColorA);
+                offsetAG = (float) ( -m_kImage.getMinG());
+            } else {
+                maxColorA = Math.max((float) m_kImage.getMaxG(), maxColorA);
+            }
+
+            if (m_kImage.getMinB() < 0.0) {
+                maxColorA = Math.max((float) (m_kImage.getMaxB() - m_kImage.getMinB()), maxColorA);
+                offsetAB = (float) ( -m_kImage.getMinB());
+            } else {
+                maxColorA = Math.max((float) m_kImage.getMaxB(), maxColorA);
+            }
+        }
+
+        normColorA = 255 / maxColorA;
+
+        final TransferFunction tfRed = volOpacityObj.getCompA().getOpacityTransferFunction();
+        final TransferFunction tfGreen = volOpacityObj.getCompA().getOpacityTransferFunction();
+        final TransferFunction tfBlue = volOpacityObj.getCompA().getOpacityTransferFunction();
+
+        TransferFunction tfRedGM = null;
+        TransferFunction tfGreenGM = null;
+        TransferFunction tfBlueGM = null;
+
+        if (gmMode) {
+            tfRedGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+            tfGreenGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+            tfBlueGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
         }
 
         pixGM_R = 0;

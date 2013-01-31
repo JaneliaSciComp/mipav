@@ -1413,27 +1413,11 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         {
             if ( m_kActiveImage == m_kImageA )
             {
-                if ( m_kImageA.isColorImage() )
-                {
-                    m_kParent.getRGBDialog().setRGBTA((ModelRGB)m_kActiveLookupTable);
-                    m_kParent.getRGBDialog().update( );
-                }
-                else
-                {
-                    m_kParent.getLUTDialog().setLUTA((ModelLUT)m_kActiveLookupTable);
-                }
+            	m_kParent.getHistogramDialog().setLUTA(m_kActiveLookupTable);
             }
             else if ( m_kActiveImage == m_kImageB )
             {
-                if ( m_kImageB.isColorImage() )
-                {
-                    m_kParent.getRGBDialog().setRGBTB((ModelRGB)m_kActiveLookupTable);
-                    m_kParent.getRGBDialog().update( );
-                }
-                else
-                {
-                    m_kParent.getLUTDialog().setLUTB((ModelLUT)m_kActiveLookupTable);
-                }
+            	m_kParent.getHistogramDialog().setLUTB(m_kActiveLookupTable);
             }
         }
         if (m_bFirstDrag) {

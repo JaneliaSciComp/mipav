@@ -2649,7 +2649,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
         imageB.addImageDisplayListener(this);
 
-        if ( (imageA.isColorImage() == false) && (imageB.isColorImage() == false)) {
+        if ( !imageB.isColorImage() ) {
             final int[] dimExtentsLUT = new int[2];
 
             dimExtentsLUT[0] = 4;
@@ -2678,16 +2678,15 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
             LUT.resetTransferLine(min, imgMin, max, imgMax);
             imageB.notifyImageDisplayListeners(LUT, true);
 
-            if (imageA.getHistoLUTFrame() != null) {
-                imageB.addImageDisplayListener(imageA.getHistoLUTFrame());
-                //updateHistoLUTFrame(ViewJFrameBase.IMAGE_B);
+            if (imageA.getHistogramFrame() != null) {
+                imageB.addImageDisplayListener(imageA.getHistogramFrame());
             }
-        } else if (imageA.isColorImage() && imageB.isColorImage()) {
+        } 
+        else if ( imageB.isColorImage() ) {
             imageB.notifyImageDisplayListeners(null, true);
 
-            if (imageA.getHistoRGBFrame() != null) {
-                imageB.addImageDisplayListener(imageA.getHistoRGBFrame());
-                //updateHistoRGBFrame(ViewJFrameBase.IMAGE_B);
+            if (imageA.getHistogramFrame() != null) {
+                imageB.addImageDisplayListener(imageA.getHistogramFrame());
             }
         }
 

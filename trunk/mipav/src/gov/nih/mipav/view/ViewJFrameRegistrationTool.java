@@ -568,28 +568,25 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 MipavUtil.displayError(" Cannot change the LUT of a Boolean image.");
             } else {
 
-                if ((imageA.getHistoLUTFrame() == null) && (imageA.getHistoRGBFrame() == null)) {
-                    JDialogHistogramLUT histogramDialog = null;
-
+                if ( imageA.getHistogramFrame() == null ) {
                     if (imageA.isColorImage() == false) {
-
                         try {
-                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB, LUTa, LUTb);
+                        	JFrameHistogram histogramDialog = new JFrameHistogram( this, componentImage, imageA, imageB, LUTa, LUTb );
+                            histogramDialog.histogramLUT(true,true);
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
-                    } else {
-
+                    } 
+                    else {
                         try {
-                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB,
-                                                                      componentImage.getRGBTA(),
-                                                                      componentImage.getRGBTB());
+                        	JFrameHistogram histogramDialog = new JFrameHistogram(this, componentImage, imageA, imageB,
+                                    componentImage.getRGBTA(),
+                                    componentImage.getRGBTB());
+                            histogramDialog.histogramLUT(true,true);
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
                     }
-
-                    histogramDialog.histogramLUT(true);
                 }
             }
         } else if (command.equals("CheckerBoard")) {

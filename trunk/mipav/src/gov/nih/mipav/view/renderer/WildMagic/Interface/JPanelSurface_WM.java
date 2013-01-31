@@ -4,6 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
@@ -564,14 +565,14 @@ public class JPanelSurface_WM extends JInterfaceBase
      * @param kLUT ModelLUT
      * @param kRGBT ModelRGB for color images.
      */
-    public void SetLUTNew(  ModelLUT kLUT, ModelRGB kRGBT )
+    public void SetLUTNew(  ModelStorageBase kLUT )
     {
         int[] aiSelected = surfaceList.getSelectedIndices();
         if ( m_kVolumeViewer != null )
         {
             DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             for (int i = 0; i < aiSelected.length; i++) {
-                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT, kRGBT);
+                m_kVolumeViewer.SetLUTNew( (String)kList.elementAt(aiSelected[i]), kLUT);
             }
         }
     }

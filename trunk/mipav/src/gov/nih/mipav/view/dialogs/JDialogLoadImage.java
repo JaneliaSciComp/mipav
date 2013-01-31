@@ -335,6 +335,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             // default margin value
             JPanel defaultValuePanel = new JPanel();
             defaultValuePanel.setBorder(buildTitledBorder("Select pad Value"));
+            /*
             if (image.isColorImage() == false) {
 
                 // set layout
@@ -359,6 +360,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 gbl.setConstraints(defaultRedInput, gbc);
                 defaultValuePanel.add(defaultRedInput);
             } else { // color image
+            */
                 GridBagLayout gbl = new GridBagLayout();
                 GridBagConstraints gbc = new GridBagConstraints();
                 defaultValuePanel.setLayout(gbl);
@@ -409,8 +411,9 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbl.setConstraints(defaultBlueInput, gbc);
                 defaultValuePanel.add(defaultBlueInput);
+                /*
             }
-
+*/
 
             Box mainBox = new Box(BoxLayout.Y_AXIS);
             mainBox.setAlignmentX(Component.LEFT_ALIGNMENT);

@@ -550,7 +550,7 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
         LUT.getTransferFunction().importArrays(x, y, 4);
         image.notifyImageDisplayListeners(LUT, false);
 
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
     }
@@ -673,7 +673,7 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
         LUT.getTransferFunction().importArrays(x, y, 4);
         image.notifyImageDisplayListeners(LUT, false);
 
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
 
@@ -766,7 +766,7 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
     private void updateHistoLUTFrame() {
 
         image.notifyImageDisplayListeners(LUT, false);
-        image.getHistoLUTFrame().update();
+        image.getHistogramFrame().redrawFrames();
 
     }
 
