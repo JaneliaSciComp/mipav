@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.JFrameHistogram;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
@@ -114,7 +115,7 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
     private JTextField m_kNumLonText = new JTextField("13", 3);
 
     /** LUT Panel based on surface curvature. */
-    private JPanelHistoLUT m_kPanelBrainsurfaceFlattenerLUT = null;
+    private JFrameHistogram m_kPanelBrainsurfaceFlattenerLUT = null;
 
     /** Picking button group -- switch between picking correspondence points
      * and the puncture triangle. */
@@ -315,6 +316,12 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         if (m_kLUTa != null) {
             m_kLUTa = null;
         }
+        
+        if ( m_kPanelBrainsurfaceFlattenerLUT != null )
+        {
+        	m_kPanelBrainsurfaceFlattenerLUT.disposeLocal();
+        	m_kPanelBrainsurfaceFlattenerLUT = null;
+        }
     }
 
 
@@ -435,10 +442,10 @@ public class JPanelBrainSurfaceFlattener_WM extends JPanel implements ActionList
         m_kLUTa.resetTransferLine(fMin, fMin, fMax, fMax);
 
         /* Create LUT panel: */
-        m_kPanelBrainsurfaceFlattenerLUT = new JPanelHistoLUT(m_kLUTImageA, null, m_kLUTa, null, true);
-
+        m_kPanelBrainsurfaceFlattenerLUT = new JFrameHistogram(m_kVolumeViewer, m_kLUTImageA, null, m_kLUTa, null);
+        m_kPanelBrainsurfaceFlattenerLUT.histogramLUT(true, false);
         JPanel brainsurfaceFlattenerLUTPanel = new JPanel();
-        brainsurfaceFlattenerLUTPanel.add(m_kPanelBrainsurfaceFlattenerLUT.getMainPanel());
+        brainsurfaceFlattenerLUTPanel.add(m_kPanelBrainsurfaceFlattenerLUT.getContainingPanel());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;

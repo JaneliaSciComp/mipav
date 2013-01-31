@@ -36,6 +36,22 @@ public class ViewJComponentVolOpacityRGB extends ViewJComponentVolOpacityBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Creates new component histogram LUT.
+     *
+     * @param  parent  Frame where histogram is to be displayed -- must implement ViewJComponentVolOpacityListener
+     * @param  _histo  histogram model
+     * @param  _image  image of the displayed histogram and associated LUT
+     */
+    public ViewJComponentVolOpacityRGB(ViewJComponentVolOpacityListener parent, ModelHistogram _histo, ModelImage _image) {
+        super(parent, _histo, _image, new Dimension(450, 375));
+
+        setupMinMax();
+
+        setDoubleBuffered(false);
+
+        linearMode();
+    }
+    /**
      * Creates a Histogram RGB component.
      *
      * @param  opacityPanel  Frame where histogram is to be displayed

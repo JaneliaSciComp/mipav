@@ -1298,6 +1298,9 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
         pixBuffer = new int[imageA.getSliceSize()];
 
         if (imageB != null) {
+            if (imageB.isColorImage()) {
+                colorFactor = 4;
+            }
             imageBufferB = new float[colorFactor * imageB.getSliceSize()];
             pixBufferB = new int[imageB.getSliceSize()];
         }

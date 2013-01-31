@@ -903,12 +903,10 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
 
                 if (!m_kRendererImageDataA.updateRenderer(rayTracerA, LUTa,
                                                               ((ViewJComponentVolOpacity)
-                                                                       ((JPanelVolOpacity)
-                                                                                (m_kVolumeRenderer.getVolOpacity()))
+                                                                       (m_kVolumeRenderer.getVolOpacity())
                                                                        .getCompA()).getOpacityTransferFunction(),
                                                               ((ViewJComponentVolOpacity)
-                                                                       ((JPanelVolOpacity)
-                                                                                (m_kVolumeRenderer.getVolOpacity()))
+                                                                       (m_kVolumeRenderer.getVolOpacity())
                                                                        .getCompA_GM()), timeSliceA, bUpdatedTimeSlice,
                                                               bUpdatedLut, forceShow)) {
                     return false;
@@ -916,7 +914,7 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
             } else { // ARGB image
 
                 if (!m_kRendererImageDataA.updateRenderer(rayTracerA, m_kRGBTA,
-                						((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity())),
+                						m_kVolumeRenderer.getVolOpacity(),
                                  		timeSliceA, bUpdatedTimeSlice, forceShow)) {
                     return false;
                 }
@@ -937,12 +935,10 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
 
                 if (!m_kRendererImageDataB.updateRenderer(rayTracerB, LUTb,
                                                               ((ViewJComponentVolOpacity)
-                                                                       ((JPanelVolOpacity)
-                                                                                (m_kVolumeRenderer.getVolOpacity()))
+                                                                       m_kVolumeRenderer.getVolOpacity()
                                                                        .getCompB()).getOpacityTransferFunction(),
                                                               ((ViewJComponentVolOpacity)
-                                                                       ((JPanelVolOpacity)
-                                                                                (m_kVolumeRenderer.getVolOpacity()))
+                                                            		  m_kVolumeRenderer.getVolOpacity()
                                                                        .getCompA_GM()), timeSliceB, bUpdatedTimeSlice,
                                                               bUpdatedLut, forceShow)) {
                     return false;
@@ -950,8 +946,7 @@ public abstract class ViewJComponentRenderImage implements MouseMotionListener {
             } // ARGB image
             else {
 
-                if (!m_kRendererImageDataB.updateRenderer(rayTracerB, m_kRGBTB,
-                                      ((JPanelVolOpacityRGB) (m_kVolumeRenderer.getVolOpacity())),                      
+                if (!m_kRendererImageDataB.updateRenderer(rayTracerB, m_kRGBTB, m_kVolumeRenderer.getVolOpacity(),                      
                                                    timeSliceB, bUpdatedTimeSlice, forceShow)) {
                     return false;
                 }

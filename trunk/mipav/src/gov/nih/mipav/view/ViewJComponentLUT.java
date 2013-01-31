@@ -11,7 +11,7 @@ import java.awt.*;
  *
  * @version  0.1 Oct 29, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
- * @see      ViewJFrameHistoLUT
+ * @see      JFrameHistogram
  */
 
 public class ViewJComponentLUT extends ViewJComponentBase {

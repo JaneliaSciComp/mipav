@@ -191,7 +191,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         tabbedPane.add("Level & Window", windowLevelPanel);
         tabbedPane.add("Min & Max", minMaxPanel);
         tabbedPane.addChangeListener(this);
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
@@ -205,7 +205,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         setVisibleStandard(true);
         image.notifyImageDisplayListeners(LUT, false);
 
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
 
@@ -287,7 +287,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         tabbedPane.add("Level & Window", windowLevelPanel);
         tabbedPane.add("Min & Max", minMaxPanel);
         tabbedPane.addChangeListener(this);
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
@@ -301,7 +301,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         setVisibleStandard(true);
         image.notifyImageDisplayListeners(LUT, false);
 
-        if (image.getHistoLUTFrame() != null) {
+        if (image.getHistogramFrame() != null) {
             updateHistoLUTFrame();
         }
 
@@ -518,7 +518,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
             // if the slider is finally done, update the transfer function
             // in the histogram.
-            if (image.getHistoLUTFrame() != null) {
+            if (image.getHistogramFrame() != null) {
                 updateHistoLUTFrame();
             }
         } else if (source == minSlider || source == maxSlider) {
@@ -552,7 +552,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
             LUT.getTransferFunction().importArrays(x, y, 4);
             image.notifyImageDisplayListeners(LUT, false);
-            if (image.getHistoLUTFrame() != null) {
+            if (image.getHistogramFrame() != null) {
                 updateHistoLUTFrame();
             }
 
@@ -603,7 +603,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
                 // if the slider is finally done, update the transfer function
                 // in the histogram.
-                if (image.getHistoLUTFrame() != null) {
+                if (image.getHistogramFrame() != null) {
                     updateHistoLUTFrame();
                 }
             } else if (tabbedPane.getSelectedIndex() == 1) {
@@ -629,7 +629,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
                 LUT.getTransferFunction().importArrays(x, y, 4);
                 image.notifyImageDisplayListeners(LUT, false);
-                if (image.getHistoLUTFrame() != null) {
+                if (image.getHistogramFrame() != null) {
                     updateHistoLUTFrame();
                 }
             }
@@ -1249,7 +1249,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     private void updateHistoLUTFrame() {
 
         image.notifyImageDisplayListeners(LUT, false);
-        image.getHistoLUTFrame().update();
+        image.getHistogramFrame().redrawFrames();
 
     }
 

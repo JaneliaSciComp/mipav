@@ -60,7 +60,15 @@ public class ModelRGB extends ModelStorageBase {
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
+    /**
+     * Default constructor.
+     */
+    public ModelRGB()
+    {
+    	this(new int[]{4,256});
+    }
+    
+    
     /**
      * constructor.
      *

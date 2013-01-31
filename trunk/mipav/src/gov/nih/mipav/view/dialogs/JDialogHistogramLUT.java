@@ -19,6 +19,8 @@ import javax.swing.*;
  *
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterface {
 
@@ -76,6 +78,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _LUTa           LUT associated with image A.
      * @param  _LUTb           LUT associated with image B (can be null).
+     * @deprecated
      */
     public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb) {
         super(theParentFrame, true);
@@ -94,6 +97,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _RGBa           RGB LUT associated with image A.
      * @param  _RGBb           RGB LUT associated with image B (can be null).
+     * @deprecated
      */
     public JDialogHistogramLUT(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb) {
         super(theParentFrame, true);
@@ -134,6 +138,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             DOCUMENT ME!
      * @param  _LUTa           Source image B (can be null)
      * @param  _LUTb           RGB LUT associated with image A.
+     * @deprecated
      */
     public JDialogHistogramLUT(Frame theParentFrame, ViewJComponentRegistration _regComponent, ModelImage imA,
                                ModelImage imB, ModelLUT _LUTa, ModelLUT _LUTb) {
@@ -155,6 +160,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
      * @param  imB             Source image B (can be null)
      * @param  _RGBa           RGB LUT associated with image A.
      * @param  _RGBb           RGB LUT associated with image B (can be null).
+     * @deprecated
      */
     public JDialogHistogramLUT(Frame theParentFrame, ViewJComponentRegistration _regComponent, ModelImage imA,
                                ModelImage imB, ModelRGB _RGBa, ModelRGB _RGBb) {

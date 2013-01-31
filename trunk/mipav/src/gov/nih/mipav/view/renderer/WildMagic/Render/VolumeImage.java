@@ -208,7 +208,7 @@ public class VolumeImage implements Serializable {
 					aucData[i + 1] = kImage.GetData()[i + 1];
 					aucData[i + 2] = kImage.GetData()[i + 2];
 					aucData[i + 3] = kImage.GetData()[i];
-					System.err.println( kImage.GetData()[i + 3] + " " + kImage.GetData()[i + 1] + " " + kImage.GetData()[i + 2] );
+					//System.err.println( kImage.GetData()[i + 3] + " " + kImage.GetData()[i + 1] + " " + kImage.GetData()[i + 2] );
 				}
 				// System.err.println( bVal );
 			}
@@ -238,17 +238,34 @@ public class VolumeImage implements Serializable {
 	 * @param kPostfix the string postfix to concatenate to the "ColorMap" image name.
 	 * @return GraphicsImage, the new GraphicsImage storing the colormap lookup table.
 	 */
-	public static GraphicsImage InitColorMap(final ModelLUT kLUT, final ModelRGB kRGBT, final String kPostFix) {
-		final byte[] aucData = new byte[256 * 4];
-		if (kLUT == null) {
-			// ModelImage is Color, initialize the ModelRGB
-			ModelLUT.exportIndexedLUTMin(kRGBT, aucData);
-		} else {
-			// Initialize the ModelLUT
-			ModelLUT.exportIndexedLUTMin(kLUT, aucData);
+	public static GraphicsImage InitColorMap( Texture kTexture, GraphicsImage kImage, final ModelStorageBase kLUT, final String kPostFix) {
+		byte[] aucData;
+		if ( kImage == null ) 
+		{
+			aucData = new byte[256 * 4];
 		}
-		// Return the new GraphicsImage containing the table data:
-		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + kPostFix));
+		else
+		{
+			aucData = kImage.GetData();
+		}
+		if (kLUT instanceof ModelLUT ) {
+			// ModelImage is Color, initialize the ModelRGB
+			ModelLUT.exportIndexedLUTMin((ModelLUT)kLUT, aucData);
+		} 
+		else if (kLUT instanceof ModelRGB ) {
+			// Initialize the ModelLUT
+			ModelLUT.exportIndexedLUTMin((ModelRGB)kLUT, aucData);
+		}
+		if ( kImage == null )
+		{
+			// Return the new GraphicsImage containing the table data:
+			return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + kPostFix));
+		}
+		if ( kTexture != null )
+		{
+			kTexture.Reload(true);
+		}
+		return kImage;
 	}
 	
 	
@@ -267,20 +284,6 @@ public class VolumeImage implements Serializable {
 		return new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + m_kPostfix));
 	}
 
-	/**
-	 * Sets the Texture object containing the color lookup table based on the ModelRGB.
-	 * 
-	 * @param kTexture the Texture object containing the colormap GraphicsImage.
-	 * @param kImage the GraphicsImage containing the colormap data.
-	 * @param kRGBT the new ModelRGB.
-	 */
-	public static void SetRGBT(final Texture kTexture, final GraphicsImage kImage, final ModelRGB kRGBT) {
-		if (kRGBT == null) {
-			return;
-		}
-		ModelLUT.exportIndexedLUTMin(kRGBT, kImage.GetData());
-		kTexture.Reload(true);
-	}
 
 	/**
 	 * When a ModelImage changes on the CPU, this function is used to update the ModelImage
@@ -952,6 +955,14 @@ public class VolumeImage implements Serializable {
 	public String GetPostfix() {
 		return m_kPostfix;
 	}
+	
+	/**
+	 * Return the Volume RGBT.
+	 * @return Volume RGBT.
+	 */
+	public ModelStorageBase getLUT() {
+		return (m_kImage != null ) ? m_kImage.isColorImage() ? m_kRGBT : m_kLUT : null;
+	}
 
 	/**
 	 * Return the Volume RGBT.
@@ -1079,7 +1090,7 @@ public class VolumeImage implements Serializable {
 		{
 			for (int i = 0; i < m_iTimeSteps; i++) {
 				ModelImage kImageLaplace = null;
-				ModelImage kImageGM = getGradientMagnitude( m_akImages[i], i );
+				ModelImage kImageGM = getGradientMagnitude( m_akImages[i], i, m_kDir );
 				if ( !m_akImages[i].isColorImage() )
 				{
 					kImageLaplace = getLaplace( m_akImages[i], i );			
@@ -1620,32 +1631,32 @@ public class VolumeImage implements Serializable {
 	}
 	 */
 	
-	private ModelImage getGradientMagnitude( ModelImage kImage, int i )
+	public static ModelImage getGradientMagnitude( ModelImage kImage, int i, String dir )
 	{
 		String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String("_GM_" + i));
-		ModelImage kImageGM = ReadFromDisk(kImageName + ".xml", m_kDir);
+		ModelImage kImageGM = ReadFromDisk(kImageName + ".xml", dir);
 		if ( kImageGM != null && !checkImage(kImage, kImageGM ) )
 		{
 			kImageGM.disposeLocal();
 			kImageGM = null;
 		}
 		if (kImageGM == null) {
-			JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, m_akImages[i]);
-			kCalcMagnitude.setOutputNewImageType( m_akImages[i].isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT );
+			JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, kImage);
+			kCalcMagnitude.setOutputNewImageType( kImage.isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT );
 			kCalcMagnitude.setVisible(false);
 			kCalcMagnitude.setOutputNewImage(true);
 			kCalcMagnitude.setDisplayProgressBar(true);
 			kCalcMagnitude.setSeparateThread(false);
 			kCalcMagnitude.setSeparable(true);
 			kCalcMagnitude.setUseOCL(true);
-			kCalcMagnitude.actionPerformed(new ActionEvent(this, 0, "OK"));
+			kCalcMagnitude.actionPerformed(new ActionEvent(new Object(), 0, "OK"));
 			kImageGM = kCalcMagnitude.getResultImage();
 			kCalcMagnitude = null;
 
-			kImageGM.setImageDirectory( m_kDir );
+			kImageGM.setImageDirectory( dir );
 			kImageGM.setImageName( kImageName + ".xml" );
 			JDialogBase.updateFileInfo( kImage, kImageGM );
-			ModelImage.saveImage(kImageGM, kImageName + ".xml", m_kDir );
+			ModelImage.saveImage(kImageGM, kImageName + ".xml", dir );
 
 			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
 			if (kImageFrame != null) {
@@ -2053,7 +2064,7 @@ public class VolumeImage implements Serializable {
 	 * @param kDir directory
 	 * @return ModelImage
 	 */
-	private ModelImage ReadFromDisk(final String kImageName, final String kDir) {
+	private static ModelImage ReadFromDisk(final String kImageName, final String kDir) {
 
 		final File kFile = new File(kDir, kImageName);
 		if ( !kFile.exists()) {
@@ -2113,6 +2124,7 @@ public class VolumeImage implements Serializable {
 	 */
 	private boolean UpdateImages(final ModelImage kImage, final Texture kOpacityTexture,
 			final GraphicsImage kOpacityMap, final TransferFunction kTransfer) {
+		
 		final int iLutHeight = 256;
 		final float[] afData = kOpacityMap.GetFloatData();
 

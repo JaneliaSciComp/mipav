@@ -383,6 +383,22 @@ public class MipavUtil extends JComponent {
 
         return path;
     }
+    
+    /**
+     * Creates a label in the proper font and color.
+     *
+     * @param   title  The title of the label.
+     *
+     * @return  The new label.
+     */
+    public static final JLabel createSliderLabel(String title) 
+    {
+        JLabel label = new JLabel(title);
+        label.setFont(MipavUtil.font12);
+        label.setForeground(Color.black);
+
+        return label;
+    }
 
     /**
      * Pops up a message dialog to display an error.

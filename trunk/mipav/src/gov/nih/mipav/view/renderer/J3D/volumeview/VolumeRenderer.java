@@ -564,7 +564,7 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
      *
      * @return  JPanelVolOpacity Opacity panel
      */
-    public JPanelVolOpacityBase getVolOpacity() {
+    public JPanelVolumeOpacity getVolOpacity() {
         return surfaceRender.getVolOpacityPanel();
     }
 

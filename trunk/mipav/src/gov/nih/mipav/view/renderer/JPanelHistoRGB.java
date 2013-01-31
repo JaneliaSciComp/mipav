@@ -25,6 +25,8 @@ import javax.swing.event.*;
  * @version  1.0
  * @author   Matthew J. McAuliffe, Ph.D. ( Primary )
  * @author   Ruida Cheng
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class JPanelHistoRGB
         implements ItemListener, ActionListener, ChangeListener, MouseMotionListener, MouseListener, HistoLUTParent {
@@ -148,6 +150,8 @@ public class JPanelHistoRGB
      * @param  _RGBTA       Model RGB
      * @param  _RGBTB       Model RGB
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
+     * @see JFrameHistogram
      */
     public JPanelHistoRGB(ModelImage _imageA, ModelImage _imageB, ModelRGB _RGBTA, ModelRGB _RGBTB,
                           boolean _entireFlag) {
@@ -210,6 +214,8 @@ public class JPanelHistoRGB
      * @param  _RGBTB       Model RGB
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
      * @param  bUpdateImage  update the displayed image continuously when true or on mouse-release when false.
+     * @deprecated
+     * @see JFrameHistogram
      */
     public JPanelHistoRGB(ModelImage _imageA, ModelImage _imageB, ModelRGB _RGBTA, ModelRGB _RGBTB,
                           boolean _entireFlag, boolean bUpdateImage) {
@@ -226,6 +232,8 @@ public class JPanelHistoRGB
      * @param  _RGBTA         Model RGB
      * @param  _RGBTB         Model RGB
      * @param  _entireFlag    Flag indicating if histogram should be done on all of image.
+     * @deprecated
+     * @see JFrameHistogram
      */
     public JPanelHistoRGB(ViewJComponentRegistration _regComponent, ModelImage _imageA, ModelImage _imageB,
                           ModelRGB _RGBTA, ModelRGB _RGBTB, boolean _entireFlag) {

@@ -268,10 +268,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     private JDialogPaintGrow paintGrowDialog;
 
     /** LUT control panel of the gray scale image. */
-    private JPanelHistoLUT panelHistoLUT;
-
-    /** RGB control panel of the color image. */
-    private JPanelHistoRGB panelHistoRGB;
+    private JFrameHistogram panelHistogram;
 
     /** Rendering parallel rotation button. */
     private JToggleButton parallelButton;
@@ -987,13 +984,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void buildHistoLUTPanel() {
         histoLUTPanel = new JPanel();
-
-        if (imageA.isColorImage()) {
-            histoLUTPanel.add(panelHistoRGB.getMainPanel());
-        } else {
-            histoLUTPanel.add(panelHistoLUT.getMainPanel());
-        }
-
+        histoLUTPanel.add(panelHistogram.getContainingPanel());
         maxPanelWidth = Math.max(histoLUTPanel.getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1419,12 +1410,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
             progressBar.updateValueImmed(80);
             progressBar.setMessage("Constructing Lookup Table...");
+            
 
-            if (imageA.isColorImage()) {
-                panelHistoRGB = new JPanelHistoRGB(imageA, imageB, RGBTA, RGBTB, true);
-            } else {
-                panelHistoLUT = new JPanelHistoLUT(imageA, imageB, LUTa, LUTb, true);
-            }
+    		ModelStorageBase selectedLUTa = imageA.isColorImage() ? RGBTA : LUTa;
+    		ModelStorageBase selectedLUTb = (imageB != null) ? imageB.isColorImage() ? RGBTB : LUTb : null;
+    		panelHistogram = new JFrameHistogram( this, imageA, imageB, selectedLUTa, selectedLUTb );
+    		panelHistogram.histogramLUT(true, false);
 
             progressBar.updateValueImmed(100);
 
@@ -1559,16 +1550,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 m_kBrainsurfaceFlattenerPanel = null;
             }
         }
-
-        if (panelHistoLUT != null) {
-            panelHistoLUT.disposeLocal();
-            panelHistoLUT = null;
-        }
-
-        if (panelHistoRGB != null) {
-            panelHistoRGB.disposeLocal();
-            panelHistoRGB = null;
-        }
+        panelHistogram.disposeLocal();
+        panelHistogram = null;
 
         if (resampleDialog != null) {
             resampleDialog.disposeLocal();
@@ -1812,9 +1795,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  blendValue blender slider value.
      */
     public int getBlendValue() {
-        JPanelVolOpacityBase opacityPanel = surRender.getVolOpacityPanel();
-
-        return opacityPanel.getAlphaBlendSliderValue();
+        return surRender.getVolOpacityPanel().getAlphaBlendSliderValue();
     }
 
     /**
@@ -1834,14 +1815,14 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public ModelImage getHistoLUTActiveImage() {
 
-        if (panelHistoLUT != null) {
-
-            if (panelHistoLUT.getDisplayMode() == JPanelHistoLUT.IMAGE_A) {
-                return imageA;
-            } else {
-                return imageB;
-            }
-        }
+    	if ( panelHistogram.isImageASelected() )
+    	{
+    		return imageA;
+    	}
+    	else if  ( panelHistogram.isImageBSelected() )
+    	{
+    		return imageB;
+    	}
 
         return null;
     }
@@ -1853,17 +1834,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @return  ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
      */
     public ModelImage getHistoRGBActiveImage() {
-
-        if (panelHistoRGB != null) {
-
-            if (panelHistoRGB.getDisplayMode() == JPanelHistoRGB.IMAGE_A) {
-                return imageA;
-            } else {
-                return imageB;
-            }
-        }
-
-        return null;
+    	return getHistoLUTActiveImage();
     }
 
     /**
@@ -1898,9 +1869,14 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Get the LUT panel (only should be used with grayscale images).
      *
      * @return  the histo LUT panel
+     * @deprecated
      */
     public JPanelHistoLUT getLUTDialog() {
-        return panelHistoLUT;
+    	return null;
+    }
+
+    public JFrameHistogram getHistogramDialog() {
+        return panelHistogram;
     }
 
 
@@ -1923,9 +1899,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Get the RGB panel (only should be used with color images).
      *
      * @return  the histo RGB panel
+     * @deprecated
      */
     public JPanelHistoRGB getRGBDialog() {
-        return panelHistoRGB;
+    	return null;
     }
 
     /**
@@ -4045,12 +4022,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
                  panelToolbar.getHeight();
 
-        if (panelHistoLUT != null) {
-            panelHistoLUT.resizePanel(maxPanelWidth, height);
-        }
-
-        if (panelHistoRGB != null) {
-            panelHistoRGB.resizePanel(maxPanelWidth, height);
+        if (panelHistogram != null) {
+        	panelHistogram.resizePanel(maxPanelWidth, height);
         }
 
         if (isEndoscopyEnable) {

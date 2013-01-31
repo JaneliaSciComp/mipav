@@ -59,10 +59,7 @@ public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImage
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Display the independent LUT for Black/White images. */
-    private JPanelHistoLUT mHistoLUT;
-
-    /** Display the independent RGB for Color Images. */
-    private JPanelHistoRGB mHistoRGB;
+    private JFrameHistogram mHistogram;
 
     /** ModelImage used to generate the 3D texture:. */
     private ModelImage mImageA;
@@ -206,22 +203,12 @@ public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImage
             ((SurfaceRender) renderBase).getSurfaceDialog().enableSurfacePaint(true);
         } else if (command.equals("LinkLUTs")) {
 
-            if (!mImageA.isColorImage()) {
-                mainPanel.remove(mHistoLUT.getMainPanel());
-            } else {
-                mainPanel.remove(mHistoRGB.getMainPanel());
-            }
-
+            mainPanel.remove(mHistogram.getContainingPanel());
             mainPanel.updateUI();
             updateImages(null, mLUTModel, false, 0);
         } else if (command.equals("SeparateLUTs")) {
 
-            if (!mImageA.isColorImage()) {
-                mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
-            } else {
-                mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
-            }
-
+            mainPanel.add(mHistogram.getContainingPanel(), BorderLayout.SOUTH);
             mainPanel.updateUI();
             updateImages(mLUTSeparate, null, false, 0);
         }
@@ -236,6 +223,11 @@ public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImage
         if (mLUTImageA != null) {
             mLUTImageA.disposeLocal();
             mLUTImageA = null;
+        }
+        if ( mHistogram != null )
+        {
+        	mHistogram.disposeLocal();
+        	mHistogram = null;
         }
     }
 
@@ -721,13 +713,15 @@ public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImage
             mLUTSeparate.resetTransferLine(fMin, fMin, fMax, fMax);
 
             /* Remove old LUT if it exists: */
-            if (mHistoLUT != null) {
-                mainPanel.remove(mHistoLUT.getMainPanel());
-                mHistoLUT = null;
+            if ( mHistogram != null )
+            {
+              mainPanel.remove(mHistogram.getContainingPanel());
+              mHistogram = null;            	
             }
 
             /* Create LUT panel: */
-            mHistoLUT = new JPanelHistoLUT(mLUTImageA, null, mLUTSeparate, null, true);
+            mHistogram = new JFrameHistogram( null, mLUTImageA, null, mLUTSeparate, null );
+            mHistogram.histogramLUT(true, false);
             mPatientSlice.setLUTa(mLUTSeparate);
         } else {
             float fMinR = (float) mImageA.getMinR();
@@ -760,22 +754,20 @@ public class JPanelSurfaceTexture extends JPanelRendererJ3D implements ViewImage
             mRGBSeparate = new ModelRGB(dimExtentsLUT);
 
             /* Remove old lut if it exists: */
-            if (mHistoRGB != null) {
-                mainPanel.remove(mHistoRGB.getMainPanel());
-                mHistoRGB = null;
+            if ( mHistogram != null )
+            {
+              mainPanel.remove(mHistogram.getContainingPanel());
+              mHistogram = null;            	
             }
 
             /* Create LUT panel: */
-            mHistoRGB = new JPanelHistoRGB(mLUTImageA, null, mRGBSeparate, null, true);
+            mHistogram = new JFrameHistogram( null, mLUTImageA, null, mRGBSeparate, null );
+            mHistogram.histogramLUT(true, false);
+
+            /* Create LUT panel: */
             mPatientSlice.setRGBTA(mRGBSeparate);
         }
-
-        if (!mImageA.isColorImage()) {
-            mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
-        } else {
-            mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
-        }
-
+        mainPanel.add(mHistogram.getContainingPanel(), BorderLayout.SOUTH);
         mainPanel.updateUI();
     }
 

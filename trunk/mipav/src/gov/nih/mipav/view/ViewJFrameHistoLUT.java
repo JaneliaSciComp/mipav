@@ -25,6 +25,8 @@ import javax.swing.*;
  * @author   Lynne M. Pusanik
  * @see      ViewJFrameBase
  * @see      ViewJComponentHistoLUT
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener, ViewImageUpdateInterface {
 
@@ -69,6 +71,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public ViewJFrameHistoLUT(ModelImage _imageA, ModelImage _imageB, ModelLUT _LUTa, ModelLUT _LUTb,
                               boolean _entireFlag) {
@@ -111,6 +114,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public ViewJFrameHistoLUT(Frame _parentFrame, ModelImage _imageA, ModelImage _imageB, ModelLUT _LUTa, ModelLUT _LUTb,
                               boolean _entireFlag) {
@@ -152,6 +156,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
      * @param  visible      Frame visible or not.
+     * @deprecated
      */
     public ViewJFrameHistoLUT(ModelImage _imageA, ModelImage _imageB, ModelLUT _LUTa, ModelLUT _LUTb,
                               boolean _entireFlag, boolean visible) {
@@ -185,6 +190,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public ViewJFrameHistoLUT(ViewJFrameColocalizationRegression colRegFrame, ModelImage _imageA, ModelImage _imageB,
                               ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag) {
@@ -227,6 +233,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public ViewJFrameHistoLUT(ViewJFrameColocalizationEM colEMFrame, ModelImage _imageA, ModelImage _imageB,
                               ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag) {
@@ -269,6 +276,7 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param  _LUTa          Model of LUT for image A
      * @param  _LUTb          Model of LUT for image B
      * @param  _entireFlag    DOCUMENT ME!
+     * @deprecated
      */
     public ViewJFrameHistoLUT(ViewJComponentRegistration _regComponent, ModelImage _imageA, ModelImage _imageB,
                               ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag) {
@@ -285,6 +293,8 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
      * @param   title  The title of the label.
      *
      * @return  The new label.
+     * @deprecated
+     * @see MipavUtil
      */
     public static final JLabel createSliderLabel(String title) {
         JLabel label = new JLabel(title);

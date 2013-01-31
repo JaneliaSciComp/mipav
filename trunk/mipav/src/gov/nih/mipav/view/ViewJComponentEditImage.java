@@ -1013,8 +1013,8 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 if ( (intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
                     LUTa.resetTransferLine(min, imgMin, max, imgMax);
 
-                    if (imageA.getHistoLUTFrame() != null) {
-                        imageA.getHistoLUTFrame().update();
+                    if (imageA.getHistogramFrame() != null) {
+                        imageA.getHistogramFrame().redrawFrames();
                     }
                 }
 

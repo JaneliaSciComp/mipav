@@ -28,6 +28,8 @@ import javax.swing.event.*;
  * map are dynamically updated with the new color map. This control panel is the control LUT of the gray scale images.
  *
  * @version  1.0
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class JPanelHistoLUT
         implements ItemListener, ActionListener, ChangeListener, ViewImageUpdateInterface, FocusListener, KeyListener,
@@ -181,6 +183,7 @@ public class JPanelHistoLUT
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public JPanelHistoLUT(ModelImage _imageA, ModelImage _imageB, ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag) {
 
@@ -238,6 +241,7 @@ public class JPanelHistoLUT
      * @param  _LUTa        Model of LUT for image A
      * @param  _LUTb        Model of LUT for image B
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public JPanelHistoLUT(ModelImage _imageA, ModelImage _imageB, 
             ModelLUT _LUTa, ModelLUT _LUTb, boolean _entireFlag, boolean bUpdateImage) {

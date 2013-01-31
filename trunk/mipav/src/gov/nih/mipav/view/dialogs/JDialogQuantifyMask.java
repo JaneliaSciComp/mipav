@@ -18,7 +18,7 @@ import java.awt.event.*;
  *
  * @author   Neva Cherniavsky
  * @version  1.0 June 1, 2002
- * @see      ViewJFrameHistoLUT
+ * @see      JFrameHistogram
  */
 public class JDialogQuantifyMask 
   extends JDialogScriptableBase implements AlgorithmInterface{

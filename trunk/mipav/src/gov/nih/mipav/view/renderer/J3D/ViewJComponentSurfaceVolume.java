@@ -434,7 +434,7 @@ public class ViewJComponentSurfaceVolume {
             zDim = imageExtents[2];
         }
 
-        JPanelVolOpacityRGB volOpacityObj = ((JPanelVolOpacityRGB) ((SurfaceRender) frame).getVolOpacityPanel());
+        JPanelVolumeOpacity volOpacityObj = ((SurfaceRender) frame).getVolOpacityPanel();
         boolean gmMode = volOpacityObj.isGradientMagnitudeOpacityEnabled();
 
 
@@ -551,18 +551,18 @@ public class ViewJComponentSurfaceVolume {
                     return false;
                 }
 
-                TransferFunction tfRed = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.RED);
-                TransferFunction tfGreen = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.GREEN);
-                TransferFunction tfBlue = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.BLUE);
+                TransferFunction tfRed = volOpacityObj.getCompA().getOpacityTransferFunction();
+                TransferFunction tfGreen = volOpacityObj.getCompA().getOpacityTransferFunction();
+                TransferFunction tfBlue = volOpacityObj.getCompA().getOpacityTransferFunction();
 
                 TransferFunction tfRedGM = null;
                 TransferFunction tfGreenGM = null;
                 TransferFunction tfBlueGM = null;
 
                 if (gmMode) {
-                    tfRedGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.RED);
-                    tfGreenGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.GREEN);
-                    tfBlueGM = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.BLUE);
+                    tfRedGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+                    tfGreenGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+                    tfBlueGM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
                 }
 
                 pixGM_R = 0;
@@ -679,26 +679,26 @@ public class ViewJComponentSurfaceVolume {
                     return false;
                 }
 
-                TransferFunction tfRedA = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.RED);
-                TransferFunction tfGreenA = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.GREEN);
-                TransferFunction tfBlueA = volOpacityObj.getOpacityAfn(ViewJComponentHLUTBase.BLUE);
+                TransferFunction tfRedA = volOpacityObj.getCompA().getOpacityTransferFunction();
+                TransferFunction tfGreenA = volOpacityObj.getCompA().getOpacityTransferFunction();
+                TransferFunction tfBlueA = volOpacityObj.getCompA().getOpacityTransferFunction();
 
                 TransferFunction tfRedGMA = null;
                 TransferFunction tfGreenGMA = null;
                 TransferFunction tfBlueGMA = null;
 
-                TransferFunction tfRedB = volOpacityObj.getOpacityBfn(ViewJComponentHLUTBase.RED);
-                TransferFunction tfGreenB = volOpacityObj.getOpacityBfn(ViewJComponentHLUTBase.GREEN);
-                TransferFunction tfBlueB = volOpacityObj.getOpacityBfn(ViewJComponentHLUTBase.BLUE);
+                TransferFunction tfRedB = volOpacityObj.getCompB().getOpacityTransferFunction();
+                TransferFunction tfGreenB = volOpacityObj.getCompB().getOpacityTransferFunction();
+                TransferFunction tfBlueB = volOpacityObj.getCompB().getOpacityTransferFunction();
 
                 TransferFunction tfRedGMB = null;
                 TransferFunction tfGreenGMB = null;
                 TransferFunction tfBlueGMB = null;
 
                 if (gmMode) {
-                    tfRedGMA = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.RED);
-                    tfGreenGMA = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.GREEN);
-                    tfBlueGMA = volOpacityObj.getOpacityGM_Afn(ViewJComponentHLUTBase.BLUE);
+                    tfRedGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+                    tfGreenGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+                    tfBlueGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
                 }
 
                 pixGM_R = 0;
@@ -875,7 +875,7 @@ public class ViewJComponentSurfaceVolume {
             return false;
         }
 
-        JPanelVolOpacity volOpacityObj = ((JPanelVolOpacity) ((SurfaceRender) frame).getVolOpacityPanel());
+        JPanelVolumeOpacity volOpacityObj = ((SurfaceRender) frame).getVolOpacityPanel();
 
         if (_LUTa != null) {
             LUTa = _LUTa;

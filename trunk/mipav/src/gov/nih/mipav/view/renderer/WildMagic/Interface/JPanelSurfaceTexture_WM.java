@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.JFrameHistogram;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -45,10 +46,11 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     private static final long serialVersionUID = 7562070328632922435L;
 
     /** Display the independent LUT for Black/White images. */
-    private JPanelHistoLUT mHistoLUT;
+    private JFrameHistogram mHistogram;
+    //private JPanelHistoLUT mHistoLUT;
 
     /** Display the independent RGB for Color Images. */
-    private JPanelHistoRGB mHistoRGB;
+    //private JPanelHistoRGB mHistoRGB;
 
     /** ModelImage used to generate the 3D texture:. */
     private ModelImage mImageA;
@@ -84,10 +86,10 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     private ModelImage mLUTImageA;
 
     /** The LUT associated with the ModelImage imageA:. */
-    private ModelLUT mLUTModel = null;
+    private ModelStorageBase mLUTModel = null;
 
     /** The LUT associated with the independent texture LUT:. */
-    private ModelLUT mLUTSeparate = null;
+    private ModelStorageBase mLUTSeparate = null;
 
     /** Use the ModelImage LUT. */
     private JRadioButton mModelLUTRadioButton;
@@ -98,12 +100,6 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     /** Grouping the radio buttons:. */
     private ButtonGroup mLUTButtonGroup = new ButtonGroup();
     
-    /** The RGB LUT associated with the ModelImage imageA:. */
-    private ModelRGB mRGBModel = null;
-
-    /** The RGB LUT associated with the independent texture LUT:. */
-    private ModelRGB mRGBSeparate = null;
-
     /** Surface panel */
     private JPanelSurface_WM m_kSurfacePanel = null;
 
@@ -170,11 +166,12 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             }
         } else if (command.equals("LinkLUTs")) {
 
-            if (!mImageA.isColorImage()) {
-                mainPanel.remove(mHistoLUT.getMainPanel());
-            } else {
-                mainPanel.remove(mHistoRGB.getMainPanel());
-            }
+            mainPanel.remove(mHistogram.getContainingPanel());
+//            if (!mImageA.isColorImage()) {
+//                mainPanel.remove(mHistoLUT.getMainPanel());
+//            } else {
+//                mainPanel.remove(mHistoRGB.getMainPanel());
+//            }
 
             mainPanel.updateUI();
             //updateImages(null, mLUTModel, false, 0);
@@ -186,11 +183,12 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             }
         } else if (command.equals("SeparateLUTs")) {
 
-            if (!mImageA.isColorImage()) {
-                mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
-            } else {
-                mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
-            }
+            mainPanel.add(mHistogram.getContainingPanel(), BorderLayout.SOUTH);
+//            if (!mImageA.isColorImage()) {
+//                mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
+//            } else {
+//                mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
+//            }
 
             mainPanel.updateUI();
             //updateImages(mLUTSeparate, null, false, 0);
@@ -212,6 +210,11 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             mLUTImageA = null;
         }
         mImageALink.removeImageDisplayListener(this);
+        if ( mHistogram != null )
+        {
+        	mHistogram.disposeLocal();
+        	mHistogram = null;
+        }
     }
 
     /**
@@ -234,7 +237,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
      * Return the current ModelLUT.
      * @return  the currently used ModelLUT.
      */
-    public ModelLUT getLUT() {
+    public ModelStorageBase getLUT() {
 
         if (mModelLUTRadioButton.isSelected()) {
             return mLUTModel;
@@ -243,48 +246,18 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
         return mLUTSeparate;
     }
 
-    /**
-     * Return the current ModelRGBT.
-     * @return  the currently used ModelRGBT.
-     */
-    public ModelRGB getRGBT() {
-
-        if (mModelLUTRadioButton.isSelected()) {
-            return mRGBModel;
-        }
-
-        return mRGBSeparate;
-    }
-
-    public ModelLUT getSeparateLUT()
+    public ModelStorageBase getSeparateLUT()
     {
         return mLUTSeparate;
     }
 
-    public void setSeparateLUT(ModelLUT kLUT)
+    public void setSeparateLUT(ModelStorageBase kLUT)
     {
         if ( kLUT != null )
         {
             mLUTSeparate = kLUT;
             initLUT();
-            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
-            m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
-                    mNewImageRadioButton.isSelected(),
-                    mNewLUTRadioButton.isSelected() );
-        }
-    }
-    public ModelRGB getSeparateRGBT()
-    {
-        return mRGBSeparate;
-    }
-
-    public void setSeparateRGBT(ModelRGB kRGBT)
-    {
-        if ( kRGBT != null )
-        {
-            mRGBSeparate = kRGBT;
-            initLUT();
-            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            m_kSurfacePanel.SetLUTNew( mLUTSeparate );
             m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
                     mNewImageRadioButton.isSelected(),
                     mNewLUTRadioButton.isSelected() );
@@ -386,10 +359,10 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     public void setRGBTA(ModelRGB RGBTa) {
 
         if (RGBTa != null) {
-            mRGBSeparate = RGBTa;
+        	mLUTSeparate = RGBTa;
             if ( m_kSurfacePanel != null )
             {
-                m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+                m_kSurfacePanel.SetLUTNew( mLUTSeparate );
             }
         }
     }
@@ -406,7 +379,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     public void setSurfacePanel( JPanelSurface_WM kSurfacePanel )
     {
         m_kSurfacePanel = kSurfacePanel;
-        m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+        m_kSurfacePanel.SetLUTNew( mLUTSeparate );
     }
 
 
@@ -445,7 +418,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             m_kSurfacePanel.ImageAsTexture(mImageAsTextureCheck.isSelected(),
                     mNewImageRadioButton.isSelected(),
                     mNewLUTRadioButton.isSelected() );
-            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            m_kSurfacePanel.SetLUTNew( mLUTSeparate );
         }
         return true;
     }
@@ -581,21 +554,13 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             if ( mLUTSeparate == null )
             {
                 mLUTSeparate = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-                mLUTSeparate.resetTransferLine(fMin, fMin, fMax, fMax);
-            }
-            /* Remove old LUT if it exists: */
-            if (mHistoLUT != null) {
-                mainPanel.remove(mHistoLUT.getMainPanel());
-                mHistoLUT = null;
-            }
-            
-            if (mHistoRGB != null) {
-                mainPanel.remove(mHistoRGB.getMainPanel());
-                mHistoRGB = null;
+                ((ModelLUT)mLUTSeparate).resetTransferLine(fMin, fMin, fMax, fMax);
             }
 
             /* Create LUT panel: */
-            mHistoLUT = new JPanelHistoLUT(mLUTImageA, null, mLUTSeparate, null, true);
+            //mHistoLUT = new JPanelHistoLUT(mLUTImageA, null, mLUTSeparate, null, true);
+            mHistogram = new JFrameHistogram(m_kVolumeViewer, mLUTImageA, null, mLUTSeparate, null);
+            mHistogram.histogramLUT(true, false);
         } else {
             float fMinR = (float) mImageA.getMinR();
             float fMaxR = (float) mImageA.getMaxR();
@@ -624,36 +589,22 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
 
             /* Create LUT */
             int[] dimExtentsLUT = { 4, 256 };
-            if ( mRGBSeparate == null )
+            if ( mLUTSeparate == null )
             {
-                mRGBSeparate = new ModelRGB(dimExtentsLUT);
-            }
+            	mLUTSeparate = new ModelRGB(dimExtentsLUT);
+            }            
 
-            /* Remove old lut if it exists: */
-            if (mHistoRGB != null) {
-                mainPanel.remove(mHistoRGB.getMainPanel());
-                mHistoRGB = null;
-            }
-
-            if (mHistoLUT != null) {
-                mainPanel.remove(mHistoLUT.getMainPanel());
-                mHistoLUT = null;
-            }
-            
             /* Create LUT panel: */
-            mHistoRGB = new JPanelHistoRGB(mLUTImageA, null, mRGBSeparate, null, true, true);
+            mHistogram = new JFrameHistogram(m_kVolumeViewer, mLUTImageA, null, mLUTSeparate, null);
+            mHistogram.histogramLUT(true, false);
         }
 
-        if (!mImageA.isColorImage()) {
-            mainPanel.add(mHistoLUT.getMainPanel(), BorderLayout.SOUTH);
-        } else {
-        	mainPanel.add(mHistoRGB.getMainPanel(), BorderLayout.SOUTH);
-        }
+        mainPanel.add(mHistogram.getContainingPanel(), BorderLayout.SOUTH);
 
         mainPanel.updateUI();
         if ( m_kSurfacePanel != null )
         {
-            m_kSurfacePanel.SetLUTNew( mLUTSeparate, mRGBSeparate );
+            m_kSurfacePanel.SetLUTNew( mLUTSeparate );
         }
     }
 

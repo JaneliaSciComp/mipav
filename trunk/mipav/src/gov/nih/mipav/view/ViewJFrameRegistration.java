@@ -573,28 +573,25 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                 MipavUtil.displayError(" Cannot change the LUT of a Boolean image.");
             } else {
 
-                if ((imageA.getHistoLUTFrame() == null) && (imageA.getHistoRGBFrame() == null)) {
-                    JDialogHistogramLUT histogramDialog = null;
-
+                if ( imageA.getHistogramFrame() == null ) {
                     if (imageA.isColorImage() == false) {
-
                         try {
-                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB, LUTa, LUTb);
+                        	JFrameHistogram histogramDialog = new JFrameHistogram( this, componentImage, imageA, imageB, LUTa, LUTb );
+                            histogramDialog.histogramLUT(true, true);
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
                     } else {
 
                         try {
-                            histogramDialog = new JDialogHistogramLUT(this, componentImage, imageA, imageB,
-                                                                      componentImage.getRGBTA(),
-                                                                      componentImage.getRGBTB());
+                        	JFrameHistogram histogramDialog = new JFrameHistogram(this, componentImage, imageA, imageB,
+                                    componentImage.getRGBTA(),
+                                    componentImage.getRGBTB());
+                            histogramDialog.histogramLUT(true, true);
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
                         }
                     }
-
-                    histogramDialog.histogramLUT(true);
                 }
             }
         } else if (command.equals("CheckerBoard")) {
@@ -1462,38 +1459,38 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     }
                 } // end of if (haveVOIPoints)
 
-                if (imageA.getHistoLUTFrame() != null) {
-                    imageA.getHistoLUTFrame().updateHistoLUT(imageA, componentImage.getLUTa(), null, null, false);
-                } else if (image.isColorImage() == false) {
-
-                    if (LUTa == null) {
-                        int[] dimExtentsLUT = new int[2];
-                        dimExtentsLUT[0] = 4;
-                        dimExtentsLUT[1] = 256;
-                        LUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-                    }
-
-                    float min, max;
-
-                    if (imageA.getType() == ModelStorageBase.UBYTE) {
-                        min = 0;
-                        max = 255;
-                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
-                        min = -128;
-                        max = 127;
-                    } else {
-                        min = (float) imageA.getMin();
-                        max = (float) imageA.getMax();
-                    }
-
-                    float imgMin = (float) imageA.getMin();
-                    float imgMax = (float) imageA.getMax();
-                    LUTa.resetTransferLine(min, imgMin, max, imgMax);
-                } // else if (image.isColorImage() == false)
-
-                if (imageA.getHistoRGBFrame() != null) {
-                    imageA.getHistoRGBFrame().updateHistoRGB(imageA, imageB, false);
-                }
+//                if (imageA.getHistoLUTFrame() != null) {
+//                    imageA.getHistoLUTFrame().updateHistoLUT(imageA, componentImage.getLUTa(), null, null, false);
+//                } else if (image.isColorImage() == false) {
+//
+//                    if (LUTa == null) {
+//                        int[] dimExtentsLUT = new int[2];
+//                        dimExtentsLUT[0] = 4;
+//                        dimExtentsLUT[1] = 256;
+//                        LUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+//                    }
+//
+//                    float min, max;
+//
+//                    if (imageA.getType() == ModelStorageBase.UBYTE) {
+//                        min = 0;
+//                        max = 255;
+//                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
+//                        min = -128;
+//                        max = 127;
+//                    } else {
+//                        min = (float) imageA.getMin();
+//                        max = (float) imageA.getMax();
+//                    }
+//
+//                    float imgMin = (float) imageA.getMin();
+//                    float imgMax = (float) imageA.getMax();
+//                    LUTa.resetTransferLine(min, imgMin, max, imgMax);
+//                } // else if (image.isColorImage() == false)
+//
+//                if (imageA.getHistoRGBFrame() != null) {
+//                    imageA.getHistoRGBFrame().updateHistoRGB(imageA, imageB, false);
+//                }
             } // end of if (zSlice != zLastSlice)
         }
 
@@ -1532,38 +1529,38 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                     }
                 } // end of if ((haveVOIPoints) && (zSlice != zSlice2))
 
-                if (imageA.getHistoLUTFrame() != null) {
-                    imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB, componentImage.getLUTb(), false);
-                } else if (image.isColorImage() == false) {
-
-                    if (LUTb == null) {
-                        int[] dimExtentsLUT = new int[2];
-                        dimExtentsLUT[0] = 4;
-                        dimExtentsLUT[1] = 256;
-                        LUTb = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
-                    }
-
-                    float min, max;
-
-                    if (imageB.getType() == ModelStorageBase.UBYTE) {
-                        min = 0;
-                        max = 255;
-                    } else if (imageB.getType() == ModelStorageBase.BYTE) {
-                        min = -128;
-                        max = 127;
-                    } else {
-                        min = (float) imageB.getMin();
-                        max = (float) imageB.getMax();
-                    }
-
-                    float imgMin = (float) imageB.getMin();
-                    float imgMax = (float) imageB.getMax();
-                    LUTb.resetTransferLine(min, imgMin, max, imgMax);
-                } // else if (image.isColorImage() == false)
-
-                if (imageA.getHistoRGBFrame() != null) {
-                    imageA.getHistoRGBFrame().updateHistoRGB(imageA, imageB, false);
-                }
+//                if (imageA.getHistoLUTFrame() != null) {
+//                    imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB, componentImage.getLUTb(), false);
+//                } else if (image.isColorImage() == false) {
+//
+//                    if (LUTb == null) {
+//                        int[] dimExtentsLUT = new int[2];
+//                        dimExtentsLUT[0] = 4;
+//                        dimExtentsLUT[1] = 256;
+//                        LUTb = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+//                    }
+//
+//                    float min, max;
+//
+//                    if (imageB.getType() == ModelStorageBase.UBYTE) {
+//                        min = 0;
+//                        max = 255;
+//                    } else if (imageB.getType() == ModelStorageBase.BYTE) {
+//                        min = -128;
+//                        max = 127;
+//                    } else {
+//                        min = (float) imageB.getMin();
+//                        max = (float) imageB.getMax();
+//                    }
+//
+//                    float imgMin = (float) imageB.getMin();
+//                    float imgMax = (float) imageB.getMax();
+//                    LUTb.resetTransferLine(min, imgMin, max, imgMax);
+//                } // else if (image.isColorImage() == false)
+//
+//                if (imageA.getHistoRGBFrame() != null) {
+//                    imageA.getHistoRGBFrame().updateHistoRGB(imageA, imageB, false);
+//                }
             } // end of if (zSlice2 != zLastSlice2)
         }
 
