@@ -63,6 +63,8 @@ public class AlgorithmASM extends AlgorithmBase  {
     
     private boolean fatalError = false;
     
+    private P p;
+    
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -197,6 +199,10 @@ public class AlgorithmASM extends AlgorithmBase  {
         // p.I Field 4: The image
         FileMATLAB fileMATLAB = null;
         int r;
+        double pointsx[];
+        double pointsy[];
+        int i;
+        int j;
         
         // Function written by D. Kroon University of Twente (February 2010)
         try {
@@ -218,7 +224,27 @@ public class AlgorithmASM extends AlgorithmBase  {
         }
         
         // Interpolate to get more points
+        // For now use linear interpolation rather than the MATLAB lowpass FIR interpolating filter
         r = 5;
+        pointsx = new double[r*p.x.length - r + 1];
+        for (i = 0; i < p.x.length; i++) {
+            pointsx[r*i] = p.x[i];
+            if (i > 0) {
+                for (j = 1; j < r; j++) {
+                    pointsx[r*(i-1) + j] = p.x[i-1] + (j*(p.x[i] - p.x[i-1]))/r;
+                }
+            }
+        }
+        pointsy = new double[r*p.y.length - r + 1];
+        for (i = 0; i < p.y.length; i++) {
+            pointsy[r*i] = p.y[i];
+            if (i > 0) {
+                for (j = 1; j < r; j++) {
+                    pointsy[r*(i-1) + j] = p.y[i-1] + (j*(p.y[i] - p.y[i-1]))/r;
+                }
+            }
+        }
+        
     }
     
     
@@ -550,7 +576,6 @@ public class AlgorithmASM extends AlgorithmBase  {
             byte buf[] = null;
             int bufSize;
             boolean memoryError;
-            P p;
 
             try {
                 p = new P();
