@@ -2251,6 +2251,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             quickRGB( m_akBounds, getActiveImage(), m_kParent.getActiveRGB() );
         }
 
+        getActiveImage().notifyImageDisplayListeners(null,true);
         if ( getActiveImage().getHistogramFrame() != null )
         {
             getActiveImage().getHistogramFrame().redrawFrames();
