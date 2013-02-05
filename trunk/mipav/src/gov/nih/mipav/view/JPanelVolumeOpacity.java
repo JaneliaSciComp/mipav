@@ -55,9 +55,6 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	private static final long serialVersionUID = -5320201609864903620L;
 	/** Histogram reference for image A. */
 	private ModelHistogram histogramA = null;
-	//private ModelHistogram histogramARed = null;
-	//private ModelHistogram histogramAGreen = null;
-	//private ModelHistogram histogramABlue = null;
 
 	/** Histogram reference for image B. */
 	private ModelHistogram histogramB = null;

@@ -277,8 +277,17 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "fragColor.a = colorB.a;" + "\n";
 
     private static String finalColorAB = ""
-    	+ "fragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
-    	+ "fragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n";
+        	//+ "if ( (ABBlend != 1) && (colorA.r == 0) && (colorA.g == 0) && (colorA.b == 0) ) { " + "\n"
+        	//+ "   fragColor = colorB;" + "\n"
+        	//+ "}" + "\n"
+        	//+ "else if ( (ABBlend != 0) && (colorB.r == 0) && (colorB.g == 0) && (colorB.b == 0) ) { " + "\n"
+        	//+ "   fragColor = colorA;" + "\n"
+        	//+ "}" + "\n"
+        	//+ "else {" + "\n"
+        	+ "   fragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
+        	+ "   fragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n"
+        	//+ "}" + "\n"
+        	;
     
     private static String mainEnd = ""
             + "if ( fragColor == vec4(0) ) {" + "\n"
@@ -549,8 +558,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", createProgramText(), true );
-        initTexturesVol(m_kPShaderCMP);
+        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", "", true );
+        createProgramText();
                  
         SetVShader(0,m_pkVShader);
         SetPShader(0,m_kPShaderCMP);
@@ -574,19 +583,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     public void setABBlend(float fBlend)
     {
     	m_afABBlendParam[0] = fBlend;
-    	if ( fBlend == 0 )
-    	{
-    		//System.err.println( fBlend );
-    	}
-    	if ( fBlend == 1 )
-    	{
-    		//System.err.println( fBlend );
-    	}
         Program kCProgram = GetCProgram(0);  
         if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 
         {
-            kCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
-            //System.err.println( fBlend );
+            kCProgram.GetUC("ABBlend").GetData()[0] = m_afABBlendParam[0];
         }
         checkPixelProgram();
     }
@@ -610,7 +610,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     public void SetClip(int iWhich, float data, boolean bEnable)
     {
     	super.SetClip(iWhich, data, bEnable );
-    	checkPixelProgram();    	
+    	checkPixelProgram();
     }
 
     public void SetClipArb(float[] afEquation, boolean bEnable)
@@ -954,7 +954,10 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		if ( !text.equals( m_kPShaderCMP.GetProgram().GetProgramText() ))
     		{
     			m_kPShaderCMP.GetProgram().SetProgramText( text );
-    			GetCProgram(0).Reload(true);
+    			if ( GetCProgram(0) != null )
+    			{
+    				GetCProgram(0).Reload(true);
+    			}
 
 
     			// Add the used textures to the shader program data structures:
