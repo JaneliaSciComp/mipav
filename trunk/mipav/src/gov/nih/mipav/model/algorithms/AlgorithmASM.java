@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
@@ -116,8 +117,22 @@ public class AlgorithmASM extends AlgorithmBase  {
         public ModelImage I;
     }
     
+    public class TData {
+        public double offsetv[] = new double[2];
+        public double offsetr;
+    }
+    
     public class ASMData {
+        public double Vertices[][];
+        public int Lines[][];
         public ModelImage I;
+        public TData tform = new TData();
+    }
+    
+    public class SData {
+        public double x_mean;
+        public double Evectors[][];
+        public double Evalues[];
     }
     
     public void ASM_2D_example() {
@@ -129,8 +144,10 @@ public class AlgorithmASM extends AlgorithmBase  {
         String fileName;
         boolean multiFile;
         FileInfoBase fileInfo;
-        double Vertices[] = null;
-        double Lines[] = null;
+        double Vertices[][] = null;
+        int Lines[][] = null;
+        ASMData TrainingData[];
+        SData ShapeData = null;
         // This is an example of a working basic Active Shape Model, with a few hand pictures.
         
         // Literature used: Ginneken B. et al., "Active Shape Model Segmentation with Optimal Features",
@@ -164,7 +181,7 @@ public class AlgorithmASM extends AlgorithmBase  {
         // The LoadDataSetNiceContour routine, not only reads the contour points, but
         // also resamples them to get a nice uniform spacing, between the important
         // landmark contour points.
-        ASMData TrainingData[] = new ASMData[10];
+        TrainingData = new ASMData[10];
         multiFile = false;
         fileInfo = null;
         for (i = 1; i <= 10; i++) {
@@ -182,11 +199,56 @@ public class AlgorithmASM extends AlgorithmBase  {
                 return;
             }
             TrainingData[i-1] = new ASMData();
+            TrainingData[i-1].Vertices = Vertices;
+            TrainingData[i-1].Lines = Lines;
             TrainingData[i-1].I = I;
         } // for (i = 1; i <= 10; i++)
+        
+        // Shape Model
+        // Make the Shape model, which finds the variations between contours
+        // in the training data sets.  And makes a PCA model describing normal contours.
+        ASM_MakeShapeModel2D(TrainingData, ShapeData);
     }
     
-    private void LoadDataSetNiceContour(String fileName, int nBetween, boolean verbose, double[] Vertices, double[] Lines) {
+    private void ASM_MakeShapeModel2D(ASMData[] TrainingData, SData ShapeData) {
+        int s;
+        int n1;
+        int i;
+        
+        // Number of datasets
+        s = TrainingData.length;
+        
+        // Number of landmarks
+        n1 = TrainingData[0].Vertices.length;
+        
+        // Shape model
+        
+        // Remove rotation and translation
+        // (Procrustes analysis would also be possible, see AAM_align_data)
+        for (i = 0; i < s; i++) {
+            ASM_align_data2D(TrainingData[i].Vertices, TrainingData[i].tform);
+        }
+    }
+    
+    private void ASM_align_data2D(double Vertices[][], TData tform) {
+        double totalv0;
+        double totalv1;
+        int i;
+        double offsetv[] = new double[2];
+        // Aligns the contours positions, center the data and remove rotation
+        
+        // Center the data to remove translation
+        totalv0 = 0.0;
+        totalv1 = 0.0;
+        for (i = 0; i < Vertices.length; i++) {
+            totalv0 += Vertices[i][0];
+            totalv1 += Vertices[i][1];
+        }
+        offsetv[0] = -totalv0/Vertices.length;
+        offsetv[1] = -totalv1/Vertices.length;
+    }
+    
+    private void LoadDataSetNiceContour(String fileName, int nBetween, boolean verbose, double[][] Vertices, int[][] Lines) {
         // Load the contour points and a photo of a dataset
         // The routine will interpolate a number of evenly spaced contour points between
         // the points marked as major landmark points.
@@ -203,6 +265,26 @@ public class AlgorithmASM extends AlgorithmBase  {
         double pointsy[];
         int i;
         int j;
+        int k;
+        double pointst[];
+        float px[];
+        float py[];
+        int numLoc;
+        int iArr[];
+        double linex[];
+        double liney[];
+        int numPoints;
+        double dx[];
+        double dy[];
+        double dist[];
+        double dist2[];
+        double linex2[];
+        double liney2[];
+        double frac;
+        double totalx[] = null;
+        double totaly[] = null;
+        double tempx[];
+        double tempy[];
         
         // Function written by D. Kroon University of Twente (February 2010)
         try {
@@ -245,6 +327,165 @@ public class AlgorithmASM extends AlgorithmBase  {
             }
         }
         
+        // Mark landmark points with 1, other poinst zero
+        pointst = new double[pointsx.length];
+        for (i = 0; i < p.t.length; i++) {
+            if (p.t[i] == 0) {
+                pointst[i*r] = 1;
+            }
+        }
+        
+        if (verbose) {
+            new ViewJFrameImage(p.I);
+            // Add subsequent plots to the image
+            // IMSHOW shows the first dimension of data along the y axis, so pointsy is plotted along the y axis
+            // and pointsx is plotted along the x axis
+            // 'b' means the color blue is used
+            px = new float[pointsx.length];
+            for (i = 0; i < pointsx.length; i++) {
+                px[i] = (float)pointsx[i];
+            }
+            py = new float[pointsy.length];
+            for (i = 0; i < pointsy.length; i++) {
+                py[i] = (float)pointsy[i];
+            }
+            new ViewJFrameGraph(px, py, "Contour point locations", "pointsx", "pointsy", Color.BLUE);
+        } // if (verbose)
+        
+        // Find the landmark point locations
+        numLoc = 0;
+        for (j = 0; j < pointst.length; j++) {
+            if (pointst[j] != 0) {
+                numLoc++;
+            }
+        }
+        iArr = new int[numLoc];
+        i = 0;
+        for (j = 0; j < pointst.length; j++) {
+            if (pointst[j] != 0) {
+                iArr[i++] = j;    
+            }
+        }
+        
+        // Loop to make points evenly spaced on line pieces between landmark points
+        for (j = 0; j < numLoc-1; j++) {
+            // One line piece
+            numPoints = iArr[j+1] - iArr[j] + 1;
+            linex = new double[numPoints];
+            liney = new double[numPoints];
+            for (i = 0; i < numPoints; i++) {
+                linex[i] = pointsx[iArr[j] + i];
+                liney[i] = pointsy[iArr[j] + i];
+            } // for (i = 0; i < numPoints; i++)
+            // Length on line through the points
+            dx = new double[numPoints];
+            dy = new double[numPoints];
+            for (i = 1; i < numPoints; i++) {
+                dx[i] = linex[i] - linex[i-1];
+                dy[i] = liney[i] - liney[i-1];
+            } // for (i = 1; i < numPoints; i++)
+            dist = new double[numPoints];
+            dist[0] = 0.0;
+            for (i = 1; i < numPoints; i++) {
+                dist[i] = dist[i-1] + Math.sqrt(dx[i]*dx[i] + dy[i]*dy[i]);
+            }
+            // Interpolate new points evenly spaced on the line piece
+            dist2 = new double[nBetween];
+            for (i = 0; i < nBetween; i++) {
+                dist2[i] = i * dist[numPoints-1]/(nBetween-1.0);
+            }
+            linex2 = new double[nBetween];
+            liney2 = new double[nBetween];
+            for (i = 0; i < nBetween; i++) {
+                if (dist2[i] == dist[0]) {
+                    linex2[i] = linex[0];
+                    liney2[i] = liney[0];
+                }
+                else if (dist2[i] == dist[numPoints-1]) {
+                    linex2[i] = linex[numPoints-1]; 
+                    liney2[i] = liney[numPoints-1];
+                }
+                else {
+                    k = 0;
+                    while ((dist[k] <= dist2[i]) && (k < numPoints-1)) {
+                        k++;
+                    }
+                    frac = (dist2[i] - dist[k-1])/(dist[k] - dist[k-1]);
+                    linex2[i] = linex[k-1] + frac * (linex[k] - linex[k-1]);
+                    liney2[i] = liney[k-1] + frac * (liney[k] - liney[k-1]);
+                }
+            } // for (i = 0; i < nBetween; i++)
+            // Display the line piece
+            if (verbose) {
+                // No obvious way to plot on same ViewJFrameGraph    
+            }
+            // Remove point because it is also in the next line piece
+            if (j < numLoc - 2) {
+                linex = new double[nBetween-1];
+                liney = new double[nBetween-1];
+                for (i = 0; i < nBetween-1; i++) {
+                    linex[i] = linex2[i];
+                    liney[i] = liney2[i];
+                }
+            }
+            else {
+                linex = new double[nBetween];
+                liney = new double[nBetween];
+                for (i = 0; i < nBetween; i++) {
+                    linex[i] = linex2[i];
+                    liney[i] = liney2[i];
+                }
+            }
+            // Add the evenly spaced line piece to the total line
+            if (totalx == null) {
+                totalx = new double[linex.length];
+                for (i = 0; i < linex.length; i++) {
+                    totalx[i] = linex[i];
+                }
+                totaly = new double[liney.length];
+                for (i = 0; i < liney.length; i++) {
+                    totaly[i] = liney[i];
+                }
+            }
+            else {
+                tempx = new double[totalx.length];
+                for (i = 0; i < totalx.length; i++) {
+                    tempx[i] = totalx[i];
+                }
+                tempy = new double[totaly.length];
+                for (i = 0; i < totaly.length; i++) {
+                    tempy[i] = totaly[i];
+                }
+                totalx = new double[tempx.length + linex.length];
+                for (i = 0; i < tempx.length; i++) {
+                    totalx[i] = tempx[i];
+                }
+                for (i = 0; i < linex.length; i++) {
+                    totalx[tempx.length + i] = linex[i];
+                }
+                totaly = new double[tempy.length + liney.length];
+                for (i = 0; i < tempy.length; i++) {
+                    totaly[i] = tempy[i];
+                }
+                for (i = 0; i < liney.length; i++) {
+                    totaly[tempy.length + i] = liney[i];
+                }
+            }
+        } // for (j = 0; j < numLoc-1; j++)
+        // Also store the image
+        Vertices = new double[totalx.length][2];
+        for (i = 0; i < totalx.length; i++) {
+            Vertices[i][0] = totalx[i];
+            Vertices[i][1] = totaly[i];
+        }
+        Lines = new int[totalx.length][2];
+        for (i = 0; i < totalx.length; i++) {
+            Lines[i][0] = i;
+        }
+        for (i = 1; i < totalx.length; i++) {
+            Lines[i-1][1] = i;
+        }
+        Lines[totalx.length-1][1] = 0;
     }
     
     
@@ -2891,36 +3132,37 @@ public class AlgorithmASM extends AlgorithmBase  {
                                 }      
                             }
                             else if (field == 4) {
-                                image = new ModelImage(ModelStorageBase.DOUBLE, imageExtents, fileName); 
+                                int pExtents[] = new int[2];
+                                pExtents[0] = imageExtents[0];
+                                pExtents[1] = imageExtents[1];
+                                image = new ModelImage(ModelStorageBase.DOUBLE, pExtents, fileName);
+                                p.I = image;
                                 fileInfo.setDataType(ModelStorageBase.DOUBLE);
                                 buffer = new byte[realDataBytes];
                                 raFile.read(buffer);
                                 doubleNumber = realDataBytes/8;
                                 doubleBuffer = new double[doubleNumber];
-                                numberSlices = doubleNumber/sliceSize;
                                 j = 0;
-                                for (s = 0; s < numberSlices; s++) {
-                                    for (x = 0; x < imageExtents[1]; x++) {
-                                        for (y = 0; y < imageExtents[0]; y++) {
-                                            index = 8*(x + imageExtents[1] * y + s * sliceSize);
-                                            b1L = buffer[index] & 0xffL;
-                                            b2L = buffer[index+1] & 0xffL;
-                                            b3L = buffer[index+2] & 0xffL;
-                                            b4L = buffer[index+3] & 0xffL;
-                                            b5L = buffer[index+4] & 0xffL;
-                                            b6L = buffer[index+5] & 0xffL;
-                                            b7L = buffer[index+6] & 0xffL;
-                                            b8L = buffer[index+7] & 0xffL;
-                                            if (endianess == BIG_ENDIAN) {
-                                                tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-                                                           (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);   
-                                            }
-                                            else {
-                                                tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-                                                           (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                            }
-                                            doubleBuffer[j++] = Double.longBitsToDouble(tmpLong);
+                                for (x = 0; x < imageExtents[1]; x++) {
+                                    for (y = 0; y < imageExtents[0]; y++) {
+                                        index = 8*(x + imageExtents[1] * y);
+                                        b1L = buffer[index] & 0xffL;
+                                        b2L = buffer[index+1] & 0xffL;
+                                        b3L = buffer[index+2] & 0xffL;
+                                        b4L = buffer[index+3] & 0xffL;
+                                        b5L = buffer[index+4] & 0xffL;
+                                        b6L = buffer[index+5] & 0xffL;
+                                        b7L = buffer[index+6] & 0xffL;
+                                        b8L = buffer[index+7] & 0xffL;
+                                        if (endianess == BIG_ENDIAN) {
+                                            tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                       (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);   
                                         }
+                                        else {
+                                            tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                       (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                        }
+                                        doubleBuffer[j++] = Double.longBitsToDouble(tmpLong);
                                     }
                                 }
                                 
@@ -6056,10 +6298,11 @@ public class AlgorithmASM extends AlgorithmBase  {
                     fileInfo.setFileName(fileInfo.getArrayName());
                 }
                 fileInfo.setSourceFile(fileDir + fileName);
-                for (i = 0; i < imageSlices; i++) {
+                image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), 0);
+                /*for (i = 0; i < imageSlices; i++) {
                     
                     image.setFileInfo((FileInfoMATLAB)fileInfo.clone(), i);
-                }
+                }*/
                 
                 if (((image.getType() == ModelStorageBase.UBYTE)|| (image.getType() == ModelStorageBase.SHORT)) &&
                     (image2 != null) && (image2.getType() == ModelStorageBase.DOUBLE) &&
