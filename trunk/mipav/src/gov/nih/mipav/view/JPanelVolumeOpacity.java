@@ -1159,6 +1159,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityB.setLocation(borderSize, borderSize);
 			componentOpacityB.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityB.setBackground(new Color(190, 208, 230));
+			componentOpacityB.linearMode();
 		}
 
 		panelOpacityB = new JPanel(new BorderLayout());
