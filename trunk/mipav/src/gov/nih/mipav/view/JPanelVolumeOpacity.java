@@ -183,6 +183,8 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	 * tri-planar volume view.
 	 */
 	protected JTextField yRangeTextA, yRangeTextB, yRangeTextGM_A, yRangeTextGM_B;
+	
+	private boolean isChanging = false;
 
 	/**
 	 * Creates new dialog for converting type of image.
@@ -468,6 +470,11 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	{
 		return tabbedPane;
 	}
+	
+	public boolean isChanging()
+	{
+		return isChanging;
+	}
 
 	/**
 	 * Return whether or not the opacity mapping based on gradient magnitude is enabled.
@@ -494,7 +501,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			} else {
 				removeGM();
 			}
-			update();
+			update(false);
 		}
 	}
 
@@ -653,7 +660,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	{
 		if (event.getSource() == blendSlider)
 		{
-			update();
+			update(blendSlider.getValueIsAdjusting());
 		}
 		else if (event.getSource() == mouseSlider) {
 
@@ -746,8 +753,9 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	/* (non-Javadoc)
 	 * @see gov.nih.mipav.view.renderer.ViewJComponentVolOpacityListener#update()
 	 */
-	public void update()
+	public void update( boolean isChanging )
 	{
+		this.isChanging = isChanging;
 		firePropertyChange("Opacity", 0, 1);
 	}
 
@@ -1090,6 +1098,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityA.setLocation(borderSize, borderSize);
 			componentOpacityA.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityA.setBackground(new Color(190, 208, 230));
+			componentOpacityA.linearMode();
 		}
 
 
@@ -1205,6 +1214,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityGM_A.setLocation(borderSize, borderSize);
 			componentOpacityGM_A.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityGM_A.setBackground(new Color(190, 208, 230));
+			componentOpacityGM_A.linearMode();
 		}
 
 		panelOpacityGM_A = new JPanel(new BorderLayout());

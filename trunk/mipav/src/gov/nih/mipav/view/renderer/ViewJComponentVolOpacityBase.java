@@ -344,6 +344,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         if ( parentListener != null )
         {
         	parentListener.setAdjustersEnabled(false);
+        	parentListener.update(false);
         }
 
         showHistogram();
@@ -446,7 +447,7 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
         }
         if ( parentListener != null )
         {
-        	parentListener.update();
+        	parentListener.update(true);
         }
 
         return;
@@ -613,6 +614,10 @@ public abstract class ViewJComponentVolOpacityBase extends JComponent implements
      */
     public void mouseReleased(MouseEvent mouseEvent) {
         showHistogram();
+        if ( parentListener != null )
+        {
+        	parentListener.update(false);
+        }
     }
 
     /**

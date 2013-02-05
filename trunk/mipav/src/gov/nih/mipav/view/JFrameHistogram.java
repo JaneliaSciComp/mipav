@@ -39,7 +39,9 @@ import javax.swing.event.ChangeListener;
 
 public class JFrameHistogram extends JPanel implements ActionListener, ChangeListener, ViewImageUpdateInterface, WindowListener {
 
-    /** DOCUMENT ME! */
+	private static final long serialVersionUID = 6057663900661366920L;
+
+	/** DOCUMENT ME! */
     private ViewJFrameColocalizationEM colEMFrame = null;
 
     /** DOCUMENT ME! */
