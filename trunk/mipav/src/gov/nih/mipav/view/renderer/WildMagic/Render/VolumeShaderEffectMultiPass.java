@@ -347,6 +347,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         if ( m_bMultiHisto )
         {
         	updateLevWidgetState( );
+        } 
+        if ( (pkCProgram != null) && pkCProgram.GetUC("ABBlend") != null ) 
+        {
+        	pkCProgram.GetUC("ABBlend").GetData()[0] = m_afABBlendParam[0];
         }
 
         super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );    
@@ -797,55 +801,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
         }
-        initTexturesVol(m_kPShaderCMP);
                  
         SetVShader(0,m_pkVShader);
         SetPShader(0,m_kPShaderCMP);
     }
-
-
-    protected void initTexturesVol( PixelShader kPShader )
-    {        
-    	System.err.println( "initTexturesVol" );
-        int iTex = 0;
-        kPShader.SetTextureQuantity(16);
-        kPShader.SetImageName(iTex, m_kSceneTarget.GetName(), "aSceneImage");
-        kPShader.SetTexture(iTex++, m_kSceneTarget, "aSceneImage");
-
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName(), "bVolumeImageA" );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget(), "bVolumeImageA" );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName(), "cColorMapA" );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget(), "cColorMapA" );
-        if ( m_kVolumeImageA.GetImage().isColorImage() )
-        {
-        	kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName(), "eNormalMapA");
-            kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget(), "eNormalMapA");
-        }
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName(), "fVolumeImageA_GM");
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget(), "fVolumeImageA_GM");
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName(), "gOpacityMapA_GM" );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget(), "gOpacityMapA_GM" );
-        
-          
-        if ( m_kVolumeImageB.GetImage() != null )
-        {
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName(), "jVolumeImageB" );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget(), "jVolumeImageB" );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName(), "kColorMapB" );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget(), "kColorMapB" );
-            if ( m_kVolumeImageB.GetImage().isColorImage() )
-            {
-            	kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName(), "mNormalMapB");
-                kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget(), "mNormalMapB");
-            }
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName(), "nVolumeImageB_GM");
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget(), "nVolumeImageB_GM");
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName(), "oOpacityMapB_GM" );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget(), "oOpacityMapB_GM" );
-        }
-    }
-    
-    
     /**
      * Sets the IsColor shader parameter values.
      */

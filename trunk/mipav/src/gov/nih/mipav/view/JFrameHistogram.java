@@ -47,16 +47,16 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     /** DOCUMENT ME! */
     private ViewJFrameColocalizationRegression colRegFrame = null;
 
-	/** DOCUMENT ME! */
-	private ModelImage imageA = null; // source image
+	/** source image A */
+	private ModelImage imageA = null;
 
-	/** DOCUMENT ME! */
-	private ModelImage imageB = null; // source image
+	/** source image B */
+	private ModelImage imageB = null;
 
-	/** DOCUMENT ME! */
+	/** lut a */
 	private ModelStorageBase LUTa;
 
-	/** DOCUMENT ME! */
+	/** lut b */
 	private ModelStorageBase LUTb;
 
 	/** false = apply algorithm only to VOI regions. */

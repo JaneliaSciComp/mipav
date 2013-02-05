@@ -70,7 +70,9 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         
         m_kVolumeTextureNew = new Texture();
+        m_kVolumeTextureNew.SetName( "VolumeImageNew" );
         m_kVolumeLUTNew = new Texture();
+        m_kVolumeLUTNew.SetName("ColorMapNew");
         
         m_kVPixelLighting = new VertexShader("MipavLightingFragmentV", true);
         if ( !bTransparent )
@@ -288,7 +290,12 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         {
             m_kColorMapNew = VolumeImage.InitColorMap( m_kVolumeLUTNew, m_kColorMapNew, kLUT, "New" );
             m_kVolumeLUTNew.SetImage(m_kColorMapNew);
+            m_kVolumeLUTNew.SetName(m_kColorMapNew.GetName());
             m_kVolumeLUTNew.Reload(true);
+            if ( this.GetCProgram(0) != null )
+            {
+            	this.GetCProgram(0).Reload(true);
+            }
         }
         else if ( kLUT != null )
         {
