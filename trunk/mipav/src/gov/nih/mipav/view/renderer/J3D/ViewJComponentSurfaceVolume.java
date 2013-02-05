@@ -861,10 +861,14 @@ public class ViewJComponentSurfaceVolume {
         int opacityValA, opacityValB;
         int[] lutBufferRemapped = null;
 
-        if (imageA.isColorImage()) {
-
+        if (imageA.isColorImage() && ((imageB == null) || ((imageB != null) && (imageB.isColorImage()))))
+        {
             // call the show method for displaying RGB images
             return (show(tSlice, forceShow));
+        }
+        if ( (imageB != null) && (imageA.isColorImage() != imageB.isColorImage()) )
+        {
+        	return showAB(tSlice, _LUTa, _LUTb, forceShow);
         }
 
         if ((imageA == null) || (texture == null)) {
@@ -1137,6 +1141,468 @@ public class ViewJComponentSurfaceVolume {
         return true;
     } // end of show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
 
+    
+
+    private boolean showAB(int tSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
+    {
+    	if ( imageB == null )
+    	{
+    		// should not reach this code. showAB should only be called when imageB != null
+    		return false;
+    	}
+    	
+
+        if (_LUTa != null) {
+            LUTa = _LUTa;
+        }
+
+        if ((imageB != null) && (_LUTb != null)) {
+            LUTb = _LUTb;
+        }
+    	
+        float[][] RGB_LUTa = null, RGB_LUTb = null;
+        if ( !imageA.isColorImage() && (LUTa != null) )
+        {
+        	RGB_LUTa = LUTa.exportRGB_LUT(true);
+        }
+        if ( !imageB.isColorImage() && (LUTb != null) )
+        {
+        	RGB_LUTb = LUTb.exportRGB_LUT(true);
+        }
+
+        // Note that alphaBlending is applied with 1 component taken as zero if both components
+        // are not present -for example, if either imageA or imageB but not both has red, then
+        // the red component is alphaBlended with zero.
+        int j;
+        float Ra = 0, Ga = 0, Ba = 0, Rb = 0, Gb = 0, Bb = 0;
+        int imageSize = 0;
+        float redMapped, greenMapped, blueMapped;
+        int[] RGBIndexBufferA = null;
+        int[] RGBIndexBufferB = null;
+
+        int xDim, yDim, zDim;
+
+        float maxColorA = 255;
+        float maxColorB = 255;
+        float normColorB = 1;
+        float normColorA = 1;
+        float offsetAR = 0.0f;
+        float offsetAG = 0.0f;
+        float offsetAB = 0.0f;
+        float offsetBR = 0.0f;
+        float offsetBG = 0.0f;
+        float offsetBB = 0.0f;
+
+        ModelImage gmImageA;
+        ModelImage gmImageB;
+
+        float pixGM_R = 0, pixGM_G = 0, pixGM_B = 0;
+        float imgBpixGM_R = 0, imgBpixGM_G = 0, imgBpixGM_B = 0;
+        int opacityValA_R = 0, opacityValA_G = 0, opacityValA_B = 0;
+        int opacityValB_R = 0, opacityValB_G = 0, opacityValB_B = 0;
+
+        xDim = imageExtents[0];
+        yDim = imageExtents[1];
+        zDim = 1;
+
+        if (imageA.getNDims() >= 3) {
+            zDim = imageExtents[2];
+        }
+
+        JPanelVolumeOpacity volOpacityObj = ((SurfaceRender) frame).getVolOpacityPanel();
+        boolean gmMode = volOpacityObj.isGradientMagnitudeOpacityEnabled();
+
+        alphaBlend = (100.0f - (float) volOpacityObj.getAlphaBlendSliderValue()) / 100.0f;
+        alphaPrime = 1 - alphaBlend;
+
+
+        if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
+            maxColorA = (float) imageA.getMaxR();
+            maxColorA = Math.max((float) imageA.getMaxG(), maxColorA);
+            maxColorA = Math.max((float) imageA.getMaxB(), maxColorA);
+        } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
+
+            if (imageA.getMinR() < 0.0) {
+                maxColorA = (float) (imageA.getMaxR() - imageA.getMinR());
+                offsetAR = (float) (-imageA.getMinR());
+            } else {
+                maxColorA = (float) imageA.getMaxR();
+            }
+
+            if (imageA.getMinG() < 0.0) {
+                maxColorA = Math.max((float) (imageA.getMaxG() - imageA.getMinG()), maxColorA);
+                offsetAG = (float) (-imageA.getMinG());
+            } else {
+                maxColorA = Math.max((float) imageA.getMaxG(), maxColorA);
+            }
+
+            if (imageA.getMinB() < 0.0) {
+                maxColorA = Math.max((float) (imageA.getMaxB() - imageA.getMinB()), maxColorA);
+                offsetAB = (float) (-imageA.getMinB());
+            } else {
+                maxColorA = Math.max((float) imageA.getMaxB(), maxColorA);
+            }
+        }
+
+        normColorA = 255 / maxColorA;
+
+        if ((imageB != null) && (imageB.getType() == ModelStorageBase.ARGB_USHORT)) {
+        	maxColorB = (float) imageB.getMaxR();
+        	maxColorB = Math.max((float) imageB.getMaxG(), maxColorB);
+        	maxColorB = Math.max((float) imageB.getMaxB(), maxColorB);
+        }
+
+        if ((imageB != null) && (imageB.getType() == ModelStorageBase.ARGB_FLOAT)) {
+
+        	if (imageB.getMinR() < 0.0) {
+        		maxColorB = (float) (imageB.getMaxR() - imageB.getMinR());
+        		offsetBR = (float) (-imageB.getMinR());
+        	} else {
+        		maxColorB = (float) imageB.getMaxR();
+        	}
+
+        	if (imageB.getMinG() < 0.0) {
+        		maxColorB = Math.max((float) (imageB.getMaxG() - imageB.getMinG()), maxColorB);
+        		offsetBG = (float) (-imageB.getMinG());
+        	} else {
+        		maxColorB = Math.max((float) imageB.getMaxG(), maxColorB);
+        	}
+
+        	if (imageB.getMinB() < 0.0) {
+        		maxColorB = Math.max((float) (imageB.getMaxB() - imageB.getMinB()), maxColorB);
+        		offsetBB = (float) (-imageB.getMinB());
+        	} else {
+        		maxColorB = Math.max((float) imageB.getMaxB(), maxColorB);
+        	}
+        }
+
+        normColorB = 255 / maxColorB;
+
+
+        if (RGBTA != null)
+        {
+        	RGBIndexBufferA = RGBTA.exportIndexedRGB();
+        }
+
+        if (RGBTB != null)
+        {
+        	RGBIndexBufferB = RGBTB.exportIndexedRGB();
+        }
+
+        if ((timeSlice != tSlice) || (forceShow == true)) {
+
+        	// Anytime the time slice changes, we need to destroy the previously
+        	// computed normal vectors for image A so that they can be recomputed
+        	// upon request.
+        	if (timeSlice != tSlice) {
+        		timeSlice = tSlice;
+        	}
+        } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
+
+        // About to recompute the composite texture image for the volume.
+        m_aiCompositeImageA = null;
+
+        imageSize = xDim * yDim;
+
+
+        for (int sliceZ = 0; sliceZ < imageA.getExtents()[2]; sliceZ++) {
+        	paintBuffer = texture.getBufferedRaster(sliceZ);
+        	int offsetA = (timeSlice * xDim * yDim * zDim) + (sliceZ * imageBufferA.length);
+        	int offsetB = (timeSlice * xDim * yDim * zDim) + (sliceZ * imageBufferB.length);
+
+        	try {
+
+        		imageA.exportData(offsetA, imageBufferA.length, imageBufferA);
+        		if (volOpacityObj.getGradMagA() != null) {
+
+        			if (imageBufferA_GM == null) {
+        				imageBufferA_GM = new float[imageBufferA.length];
+        			}
+
+        			if (gmMode == true) {
+        				gmImageA = volOpacityObj.getGradMagA();
+        				gmImageA.exportData(offsetA, imageBufferA_GM.length, imageBufferA_GM);
+        			}
+        		}
+
+        		imageB.exportData(offsetB, imageBufferB.length, imageBufferB);
+
+        		if (volOpacityObj.getGradMagB() != null) {
+
+        			if (imageBufferB_GM == null) {
+        				imageBufferB_GM = new float[imageBufferB.length];
+        			}
+
+        			if (gmMode == true) {
+        				gmImageB = volOpacityObj.getGradMagB();
+        				gmImageB.exportData(offsetB, imageBufferB_GM.length, imageBufferB_GM);
+        			}
+        		}
+        	} catch (IOException error) {
+        		MipavUtil.displayError("Error reading image slices" + error);
+
+        		return false;
+        	}
+
+    		TransferFunction tfRedA = null;
+    		TransferFunction tfGreenA = null;
+    		TransferFunction tfBlueA = null;
+    		TransferFunction tfRedGMA = null;
+    		TransferFunction tfGreenGMA = null;
+    		TransferFunction tfBlueGMA = null;
+
+    		TransferFunction tfRedB = null;
+    		TransferFunction tfGreenB = null;
+    		TransferFunction tfBlueB = null;
+    		TransferFunction tfRedGMB = null;
+    		TransferFunction tfGreenGMB = null;
+    		TransferFunction tfBlueGMB = null;
+    		
+        	if ( imageA.isColorImage() )
+        	{
+        		tfRedA = volOpacityObj.getCompA().getOpacityTransferFunction();
+        		tfGreenA = volOpacityObj.getCompA().getOpacityTransferFunction();
+        		tfBlueA = volOpacityObj.getCompA().getOpacityTransferFunction();
+
+        		if (gmMode) {
+        			tfRedGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+        			tfGreenGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+        			tfBlueGMA = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+        		}
+        	}
+        	if ( imageB.isColorImage() )
+        	{
+        		tfRedB = volOpacityObj.getCompB().getOpacityTransferFunction();
+        		tfGreenB = volOpacityObj.getCompB().getOpacityTransferFunction();
+        		tfBlueB = volOpacityObj.getCompB().getOpacityTransferFunction();
+
+        		if (gmMode) {
+        			tfRedGMB = volOpacityObj.getCompB_GM().getOpacityTransferFunction();
+        			tfGreenGMB = volOpacityObj.getCompB_GM().getOpacityTransferFunction();
+        			tfBlueGMB = volOpacityObj.getCompB_GM().getOpacityTransferFunction();
+        		}
+        	}
+
+        	pixGM_R = 0;
+        	pixGM_G = 0;
+        	pixGM_B = 0;
+        	opacityValA_R = 0;
+        	opacityValA_G = 0;
+        	opacityValA_B = 0;
+        	imgBpixGM_R = 0;
+        	imgBpixGM_G = 0;
+        	imgBpixGM_B = 0;
+        	opacityValB_R = 0;
+        	opacityValB_G = 0;
+        	opacityValB_B = 0;
+        	
+        	
+
+            int indexA = 0;
+            int indexB = 0;
+            int opacityValA = 0;
+            int opacityValB = 0;
+            
+            TransferFunction tf_compA= null;
+            TransferFunction tf_compA_GM = null;
+            TransferFunction tf_imgA = null;
+            if ( !imageA.isColorImage() )
+            {
+            	tf_compA = volOpacityObj.getCompA().getOpacityTransferFunction();
+
+            	if (volOpacityObj.isGradientMagnitudeOpacityEnabled()) {
+            		tf_compA_GM = volOpacityObj.getCompA_GM().getOpacityTransferFunction();
+            	}
+            	tf_imgA = LUTa.getTransferFunction();
+            }
+
+            TransferFunction tf_compB = null;
+            TransferFunction tf_compB_GM = null;            
+            TransferFunction tf_imgB = null;
+            if ( !imageB.isColorImage() )
+            {
+            	tf_compB = volOpacityObj.getCompB().getOpacityTransferFunction();
+
+            	if (volOpacityObj.isGradientMagnitudeOpacityEnabled()) {
+            		tf_compB_GM = volOpacityObj.getCompB_GM().getOpacityTransferFunction();
+            	}
+            	tf_imgB = LUTb.getTransferFunction();
+            }
+
+        	for (j = 0; j < imageSize; j++) {
+        		if ( imageA.isColorImage() )
+        		{
+        			int index = j*4;
+        			opacityValA_R = MipavMath.round(tfRedA.getRemappedValue(imageBufferA[index + 1], 255));
+        			opacityValA_G = MipavMath.round(tfGreenA.getRemappedValue(imageBufferA[index + 2], 255));
+        			opacityValA_B = MipavMath.round(tfBlueA.getRemappedValue(imageBufferA[index + 3], 255));
+
+        			if (gmMode) {
+        				pixGM_R = tfRedGMA.getRemappedValue(imageBufferA_GM[index + 1], 256) / 255.0f;
+        				pixGM_G = tfGreenGMA.getRemappedValue(imageBufferA_GM[index + 2], 256) / 255.0f;
+        				pixGM_B = tfBlueGMA.getRemappedValue(imageBufferA_GM[index + 3], 256) / 255.0f;
+        			} else {
+        				pixGM_R = 1;
+        				pixGM_G = 1;
+        				pixGM_B = 1;
+
+        			}
+
+        			opacityValA = (int) ((((opacityValA_R * pixGM_R) + (opacityValA_G * pixGM_G) +
+        					(opacityValA_B * pixGM_B)) * 0.333333f) + 0.5f);
+        			
+
+            		if (RGBTA != null) 
+            		{
+            			if (RGBTA.getROn()) {
+            				Ra = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
+            						0x00ff0000) >> 16;
+            			} else {
+            				Ra = 0;
+            			}
+
+            			if (RGBTA.getGOn()) {
+            				Ga = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
+            						0x0000ff00) >> 8;
+            			} else {
+            				Ga = 0;
+            			}
+
+            			if (RGBTA.getBOn()) {
+            				Ba = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
+            						0x000000ff);
+            			} else {
+            				Ba = 0;
+            			}
+            		} else {
+            			Ra = (int) ((imageBufferA[index + 1] + offsetAR) * normColorA);
+            			Ga = (int) ((imageBufferA[index + 2] + offsetAG) * normColorA);
+            			Ba = (int) ((imageBufferA[index + 3] + offsetAB) * normColorA);
+            		}        			
+        		}
+        		else
+        		{
+                    float pixGMa = 1;
+
+                    if (tf_compA_GM != null) {
+                        pixGMa = tf_compA_GM.getRemappedValue(imageBufferA_GM[j], 256) / 255.0f;
+                    }
+
+                    // Apply opacity filter after the gradient magnitude filter.
+                    // Take the gradient magnitude result into the opacity transfer function.
+                    float valA = tf_compA.getRemappedValue(imageBufferA[j], 256);
+
+                    // Apply gradient magnitude to the image and normalize the value to the range [0:255]
+                    opacityValA = (int) ((valA * pixGMa) + 0.5f);
+
+                    // Apply the imageA transfer function.
+                    indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[j], 256) + 0.5f);
+
+                    Ra = RGB_LUTa[0][indexA];
+                    Ga = RGB_LUTa[1][indexA];
+                    Ba = RGB_LUTa[2][indexA];        			
+        		}
+        		if ( imageB.isColorImage() )
+        		{
+        			int index = j*4;
+        			opacityValB_R = MipavMath.round(tfRedB.getRemappedValue(imageBufferB[index + 1], 255));
+        			opacityValB_G = MipavMath.round(tfGreenB.getRemappedValue(imageBufferB[index + 2], 255));
+        			opacityValB_B = MipavMath.round(tfBlueB.getRemappedValue(imageBufferB[index + 3], 255));
+
+        			if (gmMode) {
+        				imgBpixGM_R = tfRedGMB.getRemappedValue(imageBufferB_GM[index + 1], 256) / 255.0f;
+        				imgBpixGM_G = tfGreenGMB.getRemappedValue(imageBufferB_GM[index + 2], 256) / 255.0f;
+        				imgBpixGM_B = tfBlueGMB.getRemappedValue(imageBufferB_GM[index + 3], 256) / 255.0f;
+        			} else {
+        				imgBpixGM_R = 1;
+        				imgBpixGM_G = 1;
+        				imgBpixGM_B = 1;
+        			}
+
+        			opacityValB = (int) ((((opacityValB_R * imgBpixGM_R) + (opacityValB_G * imgBpixGM_G) +
+        					(opacityValB_B * imgBpixGM_B)) * 0.33333333f) + 0.5f);
+        			
+
+            		if (RGBTB != null)
+            		{
+            			if (RGBTB.getROn()) {
+            				Rb = (RGBIndexBufferB[(int) ((imageBufferB[index + 1] + offsetBR) * normColorB)] &
+            						0x00ff0000) >> 16;
+            			} else {
+            				Rb = 0;
+            			}
+
+            			if (RGBTB.getGOn()) {
+            				Gb = (RGBIndexBufferB[(int) ((imageBufferB[index + 2] + offsetBG) * normColorB)] &
+            						0x0000ff00) >> 8;
+            			} else {
+            				Gb = 0;
+            			}
+
+            			if (RGBTB.getBOn()) {
+            				Bb = (RGBIndexBufferB[(int) ((imageBufferB[index + 3] + offsetBB) * normColorB)] &
+            						0x000000ff);
+            			} else {
+            				Bb = 0;
+            			}
+            		} 
+            		else
+            		{
+            			Rb = (int) ((imageBufferB[index + 1] + offsetBR) * normColorB);
+            			Gb = (int) ((imageBufferB[index + 2] + offsetBG) * normColorB);
+            			Bb = (int) ((imageBufferB[index + 3] + offsetBB) * normColorB);
+            		}
+        		}
+        		else
+        		{
+                    float pixGMb = 1;
+                    if (tf_compB_GM != null) {
+                        pixGMb = tf_compB_GM.getRemappedValue(imageBufferB_GM[j], 256) / 255.0f;
+                    }
+                    // Apply opacity filter after the gradient magnitude filter.
+                    // Take the gradient magnitude result into the opacity transfer function.
+                    float valB = tf_compB.getRemappedValue(imageBufferB[j], 256);
+
+                    // Apply gradient magnitude to the image and normalize the value to the range [0:255]
+                    opacityValB = (int) ((valB * pixGMb) + 0.5f);
+
+                    // Apply the image B transfer function.
+                    indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[j], 256) + 0.5f);
+
+                    Rb = RGB_LUTb[0][indexB];
+                    Gb = RGB_LUTb[1][indexB];
+                    Bb = RGB_LUTb[2][indexB];
+        		}
+
+        		if ((Rb == 0) && (Gb == 0) && (Bb == 0)) {
+        			Ra = (int) (Ra);
+        			Ga = (int) (Ga);
+        			Ba = (int) (Ba);
+        		} else if ((Ra == 0) && (Ga == 0) && (Ba == 0)) {
+        			Ra = (int) (Rb);
+        			Ga = (int) (Gb);
+        			Ba = (int) (Bb);
+        		} else {
+        			Ra = (int) ((Ra * alphaBlend) + (Rb * alphaPrime));
+        			Ga = (int) ((Ga * alphaBlend) + (Gb * alphaPrime));
+        			Ba = (int) ((Ba * alphaBlend) + (Bb * alphaPrime));
+        		}
+                
+        		paintBuffer[j] = (((int) ((opacityValA * alphaBlend) + (opacityValB * alphaPrime))) << 24) |
+        				((int) Ra << 16) | ((int) Ga << 8) | (int) Ba;
+        	}
+
+        	texture.setImageComponent(sliceZ);
+        } // end of for (index=0, j=0; j < imageSize; index += 4, j++)
+
+        RGBIndexBufferA = null;
+        RGBIndexBufferB = null;
+        gmImageA = null;
+        gmImageB = null;
+
+        return true;
+    }
+    
     /**
      * Calls garbage collector to release system resources.
      *
@@ -1146,5 +1612,7 @@ public class ViewJComponentSurfaceVolume {
         disposeLocal();
         super.finalize();
     }
+    
+
 
 }

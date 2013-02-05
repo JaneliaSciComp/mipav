@@ -81,8 +81,6 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
         lutIndexBuffer = new int[256];
         lut.exportIndexedLUT(lutIndexBuffer);
         lut.disposeLocal();
-
-        linearMode();
     }
     
     /**
@@ -91,6 +89,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
      * @param  renderOpacityPanel  Frame where histogram is to be displayed
      * @param  _histo              histogram model
      * @param  _image              image of the displayed histogram and associated LUT
+     * @deprecated
      */
     public ViewJComponentVolOpacity(JPanelVolOpacity renderOpacityPanel, ModelHistogram _histo, ModelImage _image) {
         super(renderOpacityPanel, _histo, _image, new Dimension(450, 375));
@@ -160,6 +159,7 @@ public class ViewJComponentVolOpacity extends ViewJComponentVolOpacityBase {
      * @param  mouseEvent  event that triggered this function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
+        super.mouseReleased(mouseEvent);
         showHistogram();
 
         if (myParent instanceof SurfaceRender) {

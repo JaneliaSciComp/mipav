@@ -49,10 +49,6 @@ import javax.swing.event.ChangeListener;
 
 public class JPanelHistogram extends JPanel implements ActionListener, ChangeListener, ItemListener, KeyListener, HistoLUTParent {
 
-
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 2049904743460024433L;
 	/**
 	 * Build the center part of the LUT toolbar.

@@ -94,9 +94,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
      */
     private Vector3f[][] boxSliceVertices;
 
-    /** Buffer factor, 1 usually, 4 for color images. */
-    private int bufferFactor = 1;
-
     /** Dialog to turn the clipping palne box on and off. */
     private JPanelClip clipPanel;
 
@@ -340,12 +337,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
 
         if (imageB != null) {
             imageB.setImageOrder(ModelImage.IMAGE_B);
-        }
-
-        bufferFactor = 1;
-
-        if (imageA.isColorImage()) {
-            bufferFactor = 4;
         }
 
         background.setColor(new Color3f(Color.black));
@@ -659,9 +650,11 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
                 }
             }
 
+            int bufferFactor = imageA.isColorImage() ? 4 : 1;
             imageVolBufferA = new float[bufferFactor * xDim * yDim];
-
-            if (imageB != null) {
+            if (imageB != null)
+            {
+            	bufferFactor = imageB.isColorImage() ? 4 : 1;
                 imageVolBufferB = new float[bufferFactor * imageB.getSliceSize()];
             }
 
@@ -1285,9 +1278,11 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
             }
         }
 
+        int bufferFactor = imageA.isColorImage() ? 4 : 1;
         imageVolBufferA = new float[bufferFactor * xDim * yDim];
-
-        if (imageB != null) {
+        if (imageB != null)
+        {
+        	bufferFactor = imageB.isColorImage() ? 4 : 1;
             imageVolBufferB = new float[bufferFactor * imageB.getSliceSize()];
         }
 
@@ -2001,6 +1996,10 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
         if (volRenderNode == null) {
             configureVolumeFrame();
         }
+        else
+        {
+        	updateTextureVolumeRender();
+        }
 
         if (clipPanel != null) {
 
@@ -2382,7 +2381,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
      * @return Confirms successful update.
      */
     public boolean updateImages() {
-
         update3DTriplanar(null, null, false);
         updateVolume(null, null, false);
 
@@ -2397,7 +2395,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
      * @return boolean confirming successful update
      */
     public boolean updateImages(final boolean flag) {
-
         if (update3DTriplanar(null, null, flag) == false) {
             return false;
         }
@@ -2420,7 +2417,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
      */
     public boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow, final int interpMode) {
         boolean success = false;
-
         if (getDisplayMode3D() == true) {
             success = updateVolume(LUTa, LUTb, forceShow);
         } else {
@@ -3468,9 +3464,12 @@ public class SurfaceRender extends RenderViewBase implements KeyListener, Proper
     }
 
 	@Override
-	public void propertyChange(PropertyChangeEvent arg0) {
-		// TODO Auto-generated method stub
-		
+	public void propertyChange(PropertyChangeEvent arg0)
+	{
+		if ( !volOpacityPanel.isChanging() )
+		{
+			updateImages();
+		}
 	}
 
 }
