@@ -1110,6 +1110,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 fileIO.setQuiet(isQuiet);
                 
                 imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, imageA.getFileInfo(0), true); // read
+                this.setLUTb(fileIO.getModelLUT());
                 // image!
             } else if (obj instanceof ModelImage) {
                 imageB = (ModelImage) obj;
@@ -1127,6 +1128,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 final ModelRGB rgb = new ModelRGB(RGBExtents);
 
                 this.setRGBTB(rgb);
+            }
+            else if ( !imageB.isColorImage() && (getLUTb() == null)) {
+            	this.setLUTb(new ModelLUT() );
             }
 
             if ( (imageA.getNDims() == imageB.getNDims()) || ( (imageA.getNDims() == 4) && (imageB.getNDims() == 3))) {
