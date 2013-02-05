@@ -101,9 +101,6 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
     /** The frame around the x slice. */
     private ViewJComponentBoxSlice boxSliceX;
 
-    /** Buffer factor, 1 usually, 4 for color images. */
-    private int bufferFactor = 1;
-
     /** Current transform matrix. */
     private Transform3D currentTransform;
 
@@ -235,12 +232,6 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
             } else {
                 extents[3] = imageB.getExtents()[3];
             }
-        }
-
-        bufferFactor = 1;
-
-        if (imageA.isColorImage()) {
-            bufferFactor = 4;
         }
 
         xDim = imageA.getExtents()[0];
@@ -839,11 +830,13 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
         if (maxRenExtent != iExtent) {
             maxRenExtent = iExtent;
 
+            int bufferFactor = imageA.isColorImage() ? 4 : 1;
             /* re-initialize the size of the buffers: */
             pixBufferA_XY = null;
             pixBufferA_XY = new int[bufferFactor * maxRenExtent * maxRenExtent];
 
             if (imageB != null) {
+            	bufferFactor = imageB.isColorImage() ? 4 : 1;
                 pixBufferB_XY = null;
                 pixBufferB_XY = new int[bufferFactor * maxRenExtent * maxRenExtent];
             }
@@ -1328,9 +1321,11 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
             maxRenExtent = yDim;
         }
 
+        int bufferFactor = imageA.isColorImage() ? 4 : 1;
         pixBufferA_XY = new int[bufferFactor * maxRenExtent * maxRenExtent];
 
         if (imageB != null) {
+        	bufferFactor = imageB.isColorImage() ? 4 : 1;
             pixBufferB_XY = new int[bufferFactor * maxRenExtent * maxRenExtent];
         }
 
