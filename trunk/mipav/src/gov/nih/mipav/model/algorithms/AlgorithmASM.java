@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.zip.Inflater;
 
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
+
 
 /**
  * 
@@ -65,6 +68,10 @@ public class AlgorithmASM extends AlgorithmBase  {
     private boolean fatalError = false;
     
     private P p;
+    
+    private double Vertices[][];
+    
+    private int Lines[][];
     
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -130,11 +137,14 @@ public class AlgorithmASM extends AlgorithmBase  {
     }
     
     public class SData {
-        public double x_mean;
+        public double x_mean[];
         public double Evectors[][];
         public double Evalues[];
+        public double x[][];
+        public int Lines[][];
     }
     
+
     public void ASM_2D_example() {
         int i;
         String is;
@@ -144,8 +154,6 @@ public class AlgorithmASM extends AlgorithmBase  {
         String fileName;
         boolean multiFile;
         FileInfoBase fileInfo;
-        double Vertices[][] = null;
-        int Lines[][] = null;
         ASMData TrainingData[];
         SData ShapeData = null;
         // This is an example of a working basic Active Shape Model, with a few hand pictures.
@@ -194,7 +202,7 @@ public class AlgorithmASM extends AlgorithmBase  {
             I = fileIO.readImage(fileName, fileDir, multiFile, fileInfo);
             fileName = "train".concat(number).concat(".mat");
             
-            LoadDataSetNiceContour(fileName, options.ni, options.verbose, Vertices, Lines);
+            LoadDataSetNiceContour(fileName, options.ni, options.verbose);
             if (fatalError) {
                 return;
             }
@@ -207,6 +215,7 @@ public class AlgorithmASM extends AlgorithmBase  {
         // Shape Model
         // Make the Shape model, which finds the variations between contours
         // in the training data sets.  And makes a PCA model describing normal contours.
+        ShapeData = new SData();
         ASM_MakeShapeModel2D(TrainingData, ShapeData);
     }
     
@@ -214,6 +223,16 @@ public class AlgorithmASM extends AlgorithmBase  {
         int s;
         int n1;
         int i;
+        int j;
+        int k;
+        double x[][];
+        double Evalues[] = null;
+        double Evectors[][] = null;
+        double x_mean[] = null;
+        double totSum;
+        double sum;
+        double Evectors2[][];
+        double Evalues2[];
         
         // Number of datasets
         s = TrainingData.length;
@@ -228,6 +247,110 @@ public class AlgorithmASM extends AlgorithmBase  {
         for (i = 0; i < s; i++) {
             ASM_align_data2D(TrainingData[i].Vertices, TrainingData[i].tform);
         }
+        
+        // Construct a matrix with all contour point data of the training data set
+        x = new double[2*n1][s];
+        for (i = 0; i < s; i++) {
+            for (j = 0; j < n1; j++) {
+                x[j][i] = TrainingData[i].Vertices[j][0];
+                x[j+n1][i] = TrainingData[i].Vertices[j][1];
+            }
+        }
+        
+        Evalues = new double[x[0].length];
+        Evectors = new double[x.length][Math.min(x.length+1, x[0].length)];
+        x_mean = new double[x.length];
+        PCA(x, Evalues, Evectors, x_mean);
+        
+        // Keep only 98% of all eigenvectors, (remove contour noise)
+        totSum = 0.0;
+        for (i = 0; i < Evalues.length; i++) {
+            totSum += Evalues[i];
+        }
+        sum = 0.0;
+        for (i = 0; i < Evalues.length; i++) {
+            sum += Evalues[i];
+            if (sum > 0.98 * totSum) {
+                break;
+            }
+        }
+        Evectors2 = new double[x.length][i+1];
+        Evalues2 = new double[i+1];
+        for (j = 0; j < x.length; j++) {
+            for (k = 0; k <= i; k++) {
+                Evectors2[j][k] = Evectors[j][k];   
+            }
+        }
+        for (j = 0; j <= i; j++) {
+            Evalues2[j] = Evalues[j];
+        }
+        
+        // Store the eigenvectors and eigenvalues
+        ShapeData.Evectors = Evectors2;
+        ShapeData.Evalues = Evalues2;
+        ShapeData.x_mean = x_mean;
+        ShapeData.x = x;
+        ShapeData.Lines = TrainingData[0].Lines;
+        
+    }
+    
+    private void PCA(double x[][], double Evalues[], double Evectors[][], double x_mean[]) {
+        // PCA using Single Value Decomposition
+        // Obtaining mean vector, eigenvectors, and eigenvalues
+        
+        // inputs:
+        // x : M by N matrix with M the training vector length and N the number of training
+        // data sets
+        
+        // outputs:
+        // Evalues: The eigenvalues of the data
+        // Evectors: The eigenvectors of the data
+        // x_mean: The mean training data
+        
+        int s;
+        int i;
+        int j;
+        double x2[][] = new double[x.length][x[0].length];
+        double sq;
+        Matrix xMat;
+        SingularValueDecomposition svd;
+        double singularValues[];
+        
+        Matrix matU;
+        double U2[][];
+        
+        s = x[0].length;
+        // Calculate the mean
+        for (i = 0; i < x.length; i++) {
+            for (j = 0; j < s; j++) {
+                x_mean[i] += x[i][j];
+            }
+            x_mean[i] = x_mean[i]/s;
+        }
+        
+        // Subtract the mean
+        sq = Math.sqrt(s - 1.0);
+        for (i = 0; i < x.length; i++) {
+            for (j = 0; j < s; j++) { 
+                x2[i][j] = (x[i][j] - x_mean[i])/sq;    
+            }
+        }
+        
+        // Do the SVD
+        xMat = new Matrix(x2);
+        svd = new SingularValueDecomposition(xMat);
+        singularValues = svd.getSingularValues();
+        for (i = 0; i < s; i++) {
+            Evalues[i] = singularValues[i] * singularValues[i];
+        }
+        matU = svd.getU();
+        U2 = matU.getArray();
+        for (i = 0; i < x.length; i++) {
+            for (j = 0; j < U2[0].length; j++) {
+                Evectors[i][j]= U2[i][j] * Math.signum(U2[0][j]);
+            }
+        }
+       
     }
     
     private void ASM_align_data2D(double Vertices[][], TData tform) {
@@ -235,6 +358,10 @@ public class AlgorithmASM extends AlgorithmBase  {
         double totalv1;
         int i;
         double offsetv[] = new double[2];
+        double rot[] = new double[Vertices.length];
+        double totr;
+        double offsetr;
+        double dist[] = new double[Vertices.length];
         // Aligns the contours positions, center the data and remove rotation
         
         // Center the data to remove translation
@@ -246,9 +373,40 @@ public class AlgorithmASM extends AlgorithmBase  {
         }
         offsetv[0] = -totalv0/Vertices.length;
         offsetv[1] = -totalv1/Vertices.length;
+        
+        for (i = 0; i < Vertices.length; i++) {
+            Vertices[i][0] += offsetv[0];
+            Vertices[i][1] += offsetv[1];
+        }
+        
+        // Correct for rotation
+        // Calculate angle to center of all points
+        for (i = 0; i < Vertices.length; i++) {
+            rot[i] = Math.atan2(Vertices[i][1], Vertices[i][0]);
+        }
+        // Subtract the mean angle
+        totr = 0.0;
+        for (i = 0; i < rot.length; i++) {
+            totr += rot[i];    
+        }
+        offsetr = -totr/rot.length;
+        for (i = 0; i < Vertices.length; i++) {
+            rot[i] += offsetr;
+        }
+        // Make the new points, which all have the same rotation
+        for (i = 0; i < Vertices.length; i++) {
+            dist[i] = Math.sqrt(Vertices[i][0]*Vertices[i][0] + Vertices[i][1]*Vertices[i][1]);
+            Vertices[i][0] = dist[i] * Math.cos(rot[i]);
+            Vertices[i][1] = dist[i] * Math.sin(rot[i]);
+        }
+        
+        // Store transformation object
+        tform.offsetv[0] = offsetv[0];
+        tform.offsetv[1] = offsetv[1];
+        tform.offsetr = offsetr;
     }
     
-    private void LoadDataSetNiceContour(String fileName, int nBetween, boolean verbose, double[][] Vertices, int[][] Lines) {
+    private void LoadDataSetNiceContour(String fileName, int nBetween, boolean verbose) {
         // Load the contour points and a photo of a dataset
         // The routine will interpolate a number of evenly spaced contour points between
         // the points marked as major landmark points.
