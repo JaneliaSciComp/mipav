@@ -8,6 +8,7 @@ import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
 
@@ -23,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.zip.Inflater;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -131,6 +134,9 @@ public class AlgorithmASM extends AlgorithmBase  {
     
     public class ASMData {
         public double Vertices[][];
+        public double Normals[][];
+        public double GrayProfiles[][];
+        public double DerivativeGrayProfiles[][];
         public int Lines[][];
         public ModelImage I;
         public TData tform = new TData();
@@ -217,6 +223,155 @@ public class AlgorithmASM extends AlgorithmBase  {
         // in the training data sets.  And makes a PCA model describing normal contours.
         ShapeData = new SData();
         ASM_MakeShapeModel2D(TrainingData, ShapeData);
+        
+        // Appearance model
+        // Make the appearance model, which samples an intensity pixel profile/line
+        // perpendicular to each contour point in each training data set. Which is
+        // used to build correlation matrices for each landmark.  Which are used
+        // in the optimization step, to find the best fit.
+        ASM_MakeAppearanceModel2D(TrainingData, options);
+    }
+    
+    // Gray-Level Appearance Model
+    private void ASM_MakeAppearanceModel2D(ASMData[] TrainingData, Options options) {
+        int s;
+        int n1;
+        int i;
+        int itt_res;
+        double scale;
+        double P[][] = new double[TrainingData[0].Vertices.length][2];
+        int j;
+        int k;
+        int oXdim;
+        int oYdim;
+        float oXres;
+        float oYres;
+        TransMatrix xfrm;
+        int interp = AlgorithmTransform.BILINEAR;
+        int units[];
+        AlgorithmTransform algoTrans;
+        boolean doVOI = false;
+        boolean doClip = true;
+        boolean doPad = false;
+        boolean doRotateCenter = false;
+        Vector3f center = null;
+        boolean doUpdateOrigin = true;
+        float fillValue;
+        ModelImage Ismall;
+        double N[][];
+        int cf;
+        
+        // Number of TrainingData sets
+        s = TrainingData.length;
+        
+        // Number of landmarks
+        n1 = TrainingData[0].Vertices.length;
+        
+        // Calculate the normals of the contours of all training data
+        for (i = 0; i < s; i++) {
+            TrainingData[i].Normals = ASM_GetContourNormals2D(TrainingData[i].Vertices, TrainingData[i].Lines);    
+        }
+        
+        // Inverse of covariance matrix sometimes badly scaled
+        // Don't warn of this
+        
+        // Get the landmark profiles for 3 image scales (for multiscale ASM)
+        for (itt_res = 0; itt_res < options.nscales; itt_res++) {
+            scale = Math.pow(2.0, -itt_res);
+            
+            // Get the pixel profiles of every landmark perpendicular to the contour
+            for (i = 0; i < s; i++) {
+                for (j = 0; j < TrainingData[i].Vertices.length; j++) {
+                    for (k = 0; k < 2; k++) {
+                        P[j][k] = (TrainingData[i].Vertices[j][k] - 0.5)*scale + 0.5;
+                    }
+                }
+                oXdim = (int)Math.round(TrainingData[i].I.getExtents()[0] * scale);
+                oYdim = (int)Math.round(TrainingData[i].I.getExtents()[1] * scale);
+                oXres = TrainingData[i].I.getFileInfo(0).getResolutions()[0] * (TrainingData[i].I.getExtents()[0] - 1) / (oXdim - 1);
+                oYres = TrainingData[i].I.getFileInfo(0).getResolutions()[1] * (TrainingData[i].I.getExtents()[1] - 1) / (oYdim - 1);
+                xfrm = new TransMatrix(3);
+                TrainingData[i].I.makeUnitsOfMeasureIdentical();
+                units = new int[TrainingData[i].I.getUnitsOfMeasure().length];
+                for (j = 0; j < units.length; j++) {
+                    units[j] = TrainingData[i].I.getUnitsOfMeasure(j);
+                }
+                TrainingData[i].I.calcMinMax();
+                fillValue = (float)TrainingData[i].I.getMin();
+                algoTrans = new AlgorithmTransform(TrainingData[i].I, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                        doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.run();
+                Ismall = algoTrans.getTransformedImage();
+                Ismall.calcMinMax();
+                if (algoTrans != null) {
+                    algoTrans.disposeLocal();
+                    algoTrans = null;
+                }
+                N = TrainingData[i].Normals;
+                cf = 1;
+                if (TrainingData[i].I.isColorImage()) {
+                    cf = 3;    
+                }
+                TrainingData[i].GrayProfiles = new double[(2*options.k+1)*cf][P.length];
+                TrainingData[i].DerivativeGrayProfiles = new double[(2*options.k+1)*cf][P.length];
+                ASM_getProfileAndDerivatives2D(Ismall, P, N, options.k, TrainingData[i].GrayProfiles, TrainingData[i].DerivativeGrayProfiles);
+            } // for (i = 0; i < s; i++)
+        } // for (itt_res = 0; itt_res < options.nscales; itt_res++)
+    }
+    
+    private void ASM_getProfileAndDerivatives2D(ModelImage I, double[][] P, double[][] N, int k,
+            double[][] gt, double[][] dgt) {
+        
+    }
+    
+    private double[][] ASM_GetContourNormals2D(double[][] V, int[][] L) {
+        // This function calculates the normals, of the contour points
+        // using the neighboring points of each contour point, and
+        // forward and backward differences on the end points
+        
+        // inputs,
+        // V: List of Vertices 2 x N
+        // L: Line list, with indices to the vertices 2 x M
+        
+        // outputs,
+        // N: The normals of the Vertices
+        
+        double DT[][] = new double[V.length][V[0].length];
+        double D1[][] = new double[V.length][V[0].length];
+        double D2[][] = new double[V.length][V[0].length];
+        double D[][] = new double[V.length][V[0].length];
+        double LL[] = new double[V.length];
+        double N[][] = new double[V.length][V[0].length];
+        int i;
+        int j;
+        
+        // Derivatives of the contour
+        for (i = 0; i < V.length; i++) {
+            for (j = 0; j < V[0].length; j++) {
+                DT[i][j] = V[L[i][0]][j] - V[L[i][1]][j];
+            }
+        }
+        for (i = 0; i < V.length; i++) {
+            for (j = 0; j < V[0].length; j++) {
+                D1[L[i][0]][j] = DT[i][j];
+                D2[L[i][1]][j] = DT[i][j];
+            }
+        }
+        for (i = 0; i < V.length; i++) {
+            for (j = 0; j < V[0].length; j++) {
+                D[i][j] = D1[i][j] + D2[i][j];
+            }
+        }
+        for (i = 0; i < V.length; i++) {
+            LL[i] = Math.sqrt(D[i][0]*D[i][0] + D[i][1]*D[i][1]);
+        }
+        for (i = 0; i < V.length; i++) {
+            N[i][0] = D[i][1]/LL[i];
+            N[i][1] = -D[i][0]/LL[i];
+        }
+        return N;
     }
     
     private void ASM_MakeShapeModel2D(ASMData[] TrainingData, SData ShapeData) {
