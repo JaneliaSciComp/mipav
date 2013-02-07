@@ -136,8 +136,31 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
         initGUI();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * Deletes local memory.
+     */
+    public void disposeLocal()
+    {
+        parent = null;
+        image = null;
+        lut = null;
+        RGBT = null;
+        histogram = null;
 
+        if ( componentLUT != null )
+        {
+        	componentLUT.dispose();
+        	componentLUT = null;
+        }
+        if ( componentHistogram != null )
+        {
+        	componentHistogram.dispose();
+        	componentHistogram = null;
+        }
+    }
+    
+    
+    
     /**
      * {@inheritDoc}
      */

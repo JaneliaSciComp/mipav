@@ -1512,7 +1512,10 @@ public class ModelImage extends ModelStorageBase {
             if (frameList != null) {
 
                 for (int i = 0; i < frameList.size(); i++) {
-                    Preferences.debug( ((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
+                	if ( frameList.elementAt(i) instanceof JFrame )
+                	{
+                		Preferences.debug( ((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
+                	}
                 }
             }
 
