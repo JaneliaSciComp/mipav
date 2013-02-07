@@ -50,15 +50,90 @@ import javax.swing.event.ChangeListener;
 public class JPanelHistogram extends JPanel implements ActionListener, ChangeListener, ItemListener, KeyListener, HistoLUTParent {
 
 	private static final long serialVersionUID = 2049904743460024433L;
+	
+	/** checkbox for turning on / off the blue component of the color look-up table. */
+	private JCheckBox blueCheckBox;
+	
+	private JDialogCT ctDialog;
+	
+	/** checkbox for turning on / off the green component of the color look-up table. */
+	private JCheckBox greenCheckBox;
+	
+	/** red, green and bue histograms: */
+	private ModelHistogram histogram, histogramG, histogramB;
+
+	/** histogram panel interface. */
+	private ViewJPanelHistoLUT histoPanel;
+
+	/** displays the selected LUT color */
+	private JTextField indexColorTextF;
+
+	/** turns interpolation on/off */
+	private JCheckBox interpCheckBox;
+
+	/** turns log display on/off */
+	private JCheckBox logCheckBox;
+
+	/** displays the number of colors in the LUT */
+	private JTextField nColorsTextF;
+
+	/** sets the minimum LUT value to (1,1,1) */
+	private JCheckBox oneBasedLUTCheckBoxImage;
+
+	/** enables the user to set the image output type or LUT-based image extration */
+	private JComboBox outputBox;
+
+	/** checkbox for turning on / off the red component of the color look-up table. */
+	private JCheckBox redCheckBox;
+
+	/** displays the threshold fill-value */
+	private JTextField threshFillF;
+
+	/** displays the threshold lower-value */
+	private JTextField threshLowerF;
+	
+	/** displays the threshold upper-value */
+	private JTextField threshUpperF;
+	
+	/** bottom tool bar */
+	private JToolBar toolBarBottom;
+
+	/** threshold tool bar */
+	private JToolBar toolBarThreshold;
+
+	/** enables the user to set updating the display in real-time or only on mouse-release */
+	private JCheckBox updateCheckBox;
+	
+	/** volume threshold vaue */
+	private JLabel voxelVolumeLabel;
+	/** input image */
+	private ModelImage image = null;
+	
+	/** input LUT, either ModelLUT or ModelRGB */
+	private ModelStorageBase LUT;
+	
+	/** containing parent class. */
+	private JFrameHistogram panelParent = null;
+	
+	/** true = apply algorithm to the whole image */
+	private boolean wholeImage = true;
+	/** Active mouse cursor index of the imageA, B and GM image A, B. */
+	private int cursorIndex;
+	/** X range value of the imageA, B and GM imageA, B. */
+	private float rangeX;
+	/** slider for small LUT changes */
+	private JSlider mouseSlider;
+	private JTextField xRangeText, yRangeText;
+	private int scaleRange;
+	private JLabel[] mouseSliderLabels;
+	private Hashtable<Integer, JLabel>labelsTable;
 	/**
 	 * Build the center part of the LUT toolbar.
-	 * 
 	 * @param listener The listener to attach to the created LUT selection combo box.
-	 * 
 	 * @return the top part of the LUT toolbar
 	 */
-	public static final JToolBar buildLUTSelectionList(ActionListener listener) {
-
+	private static final JToolBar buildLUTSelectionList(ActionListener listener)
+	{
 		JToolBar LUTToolBar = new JToolBar();
 		LUTToolBar.setBorderPainted(true);
 		LUTToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -75,7 +150,13 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 
 		return LUTToolBar;
 	}
-	private static final Vector<String> getCustomLUTList() {
+
+	/**
+	 * Creates a Vector<String> or LUT names representing different color look-up tables.
+	 * @return a Vector<String> or LUT names representing different color look-up tables.
+	 */
+	private static final Vector<String> getCustomLUTList()
+	{
 		String listingFilename = ModelLUT.customLUTsLocation + "/LUT_listing";
 
 		// use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
@@ -101,16 +182,16 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 
 		return lutStrings;
 	}
+
 	/**
-	 * end HistoLUTParent.
-	 * 
-	 * @param LUT DOCUMENT ME!
-	 * 
-	 * @return DOCUMENT ME!
+	 * returns true if the first entry in the color look-up table
+	 * is (1,1,1), false otherwise.
+	 * @param LUT the LUT to query, either a ModelLUT or ModelRGB
+	 * @return true if the first entry in the color look-up table
+	 * is (1,1,1), false otherwise.
 	 */
 	private static boolean isLUT1Based(ModelStorageBase LUT)
 	{
-
 		Color color = null;
 		if ( LUT instanceof ModelLUT )
 		{
@@ -129,64 +210,15 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			return true;
 		}
 		return false;
-	} 
+	}
 
-	JCheckBox blueCheckBox;
-
-	JDialogCT ctDialog;
-
-	JCheckBox greenCheckBox;
-
-
-	ModelHistogram histogram, histogramG, histogramB;
-
-	ViewJPanelHistoLUT histoPanel;
-
-
-
-	JTextField indexColorTextF;
-
-
-	JCheckBox interpCheckBox;
-
-
-	JCheckBox logCheckBox;
-
-
-	JTextField nColorsTextF;
-
-
-
-	JCheckBox oneBasedLUTCheckBoxImage;
-
-	JComboBox outputBox;
-	JCheckBox redCheckBox;
-	JTextField threshFillF;
-
-	JTextField threshLowerF;
-
-	JTextField threshUpperF;
-	JToolBar toolBarBottom;
-	JToolBar toolBarThreshold;
-	JCheckBox updateCheckBox;
-	JLabel voxelVolumeLabel;
-	private ModelImage image = null;
-	private ModelStorageBase LUT;
-	private JFrameHistogram panelParent = null;
-	/** true = apply algorithm to the whole image */
-	private boolean wholeImage = true;
-	/** Active mouse cursor index of the imageA, B and GM image A, B. */
-	private int cursorIndex;
-	/** X range value of the imageA, B and GM imageA, B. */
-	private float rangeX;
-	JSlider mouseSlider;
-	JTextField xRangeText, yRangeText;
-	int scaleRange;
-
-	JLabel[] mouseSliderLabels;
-
-	Hashtable<Integer, JLabel>labelsTable;
-
+	/**
+	 * Creates the JPanelHistogram, with the JFrameHistogram as the containing class.
+	 * @param _panelParent parent class.
+	 * @param _image input image.
+	 * @param _LUT input LUT (ModelLUT or ModelRGB).
+	 * @param _wholeImage, when true apply the LUT to the entire image, when false apply to VOI regions only.
+	 */
 	public JPanelHistogram(JFrameHistogram _panelParent, ModelImage _image, ModelStorageBase _LUT, boolean _wholeImage) 
 	{
 		super(new BorderLayout());
@@ -197,18 +229,23 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		buildPanel();
 	}
 
+	/**
+	 * Creates the JPanelHistogram.
+	 * @param _image input image.
+	 * @param _LUT input LUT (ModelLUT or ModelRGB).
+	 * @param _wholeImage, when true apply the LUT to the entire image, when false apply to VOI regions only.
+	 */
 	public JPanelHistogram(ModelImage _image, ModelStorageBase _LUT, boolean _wholeImage) 
 	{
 		this(null, _image, _LUT, _wholeImage);
 	}
 
-	/**
-	 * Closes dialog box when the OK button is pressed and calls the algorithm.
-	 *
-	 * @param  event  event that triggers function
+
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
-	@Override
-	public void actionPerformed(ActionEvent event) {
+	public void actionPerformed(ActionEvent event)
+	{
 		String command = event.getActionCommand();
 
 		// LUT Commands:
@@ -579,17 +616,26 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			JComboBox cb = (JComboBox) event.getSource();
 			String lutName = (String) cb.getSelectedItem();
 			selectedLUT.makeCustomizedLUT(lutName);
-			panelParent.setLUT(this, selectedLUT);
+			if ( panelParent != null )
+			{
+				panelParent.setLUT(this, selectedLUT);
+			}
 			updateFrames(false);
-		} else if (event.getActionCommand().equals("OpenUDLUT") || event.getActionCommand().equals("SaveUDLUT")) {
-            panelParent.actionPerformed(event);
+		} else if (event.getActionCommand().equals("OpenUDLUT") || event.getActionCommand().equals("SaveUDLUT"))
+		{
+			if ( panelParent != null )
+			{
+				panelParent.actionPerformed(event);
+			}
         } 
 	}
+	
 	/**
 	 * Calculates the thresholded image based on the parameters of the threshold transfer function. Image A is
 	 * thresholded if the selected panel is for imageA and likewise for image B.
 	 */
-	public void calcThreshold() {
+	public void calcThreshold()
+	{
 		ModelLUT selectedLUT = image.isColorImage() ? (ModelLUT)LUT : null;
 		float[] thresholds = new float[2];
 
@@ -648,6 +694,9 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 	}
 	
+    /**
+     * Resets the threshold volume and area labels.
+     */
     public void clearVoxelLabel() {
 
 		if (image.getNDims() == 3) {
@@ -656,39 +705,82 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			voxelVolumeLabel.setText("Threshold area(red):");
 		}
 	}
+    
+    /**
+     * Removes and deletes local memory.
+     */
+    public void disposeLocal()
+    {
+		image = null;
+		LUT = null;
+		panelParent = null;
+		histogram.disposeLocal();
+		histogram = null;
+		if ( histogramG != null )
+		{
+			histogramG.disposeLocal();
+			histogramG = null;
+		}
+		if ( histogramB != null )
+		{
+			histogramB.disposeLocal();
+			histogramB = null;
+		}
+		histoPanel.disposeLocal();
+		histoPanel = null;
+    }
 	
 	@Override
 	public void dragPoint(MouseEvent mouseEvent) {}
+	
+	/**
+	 * @return the lower threshold value.
+	 */
 	public float getLowerThreshold()
 	{
 		return new Float(threshLowerF.getText()).floatValue();
 	}
 
+	/**
+	 * @return he HIstoLUTComponent mode.
+	 */
 	public int getMode()
 	{
 		return histoPanel.getHistoLUTComponent().getMode();
 	}
 
+	/**
+	 * @return the upper threshold value.
+	 */
 	public float getUpperThreshold()
 	{
 		return new Float(threshUpperF.getText()).floatValue();
 	}
 
 
+	/**
+	 * @return if the image interpolation checkbox is selected.
+	 */
 	public boolean interpolateImage()
 	{
 		return interpCheckBox.isSelected();
 	}
 
 
-	@Override
-	public boolean isImageUpdate() {
+	/**
+	 * @return if the update in real-time checkbox is selected.
+	 */
+	public boolean isImageUpdate()
+	{
         return updateCheckBox.isSelected();
 	}
 
 
-	@Override
-	public void itemStateChanged(ItemEvent event) {
+	/* (non-Javadoc)
+	 * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
+	 */
+	public void itemStateChanged(ItemEvent event)
+	{
 
 		Object source = event.getSource();
 
@@ -696,10 +788,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			histoPanel.getHistoLUTComponent().setLogFlag(logCheckBox.isSelected());
 			histoPanel.getHistoLUTComponent().showHistogram();
 		}
-		else if (source == interpCheckBox) {
+		else if (source == interpCheckBox && (panelParent != null)) {
 			panelParent.updateInterpolation();
 		}
-		else if (source == updateCheckBox) {
+		else if (source == updateCheckBox && (panelParent != null)) {
 			panelParent.updateRealTime(updateCheckBox.isSelected());
 		}
 		else if (source == outputBox) {
@@ -762,7 +854,8 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	public void keyReleased(KeyEvent arg0) {}
 	
 	@Override
-	public void keyTyped(KeyEvent event) {
+	public void keyTyped(KeyEvent event)
+	{
 
         if (event.getKeyChar() == KeyEvent.VK_ENTER) {
     		ModelLUT selectedLUT = !image.isColorImage() ? (ModelLUT)LUT : null;
@@ -800,7 +893,11 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 
 	}
 
-	public void resetHistoLUT() {
+	/**
+	 * Resets the histogram and histogram panel.
+	 */
+	public void resetHistoLUT()
+	{
 
 		histogram = calcHistogram(image, wholeImage, 1);
 		histoPanel.getHistoLUTComponent().setHistogramInfo(image, histogram);
@@ -829,6 +926,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	@Override
 	public void setAllOff() {}
 
+	/**
+	 * Sets the blue checkbox on/off.
+	 * @param isOn
+	 */
 	public void setBlueOn( boolean isOn )
 	{
 		if ( blueCheckBox != null )
@@ -838,7 +939,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
-
+	/**
+	 * Sets the green checkbox on/off.
+	 * @param isOn
+	 */
 	public void setGreenOn( boolean isOn )
 	{
 		if ( greenCheckBox != null )
@@ -847,10 +951,22 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 	}
 
-	@Override
-	public void setLUT(ModelLUT newLUT) {
-        panelParent.setLUT(this, newLUT);
+
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#setLUT(gov.nih.mipav.model.structures.ModelLUT)
+	 */
+	public void setLUT(ModelLUT newLUT)
+	{
+		if ( panelParent != null )
+		{
+			panelParent.setLUT(this, newLUT);
+		}
 	}
+	
+	/**
+	 * Sets the LUT and updates the histogram panel.
+	 * @param newLUT
+	 */
 	public void setLUT(ModelStorageBase newLUT) {
 		if ( newLUT == null )
 		{
@@ -862,7 +978,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			histoPanel.getLUTComponent().show((ModelLUT)LUT);
 			histoPanel.getHistoLUTComponent().showHistogram((ModelLUT)LUT);
 		}
-        panelParent.setLUT(this, LUT);
+		if ( panelParent != null )
+		{
+			panelParent.setLUT(this, LUT);
+		}
 	}
 	/**
      * Change the text field showing the number of colors.
@@ -872,10 +991,13 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
     public void setNColors(int value) {
         nColorsTextF.setText(String.valueOf(value));
     }
-	@Override
+
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#setRangeText(float, float, int)
+	 */
 	public void setRangeText(float x, float y, int _index) {
 
-		if (panelParent.doCalcThresholdVolume()) {
+		if ((panelParent != null) && panelParent.doCalcThresholdVolume()) {
 			calculateThreshold();
 		}
 
@@ -907,9 +1029,9 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			start = MipavUtil.makeFloatString(x - scaleRange, 2);
 			mid = MipavUtil.makeFloatString(x, 2);
 			end = MipavUtil.makeFloatString(x + scaleRange, 2);
-			mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(start);
-			mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
-			mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(end);
+			mouseSliderLabels[0] = MipavUtil.createSliderLabel(start);
+			mouseSliderLabels[1] = MipavUtil.createSliderLabel(mid);
+			mouseSliderLabels[2] = MipavUtil.createSliderLabel(end);
 			labelsTable = new Hashtable<Integer, JLabel>();
 			labelsTable.put(0 + (start.length() / 2), mouseSliderLabels[0]);
 			labelsTable.put(50 + (mid.length() / 2), mouseSliderLabels[1]);
@@ -920,6 +1042,11 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 
 	}
+
+	/**
+	 * Sets the red checkbox on/off.
+	 * @param isOn
+	 */
 	public void setRedOn( boolean isOn )
 	{
 		if ( redCheckBox != null )
@@ -927,8 +1054,12 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			redCheckBox.setSelected(isOn);
 		}
 	}
-	@Override
-	public void stateChanged(ChangeEvent event) {
+
+	/* (non-Javadoc)
+	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+	 */
+	public void stateChanged(ChangeEvent event)
+	{
 		Object source = event.getSource();
 		if (source == mouseSlider) {
 			float value, sliderValue;
@@ -965,12 +1096,17 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
-	@Override
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#updateComponentLUT()
+	 */
 	public void updateComponentLUT() {}
 
 
-	@Override
-	public void updateFrames(boolean flag) {
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#updateFrames(boolean)
+	 */
+	public void updateFrames(boolean flag)
+	{
 		if ( histoPanel == null )
 		{
 			return;
@@ -983,37 +1119,56 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		{
 			histoPanel.getHistoLUTComponent().showHistogram();
 		}
-		panelParent.updateFrames(flag);
+		if ( panelParent != null )
+		{
+			panelParent.updateFrames(flag);
+		}
 	}
 
 
-	@Override
-	public void updateLUTPositionString(String str) {
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#updateLUTPositionString(java.lang.String)
+	 */
+	public void updateLUTPositionString(String str) 
+	{
         indexColorTextF.setText(str);
 	}
 
+	/**
+	 * @param updateRealTime
+	 */
 	public void updateRealTime( boolean updateRealTime )
 	{
 		updateCheckBox.removeItemListener(this);
 		updateCheckBox.setSelected(updateRealTime);
 		updateCheckBox.addItemListener(this);
 	}
-	@Override
-	public void updateThresholdFields(float lower, float upper) {
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.HistoLUTParent#updateThresholdFields(float, float)
+	 */
+	public void updateThresholdFields(float lower, float upper) 
+	{
         threshLowerF.setText(Float.toString(lower));
         threshUpperF.setText(Float.toString(upper));
 
         if ((histoPanel.getHistoLUTComponent().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD_INV) ||
                 (histoPanel.getHistoLUTComponent().getMode() == ViewJComponentHLUTBase.DUAL_THRESHOLD))
         {
-
-            if (panelParent.doCalcThresholdVolume()) {
+            if ((panelParent != null) && panelParent.doCalcThresholdVolume())
+            {
                 calculateThreshold(lower, upper);
             }
         }
 
 	}
 
+	/**
+	 * Builds the interface panel.
+	 * @param image
+	 * @param addAdjustment
+	 * @return
+	 */
 	private JPanel buildControlPanel( ModelImage image, boolean addAdjustment )
 	{
 		JPanel controlPanel = new JPanel(new GridBagLayout());
@@ -1223,6 +1378,11 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		return controlPanel;
 	}
 
+	/**
+	 * Builds the mouse panel.
+	 * @param range
+	 * @return
+	 */
 	private JPanel buildMousePanel( double range )
 	{
 		JPanel panelMouse = new JPanel();
@@ -1233,9 +1393,9 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		scaleRange = ((int) Math.round( range ) + 1) / 256;
 
 		mouseSliderLabels = new JLabel[3];
-		mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(0));
-		mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRange));
-		mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(scaleRange * 2));
+		mouseSliderLabels[0] = MipavUtil.createSliderLabel(String.valueOf(0));
+		mouseSliderLabels[1] = MipavUtil.createSliderLabel(String.valueOf(scaleRange));
+		mouseSliderLabels[2] = MipavUtil.createSliderLabel(String.valueOf(scaleRange * 2));
 
 		labelsTable = new Hashtable<Integer, JLabel>();
 
@@ -1361,6 +1521,11 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		add( panel, BorderLayout.CENTER);
 	}
 
+	/**
+	 * Builds the toolbars.
+	 * @param image
+	 * @return
+	 */
 	private JPanel buildToolBar( ModelImage image )
 	{
 		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
@@ -1532,12 +1697,23 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 				+ units);
 	}
 	
+	/**
+	 * Updates the number of colors in the LUT and updates the displays.
+	 * @param selectedLUT
+	 * @param nColors
+	 */
 	private void makeLUT( ModelLUT selectedLUT, int nColors )
 	{
 		makeLUT( selectedLUT, nColors, true );
 	}
 
 
+	/**
+	 * Updates the number of colors in the LUT and updates the displays.
+	 * @param selectedLUT
+	 * @param nColors
+	 * @param makeLUT
+	 */
 	private void makeLUT( ModelLUT selectedLUT, int nColors, boolean makeLUT )
 	{
 		if ( makeLUT )
@@ -1546,7 +1722,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 		histoPanel.getLUTComponent().show(selectedLUT);
 		histoPanel.getHistoLUTComponent().showHistogram(selectedLUT);
-		histoPanel.getLUTRecorder().updateLUT(selectedLUT);	      
-		panelParent.setLUT(this, selectedLUT);
+		histoPanel.getLUTRecorder().updateLUT(selectedLUT);
+		if ( panelParent != null )
+		{
+			panelParent.setLUT(this, selectedLUT);
+		}
 	}
 }

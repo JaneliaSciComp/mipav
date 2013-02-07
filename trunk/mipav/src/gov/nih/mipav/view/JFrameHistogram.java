@@ -37,14 +37,26 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 
-public class JFrameHistogram extends JPanel implements ActionListener, ChangeListener, ViewImageUpdateInterface, WindowListener {
+/**
+ * Lookup table interface for either grayscale or color (RGB) images.
+ * Either one or two images can be combined in a frame, and this LUT interface
+ * enables the user to apply a color look-up table to the images.
+ * 
+ * Each image is treated separately, with an individual interface in a separate tabbed pane.
+ * The images can be grayscale, color, or a combination (one grayscale, one RGB).
+ * 
+ * @see JPanelHistogram
+ *
+ */
+public class JFrameHistogram extends JPanel implements ActionListener, ChangeListener, ViewImageUpdateInterface, WindowListener 
+{
 
 	private static final long serialVersionUID = 6057663900661366920L;
 
-	/** DOCUMENT ME! */
+	/** reference to the colocalization frame for updatng the image. */
     private ViewJFrameColocalizationEM colEMFrame = null;
 
-    /** DOCUMENT ME! */
+    /** reference to the colocalization frame for updatng the image. */
     private ViewJFrameColocalizationRegression colRegFrame = null;
 
 	/** source image A */
@@ -68,35 +80,49 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	/** Parent frame of this dialog, usually of type ViewJFrameImage. */
 	private Frame parentFrame;
 
+	/** Dialog that enables the user to choose to apply the lut to the entire image, or voi regions. */
 	private JDialog voiDialog;
 
+	/** frame containing the lut interface (if display in a stand-alone window) */
 	private JFrame containingFrame;
+	/** panel containing the lut interface (used in the stand-alone frame or in an outside frame) */
 	private JPanel containingPanel;
+	/** set to true when the lut interface contains two images (imageA and imageB) */
 	private boolean dualImage;
-
-	ViewMenuBuilder menuObj;
-
-
-	JTabbedPane tabbedPane = null;
-
-
-	JPanelHistogram panelA, panelB;
+	/** menu builder */
+	private ViewMenuBuilder menuObj;
+	/** tabbed pane, each separate tab contains the interface for imageA and imageB */
+	private JTabbedPane tabbedPane = null;
+	/** histogram interface panels for imageA and imageB */
+	private JPanelHistogram panelA, panelB;
 	
+	/**
+	 * Creates the JFrameHistogram class. Initializes the images and LUTs, does not create the interface
+	 * until the constructDialog() function is called, which asks the user if the luts should be applied to the VOI region
+	 * or to the entire image, or until the histogramLUT() function is called to create the frame and interface panels.
+	 * @param theParentFrame
+	 * @param imA imageA
+	 * @param imB imageB
+	 * @param _LUTa lutA (either ModelLUT or ModelRGB)
+	 * @param _LUTb lutb (either ModelLUT or ModelRGB)
+	 */
 	public JFrameHistogram(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelStorageBase _LUTa, ModelStorageBase _LUTb) 
 	{
 		this( theParentFrame, null, imA, imB, _LUTa, _LUTb );
 	}
 
 
+
 	/**
-	 * Creates new histogram dialog. This is called from ViewJFrameRegistration.
-	 *
-	 * @param  theParentFrame  Parent frame
-	 * @param  _regComponent   Registration component.
-	 * @param  imA             Source image A
-	 * @param  imB             DOCUMENT ME!
-	 * @param  _LUTa           Source image B (can be null)
-	 * @param  _LUTb           RGB LUT associated with image A.
+	 * Creates the JFrameHistogram class. Initializes the images and LUTs, does not create the interface
+	 * until the constructDialog() function is called, which asks the user if the luts should be applied to the VOI region
+	 * or to the entire image, or until the histogramLUT() function is called to create the frame and interface panels.
+	 * @param theParentFrame
+	 * @param _regComponent registration component image to update on lut changes.
+	 * @param imA imageA
+	 * @param imB imageB
+	 * @param _LUTa lutA (either ModelLUT or ModelRGB)
+	 * @param _LUTb lutb (either ModelLUT or ModelRGB)
 	 */
 	public JFrameHistogram(Frame theParentFrame, ViewJComponentRegistration _regComponent, ModelImage imA,
 			ModelImage imB, ModelStorageBase _LUTa, ModelStorageBase _LUTb)
@@ -115,12 +141,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 	}
 	
-	/**
-	 * Closes dialog box when the OK button is pressed and calls the algorithm.
-	 *
-	 * @param  event  event that triggers function
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
-	public void actionPerformed(ActionEvent event) {
+	public void actionPerformed(ActionEvent event)
+	{
 		String command = event.getActionCommand();
 
 		if ( containingFrame != null )
@@ -165,45 +190,9 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 	}
 	
-	public void setImageB( ModelImage image, ModelStorageBase LUT )
-	{
-		if ( (imageB == image) || (image == null) )
-		{
-			return;
-		}
-		imageB = image;
-		LUTb = LUT;
-		dualImage = (imageA != null) && (imageB != null);
-		if ( imageB != null )
-		{
-			imageB.addImageDisplayListener( this );
-		}
-		if ( tabbedPane != null )
-		{
-			tabbedPane.remove(panelB);
-			panelB = null;
-			panelB = new JPanelHistogram(this, imageB, LUTb, wholeImage);
-			tabbedPane.addTab("ImageB", null, panelB);
-			containingPanel.revalidate();
-			tabbedPane.setSelectedIndex(1);
-		}
-		else
-		{
-			containingPanel.remove(panelA);
-			panelB = new JPanelHistogram(this, imageB, LUTb, wholeImage);
-			tabbedPane = new JTabbedPane();
-			tabbedPane.addTab("ImageA", null, panelA);
-			tabbedPane.addTab("ImageB", null, panelB);
-			tabbedPane.setFont(MipavUtil.font12B);
-
-			containingPanel.add(tabbedPane);
-			containingPanel.revalidate();
-			tabbedPane.setSelectedIndex(1);
-			tabbedPane.addChangeListener(this);
-		}
-		containingFrame.pack();
-	}
-	
+	/**
+	 * Closes the stand-alone interface frame.
+	 */
 	public void closeFrame()
 	{
 		if ( containingFrame != null )
@@ -212,7 +201,10 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 		disposeLocal();
 	}
-
+	
+	/**
+	 * Closes imageB and removes the tabbed-pane interface, replacing it with a single interface panel.
+	 */
 	public void closeImageB()
 	{
 		if ( tabbedPane != null )
@@ -228,9 +220,9 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			containingPanel.validate();
 			containingFrame.pack();
 		}
-	}    
-	
-    /**
+	}
+
+	/**
 	 * Creates a dialog to choose if histogram should be over all of image or just VOI regions.
 	 */
 	public void constructDialog()
@@ -277,8 +269,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		voiDialog.pack();
 		MipavUtil.centerOnScreen(voiDialog);
 		voiDialog.setVisible(true);
-	}
-
+	}    
+	
+    /**
+	 * Removes this from the image display listeners. Removes and deletes the interface panels.
+	 */
 	public void disposeLocal()
 	{
 		imageA.removeImageDisplayListener( this );
@@ -286,20 +281,45 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		{
 			imageB.removeImageDisplayListener( this );
 		}
+		panelA.disposeLocal();
+		if ( panelB != null )
+		{
+			panelB.disposeLocal();
+		}
+		colEMFrame = null;
+		colRegFrame = null;
+		regComponent = null;
+		panelA = null;
+		panelB = null;
+		tabbedPane = null;
+		containingPanel = null;
+		containingFrame = null;
 	}
 
-
+	/**
+	 * Returns true if 'Calculate threshold volume' is selected.
+	 * @return true if 'Calculate threshold volume' is selected, false otherwise.
+	 */
 	public boolean doCalcThresholdVolume()
 	{
 		return (menuObj == null) || menuObj.isMenuItemSelected("Calculate threshold volume");
 	}
 
 
+	/**
+	 * Returns the main interface panel for display in another interface.
+	 * @return the main interface panel for display in another interface.
+	 */
 	public JPanel getContainingPanel()
 	{
 		return containingPanel;
 	}
 
+
+	/**
+	 * Returns the lower threshold image value for whichever image is current selected.
+	 * @return the lower threshold image value for whichever image is current selected.
+	 */
 	public float getLowerThreshold()
 	{
         if (isImageASelected())
@@ -312,10 +332,19 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
         }
         return -1;
 	}
+
+	/**
+	 * Returns the currently selected interface panel.
+	 * @return the currently selected interface panel.
+	 */
 	public JPanelHistogram getSelectedPanel() {
 		return isImageASelected() ? panelA : panelB;
 	}
-
+	
+	/**
+	 * Returns the upper threshold image value for whichever image is current selected.
+	 * @return the upper threshold image value for whichever image is current selected.
+	 */
 	public float getUpperThreshold()
 	{
         if (isImageASelected())
@@ -328,9 +357,19 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
         }
         return -1;
 	}
+
+	/**
+	 * Creates the user interface for LUT changes. The entieFlag indicates if the entire image
+	 * is to be used in the histogram calculation and LUT change, or if only the VOI regions are to
+	 * be used. The separateFrame flag indicates if the interface is to be displayed in a stand-along
+	 * window or inside another outside interface.
+	 * @param entireFlag when true apply the LUT to the entire image, when false apply to VOI regions only.
+	 * @param separateFrame when true create and display the LUT interface in a separate, stand-alone window,
+	 * when false create the interface for display in another outside frame or panel.
+	 */
 	public void histogramLUT(boolean entireFlag, boolean separateFrame) 
 	{
-
+		// Create in a stand-alone window:
 		if ( separateFrame )
 		{
 			containingFrame = new JFrame();
@@ -365,31 +404,31 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			containingPanel = createPanel();
 		}
 	}
+	
+	
 	/**
-	 * Returns whether the imageA LUT panel is the one being worked on.
-	 * 
-	 * @return whether the imageA LUT panel is the one being worked on
+	 * Returns whether the imageA LUT panel is currently visible and active.
+	 * @return whether the imageA LUT panel is currently visible and active.
 	 */
-	public boolean isImageASelected() {
+	public boolean isImageASelected()
+	{
 		return (tabbedPane == null) || ((tabbedPane != null) && (tabbedPane.getSelectedIndex() == 0));
 	}
-
-
-
-
 	/**
-	 * Returns whether the imageB LUT panel is the one being worked on.
-	 * 
-	 * @return whether the imageB LUT panel is the one being worked on
+	 * Returns whether the imageB LUT panel is currently visible and active.	 * 
+	 * @return whether the imageB LUT panel is currently visible and active.
 	 */
-	public boolean isImageBSelected() {
+	public boolean isImageBSelected()
+	{
 		return (dualImage && (tabbedPane == null) || ((tabbedPane != null) && (tabbedPane.getSelectedIndex() == 1)));
 	}
 
+
+
+
 	/**
-     * Returns true if comphist A or B is in dual threshold inverse mode (for JDialogConvertType input ranges).
-     *
-     * @return  boolean is dual threshold inversing
+     * Returns true if image A or B is in dual threshold inverse mode (for JDialogConvertType input ranges).
+     * @return  boolean is dual threshold inverse mode.
      */
     public boolean isThresholding() {
 
@@ -413,6 +452,9 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
         return false;
     }
 
+	/**
+	 * Redraws the histogram interface for the currently selected image.
+	 */
 	public void redrawFrames()
 	{
 		if ( isImageASelected() )
@@ -424,14 +466,15 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			panelB.updateFrames(true);
 		}
 	}
-	
+
 	/**
      * Resizing the control panel with ViewJFrameVolumeView's frame width and height.
      *
      * @param  panelWidth   panel width.
      * @param  frameHeight  parent frame height.
      */
-    public void resizePanel(int panelWidth, int frameHeight) {
+    public void resizePanel(int panelWidth, int frameHeight)
+    {
     	if ( containingPanel != null )
     	{
     		containingPanel.setPreferredSize(new Dimension(panelWidth, frameHeight));
@@ -439,8 +482,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     		containingPanel.revalidate();
     	}
     }
-
-	public void setActiveImage( ModelImage  image )
+	
+	/**
+	 * Sets which image is currently active and makes the corresponding tabbed pane visible.
+	 * @param image the image to set as currently active.
+	 */
+	public void setActiveImage( ModelImage image )
 	{
 		if ( tabbedPane == null )
 		{
@@ -455,7 +502,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			tabbedPane.setSelectedIndex(1);
 		}
 	}
-	
+
+	/**
+     * Sets the blue flag to be on or off.
+     * @param isOn flag, either on or off.
+     * @param isImageA when true apply to imageA, when false apply to imageB.
+     */
     public void setBlueOn( boolean isOn, boolean isImageA )
     {
     	if ( isImageA && panelA != null )
@@ -467,15 +519,30 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     		panelB.setBlueOn(isOn);
     	}
     }
-
-	public void setColocalizationEMFrame(ViewJFrameColocalizationEM colocalizationEMFrame) {
+	
+    /**
+	 * Called from ViewJFrameColocalizationEM. Enables LUT changes to be applied to that frame.
+	 * @param colocalizationEMFrame
+	 */
+	public void setColocalizationEMFrame(ViewJFrameColocalizationEM colocalizationEMFrame)
+	{
 		colEMFrame = colocalizationEMFrame;
 	}
-	
-	public void setColocalizationRegFrame(ViewJFrameColocalizationRegression colocalizationRegFrame) { 
+
+	/**
+	 * Called from ViewJFrameColocalizationRegression. Enables LUT changes to be applied to that frame.
+	 * @param colocalizationEMFrame
+	 */
+	public void setColocalizationRegFrame(ViewJFrameColocalizationRegression colocalizationRegFrame)
+	{ 
 		colRegFrame = colocalizationRegFrame;
 	}
-	
+
+	/**
+     * Sets the green flag to be on or off.
+     * @param isOn flag, either on or off.
+     * @param isImageA when true apply to imageA, when false apply to imageB.
+     */
 	public void setGreenOn( boolean isOn, boolean isImageA )
     {
     	if ( isImageA && panelA != null )
@@ -487,8 +554,59 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     		panelB.setGreenOn(isOn);
     	}
     }
+
+    /**
+	 * Sets the imageB for the LUT interface. If the interface is not currently a dual-panel interface, 
+	 * it is re-created with the tabbed pane and two interface panels.
+	 * @param image
+	 * @param LUT
+	 */
+	public void setImageB( ModelImage image, ModelStorageBase LUT )
+	{
+		if ( (imageB == image) || (image == null) )
+		{
+			return;
+		}
+		imageB = image;
+		LUTb = LUT;
+		dualImage = (imageA != null) && (imageB != null);
+		if ( imageB != null )
+		{
+			imageB.addImageDisplayListener( this );
+		}
+		if ( tabbedPane != null )
+		{
+			tabbedPane.remove(panelB);
+			panelB = null;
+			panelB = new JPanelHistogram(this, imageB, LUTb, wholeImage);
+			tabbedPane.addTab("ImageB", null, panelB);
+			containingPanel.revalidate();
+			tabbedPane.setSelectedIndex(1);
+		}
+		else
+		{
+			containingPanel.remove(panelA);
+			panelB = new JPanelHistogram(this, imageB, LUTb, wholeImage);
+			tabbedPane = new JTabbedPane();
+			tabbedPane.addTab("ImageA", null, panelA);
+			tabbedPane.addTab("ImageB", null, panelB);
+			tabbedPane.setFont(MipavUtil.font12B);
+
+			containingPanel.add(tabbedPane);
+			containingPanel.revalidate();
+			tabbedPane.setSelectedIndex(1);
+			tabbedPane.addChangeListener(this);
+		}
+		containingFrame.pack();
+	}
 	
-	public void setLUT(JPanelHistogram panel, ModelStorageBase LUT) {
+	/**
+	 * Sets the LUT for the input panel.
+	 * @param panel the panel to set the LUT for.
+	 * @param LUT the new LUT.
+	 */
+	public void setLUT(JPanelHistogram panel, ModelStorageBase LUT)
+	{
 		if ( panel == panelA )
 		{
 			LUTa = LUT;
@@ -500,18 +618,31 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		updateFrames(false);
 	}
 	
+    /**
+     * Set LUTa
+     * @param LUT
+     */
     public void setLUTA(ModelStorageBase LUT)
     {
     	LUTa = LUT;
     	updateFrames(false);
 	}
 
+    /**
+     * Set LUTb
+     * @param LUT
+     */
     public void setLUTB(ModelStorageBase LUT)
     {
     	LUTb = LUT;
     	updateFrames(false);
 	}
 
+    /**
+     * Sets the red flag to be on or off.
+     * @param isOn flag, either on or off.
+     * @param isImageA when true apply to imageA, when false apply to imageB.
+     */
     public void setRedOn( boolean isOn, boolean isImageA )
     {
     	if ( isImageA && panelA != null )
@@ -525,18 +656,17 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     }
 
     @Override
-	public void setSlice(int slice) {
-		// TODO Auto-generated method stub
-		
-	} 
+	public void setSlice(int slice) {} 
 
     @Override
-	public void setTimeSlice(int tSlice) {
-		// TODO Auto-generated method stub
-		
-	} 
+	public void setTimeSlice(int tSlice) {} 
 
-	public void setTransferFunctionA(TransferFunction txFunction) {
+	/**
+	 * Set the transfer function for imageA.
+	 * @param txFunction
+	 */
+	public void setTransferFunctionA(TransferFunction txFunction)
+	{
 		ModelLUT selectedLUTa = !imageA.isColorImage() ? (ModelLUT)LUTa : null;
 		if ( selectedLUTa != null )
 		{
@@ -544,8 +674,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
     } 
 
-
-    public void setTransferFunctionB(TransferFunction txFunction) {
+	/**
+	 * Set the transfer function for imageA.
+	 * @param txFunction
+	 */
+    public void setTransferFunctionB(TransferFunction txFunction)
+    {
 		ModelLUT selectedLUTb = !imageB.isColorImage() ? (ModelLUT)LUTb : null;
 		if ( selectedLUTb != null )
 		{
@@ -553,8 +687,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
     }
 
-    @Override
-	public void stateChanged(ChangeEvent event) {
+	/* (non-Javadoc)
+	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+	 */
+	public void stateChanged(ChangeEvent event)
+    {
 		Object source = event.getSource();
 
 		// Slider has changed lets update.
@@ -577,13 +714,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			}
 		}
 	}
-
+	
 	/**
-	 * Update registration frames.
-	 *
-	 * @param  flag  whether to display a reloading of the image in the frames
+	 * @param flag
 	 */
-	public void updateFrames(boolean flag) {
+	public void updateFrames(boolean flag)
+	{
 		ModelLUT selectedLUTa = !imageA.isColorImage() ? (ModelLUT)LUTa : null;
 		ModelLUT selectedLUTb = ((imageB != null) && !imageB.isColorImage()) ? (ModelLUT)LUTb : null;
 		ModelRGB selectedRGBa = imageA.isColorImage() ? (ModelRGB)LUTa : null;
@@ -631,8 +767,8 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 
 
 	@Override
-	public boolean updateImageExtents() {
-		// TODO Auto-generated method stub
+	public boolean updateImageExtents()
+	{
 		return false;
 	}
 
@@ -643,19 +779,22 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 	@Override
-	public boolean updateImages(boolean flag) {
-		// TODO Auto-generated method stub
+	public boolean updateImages(boolean flag)
+	{
 		return false;
 	}
 
 	@Override
 	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag,
-			int interpMode) {
-		// TODO Auto-generated method stub
+			int interpMode) 
+	{
 		return false;
 	}
 
 
+	/**
+	 * updates the interpolation mode for the images.
+	 */
 	public void updateInterpolation()
 	{
 		ModelLUT selectedLUTa = !imageA.isColorImage() ? (ModelLUT)LUTa : null;
@@ -680,6 +819,11 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
+	/**
+	 * Updates the interface behavior when the user choses to update 
+	 * in real-time or on mouse release.
+	 * @param updateRealTime
+	 */
 	public void updateRealTime( boolean updateRealTime )
 	{
 		panelA.updateRealTime(updateRealTime);
@@ -688,6 +832,37 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			panelB.updateRealTime(updateRealTime);
 		}
 	}
+
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {}
+
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {}
+
+
+	@Override
+	public void windowClosing(WindowEvent arg0)
+	{
+		disposeLocal();		
+	}
+
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {}
+
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {}
+
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {}
+
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {}
 
 
 	/**
@@ -745,6 +920,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
+	/**
+	 * Creates the display panel. If there are two images the panel
+	 * contains a tabbed pane with the two interfaces panels. If there is only
+	 * one image the panel contains just the interface.
+	 * @return the new display panel.
+	 */
 	private JPanel createPanel()
 	{
 		JPanel panel = new JPanel();
@@ -771,6 +952,10 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
+	/**
+	 * Called when the FileMenu is activated. Processes the commands from the file menu.
+	 * @param command the file menu command.
+	 */
 	private void processFileMenu( String command )
 	{
 		if (command.equals("OpenLUT") || command.equals("OpenFuncts") || command.equals("OpenUDLUT"))
@@ -844,6 +1029,10 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	}
 
 
+	/**
+	 * Called when the Utilities Menu is activated. Processes the commands from the utilities menu.
+	 * @param command the utilities menu command.
+	 */
 	private void processUtilitiesMenu( ActionEvent event, String command )
 	{
 
@@ -927,34 +1116,4 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 			}
 		}
 	}
-
-
-	@Override
-	public void windowActivated(WindowEvent arg0) {}
-
-
-	@Override
-	public void windowClosed(WindowEvent arg0) {}
-
-
-	@Override
-	public void windowClosing(WindowEvent arg0) {
-		disposeLocal();		
-	}
-
-
-	@Override
-	public void windowDeactivated(WindowEvent arg0) {}
-
-
-	@Override
-	public void windowDeiconified(WindowEvent arg0) {}
-
-
-	@Override
-	public void windowIconified(WindowEvent arg0) {}
-
-
-	@Override
-	public void windowOpened(WindowEvent arg0) {}
 }
