@@ -322,8 +322,91 @@ public class AlgorithmASM extends AlgorithmBase  {
     }
     
     private void ASM_getProfileAndDerivatives2D(ModelImage I, double[][] P, double[][] N, int k,
-            double[][] gt, double[][] dgt) {
+            double[][] gtc, double[][] dgtc) {
+        // This function getProfileAndDerivatives samples the image on lines perpendicular to the contour points,
+        // which are used to train the appearance model, and to find the best location for a contour point later on.
         
+        // inputs,
+        // I: The image color or greyscale
+        // P: The locations of the contour points
+        // N: The normals of the contour points
+        // k: The length of the sampled line in one normal direction,
+        //    total length becomes 2*k+1
+        
+        // outputs,
+        // gtc: Columns with the sampled lines perpendicular to the contour
+        // dgtc: The first order derivatives of the sampled lines
+        
+        // Original function written by D. Kroon University of Twnete (February 2010)
+        
+        int cf;
+        int i;
+        double d1[] = new double[P.length];
+        double d2[] = new double[P.length];
+        double xi[][] = new double[P.length][2*k+1];
+        double yi[][] = new double[P.length][2*k+1];
+        int j;
+        int m;
+        
+        cf = 1;
+        if (I.isColorImage()) {
+            cf = 3;
+        }
+        for (i = 0; i < cf; i++) {
+            for (j = 0; j < P.length; j++) {
+                d1[j] = k*(P[j][0] - N[j][0]);
+                d2[j] = k*(P[j][0] + N[j][0]);
+            }
+            linspace_multi(d1, d2, 2*k+1, xi);
+            for (j = 0; j < P.length; j++) {
+                d1[j] = k*(P[j][1] - N[j][1]);
+                d2[j] = k*(P[j][1] + N[j][1]);
+            }
+            linspace_multi(d1, d2, 2*k+1, yi);
+            for (j = 0; j < xi.length; j++) {
+                for (m = 0; m < xi[0].length; m++) {
+                    if (xi[j][m]  < 1.0) {
+                        xi[j][m] = 1.0;
+                    }
+                    if (xi[j][m] > I.getExtents()[0]) {
+                        xi[j][m] = I.getExtents()[0];
+                    }
+                    if (yi[j][m] < 1.0) {
+                        yi[j][m] = 1.0;
+                    }
+                    if (yi[j][m] > I.getExtents()[1]) {
+                        yi[j][m] = I.getExtents()[1];
+                    }
+                }
+            }
+        } // for (i = 0; i < cf; i++)
+    }
+    
+    private void linspace_multi(double d1[], double d2[], int n, double X[][]) {
+      double A[][] = new double[d1.length][n-1];
+      double B[][] = new double[d1.length][n-1];
+      int i;
+      int j;
+      
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
+              A[i][j] = j;
+          }
+      }
+      
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
+              B[i][j] = (d2[i] - d1[i]);
+          }
+      }
+      
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
+              X[i][j] = A[i][j] * B[i][j]/(n - 1.0);
+              X[i][j] += d1[i];
+          }
+          X[i][n-1] = d2[i];
+      }
     }
     
     private double[][] ASM_GetContourNormals2D(double[][] V, int[][] L) {
