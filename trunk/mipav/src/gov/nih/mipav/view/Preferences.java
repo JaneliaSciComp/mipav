@@ -102,17 +102,17 @@ public class Preferences {
      *
      */
     public enum DefaultDisplay {
-        /** Lookuptable table and associated transfer function */
-        LUT("LUT & transfer function default"),
-        /** Window and level settings (will also be reflected as transfer function */
-        WindowLevel("Window & level default"),
-        /** Minimum and maximum settings  */
-        MinMax("Min & max default"),
         /** MIPAV default setting */
-        Mipav("MIPAV default setting"),
-        Default("Default"), //for backwards compatibility
+        Mipav("MIPAV default"),
         /**ImageJ default setting */
-        ImageJ("ImageJ default setting");
+        ImageJ("ImageJ default setting"),
+        /** Window and level settings (will also be reflected as transfer function */
+        WindowLevel("Saved window & level"),
+        /** Minimum and maximum settings  */
+        MinMax("Saved min & max"),
+        /** Lookuptable table and associated transfer function */
+        LUT("User-defined LUT & transfer function"),
+        Default("Default"); //for backwards compatibility
         
         /** The format of default display */
         private String str;
@@ -1112,7 +1112,22 @@ public class Preferences {
     	if(defaultDisplay == null) {
     		defaultDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
     	}
-    	return DefaultDisplay.valueOf(defaultDisplay);
+    	// if we find the old 'Default' display, force it to the new 'MIPAV default'
+    	if (defaultDisplay.equals(DefaultDisplay.Default.name())) {
+    	    defaultDisplay = DefaultDisplay.Mipav.name();
+    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+    	}
+    	
+    	DefaultDisplay display; 
+    	try {
+    	    display = DefaultDisplay.valueOf(defaultDisplay);
+    	} catch (IllegalArgumentException e) {
+    	    Preferences.debug("Unrecognized default display mode. Resetting to MIPAV default.", Preferences.DEBUG_MINOR);
+    	    display = DefaultDisplay.Mipav;
+    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+    	}
+    	
+    	return display;
     }
     
     /**

@@ -1053,7 +1053,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * Makes the options for displaying how images should be displayed on default.
      */
     protected void makeDefaultLoadImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
-    	final JLabel l1 = new JLabel("Load image using default: ");
+    	final JLabel l1 = new JLabel("Initial image display settings: ");
     	l1.setFont(MipavUtil.font12);
         l1.setForeground(Color.black);
         gbc2.insets = new Insets(0, 0, 0, 5);
@@ -1061,7 +1061,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(l1, gbc2);
         
-        defaultDisplayChoices = new JComboBox(DefaultDisplay.values());
+        // remove the 'Default' item since it's just for reading old pref files back in
+        ArrayList<DefaultDisplay> vals = new ArrayList<DefaultDisplay>();
+        for (DefaultDisplay val : DefaultDisplay.values()) {
+            if (!val.equals(DefaultDisplay.Default)) {
+                vals.add(val);
+            }
+        }
+        defaultDisplayChoices = new JComboBox(vals.toArray());
         defaultDisplayChoices.setFont(MipavUtil.font12);
         
         gbc2.insets = new Insets(0, 0, 5, 0);
@@ -1069,17 +1076,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(defaultDisplayChoices, gbc2);
         
-        DefaultDisplay defaultChoice = DefaultDisplay.Mipav;
         //preset the choices.
-        if(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY) == null) {
-        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Mipav.name());
-        } else {
-        	defaultChoice = DefaultDisplay.valueOf(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY));
-        }
-        
-        if(defaultChoice != null) {
-        	defaultDisplayChoices.setSelectedItem(defaultChoice);
-        }
+    	defaultDisplayChoices.setSelectedItem(Preferences.getDefaultDisplay().toString());
     }
     
     /**
