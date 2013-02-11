@@ -86,7 +86,21 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
      */
     public OpenCLAlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean separable,
                                  boolean img25D) {
-        super(destImg, srcImg, maskFlag, CL.CL_DEVICE_TYPE_GPU);
+        this(destImg, srcImg, sigmas, maskFlag, separable, img25D, CL.CL_DEVICE_TYPE_GPU);
+    }
+
+    /**
+     * Constructor which sets the source and destination images, the minimum and maximum progress value.
+     *
+     * @param  destImg   the destination image
+     * @param  srcImg    the source image
+     * @param  sigmas    the sigmas
+     * @param  maskFlag  the mask flag
+     * @param  img25D    the 2.5D indicator
+     */
+    public OpenCLAlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean separable,
+                                 boolean img25D, long deviceType) {
+        super(destImg, srcImg, maskFlag, deviceType);
 
         this.sigmas = sigmas;
 		this.separable = separable;
@@ -619,8 +633,9 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		int nBuffers = 2;
 		int elementCount = width * height * depth * color;		
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( (Sizeof.cl_float * elementCount * nBuffers) > maxAllocSize )
+		if ( elementCount > (maxAllocSize / (nBuffers * Sizeof.cl_float)) )
 		{
+			System.err.println( "Calling gaussianBlurSep25DSlices" );
 			gaussianBlurSep25DSlices();
 			return;
 		}

@@ -178,6 +178,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null, false),
                         menuBuilder.buildMenuItem("Coherence-enhancing diffusion", "CoherDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0, null, false),
+                        menuBuilder.buildMenuItem("Deconvolution", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
                         menuBuilder.buildMenuItem("Haralick texture", "Haralick", 0, null, false),
