@@ -4338,12 +4338,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     
                     break;
                 }
+                
+                y[0] = 255.0f;
+                x[0] = minPref;
 
                 y[1] = 255.0f;
                 x[1] = minPref;
 
                 y[2] = 0;
                 x[2] = maxPref;
+                
+                y[3] = 0;
+                x[3] = maxPref;
 
                 newLUT.getTransferFunction().importArrays(x, y, 4);
                 
@@ -4366,29 +4372,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     break;
                 }
                 
-                
-
-                if (window == 0) {
-                    window = 1;
-                }
-                
-                x[2] = level + (window / 2);
-
-                if (x[2] > imgMax) {
-                    y[2] = 255.0f * (x[2] - imgMax) / window;
-                    x[2] = imgMax;
-                } else {
-                    y[2] = 0.0f;
-                }
-
-                x[1] = level - (window / 2);
-
-                if (x[1] < imgMin) {
-                    y[1] = 255.0f - (255.0f * (imgMin - x[1]) / window);
-                    x[1] = imgMin;
-                } else {
-                    y[1] = 255.0f;
-                }
+                JDialogWinLevel.calcWinLevTransferFunction(img, window, level, x, y);
 
                 newLUT.getTransferFunction().importArrays(x, y, 4);
                 break;
