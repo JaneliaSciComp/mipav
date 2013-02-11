@@ -113,7 +113,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /** slope for mapping of min/max sliders * */
     public float minMaxSlope;
 
-    /** b interecept for mapping of min/max sliders * */
+    /** b intercept for mapping of min/max sliders * */
     public float minMaxBInt;
 
     public boolean keyTyped = false;
@@ -129,94 +129,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
      * @param LUT DOCUMENT ME!
      */
     public JDialogWinLevel(final Frame theParentFrame, final ModelImage image, final ModelLUT LUT) {
-        super(theParentFrame, false);
-
-        float min, max;
-        int i;
-
-        this.image = image;
-        this.LUT = LUT;
-
-        setTitle("Level and Window");
-        setForeground(Color.black);
-        try {
-            setIconImage(MipavUtil.getIconImage("winlevel.gif"));
-        } catch (final Exception e) {
-            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
-        }
-        getContentPane().setLayout(new BorderLayout());
-        calcMinMax();
-
-        dataSlice = ((ViewJFrameImage) parentFrame).getComponentImage().getActiveImageBuffer();
-        min = Float.MAX_VALUE;
-        max = -Float.MAX_VALUE;
-
-        for (i = 0; i < dataSlice.length; i++) {
-
-            if (dataSlice[i] > max) {
-                max = dataSlice[i];
-            }
-
-            if (dataSlice[i] < min) {
-                min = dataSlice[i];
-            }
-        }
-
-        // Set LUT min max values of the image slice !!
-        x[0] = minImage;
-        y[0] = 255;
-        z[0] = 0;
-        x[1] = min;
-        y[1] = 255;
-        z[1] = 0;
-        x[2] = max;
-        y[2] = 0;
-        z[2] = 0;
-        x[3] = maxImage;
-        y[3] = 0;
-        z[3] = 0;
-        LUT.getTransferFunction().importArrays(x, y, 4);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        final GridBagConstraints gbc = new GridBagConstraints();
-
-        // build a monochrome window/level slider panel and populate it
-        windowLevelPanel = buildWindowLevelPanel();
-        minMaxPanel = buildMinMaxPanel();
-
-        buildLevelSlider(windowLevelPanel, gbc);
-        buildWindowSlider(windowLevelPanel, gbc);
-        buildMinSlider(minMaxPanel, gbc);
-        buildMaxSlider(minMaxPanel, gbc);
-        tabbedPane.add("Level & Window", windowLevelPanel);
-        tabbedPane.add("Min & Max", minMaxPanel);
-        tabbedPane.addChangeListener(this);
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-        getContentPane().add(tabbedPane, BorderLayout.CENTER);
-        buildButtons(gbc);
-
-        setResizable(true);
-        setMinimumSize(new Dimension(250, 400));
-        pack();
-        locateDialog();
-
-        setVisibleStandard(true);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-
-        System.gc();
+        this(theParentFrame, image, LUT, ((ViewJFrameImage) theParentFrame).getComponentImage().getActiveImageBuffer());
     }
-    
-    
-    
-    
-    
-    
+
     /**
      * Constructor.
      * 
@@ -242,6 +157,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         }
         getContentPane().setLayout(new BorderLayout());
         calcMinMax();
+        
+        // TODO replace with shared method call to set up tf
 
         dataSlice = dataS;
         min = Float.MAX_VALUE;
@@ -257,6 +174,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 min = dataSlice[i];
             }
         }
+        
+        //calcWinLevTransferFuntion(image, win, lev, x, y);
 
         // Set LUT min max values of the image slice !!
         x[0] = minImage;
@@ -271,6 +190,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         x[3] = maxImage;
         y[3] = 0;
         z[3] = 0;
+        
         LUT.getTransferFunction().importArrays(x, y, 4);
         image.notifyImageDisplayListeners(LUT, false);
 
@@ -307,16 +227,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         System.gc();
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -342,6 +252,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 Preferences.setDefaultDisplay(DefaultDisplay.MinMax);
             }
         } else if (source == loadButton) {
+        	// TODO switch to use common function
             if (tabbedPane.getSelectedIndex() == 0) {
                 final String lev = Preferences.getProperty(Preferences.PREF_LEVEL);
                 final String win = Preferences.getProperty(Preferences.PREF_WINDOW);
@@ -364,7 +275,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 final String minString = Preferences.getProperty(Preferences.PREF_MIN);
                 final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
                 if (minString != null && maxString != null) {
-                    final boolean success = validateMinMaxNums(minString, maxString);
+                    final boolean success = validateMinMaxNums(image, minString, maxString);
 
                     if (success == true) {
                         float val1 = Float.parseFloat(minString);
@@ -390,7 +301,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         } else {
             super.actionPerformed(event);
         }
-
     }
 
     // this code commented out. idea is to make the sliders assume a value
@@ -473,7 +383,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         final Object source = e.getSource();
         if (source == levelSlider || source == windowSlider) {
             calcMinMax();
-
+            
             level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
             window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
@@ -485,27 +395,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 levelValTextField.setText(Float.toString(Math.round(level)));
             }
 
-            if (window == 0) {
-                window = 1;
-            }
-
-            x[2] = level + (window / 2);
-
-            if (x[2] > maxImage) {
-                y[2] = 255.0f * (x[2] - maxImage) / window;
-                x[2] = maxImage;
-            } else {
-                y[2] = 0.0f;
-            }
-
-            x[1] = level - (window / 2);
-
-            if (x[1] < minImage) {
-                y[1] = 255.0f - (255.0f * (minImage - x[1]) / window);
-                x[1] = minImage;
-            } else {
-                y[1] = 255.0f;
-            }
+            calcWinLevTransferFunction(image, window, level, x, y);
 
             // update the transfer function so the on-screen image
             // (modelImage/viewJFrameImage) updates for the user
@@ -522,6 +412,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 updateHistoLUTFrame();
             }
         } else if (source == minSlider || source == maxSlider) {
+        	// TODO use shared method
+        	
             min = minSlider.getValue();
             max = maxSlider.getValue();
 
@@ -559,6 +451,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         } else if (source == tabbedPane) {
             if (tabbedPane.getSelectedIndex() == 0) {
                 calcMinMax();
+                
+                // TODO use shared method
+                
                 level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
                 window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
@@ -569,28 +464,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     winValTextField.setText(Float.toString(Math.round(window)));
                     levelValTextField.setText(Float.toString(Math.round(level)));
                 }
-
-                if (window == 0) {
-                    window = 1;
-                }
-
-                x[2] = level + (window / 2);
-
-                if (x[2] > maxImage) {
-                    y[2] = 255.0f * (x[2] - maxImage) / window;
-                    x[2] = maxImage;
-                } else {
-                    y[2] = 0.0f;
-                }
-
-                x[1] = level - (window / 2);
-
-                if (x[1] < minImage) {
-                    y[1] = 255.0f - (255.0f * (minImage - x[1]) / window);
-                    x[1] = minImage;
-                } else {
-                    y[1] = 255.0f;
-                }
+                
+                calcWinLevTransferFunction(image, window, level, x, y);
 
                 // update the transfer function so the on-screen image
                 // (modelImage/viewJFrameImage) updates for the user
@@ -607,6 +482,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     updateHistoLUTFrame();
                 }
             } else if (tabbedPane.getSelectedIndex() == 1) {
+            	// TODO use shared method
+            	
                 /*
                  * min = minSlider.getValue(); max = maxSlider.getValue();
                  * 
@@ -666,7 +543,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             } else if (source == minValTextField) {
                 final String numStringMin = minValTextField.getText();
                 final String numStringMax = maxValTextField.getText();
-                final boolean success = validateMinMaxNums(numStringMin, numStringMax);
+                final boolean success = validateMinMaxNums(image, numStringMin, numStringMax);
                 if (success == true) {
                     float val = Float.parseFloat(numStringMin);
                     val = (val - minMaxBInt) / minMaxSlope;
@@ -688,7 +565,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             } else if (source == maxValTextField) {
                 final String numStringMin = minValTextField.getText();
                 final String numStringMax = maxValTextField.getText();
-                final boolean success = validateMinMaxNums(numStringMin, numStringMax);
+                final boolean success = validateMinMaxNums(image, numStringMin, numStringMax);
                 if (success == true) {
                     float val = Float.parseFloat(numStringMax);
                     val = (val - minMaxBInt) / minMaxSlope;
@@ -965,7 +842,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(minValTextField, gbc);
 
         minMaxBInt = minImage;
-        minMaxSlope = (maxImage - minImage) / 11999;
+        minMaxSlope = calcMinMaxSlope(image);
 
     }
 
@@ -1186,7 +1063,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
      * @param max
      * @return
      */
-    public float validateCurrentNum(final String numString, final float min, final float max) {
+    public static final float validateCurrentNum(final String numString, final float min, final float max) {
         float num;
 
         try {
@@ -1201,9 +1078,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         }
     }
 
-    public boolean validateMinMaxNums(final String minString, final String maxString) {
+    public static final boolean validateMinMaxNums(final ModelImage img, final String minString, final String maxString) {
         float numMin;
         float numMax;
+        
+        float[] bounds = calcMinMax(img);
 
         try {
             numMin = Float.parseFloat(minString);
@@ -1212,7 +1091,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             return false;
         }
 
-        if (numMin < minImage || numMin > maxImage || numMax < minImage || numMax > maxImage || numMin > numMax) {
+        if (numMin < bounds[0] || numMin > bounds[1] || numMax < bounds[0] || numMax > bounds[1] || numMin > numMax) {
             return false;
         } else {
             return true;
@@ -1221,67 +1100,24 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     }
 
     /**
-     * Calculate the maximum and minimum valuse to setup the window and level sliders.
-     */
-    private void calcMinMax() {
-
-        if (image.getType() == ModelStorageBase.UBYTE) {
-            minImage = 0;
-            maxImage = 255;
-            levelSliderMax = 255;
-            windowSliderMax = 511;
-        } else if (image.getType() == ModelStorageBase.BYTE) {
-            minImage = -128;
-            maxImage = 127; 
-            levelSliderMax = 255;
-            windowSliderMax = 511;
-        } else {
-            minImage = (float) image.getMin();
-            maxImage = (float) image.getMax();
-            levelSliderMax = 1999;
-            windowSliderMax = 3999;
-        }
-    }
-
-    /**
      * Displays histoLUT frame for a gray scale image.
      */
     private void updateHistoLUTFrame() {
-
         image.notifyImageDisplayListeners(LUT, false);
         image.getHistogramFrame().redrawFrames();
-
     }
 
-    public void keyPressed(final KeyEvent arg0) {
-    // TODO Auto-generated method stub
+    public void keyPressed(final KeyEvent arg0) {}
 
-    }
+    public void keyReleased(final KeyEvent arg0) {}
 
-    public void keyReleased(final KeyEvent arg0) {
-    // TODO Auto-generated method stub
+    public void mouseClicked(final MouseEvent e) {}
 
-    }
+    public void mouseEntered(final MouseEvent e) {}
 
-    public void mouseClicked(final MouseEvent e) {
-    // TODO Auto-generated method stub
+    public void mouseExited(final MouseEvent e) {}
 
-    }
-
-    public void mouseEntered(final MouseEvent e) {
-    // TODO Auto-generated method stub
-
-    }
-
-    public void mouseExited(final MouseEvent e) {
-    // TODO Auto-generated method stub
-
-    }
-
-    public void mousePressed(final MouseEvent e) {
-    // TODO Auto-generated method stub
-
-    }
+    public void mousePressed(final MouseEvent e) {}
 
     public void mouseReleased(final MouseEvent e) {
         final Object source = e.getSource();
@@ -1301,5 +1137,111 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     public void notifyImageDisplayListeners() {
         image.notifyImageDisplayListeners(LUT, false);
     }
+    
+    /**
+     * Calculate the x and y components of the transfer function, given the active image and the desired window and level.
+     * @param img The active image.
+     * @param win The desired window.
+     * @param lev The desired level.
+     * @param tfx The array in which the x components of the transfer function will be placed.  Should already be allocated and of size 4.
+     * @param tfy The array in which the y components of the transfer function will be placed.  Should already be allocated and of size 4.
+     */
+    public static final void calcWinLevTransferFunction(ModelImage img, float win, float lev, float[] tfx, float tfy []) {
+    	if (tfx == null || tfx.length != 4) {
+    		throw new IllegalArgumentException("Transfer function x component not set up correctly.");
+    	}
+    	if (tfy == null || tfy.length != 4) {
+    		throw new IllegalArgumentException("Transfer function y component not set up correctly.");
+    	}
+    	
+    	float[] bounds = calcMinMax(img);
+    	
+    	// first point always at lower left
+        tfx[0] = bounds[0];
+        tfy[0] = 255;
+        
+        if (win == 0) {
+    		win = 1;
+    	}
+    	
+    	tfx[2] = lev + (win / 2);
 
+        if (tfx[2] > bounds[1]) {
+            tfy[2] = 255.0f * (tfx[2] - bounds[1]) / win;
+            tfx[2] = bounds[1];
+        } else {
+            tfy[2] = 0.0f;
+        }
+
+        tfx[1] = lev - (win / 2);
+
+        if (tfx[1] < bounds[0]) {
+            tfy[1] = 255.0f - (255.0f * (bounds[0] - tfx[1]) / win);
+            tfx[1] = bounds[0];
+        } else {
+            tfy[1] = 255.0f;
+        }
+        
+        // last point always at upper right of histogram
+        tfx[3] = bounds[1];
+        tfy[3] = 0;
+    }
+    
+    /**
+     * Calculate the image range bounds for transfer function determination.
+     * @param img The active image.
+     * @return An array containing the minimum value of the range in the 0th index and the maximum in the 1st index.
+     */
+    public static final float[] calcMinMax(ModelImage img) {
+    	float[] bounds = new float[2];
+    	
+    	if (img.getType() == ModelStorageBase.UBYTE) {
+    		bounds[0] = 0;
+    		bounds[1] = 255;
+        } else if (img.getType() == ModelStorageBase.BYTE) {
+        	bounds[0] = -128;
+        	bounds[1] = 127;
+        } else {
+        	bounds[0] = (float) img.getMin();
+        	bounds[1] = (float) img.getMax();
+        }
+    	
+    	return bounds;
+    }
+    
+    private static final int calcLevelSliderMax(ModelImage img) {
+    	if (img.getType() == ModelStorageBase.UBYTE) {
+            return 255;
+        } else if (img.getType() == ModelStorageBase.BYTE) {
+            return 255;
+        } else {
+            return 1999;
+        }
+    }
+    
+    private static final int calcWindowSliderMax(ModelImage img) {
+    	if (img.getType() == ModelStorageBase.UBYTE) {
+            return 511;
+        } else if (img.getType() == ModelStorageBase.BYTE) {
+            return 511;
+        } else {
+            return 3999;
+        }
+    }
+    
+    private static final float calcMinMaxSlope(ModelImage img) {
+    	float[] bounds = calcMinMax(img);
+    	return (bounds[1] - bounds[0]) / 11999;
+    }
+    
+    /**
+     * Calculate the maximum and minimum valuse to setup the window and level sliders.
+     */
+    private void calcMinMax() {
+    	float[] bounds = calcMinMax(image);
+    	minImage = bounds[0];
+    	maxImage = bounds[1];
+    	levelSliderMax = calcLevelSliderMax(image);
+    	windowSliderMax = calcWindowSliderMax(image);
+    }
 } // end class JDialogWinLevel

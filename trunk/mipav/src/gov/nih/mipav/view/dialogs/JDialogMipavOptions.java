@@ -1077,7 +1077,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayImagePanel.add(defaultDisplayChoices, gbc2);
         
         //preset the choices.
-    	defaultDisplayChoices.setSelectedItem(Preferences.getDefaultDisplay().toString());
+    	defaultDisplayChoices.setSelectedItem(Preferences.getDefaultDisplay());
     }
     
     /**
