@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIVector;
+//import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
 
 
 import gov.nih.mipav.view.MipavUtil;
@@ -29,6 +30,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
+
 
 
 /**
@@ -150,6 +152,23 @@ public class AlgorithmASM extends AlgorithmBase  {
         public int Lines[][];
     }
     
+    public class LandData {
+        public double S[][];
+        public double Sinv[][];
+        public double dg_mean[];
+    }
+    
+    public class PData {
+        public double Evectors[][];
+        public double Evalues[];
+        public double Emean[];
+    }
+    
+    public class AppData {
+        public LandData Landmarks[];
+        public PData PCAData[];
+    }
+    
 
     public void ASM_2D_example() {
         int i;
@@ -185,7 +204,7 @@ public class AlgorithmASM extends AlgorithmBase  {
         // Number of search iterations
         options.nsearch = 40;
         // If verbose if true, all debug images will be shown.
-        options.verbose = true;
+        options.verbose = false;
         // The original minimal Mahalanobis distance using edge gradient (true)
         // or new minimal PCA parameters using the intensities. (false)
         options.originalsearch = false;
@@ -242,6 +261,7 @@ public class AlgorithmASM extends AlgorithmBase  {
         double P[][] = new double[TrainingData[0].Vertices.length][2];
         int j;
         int k;
+        int m;
         int oXdim;
         int oYdim;
         float oXres;
@@ -260,6 +280,21 @@ public class AlgorithmASM extends AlgorithmBase  {
         ModelImage Ismall;
         double N[][];
         int cf;
+        int p1;
+        double dg[][];
+        double dg_mean[];
+        Matrix dgMat;
+        Matrix dgtMat;
+        Matrix sMat;
+        double g[][];
+        double Evalues[];
+        double Evectors[][];
+        double Emean[];
+        double totSum;
+        double sum;
+        double Evectors2[][];
+        double Evalues2[];
+        //GeneralizedInverse ge;
         
         // Number of TrainingData sets
         s = TrainingData.length;
@@ -276,7 +311,11 @@ public class AlgorithmASM extends AlgorithmBase  {
         // Don't warn of this
         
         // Get the landmark profiles for 3 image scales (for multiscale ASM)
+        AppData AppearanceData[] = new AppData[options.nscales];
         for (itt_res = 0; itt_res < options.nscales; itt_res++) {
+            AppearanceData[itt_res] = new AppData();
+            AppearanceData[itt_res].Landmarks = new LandData[n1];
+            PData PCAData[] = new PData[n1];
             scale = Math.pow(2.0, -itt_res);
             
             // Get the pixel profiles of every landmark perpendicular to the contour
@@ -318,6 +357,109 @@ public class AlgorithmASM extends AlgorithmBase  {
                 TrainingData[i].DerivativeGrayProfiles = new double[(2*options.k+1)*cf][P.length];
                 ASM_getProfileAndDerivatives2D(Ismall, P, N, options.k, TrainingData[i].GrayProfiles, TrainingData[i].DerivativeGrayProfiles);
             } // for (i = 0; i < s; i++)
+            
+            if (options.verbose) {
+                for (i = 0; i < s; i++) {
+                    float mean[] = new float[(2*options.k+1)];
+                    for (j = 0; j < 2*options.k+1; j++) {
+                        for (m = 0; m < P.length; m++) {
+                            mean[j] += TrainingData[i].GrayProfiles[j][m];
+                        }
+                        mean[j] = mean[j]/P.length;
+                    }
+                    
+                    float xax[] = new float[2*options.k+1];
+                    for (j = 0; j < 2*options.k+1; j++) {
+                        xax[j] = j;
+                    }
+                    new ViewJFrameGraph(xax, mean, "Mean intensity profile", "", "", Color.BLUE); 
+                }
+            } // if (options.verbose)
+            
+            // Profile length * space for rgb
+            cf = 1;
+            if (TrainingData[0].I.isColorImage()) {
+                cf = 3;
+            }
+            p1 = cf * (2*options.k + 1);
+            
+            // Calculate a covariance matrix for all landmarks
+            for (j = 0; j < n1; j++) {
+                AppearanceData[itt_res].Landmarks[j] = new LandData();
+                PCAData[j] = new PData();
+                // The original search method using Mahalanobis distance with edge gradient information 
+                dg = new double[p1][s];
+                for (m = 0; m < p1; m++) {
+                    for (i = 0; i < s; i++) {
+                        dg[m][i] = TrainingData[i].DerivativeGrayProfiles[m][j];
+                    } // for (i = 0; i < s; i++)
+                } // for (m = 0; m < 2*options.k+1; m++)
+                dg_mean = new double[p1];
+                for (m = 0; m < p1; m++) {
+                    for (i = 0; i < s; i++) {
+                        dg_mean[m] += dg[m][i];
+                    }
+                    dg_mean[m] /= s;
+                } // for (m = 0; m < p1; m++)
+                for (m = 0; m < p1; m++) {
+                    for (i = 0; i < s; i++) {
+                        dg[m][i] = dg[m][i] - dg_mean[m];
+                    }
+                } // for (m = 0; m < p1; m++)
+                // Calculate the covariance matrix and its inverse
+                // The covariance removes the mean from each column
+                // For dg' the matrix is [s][p1], where there are s rows and p1 columns
+                // The mean has already been removed by each of the p1 columns
+                // Normalize by the number of observations - 1 or the number of rows -1 = s-1
+                dgMat = new Matrix(dg);
+                dgtMat = dgMat.transpose();
+                sMat = dgtMat.times(dgMat).times(1.0/(s - 1.0));
+                AppearanceData[itt_res].Landmarks[j].S = sMat.getArray();
+                //ge = new GeneralizedInverse(AppearanceData[itt_res].Landmarks[j].S, s, s);
+                //AppearanceData[itt_res].Landmarks[j].Sinv = ge.pinv();
+                AppearanceData[itt_res].Landmarks[j].Sinv = sMat.inverse().getArray();
+                AppearanceData[itt_res].Landmarks[j].dg_mean = dg_mean;
+                
+                // The new search method using PCA on intensities, and minimizing
+                // parameters/ the distance to the mean during the search.
+                // Make a matrix with all intensities
+                g = new double[p1][s];
+                for (m = 0; m < p1; m++) {
+                    for (i = 0; i < s; i++) {
+                        g[m][i] = TrainingData[i].GrayProfiles[m][j];
+                    }
+                } // for (m = 0; m < p1; m++)
+                Evalues = new double[g[0].length];
+                Evectors = new double[g.length][Math.min(g.length+1, g[0].length)];
+                Emean = new double[g.length];
+                PCA(g, Evalues, Evectors, Emean);
+                // Keep only 98% of all eigenvectors, (remove contour noise)
+                totSum = 0.0;
+                for (i = 0; i < Evalues.length; i++) {
+                    totSum += Evalues[i];
+                }
+                sum = 0.0;
+                for (i = 0; i < Evalues.length; i++) {
+                    sum += Evalues[i];
+                    if (sum > 0.98 * totSum) {
+                        break;
+                    }
+                }
+                Evectors2 = new double[g.length][i+1];
+                Evalues2 = new double[i+1];
+                for (m = 0; m < g.length; m++) {
+                    for (k = 0; k <= i; k++) {
+                        Evectors2[m][k] = Evectors[m][k];   
+                    }
+                }
+                for (m = 0; m <= i; m++) {
+                    Evalues2[m] = Evalues[m];
+                }
+                PCAData[j].Evectors = Evectors2;
+                PCAData[j].Evalues = Evalues2;
+                PCAData[j].Emean = Emean;
+            } // for (j = 0; j < n1; j++)
+            AppearanceData[itt_res].PCAData = PCAData;
         } // for (itt_res = 0; itt_res < options.nscales; itt_res++)
     }
     
@@ -343,16 +485,45 @@ public class AlgorithmASM extends AlgorithmBase  {
         int i;
         double d1[] = new double[P.length];
         double d2[] = new double[P.length];
-        double xi[][] = new double[P.length][2*k+1];
-        double yi[][] = new double[P.length][2*k+1];
+        double xi[][] = new double[2*k+1][P.length];
+        double yi[][] = new double[2*k+1][P.length];
+        double gt[][] = new double[2*k+1][P.length];
+        double dgt[][] = new double[2*k+1][P.length];
         int j;
         int m;
+        int sliceSize = I.getExtents()[0] * I.getExtents()[1];
+        double buffer[] = new double[sliceSize];
+        int xfl;
+        int yfl;
+        int xce;
+        int yce;
+        int b;
+        double eps = Math.pow(2.0,-52);
+        double ngt[] = new double[P.length];
         
         cf = 1;
         if (I.isColorImage()) {
             cf = 3;
         }
         for (i = 0; i < cf; i++) {
+            if (I.isColorImage()) {
+                try {
+                    I.exportRGBDataNoLock((i+1), 0, sliceSize, buffer);
+                }
+                catch (IOException ex) {
+                    System.err.println("IOException " + ex + " on I.exportRGBDataNoLock((" + (i+1) + "), 0, sliceSize, buffer)");
+                    return;
+                }
+            }
+            else {
+                try {
+                    I.exportData(0, sliceSize, buffer);
+                }
+                catch (IOException ex) {
+                    System.err.println("IOException " + ex + " on I.exportData(0, sliceSize, buffer)");
+                    return;
+                }
+            }
             for (j = 0; j < P.length; j++) {
                 d1[j] = k*(P[j][0] - N[j][0]);
                 d2[j] = k*(P[j][0] + N[j][0]);
@@ -363,8 +534,8 @@ public class AlgorithmASM extends AlgorithmBase  {
                 d2[j] = k*(P[j][1] + N[j][1]);
             }
             linspace_multi(d1, d2, 2*k+1, yi);
-            for (j = 0; j < xi.length; j++) {
-                for (m = 0; m < xi[0].length; m++) {
+            for (j = 0; j < 2*k+1; j++) {
+                for (m = 0; m < P.length; m++) {
                     if (xi[j][m]  < 1.0) {
                         xi[j][m] = 1.0;
                     }
@@ -377,35 +548,84 @@ public class AlgorithmASM extends AlgorithmBase  {
                     if (yi[j][m] > I.getExtents()[1]) {
                         yi[j][m] = I.getExtents()[1];
                     }
+                    xi[j][m] -= 1.0;
+                    yi[j][m] -= 1.0;
+                    xfl = (int)Math.floor(xi[j][m]);
+                    yfl = (int)Math.floor(yi[j][m]);
+                    xce = xfl + 1;
+                    yce = yfl + 1;
+                    gt[j][m] = buffer[xfl + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xce - xi[j][m]);
+                    if (xfl < I.getExtents()[0] - 1) {
+                        gt[j][m] += buffer[xce + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xi[j][m] - xfl);
+                    }
+                    if (yfl < I.getExtents()[1] - 1) {
+                        gt[j][m] += buffer[xfl + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xce - xi[j][m]);
+                    }
+                    if ((xfl < I.getExtents()[0] - 1) && (yfl < I.getExtents()[1] - 1)) {
+                        gt[j][m] += buffer[xce + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xi[j][m] - xfl);
+                    }
+                    if (Double.valueOf(gt[j][m]).isNaN()) {
+                        gt[j][m] = 0.0;
+                    }
+                } // for (m = 0; m < P.length; m++)
+            } // for (j = 0; j < 2*k+1; j++)
+            // Get the derivatives
+            for (m = 0; m < P.length; m++) {
+                dgt[0][m] = gt[1][m] - gt[0][m];
+            }
+            for (j = 1; j < 2*k; j++) {
+                for (m = 0; m < P.length; m++) {
+                    dgt[j][m] = (gt[j+1][m] - gt[j-1][m])/2.0;
+                }
+            }
+            for (m = 0; m < P.length; m++) {
+                dgt[2*k][m] = gt[2*k][m] - gt[2*k-1][m];
+            }
+            // Store the grey profiles and derivatives for the different color channels
+            b = i*(2*k+1);
+            for (j = 0; j < 2*k+1; j++) {
+                for (m = 0; m < P.length; m++) {
+                    gtc[b+j][m] = gt[j][m];
+                    dgtc[b+j][m] = dgt[j][m];
                 }
             }
         } // for (i = 0; i < cf; i++)
+        // Normalize the derivatives
+        for (m = 0; m < P.length; m++) {
+            for (j = 0; j < cf*(2*k+1); j++) {
+                ngt[m] += Math.abs(dgtc[j][m]);
+            }
+            ngt[m] += eps;
+            for (j = 0; j < cf*(2*k+1); j++) {
+                dgtc[j][m] = dgtc[j][m]/ngt[m];
+            }
+        }
     }
     
     private void linspace_multi(double d1[], double d2[], int n, double X[][]) {
-      double A[][] = new double[d1.length][n-1];
-      double B[][] = new double[d1.length][n-1];
+      double A[][] = new double[n-1][d1.length];
+      double B[][] = new double[n-1][d1.length];
       int i;
       int j;
       
-      for (i = 0; i < d1.length; i++) {
-          for (j = 0; j <= n-2; j++) {
-              A[i][j] = j;
+      for (j = 0; j < d1.length; j++) {
+          for (i = 0; i <= n-2; i++) {
+              A[i][j] = i;
           }
       }
       
-      for (i = 0; i < d1.length; i++) {
-          for (j = 0; j <= n-2; j++) {
-              B[i][j] = (d2[i] - d1[i]);
+      for (j = 0; j < d1.length; j++) {
+          for (i = 0; i <= n-2; i++) {
+              B[i][j] = (d2[j] - d1[j]);
           }
       }
       
-      for (i = 0; i < d1.length; i++) {
-          for (j = 0; j <= n-2; j++) {
+      for (j = 0; j < d1.length; j++) {
+          for (i = 0; i <= n-2; i++) {
               X[i][j] = A[i][j] * B[i][j]/(n - 1.0);
-              X[i][j] += d1[i];
+              X[i][j] += d1[j];
           }
-          X[i][n-1] = d2[i];
+          X[n-1][j] = d2[j];
       }
     }
     
