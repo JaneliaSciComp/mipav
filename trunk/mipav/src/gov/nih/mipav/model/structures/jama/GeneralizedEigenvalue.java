@@ -2449,7 +2449,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * RESID (output) DOUBLE PRECISION The maximum over the number of right hand sides of norm(B - A*X) / ( norm(A) *
      * norm(X) * EPS ).
      */
-    private void dget02(final char trans, final int m, final int n, final int nrhs, final double[][] A, final int lda,
+    public void dget02(final char trans, final int m, final int n, final int nrhs, final double[][] A, final int lda,
             final double[][] X, final int ldx, final double[][] B, final int ldb, final double[] rwork,
             final double[] resid) {
         int j;
@@ -8089,7 +8089,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * LDA (input) INTEGER Leading dimension of A.
      */
-    private boolean dgennd(final int m, final int n, final double A[][], final int lda) {
+    public boolean dgennd(final int m, final int n, final double A[][], final int lda) {
         int i;
         int k;
 
@@ -12253,7 +12253,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work workspace double[] of dimension (m+n)
      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
      */
-    private void dlagge(final int m, final int n, final int kl, final int ku, final double[] D, final double[][] A,
+    public void dlagge(final int m, final int n, final int kl, final int ku, final double[] D, final double[][] A,
             final int lda, final int[] iseed, final double[] work, final int[] info) {
         int i;
         int j;
@@ -12691,7 +12691,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work workspace double[] of dimension (2*n)
      * @param info output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
      */
-    private void dlagsy(final int n, final int k, final double[] D, final double[][] A, final int lda,
+    public void dlagsy(final int n, final int k, final double[] D, final double[][] A, final int lda,
             final int[] iseed, final double[] work, final int[] info) {
         int i;
         int j;
@@ -14043,7 +14043,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlangb(final char norm, final int n, final int kl, final int ku, final double[][] ab,
+    public double dlangb(final char norm, final int n, final int kl, final int ku, final double[][] ab,
             final int ldab, final double[] work) {
         int i;
         int j;
@@ -14349,7 +14349,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return DOCUMENT ME!
      */
-    private double dlansb(final char norm, final char uplo, final int n, final int k, final double[][] ab,
+    public double dlansb(final char norm, final char uplo, final int n, final int k, final double[][] ab,
             final int ldab, final double[] work) {
         int i;
         int j;
@@ -14509,7 +14509,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlansp(final char norm, final char uplo, final int n, final double[] ap, final double[] work) {
+    public double dlansp(final char norm, final char uplo, final int n, final double[] ap, final double[] work) {
         int i;
         int j;
         int k;
@@ -14966,7 +14966,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlaran(final int[] iseed) {
+    public double dlaran(final int[] iseed) {
         final int m1 = 494;
         final int m2 = 322;
         final int m3 = 2508;
@@ -16595,7 +16595,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param xright input/output double[] If lright is true, then xright will be used and modified instead of
      *            A[0][nl-1] (if lrows = true) or A[nl-1][0] (if lrows = false).
      */
-    private void dlarot(final boolean lrows, final boolean lleft, final boolean lright, final int nl, final double c,
+    public void dlarot(final boolean lrows, final boolean lleft, final boolean lright, final int nl, final double c,
             final double s, final double[] A, final int lda, final double[] xleft, final double[] xright) {
         int iinc;
         int inext;
@@ -18558,7 +18558,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * DIST (output) CHARACTER*1 The type of distribution to be used by the random number generator.
      */
-    private void dlatb4(final String path, final int imat, final int m, final int n, final char[] type, final int[] kl,
+    public void dlatb4(final String path, final int imat, final int m, final int n, final char[] type, final int[] kl,
             final int[] ku, final double anorm[], final int[] mode, final double[] cndnum, final char[] dist) {
         String c2;
         int mat;
@@ -18893,7 +18893,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            or 6, and irsign neither 0 nor 1 -3 => if mode neither -6, 0, or 6 and cond less than 1 -4 => if mode
      *            equals 6 or -6 and idist not in range 1 to 3 -7 => if n negative
      */
-    private void dlatm1(final int mode, final double cond, final int irsign, final int idist, final int[] iseed,
+    public void dlatm1(final int mode, final double cond, final int irsign, final int idist, final int[] iseed,
             final double[] D, final int n, final int[] info) {
         int i;
         double alpha;
@@ -19100,7 +19100,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlatm2(final int m, final int n, final int i, final int j, final int kl, final int ku,
+    public double dlatm2(final int m, final int n, final int i, final int j, final int kl, final int ku,
             final int idist, final int[] iseed, final double[] D, final int igrade, final double[] dl,
             final double[] dr, final int ipvtng, final int[] iwork, final double sparse) {
         int isub = 0;
@@ -19242,7 +19242,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlatm3(final int m, final int n, final int i, final int j, final int[] isub, final int[] jsub,
+    public double dlatm3(final int m, final int n, final int i, final int j, final int[] isub, final int[] jsub,
             final int kl, final int ku, final int idist, final int[] iseed, final double[] D, final int igrade,
             final double[] dl, final double[] dr, final int ipvtng, final int[] iwork, final double sparse) {
         double temp;
@@ -28114,7 +28114,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            must contain the n element vector y. On exit, y is overwritten by the updated vector y.
      * @param incy input int On entry, incy specifies the increment for the elements of y. incy must not be zero.
      */
-    private void dsymv(final char uplo, final int n, final double alpha, final double[][] A, final int lda,
+    public void dsymv(final char uplo, final int n, final double alpha, final double[][] A, final int lda,
             final double[] x, final int incx, final double beta, final double[] y, final int incy) {
         double temp1;
         double temp2;
@@ -28467,7 +28467,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param lda input int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
      *            lda must be at least max(1,n).
      */
-    private void dsyr2(final char uplo, final int n, final double alpha, final double[] x, final int incx,
+    public void dsyr2(final char uplo, final int n, final double alpha, final double[] x, final int incx,
             final double[] y, final int incy, final double[][] A, final int lda) {
         double temp1;
         double temp2;
