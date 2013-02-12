@@ -728,7 +728,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+			cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 					Sizeof.cl_float * input.length, Pointer.to(input), errcode);
 			if ( errcode[0] != CL.CL_SUCCESS )
 			{
@@ -763,7 +763,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 
 				// blur result:
 				OpenCLAlgorithmConvolver.convolveSep2D( cl, device, 
-						blurredBuffer, outputBuffer, width, height, 1, elementCount, gaussianKernel, 
+						blurredBuffer, correlationBuffer, width, height, 1, elementCount, gaussianKernel, 
 						color, colorMask );
 
 
