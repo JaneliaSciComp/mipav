@@ -26,10 +26,14 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     private double t;
     
     /** Double precison machine variables found in routine ge.dlartg. */
-    private boolean first_ge.dlartg = true;
+    private boolean first_dlartg = true;
     private double safmin;
     private double safmn2;
-    private double safmx2
+    private double safmx2;
+    
+    /** Found in routine dchkqr */
+    private int infot;
+    private String srnamt;
     
     /** Found in routine xlaenv */
     private int iparms[];
@@ -2645,7 +2649,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
         
         // Early return if simgx[0] is zero (matrix is already diagonal).
         if (sigmx[0] == 0) {
-            ge.ge.dlasrt('D', n, d, iinfo);
+            ge.dlasrt('D', n, d, iinfo);
             return;
         }
         
@@ -2912,7 +2916,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
             for (k = 2; k <= n; k++) {
                 z[k-1] = z[2*k-2];
             }
-            ge.ge.dlasrt('D', n, z, iinfo);
+            ge.dlasrt('D', n, z, iinfo);
             z[2*n-2] = d;
             return;
         } // if (e == 0.0)
@@ -3172,7 +3176,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
         
         // Sort and compute sum of eigenvalues.
         
-        ge.ge.dlasrt('D', n, z, iinfo);
+        ge.dlasrt('D', n, z, iinfo);
         
         e = 0.0;
         for (k = n; k >= 1; k--) {
