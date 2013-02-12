@@ -2367,7 +2367,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * INFO (output) INTEGER = 0: successful exit < 0: if INFO = -i, the i-th argument had an illegal value
      */
-    private void dgeqrs(final int m, final int n, final int nrhs, final double A[][], final int lda,
+    public void dgeqrs(final int m, final int n, final int nrhs, final double A[][], final int lda,
             final double[] tau, final double[][] B, final int ldb, final double[] work, final int lwork,
             final int info[]) {
 
@@ -7883,7 +7883,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            contain the vector y. On exit, array y is overwritten with the updated vector y.
      * @param incy input int On entry, incy specifies the increment for the elements of y. incy must not be zero.
      */
-    private void dgemv(final char trans, final int m, final int n, final double alpha, final double[][] A,
+    public void dgemv(final char trans, final int m, final int n, final double alpha, final double[][] A,
             final int lda, final double[] x, final int incx, final double beta, final double[] y, final int incy) {
         int info;
         int lenx;
@@ -8121,7 +8121,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work (workspace) double[] of dimension (n)
      * @param info output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
-    private void dgeqr2(final int m, final int n, final double[][] A, final int lda, final double[] tau,
+    public void dgeqr2(final int m, final int n, final double[][] A, final int lda, final double[] tau,
             final double[] work, final int[] info) {
         int i;
         int k;
@@ -8234,7 +8234,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            array, and no error message related to lwork is output.
      * @param info output int[] = 0: successful exit, < 0: If info[0] = -i, the i-th argument had an illegal value
      */
-    private void dgeqrf(final int m, final int n, final double[][] A, final int lda, final double[] tau,
+    public void dgeqrf(final int m, final int n, final double[][] A, final int lda, final double[] tau,
             final double[] work, final int lwork, final int[] info) {
         boolean lquery;
         int i;
@@ -8451,7 +8451,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param lda input int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
      *            lda must be at least max(1,m).
      */
-    private void dger(final int m, final int n, final double alpha, final double[] x, final int incx, final double[] y,
+    public void dger(final int m, final int n, final double alpha, final double[] x, final int incx, final double[] y,
             final int incy, final double[][] A, final int lda) {
         double temp;
         int i;
@@ -15029,7 +15029,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldc input int The leading dimension of array C. ldc >= max(1,m).
      * @param work workspace double[] If side = 'L', dimension = n. If side = 'R', dimension = m.
      */
-    private void dlarf(final char side, final int m, final int n, final double[] v, final int incv, final double tau,
+    public void dlarf(final char side, final int m, final int n, final double[] v, final int incv, final double tau,
             final double[][] C, final int ldc, final double[] work) {
         boolean applyLeft;
         int i;
@@ -15882,7 +15882,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param incx input int The increment between elements of x. incx > 0
      * @param tau output double[] The value tau
      */
-    private void dlarfg(final int n, final double[] alpha, final double[] x, final int incx, final double[] tau) {
+    public void dlarfg(final int n, final double[] alpha, final double[] x, final int incx, final double[] tau) {
         int j;
         int knt;
         double beta;
@@ -15964,7 +15964,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param incx input int The increment between elements of x. incx > 0
      * @param tau output double[] The value tau
      */
-    private void dlarfp(final int n, final double[] alpha, final double[] x, final int incx, final double[] tau) {
+    public void dlarfp(final int n, final double[] alpha, final double[] x, final int incx, final double[] tau) {
         int j;
         int knt;
         double beta;
@@ -16700,7 +16700,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param sn output double[] The sine of the rotation.
      * @param r output double[] The nonzero component of the rotated vector.
      */
-    private void dlartg(final double f, final double g, final double[] cs, final double[] sn, final double[] r) {
+    public void dlartg(final double f, final double g, final double[] cs, final double[] sn, final double[] r) {
         int count;
         int i;
         double eps;
@@ -17401,7 +17401,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param lda input int The leading dimension of the array A. lda >= max(1,m).
      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
      */
-    private void dlascl(final char type, final int kL, final int ku, final double cfrom, final double cto, final int m,
+    public void dlascl(final char type, final int kL, final int ku, final double cfrom, final double cto, final int m,
             final int n, final double[][] A, final int lda, final int[] info) {
         boolean done;
         int i;
@@ -17705,7 +17705,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            by P*A if side = 'L' or by A*P' if side = 'R'.
      * @param lda input int The leading dimension of the array A. lda >= max(1,m).
      */
-    private void dlasr(final char side, final char pivot, final char direct, final int m, final int n,
+    public void dlasr(final char side, final char pivot, final char direct, final int m, final int n,
             final double[] c, final double[] s, final double[][] A, final int lda) {
         int i;
         int info;
@@ -18212,7 +18212,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param sumsq input/output double[] On entry, the value sumsq in the equation above. On exit, sumsq is overwritten
      *            with smsq, the basic sum of squares from which scl has been factored out.
      */
-    private void dlassq(final int n, final double[] x, final int incx, final double[] scale, final double[] sumsq) {
+    public void dlassq(final int n, final double[] x, final int incx, final double[] scale, final double[] sumsq) {
         int ix;
         double absxi;
         double ratio;
@@ -18280,7 +18280,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            by perturbations of size near the underflow threshold.
      *            </p>
      */
-    private void dlasv2(final double f, final double g, final double h, final double[] ssmin, final double[] ssmax,
+    public void dlasv2(final double f, final double g, final double h, final double[] ssmin, final double[] ssmax,
             final double[] snr, final double[] csr, final double[] snl, final double[] csl) {
         boolean gasmal;
         boolean swap;
@@ -22730,7 +22730,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work workspace double[] of dimension n.
      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument has an illegal value.
      */
-    private void dorg2r(final int m, final int n, final int k, final double[][] A, final int lda, final double[] tau,
+    public void dorg2r(final int m, final int n, final int k, final double[][] A, final int lda, final double[] tau,
             final double[] work, final int[] info) {
         int i;
         int j;
@@ -23069,7 +23069,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            array, and no error message related to lwork is issued.
      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument has an illegal value
      */
-    private void dorgqr(final int m, final int n, final int k, final double[][] A, final int lda, final double[] tau,
+    public void dorgqr(final int m, final int n, final int k, final double[][] A, final int lda, final double[] tau,
             final double[] work, final int lwork, final int[] info) {
         boolean lquery;
         int i;
@@ -23661,7 +23661,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work (workspace) double[] of dimension (n) if side = 'L' (m) if side = 'R'
      * @param info output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
-    private void dorm2r(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
+    public void dorm2r(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
             final int lda, final double[] tau, final double[][] C, final int ldc, final double[] work, final int[] info) {
         boolean left;
         boolean notran;
@@ -25083,7 +25083,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param c double
      * @param s double
      */
-    private void drot(final int n, final double[] dx, final int incx, final double[] dy, final int incy,
+    public void drot(final int n, final double[] dx, final int incx, final double[] dy, final int incy,
             final double c, final double s) {
         double dtemp;
         int i;
@@ -32047,7 +32047,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldb input int On entry, ldb specifies the first dimension of B as declared in the calling (sub) program.
      *            ldb must be at least max(1,m).
      */
-    private void dtrsm(final char side, final char uplo, final char transa, final char diag, final int m, final int n,
+    public void dtrsm(final char side, final char uplo, final char transa, final char diag, final int m, final int n,
             final double alpha, final double[][] A, final int lda, final double[][] B, final int ldb) {
         boolean lside;
         boolean nounit;
