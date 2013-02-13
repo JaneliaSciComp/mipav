@@ -258,6 +258,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** Available options for image interpolation */
     private JComboBox interpolateDisplayChoices;
+    
+    /** Button used to reset all preferences to default state. */
+    private JButton resetButton;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -776,6 +779,15 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10247");
             MipavUtil.showWebHelp("Customizing_MIPAV");
+        } else if (command.equals("Reset defaults")) {
+        	final int reply = JOptionPane.showConfirmDialog(this, "Are you sure you want to reset all MIPAV preferences to their default?  This action cannot be undone.", 
+        			"Reset MIPAV preferences", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        	if (reply == JOptionPane.YES_OPTION) {
+        		Preferences.resetToDefaults();
+        		// close the dialog, since that's easier than resetting everything
+        		dispose();
+        		ViewUserInterface.getReference().options();
+        	}
         } else if (command.equals("fileTempDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
             if (Preferences.getFileTempDir() != null) {
@@ -1011,18 +1023,20 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @return the Panel made.
      */
     protected JPanel makeApplyClosePanel() {
-        final JPanel applyClosePanel = new JPanel();
+        final JPanel applyClosePanel = new JPanel(new GridLayout());
 
         buildOKButton();
         OKButton.setText("Apply");
 
         // OKButton.setEnabled(false); // doesn't act correctly when open and then new image frame is added.
-        applyClosePanel.add(OKButton, BorderLayout.WEST);
+        applyClosePanel.add(OKButton);
         buildCancelButton();
         cancelButton.setText("Cancel");
         cancelButton.setActionCommand("close");
-        applyClosePanel.add(cancelButton, BorderLayout.CENTER);
-        applyClosePanel.add(buildHelpButton(), BorderLayout.EAST);
+        
+        applyClosePanel.add(cancelButton);
+        applyClosePanel.add(buildResetDefaultsButton());
+        applyClosePanel.add(buildHelpButton());
 
         return applyClosePanel;
     }
@@ -2546,6 +2560,23 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             return this;
         }
+    }
+    
+    /**
+     * Builds the reset to defaults button. Sets it internally as well return the just-built button.
+     *
+     * @return  JButton reset defaults button
+     */
+    protected JButton buildResetDefaultsButton() {
+        resetButton = new JButton("Reset defaults");
+        resetButton.addActionListener(this);
+
+        resetButton.setToolTipText("Reset all of the MIPAV preferences to their default state. Equivalent to deleting mipav.preferences file.");
+        resetButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        resetButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        resetButton.setFont(serif12B);
+
+        return resetButton;
     }
 
 }

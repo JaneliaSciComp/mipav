@@ -3127,4 +3127,12 @@ public class Preferences {
 
         return Preferences.defaultShortcutTable;
     }
+    
+    /**
+     * Resets the current MIPAV properties to the defaults and saves the preferences file.  Cannot be undone.
+     */
+    public static void resetToDefaults() {
+    	mipavProps = defaultProps;
+    	save();
+    }
 }
