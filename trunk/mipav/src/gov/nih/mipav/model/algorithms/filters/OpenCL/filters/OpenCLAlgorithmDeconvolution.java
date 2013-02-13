@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters.OpenCL.filters;
 
 
+import static org.jocl.CL.CL_DEVICE_GLOBAL_MEM_SIZE;
 import static org.jocl.CL.CL_DEVICE_MAX_MEM_ALLOC_SIZE;
 import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
 import static org.jocl.CL.CL_TRUE;
@@ -801,16 +802,18 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	private void deconvolution3D( int time )
 	{
 		initCL(m_iDeviceType, null);
+		int nBuffers = 6;
 		int elementCount = width * height * depth * color;		
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( elementCount > (maxAllocSize / (Sizeof.cl_float)) )
+		long totalMemSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_GLOBAL_MEM_SIZE);
+		if ( (elementCount > (maxAllocSize / (Sizeof.cl_float))) || ((nBuffers + 1) >= (totalMemSize / (elementCount*Sizeof.cl_float))) )
 		{
-			MipavUtil.displayInfo( (elementCount * Sizeof.cl_float) + " greater than " + maxAllocSize + " calling CPU version" );
+			MipavUtil.displayInfo( "Not enough GPU memory. Calling CPU version" );
 			m_iDeviceType = CL.CL_DEVICE_TYPE_CPU;
 			initCL(m_iDeviceType, null);maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
 			if ( elementCount > (maxAllocSize / (Sizeof.cl_float)) )
 			{
-				MipavUtil.displayError( "Image size too big " + (elementCount * Sizeof.cl_float) + " greater than " + maxAllocSize );
+				MipavUtil.displayError( "Image size too big." );
 				return;
 			}
 		}
@@ -1071,17 +1074,19 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	{
 		initCL(m_iDeviceType, null);
 
+		int nBuffers = 7;
 		int elementCount = width * height * depth * color;		
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( elementCount > (maxAllocSize / (Sizeof.cl_float)) )
+		long totalMemSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_GLOBAL_MEM_SIZE);
+		if ( (elementCount > (maxAllocSize / (Sizeof.cl_float))) || ((nBuffers + 1) >= (totalMemSize / (elementCount*Sizeof.cl_float))) )
 		{
-			MipavUtil.displayInfo( (elementCount * Sizeof.cl_float) + " greater than " + maxAllocSize + " calling CPU version" );
+			MipavUtil.displayInfo( "Not enough GPU memory. Calling CPU version" );
 			m_iDeviceType = CL.CL_DEVICE_TYPE_CPU;
 			initCL(m_iDeviceType, null);
 			maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
 			if ( elementCount > (maxAllocSize / (Sizeof.cl_float)) )
 			{
-				MipavUtil.displayError( "Image size too big " + (elementCount * Sizeof.cl_float) + " greater than " + maxAllocSize );
+				MipavUtil.displayError( "Image size too big." );
 				return;
 			}
 		}
