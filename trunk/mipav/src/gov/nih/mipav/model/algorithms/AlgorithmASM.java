@@ -10,9 +10,9 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIVector;
-//import gov.nih.mipav.model.structures.jama.GeneralizedEigenvalue;
-
+import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -20,16 +20,20 @@ import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.awt.Color;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.zip.Inflater;
-
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 
@@ -65,7 +69,7 @@ import Jama.SingularValueDecomposition;
  
  *
  */
-public class AlgorithmASM extends AlgorithmBase  {
+public class AlgorithmASM extends AlgorithmBase {
     
 //~ Instance fields ------------------------------------------------------------------------------------------------
     private String fileDir = "C:/Active Models/Fotos/";
@@ -77,6 +81,8 @@ public class AlgorithmASM extends AlgorithmBase  {
     private double Vertices[][];
     
     private int Lines[][];
+    
+    private boolean noKey = true;
     
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -132,6 +138,7 @@ public class AlgorithmASM extends AlgorithmBase  {
     public class TData {
         public double offsetv[] = new double[2];
         public double offsetr;
+        public double offsets;
     }
     
     public class ASMData {
@@ -168,7 +175,6 @@ public class AlgorithmASM extends AlgorithmBase  {
         public LandData Landmarks[];
         public PData PCAData[];
     }
-    
 
     public void ASM_2D_example() {
         int i;
@@ -181,6 +187,14 @@ public class AlgorithmASM extends AlgorithmBase  {
         FileInfoBase fileInfo;
         ASMData TrainingData[];
         SData ShapeData = null;
+        ModelImage Itest;
+        TData tform;
+        double pos[][];
+        VOIVector voiVector;
+        VOI initialVOI = null;
+        VOIBaseVector curves;
+        int nPoints;
+        Vector3f pointLoc;
         // This is an example of a working basic Active Shape Model, with a few hand pictures.
         
         // Literature used: Ginneken B. et al., "Active Shape Model Segmentation with Optimal Features",
@@ -249,6 +263,73 @@ public class AlgorithmASM extends AlgorithmBase  {
         // used to build correlation matrices for each landmark.  Which are used
         // in the optimization step, to find the best fit.
         ASM_MakeAppearanceModel2D(TrainingData, options);
+        
+        // Test the ASM Model
+        fileName = "test001.jpg";
+        fileIO = new FileIO();
+        // Image is ARGB.  Data should be converted to double.
+        Itest = fileIO.readImage(fileName, fileDir, multiFile, fileInfo);
+        new ViewJFrameImage(Itest);
+        
+        // Initial position offset and rotation of the initial/mean contour
+        tform = new TData();
+        // tform.offsetv = [0 0];
+        tform.offsetr = -0.3;
+        tform.offsets = 117;
+        pos = new double[ShapeData.x_mean.length/2][2];
+        for (i = 0; i < ShapeData.x_mean.length/2; i++) {
+            pos[i][0] = ShapeData.x_mean[i];
+            pos[i][1] = ShapeData.x_mean[ShapeData.x_mean.length/2 + i];
+        }
+        ASM_align_data_inverse2D(pos, tform);
+        
+        // Select the best starting position with the mouse
+        // Figures 5 and 6 in A Brief Introduction to Statistical Shape Analysis by Mikkel B. Stegmann 
+        // and David Delgado Gomez show the starting point to be the intersection of the thumb and the wrist.
+        System.out.println("Select the best starting position with a point VOI");
+        System.out.println("This is the intersection of the thumb and the wrist");
+        System.out.println("Hit any key when point is positioned");
+       
+        System.out.println("I made it past");
+        nPoints = 0;
+        voiVector = Itest.getVOIs();
+        for (i = 0; i < voiVector.size(); i++) {
+            initialVOI = voiVector.VOIAt(i);
+            if (initialVOI.getCurveType() == VOI.POINT) {
+                curves = initialVOI.getCurves();
+                nPoints += curves.size();
+            }
+        }
+        if (nPoints == 0) {
+            MipavUtil.displayError("No points were present");
+            return;
+        }
+        else if (nPoints > 1) {
+            MipavUtil.displayError(nPoints + " points were selected instead of only 1");
+            return;
+        }
+        pointLoc = initialVOI.exportPoint();
+        tform.offsetv[0] = -pointLoc.X;
+        tform.offsetv[1] = -pointLoc.Y;
+    }
+    
+    private void ASM_align_data_inverse2D(double pos[][], TData tform) {
+        int i;
+        int len;
+        double rot;
+        double dist;
+        // Correct for rotation  
+        len = pos.length;
+        for (i = 0; i < len; i++) {
+            rot = Math.atan2(pos[i][1], pos[i][0]);
+            rot = rot - tform.offsetr;
+            dist = Math.sqrt(pos[i][0]*pos[i][0] + pos[i][1]*pos[i][1]);
+            // tform.offsets
+            pos[i][0] = dist*Math.cos(rot);
+            pos[i][1] = dist*Math.sin(rot);
+            pos[i][0] = pos[i][0] - tform.offsetv[0];
+            pos[i][1] = pos[i][1] - tform.offsetv[1];
+        } // for (i = 0; i < len; i++)
     }
     
     // Gray-Level Appearance Model
@@ -294,7 +375,7 @@ public class AlgorithmASM extends AlgorithmBase  {
         double sum;
         double Evectors2[][];
         double Evalues2[];
-        //GeneralizedInverse ge;
+        GeneralizedInverse2 ge;
         
         // Number of TrainingData sets
         s = TrainingData.length;
@@ -415,9 +496,9 @@ public class AlgorithmASM extends AlgorithmBase  {
                 dgtMat = dgMat.transpose();
                 sMat = dgtMat.times(dgMat).times(1.0/(s - 1.0));
                 AppearanceData[itt_res].Landmarks[j].S = sMat.getArray();
-                //ge = new GeneralizedInverse(AppearanceData[itt_res].Landmarks[j].S, s, s);
-                //AppearanceData[itt_res].Landmarks[j].Sinv = ge.pinv();
-                AppearanceData[itt_res].Landmarks[j].Sinv = sMat.inverse().getArray();
+                ge = new GeneralizedInverse2(AppearanceData[itt_res].Landmarks[j].S, s, s);
+                AppearanceData[itt_res].Landmarks[j].Sinv = ge.pinv();
+                //AppearanceData[itt_res].Landmarks[j].Sinv = sMat.inverse().getArray();
                 AppearanceData[itt_res].Landmarks[j].dg_mean = dg_mean;
                 
                 // The new search method using PCA on intensities, and minimizing
