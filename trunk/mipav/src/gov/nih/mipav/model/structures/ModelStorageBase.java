@@ -6221,13 +6221,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final boolean set(final int[] position, final Number value) {
         int i;
+        int j;
         int location = 0;
+        int prod;
         final int dimensions = position.length;
 
         if (nDims == dimensions) {
 
             for (i = dimensions - 1; i > 0; i--) {
-                location += (position[i] * dimExtents[i]);
+                prod = dimExtents[0];
+                for (j = 1; j <= i-1; j++) {
+                    prod *= dimExtents[j];
+                }
+                location += (position[i] * prod);
             }
 
             location += position[0];
@@ -6264,11 +6270,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final boolean value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6293,11 +6305,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final byte value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6312,11 +6330,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final short value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6341,11 +6365,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final int value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6370,11 +6400,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final long value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6399,11 +6435,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final float value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
@@ -6428,11 +6470,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final void set(final int[] position, final double value) {
         int i;
+        int j;
+        int prod;
         int location = 0;
         final int dimensions = position.length;
-
+        
         for (i = dimensions - 1; i > 0; i--) {
-            location += (position[i] * dimExtents[i]);
+            prod = dimExtents[0];
+            for (j = 1; j <= i-1; j++) {
+                prod *= dimExtents[j];
+            }
+            location += (position[i] * prod);
         }
 
         location += position[0];
