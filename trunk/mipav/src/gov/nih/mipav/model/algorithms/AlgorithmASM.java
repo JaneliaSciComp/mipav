@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
 
@@ -18,8 +19,16 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameGraph;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -30,6 +39,15 @@ import java.io.RandomAccessFile;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.zip.Inflater;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -69,7 +87,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  
  *
  */
-public class AlgorithmASM extends AlgorithmBase {
+public class AlgorithmASM extends AlgorithmBase implements ActionListener {
     
 //~ Instance fields ------------------------------------------------------------------------------------------------
     private String fileDir = "C:/Active Models/Fotos/";
@@ -82,7 +100,17 @@ public class AlgorithmASM extends AlgorithmBase {
     
     private int Lines[][];
     
-    private boolean noKey = true;
+    private JDialog pauseDialog = null;
+    
+    private ModelImage Itest = null;
+    
+    private VOI initialVOI = null;
+    
+    private JButton OKButton = null;
+    
+    private boolean pressedOK = false;
+    
+    private ViewJFrameImage testFrame = null;
     
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -186,14 +214,10 @@ public class AlgorithmASM extends AlgorithmBase {
         boolean multiFile;
         FileInfoBase fileInfo;
         ASMData TrainingData[];
+        AppData AppearanceData[];
         SData ShapeData = null;
-        ModelImage Itest;
         TData tform;
         double pos[][];
-        VOIVector voiVector;
-        VOI initialVOI = null;
-        VOIBaseVector curves;
-        int nPoints;
         Vector3f pointLoc;
         // This is an example of a working basic Active Shape Model, with a few hand pictures.
         
@@ -249,6 +273,23 @@ public class AlgorithmASM extends AlgorithmBase {
             TrainingData[i-1].Vertices = Vertices;
             TrainingData[i-1].Lines = Lines;
             TrainingData[i-1].I = I;
+            /*if (i == 1) {
+                float xArr[] = new float[1];
+                float yArr[] = new float[1];
+                float zArr[] = new float[1];
+                for (int j = 0; j < Vertices.length; j++) {
+                    VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
+                    newPtVOI.setColor(Color.RED);
+                    xArr[0] = (float)Vertices[j][0];
+                    yArr[0] = (float)Vertices[j][1];
+                    zArr[0] = 0.0f;
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    I.registerVOI(newPtVOI);
+                }
+                new ViewJFrameImage(I);
+                return;
+            } // if (i == 1) */
         } // for (i = 1; i <= 10; i++)
         
         // Shape Model
@@ -262,14 +303,15 @@ public class AlgorithmASM extends AlgorithmBase {
         // perpendicular to each contour point in each training data set. Which is
         // used to build correlation matrices for each landmark.  Which are used
         // in the optimization step, to find the best fit.
-        ASM_MakeAppearanceModel2D(TrainingData, options);
+        AppearanceData = new AppData[options.nscales];
+        ASM_MakeAppearanceModel2D(TrainingData, options, AppearanceData);
         
         // Test the ASM Model
         fileName = "test001.jpg";
         fileIO = new FileIO();
         // Image is ARGB.  Data should be converted to double.
         Itest = fileIO.readImage(fileName, fileDir, multiFile, fileInfo);
-        new ViewJFrameImage(Itest);
+        testFrame = new ViewJFrameImage(Itest);
         
         // Initial position offset and rotation of the initial/mean contour
         tform = new TData();
@@ -286,31 +328,382 @@ public class AlgorithmASM extends AlgorithmBase {
         // Select the best starting position with the mouse
         // Figures 5 and 6 in A Brief Introduction to Statistical Shape Analysis by Mikkel B. Stegmann 
         // and David Delgado Gomez show the starting point to be the intersection of the thumb and the wrist.
-        System.out.println("Select the best starting position with a point VOI");
-        System.out.println("This is the intersection of the thumb and the wrist");
-        System.out.println("Hit any key when point is positioned");
-       
-        System.out.println("I made it past");
-        nPoints = 0;
-        voiVector = Itest.getVOIs();
-        for (i = 0; i < voiVector.size(); i++) {
-            initialVOI = voiVector.VOIAt(i);
-            if (initialVOI.getCurveType() == VOI.POINT) {
-                curves = initialVOI.getCurves();
-                nPoints += curves.size();
-            }
+        createPauseDialog(this);
+
+        while (!pressedOK) {
+
+            try {
+                sleep(5L);
+            } catch (InterruptedException error) { }
         }
-        if (nPoints == 0) {
-            MipavUtil.displayError("No points were present");
-            return;
-        }
-        else if (nPoints > 1) {
-            MipavUtil.displayError(nPoints + " points were selected instead of only 1");
-            return;
-        }
+    
         pointLoc = initialVOI.exportPoint();
         tform.offsetv[0] = -pointLoc.X;
         tform.offsetv[1] = -pointLoc.Y;
+        
+        // Apply the ASM model on the test image
+        ASM_ApplyModel2D(Itest, tform, ShapeData, AppearanceData, options);
+    }
+    
+    private void ASM_ApplyModel2D(ModelImage Itest, TData tform, SData ShapeData, AppData AppearanceData[], Options options) {
+        int n1;
+        int i;
+        double pos[][];
+        int itt_res;
+        double scale;
+        PData PCAData[];
+        int itt;
+        double N[][];
+        int n;
+        int oXdim;
+        int oYdim;
+        float oXres;
+        float oYres;
+        TransMatrix xfrm;
+        int interp = AlgorithmTransform.BILINEAR;
+        int units[];
+        AlgorithmTransform algoTrans;
+        boolean doVOI = false;
+        boolean doClip = true;
+        boolean doPad = false;
+        boolean doRotateCenter = false;
+        Vector3f center = null;
+        boolean doUpdateOrigin = true;
+        float fillValue;
+        ModelImage IScaledTest;
+        int j;
+        double gt[][];
+        double dgt[][];
+        int cf;
+        double scaledPos[][];
+        double f[][];
+        double gi[];
+        int k;
+        int coffset;
+        int coffset2;
+        int m;
+        double v[];
+        double mid[];
+        double bc[];
+        double minVal;
+        int iArr[];
+        int movement[];
+        double x_search[];
+        double b[];
+        double maxb;
+        // Optimization
+        
+        // Show the test image if not shown
+        if (testFrame == null) {
+            testFrame = new ViewJFrameImage(Itest);
+        }
+        
+        // The initial contour is the mean training data set contour
+        n1 = ShapeData.x_mean.length/2;
+        pos = new double[n1][2];
+        for (i = 0; i < n1; i++) {
+            pos[i][0] = ShapeData.x_mean[i];
+            pos[i][1] = ShapeData.x_mean[i+n1];
+        }
+        
+        // Position the initial contour at a location close to the correct location
+        ASM_align_data_inverse2D(pos, tform);
+        
+        // Optimize from a rough to a fine image
+        for (itt_res = options.nscales-1; itt_res >= 0; itt_res--) {
+            // Scaling of the image  
+            scale = Math.pow(2.0, -itt_res);
+            
+            PCAData = AppearanceData[itt_res].PCAData;
+            
+            // Do 50 ASM iterations
+            for (itt = 1; itt <= options.nsearch; itt++) {
+                // Plot the contour -leave out for now.  This would be 50 * 3 = 150 plots.
+                
+                // Calculate the normals of the contour points
+                N = ASM_GetContourNormals2D(pos, ShapeData.Lines);
+                
+                // Create long intensity profiles on the contour normals, for search
+                // of best point fit, using the correlation matrices made in the
+                // appearance model.
+                
+                // Total intensity line-profile needed, is the traingingLength + the
+                // search length in both normal directions.
+                n = options.k + options.ns;
+                
+                // Get the intensity profiles of all landmarks and their first order
+                // derivatives
+                oXdim = (int)Math.round(Itest.getExtents()[0] * scale);
+                oYdim = (int)Math.round(Itest.getExtents()[1] * scale);
+                oXres = Itest.getFileInfo(0).getResolutions()[0] * (Itest.getExtents()[0] - 1) / (oXdim - 1);
+                oYres = Itest.getFileInfo(0).getResolutions()[1] * (Itest.getExtents()[1] - 1) / (oYdim - 1);
+                xfrm = new TransMatrix(3);
+                Itest.makeUnitsOfMeasureIdentical();
+                units = new int[Itest.getUnitsOfMeasure().length];
+                for (i = 0; i < units.length; i++) {
+                    units[i] = Itest.getUnitsOfMeasure(i);
+                }
+                Itest.calcMinMax();
+                fillValue = (float)Itest.getMin();
+                algoTrans = new AlgorithmTransform(Itest, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                        doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.run();
+                IScaledTest = algoTrans.getTransformedImage();
+                IScaledTest.calcMinMax();
+                if (algoTrans != null) {
+                    algoTrans.disposeLocal();
+                    algoTrans = null;
+                }
+                cf = 1;
+                if (IScaledTest.isColorImage()) {
+                    cf = 3;
+                }
+                scaledPos = new double[n1][2];
+                for (i = 0; i < n1; i++) {
+                    for (j = 0; j < 2; j++) {
+                        scaledPos[i][j] = scale * pos[i][j];
+                    }
+                }
+                gt = new double[(2*n+1)*cf][pos.length];
+                dgt = new double[(2*n+1)*cf][pos.length];
+                ASM_getProfileAndDerivatives2D(IScaledTest, scaledPos, N, n, gt, dgt);
+                // Loop through all contour points
+                f = new double[2*options.ns+1][n1];
+                for (j = 0; j < n1; j++) {
+                    // Search through the large sampled profile, for the optimal position
+                    for (i = 0; i <= 2*options.ns; i++) {
+                        // A profile from the large profile, with the length of the
+                        // training profile (for rgb image 3x as long)
+                        gi = new double[cf * (2*options.k+1)];
+                        if (options.originalsearch) {
+                            for (k = 0; k < cf; k++) {
+                                coffset = k*(2*options.k+1);
+                                coffset2 = k*(2*options.ns+1);
+                                for (m = 0; m <= 2*options.k; m++) {
+                                    gi[coffset+m] = dgt[i+coffset2+m][j];
+                                } // for (m = 0; m <= 2*options.k; m++)
+                            } // for (k = 0; k < cf; k++)
+                            // Calculate the Mahalanobis distance from the current profile
+                            // to the training data sets profiles through an inverse
+                            // correlation matrix.
+                            v = new double[cf*(2*options.k+1)];
+                            for (k = 0; k < cf*(2*options.k+1); k++) {
+                                v[k] = (gi[k] - AppearanceData[itt_res].Landmarks[j].dg_mean[k]);
+                            } // for (k = 0; k < cf*(2*options.k+1); k++)
+                            mid = new double[cf*(2*options.k+1)];
+                            for (k = 0; k < cf*(2*options.k+1); k++) {
+                                for (m = 0; m < cf*(2*options.k); k++) {
+                                    mid[k] += v[m]*AppearanceData[itt_res].Landmarks[j].Sinv[k][m];
+                                }
+                            }
+                            f[i][j] = 0.0;
+                            for (k = 0; k < cf*(2*options.k+1); k++) {
+                                f[i][j] += mid[k] * v[k];
+                            }
+                        } // if (options.originalsearch)
+                        else {
+                            for (k = 0; k < cf; k++) {
+                                coffset = k*(2*options.k+1);
+                                coffset2 = k*(2*options.ns+1);
+                                for (m = 0; m <= 2*options.k; m++) {
+                                    gi[coffset+m] = gt[i+coffset2+m][j];
+                                } // for (m = 0; m <= 2*options.k; m++)
+                            } // for (k = 0; k < cf; k++) 
+                            // Calculate the PCA parameters, and normalize them with the variances
+                            // (Seems to work better with color images than the original method)
+                            bc = new double[PCAData[j].Evectors[0].length];
+                            for (k = 0; k < bc.length; k++) {
+                                for (m = 0; m < cf*(2*options.k+1); m++) {
+                                    bc[k] += PCAData[j].Evectors[m][k] *(gi[m] - PCAData[j].Emean[m]);
+                                }
+                            }
+                            f[i][j] = 0.0;
+                            for (k = 0; k < bc.length; k++) {
+                                bc[k] = bc[k]/(Math.sqrt(PCAData[j].Evalues[k]));
+                                f[i][j] += (bc[k]*bc[k]);                            
+                            }
+                        } // else !options.originalsearch
+                    } // for (i = 0; i <= 2*options.ns; i++)
+                } // for (j = 0; j < n1; j++)
+                // Find the lowest Mahalanobis distance, and store it as movement step
+                iArr = new int[n1];
+                for (j = 0; j < n1; j++) {
+                    minVal = Double.MAX_VALUE;
+                    iArr[j] = -1;
+                    for (i = 0; i <= 2*options.ns; i++) {
+                        if (f[i][j] < minVal) {
+                            minVal = f[i][j];
+                            iArr[j] = i;
+                        }
+                    }
+                } // for (j = 0; j < n1; j++)
+                movement = new int[n1];
+                for (j = 0; j < n1; j++) {
+                    movement[j] = iArr[j] - options.ns;
+                }
+                
+                // Move the points to their new optimal positions
+                for (j = 0; j < n1; j++) {
+                    pos[j][0] = pos[j][0] + (1.0/scale)*movement[j]*N[j][0];
+                    pos[j][1] = pos[j][1] + (1.0/scale)*movement[j]*N[j][1];
+                }
+                
+                // Show new positions
+                
+                // Remove translation and rotation, as done when training the model
+                ASM_align_data2D(pos, tform);
+                
+                // Describe the model by a vector b with model parameters
+                x_search = new double[2*n1];
+                for (j = 0; j < n1; j++) {
+                    x_search[j] = pos[j][0];
+                    x_search[j+n1] = pos[j][1];
+                }
+                b = new double[ShapeData.Evectors[0].length];
+                for (j = 0; j < ShapeData.Evectors[0].length; j++) {
+                    for (i = 0; i < 2*n1; i++) {
+                        b[j] += (ShapeData.Evectors[i][j] * (x_search[i] - ShapeData.x_mean[i]));
+                    }
+                }
+                
+                // Limit the model parameters based on what is considered a normal
+                // contour, using the eigenvalues of the PCA model
+                for (j = 0; j < b.length; j++) {
+                    maxb = options.m * Math.sqrt(ShapeData.Evalues[j]);
+                    b[j] = Math.max(Math.min(b[j],maxb), -maxb);
+                }
+                
+                // Transfrom the model parameter vector b back to contour positions
+                mid = new double[2*n1];
+                for (j = 0; j < 2*n1; j++) {
+                    for (i = 0; i < b.length; i++) {
+                        mid[j] += ShapeData.Evectors[j][i]*b[i];    
+                    }
+                    x_search[j] = ShapeData.x_mean[j] + mid[j];
+                }
+                
+                for (j = 0; j < n1; j++) {
+                    pos[j][0] = x_search[j];
+                    pos[j][1] = x_search[j+n1];
+                }
+                
+                // Now add the previously removed translation and rotation
+                ASM_align_data_inverse2D(pos, tform);
+            } // for (itt = 1; itt <= options.nsearch; itt++)
+        } // for (itt_res = options.nscales-1; itt_res >= 0; itt_res--)
+    }
+    
+    private void createPauseDialog(ActionListener al) {
+        JPanel panel;
+        TitledBorder border;
+        Font serif12, serif12B;
+        JLabel label1;
+        JLabel label2;
+
+        pauseDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Press OK to continue", false);
+        pauseDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
+                                  (pauseDialog.getBounds().width / 2),
+                                  (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
+                                  (pauseDialog.getBounds().height / 2));
+        pauseDialog.getContentPane().setLayout(new GridBagLayout());
+
+        pauseDialog.setSize(300, 160);
+
+        serif12 = MipavUtil.font12;
+        serif12B = MipavUtil.font12B;
+
+        panel = new JPanel();
+        panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+        panel.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.setForeground(Color.black);
+        border = new TitledBorder("Instructions");
+        border.setTitleColor(Color.black);
+        border.setBorder(new EtchedBorder());
+        border.setTitleFont(serif12B);
+        panel.setBorder(border);
+        pauseDialog.getContentPane().add(panel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        label1 = new JLabel("Select the best starting postion with a point VOI");
+        label1.setForeground(Color.black);
+        label1.setFont(serif12);
+        panel.add(label1, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        label2 = new JLabel("This is the intersection of the thumb and the wrist");
+        label2.setForeground(Color.black);
+        label2.setFont(serif12);
+        panel.add(label2, gbc);
+
+        JPanel buttonPanel = new JPanel();
+        OKButton = new JButton("OK");
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
+        OKButton.addActionListener(al);
+        buttonPanel.add(OKButton);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        pauseDialog.getContentPane().add(buttonPanel, gbc);
+        pauseDialog.setResizable(true);
+        pauseDialog.setVisible(true);
+
+    }
+
+    // ************************************************************************
+    // **************************** Action Events *****************************
+    // ************************************************************************
+
+    /**
+     * Calls various methods depending on the action.
+     *
+     * @param  event  event that triggered function
+     */
+    public void actionPerformed(ActionEvent event) {
+        int nPoints;
+        VOIVector voiVector;
+        VOIBaseVector curves;
+        int i;
+        Object source = event.getSource();
+
+        if (source == OKButton) {
+            nPoints = 0;
+            voiVector = Itest.getVOIs();
+            for (i = 0; i < voiVector.size(); i++) {
+                initialVOI = voiVector.VOIAt(i);
+                if (initialVOI.getCurveType() == VOI.POINT) {
+                    curves = initialVOI.getCurves();
+                    nPoints += curves.size();
+                }
+            }
+            if (nPoints == 0) {
+                MipavUtil.displayError("No points were present");
+                return;
+            }
+            else if (nPoints > 1) {
+                MipavUtil.displayError(nPoints + " points were selected instead of only 1");
+                return;
+            } 
+            else {
+                pauseDialog.dispose();
+                pressedOK = true;
+            }
+        }
     }
     
     private void ASM_align_data_inverse2D(double pos[][], TData tform) {
@@ -333,7 +726,7 @@ public class AlgorithmASM extends AlgorithmBase {
     }
     
     // Gray-Level Appearance Model
-    private void ASM_MakeAppearanceModel2D(ASMData[] TrainingData, Options options) {
+    private void ASM_MakeAppearanceModel2D(ASMData[] TrainingData, Options options, AppData AppearanceData[]) {
         int s;
         int n1;
         int i;
@@ -392,7 +785,6 @@ public class AlgorithmASM extends AlgorithmBase {
         // Don't warn of this
         
         // Get the landmark profiles for 3 image scales (for multiscale ASM)
-        AppData AppearanceData[] = new AppData[options.nscales];
         for (itt_res = 0; itt_res < options.nscales; itt_res++) {
             AppearanceData[itt_res] = new AppData();
             AppearanceData[itt_res].Landmarks = new LandData[n1];
@@ -3748,48 +4140,6 @@ public class AlgorithmASM extends AlgorithmBase {
                                 buffer = new byte[realDataBytes];
                                 raFile.read(buffer);
                                 doubleNumber = realDataBytes/8;
-                                p.x = new double[doubleNumber];
-                                j = 0;
-                                for (s = 0; s < p.n; s++) {
-                                    index = 8*s;
-                                    b1L = buffer[index] & 0xffL;
-                                    b2L = buffer[index+1] & 0xffL;
-                                    b3L = buffer[index+2] & 0xffL;
-                                    b4L = buffer[index+3] & 0xffL;
-                                    b5L = buffer[index+4] & 0xffL;
-                                    b6L = buffer[index+5] & 0xffL;
-                                    b7L = buffer[index+6] & 0xffL;
-                                    b8L = buffer[index+7] & 0xffL;
-                                    if (endianess == BIG_ENDIAN) {
-                                        tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
-                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);   
-                                    }
-                                    else {
-                                        tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
-                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
-                                    }
-                                    p.x[j++] = Double.longBitsToDouble(tmpLong); 
-                                }
-                                
-                                if (haveSmallRealData) {
-                                    if (realDataBytes < 4) {
-                                        padBytes = 4 - realDataBytes;
-                                        for (i = 0; i < padBytes; i++) {
-                                            raFile.readByte();
-                                        }
-                                    }
-                                }
-                                else if ((realDataBytes % 8) != 0) {
-                                    padBytes = 8 - (realDataBytes % 8);
-                                    for (i = 0; i < padBytes; i++) {
-                                        raFile.readByte();
-                                    }
-                                }      
-                            }
-                            else if (field == 2) {
-                                buffer = new byte[realDataBytes];
-                                raFile.read(buffer);
-                                doubleNumber = realDataBytes/8;
                                 p.y = new double[doubleNumber];
                                 j = 0;
                                 for (s = 0; s < p.n; s++) {
@@ -3811,6 +4161,48 @@ public class AlgorithmASM extends AlgorithmBase {
                                                    (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                     }
                                     p.y[j++] = Double.longBitsToDouble(tmpLong); 
+                                }
+                                
+                                if (haveSmallRealData) {
+                                    if (realDataBytes < 4) {
+                                        padBytes = 4 - realDataBytes;
+                                        for (i = 0; i < padBytes; i++) {
+                                            raFile.readByte();
+                                        }
+                                    }
+                                }
+                                else if ((realDataBytes % 8) != 0) {
+                                    padBytes = 8 - (realDataBytes % 8);
+                                    for (i = 0; i < padBytes; i++) {
+                                        raFile.readByte();
+                                    }
+                                }      
+                            }
+                            else if (field == 2) {
+                                buffer = new byte[realDataBytes];
+                                raFile.read(buffer);
+                                doubleNumber = realDataBytes/8;
+                                p.x = new double[doubleNumber];
+                                j = 0;
+                                for (s = 0; s < p.n; s++) {
+                                    index = 8*s;
+                                    b1L = buffer[index] & 0xffL;
+                                    b2L = buffer[index+1] & 0xffL;
+                                    b3L = buffer[index+2] & 0xffL;
+                                    b4L = buffer[index+3] & 0xffL;
+                                    b5L = buffer[index+4] & 0xffL;
+                                    b6L = buffer[index+5] & 0xffL;
+                                    b7L = buffer[index+6] & 0xffL;
+                                    b8L = buffer[index+7] & 0xffL;
+                                    if (endianess == BIG_ENDIAN) {
+                                        tmpLong = ((b1L << 56) | (b2L << 48) | (b3L << 40) | (b4L << 32) |
+                                                   (b5L << 24) | (b6L << 16) | (b7L << 8) | b8L);   
+                                    }
+                                    else {
+                                        tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
+                                                   (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
+                                    }
+                                    p.x[j++] = Double.longBitsToDouble(tmpLong); 
                                 }
                                 
                                 if (haveSmallRealData) {
