@@ -494,8 +494,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                             } // for (k = 0; k < cf*(2*options.k+1); k++)
                             mid = new double[cf*(2*options.k+1)];
                             for (k = 0; k < cf*(2*options.k+1); k++) {
-                                for (m = 0; m < cf*(2*options.k); k++) {
-                                    mid[k] += v[m]*AppearanceData[itt_res].Landmarks[j].Sinv[k][m];
+                                for (m = 0; m < cf*(2*options.k+1); m++) {
+                                    mid[k] += v[m]*AppearanceData[itt_res].Landmarks[j].Sinv[m][k];
                                 }
                             }
                             f[i][j] = 0.0;
@@ -575,7 +575,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                     b[j] = Math.max(Math.min(b[j],maxb), -maxb);
                 }
                 
-                // Transfrom the model parameter vector b back to contour positions
+                // Transform the model parameter vector b back to contour positions
                 mid = new double[2*n1];
                 for (j = 0; j < 2*n1; j++) {
                     for (i = 0; i < b.length; i++) {
@@ -593,6 +593,20 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                 ASM_align_data_inverse2D(pos, tform);
             } // for (itt = 1; itt <= options.nsearch; itt++)
         } // for (itt_res = options.nscales-1; itt_res >= 0; itt_res--)
+        
+        float xArr[] = new float[1];
+        float yArr[] = new float[1];
+        float zArr[] = new float[1];
+        for (j = 0; j < pos.length; j++) {
+            VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
+            newPtVOI.setColor(Color.RED);
+            xArr[0] = (float)pos[j][0];
+            yArr[0] = (float)pos[j][1];
+            zArr[0] = 0.0f;
+            newPtVOI.importCurve(xArr, yArr, zArr);
+            ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+            Itest.registerVOI(newPtVOI);
+        }
     }
     
     private void createPauseDialog(ActionListener al) {
@@ -753,7 +767,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         float fillValue;
         ModelImage Ismall;
         double N[][];
-        int cf;
+        int cf = 1;
         int p1;
         double dg[][];
         double dg_mean[];
@@ -833,19 +847,65 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             
             if (options.verbose) {
                 for (i = 0; i < s; i++) {
+                    if (cf == 1) {
                     float mean[] = new float[(2*options.k+1)];
-                    for (j = 0; j < 2*options.k+1; j++) {
+                    for (j = 0; j < (2*options.k+1); j++) {
                         for (m = 0; m < P.length; m++) {
                             mean[j] += TrainingData[i].GrayProfiles[j][m];
                         }
                         mean[j] = mean[j]/P.length;
                     }
                     
-                    float xax[] = new float[2*options.k+1];
+                    float xax[] = new float[(2*options.k+1)];
                     for (j = 0; j < 2*options.k+1; j++) {
                         xax[j] = j;
                     }
-                    new ViewJFrameGraph(xax, mean, "Mean intensity profile", "", "", Color.BLUE); 
+                    new ViewJFrameGraph(xax, mean, "Mean intensity profile", "", "", Color.BLUE);
+                    } //if (cf == 1)
+                    else {
+                        float meanr[] = new float[(2*options.k+1)];
+                        for (j = 0; j < (2*options.k+1); j++) {
+                            for (m = 0; m < P.length; m++) {
+                                meanr[j] += TrainingData[i].GrayProfiles[j][m];
+                            }
+                            meanr[j] = meanr[j]/P.length;
+                        }
+                        
+                        float xaxr[] = new float[(2*options.k+1)];
+                        for (j = 0; j < 2*options.k+1; j++) {
+                            xaxr[j] = j;
+                        }
+                        new ViewJFrameGraph(xaxr, meanr, "Red mean intensity profile", "", "", Color.RED);
+                        
+                        float meang[] = new float[(2*options.k+1)];
+                        for (j = 0; j < (2*options.k+1); j++) {
+                            for (m = 0; m < P.length; m++) {
+                                meang[j] += TrainingData[i].GrayProfiles[(2*options.k+1)+j][m];
+                            }
+                            meang[j] = meang[j]/P.length;
+                        }
+                        
+                        float xaxg[] = new float[(2*options.k+1)];
+                        for (j = 0; j < 2*options.k+1; j++) {
+                            xaxg[j] = j;
+                        }
+                        new ViewJFrameGraph(xaxg, meang, "Green mean intensity profile", "", "", Color.GREEN);
+                        
+                        float meanb[] = new float[(2*options.k+1)];
+                        for (j = 0; j < (2*options.k+1); j++) {
+                            for (m = 0; m < P.length; m++) {
+                                meanb[j] += TrainingData[i].GrayProfiles[2*(2*options.k+1)+j][m];
+                            }
+                            meanb[j] = meanb[j]/P.length;
+                        }
+                        
+                        float xaxb[] = new float[(2*options.k+1)];
+                        for (j = 0; j < 2*options.k+1; j++) {
+                            xaxb[j] = j;
+                        }
+                        new ViewJFrameGraph(xaxb, meanb, "Blue mean intensity profile", "", "", Color.BLUE);
+                        
+                    }
                 }
             } // if (options.verbose)
             
@@ -880,15 +940,18 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                     }
                 } // for (m = 0; m < p1; m++)
                 // Calculate the covariance matrix and its inverse
-                // The covariance removes the mean from each column
-                // For dg' the matrix is [s][p1], where there are s rows and p1 columns
-                // The mean has already been removed by each of the p1 columns
-                // Normalize by the number of observations - 1 or the number of rows -1 = s-1
+                // First index is row and second is column
+                // The covariance:
+                // 1.) removes the mean from each column
+                // 2.) Multiplies transpose times original
+                // 3.) Divide by number of rows - 1 in original
+                // dg' has s rows and p1 columns
+                // Have already subtracted out mean of s rows
                 dgMat = new Matrix(dg);
                 dgtMat = dgMat.transpose();
-                sMat = dgtMat.times(dgMat).times(1.0/(s - 1.0));
+                sMat = dgMat.times(dgtMat).times(1.0/(s - 1.0));
                 AppearanceData[itt_res].Landmarks[j].S = sMat.getArray();
-                ge = new GeneralizedInverse2(AppearanceData[itt_res].Landmarks[j].S, s, s);
+                ge = new GeneralizedInverse2(AppearanceData[itt_res].Landmarks[j].S, p1, p1);
                 AppearanceData[itt_res].Landmarks[j].Sinv = ge.pinv();
                 //AppearanceData[itt_res].Landmarks[j].Sinv = sMat.inverse().getArray();
                 AppearanceData[itt_res].Landmarks[j].dg_mean = dg_mean;
@@ -958,8 +1021,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         int i;
         double d1[] = new double[P.length];
         double d2[] = new double[P.length];
-        double xi[][] = new double[2*k+1][P.length];
-        double yi[][] = new double[2*k+1][P.length];
+        double xi[][] = new double[P.length][2*k+1];
+        double yi[][] = new double[P.length][2*k+1];
         double gt[][] = new double[2*k+1][P.length];
         double dgt[][] = new double[2*k+1][P.length];
         int j;
@@ -998,17 +1061,17 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                 }
             }
             for (j = 0; j < P.length; j++) {
-                d1[j] = k*(P[j][0] - N[j][0]);
-                d2[j] = k*(P[j][0] + N[j][0]);
+                d1[j] = (P[j][0] - N[j][0]*k);
+                d2[j] = (P[j][0] + N[j][0]*k);
             }
             linspace_multi(d1, d2, 2*k+1, xi);
             for (j = 0; j < P.length; j++) {
-                d1[j] = k*(P[j][1] - N[j][1]);
-                d2[j] = k*(P[j][1] + N[j][1]);
+                d1[j] = (P[j][1] - N[j][1]*k);
+                d2[j] = (P[j][1] + N[j][1]*k);
             }
             linspace_multi(d1, d2, 2*k+1, yi);
-            for (j = 0; j < 2*k+1; j++) {
-                for (m = 0; m < P.length; m++) {
+            for (j = 0; j < P.length; j++) {
+                for (m = 0; m < 2*k+1; m++) {
                     if (xi[j][m]  < 1.0) {
                         xi[j][m] = 1.0;
                     }
@@ -1027,18 +1090,18 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                     yfl = (int)Math.floor(yi[j][m]);
                     xce = xfl + 1;
                     yce = yfl + 1;
-                    gt[j][m] = buffer[xfl + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xce - xi[j][m]);
+                    gt[m][j] = buffer[xfl + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xce - xi[j][m]);
                     if (xfl < I.getExtents()[0] - 1) {
-                        gt[j][m] += buffer[xce + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xi[j][m] - xfl);
+                        gt[m][j] += buffer[xce + I.getExtents()[0]*yfl]*(yce - yi[j][m])*(xi[j][m] - xfl);
                     }
                     if (yfl < I.getExtents()[1] - 1) {
-                        gt[j][m] += buffer[xfl + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xce - xi[j][m]);
+                        gt[m][j] += buffer[xfl + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xce - xi[j][m]);
                     }
                     if ((xfl < I.getExtents()[0] - 1) && (yfl < I.getExtents()[1] - 1)) {
-                        gt[j][m] += buffer[xce + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xi[j][m] - xfl);
+                        gt[m][j] += buffer[xce + I.getExtents()[0]*yce]*(yi[j][m] - yfl)*(xi[j][m] - xfl);
                     }
-                    if (Double.valueOf(gt[j][m]).isNaN()) {
-                        gt[j][m] = 0.0;
+                    if (Double.valueOf(gt[m][j]).isNaN()) {
+                        gt[m][j] = 0.0;
                     }
                 } // for (m = 0; m < P.length; m++)
             } // for (j = 0; j < 2*k+1; j++)
@@ -1076,29 +1139,29 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
     }
     
     private void linspace_multi(double d1[], double d2[], int n, double X[][]) {
-      double A[][] = new double[n-1][d1.length];
-      double B[][] = new double[n-1][d1.length];
+      double A[][] = new double[d1.length][n-1];
+      double B[][] = new double[d1.length][n-1];
       int i;
       int j;
       
-      for (j = 0; j < d1.length; j++) {
-          for (i = 0; i <= n-2; i++) {
-              A[i][j] = i;
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
+              A[i][j] = j;
           }
       }
       
-      for (j = 0; j < d1.length; j++) {
-          for (i = 0; i <= n-2; i++) {
-              B[i][j] = (d2[j] - d1[j]);
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
+              B[i][j] = (d2[i] - d1[i]);
           }
       }
       
-      for (j = 0; j < d1.length; j++) {
-          for (i = 0; i <= n-2; i++) {
+      for (i = 0; i < d1.length; i++) {
+          for (j = 0; j <= n-2; j++) {
               X[i][j] = A[i][j] * B[i][j]/(n - 1.0);
-              X[i][j] += d1[j];
+              X[i][j] += d1[i];
           }
-          X[n-1][j] = d2[j];
+          X[i][n-1] = d2[i];
       }
     }
     
