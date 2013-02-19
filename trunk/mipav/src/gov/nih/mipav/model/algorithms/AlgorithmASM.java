@@ -171,6 +171,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
     
     public class ASMData {
         public double Vertices[][];
+        public double CVertices[][];
         public double Normals[][];
         public double GrayProfiles[][];
         public double DerivativeGrayProfiles[][];
@@ -274,22 +275,31 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             TrainingData[i-1].Lines = Lines;
             TrainingData[i-1].I = I;
             /*if (i == 1) {
+                float xtot = 0.0f;
+                float ytot = 0.0f;
                 float xArr[] = new float[1];
                 float yArr[] = new float[1];
                 float zArr[] = new float[1];
+                double totr = 0.0;
                 for (int j = 0; j < Vertices.length; j++) {
-                    VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
-                    newPtVOI.setColor(Color.RED);
-                    xArr[0] = (float)Vertices[j][0];
-                    yArr[0] = (float)Vertices[j][1];
-                    zArr[0] = 0.0f;
-                    newPtVOI.importCurve(xArr, yArr, zArr);
-                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
-                    I.registerVOI(newPtVOI);
+                    totr += Math.atan2(Vertices[j][1], Vertices[j][0]);
                 }
-                new ViewJFrameImage(I);
+                double rot = totr/Vertices.length;
+                System.out.println("rot = " + rot);
+                //xArr[0] = xtot/Vertices.length;
+                //yArr[0] = ytot/Vertices.length;
+                    //VOI newPtVOI = new VOI((short) (1), String.valueOf(1), VOI.POINT, -1.0f);
+                    //newPtVOI.setColor(Color.RED);
+                    //xArr[0] = (float)Vertices[j][0];
+                    //yArr[0] = (float)Vertices[j][1];
+                    //zArr[0] = 0.0f;
+                    //newPtVOI.importCurve(xArr, yArr, zArr);
+                    //((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    //I.registerVOI(newPtVOI);
+            
+                //new ViewJFrameImage(I);
                 return;
-            } // if (i == 1) */
+            } // if (i == 1)*/
         } // for (i = 1; i <= 10; i++)
         
         // Shape Model
@@ -315,9 +325,10 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         
         // Initial position offset and rotation of the initial/mean contour
         tform = new TData();
+    
         // tform.offsetv = [0 0];
         tform.offsetr = -0.3;
-        tform.offsets = 117;
+        //tform.offsets = 117;
         pos = new double[ShapeData.x_mean.length/2][2];
         for (i = 0; i < ShapeData.x_mean.length/2; i++) {
             pos[i][0] = ShapeData.x_mean[i];
@@ -326,8 +337,9 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         ASM_align_data_inverse2D(pos, tform);
         
         // Select the best starting position with the mouse
+        // This is on the middle finger 1/4 from the base to the first joint
         // Figures 5 and 6 in A Brief Introduction to Statistical Shape Analysis by Mikkel B. Stegmann 
-        // and David Delgado Gomez show the starting point to be the intersection of the thumb and the wrist.
+        // and David Delgado Gomez show the first point to be the intersection of the thumb and the wrist.
         createPauseDialog(this);
 
         while (!pressedOK) {
@@ -658,7 +670,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         
         gbc.gridx = 0;
         gbc.gridy = 1;
-        label2 = new JLabel("This is the intersection of the thumb and the wrist");
+        label2 = new JLabel("On the middle finger 1/4 from the base to the first joint");
         label2.setForeground(Color.black);
         label2.setFont(serif12);
         panel.add(label2, gbc);
@@ -1072,20 +1084,18 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             linspace_multi(d1, d2, 2*k+1, yi);
             for (j = 0; j < P.length; j++) {
                 for (m = 0; m < 2*k+1; m++) {
-                    if (xi[j][m]  < 1.0) {
-                        xi[j][m] = 1.0;
+                    if (xi[j][m]  < 0.0) {
+                        xi[j][m] = 0.0;
                     }
-                    if (xi[j][m] > I.getExtents()[0]) {
-                        xi[j][m] = I.getExtents()[0];
+                    if (xi[j][m] > I.getExtents()[0]-1) {
+                        xi[j][m] = I.getExtents()[0]-1;
                     }
-                    if (yi[j][m] < 1.0) {
-                        yi[j][m] = 1.0;
+                    if (yi[j][m] < 0.0) {
+                        yi[j][m] = 0.0;
                     }
-                    if (yi[j][m] > I.getExtents()[1]) {
-                        yi[j][m] = I.getExtents()[1];
+                    if (yi[j][m] > I.getExtents()[1]-1) {
+                        yi[j][m] = I.getExtents()[1]-1;
                     }
-                    xi[j][m] -= 1.0;
-                    yi[j][m] -= 1.0;
                     xfl = (int)Math.floor(xi[j][m]);
                     yfl = (int)Math.floor(yi[j][m]);
                     xce = xfl + 1;
@@ -1239,15 +1249,21 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         // Remove rotation and translation
         // (Procrustes analysis would also be possible, see AAM_align_data)
         for (i = 0; i < s; i++) {
-            ASM_align_data2D(TrainingData[i].Vertices, TrainingData[i].tform);
+            TrainingData[i].CVertices = new double[TrainingData[i].Vertices.length][TrainingData[i].Vertices[0].length];
+            for (j = 0; j < TrainingData[i].Vertices.length; j++) {
+                for (k = 0; k < TrainingData[i].Vertices[0].length; k++) {
+                    TrainingData[i].CVertices[j][k] = TrainingData[i].Vertices[j][k];
+                }
+            }
+            ASM_align_data2D(TrainingData[i].CVertices, TrainingData[i].tform);
         }
         
         // Construct a matrix with all contour point data of the training data set
         x = new double[2*n1][s];
         for (i = 0; i < s; i++) {
             for (j = 0; j < n1; j++) {
-                x[j][i] = TrainingData[i].Vertices[j][0];
-                x[j+n1][i] = TrainingData[i].Vertices[j][1];
+                x[j][i] = TrainingData[i].CVertices[j][0];
+                x[j+n1][i] = TrainingData[i].CVertices[j][1];
             }
         }
         
@@ -4223,7 +4239,10 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                                         tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
                                                    (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                     }
-                                    p.y[j++] = Double.longBitsToDouble(tmpLong); 
+                                    // The MATLAB spatial coordinate starts with (0.5, 0.5) at the upper left corner of the
+                                    // upper left pixel and has (1.0, 1.0) at the center of the upper left pixel.
+                                    // Subtract 1.0 to correspond to MIPAV.
+                                    p.y[j++] = Double.longBitsToDouble(tmpLong) - 1.0; 
                                 }
                                 
                                 if (haveSmallRealData) {
@@ -4265,7 +4284,10 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                                         tmpLong = ((b8L << 56) | (b7L << 48) | (b6L << 40) | (b5L << 32) |
                                                    (b4L << 24) | (b3L << 16) | (b2L << 8) | b1L);
                                     }
-                                    p.x[j++] = Double.longBitsToDouble(tmpLong); 
+                                    // The MATLAB spatial coordinate starts with (0.5, 0.5) at the upper left corner of the
+                                    // upper left pixel and has (1.0, 1.0) at the center of the upper left pixel.
+                                    // Subtract 1.0 to correspond to MIPAV.
+                                    p.x[j++] = Double.longBitsToDouble(tmpLong) - 1.0; 
                                 }
                                 
                                 if (haveSmallRealData) {
