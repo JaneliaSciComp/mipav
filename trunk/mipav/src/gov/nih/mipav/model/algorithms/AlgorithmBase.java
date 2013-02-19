@@ -318,6 +318,27 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         return (double) (elapsedTime / 1000.0); // return in seconds!!
     }
 
+    
+    /**
+     * Computes the elapased time as the difference between the start time and the current time (both of which are in
+     * milliseconds).
+     *
+     * @return  the elapsed time in seconds -- this is a double value
+     */
+    public double computeElapsedTime( long start ) {
+
+        long now = System.currentTimeMillis();
+
+        double elapsed = (double) (now - start);
+
+        // if elasedTime is invalid, then set it to 0
+        if (elapsed <= 0) {
+        	elapsed = (double) 0.0;
+        }
+
+        return (double) (elapsed / 1000.0); // return in seconds!!
+    }
+
     /**
      * Displays an error in a frame.
      *
