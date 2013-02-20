@@ -66,7 +66,7 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
     private ViewUserInterface userInterface;
 
     /** sigma conversion factor is by 1.0 / (2*Math.sqrt(2*Math.log(2))) */
-    private JCheckBox conversionFactorCheckbox;
+    private JCheckBox conversionFactorCheckbox = null;
     
     /** gui, sigma value */
     private JTextField[] textGaussX = new JTextField[2];
@@ -438,6 +438,8 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
         {
         	paramPanelManager.addOnNextLine(sigmaPanelB);
         }
+        conversionFactorCheckbox = WidgetFactory.buildCheckBox("Use sigma conversion factor.", true);
+        paramPanelManager.addOnNextLine(conversionFactorCheckbox);
         paramPanelManager.addOnNextLine(colorChannelPanel);
         paramPanelManager.addOnNextLine(outputOptionsPanel);
 
@@ -472,15 +474,12 @@ public class JDialogDeconvolution extends JDialogScriptableBase implements Algor
         textGaussZ[index] = WidgetFactory.buildTextField("1.0");
         textGaussZ[index].setColumns(5);
         
-        conversionFactorCheckbox = WidgetFactory.buildCheckBox("Use sigma conversion factor.", true);
-
         scalePanelManager.add(WidgetFactory.buildLabel("X dimension (>= 0.0) "));
         scalePanelManager.add(textGaussX[index]);
         scalePanelManager.addOnNextLine(WidgetFactory.buildLabel("Y dimension (>= 0.0) "));
         scalePanelManager.add(textGaussY[index]);
         scalePanelManager.addOnNextLine(WidgetFactory.buildLabel("Z dimension (>= 0.0) "));
         scalePanelManager.add(textGaussZ[index]);
-        scalePanelManager.addOnNextLine(conversionFactorCheckbox);
         return scalePanelManager.getPanel();
     }
 }
