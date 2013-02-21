@@ -1,7 +1,0 @@
-void p_PassThrough4
-(
-    in float4  kInPixelColor : COLOR,
-    out float4 kPixelColor : COLOR)
-{
-    kPixelColor = kInPixelColor;
-}
