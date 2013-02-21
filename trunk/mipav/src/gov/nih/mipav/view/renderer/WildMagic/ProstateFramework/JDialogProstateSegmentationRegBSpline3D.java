@@ -234,6 +234,10 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 			endVOICoronal = Integer.valueOf(textFieldEndVOICoronal.getText());
 			midVOICoronal = Integer.valueOf(textFieldMidVOICoronal.getText());
 
+			adjustVOIs(imageAxial);
+			adjustVOIs(imageSagittal);
+			adjustVOIs(imageCoronal);
+			
 			// Parallel processing the prostate segmentation concurrently.
 			int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime
 					.getRuntime().availableProcessors() - 2 : 1;
@@ -1863,12 +1867,12 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		VOIsSrc = image.getVOIs();
 		// }
 
-		Vector<VOIBase>[] vArrayCenter = VOIsSrc.VOIAt(0).getSortedCurves(
+		Vector<VOIBase>[] vArrayCenter = VOIsSrc.VOIAt(1).getSortedCurves(
 				VOIBase.ZPLANE, zDim);
 		VOIBase vCenter = vArrayCenter[midVOI].get(0);
 		voiNew.importCurve(vCenter);
 
-		Vector<VOIBase>[] vArrayStart = VOIsSrc.VOIAt(1).getSortedCurves(
+		Vector<VOIBase>[] vArrayStart = VOIsSrc.VOIAt(0).getSortedCurves(
 				VOIBase.ZPLANE, zDim);
 		VOIBase vStart = vArrayStart[startVOI].get(0);
 		voiNew.importCurve(vStart);
@@ -1907,12 +1911,12 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		VOIs = coherenceEnhancingDiffusionImage.getVOIs();
 		// }
 
-		Vector<VOIBase>[] vArrayCenter = VOIs.VOIAt(0).getSortedCurves(
+		Vector<VOIBase>[] vArrayCenter = VOIs.VOIAt(1).getSortedCurves(
 				VOIBase.ZPLANE, zDim);
 		VOIBase vCenter = vArrayCenter[midVOI].get(0);
 		voiNew.importCurve(vCenter);
 
-		Vector<VOIBase>[] vArrayStart = VOIs.VOIAt(1).getSortedCurves(
+		Vector<VOIBase>[] vArrayStart = VOIs.VOIAt(0).getSortedCurves(
 				VOIBase.ZPLANE, zDim);
 		VOIBase vStart = vArrayStart[startVOI].get(0);
 		voiNew.importCurve(vStart);
@@ -3506,6 +3510,101 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 	}
 
 	/**
+	 * When user draws the 3 VOIs out of order, adjust the VOIs in ascending order
+	 * @param image  source image, axial, sagittal or coronal 
+	 */
+    public void adjustVOIs(ModelImage image) {
+		
+		int[] extents = (int[]) image.getFileInfo(0).getExtents();
+		int zDim = extents[2] - 1;
+		int i;
+		int indexFirst = 0, indexSecond = 0, indexThird = 0;
+		int minIndex, maxIndex, midIndex = 0;
+		
+		VOIVector VOIs;
+		VOIs = image.getVOIs();
+		
+		// get the three index
+		Vector<VOIBase>[] vArrayFirst = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
+		for (i = 0; i < vArrayFirst.length; i++ ) {
+			if ( vArrayFirst[i].size() > 0 ) {
+				indexFirst = i;
+				break;
+			}
+		}
+		
+		Vector<VOIBase>[] vArraySecond = VOIs.VOIAt(1).getSortedCurves(VOIBase.ZPLANE, zDim);
+		for (i = 0; i < vArraySecond.length; i++ ) {
+			if ( vArraySecond[i].size() > 0 ) {
+				indexSecond = i;
+				break;
+			}
+		}
+		
+		Vector<VOIBase>[] vArrayThird = VOIs.VOIAt(2).getSortedCurves(VOIBase.ZPLANE, zDim);
+		for (i = 0; i < vArrayThird.length; i++ ) {
+			if ( vArrayThird[i].size() > 0 ) {
+				indexThird = i;
+				break;
+			}
+		}
+		
+		// sort index
+	    minIndex = Math.min(indexFirst, Math.min(indexSecond, indexThird));
+	    maxIndex = Math.max(indexFirst, Math.max(indexSecond, indexThird));
+		
+	    if ( minIndex == indexFirst && maxIndex == indexSecond ) {
+	             midIndex = indexThird;
+	    } else if ( minIndex == indexFirst && maxIndex == indexThird ) {
+	    	     midIndex = indexSecond;
+	    } else if ( minIndex == indexSecond && maxIndex == indexThird ) {
+	    	     midIndex = indexFirst;
+	    }
+	    
+	    image.getVOIs().removeAllElements();
+	    
+	    VOIVector voiFirstNew = new VOIVector();
+	    VOI voiFirst = new VOI((short) 0, "blank");
+	    if ( minIndex == indexFirst) {
+	    	voiFirst.importCurve(vArrayFirst[indexFirst].get(0));	
+	    } else if ( minIndex == indexSecond ) {
+	    	voiFirst.importCurve(vArraySecond[indexSecond].get(0));
+	    } else if ( minIndex == indexThird ) {
+	    	voiFirst.importCurve(vArrayThird[indexThird].get(0));
+	    }
+	    voiFirstNew.add(voiFirst);
+	    image.addVOIs(voiFirstNew);
+	    
+	    
+	    VOIVector voiSecondNew = new VOIVector();
+	    VOI voiSecond = new VOI((short) 0, "blank");
+	    if ( midIndex == indexFirst) {
+	    	voiSecond.importCurve(vArrayFirst[indexFirst].get(0));	
+	    } else if ( midIndex == indexSecond ) {
+	    	voiSecond.importCurve(vArraySecond[indexSecond].get(0));
+	    } else if ( midIndex == indexThird ) {
+	    	voiSecond.importCurve(vArrayThird[indexThird].get(0));
+	    }
+	    voiSecondNew.add(voiSecond);
+	    image.addVOIs(voiSecondNew);
+	    
+	    
+	    VOIVector voiThirdNew = new VOIVector();
+	    VOI voiThird = new VOI((short) 0, "blank");
+	    if ( maxIndex == indexFirst) {
+	    	voiThird.importCurve(vArrayFirst[indexFirst].get(0));	
+	    } else if ( maxIndex == indexSecond ) {
+	    	voiThird.importCurve(vArraySecond[indexSecond].get(0));
+	    } else if ( maxIndex == indexThird ) {
+	    	voiThird.importCurve(vArrayThird[indexThird].get(0));
+	    }
+	    voiThirdNew.add(voiThird);
+	    image.addVOIs(voiThirdNew);
+	    	
+	}
+
+	
+	/**
 	 * Crop MR image with specified X, Y, Z bounds Use the mid slice as the
 	 * initial guidance to find the bounds.
 	 * 
@@ -3552,7 +3651,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		// }
 
 		// find the intersection of the lower bound with the VOI.
-		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(
+		Vector<VOIBase>[] vArray = VOIs.VOIAt(1).getSortedCurves(
 				VOIBase.ZPLANE, zDim);
 		VOIBase v = vArray[midVOI].get(0);
 
