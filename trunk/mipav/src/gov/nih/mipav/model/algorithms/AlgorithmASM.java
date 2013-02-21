@@ -241,7 +241,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         // Set normal contour, limit to +- m*sqrt(eigenvalue)
         options.m = 3;
         // Number of search iterations
-        options.nsearch = 40;
+        //options.nsearch = 40;
+        options.nsearch = 120;
         // If verbose if true, all debug images will be shown.
         options.verbose = false;
         // The original minimal Mahalanobis distance using edge gradient (true)
@@ -275,29 +276,23 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             TrainingData[i-1].Lines = Lines;
             TrainingData[i-1].I = I;
             /*if (i == 1) {
-                float xtot = 0.0f;
-                float ytot = 0.0f;
-                float xArr[] = new float[1];
-                float yArr[] = new float[1];
-                float zArr[] = new float[1];
-                double totr = 0.0;
-                for (int j = 0; j < Vertices.length; j++) {
-                    totr += Math.atan2(Vertices[j][1], Vertices[j][0]);
-                }
-                double rot = totr/Vertices.length;
-                System.out.println("rot = " + rot);
-                //xArr[0] = xtot/Vertices.length;
-                //yArr[0] = ytot/Vertices.length;
-                    //VOI newPtVOI = new VOI((short) (1), String.valueOf(1), VOI.POINT, -1.0f);
-                    //newPtVOI.setColor(Color.RED);
+                float xArr[] = new float[2];
+                float yArr[] = new float[2];
+                float zArr[] = new float[2];
+                for (int j = 0; j < Lines.length; j++) {
+                //for (int j = 0; j < Vertices.length; j++) {
+                    VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
+                    newPtVOI.setColor(Color.RED);
                     //xArr[0] = (float)Vertices[j][0];
                     //yArr[0] = (float)Vertices[j][1];
-                    //zArr[0] = 0.0f;
-                    //newPtVOI.importCurve(xArr, yArr, zArr);
-                    //((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
-                    //I.registerVOI(newPtVOI);
-            
-                //new ViewJFrameImage(I);
+                    xArr[0] = (float)Vertices[Lines[j][0]][0];
+                    yArr[0] = (float)Vertices[Lines[j][0]][1];
+                    zArr[0] = 0.0f;
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    I.registerVOI(newPtVOI);
+                }
+                new ViewJFrameImage(I);
                 return;
             } // if (i == 1)*/
         } // for (i = 1; i <= 10; i++)
@@ -307,6 +302,48 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         // in the training data sets.  And makes a PCA model describing normal contours.
         ShapeData = new SData();
         ASM_MakeShapeModel2D(TrainingData, ShapeData);
+        
+        /*boolean testme = true;
+        if (testme) {
+            double xtest[] = new double[ShapeData.x_mean.length];
+            for (i = 0; i < Math.min(5, ShapeData.Evalues.length-1); i++) {
+                for (int j = 0; j < ShapeData.x_mean.length; j++) {
+                    xtest[j] = ShapeData.x_mean[j] + ShapeData.Evectors[j][i] * Math.sqrt(ShapeData.Evalues[i])*3.0;
+                }
+                float xArr[] = new float[1];
+                float yArr[] = new float[1];
+                float zArr[] = new float[1];
+                for (int j = 0; j < xtest.length/2; j++) {
+                    VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
+                    if (i == 0) {
+                        newPtVOI.setColor(Color.RED);
+                    }
+                    else if (i == 1) {
+                        newPtVOI.setColor(Color.GREEN);
+                    }
+                    else if (i == 2) {
+                        newPtVOI.setColor(Color.BLUE);
+                    }
+                    else if (i == 3) {
+                        newPtVOI.setColor(Color.CYAN);
+                    }
+                    else if (i == 4) {
+                        newPtVOI.setColor(Color.YELLOW);
+                    }
+                    else if (i == 5) {
+                        newPtVOI.setColor(Color.MAGENTA);
+                    }
+                    xArr[0] = (float)xtest[j] + 400;
+                    yArr[0] = (float)xtest[j+xtest.length/2] + 250;
+                    zArr[0] = 0.0f;
+                    newPtVOI.importCurve(xArr, yArr, zArr);
+                    ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                    TrainingData[0].I.registerVOI(newPtVOI);    
+                }
+            }
+            new ViewJFrameImage(TrainingData[0].I);
+            return;
+        }*/
         
         // Appearance model
         // Make the appearance model, which samples an intensity pixel profile/line
@@ -327,7 +364,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         tform = new TData();
     
         // tform.offsetv = [0 0];
-        tform.offsetr = -0.3;
+        //tform.offsetr = -0.3;
+        tform.offsetr = 0.0;
         //tform.offsets = 117;
         pos = new double[ShapeData.x_mean.length/2][2];
         for (i = 0; i < ShapeData.x_mean.length/2; i++) {
@@ -410,6 +448,16 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             testFrame = new ViewJFrameImage(Itest);
         }
         
+        cf = 1;
+        if (Itest.isColorImage()) {
+            cf = 3;
+        }
+        
+
+        // Total intensity line-profile needed, is the traingingLength + the
+        // search length in both normal directions.
+        n = options.k + options.ns;
+        
         // The initial contour is the mean training data set contour
         n1 = ShapeData.x_mean.length/2;
         pos = new double[n1][2];
@@ -428,23 +476,9 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             
             PCAData = AppearanceData[itt_res].PCAData;
             
-            // Do 50 ASM iterations
-            for (itt = 1; itt <= options.nsearch; itt++) {
-                // Plot the contour -leave out for now.  This would be 50 * 3 = 150 plots.
-                
-                // Calculate the normals of the contour points
-                N = ASM_GetContourNormals2D(pos, ShapeData.Lines);
-                
-                // Create long intensity profiles on the contour normals, for search
-                // of best point fit, using the correlation matrices made in the
-                // appearance model.
-                
-                // Total intensity line-profile needed, is the traingingLength + the
-                // search length in both normal directions.
-                n = options.k + options.ns;
-                
-                // Get the intensity profiles of all landmarks and their first order
-                // derivatives
+            // Get the intensity profiles of all landmarks and their first order
+            // derivatives
+            if (itt_res != 0) {
                 oXdim = (int)Math.round(Itest.getExtents()[0] * scale);
                 oYdim = (int)Math.round(Itest.getExtents()[1] * scale);
                 oXres = Itest.getFileInfo(0).getResolutions()[0] * (Itest.getExtents()[0] - 1) / (oXdim - 1);
@@ -468,10 +502,21 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                     algoTrans.disposeLocal();
                     algoTrans = null;
                 }
-                cf = 1;
-                if (IScaledTest.isColorImage()) {
-                    cf = 3;
-                }
+            } // if (itt_res != 0)
+            else {
+                IScaledTest = Itest;
+            }
+            
+            // Do 50 ASM iterations
+            for (itt = 1; itt <= options.nsearch; itt++) {
+                // Plot the contour -leave out for now.  This would be 50 * 3 = 150 plots.
+                
+                // Calculate the normals of the contour points
+                N = ASM_GetContourNormals2D(pos, ShapeData.Lines);
+                
+                // Create long intensity profiles on the contour normals, for search
+                // of best point fit, using the correlation matrices made in the
+                // appearance model. 
                 scaledPos = new double[n1][2];
                 for (i = 0; i < n1; i++) {
                     for (j = 0; j < 2; j++) {
@@ -604,6 +649,10 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                 // Now add the previously removed translation and rotation
                 ASM_align_data_inverse2D(pos, tform);
             } // for (itt = 1; itt <= options.nsearch; itt++)
+            if (itt_res != 0) {
+                IScaledTest.disposeLocal();
+                IScaledTest = null;
+            }
         } // for (itt_res = options.nscales-1; itt_res >= 0; itt_res--)
         
         float xArr[] = new float[1];
@@ -802,15 +851,27 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         // Number of landmarks
         n1 = TrainingData[0].Vertices.length;
         
+        // Profile length * space for rgb
+        cf = 1;
+        if (TrainingData[0].I.isColorImage()) {
+            cf = 3;
+        }
+        p1 = cf * (2*options.k + 1);
+        
         // Calculate the normals of the contours of all training data
         for (i = 0; i < s; i++) {
-            TrainingData[i].Normals = ASM_GetContourNormals2D(TrainingData[i].Vertices, TrainingData[i].Lines);    
+            TrainingData[i].Normals = ASM_GetContourNormals2D(TrainingData[i].Vertices, TrainingData[i].Lines); 
+            /*for (j = 0; j < TrainingData[i].Normals.length; j++) {
+                Preferences.debug("x = " + TrainingData[i].Normals[j][0] + " y = " + TrainingData[i].Normals[j][1] + "\n");
+            }*/
         }
+        
+        
         
         // Inverse of covariance matrix sometimes badly scaled
         // Don't warn of this
         
-        // Get the landmark profiles for 3 image scales (for multiscale ASM)
+        // Get the landmark profiles for 2 image scales (for multiscale ASM)
         for (itt_res = 0; itt_res < options.nscales; itt_res++) {
             AppearanceData[itt_res] = new AppData();
             AppearanceData[itt_res].Landmarks = new LandData[n1];
@@ -824,29 +885,50 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                         P[j][k] = (TrainingData[i].Vertices[j][k] - 0.5)*scale + 0.5;
                     }
                 }
-                oXdim = (int)Math.round(TrainingData[i].I.getExtents()[0] * scale);
-                oYdim = (int)Math.round(TrainingData[i].I.getExtents()[1] * scale);
-                oXres = TrainingData[i].I.getFileInfo(0).getResolutions()[0] * (TrainingData[i].I.getExtents()[0] - 1) / (oXdim - 1);
-                oYres = TrainingData[i].I.getFileInfo(0).getResolutions()[1] * (TrainingData[i].I.getExtents()[1] - 1) / (oYdim - 1);
-                xfrm = new TransMatrix(3);
-                TrainingData[i].I.makeUnitsOfMeasureIdentical();
-                units = new int[TrainingData[i].I.getUnitsOfMeasure().length];
-                for (j = 0; j < units.length; j++) {
-                    units[j] = TrainingData[i].I.getUnitsOfMeasure(j);
+                if (itt_res != 0) {
+                    oXdim = (int)Math.round(TrainingData[i].I.getExtents()[0] * scale);
+                    oYdim = (int)Math.round(TrainingData[i].I.getExtents()[1] * scale);
+                    oXres = TrainingData[i].I.getFileInfo(0).getResolutions()[0] * (TrainingData[i].I.getExtents()[0] - 1) / (oXdim - 1);
+                    oYres = TrainingData[i].I.getFileInfo(0).getResolutions()[1] * (TrainingData[i].I.getExtents()[1] - 1) / (oYdim - 1);
+                    xfrm = new TransMatrix(3);
+                    TrainingData[i].I.makeUnitsOfMeasureIdentical();
+                    units = new int[TrainingData[i].I.getUnitsOfMeasure().length];
+                    for (j = 0; j < units.length; j++) {
+                        units[j] = TrainingData[i].I.getUnitsOfMeasure(j);
+                    }
+                    TrainingData[i].I.calcMinMax();
+                    fillValue = (float)TrainingData[i].I.getMin();
+                    algoTrans = new AlgorithmTransform(TrainingData[i].I, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                            doPad, doRotateCenter, center);
+                    algoTrans.setFillValue(fillValue);
+                    algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                    algoTrans.run();
+                    Ismall = algoTrans.getTransformedImage();
+                    Ismall.calcMinMax();
+                    if (algoTrans != null) {
+                        algoTrans.disposeLocal();
+                        algoTrans = null;
+                    }
                 }
-                TrainingData[i].I.calcMinMax();
-                fillValue = (float)TrainingData[i].I.getMin();
-                algoTrans = new AlgorithmTransform(TrainingData[i].I, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
-                        doPad, doRotateCenter, center);
-                algoTrans.setFillValue(fillValue);
-                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-                algoTrans.run();
-                Ismall = algoTrans.getTransformedImage();
-                Ismall.calcMinMax();
-                if (algoTrans != null) {
-                    algoTrans.disposeLocal();
-                    algoTrans = null;
-                }
+                else {
+                    Ismall = TrainingData[i].I;
+                } // if (itt_res != 0)
+                /*if (i == 0) {
+                    float xArr[] = new float[1];
+                    float yArr[] = new float[1];
+                    float zArr[] = new float[1];
+                    for (j = 0; j < P.length; j++) {
+                        VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
+                        newPtVOI.setColor(Color.RED);
+                        xArr[0] = (float)P[j][0];
+                        yArr[0] = (float)P[j][1];
+                        zArr[0] = 0.0f;
+                        newPtVOI.importCurve(xArr, yArr, zArr);
+                        ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
+                        Ismall.registerVOI(newPtVOI);
+                    }
+                    new ViewJFrameImage(Ismall);
+                }*/
                 N = TrainingData[i].Normals;
                 cf = 1;
                 if (TrainingData[i].I.isColorImage()) {
@@ -857,22 +939,23 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                 ASM_getProfileAndDerivatives2D(Ismall, P, N, options.k, TrainingData[i].GrayProfiles, TrainingData[i].DerivativeGrayProfiles);
             } // for (i = 0; i < s; i++)
             
-            if (options.verbose) {
+            /*boolean testme = true;
+            if (testme) {
                 for (i = 0; i < s; i++) {
                     if (cf == 1) {
-                    float mean[] = new float[(2*options.k+1)];
-                    for (j = 0; j < (2*options.k+1); j++) {
-                        for (m = 0; m < P.length; m++) {
-                            mean[j] += TrainingData[i].GrayProfiles[j][m];
+                        float mean[] = new float[(2*options.k+1)];
+                        for (j = 0; j < (2*options.k+1); j++) {
+                            for (m = 0; m < P.length; m++) {
+                                mean[j] += TrainingData[i].GrayProfiles[j][m];
+                            }
+                            mean[j] = mean[j]/P.length;
                         }
-                        mean[j] = mean[j]/P.length;
-                    }
-                    
-                    float xax[] = new float[(2*options.k+1)];
-                    for (j = 0; j < 2*options.k+1; j++) {
-                        xax[j] = j;
-                    }
-                    new ViewJFrameGraph(xax, mean, "Mean intensity profile", "", "", Color.BLUE);
+                        
+                        float xax[] = new float[(2*options.k+1)];
+                        for (j = 0; j < 2*options.k+1; j++) {
+                            xax[j] = j;
+                        }
+                        new ViewJFrameGraph(xax, mean, "Mean intensity profile " + (i+1), "", "", Color.BLUE);
                     } //if (cf == 1)
                     else {
                         float meanr[] = new float[(2*options.k+1)];
@@ -887,7 +970,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                         for (j = 0; j < 2*options.k+1; j++) {
                             xaxr[j] = j;
                         }
-                        new ViewJFrameGraph(xaxr, meanr, "Red mean intensity profile", "", "", Color.RED);
+                        new ViewJFrameGraph(xaxr, meanr, "Red mean intensity profile "  + (i+1), "", "", Color.RED);
                         
                         float meang[] = new float[(2*options.k+1)];
                         for (j = 0; j < (2*options.k+1); j++) {
@@ -901,7 +984,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                         for (j = 0; j < 2*options.k+1; j++) {
                             xaxg[j] = j;
                         }
-                        new ViewJFrameGraph(xaxg, meang, "Green mean intensity profile", "", "", Color.GREEN);
+                        new ViewJFrameGraph(xaxg, meang, "Green mean intensity profile " + (i+1), "", "", Color.GREEN);
                         
                         float meanb[] = new float[(2*options.k+1)];
                         for (j = 0; j < (2*options.k+1); j++) {
@@ -915,18 +998,13 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                         for (j = 0; j < 2*options.k+1; j++) {
                             xaxb[j] = j;
                         }
-                        new ViewJFrameGraph(xaxb, meanb, "Blue mean intensity profile", "", "", Color.BLUE);
+                        new ViewJFrameGraph(xaxb, meanb, "Blue mean intensity profile " + (i+1), "", "", Color.BLUE);
                         
                     }
                 }
-            } // if (options.verbose)
+            } // if (testme)*/
             
-            // Profile length * space for rgb
-            cf = 1;
-            if (TrainingData[0].I.isColorImage()) {
-                cf = 3;
-            }
-            p1 = cf * (2*options.k + 1);
+           
             
             // Calculate a covariance matrix for all landmarks
             for (j = 0; j < n1; j++) {
@@ -958,7 +1036,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                 // 2.) Multiplies transpose times original
                 // 3.) Divide by number of rows - 1 in original
                 // dg' has s rows and p1 columns
-                // Have already subtracted out mean of s rows
+                // Have already subtracted out mean of s rows from each column
                 dgMat = new Matrix(dg);
                 dgtMat = dgMat.transpose();
                 sMat = dgMat.times(dgtMat).times(1.0/(s - 1.0));
