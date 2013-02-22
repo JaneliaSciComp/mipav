@@ -5,6 +5,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 import java.io.IOException;
+import java.util.Vector;
 
 
 /**
@@ -284,7 +285,7 @@ public class FileDicomJPEG {
     private final byte[][] huffval;
 
     /** Image data we're reading. */
-    private final byte[] image;
+    private byte[] image;
 
     /** Image height. */
     private int imageHeight;
@@ -334,6 +335,12 @@ public class FileDicomJPEG {
 
     /** Vertical sample factor. */
     private final int[] vSampFactor;
+    
+    private Vector<byte[]> v;
+    
+    private int vIndex;
+    
+    private Vector<int[]> v2;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -387,9 +394,72 @@ public class FileDicomJPEG {
         dicomW = width;
         dicomH = height;
     }
+    
+    /**
+     * Assigns image buffer and creates the other arrays needed to read in image.
+     * 
+     * @param imageBuffer Image buffer.
+     * @param width DOCUMENT ME!
+     * @param height DOCUMENT ME!
+     */
+    public FileDicomJPEG(Vector<byte[]> v,  Vector<int[]> v2, final int width, final int height) {
+        this.v = v;
+        this.v2 = v2;
+        image = null;
+        // try
+        // {
+        // File f = new File("C:\\f.txt");
+        // FileWriter write = new FileWriter(f);
+        // String s = new String();
+        // for(int i=0; i<image.length; i++)
+        // {
+        // s = s+(Byte.toString(image[i])+" ");
+        // if(i%100==0)
+        // {
+        // s = s+"\n\r";
+        // write.write(s);
+        // s = new String();
+        // }
+        // }
+        // write.write(s+"\n\r");
+        // write.flush();
+        // write.close();
+        //    
+        // }
+        // catch(Exception e)
+        // {
+        // e.printStackTrace();
+        // }
+
+        bits = new byte[4][17];
+        huffval = new byte[4][256];
+        mincode = new short[4][17];
+        maxcode = new int[4][18];
+        valptr = new short[4][17];
+        numbits = new int[4][256];
+        value = new int[4][256];
+        componentIndex = new short[4];
+        componentId = new int[4];
+        hSampFactor = new int[4];
+        vSampFactor = new int[4];
+        tableNo = new int[4];
+        dicomW = width;
+        dicomH = height;
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
+    
+    
+    public void extractMultiJPEGImage() throws IOException {
+        vIndex = 0;
+        int[] jpegImage = null;
+        for (vIndex = 0; vIndex < v.size(); vIndex++) {
+            image = v.get(vIndex);
+            jpegImage = extractJPEGImage();
+            v2.addElement(jpegImage);   
+        }
+    }
 
     /**
      * Extracts the JPEG image by processing the byte image array.
@@ -507,7 +577,7 @@ public class FileDicomJPEG {
             }
 
             // Add the predictor to the difference.
-            final short s = (short) (d + (1 << (dataPrecision - Pt - 1)));
+            final short s = (short)(d + (1 << (dataPrecision - Pt - 1)));
             curRowBuf[0][curComp] = s;
         }
 
@@ -526,7 +596,7 @@ public class FileDicomJPEG {
                 }
 
                 // Add the predictor to the difference.
-                curRowBuf[col][curComp] = (short) (d + curRowBuf[col - 1][curComp]);
+                curRowBuf[col][curComp] = (short)(d + curRowBuf[col - 1][curComp]);
             }
         }
     }
@@ -555,7 +625,7 @@ public class FileDicomJPEG {
         int[] buffer;
         int j = 0;
 
-        final HuffTable table = new HuffTable(image, index);
+        HuffTable table = new HuffTable(image, index);
 
         // Decode the first row of image. Output the row and
         // turn this row into a previous row for later predictor
@@ -646,9 +716,11 @@ public class FileDicomJPEG {
             // calculations are based on PSV.
 
             for (col = 1; col < numCOL; col++) {
-
+        
                 for (curComp = 0; curComp < compsInScan; curComp++) {
+          
                     d = table.huffDecode(tableNo[curComp]);
+                    
                     // if(index > 75)
                     //    
 
@@ -705,7 +777,7 @@ public class FileDicomJPEG {
                         }
                     }
 
-                    curRowBuf[col][curComp] = (short) ((short) (d) + predictor);
+                    curRowBuf[col][curComp] = (short)((short)d + predictor);
                 }
             }
 
@@ -1211,14 +1283,14 @@ public class FileDicomJPEG {
          * @param image Image.
          * @param i Index into image.
          */
-        public HuffTable(final byte[] image, final int i) {
+        public HuffTable(byte[] image, int i) {
             buffer = image;
             index = i;
             bitCount = 8;
             marker = false;
             padded = false;
         }
-
+        
         /**
          * Returns index that we're at.
          * 
@@ -1246,6 +1318,12 @@ public class FileDicomJPEG {
                 // if necessary, read in the next byte and get some bits from that.
                 if (bitCount == 8) {
                     previous = current;
+                    if (index >= image.length) {
+                        vIndex++;
+                        image = v.get(vIndex);
+                        buffer = image;
+                        index = 0;
+                    }
                     current = getNext();
                     bitCount = 0;
 
