@@ -2768,20 +2768,20 @@ public class FileDicom extends FileDicomBase {
         if (v.size() > 1) {
             final Vector<int[]> v2 = new Vector<int[]>();
             int[] jpegImage;
-
-            for (final byte[] name2 : v) {
-
-                if (lossy == true) {
+            
+            if (lossy) {
+                for (final byte[] name2 : v) {
                     jpegImage = extractLossyJPEGImage(name2);
-                } else {
-                    final FileDicomJPEG fileReader = new FileDicomJPEG(name2, fileInfo.getExtents()[0], fileInfo
-                            .getExtents()[1]);
-                    jpegImage = fileReader.extractJPEGImage();
-                }
+                    v2.addElement(jpegImage);
+                }    
+            } // if (lossy)
+            else { // not lossy
+                final FileDicomJPEG fileReaderMulti = new FileDicomJPEG(v, v2, fileInfo.getExtents()[0], fileInfo
+                        .getExtents()[1]);
+                fileReaderMulti.extractMultiJPEGImage();
+            } // else not lossy
 
-                v2.addElement(jpegImage);
-            }
-
+           
             int size = 0;
 
             for (final int[] name2 : v2) {
