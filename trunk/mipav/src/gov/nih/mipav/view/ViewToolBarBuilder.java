@@ -35,7 +35,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
     protected static final Border etchedBorder = BorderFactory.createEtchedBorder();
 
     /** DOCUMENT ME! */
-    protected static final int NUM_BRUSHES_INTERNAL = 9;
+    public static final int NUM_BRUSHES_INTERNAL = 9;
 
     /** DOCUMENT ME! */
     public static final String USER_BRUSHES = System.getProperty("user.home") + File.separator + "mipav" +
@@ -244,6 +244,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
         button.setBorderPainted(false);
         button.setFocusPainted(true);
+        button.setOpaque(true);
         button.setRolloverEnabled(true);
         button.setRolloverIcon(MipavUtil.getIcon(iconBase + "roll.gif"));
         button.setMargin(new Insets(0, 0, 0, 0));
@@ -1672,6 +1673,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
             setMaximumSize(new Dimension(24, 24));
             setSize(new Dimension(24, 24));
             setEnabled(true);
+            setOpaque(true);
             setRolloverEnabled(false);
             setBorder(BorderFactory.createEtchedBorder(Color.white, Color.black));
             
