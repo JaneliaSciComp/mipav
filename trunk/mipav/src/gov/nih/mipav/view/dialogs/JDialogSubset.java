@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
 
 import gov.nih.mipav.view.*;
 
@@ -155,9 +156,12 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-
-                    // put the new image into a new frame
-                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                	ModelLUT lut = null;
+                	if(resultImage.getFileInfo(0) != null) {
+                		lut = resultImage.getFileInfo(0).getLUT();
+                	}
+                	// put the new image into a new frame
+                    ViewJFrameImage frame = new ViewJFrameImage(resultImage, lut, new Dimension(25, 32));
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("JDialogSubset reports: out of memory; " + "unable to open a new frame");
                 }
