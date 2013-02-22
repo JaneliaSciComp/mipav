@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * DOCUMENT ME!
  */
-public class FilenameSorter {
+public class FilenameSorter implements Comparator<String> {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -242,4 +242,9 @@ public class FilenameSorter {
 
         return arrayList;
     }
+
+	@Override
+	public int compare(String arg0, String arg1) {
+		return FilenameSorter.compareToLastNumericalSequence(arg0, arg1);
+	}
 }
