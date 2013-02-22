@@ -1018,7 +1018,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 matrixComboBox.addItem(refImage.getImageDirectory());	
             }
             
-            if ((matchImage.getImageDirectory() != null) && 
+            if ((refImage.getImageDirectory() != null) && 
                 	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
                 	matrixComboBox.addItem(matchImage.getImageDirectory());
             }
@@ -1989,7 +1989,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         optPanel.add(multiThreadCheckBox, gbc);
 
 
-        universalCheckbox = new JCheckBox("Apply same rotations to all dimensions.");
+        universalCheckbox = new JCheckBox("Apply same rotation limits to all dimensions.");
         universalCheckbox.setFont(serif12);
         universalCheckbox.setForeground(Color.black);
         universalCheckbox.setSelected(true);
@@ -2399,7 +2399,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             matrixComboBox.addItem(refImage.getImageDirectory());	
         }
         if ((matchImage.getImageDirectory() != null) && 
-        	(!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))){
+        	(refImage.getImageDirectory() == null || 
+        	!refImage.getImageDirectory().equals(matchImage.getImageDirectory()))) {
         	matrixComboBox.addItem(matchImage.getImageDirectory());
         }
         if ((UI.getDefaultDirectory() != null) && 
