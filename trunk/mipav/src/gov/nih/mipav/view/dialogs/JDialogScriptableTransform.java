@@ -664,9 +664,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 comboBoxInterp.setSelectedIndex(1); // bilinear
             }
 
-        }
-
-        if (source == comboBoxInterp) {
+        } else if (source == comboBoxInterp) {
 
             if (comboBoxInterp.getSelectedIndex() < 4) {
                 clipCheckbox.setSelected(true);
@@ -709,9 +707,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             resampletoUser.setEnabled(true);
             resampleSlider.setEnabled(true);
             comboBoxImage.setEnabled(true);
-        }
-
-        if (source == computeTImage) {
+        } else if (source == computeTImage) {
 
             if (computeTImage.isSelected()) {
                 comboBoxTalTransform.setEnabled(true);
@@ -780,9 +776,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 resampletoUser.setEnabled(true);
                 resampleSlider.setEnabled(true);
             } // else computeTImage not selected
-        } // if (source == computeTImage)
-
-        if (source == userDefinedMatrix) {
+        } else if (source == userDefinedMatrix) {
             matrixFName.setText(" ");
             storedMatrixBox.setEnabled(false);
             if (userDefinedMatrix.isSelected()) {
@@ -1074,6 +1068,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 ViewUserInterface.getReference().setDefaultDirectory(directory);
                 matrixFName.setText(fileName);
+                
+                //TODO: Fill in user defined fields from here
+                
             } else {
                 return null;
             }
@@ -1095,7 +1092,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     public TransMatrix readTransformMatrixFile(final String fileName) {
     	
-        final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
+    	int nDims = image.getNDims() > 3 ? 4 : image.getNDims() + 1; 
+    	
+        TransMatrix matrix = new TransMatrix(nDims);
         matrix.identity();
 
         if (fileName == null) {
@@ -1120,6 +1119,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 spline = new AlgorithmTPSpline(image);
                 spline.readMatrix(raFile);
                 raFile.close();
+            } else if(extension.equals(".1d")) { 
+            	fileTransMatrix = TransMatrix.readAfniMatrix(raFile);
             } else {
                 spline = null;
                 matrix.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim, 
