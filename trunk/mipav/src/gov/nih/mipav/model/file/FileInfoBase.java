@@ -867,6 +867,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     // 2 RGB
     // 3 indexed color LUT is saved with image
 
+    /** ModelLUT associated with fileinfo */
+    private ModelLUT lut = null;
+    
     /** Flag that indicates whether or not the image is in multiple files (tiff). */
     private boolean multiFile = false;
 
@@ -1842,6 +1845,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         return LPSOrigin;
     }
+    
+    /**
+     * Returns the LUT.
+     */
+    public ModelLUT getLUT() {
+    	return lut;
+    }
 
     /**
      * Returns max pixel value of the image.
@@ -2334,6 +2344,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public void setImageOrientation(final int orient) {
         imageOrientation = orient;
+    }
+    
+    /**
+     * Sets the model lut
+     * 
+     * @param reference to the model lut for this file info (often shared between file infos to conserve space
+     */
+    public void setLUT(ModelLUT lut) {
+    	this.lut = lut;
     }
 
     /**
