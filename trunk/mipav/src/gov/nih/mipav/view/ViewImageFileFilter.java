@@ -11,7 +11,7 @@ import java.io.File;
  * 
  * @author Harman Singh
  */
-public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
+public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter implements java.io.FileFilter {
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
