@@ -1416,7 +1416,7 @@ public class FileZVI extends FileBase {
         return image;
     }
     
-    private void readHeader() throws IOException {
+    public boolean readHeader() throws IOException {
         int i;
         int j;
         byte[] b;
@@ -5890,7 +5890,7 @@ public class FileZVI extends FileBase {
             
         } // while (true)
         
-          return;
+          return true;
 
     }
     
