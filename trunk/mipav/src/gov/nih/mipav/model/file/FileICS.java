@@ -3058,7 +3058,7 @@ public class FileICS extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private void readHeader() throws IOException {
+    public boolean readHeader() throws IOException {
         int s;
         int index;
         String tempString;
@@ -3895,7 +3895,7 @@ public class FileICS extends FileBase {
 
         raFile.close();
 
-        return;
+        return true;
     }
 
     /**
