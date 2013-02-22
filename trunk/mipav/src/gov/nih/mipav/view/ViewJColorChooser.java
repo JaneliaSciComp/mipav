@@ -23,8 +23,8 @@ public class ViewJColorChooser extends JColorChooser {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private JDialog colorDialog;
+    /** Main color dialog for display */
+    protected JDialog colorDialog;
  
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -58,17 +58,15 @@ public class ViewJColorChooser extends JColorChooser {
      * @param  OKListener      class that will respond to the user pressing OK
      * @param  CancelListener  class that will respond to the user pressing Cancel
      */
-    public ViewJColorChooser(Component parent, String title, ActionListener OKListener, ActionListener CancelListener,boolean setVisible) {
+    public ViewJColorChooser(Component parent, String title, ActionListener OKListener, ActionListener CancelListener, boolean setVisible) {
         super();
 
         colorDialog = JColorChooser.createDialog(parent, title, false, this, OKListener, CancelListener);
-
-        //this.setPreviewPanel(prevPanel);
-        if(setVisible) {
-	        colorDialog.setSize(450, 310);
-	        colorDialog.setResizable(false);
-	        colorDialog.setVisible(true);
-        }
+        this.setPreviewPanel(new JPanel());
+        colorDialog.setSize(450, 310);
+        colorDialog.setResizable(false);
+        
+        colorDialog.setVisible(setVisible);
     }
     
     
