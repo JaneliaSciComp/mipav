@@ -51,7 +51,7 @@ public class TransferFunction extends ModelSerialCloneable {
     public synchronized void addPoint(Vector2f pt) {
 
         checkSize();
-
+        
         pts[endPtr] = new Vector2f(pt.X, pt.Y);
         endPtr++;
         recalculateSlopes();
@@ -234,7 +234,7 @@ public class TransferFunction extends ModelSerialCloneable {
     public synchronized void insertPoint(Vector2f pt, int index) {
 
         checkSize();
-
+        
         for (int i = endPtr - 1; i >= index; i--) {
             pts[i + 1] = pts[i];
         }
@@ -254,7 +254,7 @@ public class TransferFunction extends ModelSerialCloneable {
     public synchronized void insertPoint(float x, float y, int index) {
 
         checkSize();
-
+        
         for (int i = endPtr - 1; i >= index; i--) {
             pts[i + 1] = pts[i];
         }
@@ -279,9 +279,11 @@ public class TransferFunction extends ModelSerialCloneable {
     /**
      * Removes all points from the funcitons.
      */
-    public synchronized void removeAll() {
+    public synchronized Vector2f[] removeAll() {
         endPtr = 0;
         recalculateSlopes();
+        
+        return pts;
     }
 
     /**
@@ -289,14 +291,17 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @param  index  the index where the point is to be removed
      */
-    public synchronized void removePoint(int index) {
-
+    public synchronized Vector2f removePoint(int index) {
+    	Vector2f old = pts[index];
+    	
         for (int i = index; i < endPtr; i++) {
             pts[i] = pts[i + 1];
         }
 
         endPtr--;
         recalculateSlopes();
+
+        return old;
     }
 
     /**
@@ -306,7 +311,7 @@ public class TransferFunction extends ModelSerialCloneable {
      * @param  index  int the index of the point to be replaced
      */
     public synchronized void replacePoint(Vector2f pt, int index) {
-
+    	
         if ((index >= 0) && (index < pts.length)) {
             pts[index].X = pt.X;
             pts[index].Y = pt.Y;
