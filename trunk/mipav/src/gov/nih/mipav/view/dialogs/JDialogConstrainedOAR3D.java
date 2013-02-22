@@ -1700,7 +1700,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         translatePanel.add(limitTranslationCheckbox);
 
         // Universal translation?
-        universalTranslationCheckbox = new JCheckBox("Apply same translations limits to all dimensions.");
+        universalTranslationCheckbox = new JCheckBox("Apply same translation limits to all dimensions.");
         universalTranslationCheckbox.setEnabled(limitTrans);
         universalTranslationCheckbox.setSelected(oneTrans);
         universalTranslationCheckbox.setFont(serif12);
@@ -2107,7 +2107,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         rotatePanel.setBorder(buildTitledBorder("Rotation Search Range"));
 
         // Radio buttons
-        universalRotationCheckbox = new JCheckBox("Apply same rotations to all dimensions.", true);
+        universalRotationCheckbox = new JCheckBox("Apply same rotation limits to all dimensions.", true);
         universalRotationCheckbox.setFont(serif12);
         universalRotationCheckbox.addItemListener(this);
 
