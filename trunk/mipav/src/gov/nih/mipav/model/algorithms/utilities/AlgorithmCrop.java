@@ -38,9 +38,9 @@ public class AlgorithmCrop extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates new algorithms to crop image using VOI. Stores in destImg.
+     * Creates new algorithms to crop image by specified bounds. Stores in destImg.
      *
-     * @param  destImg   image model where result image is to stored
+     * @param  destImg   image model where result image is to stored, use null to do in-place calculation
      * @param  srcImg    source image model
      * @param  _cushion  extra space around VOI in x and y dimensions.
      * @param  _x        VOI xBounds: x[0] = min. bound and x[1] = max. bound
