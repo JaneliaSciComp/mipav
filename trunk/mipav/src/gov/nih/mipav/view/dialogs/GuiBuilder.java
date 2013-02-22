@@ -99,6 +99,7 @@ public class GuiBuilder implements ActionListener {
         f.setAlignment(FlowLayout.LEFT);
         JPanel radioPanel = new JPanel(f);
         JRadioButton radioButton = new JRadioButton(label);
+        radioButton.setFont(MipavUtil.font12);
         radioButton.setSelected(selected);
         radioPanel.add(radioButton);
         return radioButton;
@@ -109,6 +110,7 @@ public class GuiBuilder implements ActionListener {
         f.setAlignment(FlowLayout.LEFT);
         JPanel checkPanel = new JPanel(f);
         JCheckBox checkBox = new JCheckBox(label);
+        checkBox.setFont(MipavUtil.font12);
         checkBox.setSelected(selected);
         checkPanel.add(checkBox);
         return checkBox;
@@ -119,6 +121,7 @@ public class GuiBuilder implements ActionListener {
         f.setAlignment(FlowLayout.LEFT);
         JPanel panel = new JPanel(f);
         JLabel label = new JLabel(labelText);
+        label.setFont(MipavUtil.font12);
         JTextField text = new JTextField(initText);
         text.setColumns(8);
         panel.add(label);
@@ -127,28 +130,47 @@ public class GuiBuilder implements ActionListener {
     }
         
     
-    public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode) {
+    public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode) {
         return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
     }
     
-    public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode, ActionListener updateAction) {
+    public JTextField buildFileField(String labelText, final String initText, final boolean multiSelect, final int fileSelectionMode, ActionListener updateAction) {
         return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode, false, updateAction);
     }
     
-    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
+    public JTextField buildFileField(String labelText, final String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
         return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, createNewFiles, null);
     }
     
-    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
+    public JTextField buildFileField(String labelText, final String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         JLabel label = new JLabel(labelText);
+        label.setFont(MipavUtil.font12);
         final JTextField text = new JTextField(initText);
         text.setColumns(8);
         JButton button = new JButton("Browse");
+        button.setFont(MipavUtil.font12B);
+        
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser(initDir);
+            	
+            	String finalDir = initDir;
+            	final File f2 = new File(text.getText());
+            	if(f2.exists() && f2.isDirectory()) {
+            		finalDir = f2.getAbsolutePath();
+            	} else if(f2.exists() && !f2.isDirectory()) {
+            		finalDir = f2.getParentFile().getAbsolutePath();
+            	} else {
+	                final File f = new File(initDir + File.separator + initText);
+	                if(f.exists() && f.isDirectory()) {
+	            		finalDir = f.getAbsolutePath();
+	            	} else if(f.exists() && !f.isDirectory()) {
+	            		finalDir = f.getParentFile().getAbsolutePath();
+	            	}
+            	}
+            	
+                JFileChooser fileChooser = new JFileChooser(finalDir);
                 fileChooser.setFont(MipavUtil.defaultMenuFont);
                 fileChooser.setMultiSelectionEnabled(multiSelect);
                 fileChooser.setFileSelectionMode(fileSelectionMode);
@@ -290,6 +312,7 @@ public class GuiBuilder implements ActionListener {
         f.setAlignment(FlowLayout.LEFT);
         JPanel panel = new JPanel(f);
         JLabel label = new JLabel(labelText);
+        label.setFont(MipavUtil.font12);
         JComboBox comboBox = null;
         if(options != null) {
             
