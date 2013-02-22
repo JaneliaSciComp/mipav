@@ -82,6 +82,17 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
     public void addFunctionPoint(float x, float y) {
         float mx = x - offsetX; // see ViewJComponentHLUTBase
         float my = y - offsetY;
+        if(my < 0) {
+        	my = 0;
+        } else if(my > 255) {
+        	my = 255;
+        }
+        
+        if(mx < 0) {
+        	mx = 0;
+        } else if(mx > 255) {
+        	mx = 255;
+        }
 
         float min, max;
 
