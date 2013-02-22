@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
@@ -775,6 +776,89 @@ public class TransMatrix extends Matrix4f
         }
         return list;
     }
+    
+    /** 
+     * Reads AFNI-style matrix and does processing to generate TransMatrix result
+     */
+    public static TransMatrix readAfniMatrix(RandomAccessFile raFile) {
+    	if(raFile == null) {
+    		return null;
+    	}
+    	
+    	String str = null;
+    	
+    	try {
+    		str = raFile.readLine();
+    	} catch(IOException error) {
+    		MipavUtil.displayError("Matrix read error "+error);
+    		error.printStackTrace();
+    		return null;
+    	}
+    	
+    	if(str == null) {
+    		return null;
+    	}
+    	
+    	String[] numSplit = str.split("\\s+");
+    	if(numSplit.length < 12) {
+    		MipavUtil.displayError("Matrix has too few entries");
+    		return null;
+    	}
+    	
+    	ArrayList<Float> d = new ArrayList<Float>();
+    	for(int i=0; i<numSplit.length; i++) {
+    		if(numSplit[i].length() > 0) {
+	    		try {
+	    			d.add(Float.valueOf(numSplit[i]));
+	    		} catch(NumberFormatException nfe) {
+	    			MipavUtil.displayError("Matrix read error "+nfe);
+	    			nfe.printStackTrace();
+	    			return null;
+	    		}
+    		}
+    	}
+    	
+    	if(d.size() < 12) {
+    		MipavUtil.displayError("Matrix has too few entries");
+    		return null;
+    	}
+    	
+    	return createMatrixFromAfni(d);
+    }
+    
+    private static TransMatrix createMatrixFromAfni(ArrayList<Float> d) {
+    	Matrix3f uMat = new Matrix3f();
+    	uMat = uMat.identity();
+    	
+    	Matrix3f dMat = new Matrix3f();
+    	dMat = dMat.identity();
+    	dMat.M00 = d.get(6);
+    	dMat.M11 = d.get(7);
+    	dMat.M22 = d.get(8);
+    	
+    	Matrix3f sMat = new Matrix3f();
+    	sMat = sMat.identity();
+    	sMat.M01 = d.get(9);
+    	sMat.M02 = d.get(10);
+    	sMat.M12 = d.get(11);
+    	
+    	Matrix3f transform = uMat.mult(dMat).mult(sMat);
+    	
+    	TransMatrix transTry = new TransMatrix(4);
+    	transTry.MakeIdentity();
+    	transTry.M03 = d.get(0);
+    	transTry.M13 = d.get(1);
+    	transTry.M23 = d.get(2);
+    	
+    	TransMatrix trans = new TransMatrix(4);
+    	trans.setZoom(d.get(6), d.get(7), d.get(8));
+    	trans.setRotate(d.get(4), d.get(5), d.get(3), TransMatrix.DEGREES); //comment out rotations to compare
+    	trans.setSkew(d.get(9), d.get(10), d.get(11));
+    	trans.setTranslate(d.get(0), d.get(1), d.get(2));
+    	
+    	return trans;
+    }
+    
     /**
      * Saves transformation matrix to a text file MIPAV format 
      * @see saveMatrix(RandomAccessFile raFile)
