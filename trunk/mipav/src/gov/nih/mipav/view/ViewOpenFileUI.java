@@ -285,7 +285,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     return null;
                 }
 
-                LUT = fileIO.getModelLUT();
+                if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+                	LUT = fileIO.getModelLUT();
+                }
                 modelRGB = fileIO.getModelRGB();
 
                 //readLinkedImage also gets LUT2 and modelRGB2
@@ -352,7 +354,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 }
 
                 if (image2 != null) {
-                    LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT
+                	if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+                		LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT
+                	}
 
                     // or compressed AVI image has a LUT
                     // else it is null
@@ -452,7 +456,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         }
 
         // image.getMatrix().identity();
-        LUT = fileIO.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
+        if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+        	LUT = fileIO.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
+        }
 
         modelRGB = fileIO.getModelRGB();
         
@@ -506,7 +512,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             }
 
             // image2.getMatrix().identity();
-            LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
+            if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY)) {
+            	LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
+            }
             modelRGB2 = fileIO2.getModelRGB();
 
             // and create in ViewFrameImage
