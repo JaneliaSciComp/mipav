@@ -275,6 +275,9 @@ public class FileUtility {
      */
     public static final int METAIMAGE = 77;
     
+    /** Extension: .trk, TrackVis track data */
+    public static final int TRACKVIS = 78;
+    
     
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
@@ -284,7 +287,7 @@ public class FileUtility {
             "medivision", "mgh", "micro cat", "minc", "minc multifile", "mipav", "mrc", "nifti", "nifti multifile", "nrrd",
             "nrrd multifile", "osm", "pcx", "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml",
             "tga", "tiff", "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "parrec multifile",
-            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage"};
+            "spar", "surfaceref xml", "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "MetaImage", "trk"};
 
     
 
@@ -681,24 +684,8 @@ public class FileUtility {
         }
 
         // sort to ensure that files are in correct (lexicographical) order
-        for (i = 0; i < nImages; i++) { // (bubble sort? ... )
-
-            for (j = i + 1; j < nImages; j++) {
-                result = FilenameSorter.compareToLastNumericalSequence(fileList2[i], fileList2[j]); // compare based on
-                // last numerical
-                // sequence
-                // result =
-                // fileList2[i].compareTo(
-                // fileList2[j] );
-
-                if (result > 0) {
-                    fileTemp = fileList2[i];
-                    fileList2[i] = fileList2[j];
-                    fileList2[j] = fileTemp;
-                } // end of if (result > 0)
-            } // end of for (j = i+1; j < nImages; j++)
-        } // end of for (i = 0; i < nImages; i++)
-
+        Arrays.sort(fileList2, new FilenameSorter());
+        
         return fileList2;
     }
 
