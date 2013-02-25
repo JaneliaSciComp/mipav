@@ -57,7 +57,7 @@ public class FileVista extends FileBase {
      * reads the header
      * @param imageFileName
      * @param fileDir
-     * @return
+     * @return boolean - if header could be read
      * @throws IOException
      */
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
