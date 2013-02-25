@@ -281,7 +281,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
 
-    ButtonGroup VOIGroup = new ButtonGroup();
+    protected ButtonGroup VOIGroup = new ButtonGroup();
 
     protected JToolBar imageAlignToolBar;
 
@@ -390,49 +390,43 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Magnification for image. */
     protected float zoom = 1.0f;
 
-    /** DOCUMENT ME! */
-    private JToggleButton addPointToggleButton;
-
-    /** DOCUMENT ME! */
-    private JToggleButton dropperPaintToggleButton;
+    /** Toggle buttons for voi/points */
+    protected JToggleButton addPointToggleButton, dropperPaintToggleButton, paintCanToggleButton;
 
     /** refs to indiviadual frame zooming in and out buttons. */
-    private JToggleButton indivMagButton, indivMinButton;
+    protected JToggleButton indivMagButton, indivMinButton;
 
     /** DOCUMENT ME! */
-    private JButton leastSquaresButton;
+    protected JButton leastSquaresButton;
 
     /** refs to the magnify and minimize button.* */
-    private JButton magButton, minButton;
+    protected JButton magButton, minButton;
 
     /** Box holding the list of available paint brushes. */
-    private JComboBox paintBox = null;
+    protected JComboBox paintBox = null;
 
     /** used with the above to say the paint brush has been changed, waiting to change back. */
     private boolean paintBrushLocked = false;
-
-    /** DOCUMENT ME! */
-    private JToggleButton paintCanToggleButton;
 
     /** int used for quick-key painting for speedier paint brush access. */
     private int quickPaintBrushIndex = -1;
 
     /** The button that indicates whether this triframe is linked with tri-frames of similar dimensionality. */
-    private JCheckBox scrollButton;
+    protected JCheckBox scrollButton;
 
     /** Used to setup the paint spinner. */
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
     /** Toolbar builder reference. */
-    private ViewToolBarBuilder toolbarBuilder;
+    protected ViewToolBarBuilder toolbarBuilder;
 
     /** DOCUMENT ME! */
-    private JButton tpSplineButton;
+    protected JButton tpSplineButton;
 
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
-    private JMenu voiMenu;
+    protected JMenu voiMenu;
 
     private VOIManagerInterface voiManager;
 
@@ -449,6 +443,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Creates a JFrameBase without calling gui initialization, init() must
+     * be called after pre-processing has completed.
+     * 
+     * @param _imageA First image to display
+     * @param _imageB Second loaded image
+     */
+    public ViewJFrameTriImage(final ModelImage _imageA, final ModelImage _imageB) {
+    	super(_imageA, _imageB);
+    }
+    
     /**
      * Make a frame and puts an image component into it.
      * 
@@ -692,7 +697,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             updateImages(true);
         } else if (command.equals("traverse")) {
-            voiManager.actionPerformed(event);
+        	voiManager.actionPerformed(event);
             if ( (imageB != null) && ( !radioImageBoth.isEnabled())) {
                 radioImageBoth.setEnabled(true);
             }
@@ -2300,7 +2305,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         fireCoordinateChange(i, j, k);
         setPositionLabels(i, j, k);
-        updateImages(true);
+        updateImages(false);
     }
 
     /**
@@ -2403,8 +2408,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param _imageB image to set the frame to
      */
     public void setImageB(final ModelImage _imageB) {
+    	setImageB(_imageB, true);
+    }
+    
+    /**
+     * Accessor that sets the reference to imageB. Includes changing the frame's reference and the references the
+     * components keep.  Unlike <code>setImageB(ModelImage)</code> this method matches the functionality of
+     * <code>setImageA(ModelImage)</code>
+     * 
+     * @param _imageB image to set the frame to
+     */
+    public void setImageB(final ModelImage _imageB, boolean disposeOldB) {
 
-        if (imageB != null) {
+        if (imageB != null && disposeOldB) {
             imageB.disposeLocal();
         } // Dispose of the memory of the old image
 
@@ -2463,9 +2479,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         for (int i = 0; i < frameList.size(); i++) {
 
-            if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
-                ((ViewJFrameBase) frameList.elementAt(i)).setImageB(imageB);
-            }
+//            if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
+//                ((ViewJFrameBase) frameList.elementAt(i)).setImageB(imageB);
+//            }
         }
 
         setActiveImage(ViewJComponentBase.IMAGE_B);
@@ -2484,7 +2500,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
          */
         setCenter( (extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
 
-        updateLayout();
+//        if(!disposeOldB) {
+//        	updateLayout();
+//        }
     }
 
     /**
@@ -3057,6 +3075,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         return updateImages(null, null, forceShow, interpMode);
     }
 
+    static int v = 0;
+    
     /**
      * This methods calls the componentImage's update method to redraw the screen.
      * 
@@ -3071,15 +3091,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
 
-            if (triImage[i] != null) {
-
+            if (triImage[i] != null && triImage[i].isVisible()) {
+            	
                 // redraw the paint brush cursor (quick)
                 triImage[i].updatePaintBrushCursor();
 
                 if (triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false) {
                     return false;
                 }
-            }
+            } 
         }
 
         return true;
@@ -3286,7 +3306,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         menuBar.add(menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
                 menuObj.buildCheckBoxMenuItem("Paint toolbar", "PaintToolbar", showPaintToolbar),
-                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", true),
                 menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)}));
 
         return menuBar;
@@ -3429,9 +3449,65 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             btnInvisible[i] = new JToggleButton("");
         }
 
-        final Border etchedBorder = BorderFactory.createEtchedBorder();
+        imageToolBar = buildMagToolBar(BoxLayout.X_AXIS);
 
-        imageToolBar = new JToolBar();
+        panelToolbar.add(imageToolBar, panelToolBarGBC);
+
+        paintToolBar = buildPaintToolBar(BoxLayout.X_AXIS);
+
+        panelToolBarGBC.gridx = 0;
+        panelToolBarGBC.gridy = 3;
+        panelToolBarGBC.gridwidth = 1;
+        panelToolBarGBC.gridheight = 1;
+        panelToolBarGBC.fill = GridBagConstraints.BOTH;
+        panelToolBarGBC.anchor = GridBagConstraints.WEST;
+        panelToolBarGBC.weightx = 100;
+        panelToolBarGBC.weighty = 100;
+        panelToolbar.add(paintToolBar, panelToolBarGBC);
+        paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
+
+        if ( (imageA.getNDims() == 4) || ( (imageB != null) && (imageB.getNDims() == 4))) {
+            final JPanel panelImageSlider = new JPanel();
+            panelImageSlider.setLayout(new GridLayout(1, 1));
+            panelImageSlider.setForeground(Color.black);
+
+            tDim = extents[3];
+            final TitledBorder borderImageSlider = new TitledBorder(" Time slice index [total number volumes=" + tDim
+                    + "] ");
+            borderImageSlider.setTitleColor(Color.black);
+            borderImageSlider.setTitleFont(MipavUtil.font12B);
+            borderImageSlider.setBorder(new EtchedBorder());
+            panelImageSlider.setBorder(borderImageSlider);
+
+            tImageSlider = new ViewJSlider(ViewJSlider.TIME, tDim - 1);
+            tImageSlider.addChangeListener(this);
+
+            panelImageSlider.add(tImageSlider);
+            panelToolBarGBC.gridx = 0;
+            panelToolBarGBC.gridy = 4;
+            panelToolBarGBC.gridwidth = 1;
+            panelToolBarGBC.gridheight = 1;
+            panelToolBarGBC.fill = GridBagConstraints.BOTH;
+            panelToolBarGBC.anchor = GridBagConstraints.WEST;
+            panelToolBarGBC.weightx = 100;
+            panelToolBarGBC.weighty = 100;
+            panelToolbar.add(panelImageSlider, panelToolBarGBC);
+        }
+
+        setImageSelectorPanelVisible(true);
+    }
+    
+    /**
+     * Builds the image toolbar for zooming
+     *   
+     * @param boxLayout the layout to apply
+     * @return imageToolBar
+     */
+    protected JToolBar buildMagToolBar(int boxLayout) {
+    	final Border etchedBorder = BorderFactory.createEtchedBorder();
+    	JToolBar imageToolBar = new JToolBar();
+    	BoxLayout axis = new BoxLayout(imageToolBar, boxLayout);
+    	imageToolBar.setLayout(axis);
         imageToolBar.setBorder(etchedBorder);
         imageToolBar.setBorderPainted(true);
         imageToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -3493,11 +3569,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         crosshairSpinner.setToolTipText("Crosshair pixel gap"); // bug in API prevents this from working
 
         imageToolBar.add(crosshairSpinner);
-
-        panelToolbar.add(imageToolBar, panelToolBarGBC);
-
-        // Paint toolbar
-        paintToolBar = new JToolBar();
+        
+        return imageToolBar;
+    }
+    
+    /**
+     * Builds the paint toolbar
+     * 
+     * @param boxLayout layout to apply
+     * @return the paintToolBar
+     */
+    protected JToolBar buildPaintToolBar(int boxLayout) {
+    	final Border etchedBorder = BorderFactory.createEtchedBorder();
+        JToolBar paintToolBar = new JToolBar();
+        BoxLayout axis = new BoxLayout(paintToolBar, boxLayout);
+        paintToolBar.setLayout(axis);
         paintToolBar.setBorder(etchedBorder);
         paintToolBar.setBorderPainted(true);
         paintToolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -3655,47 +3741,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         paintToolBar.add(toolbarBuilder.buildButton("CalcPaint", "Calculate volume of paint", "calc"));
 
         paintToolBar.setFloatable(false);
-
-        panelToolBarGBC.gridx = 0;
-        panelToolBarGBC.gridy = 3;
-        panelToolBarGBC.gridwidth = 1;
-        panelToolBarGBC.gridheight = 1;
-        panelToolBarGBC.fill = GridBagConstraints.BOTH;
-        panelToolBarGBC.anchor = GridBagConstraints.WEST;
-        panelToolBarGBC.weightx = 100;
-        panelToolBarGBC.weighty = 100;
-        panelToolbar.add(paintToolBar, panelToolBarGBC);
-        paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
-
-        if ( (imageA.getNDims() == 4) || ( (imageB != null) && (imageB.getNDims() == 4))) {
-            final JPanel panelImageSlider = new JPanel();
-            panelImageSlider.setLayout(new GridLayout(1, 1));
-            panelImageSlider.setForeground(Color.black);
-
-            tDim = extents[3];
-            final TitledBorder borderImageSlider = new TitledBorder(" Time slice index [total number volumes=" + tDim
-                    + "] ");
-            borderImageSlider.setTitleColor(Color.black);
-            borderImageSlider.setTitleFont(MipavUtil.font12B);
-            borderImageSlider.setBorder(new EtchedBorder());
-            panelImageSlider.setBorder(borderImageSlider);
-
-            tImageSlider = new ViewJSlider(ViewJSlider.TIME, tDim - 1);
-            tImageSlider.addChangeListener(this);
-
-            panelImageSlider.add(tImageSlider);
-            panelToolBarGBC.gridx = 0;
-            panelToolBarGBC.gridy = 4;
-            panelToolBarGBC.gridwidth = 1;
-            panelToolBarGBC.gridheight = 1;
-            panelToolBarGBC.fill = GridBagConstraints.BOTH;
-            panelToolBarGBC.anchor = GridBagConstraints.WEST;
-            panelToolBarGBC.weightx = 100;
-            panelToolBarGBC.weighty = 100;
-            panelToolbar.add(panelImageSlider, panelToolBarGBC);
-        }
-
-        setImageSelectorPanelVisible(true);
+        
+        return paintToolBar;
     }
 
     protected void buildImageAlignToolBar() {
@@ -4090,8 +4137,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         triImage[ViewJFrameTriImage.CORONAL_A] = buildTriImage(imageA, LUTa, RGBTa, null, null, null, FileInfoBase.CORONAL);
         triImage[ViewJFrameTriImage.CORONAL_A].addMouseListener(this);
         triImage[ViewJFrameTriImage.CORONAL_A].setName( (new Integer(ViewJFrameTriImage.CORONAL_A)).toString());
-
+        
         tSlice = 0;
+        if(tImageSlider != null) {
+        	tSlice = parentFrame.getComponentImage().getTimeSlice();
+        	tImageSlider.setValue(tSlice);
+        }
 
         zoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM, ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
@@ -4206,7 +4257,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane[coronalIndex] = new JScrollPane(triImagePanel[coronalIndex],
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
+        
         if (volumePositionPanel == null) {
             buildVolumePositionPanel();
         }
@@ -4220,7 +4271,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         splitPane1.setResizeWeight(0.5);
         splitPane1.setOneTouchExpandable(true);
         topPanel.add(splitPane1);
-
+        
         JSplitPane splitPane2 = null;
 
         if (pluginPanel != null) {
@@ -5190,7 +5241,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /**
      * Clears the volumePositionPanel, so it can be recreated when the volumePositionFrame is closed:.
      */
-    private void cleanVolumePositionPanel() {
+    protected final void cleanVolumePositionPanel() {
 
         if (volumePositionPanel != null) {
             volumePositionPanel.removeAll();
