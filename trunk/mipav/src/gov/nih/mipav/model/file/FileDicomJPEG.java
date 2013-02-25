@@ -1372,6 +1372,12 @@ public class FileDicomJPEG {
 
                     if (bitCount == 8) {
                         previous = current;
+                        if (index >= image.length) {
+                            vIndex++;
+                            image = v.get(vIndex);
+                            buffer = image;
+                            index = 0;
+                        }
                         current = getNext();
                         bitCount = 0;
 
@@ -1422,6 +1428,12 @@ public class FileDicomJPEG {
                         // isNeverRead = false;
                         // z = 1;
                         previous = current;
+                        if (index >= image.length) {
+                            vIndex++;
+                            image = v.get(vIndex);
+                            buffer = image;
+                            index = 0;
+                        }
                         current = getNext();
                         bitCount = 0;
 
