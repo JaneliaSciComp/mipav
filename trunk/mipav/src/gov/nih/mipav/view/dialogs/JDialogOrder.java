@@ -29,7 +29,7 @@ public class JDialogOrder extends JDialogBase {
     private JRadioButton dicomOrder;
 
     /** Whether to ask user next time choice is available for AFNI ordering. */
-	private JCheckBox askAgain;
+	private JCheckBox dontAskAgain;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ public class JDialogOrder extends JDialogBase {
      * @param  event  Event that triggered this function.
      */
     public void actionPerformed(ActionEvent event) {
-        if(askAgain.isSelected()) {
+        if(dontAskAgain.isSelected()) {
         	Preferences.setProperty(Preferences.PREF_AFNI_ORDER_LOAD, Boolean.valueOf(dicomOrder.isSelected()).toString());
         }
     	dispose();
@@ -123,10 +123,10 @@ public class JDialogOrder extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         mainPanel.add(createPanel, gbc);
-        askAgain = new JCheckBox("Remember decision", false);
-        askAgain.setFont(serif12);
+        dontAskAgain = new JCheckBox("Remember decision", false);
+        dontAskAgain.setFont(serif12);
         gbc.gridy++;
-        mainPanel.add(askAgain, gbc);
+        mainPanel.add(dontAskAgain, gbc);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
