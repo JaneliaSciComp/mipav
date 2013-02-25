@@ -47,6 +47,23 @@ public class FileTypeInfo {
             extensionList.add(ext);
         }
     }
+    
+    /**
+     * Create a new FileTypeInfo.
+     * 
+     * @param desc The description for this file type.
+     * @param exts A String containing file extensions for this file type, separated by EXT_DELIM, starting with a
+     *            period (i.e., '.nii,.img'). The first extension is the default extension for this file type.
+     */
+    public FileTypeInfo(final String desc, final String ext, final String... extMore) {
+        description = desc;
+        
+        extensionList.add(ext);
+        
+        for(String str : extMore) {
+        	extensionList.add(str);
+        }
+    }
 
     /**
      * Retrieve the description for this file type.
