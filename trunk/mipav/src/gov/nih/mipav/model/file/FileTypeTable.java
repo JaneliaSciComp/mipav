@@ -298,6 +298,10 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".MAT", FileUtility.MATLAB);
         
         FileTypeTable.FILE_EXT_TABLE.put(".v", FileUtility.VISTA);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.TRACKVIS, new FileTypeInfo("TrackVis", ".trk"));
+        FileTypeTable.FILE_EXT_TABLE.put(".trk", FileUtility.TRACKVIS);
+        FileTypeTable.FILE_EXT_TABLE.put(".TRK", FileUtility.TRACKVIS);
     }
 
     /**
