@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -21,11 +22,14 @@ public class JDialogOrder extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Load image using dataset-specific ordering */
     private JRadioButton datasetOrder;
 
-    /** DOCUMENT ME! */
+    /** Load image using dicom ordering (R-L, A-P, I-S) */
     private JRadioButton dicomOrder;
+
+    /** Whether to ask user next time choice is available for AFNI ordering. */
+	private JCheckBox askAgain;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -36,7 +40,7 @@ public class JDialogOrder extends JDialogBase {
      * @param  orients         Axis orientation of image.
      */
     public JDialogOrder(Frame theParentFrame, int[] orients) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         init(orients);
     }
 
@@ -48,7 +52,10 @@ public class JDialogOrder extends JDialogBase {
      * @param  event  Event that triggered this function.
      */
     public void actionPerformed(ActionEvent event) {
-        dispose();
+        if(askAgain.isSelected()) {
+        	Preferences.setProperty(Preferences.PREF_AFNI_ORDER_LOAD, Boolean.valueOf(dicomOrder.isSelected()).toString());
+        }
+    	dispose();
         super.actionPerformed(event);
     }
 
@@ -69,7 +76,6 @@ public class JDialogOrder extends JDialogBase {
      */
     private void init(int[] orientSpecific) {
         setTitle("Choose image ordering");
-
         JPanel datasetPanel = new JPanel(new GridLayout(3, 1));
         datasetPanel.setBorder(buildTitledBorder("Dataset order"));
 
@@ -97,25 +103,46 @@ public class JDialogOrder extends JDialogBase {
         dicomOrder = new JRadioButton("dicom order", false);
         dicomOrder.setFont(serif12);
         orderGroup.add(dicomOrder);
-
         createPanel.add(dicomOrder);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
-
-        JPanel orderPanel = new JPanel(new GridLayout(1, 2));
-        orderPanel.add(datasetPanel);
-        orderPanel.add(dicomPanel);
-
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(orderPanel);
-        mainPanel.add(createPanel, BorderLayout.SOUTH);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.add(datasetPanel, gbc);
+        gbc.gridx++;
+        mainPanel.add(dicomPanel, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        mainPanel.add(createPanel, gbc);
+        askAgain = new JCheckBox("Remember decision", false);
+        askAgain.setFont(serif12);
+        gbc.gridy++;
+        mainPanel.add(askAgain, gbc);
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        
         pack();
         setVisible(true);
+
+        if(Preferences.getProperty(Preferences.PREF_AFNI_ORDER_LOAD) != null) {
+        	if(Preferences.is(Preferences.PREF_AFNI_ORDER_LOAD)) {
+        		dicomOrder.setSelected(true);
+        	} else {
+        		datasetOrder.setSelected(true);
+        	}
+        	OKButton.doClick();
+        }
+        
     }
 
 }
