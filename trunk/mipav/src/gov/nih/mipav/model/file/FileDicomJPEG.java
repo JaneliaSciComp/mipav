@@ -730,51 +730,47 @@ public class FileDicomJPEG {
                             return buffer;
                         }
                     }
-                    if (row == 1 && col == 1 || col == 1) {
-                        predictor = prevRowBuf[col][curComp]
-                                + ( (curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
-                    } else {
-                        switch (psv) {
+                    
+                    switch (psv) {
 
-                            case 0:
-                                predictor = 0;
-                                break;
+                        case 0:
+                            predictor = 0;
+                            break;
 
-                            case 1:
-                                predictor = curRowBuf[col - 1][curComp];
-                                break;
+                        case 1:
+                            predictor = curRowBuf[col - 1][curComp];
+                            break;
 
-                            case 2:
-                                predictor = prevRowBuf[col][curComp];
-                                break;
+                        case 2:
+                            predictor = prevRowBuf[col][curComp];
+                            break;
 
-                            case 3:
-                                predictor = prevRowBuf[col - 1][curComp];
-                                break;
+                        case 3:
+                            predictor = prevRowBuf[col - 1][curComp];
+                            break;
 
-                            case 4:
-                                predictor = curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]
-                                        - prevRowBuf[col - 1][curComp];
-                                break;
+                        case 4:
+                            predictor = curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]
+                                    - prevRowBuf[col - 1][curComp];
+                            break;
 
-                            case 5:
-                                predictor = curRowBuf[col - 1][curComp]
-                                        + ( (prevRowBuf[col][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
-                                break;
+                        case 5:
+                            predictor = curRowBuf[col - 1][curComp]
+                                    + ( (prevRowBuf[col][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
+                            break;
 
-                            case 6:
-                                predictor = prevRowBuf[col][curComp]
-                                        + ( (curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
-                                break;
+                        case 6:
+                            predictor = prevRowBuf[col][curComp]
+                                    + ( (curRowBuf[col - 1][curComp] - prevRowBuf[col - 1][curComp]) >> 1);
+                            break;
 
-                            case 7:
-                                predictor = (curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]) >> 1;
-                                break;
+                        case 7:
+                            predictor = (curRowBuf[col - 1][curComp] + prevRowBuf[col][curComp]) >> 1;
+                            break;
 
-                            default:
-                                Preferences.debug("FileDicomJPEG: Warning: Undefined PSV\n", Preferences.DEBUG_FILEIO);
-                                predictor = 0;
-                        }
+                        default:
+                            Preferences.debug("FileDicomJPEG: Warning: Undefined PSV\n", Preferences.DEBUG_FILEIO);
+                            predictor = 0;
                     }
 
                     curRowBuf[col][curComp] = (short)((short)d + predictor);
