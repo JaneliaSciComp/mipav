@@ -168,6 +168,9 @@ public class FileInfoAfni extends FileInfoBase {
     /** DOCUMENT ME! */
     private int[] botZ;
 
+    /** Name for each sub-brick */
+    private String[] brickLabsString;
+    
     /** DOCUMENT ME! */
     private float[] brickStatAux = null;
 
@@ -312,7 +315,10 @@ public class FileInfoAfni extends FileInfoBase {
     /** DOCUMENT ME! */
     private float[] statAux = null;
 
-    /** markers used for +orig to +ACPC transformation. */
+    /** Specifies sub-brick that this file-info belongs to */
+	private int subBrickNumber;
+
+	/** markers used for +orig to +ACPC transformation. */
     private Vector3f superiorEdge = new Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                  Float.POSITIVE_INFINITY);
 
@@ -356,6 +362,8 @@ public class FileInfoAfni extends FileInfoBase {
     /** DOCUMENT ME! */
     private float zAxisStep;
 
+    
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -383,7 +391,7 @@ public class FileInfoAfni extends FileInfoBase {
         int AFNITypeString;
         int AFNIViewType;
         int[] axisOrientation;
-        int subBrickNumber;
+        int subBrickExtents;
         int subBrickIndex;
         int statCode;
         int followingParms;
@@ -413,13 +421,17 @@ public class FileInfoAfni extends FileInfoBase {
         AFNITypeString = getAFNITypeString();
 
         if (getExtents().length == 4) {
-            subBrickNumber = getExtents()[3];
+            subBrickExtents = getExtents()[3];
         } else {
-            subBrickNumber = 1;
+            subBrickExtents = 1;
         }
 
+        if(brickLabsString != null && brickLabsString.length > subBrickNumber) {
+        	dialog.append("Sub-brick name: "+brickLabsString[subBrickNumber]+"\n");
+        }
+        
         if ((AFNITypeString == HEAD_FUNC_TYPE) || (AFNITypeString == GEN_FUNC_TYPE)) {
-            dialog.append("Number of sub-bricks: " + subBrickNumber + "\n");
+            dialog.append("Number of sub-bricks: " + subBrickExtents + "\n");
         }
 
         dialog.append("AFNI view:            ");
@@ -587,7 +599,7 @@ public class FileInfoAfni extends FileInfoBase {
 
             while (i < brickStatAux.length) {
                 subBrickIndex = (int) brickStatAux[i];
-                dialog.append("BRICK_STATAUX[" + i + "]: " + subBrickIndex + ", the sub-brick index\n");
+                dialog.append("BRICK_STATAUX[" + i + "]: Volume number " + subBrickIndex + "\n");
                 i++;
                 statCode = (int) brickStatAux[i];
 
@@ -598,8 +610,8 @@ public class FileInfoAfni extends FileInfoBase {
                                       " for FUNC_COR_TYPE with Correlation coeff\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         numSamples = (int) brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + numSamples + ", the number of samples\n");
@@ -618,8 +630,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_TT_TYPE with Student t\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         dof = (int) brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + dof + " for degrees of freedom\n");
@@ -630,8 +642,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_FT_TYPE with F ratio\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         ndof = (int) brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + ndof + " for numerator degrees of freedom\n");
@@ -646,8 +658,8 @@ public class FileInfoAfni extends FileInfoBase {
                                       " for FUNC_ZT_TYPE with Standard Normal\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         break;
 
@@ -655,8 +667,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_CT_TYPE with Chi-squared\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         dof = (int) brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + dof + " for degrees of freedom\n");
@@ -665,11 +677,11 @@ public class FileInfoAfni extends FileInfoBase {
 
                     case FUNC_BT_TYPE:
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode +
-                                      " for FUNC_BT_TYPE with Inomplete Beta\n");
+                                      " for FUNC_BT_TYPE with Incomplete Beta\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         a = brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + a + " for parameter a\n");
@@ -683,8 +695,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_BN_TYPE with Binomial\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         numTrials = (int) brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + numTrials + " number of trials\n");
@@ -698,8 +710,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_GT_TYPE with Gamma\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         shape = brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + shape + " for shape\n");
@@ -713,8 +725,8 @@ public class FileInfoAfni extends FileInfoBase {
                         dialog.append("BRICK_STATAUX[" + i + "]: " + statCode + " for FUNC_PT_TYPE with Poisson\n");
                         i++;
                         followingParms = (int) brickStatAux[i];
-                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
-                                      " for number of parameters that follow\n");
+//                        dialog.append("BRICK_STATAUX[" + i + "]: " + followingParms +
+//                                      " for number of parameters that follow\n");
                         i++;
                         mean = brickStatAux[i];
                         dialog.append("BRICK_STATAUX[" + i + "]: " + mean + " for mean\n");
@@ -1010,6 +1022,12 @@ public class FileInfoAfni extends FileInfoBase {
         return botZ;
     }
 
+    /**
+     * Returns the brick labs string for identifying sub-bricks.
+     */
+    public String[] getBrickLabsString() {
+    	return brickLabsString;
+    }
 
     /**
      * Returns first mid-sag point marker point for +orig to +acpc transformation in dataset ordering.
@@ -1454,7 +1472,11 @@ public class FileInfoAfni extends FileInfoBase {
         this.botZ = botZ;
     }
 
-    /**
+    public void setBrickLabsString(String[] brickLabsString) {
+		this.brickLabsString = brickLabsString;
+	}
+
+	/**
      * Sets brickStatAux The BRICK_STATAUX attribute allows you to attach statistical distribution information to
      * arbitrary sub-bricks of a bucket dataset.
      *
@@ -1863,7 +1885,11 @@ public class FileInfoAfni extends FileInfoBase {
         this.statAux = statAux;
     }
 
-    /**
+    public void setSubBrickNumber(int i) {
+		this.subBrickNumber = i;
+	}
+
+	/**
      * Sets the AC superior edge marker for orig to ACPC transformation in dataset ordering.
      *
      * @param  pt  - the marker point coordinates
