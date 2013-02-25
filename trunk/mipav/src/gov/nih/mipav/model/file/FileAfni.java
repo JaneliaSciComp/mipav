@@ -171,7 +171,7 @@ public class FileAfni extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int FUNC_BUCK_TYPE = 11; /* fbuc: bucket */
-
+    
     /**
      * Unfortunately, the func type codes overlap for Func and Anat datasets. This means that one cannot tell the
      * contents of a dataset from a single attribute. Default scale factors for functional data threshold values stored
@@ -328,16 +328,8 @@ public class FileAfni extends FileBase {
     /** DOCUMENT ME! */
     private String brickKeywordsString; // List of keywords for each sub-brick of the dataset.
 
-    // Should contain nvals sub-strings (separated by NULS).  Again,
-    // by convention, separate keywords for the same sub-brick would
-    // be separated by ";" within the sub-brick's keyword string.
-
-    /** DOCUMENT ME! */
-    private String brickLabsString; // These are labels for the sub-bricks, and are used in the
-
-    // choosers for sub-brick display when the dataset is a bucket
-    // type.  This attribute should contain nvals sub-strings,
-    // separated by NUL characters.
+    /** Sub-brick names */
+    private String[] brickLabsString; 
 
     /**
      * Each BLT is defined by a struct that contains two 3x3 matrices and four 3-vectors (2*3*3 + 4*3 = the 30 numbers).
@@ -563,9 +555,6 @@ public class FileAfni extends FileBase {
 
     /** Dataset ordered bounding box in mm. */
     private float lowestX, lowestY, lowestZ, highestX, highestY, highestZ;
-
-    /** DOCUMENT ME! */
-    private ModelLUT LUT;
 
     /** DOCUMENT ME! */
     private int marksFlag = -1; // Either MARKSET_ALIGN or MARKSET_BOUNDING
@@ -1161,8 +1150,7 @@ public class FileAfni extends FileBase {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
+	/**
      * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
      * files and sets other elements to <code>null</code>.
      */
@@ -1305,16 +1293,6 @@ public class FileAfni extends FileBase {
     // this.testNumber = testNumber;
     // }
 
-
-    /**
-     * getModelLUT - returns LUT if defined.
-     *
-     * @return  the LUT if defined else it is null
-     */
-    public ModelLUT getModelLUT() {
-        return LUT;
-    }
-
     /**
      * readImage.
      *
@@ -1358,12 +1336,12 @@ public class FileAfni extends FileBase {
             nextViewType = presentViewType;
             fileName = origName;
             presentViewType = FileInfoAfni.AFNI_ORIG;
-            readImage1();
+            readHeader();
             fileName = nextFileName;
             presentViewType = nextViewType;
         } // if (alsoOrig)
 
-        readImage1();
+        readHeader();
         readImage2();
 
         if (readACPC) {
@@ -1383,7 +1361,7 @@ public class FileAfni extends FileBase {
             AFNIOrigResolutions[2] = dicomDelta[2];
             fileName = originalFileName;
             presentViewType = viewType;
-            readImage1();
+            readHeader();
 
             // rr = -svec where rr is the Talairach center
             rr.X = -warpData[21];
@@ -1721,7 +1699,7 @@ public class FileAfni extends FileBase {
             iZres = origDelta[2];
             fileName = acpcName;
             presentViewType = FileInfoAfni.AFNI_ACPC;
-            readImage1();
+            readHeader();
 
             // rr = -svec where rr is the Talairach center
             if (warpData != null) {
@@ -2098,7 +2076,7 @@ public class FileAfni extends FileBase {
 
             fileName = originalFileName;
             presentViewType = viewType;
-            readImage1();
+            readHeader();
             xfrm = new TransMatrix(4);
             center = new Vector3f();
             center.X = (image.getExtents()[0] - 1) / 2.0f;
@@ -2344,7 +2322,14 @@ public class FileAfni extends FileBase {
         fileName = fName;
     }
 
-    /**
+    public ModelLUT getModelLUT() {
+		if(fileInfo != null) {
+			return fileInfo.getLUT();
+		}
+		return null;
+	}
+
+	/**
      * Writes a AFNI format type image.
      *
      * @param      image    Image model of data to write.
@@ -4651,11 +4636,11 @@ public class FileAfni extends FileBase {
 
 
     /**
-     * readImage1.
+     * Reads AFNI header (.HEAD file)
      *
      * @exception  IOException  if there is an error reading the file
      */
-    private void readImage1() throws IOException {
+    public boolean readHeader() throws IOException {
         boolean done, restart, countRead, exceptionOccurred, isNull;
         String lineString;
         String tmpString;
@@ -4837,8 +4822,34 @@ public class FileAfni extends FileBase {
                             fileInfo.setEndianess(endianess);
                         } // else if (nameString.equalsIgnoreCase("BYTEORDER_STRING"))
                         else if (nameString.equalsIgnoreCase("BRICK_LABS")) {
-                            brickLabsString = new String(buffer, 0, countEntries - 1);
-                            Preferences.debug("BRICK_LABS = " + brickLabsString + "\n", Preferences.DEBUG_FILEIO);
+                        	try {
+	                        	Vector<Integer> zeroLoc = new Vector<Integer>();
+	                        	zeroLoc.add(0);
+	                        	for(int k=0; k<buffer.length; k++) {
+	                        		if(buffer[k] == 0) {
+	                        			zeroLoc.add(k);
+	                        		}
+	                        	}
+	                        	
+	                        	int size = buffer[buffer.length-1] == 0 ? zeroLoc.size()-1 : zeroLoc.size();
+	                        	brickLabsString = new String[size];
+	                        	for(int k=0; k<zeroLoc.size()-1; k++) {
+	                        		brickLabsString[k] = new String(buffer, zeroLoc.get(k), zeroLoc.get(k+1)-zeroLoc.get(k));
+	                        	}
+	                        	
+	                        	if(size > zeroLoc.size()) {
+	                        		brickLabsString[brickLabsString.length-1] = new String(buffer, zeroLoc.get(zeroLoc.size()-1), buffer.length - zeroLoc.get(zeroLoc.size()-1) - 1);
+	                        	}
+                        	} catch(Exception e) {
+                        		brickLabsString = new String[1];
+                        		brickLabsString[0] = new String(buffer, 0, countEntries - 1);
+                        		Preferences.debug("Parsng of sub-brick names from BRICK_LABS failed, storing in single sub-brick entry\n", Preferences.DEBUG_FILEIO);
+                        	}
+
+                            for(int k=0; k<brickLabsString.length; k++) {
+                            	Preferences.debug("BRICK_LABS["+k+"] = " + brickLabsString[k] + "\n", Preferences.DEBUG_FILEIO);
+                            }
+                            fileInfo.setBrickLabsString(brickLabsString);
                         } else if (nameString.equalsIgnoreCase("HISTORY_NOTE")) {
                             historyNoteString = new String(buffer, 0, countEntries - 1);
                             Preferences.debug("HISTORY_NOTE = " + historyNoteString + "\n", Preferences.DEBUG_FILEIO);
@@ -5935,7 +5946,7 @@ public class FileAfni extends FileBase {
 
                                     case FUNC_BT_TYPE:
                                         Preferences.debug("BRICK_STATAUX[" + i + "] = " + statCode +
-                                                          " for FUNC_BT_TYPE with Inomplete Beta\n", Preferences.DEBUG_FILEIO);
+                                                          " for FUNC_BT_TYPE with Incomplete Beta\n", Preferences.DEBUG_FILEIO);
                                         i++;
                                         brickStatAux[i] = floatVar[i];
                                         followingParms = (int) floatVar[i];
@@ -7195,15 +7206,17 @@ public class FileAfni extends FileBase {
             System.gc();
             throw error;
         }
+        
+        return true;
     }
 
 
     /**
-     * DOCUMENT ME!
+     * Reads AFNI image (.BRIK file)
      *
-     * @return  DOCUMENT ME!
+     * @return  Generated modelImage
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  data reading problem occured
      */
     private ModelImage readImage2() throws IOException {
         int i, j, index;
@@ -7570,13 +7583,9 @@ public class FileAfni extends FileBase {
 
             for (i = 0; i < subBrickNumber; i++) {
 
+            	
                 for (j = 0; j < zDim; j++) {
                     index = j + (i * zDim);
-
-                    if ((!readACPC) && (!readTLRC)) {
-                        fileInfoCopy = (FileInfoAfni)fileInfo.clone();
-                        image.setFileInfo(fileInfoCopy, index);
-                    }
 
                     if (havePosFloatFacs) {
                         readBuffer(index, imgBuffer, brickFloatFacs[i], numRead); // Slice at a time
@@ -7587,6 +7596,29 @@ public class FileAfni extends FileBase {
                     image.importData(index * bufferSize, imgBuffer, false);
                 }
             }
+            
+            image.calcMinMax();
+            
+            for (i = 0; i < subBrickNumber; i++) {
+            	ModelLUT lut = null;
+            	if(brickLabsString != null && brickLabsString[i].contains("Tstat")) {
+            		lut = ModelLUT.buildTDistLUT(1, .9, image);
+            	}
+            	
+            	for (j = 0; j < zDim; j++) {
+                    index = j + (i * zDim);
+
+                    if ((!readACPC) && (!readTLRC)) {
+                        fileInfoCopy = (FileInfoAfni)fileInfo.clone();
+                        fileInfoCopy.setSubBrickNumber(i);
+                        if(lut != null) {
+                        	fileInfoCopy.setLUT(lut);
+                        }
+                        image.setFileInfo(fileInfoCopy, index);
+                    }
+            	}
+            }
+            
 
         } // dataset ordering
 
