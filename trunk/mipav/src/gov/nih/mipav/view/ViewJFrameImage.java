@@ -37,6 +37,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -724,7 +725,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 menuBuilder.setMenuItemEnabled("Extract image(B)", false);
                 setControls();
                 setTitle();
-                updateImages(null, null, true, -1);
+                if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY) && imageA.getFileInfo(componentImage.getSlice()).getLUT() != null) {
+                	updateImages(imageA.getFileInfo(componentImage.getSlice()).getLUT(), null, true, -1);
+                } else {
+                	updateImages(null, null, true, -1);
+                }
             }
 
             if (imageA.getFileInfo()[0] instanceof FileInfoXML) {
@@ -4272,7 +4277,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param whether linked images should change their linked image sets
      */
     public void setTimeSlice(final int slice, final boolean checkScroll) {
-
+    	
         if (imageA.getNDims() == 4) {
 
             if (componentImage.getTimeSlice() < imageA.getExtents()[3]) {
@@ -4282,8 +4287,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 // livewire grad mag. should be recalculated for the new slice
                 voiManager.resetLivewire();
                 setTitle();
-                updateImages(true);
-
+                if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY) && imageA.getFileInfo(slice*imageA.getExtents()[2]).getLUT() != null) {
+                	updateImages(imageA.getFileInfo(slice*imageA.getExtents()[2]).getLUT(), null, true, -1);      	
+                } else if(defaultLUTa != componentImage.getLUTa()) {
+                	updateImages(defaultLUTa, null, true, -1);      	
+                } else {
+                	updateImages(true);
+                }
+                	
                 if (linkFrame != null) {
                     linkFrame.setTimeSlice(componentImage.getTimeSlice());
                 }
@@ -4319,7 +4330,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 // livewire grad mag. should be recalculated for the new slice
                 voiManager.resetLivewire();
                 setTitle();
-                updateImages(true);
+                if(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY) && imageB.getFileInfo(slice*imageB.getExtents()[2]).getLUT() != null) {
+                	updateImages(null, imageB.getFileInfo(slice*imageB.getExtents()[2]).getLUT(), true, -1);
+                } else if(defaultLUTb != componentImage.getLUTb()) {
+                	updateImages(null, defaultLUTb, true, -1);
+                } else {
+                	updateImages(true);
+                }
 
                 if (linkFrame != null) {
                     linkFrame.setTimeSlice(componentImage.getTimeSlice());
@@ -4815,6 +4832,34 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (LUTa == null) {
             LUTa = ViewJFrameBase.initLUT(imageA);
+            defaultLUTa = LUTa;
+        } else {
+        	TransferFunction transfer = LUTa.getTransferFunction();
+        	int size = transfer.size();
+        	double localMin = 256;
+        	double localMax = -1;
+        	for(int i=0; i<size; i++) {
+        		Vector2f point = transfer.getPoint(i);
+        		if(point.X < imageA.getMin() || point.X > imageA.getMax()) {
+        			transfer.removePoint(i);
+        			if(point.X < imageA.getMin()) {
+        				localMin = point.Y;
+        			}
+        			if(point.X > imageA.getMax()) {
+        				localMax = point.Y;
+        			}
+        			i--;
+        			size--;
+        		}
+        	}
+        	
+        	if(localMin < 256) {
+        		transfer.insertPoint((float) imageA.getMin(), (float) localMin, 0);
+        	}
+        	
+        	if(localMax > -1) {
+        		transfer.addPoint((float) imageA.getMax(), (float) localMax);
+        	}
         }
     }
 
