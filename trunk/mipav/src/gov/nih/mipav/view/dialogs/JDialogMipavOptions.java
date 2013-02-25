@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
 
 
 /**
@@ -262,6 +263,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Button used to reset all preferences to default state. */
     private JButton resetButton;
 
+	/** Whether to auto-display lut associated with file. */
+    private JCheckBox displayLUT;
+
+    /** Look and feel choices. */
+	private JComboBox lfDisplayChoices;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -306,11 +313,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
         makeMouseClickOptions(gbc, gbl);
+        makeLFOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
         
         displayImagePanel.setLayout(gbl);
         displayImagePanel.setBorder(buildTitledBorder("Image"));
         makeDefaultLoadImageOptions(gbc, gbl);
+        makeLUTImageOptions(gbc, gbl);
         makeComplexImageOptions(gbc, gbl);
         makeLogMagImageOptions(gbc, gbl);
         makeInterpolateImageOptions(gbc, gbl);
@@ -510,10 +519,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .makeColorString(preferredActiveColor));
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, (String)activeImageColorBorderSize.getSelectedItem());
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
-                    .getSelectedIndex()]);
+                    .getSelectedIndex()]);    
+            Preferences.setProperty(Preferences.PREF_SHOW_UI_LF, lfDisplayChoices.getSelectedItem());     
             Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, ((DefaultDisplay)defaultDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
+            Preferences.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, String.valueOf(displayLUT.isSelected()));
             Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, ((InterpolateDisplay)interpolateDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, String.valueOf(displayHistogram.isSelected()));
             
@@ -963,6 +974,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         activeColor = new JButton();
         activeColor.setActionCommand("active color");
         activeColor.addActionListener(this);
+        activeColor.setOpaque(true);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
@@ -1064,6 +1076,44 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
     
     /**
+     * Makes option for look and feel
+     */
+    protected void makeLFOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
+    	String noChoice = "None";
+    	String lf = Preferences.getProperty(Preferences.PREF_SHOW_UI_LF);
+    	int defaultChoice = 0;
+    	
+    	LookAndFeelInfo[] looks = UIManager.getInstalledLookAndFeels();
+    	    	
+    	String[] looksString = new String[looks.length+1];
+    	looksString[0] = noChoice;
+    	for(int i=0; i<looks.length; i++) {
+    		if(lf != null && lf.equals(looks[i].getClassName())) {
+    			defaultChoice = i+1;
+    		}
+    		looksString[i+1] = looks[i].getClassName();
+    		System.out.println(looks[i].getClassName());
+    	}
+    	
+    	final JLabel l1 = new JLabel("MIPAV look and feel: ");
+    	l1.setFont(MipavUtil.font12);
+    	l1.setForeground(Color.black);
+    	gbc.insets = new Insets(0, 0, 0, 5);
+    	gbc.gridwidth = 1;
+    	gbc.anchor = GridBagConstraints.WEST;
+    	displayUserInterfacePanel.add(l1, gbc);
+    	
+    	lfDisplayChoices = new JComboBox(looksString);
+    	lfDisplayChoices.setSelectedIndex(defaultChoice);
+    	lfDisplayChoices.setFont(MipavUtil.font12);
+    	
+    	gbc.insets = new Insets(0, 0, 5, 0);
+    	gbc.gridwidth = GridBagConstraints.REMAINDER;
+    	gbc.anchor = GridBagConstraints.WEST;
+    	displayUserInterfacePanel.add(lfDisplayChoices, gbc);
+    }
+    
+    /**
      * Makes the options for displaying how images should be displayed on default.
      */
     protected void makeDefaultLoadImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
@@ -1127,6 +1177,26 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         if(defaultChoice != null) {
             complexDisplayChoices.setSelectedItem(defaultChoice);
+        }
+    }
+    
+    /**
+     * Makes checkbox for whether to display image using lut that is modality or image specific.
+     */
+    protected void makeLUTImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+    	displayLUT = new JCheckBox("Display image using stored LUT");
+    	displayLUT.setFont(MipavUtil.font12);
+    	displayLUT.setForeground(Color.black);
+    	displayLUT.addActionListener(this);
+    	gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(displayLUT, gbc2);
+        
+        if(Preferences.getProperty(Preferences.PREF_FILE_LUT_DISPLAY) == null) {
+            Preferences.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, Boolean.valueOf(true).toString());
+        } else {
+        	displayLUT.setSelected(Preferences.is(Preferences.PREF_FILE_LUT_DISPLAY));
         }
     }
     
@@ -1416,6 +1486,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileMiscPanel.add(fileTempDirBrowseButton);
     }
 
+    
+    
     /**
      * DOCUMENT ME!
      * 
@@ -1489,6 +1561,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // gbc.fill = GridBagConstraints;
         displayUserInterfacePanel.add(fontPanel, gbc);
     }
+    
+    
     
     /**
      * Makes options for how user interface will react when the left or right mouse buttons are clicked.
@@ -2187,10 +2261,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(l1);
 
         intensityLabelColorButton = new JButton();
+        intensityLabelColorButton.setOpaque(true);
         intensityLabelColorButton.setActionCommand("intensityLabelColor");
         intensityLabelColorButton.addActionListener(this);
 
         intensityLabelBackgroundButton = new JButton();
+        intensityLabelBackgroundButton.setOpaque(true);
         intensityLabelBackgroundButton.setActionCommand("intensityLabelBackground");
         intensityLabelBackgroundButton.addActionListener(this);
 
@@ -2245,6 +2321,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(l1);
 
         voiDrawButton = new JButton();
+        voiDrawButton.setOpaque(true);
         voiDrawButton.setActionCommand("VOIDrawColor");
         voiDrawButton.addActionListener(this);
         gbc.insets = new Insets(0, 0, 0, 0);
