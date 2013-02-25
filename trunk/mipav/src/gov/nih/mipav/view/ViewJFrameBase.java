@@ -84,11 +84,11 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     /** Holds a reference (link) to another frame so that it can be updated with this frame. */
     protected ViewJFrameTriImage linkTriFrame;
 
-    /** Reference to LUT for image A. */
-    protected ModelLUT LUTa;
+    /** Reference to LUT for image A and to the default LUT for image A. */
+    protected ModelLUT defaultLUTa, LUTa;
 
-    /** Reference to LUT for image B. */
-    protected ModelLUT LUTb;
+    /** Reference to LUT for image B and to the default LUT for image B. */
+    protected ModelLUT defaultLUTb, LUTb;
 
     /** Reference to progress bar. */
     protected ViewJProgressBar progressBar;
@@ -877,8 +877,26 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public ModelLUT getLUTb() {
         return LUTb;
     }
+    
+    /**
+     * Accessor that returns the default LUTa for the frame.
+     * 
+     * @return defaultLUTa
+     */
+    public ModelLUT getDefaultLUTa() {
+		return defaultLUTa;
+	}
 
     /**
+     * Accessor that returns the default LUTb for the frame.
+     * 
+     * @return defaultLUTb
+     */
+	public ModelLUT getDefaultLUTb() {
+		return defaultLUTb;
+	}
+
+	/**
      * Get the RGB table for image A.
      * 
      * @return null (may be overridden by inheriting classes)
@@ -3631,6 +3649,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     public void setLUTa(final ModelLUT lut) {
         LUTa = lut;
+        if(defaultLUTa == null) {
+        	defaultLUTa = lut;
+        }
     }
 
     /**
@@ -3640,6 +3661,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     public void setLUTb(final ModelLUT lut) {
         LUTb = lut;
+        if(defaultLUTb == null) {
+        	defaultLUTb = lut;
+        }
     }
 
     /**
@@ -3651,6 +3675,12 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public void setLUTs(final ModelLUT _LUTa, final ModelLUT _LUTb) {
         LUTa = _LUTa;
         LUTb = _LUTb;
+        if(defaultLUTa == null) {
+        	defaultLUTa = _LUTa;
+        }
+        if(defaultLUTb == null) {
+        	defaultLUTb = _LUTb;
+        }
     }
 
     /**
