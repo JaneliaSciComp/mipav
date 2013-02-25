@@ -298,6 +298,9 @@ public class Preferences {
 
     /** Constant that indicates if the splash graphic should be shown when mipav starts. */
     public static final String PREF_SHOW_SPLASH = "SplashGraphics";
+    
+    /** Class name for selected look and feel type, can also be "None" (default selection) */
+    public static final String PREF_SHOW_UI_LF = "LookAndFeel";
 
     /** Constant that indicates the pathname of the log file. */
     public static final String PREF_LOG_FILENAME = "LogFilename";
@@ -463,6 +466,12 @@ public class Preferences {
     
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
+    
+    /** Constant that indicates whether DICOM ordering should be used by default for loading AFNI images */
+    public static final String PREF_AFNI_ORDER_LOAD = "DicomOrderLoad";
+    
+    /** Constant that indicates whether image will display using a stored LUT (from image file or generic to image type) */
+    public static final String PREF_FILE_LUT_DISPLAY = "LutDisplay";
     
     /** Constant that indicates the mode of image interpolation used for display */
     public static final String PREF_INTERPOLATE_MODE = "InterpolateMode";
@@ -777,6 +786,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.Mipav.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, "true");
         
