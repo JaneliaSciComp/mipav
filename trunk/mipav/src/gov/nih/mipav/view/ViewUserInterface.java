@@ -2223,22 +2223,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * this method closes all registered images
      */
     public void closeAllImages() {
-
+    	
         Enumeration<String> e = ViewUserInterface.getReference().getRegisteredImageNames();
 
         while (e.hasMoreElements()) {
-            deleteItem((String) e.nextElement(), true);
+            deleteItem((String) e.nextElement(), true, false);
         }
-
+        
+        Runtime.getRuntime().gc();
+        Runtime.getRuntime().runFinalization();
     }
-
+    
     /**
      * Deletes the item specified by name. If false, only the model image is deleted
      * 
      * @param name the object to delete
      * @param deleteFrame whether the frame should be deleted along with the image
+     * @param runGC whether to run application-wide garbage collector once item is deleted
      */
-    private void deleteItem(String name, boolean deleteFrame) {
+    private void deleteItem(String name, boolean deleteFrame, boolean runGC) {
         // System.out.println("selected name = " + selectedName);
         if (name == null) {
             return; // log nothing.
@@ -2250,15 +2253,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             // An image that has a frame is only deleted when deleteFrame == true
             if (image != null && ( (deleteFrame && frame != null) || ( !deleteFrame && frame == null))) {
-                image.disposeLocal();
+                image.disposeLocal(false); 
 
                 if (deleteFrame && frame != null) {
                     frame.close();
                 }
             }
-
-            Runtime.getRuntime().gc();
-            Runtime.getRuntime().runFinalization();
+            
+            if(runGC) {
+	            Runtime.getRuntime().gc();
+	            Runtime.getRuntime().runFinalization();
+            }
         } catch (IllegalArgumentException iae) {
 
             // MipavUtil.displayError("There was a problem with the " +
