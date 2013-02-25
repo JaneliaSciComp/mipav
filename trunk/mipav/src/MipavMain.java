@@ -7,6 +7,9 @@
  * @author Matthew J. McAuliffe
  */
 
+
+import javax.swing.UIManager;
+
 import gov.nih.mipav.view.*;
 
 
@@ -35,6 +38,18 @@ public class MipavMain {
             ui.showSplashGraphics();
         }
 
+        String lf = null;
+        try {
+            
+			lf = Preferences.getProperty(Preferences.PREF_SHOW_UI_LF);
+			String os = System.getProperty("os.name");
+			if(lf != null && !lf.equals("None") && !os.toLowerCase().contains("mac")) {
+				UIManager.setLookAndFeel(lf);
+			}
+		} catch (Exception e) {
+			System.err.println("Unable to set requested look and feel: "+lf);
+		}
+        
         ui.setVisible(ui.isAppFrameVisible());
     }
 }
