@@ -358,7 +358,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		Pointer indexP = Pointer.to(index);
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Convolve.cl");
+		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		checkError( clBuildProgram(program, 0, null, "-cl-mad-enable", null, null) );
@@ -423,7 +423,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		{
 			clSetKernelArg(kernelZ_Div, argZDiv++, Sizeof.cl_int4, Pointer.to(colorMask));
 		}
-		boolean clipZ = false;
+		boolean clipZ = true;
 		int clip = clipZ ? 1 : 0;
 		clSetKernelArg(kernelZ_Div, argZDiv++, Sizeof.cl_int, Pointer.to(new int[]{clip}));
 		clSetKernelArg(kernelZ_Div, argZDiv, Sizeof.cl_int, indexP);
@@ -771,7 +771,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Convolve.cl");
+		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
 		program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		errcode[0] = clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -1145,7 +1145,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		// At this point all the buffers have been created.			
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Convolve.cl");
+		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		checkError( clBuildProgram(program, 0, null, "-cl-mad-enable", null, null) );
@@ -1666,12 +1666,42 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 				localSigmas[i] = sigmas[i];
 			}
 		}
+//		for ( int i = 0; i < sigmas.length; i++ )
+//		{
+//			System.err.print( localSigmas[i] + " " );
+//		}
+//		System.err.println("");
+//		System.err.println("");
 		
 		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(localSigmas);
 		gkf.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
 		Kernel gaussianKernel = gkf.createKernel();
 		float[][] derivativeKernel = gaussianKernel.getData();
-		kExtents[index] = gaussianKernel.getExtents();
+
+//		for ( int i = 0; i < derivativeKernel[0].length; i++ )
+//			System.err.print( derivativeKernel[0][i] + " " );
+//		System.err.println("");
+//		System.err.println("");
+//		System.err.println("");
+
+//		for ( int i = 0; i < derivativeKernel[1].length; i++ )
+//			System.err.print( derivativeKernel[1][i] + " " );
+//		System.err.println("");
+//		System.err.println("");
+//		System.err.println("");
+
+//		for ( int i = 0; i < derivativeKernel[2].length; i++ )
+//			System.err.print( derivativeKernel[2][i] + " " );
+//		System.err.println("");
+//		System.err.println("");
+//		System.err.println("");
+
+		int[] kExtentsTemp = gaussianKernel.getExtents();
+		kExtents[index] = new int[kExtentsTemp.length];
+		for ( int i = 0; i < kExtents[index].length; i++ )
+		{
+			kExtents[index][i] = kExtentsTemp[i];
+		}
 
 		//	float[][] derivativeKernel = new float[3][];
 		//	derivativeKernel[0] = getKernel(localSigmas[0]);
@@ -1684,8 +1714,8 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		{
 			kOrigins[index][i] = (kExtents[index][i]-1)>>1;
 		}
-//		System.err.println( kExtents[0] + " " + kExtents[1] + " " + kExtents[2] );
-//		System.err.println( kOrigins[0] + " " + kOrigins[1] + " " + kOrigins[2] );
+//		System.err.println( kExtents[index][0] + " " + kExtents[index][1] + " " + kExtents[index][2] );
+//		System.err.println( kOrigins[index][0] + " " + kOrigins[index][1] + " " + kOrigins[index][2] );
 		
 		// x-convolution buffer:
 		derivativeX[index] = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
