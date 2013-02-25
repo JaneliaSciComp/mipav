@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.model.algorithms.StatisticsTable;
 import gov.nih.mipav.view.*;
 
 import java.awt.Color;
@@ -192,7 +193,34 @@ public class ModelLUT extends ModelStorageBase {
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
-
+    /**
+     * Build LUT consisting of a student t-distribution at the specified level os significance for the given
+     * degrees of freedom.
+     * 
+     * @param dof degrees of freedom
+     * @param sig level of significance 
+     * @param image 
+     * 
+     * @return
+     */
+    public static ModelLUT buildTDistLUT(int dof, double sig, ModelImage image) {
+    	
+    	double studentT = StatisticsTable.getOneTailInvTStatsitic(dof, sig);
+    	
+    	ModelLUT lut = new ModelLUT(ModelLUT.GRAY, 256, new int[]{4, 256});
+		lut.makeCustomizedLUT("Rainbow2");
+		TransferFunction t = new TransferFunction();
+		t.addPoint((float) image.getMin(),  255);
+		t.addPoint((float) studentT, 255);
+		t.addPoint(14, 0);
+		t.addPoint((float) image.getMax(), 0);
+		lut.setTransferFunction(t);
+		//lut.makeBoneTransferFunctions();
+		
+		
+		return lut;
+	}
+    
     /**
      * This is a method to export a special int array where the alpha is stored in the most significant byte, then red,
      * green and blue. Note that the transfer function has been applied to it.
@@ -1459,6 +1487,8 @@ public class ModelLUT extends ModelStorageBase {
         // and blue follow;
         makeIndexedLUT(null);
     }
+    
+    
 
     /**
      * The purpose of this method is to adjust the zero index of the LUT from (1, 1, 1) to (0, 0, 0) The reason is so
