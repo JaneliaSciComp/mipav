@@ -33,6 +33,7 @@ import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLDrawableFactory;
+import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -45,78 +46,93 @@ public class SharedDemo extends Thread {
     static GLProfile glp;
     static GLCapabilities caps;
     static int width, height;
-    //GLOffscreenAutoDrawable sharedDrawable;
-    GLPbuffer sharedDrawable;
-    Lattice sharedDemo;
+    GLOffscreenAutoDrawable sharedDrawable;
+    //GLPbuffer sharedDrawable;
+    DemoBase sharedDemo;
     static boolean init = initClass();
 
     static long duration = 500000; // ms
 
     public static boolean initClass() {
-        GLProfile.initSingleton(true);
-        glp = GLProfile.getMaxProgrammable();
+        //GLProfile.initSingleton(true);
+        //glp = GLProfile.getMaxProgrammable();
         //GLProfile.initSingleton();
-        //glp = GLProfile.getMaxProgrammable(true);
+        glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
+        caps.setAlphaBits(8);
+        caps.setHardwareAccelerated(true);
         width  = 512;
         height = 512;
         return true;
     }
 
-    public static void main(String args[]) {
-    	if ( args != null )
-    	{
-    		for(int i=0; i<args.length; i++) {
-    			if(args[i].equals("-time")) {
-    				i++;
-    				try {
-    					duration = Integer.parseInt(args[i]);
-    				} catch (Exception ex) { ex.printStackTrace(); }
-    			}
-    		}
-    	}
+    public static void main(String args[]) 
+    {
     	
     	 SharedDemo test = new SharedDemo();
     	 test.initShared();
+    	 GLCanvas glCanvas;
 
-         final Animator animator = new Animator();
-         JFrame mainWin = new JFrame( "Shared Gears AWT Test" );
-         mainWin.setLayout( new GridLayout( 2, 2 ) );
-         mainWin.setSize( width*2, height*2 );
-         JPanel f1 = test.runTestGL(animator, 0, 0, true);
-         JPanel f2 = test.runTestGL(animator, width, 0, true);
-         JPanel f3 = test.runTestGL(animator, 0, height, false);
-         mainWin.add(f1);
-         mainWin.add(f2);
-         mainWin.add(f3);
-         animator.setRunAsFastAsPossible(true);
+         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+    	 
+         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+    	 
+         glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
+         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
 
-         mainWin.addWindowListener(new WindowAdapter() {
-     		@Override
-			public void windowClosing(WindowEvent e) {
-     			// Run this on another thread than the AWT event queue to
-     			// avoid deadlocks on shutdown on some platforms
-     			new Thread(new Runnable() {
-     				@Override
-					public void run() {
-     					animator.stop();
-     			        //releaseShared();
-     					System.exit(0);
-     				}
-     			}).start();
-     		}
-     	});
-         mainWin.setVisible(true);
-         animator.start();
+//         glCanvas = new GLCanvas(caps);
+//         Iridescence.main(glCanvas, null, false );
+//
+//         final Animator animator1 = new Animator();
+//         final Animator animator2 = new Animator();
+//         final Animator animator3 = new Animator();
+//         JFrame mainWin = new JFrame( "Shared Gears AWT Test" );
+//         mainWin.setLayout( new GridLayout( 2, 2 ) );
+//         mainWin.setSize( width*2, height*2 );
+//         JPanel f1 = test.runTestGL(animator1, 0, 0, true);
+//         JPanel f2 = test.runTestGL(animator2, width, 0, true);
+//         JPanel f3 = test.runTestGL(animator3, 0, height, false);
+//         mainWin.add(f1);
+//         mainWin.add(f2);
+//         mainWin.add(f3);
+//         animator1.setRunAsFastAsPossible(true);
+//         animator2.setRunAsFastAsPossible(true);
+//         animator3.setRunAsFastAsPossible(true);
+//
+//         mainWin.addWindowListener(new WindowAdapter() {
+//     		@Override
+//			public void windowClosing(WindowEvent e) {
+//     			// Run this on another thread than the AWT event queue to
+//     			// avoid deadlocks on shutdown on some platforms
+//     			new Thread(new Runnable() {
+//     				@Override
+//					public void run() {
+//     					animator1.stop();
+//     					animator2.stop();
+//     					animator3.stop();
+//     			        //releaseShared();
+//     					System.exit(0);
+//     				}
+//     			}).start();
+//     		}
+//     	});
+//         mainWin.setVisible(true);
+//         animator1.start();
+//         animator2.start();
+//         animator3.start();
     }
     
     private void initShared() {
-        //sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
-        sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
-        sharedDemo = new Lattice();
+        sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+        //sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+        //sharedDemo = new Lattice();
+        sharedDemo = new Iridescence();
         sharedDrawable.addGLEventListener(sharedDemo);
         // init and render one frame, which will setup the Gears display lists
         sharedDrawable.display();
+        caps.setStereo(true);
     }
 
     protected void releaseShared() {
@@ -131,13 +147,15 @@ public class SharedDemo extends Thread {
         frame.setSize(width, height);
         frame.setLocation(x, y);
 
-        Lattice demo = null;
+        Iridescence demo = null;
         if(useShared) {
-        	demo = new Lattice(glCanvas, sharedDemo.GetScene(), useShared);
+        	//demo = new Lattice(glCanvas, sharedDemo.GetScene(), useShared);
+        	demo = new Iridescence(glCanvas, sharedDemo.GetScene(), useShared);
         }
         else
         {
-        	demo = new Lattice(glCanvas, null, useShared);
+        	//demo = new Lattice(glCanvas, null, useShared);
+        	demo = new Iridescence(glCanvas, null, useShared);
         }
         glCanvas.addGLEventListener(demo);
 

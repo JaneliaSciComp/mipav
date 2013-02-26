@@ -414,10 +414,8 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		System.err.println( "" );
 		System.err.println( "" );
 		System.err.println( "default " + GLProfile.getDefault() );
-		//System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable(true) );
-		//GLProfile kProfile = GLProfile.getMaxProgrammable(true);
-		System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable() );
-		GLProfile kProfile = GLProfile.getMaxProgrammable();
+		System.err.println( "maxProgrammable " + GLProfile.getMaxProgrammable(true) );
+		GLProfile kProfile = GLProfile.getMaxProgrammable(true);
 		//GLProfile kProfile = GLProfile.get( "GL3" );
 		System.err.println( kProfile );
 		GLCapabilities kGlCapabilities = new GLCapabilities(kProfile);

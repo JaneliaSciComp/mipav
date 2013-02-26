@@ -25,12 +25,15 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
 
 import java.awt.Cursor;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
 import java.util.Vector;
 
@@ -39,6 +42,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 
+import WildMagic.ApplicationDemos.Iridescence;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -53,6 +57,7 @@ import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
@@ -232,6 +237,45 @@ public class PlaneRender_WM extends GPURenderBase
         setOrientation();
         m_kWinLevel = new WindowLevel(); 
     }
+    
+    
+	/**
+	 */
+	public static PlaneRender_WM main(GLCanvas kCanvas, VolumeTriPlanarInterface kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB,
+            int iPlane, VolumeSlices kVolumeSlice, boolean displayInSeparateFrame )
+	{
+		PlaneRender_WM kWorld = new PlaneRender_WM(kCanvas, kParent, kAnimator, 
+	            kVolumeImageA, kVolumeImageB, iPlane);
+		kWorld.addSlices(kVolumeSlice);
+		/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+        animator.setRunAsFastAsPossible(true);
+        animator.start();
+		if ( displayInSeparateFrame )
+		{
+			Frame frame = new Frame(kWorld.GetWindowTitle());
+			frame.add( kWorld.GetCanvas() );
+			frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+			/* Animator serves the purpose of the idle function, calls display: */
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// Run this on another thread than the AWT event queue to
+					// avoid deadlocks on shutdown on some platforms
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							animator.stop();
+							System.exit(0);
+						}
+					}).start();
+				}
+			});
+			frame.setVisible(true);
+		}
+        return kWorld;
+	}
 
     
     /**
