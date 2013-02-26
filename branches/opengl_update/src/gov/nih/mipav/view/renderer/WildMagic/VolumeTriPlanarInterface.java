@@ -673,6 +673,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 		        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
 		        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
 		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+		        setModified();
 			}
 //    		for (int i = 0; i < 3; i++) {
 //    			if (m_akPlaneRender[i] != null) {
