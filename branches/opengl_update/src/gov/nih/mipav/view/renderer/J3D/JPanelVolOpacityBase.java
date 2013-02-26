@@ -23,6 +23,8 @@ import javax.swing.event.*;
  * Simple panel containing the volume renderer opacity controls.
  *
  * @version  0.1 August, 2005
+ * @deprecated
+ * @see JPanelVolumeOpacity
  */
 public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements ChangeListener, MouseListener {
 
@@ -154,6 +156,8 @@ public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements 
      * Base for the opacity objects.
      *
      * @param  theParentFrame  RenderViewBase
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacityBase(RenderViewBase theParentFrame) {
         super(theParentFrame);
@@ -162,6 +166,8 @@ public abstract class JPanelVolOpacityBase extends JPanelRendererJ3D implements 
     /**
      * Base for the opacity objects.
      *
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacityBase(VolumeTriPlanarInterface kVolumeViewer) {
         super(null);

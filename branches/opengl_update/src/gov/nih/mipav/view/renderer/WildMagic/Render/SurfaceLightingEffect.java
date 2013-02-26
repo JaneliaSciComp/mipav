@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -51,7 +52,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     
     private boolean m_bUseNewImage = false;
     private ModelImage m_kImageNew = null;
-    private ModelLUT m_kLUTNew = null;
+    private ModelStorageBase m_kLUTNew = null;
     /** Creates a LightingEffect
      * @param kImageA VolumeImage containing data and textures for the effect.
      */
@@ -69,7 +70,9 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         
         m_kVolumeTextureNew = new Texture();
+        m_kVolumeTextureNew.SetName( "VolumeImageNew" );
         m_kVolumeLUTNew = new Texture();
+        m_kVolumeLUTNew.SetName("ColorMapNew");
         
         m_kVPixelLighting = new VertexShader("MipavLightingFragmentV", true);
         if ( !bTransparent )
@@ -83,14 +86,14 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         if ( kImageA != null )
         {
             m_kPPixelLighting.SetTextureQuantity(4);
-            m_kPPixelLighting.SetImageName(0,"VolumeImageA");
-            m_kPPixelLighting.SetTexture(0, kImageA.GetVolumeTarget() );
-            m_kPPixelLighting.SetImageName(1, "ColorMapA");
-            m_kPPixelLighting.SetTexture(1, kImageA.GetColorMapTarget() );
-            m_kPPixelLighting.SetImageName(2,"VolumeImageNew");
-            m_kPPixelLighting.SetTexture(2, m_kVolumeTextureNew );
-            m_kPPixelLighting.SetImageName(3, "ColorMapNew");
-            m_kPPixelLighting.SetTexture(3, m_kVolumeLUTNew );
+            m_kPPixelLighting.SetImageName(0,"VolumeImageA", "bVolumeImageA");
+            m_kPPixelLighting.SetTexture(0, kImageA.GetVolumeTarget(), "bVolumeImageA" );
+            m_kPPixelLighting.SetImageName(1, "ColorMapA", "cColorMapA");
+            m_kPPixelLighting.SetTexture(1, kImageA.GetColorMapTarget(), "cColorMapA" );
+            m_kPPixelLighting.SetImageName(2,"VolumeImageNew", "fVolumeImageNew");
+            m_kPPixelLighting.SetTexture(2, m_kVolumeTextureNew, "fVolumeImageNew" );
+            m_kPPixelLighting.SetImageName(3, "ColorMapNew", "gColorMapNew");
+            m_kPPixelLighting.SetTexture(3, m_kVolumeLUTNew, "gColorMapNew" );
         }
         m_kVShader.set(0, m_kVVertexLighting);
         m_kPShader.set(0, m_kPVertexLighting);
@@ -189,7 +192,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
             ModelLUT kLUT = m_kVolumeImage.GetLUT();
             if ( m_bUseNewLUT )
             {
-                kLUT = m_kLUTNew;
+                kLUT = (ModelLUT) m_kLUTNew;
             }
             float[][] RGB_LUT = kLUT.exportRGB_LUT(true);
             TransferFunction tf_imgA = kLUT.getTransferFunction();
@@ -281,21 +284,22 @@ public class SurfaceLightingEffect extends VolumeClipEffect
      * @param kLUT LUT for grayscale images.
      * @param kRGBT LUT for color images.
      */
-    public void SetLUTNew( ModelLUT kLUT, ModelRGB kRGBT )
+    public void SetLUTNew( ModelStorageBase kLUT )
     {
         if ( m_kColorMapNew == null  )
         {
-            m_kColorMapNew = VolumeImage.InitColorMap( kLUT, kRGBT, "New" );
-            m_kVolumeLUTNew.Reload(true);
+            m_kColorMapNew = VolumeImage.InitColorMap( m_kVolumeLUTNew, m_kColorMapNew, kLUT, "New" );
             m_kVolumeLUTNew.SetImage(m_kColorMapNew);
+            m_kVolumeLUTNew.SetName(m_kColorMapNew.GetName());
+            m_kVolumeLUTNew.Reload(true);
+            if ( this.GetCProgram(0) != null )
+            {
+            	this.GetCProgram(0).Reload(true);
+            }
         }
         else if ( kLUT != null )
         {
-            VolumeImage.UpdateImages( m_kVolumeLUTNew, m_kColorMapNew, kLUT );
-        }
-        else if ( kRGBT != null )
-        {
-            VolumeImage.SetRGBT( m_kVolumeLUTNew, m_kColorMapNew, kRGBT );
+            m_kColorMapNew = VolumeImage.InitColorMap( m_kVolumeLUTNew, m_kColorMapNew, kLUT, "New" );
         }
         m_kLUTNew = kLUT;
     }

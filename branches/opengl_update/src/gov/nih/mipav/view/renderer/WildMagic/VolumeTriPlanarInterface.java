@@ -7,9 +7,12 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
+import gov.nih.mipav.view.JFrameHistogram;
+import gov.nih.mipav.view.JPanelVolumeOpacity;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
@@ -73,6 +76,8 @@ import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -130,7 +135,7 @@ import com.jogamp.opengl.util.Animator;
 
 
 public class VolumeTriPlanarInterface extends JFrame
-implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener, VOIManagerInterfaceListener
+implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener, VOIManagerInterfaceListener, PropertyChangeListener
 {
     public class IntVector extends Vector<Integer> {
         /**  */
@@ -283,12 +288,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     /** Menu bar. */
     protected JMenuBar menuBar;
-
-    /** LUT control panel of the gray scale image. */
-    protected JPanelHistoLUT panelHistoLUT;
-
-    /** RGB control panel of the color image. */
-    protected JPanelHistoRGB panelHistoRGB;
+    
+    protected JFrameHistogram frameHistogram;
 
     /** VolumeImage contains data and textures for ModelImage A. */
     protected VolumeImage m_kVolumeImageA;
@@ -318,7 +319,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected JToolBar viewToolBar;
 
     /** Opacity panel. */
-    protected JPanelVolOpacityBase m_kVolOpacityPanel;
+    protected JPanelVolumeOpacity m_kVolOpacityPanel;
     
     /** Axial view panel. */
     protected JPanel panelAxial;
@@ -459,11 +460,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("ExtractMeshFromVolume")) {
             raycastRenderWM.extractMeshFromVolume();
         } else if (command.equals("HistoLUT")) {
-            if (m_kVolumeImageA.GetImage().isColorImage()) {
-                insertTab("LUT", panelHistoRGB.getMainPanel());
-            } else {
-                insertTab("LUT", panelHistoLUT.getMainPanel());
-            }
+        	insertTab("LUT", frameHistogram.getContainingPanel());
         } else if (command.equals("VolRender")) {}
         else if (command.equals("Geodesic")) {
             insertTab("Geodesic", geodesicGUI.getMainPanel());
@@ -481,6 +478,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             rendererGUI.setDisplaySlicesCheck(false);
             raycastRenderWM.displayVolumeSlices(rendererGUI.getSlicesCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
+	        updateABBlend( );
         } else if (command.equals("VolumeRayCast")) {
             raycastRenderWM.displayVolumeRaycast(rendererGUI.getVolumeCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
@@ -751,12 +749,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void buildHistoLUTPanel() {
 
-        if (m_kVolumeImageA.GetImage().isColorImage()) {
-            maxPanelWidth = Math.max(panelHistoRGB.getMainPanel().getPreferredSize().width, maxPanelWidth);
-        } else {
-            maxPanelWidth = Math.max(panelHistoLUT.getMainPanel().getPreferredSize().width, maxPanelWidth);
-        }
-
+    	maxPanelWidth = Math.max(frameHistogram.getContainingPanel().getPreferredSize().width, maxPanelWidth);
     }
 
     /*
@@ -786,11 +779,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * Build the volume opacity control panel for the surface render.
      */
     public void buildOpacityPanel() {
-        if (m_kVolumeImageA.GetImage().isColorImage()) {
-            m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
-        } else {
-            m_kVolOpacityPanel = new JPanelVolOpacity(this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
-        }
+        //m_kVolOpacityPanel = new JPanelVolumeOpacity(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
+
         maxPanelWidth = Math.max(m_kVolOpacityPanel.getMainPanel().getPreferredSize().width, maxPanelWidth);
     }
 
@@ -1051,8 +1041,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @return blendValue blender slider value.
      */
     public int getBlendValue() {
-        final JPanelVolOpacityBase opacityPanel = m_kVolOpacityPanel;
-        return opacityPanel.getAlphaBlendSliderValue();
+        return m_kVolOpacityPanel.getAlphaBlendSliderValue();
     }
 
     /**
@@ -1100,9 +1089,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public ModelImage getHistoLUTActiveImage() {
 
-        if (panelHistoLUT != null) {
+        if (frameHistogram != null) {
 
-            if (panelHistoLUT.getDisplayMode() == JPanelHistoLUT.IMAGE_A) {
+            if (frameHistogram.isImageASelected()) {
                 return m_kVolumeImageA.GetImage();
             }
             return m_kVolumeImageB.GetImage();
@@ -1118,16 +1107,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @return ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
      */
     public ModelImage getHistoRGBActiveImage() {
-
-        if (panelHistoRGB != null) {
-
-            if (panelHistoRGB.getDisplayMode() == JPanelHistoRGB.IMAGE_A) {
-                return m_kVolumeImageA.GetImage();
-            }
-            return m_kVolumeImageB.GetImage();
-        }
-
-        return null;
+        return getHistoLUTActiveImage();
     }
 
     /**
@@ -1162,8 +1142,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * 
      * @return the histo LUT panel
      */
-    public JPanelHistoLUT getLUTDialog() {
-        return panelHistoLUT;
+    public JFrameHistogram getLUTDialog() {
+        return frameHistogram;
     }
 
     /**
@@ -1217,14 +1197,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         return rendererGUI;
     }
 
-    /**
-     * Get the RGB panel (only should be used with color images).
-     * 
-     * @return the histo RGB panel
-     */
-    public JPanelHistoRGB getRGBDialog() {
-        return panelHistoRGB;
-    }
 
     /**
      * Return the size of the surface-area of the given surface.
@@ -1707,8 +1679,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param kLUT the new LUT.
      * @param kRGBT the new ModelRGB (for color images).
      */
-    public void SetLUTNew(final String kSurfaceName, final ModelLUT kLUT, final ModelRGB kRGBT) {
-        raycastRenderWM.setLUTNew(kSurfaceName, kLUT, kRGBT);
+    public void SetLUTNew(final String kSurfaceName, final ModelStorageBase kLUT) {
+        raycastRenderWM.setLUTNew(kSurfaceName, kLUT);
     }
 
     /**
@@ -2374,13 +2346,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             sliceGUI.disposeLocal();
             sliceGUI = null;
         }
-        if (panelHistoLUT != null) {
-            panelHistoLUT.disposeLocal();
-            panelHistoLUT = null;
-        }
-        if (panelHistoRGB != null) {
-            panelHistoRGB.disposeLocal();
-            panelHistoRGB = null;
+        if (frameHistogram != null) {
+        	frameHistogram.disposeLocal();
+        	frameHistogram = null;
         }
         if (m_kVolOpacityPanel != null) {
             m_kVolOpacityPanel.disposeLocal();
@@ -2610,9 +2578,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageA.GetRGB().setRedFunction(kState.RedA);
             m_kVolumeImageA.GetRGB().setGreenFunction(kState.GreenA);
             m_kVolumeImageA.GetRGB().setBlueFunction(kState.BlueA);
-            panelHistoRGB.setRedOn(kState.RedOnA, true);
-            panelHistoRGB.setGreenOn(kState.GreenOnA, true);
-            panelHistoRGB.setBlueOn(kState.BlueOnA, true);
+            frameHistogram.setRedOn(kState.RedOnA, true);
+            frameHistogram.setGreenOn(kState.GreenOnA, true);
+            frameHistogram.setBlueOn(kState.BlueOnA, true);
             kState.RGBa.setROn(kState.RedOnA);
             kState.RGBa.setGOn(kState.GreenOnA);
             kState.RGBa.setBOn(kState.BlueOnA);
@@ -2628,9 +2596,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 m_kVolumeImageB.GetRGB().setRedFunction(kState.RedB);
                 m_kVolumeImageB.GetRGB().setGreenFunction(kState.GreenB);
                 m_kVolumeImageB.GetRGB().setBlueFunction(kState.BlueB);
-                panelHistoRGB.setRedOn(kState.RedOnB, false);
-                panelHistoRGB.setGreenOn(kState.GreenOnB, false);
-                panelHistoRGB.setBlueOn(kState.BlueOnB, false);
+                frameHistogram.setRedOn(kState.RedOnB, false);
+                frameHistogram.setGreenOn(kState.GreenOnB, false);
+                frameHistogram.setBlueOn(kState.BlueOnB, false);
                 kState.RGBb.setROn(kState.RedOnB);
                 kState.RGBb.setGOn(kState.GreenOnB);
                 kState.RGBb.setBOn(kState.BlueOnB);
@@ -2723,14 +2691,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         surfaceTextureGUI.setTextureImage(kState.OtherImageDirectory, kState.OtherImageName);
         surfaceTextureGUI.setTextureImageOn(kState.UseOtherImage);
         surfaceTextureGUI.setSeparateLUT(kState.OtherLUT);
-        if (kState.OtherLUT != null) {
-            kState.OtherLUT.setTransferFunction(kState.OtherTransfer);
+        if (kState.OtherLUT instanceof ModelLUT ) {
+            ((ModelLUT)kState.OtherLUT).setTransferFunction(kState.OtherTransfer);
         }
-        surfaceTextureGUI.setSeparateRGBT(kState.OtherRGB);
-        if (kState.OtherRGB != null) {
-            kState.OtherRGB.setRedFunction(kState.OtherRed);
-            kState.OtherRGB.setGreenFunction(kState.OtherGreen);
-            kState.OtherRGB.setBlueFunction(kState.OtherBlue);
+        else if (kState.OtherLUT instanceof ModelRGB ) {
+        	((ModelRGB)kState.OtherLUT).setRedFunction(kState.OtherRed);
+        	((ModelRGB)kState.OtherLUT).setGreenFunction(kState.OtherGreen);
+        	((ModelRGB)kState.OtherLUT).setBlueFunction(kState.OtherBlue);
         }
         surfaceTextureGUI.setTextureLUTOn(kState.UseOtherLUT);
 
@@ -2787,11 +2754,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         for (int i = 0; i < kState.TabbedList.size(); i++) {
             final String name = kState.TabbedList.get(i);
             if (name.equals("LUT")) {
-                if (m_kVolumeImageA.IsColorImage()) {
-                    insertTab("LUT", panelHistoRGB.getMainPanel());
-                } else {
-                    insertTab("LUT", panelHistoLUT.getMainPanel());
-                }
+            	insertTab("LUT", frameHistogram.getContainingPanel());
             } else if (name.equals("Renderer")) {
                 insertTab("Renderer", rendererGUI.getMainPanel());
             } else if (name.equals("Light")) {
@@ -2967,14 +2930,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         kState.OtherImageDirectory = surfaceTextureGUI.getImageDir();
         kState.UseOtherImage = surfaceTextureGUI.getTextureImageOn();
         kState.OtherLUT = surfaceTextureGUI.getSeparateLUT();
-        if (kState.OtherLUT != null) {
-            kState.OtherTransfer = kState.OtherLUT.getTransferFunction();
+        if (kState.OtherLUT instanceof ModelLUT) {
+            kState.OtherTransfer = ((ModelLUT)kState.OtherLUT).getTransferFunction();
         }
-        kState.OtherRGB = surfaceTextureGUI.getSeparateRGBT();
-        if (kState.OtherRGB != null) {
-            kState.OtherRed = kState.OtherRGB.getRedFunction();
-            kState.OtherGreen = kState.OtherRGB.getGreenFunction();
-            kState.OtherBlue = kState.OtherRGB.getBlueFunction();
+        else if (kState.OtherLUT instanceof ModelRGB) {
+            kState.OtherRed = ((ModelRGB)kState.OtherLUT).getRedFunction();
+            kState.OtherGreen = ((ModelRGB)kState.OtherLUT).getGreenFunction();
+            kState.OtherBlue = ((ModelRGB)kState.OtherLUT).getBlueFunction();
         }
         kState.UseOtherLUT = surfaceTextureGUI.getTextureLUTOn();
 
@@ -3013,11 +2975,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
     protected void buildImageDependentComponents() {
 
-        if (m_kVolumeImageA.GetImage().isColorImage()) {
-            m_kVolOpacityPanel = new JPanelVolOpacityRGB(this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
-        } else {
-            m_kVolOpacityPanel = new JPanelVolOpacity(this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
-        }
+        m_kVolOpacityPanel = new JPanelVolumeOpacity(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
+        m_kVolOpacityPanel.addPropertyChangeListener(this);
+        
         TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
         m_kVolumeImageA.UpdateImages(kTransfer, 0, null);
         if (m_kVolumeImageB.GetImage() != null) {
@@ -3025,12 +2985,23 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
         }
 
-        if (m_kVolumeImageA.GetImage().isColorImage()) {
-            panelHistoRGB = new JPanelHistoRGB(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA
-                    .GetRGB(), m_kVolumeImageB.GetRGB(), true);
-        } else {
-            panelHistoLUT = new JPanelHistoLUT(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA
-                    .GetLUT(), m_kVolumeImageB.GetLUT(), true, true);
+        frameHistogram = new JFrameHistogram(this, m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),
+        		m_kVolumeImageA.getLUT(), m_kVolumeImageB.getLUT());
+        boolean foundContour = false;
+        for (int i = 0; i < getActiveImage().getVOIs().size(); i++)
+        {
+        	if (getActiveImage().getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR)
+        	{
+        		foundContour = true;
+        	}
+        }
+        if (foundContour)
+        {
+        	frameHistogram.constructDialog();
+        }
+        else
+        {
+        	frameHistogram.histogramLUT(true, false);
         }
 
         if (m_kVolumeImageA.GetImage().is4DImage()) {
@@ -3070,6 +3041,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         // After the whole WM rendering framework built, force updating the color LUT table in order to
         // update both the volume viewer and tri-planar viewer. Otherwise, the render volume turns to be black.
+        /*
         if (panelHistoLUT != null) {
             panelHistoLUT.updateComponentLUT();
         }
@@ -3077,13 +3049,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             panelHistoRGB.updateHistoRGB(m_kVolumeImageA.GetImage(), null, false);
             panelHistoRGB.updateFrames(false);
         }
-
+*/
+        
         if (m_kVolumeImageA.GetImage().isColorImage()) {
             setRGBTA(m_kVolumeImageA.GetRGB());
+        }
 
-            if ( (m_kVolumeImageB.GetImage() != null) && m_kVolumeImageB.GetImage().isColorImage()) {
-                setRGBTB(m_kVolumeImageB.GetRGB());
-            }
+        if ( (m_kVolumeImageB.GetImage() != null) && m_kVolumeImageB.GetImage().isColorImage()) {
+            setRGBTB(m_kVolumeImageB.GetRGB());
         }
         updateImages(true);
     }
@@ -3407,11 +3380,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	//System.err.println( getWidth() + " " + getHeight() + " " + prevHeight );
 
         if (m_bDependentInterfaceInit) {
-            if (panelHistoLUT != null) {
-                panelHistoLUT.resizePanel(maxPanelWidth, height);
-            }
-            if (panelHistoRGB != null) {
-                panelHistoRGB.resizePanel(maxPanelWidth, height);
+            if (frameHistogram != null) {
+                frameHistogram.getContainingPanel().setPreferredSize(new Dimension(maxPanelWidth, height));
             }
             surfaceGUI.resizePanel(maxPanelWidth, height);
             m_kLightsPanel.resizePanel(maxPanelWidth, height);
@@ -3439,5 +3409,40 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         geodesicGUI.resizePanel(maxPanelWidth, height);
         // rightPane.setDividerLocation( 0.618f );
         // updatePlanes();
-    }        
+    }
+
+	@Override
+	public void propertyChange(PropertyChangeEvent event)
+	{
+		String propertyName = event.getPropertyName();
+		if ( propertyName.equals("Opacity") )
+		{
+			boolean gmChanged = raycastRenderWM.getGradientMagnitude() != m_kVolOpacityPanel.isGradientMagnitudeOpacityEnabled();
+	        raycastRenderWM.setGradientMagnitude(m_kVolOpacityPanel.isGradientMagnitudeOpacityEnabled());
+	        final ViewJComponentVolOpacityBase kSelectedComp = m_kVolOpacityPanel.getSelectedComponent();
+	        
+	        if ( kSelectedComp == m_kVolOpacityPanel.getCompA() )
+	        {
+	        	final TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+	        	m_kVolumeImageA.UpdateImages(kTransfer, 0, null);
+	        } 
+	        if ( gmChanged || (kSelectedComp == m_kVolOpacityPanel.getCompA_GM()) )
+	        {
+	        	final TransferFunction kTransfer = m_kVolOpacityPanel.getCompA_GM().getOpacityTransferFunction();
+	        	m_kVolumeImageA.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagA());
+	        }
+	        if ( kSelectedComp == m_kVolOpacityPanel.getCompB() )
+	        {
+	        	final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB().getOpacityTransferFunction();
+	        	m_kVolumeImageB.UpdateImages(kTransfer, 0, null);
+	        } 
+	        if ( (m_kVolumeImageB.GetImage() != null) && (gmChanged || (kSelectedComp == m_kVolOpacityPanel.getCompB_GM())) )
+	        {
+	        	final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+	        	m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
+	        }
+	        updateABBlend( );
+		}
+
+	}        
 }

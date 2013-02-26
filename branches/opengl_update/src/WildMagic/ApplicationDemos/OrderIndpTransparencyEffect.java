@@ -49,7 +49,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
         m_kPShader.set(0, new PixelShader("OrderIndpTransparencyInitP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);
-        m_kPShader.get(0).SetImageName(0,rkBaseName);
+        m_kPShader.get(0).SetImageName(0,rkBaseName,"BaseSampler");
     }
 
     
@@ -64,8 +64,8 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
         kPShader.SetTextureQuantity(akTextures.length);
         for ( int i = 0; i < akTextures.length; i++ )
         {
-            kPShader.SetTexture( i, akTextures[i] );
-            kPShader.SetImageName( i, akTextures[i].GetName() );
+            kPShader.SetTexture( i, akTextures[i], "ColorTex" + i );
+            kPShader.SetImageName( i, akTextures[i].GetName(), "ColorTex" + i );
         }
 
     	m_kVShader.set(0, new VertexShader( "TextureV", Shader.vertexShaderTexture2, true  ));
@@ -79,7 +79,6 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
      * by iTextureQuantity
      * @param iTextureQuantity the number of textures in this
      * MultitextureEffect.
-     */
     public OrderIndpTransparencyEffect (Texture[] akTextures, Texture kSolidTex, ColorRGBA kBackgroundColor)
     {
         super(1);   
@@ -97,6 +96,7 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
         kPShader.SetTexture( 2, kSolidTex );
         kPShader.SetImageName( 2, kSolidTex.GetName() );
     }
+     */
     
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)

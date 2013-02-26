@@ -21,8 +21,7 @@ import java.util.*;
  * @author   Lynne M. Pusanik
  * @see      ModelLUT
  * @see      ModelRGB
- * @see      gov.nih.mipav.view.ViewJFrameHistoLUT
- * @see      gov.nih.mipav.view.ViewJFrameHistoRGB
+ * @see      gov.nih.mipav.view.JFrameHistogram
  */
 public class FileHistoLUT extends FileBase {
 
@@ -107,6 +106,42 @@ public class FileHistoLUT extends FileBase {
     }
 
     /**
+     * LUT reader/writer constructor.
+     *
+     * @param      fileName  file name
+     * @param      fileDir   file directory
+     * @param      lut       the ModelLUT
+     *
+     * @exception  IOException  if there is an error making the files, or if lut is null
+     */
+    public FileHistoLUT(String fileName, String fileDir, ModelImage image, ModelLUT lut) throws IOException {
+        this(fileName, fileDir);
+        setImg(image);
+        setLUT(lut);
+    }
+    /**
+     * LUT reader/writer constructor.
+     *
+     * @param      fileName  file name
+     * @param      fileDir   file directory
+     * @param      lut       the ModelLUT
+     *
+     * @exception  IOException  if there is an error making the files, or if lut is null
+     */
+    public FileHistoLUT(String fileName, String fileDir, ModelImage image, ModelStorageBase lut) throws IOException {
+        this(fileName, fileDir);
+        setImg(image);
+        if ( image.isColorImage() )
+        {
+        	setRGB((ModelRGB)lut);
+        }
+        else
+        {
+        	setLUT((ModelLUT)lut);
+        }
+    }
+
+    /**
      * RGB reader/writer constructor.
      *
      * @param      fileName  file name
@@ -117,6 +152,21 @@ public class FileHistoLUT extends FileBase {
      */
     public FileHistoLUT(String fileName, String fileDir, ModelRGB rgb) throws IOException {
         this(fileName, fileDir);
+        setRGB(rgb);
+    }
+
+    /**
+     * RGB reader/writer constructor.
+     *
+     * @param      fileName  file name
+     * @param      fileDir   file directory
+     * @param      rgb       the ModelRGB
+     *
+     * @exception  IOException  if there is an error making the files, or if rgb is null
+     */
+    public FileHistoLUT(String fileName, String fileDir, ModelImage image, ModelRGB rgb) throws IOException {
+        this(fileName, fileDir);
+        setImg(image);
         setRGB(rgb);
     }
 
@@ -477,8 +527,7 @@ public class FileHistoLUT extends FileBase {
         	// remap the xfer function from 0->1 to min->max
             for (int i = 0; i < nPts; i++) {
                 x[i] = (x[i] * diff) + min;
-            }
-            System.err.println("min = " + min + " max = " + max + " diff = " + diff);               
+            }            
             
         }
 
@@ -719,10 +768,10 @@ public class FileHistoLUT extends FileBase {
         	    img = null;
         	}
         	diff = max - min;
-        	
+
         	// remap the xfer function from min->max to 0->1 
             for (int i = 0; i < nPts; i++) {
-                x[i] = (x[i] / diff) - min;
+                x[i] = (x[i] -min) / diff;
             }
         }
    

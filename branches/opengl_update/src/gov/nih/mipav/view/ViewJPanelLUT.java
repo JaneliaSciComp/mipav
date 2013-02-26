@@ -24,6 +24,8 @@ import WildMagic.LibFoundation.Mathematics.Vector2f;
  * 
  * @author Evan McCreedy
  * @version 1.0
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListener, ChangeListener, KeyListener,
         HistoLUTParent {
@@ -156,6 +158,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     /**
      * The location of custom LUT definitions, mostly used for volume rendering purposes. The original set were taken
      * from the Osirix imaging application.
+     * @deprecated
+     * @see ModelLUT
      */
     // public static final String customLUTsLocation = "gov" + File.separator + "nih" + File.separator + "mipav" +
     // File.separator + "view" + File.separator + "WildMagic" + File.separator + "Shaders" + File.separator + "LUTs";
@@ -168,6 +172,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      * Set up the LUT panel.
      * 
      * @param parent DOCUMENT ME!
+     * @deprecated
      */
     public ViewJPanelLUT(ViewJFrameHistoLUT parent) {
         panelParent = parent;
@@ -372,13 +377,13 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                    ctDialogA = new JDialogCT(panelParent);
+                    ctDialogA = new JDialogCT(histoPanelA, panelParent.getLUTa());
                     ctDialogA.setVisible(true);
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                    ctDialogB = new JDialogCT(panelParent);
+                    ctDialogB = new JDialogCT(histoPanelB, panelParent.getLUTb());
                     ctDialogB.setVisible(true);
                 }
             }
@@ -1084,6 +1089,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      * @param listener The listener to attach to the created LUT selection combo box.
      * 
      * @return the top part of the LUT toolbar
+     * @deprecated
      */
     public static final JToolBar buildLUTSelectionList(ActionListener listener) {
 
@@ -2666,6 +2672,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      * @param lutName The name of the LUT file (without the extension).
      * 
      * @return A LUT file buffered reader.
+     * @deprecated
+     * @see ModelLUT
      */
     public static final BufferedReader openLUTFile(String lutName) throws IOException {
         String filename = customLUTsLocation + "/" + lutName + ".txt";

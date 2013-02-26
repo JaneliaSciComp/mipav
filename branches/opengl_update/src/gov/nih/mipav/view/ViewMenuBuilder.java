@@ -936,6 +936,74 @@ public class ViewMenuBuilder {
         }
     }
     
+    
+
+    public JMenu makeMenu(Object parentMenu, char mnemonic, boolean iconPadding, Vector<JComponent> menuComponent) {
+
+        JMenu menu;
+        int i;
+
+        try {
+
+            if (parentMenu instanceof String) {
+                menu = buildMenu((String) parentMenu, mnemonic, iconPadding);
+            } else if (parentMenu instanceof JMenu) {
+                menu = (JMenu) parentMenu;
+            } else {
+                return null;
+            }
+
+            if (Character.isDefined(mnemonic)) { // the check may not be needed...
+                menu.setMnemonic(mnemonic);
+            }
+
+            for (i = 0; i < menuComponent.size(); i++) {
+
+                if (menuComponent.elementAt(i) instanceof JMenu) {
+                    menu.add((JMenu) menuComponent.elementAt(i));
+                } else if (menuComponent.elementAt(i) instanceof JMenuItem) {
+                    menu.add((JMenuItem) menuComponent.elementAt(i));
+                } else if ( (menuComponent.elementAt(i) instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
+                    JCheckBoxMenuItem checkboxItem = (JCheckBoxMenuItem) menuComponent.elementAt(i);
+                    checkboxItem.addItemListener((ItemListener) listener);
+                    menu.add(checkboxItem);
+                } else if (menuComponent.elementAt(i) instanceof JSeparator) {
+                    menu.addSeparator();
+                } else if (menuComponent.elementAt(i) instanceof QuickList) {
+                    Vector<JMenuItem> list = ((QuickList) menuComponent.elementAt(i)).getList();
+
+                    // save the index of the quicklist here for rebuilding
+                    quicklistIndex = menu.getItemCount();
+
+                    if (list.size() > 0) {
+                        for (int j = 0; j < list.size(); j++) {
+                            menu.add(list.elementAt(j));
+                        }
+                    }
+
+                    this.quickList = (QuickList) menuComponent.elementAt(i);
+                }
+            }
+
+            menuItemVector.addElement(new MipavMenuItem(menu.getText(), menu));
+
+            // if we just built the file menu, save the reference here
+            if ( (parentMenu instanceof String) && ((String) parentMenu).equals("File")) {
+
+                // System.err.println("Saved file menu");
+                this.fileMenu = menu;
+            }
+            
+            addMenuDragListener(menu, op);
+            
+            return menu;
+        } catch (OutOfMemoryError error) {
+            System.gc();
+
+            return null;
+        }
+    }
+    
     /**
      * Provides a method of setting the state of specified menu.
      * 

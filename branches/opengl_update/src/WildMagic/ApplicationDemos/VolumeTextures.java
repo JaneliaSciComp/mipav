@@ -306,7 +306,7 @@ final int iBound = 256;
 		PixelShader pkPShader = new PixelShader("VolumeTexturesP");
 
 		pkPShader.SetTextureQuantity(1);
-		pkPShader.SetImageName(0,"VolumeImage");
+		pkPShader.SetImageName(0,"VolumeImage", "BaseSampler");
 		pkPShader.GetTexture(0).SetFilterType(Texture.FilterType.NEAREST);
 		pkPShader.GetTexture(0).SetWrapType(0,Texture.WrapType.REPEAT);
 		pkPShader.GetTexture(0).SetWrapType(1,Texture.WrapType.REPEAT);

@@ -308,8 +308,6 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
 		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
 
-		m_kPShader.get(0).SetTextureQuantity(2);
-		m_kPShader.get(0).SetImageName(0,kTexture.GetName());
 		m_kWidgetState.UseWidget[0] = 1.0f;
 
 		m_kWidgetState.UseColorMap[0] = -1.0f;
@@ -374,10 +372,6 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		SetPassQuantity(1);
 		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
 		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
-
-		m_kPShader.get(0).SetTextureQuantity(2);
-		m_kPShader.get(0).SetImageName(0,rkBaseName);
-
 		m_kWidgetState = (ClassificationWidgetState)in.readObject();
 	}
 	
@@ -478,8 +472,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		m_kLUTName = kMap.GetName();
 		m_kLUTMap = kMap;
 
-		m_kPShader.get(0).SetImageName(1,m_kLUTName);
-		m_kPShader.get(0).SetTexture(1,m_kLUTMap);
+		m_kPShader.get(0).SetImageName(1,m_kLUTName, "ColorMap");
+		m_kPShader.get(0).SetTexture(1,m_kLUTMap, "ColorMap");
 
 		m_kWidgetState.UseColorMap[0] = index;
 		m_kWidgetState.InvertLUT = bReverse;
@@ -678,12 +672,13 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 		PixelShader pShader = m_kPShader.get(0);
 		if ( pShader != null )
 		{
-			pShader.SetImageName(iTex, m_kTexture.GetName());
-			pShader.SetTexture(iTex++, m_kTexture);
+			pShader.SetTextureQuantity(2);
+			pShader.SetImageName(iTex, m_kTexture.GetName(), "BaseSampler");
+			pShader.SetTexture(iTex++, m_kTexture, "BaseSampler");
 			if ( bUseColorTexture )
 			{		
-				pShader.SetImageName(iTex,m_kLUTName);
-				pShader.SetTexture(iTex++,m_kLUTMap);	
+				pShader.SetImageName(iTex,m_kLUTName, "ColorMap");
+				pShader.SetTexture(iTex++,m_kLUTMap, "ColorMap");	
 			}
 		}
 		return programText;

@@ -2087,19 +2087,9 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
 
         if (m_kWinLevel.updateWinLevel(localPt.X, localPt.Y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage)) {
             if (m_kActiveImage == m_kVolumeImageA.GetImage()) {
-                if (m_kVolumeImageA.GetImage().isColorImage()) {
-                    m_kParent.getRGBDialog().setRGBTA((ModelRGB) m_kActiveLookupTable);
-                    m_kParent.getRGBDialog().update();
-                } else {
-                    m_kParent.getLUTDialog().setLUTA((ModelLUT) m_kActiveLookupTable);
-                }
+                m_kParent.getLUTDialog().setLUTA((ModelLUT) m_kActiveLookupTable);
             } else if ( (m_kVolumeImageB.GetImage() != null) && (m_kActiveImage == m_kVolumeImageB.GetImage())) {
-                if (m_kVolumeImageB.GetImage().isColorImage()) {
-                    m_kParent.getRGBDialog().setRGBTB((ModelRGB) m_kActiveLookupTable);
-                    m_kParent.getRGBDialog().update();
-                } else {
-                    m_kParent.getLUTDialog().setLUTB((ModelLUT) m_kActiveLookupTable);
-                }
+            	m_kParent.getLUTDialog().setLUTB((ModelLUT) m_kActiveLookupTable);
             }
         }
         if (m_bFirstDrag) {

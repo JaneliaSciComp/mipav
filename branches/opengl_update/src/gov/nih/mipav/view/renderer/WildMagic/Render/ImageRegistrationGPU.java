@@ -120,8 +120,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
-        GetCanvas().getContext().setSwapInterval(0);  
-        //GetCanvas().getContext().setSynchronized(true);  
+        //GetCanvas().getContext().setSwapInterval(0);  
+        GetCanvas().getContext().setSynchronized(true);  
         m_kTarget = kTarget;
         m_kMoving = kMoving;
         String kExternalDirs = MipavInitGPU.getExternalDirs();        
@@ -932,8 +932,8 @@ public class ImageRegistrationGPU extends JavaApplication3D
         OpenGLFrameBuffer kTempBracket;
         for ( int i = 0; i < 100; i++ )
         {
-            m_kCalcTransform.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
-            m_kImageLineMinPass2a.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            //m_kCalcTransform.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
+            //m_kImageLineMinPass2a.SetTexture( kCurrentBracket.GetTarget(0), 0, 0 );
             
             // 1. Create the transform matrix based on the current bracket.
             m_pkRenderer.Resize(m_kTransformOut.GetTarget(0).GetImage().GetBound(0),

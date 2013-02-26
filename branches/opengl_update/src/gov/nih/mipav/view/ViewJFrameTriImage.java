@@ -444,6 +444,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     
     private int currentOrientation;
 
+    private ModelRGB RGBTa, RGBTb;
+    
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -463,6 +465,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         userInterface = ViewUserInterface.getReference();
         this.LUTa = LUTa;
         this.LUTb = LUTb;
+        this.controls = controls;
+        parentFrame = parent;
+
+        try {
+            scrollOriginalCrosshair = Preferences.is(Preferences.PREF_TRIPLANAR_SCROLL_ORIGINAL);
+        } catch (final Exception e) {
+            scrollOriginalCrosshair = false;
+        }
+
+        try {
+            setIconImage(MipavUtil.getIconImage("3plane_16x16.gif"));
+        } catch (final Exception e) {}
+
+        init();
+    }
+    
+    public ViewJFrameTriImage(final ModelImage _imageA, final ModelLUT LUTa, final ModelRGB RGBTa, 
+    		final ModelImage _imageB, final ModelLUT LUTb, final ModelRGB RGBTb, 
+    		final ViewControlsImage controls, final ViewJFrameImage parent) {
+        super(_imageA, _imageB);
+        userInterface = ViewUserInterface.getReference();
+        this.LUTa = LUTa;
+        this.LUTb = LUTb;
+        this.RGBTa = RGBTa;
+        this.RGBTb = RGBTb;
         this.controls = controls;
         parentFrame = parent;
 
@@ -1567,12 +1594,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @return image
      */
     public ModelImage getImageA() {
-
-        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
-            return triImage[ViewJFrameTriImage.AXIAL_A].getImageA();
-        } else {
-            return null;
-        }
+    	return imageA;
+//        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+//            return triImage[ViewJFrameTriImage.AXIAL_A].getImageA();
+//        } else {
+//            return null;
+//        }
     }
 
     /**
@@ -1581,12 +1608,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @return imageB
      */
     public ModelImage getImageB() {
-
-        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
-            return triImage[ViewJFrameTriImage.AXIAL_B].getImageB();
-        } else {
-            return null;
-        }
+    	return imageB;
+//        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+//            return triImage[ViewJFrameTriImage.AXIAL_B].getImageB();
+//        } else {
+//            return null;
+//        }
     }
 
     /**
@@ -2366,10 +2393,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         image.addImageDisplayListener(this);
 
-        if (image.getHistoLUTFrame() != null) {
-            updateHistoLUTFrame(ViewJComponentBase.IMAGE_A);
-        }
-
         setActiveImage(ViewJComponentBase.IMAGE_A);
     }
 
@@ -2389,12 +2412,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         imageB.setImageOrder(ModelImage.IMAGE_B);
 
         // tri image objects must be rebuilt with the new image B
-        triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
-        triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
-        triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
-        triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
-        triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
-        triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.SAGITTAL);
 
         imageB.addImageDisplayListener(this);
 
@@ -2443,10 +2466,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
                 ((ViewJFrameBase) frameList.elementAt(i)).setImageB(imageB);
             }
-        }
-
-        if (imageB.getHistoLUTFrame() != null) {
-            updateHistoLUTFrame(ViewJComponentBase.IMAGE_B);
         }
 
         setActiveImage(ViewJComponentBase.IMAGE_B);
@@ -2540,16 +2559,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             triImage[ViewJFrameTriImage.SAGITTAL_AB].setLUTa(LUT);
         }
 
-        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
-            triImage[ViewJFrameTriImage.AXIAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_A].setLUTa(LUT);
         }
 
-        if (triImage[ViewJFrameTriImage.CORONAL_B] != null) {
-            triImage[ViewJFrameTriImage.CORONAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.CORONAL_A] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_A].setLUTa(LUT);
         }
 
-        if (triImage[ViewJFrameTriImage.SAGITTAL_B] != null) {
-            triImage[ViewJFrameTriImage.SAGITTAL_B].setLUTa(LUT);
+        if (triImage[ViewJFrameTriImage.SAGITTAL_A] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_A].setLUTa(LUT);
         }
 
         updateImages(true);
@@ -2647,12 +2666,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setRGBTA(final ModelRGB RGBT) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
-
-            if (triImage[i] != null) {
-                triImage[i].setRGBTA(RGBT);
-            }
+        if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_AB].setRGBTA(RGBT);
         }
+
+        if (triImage[ViewJFrameTriImage.CORONAL_AB] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_AB].setRGBTA(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setRGBTA(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.AXIAL_A] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_A].setRGBTA(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.CORONAL_A] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_A].setRGBTA(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.SAGITTAL_A] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_A].setRGBTA(RGBT);
+        }
+        updateImages(true);
     }
 
     /**
@@ -2662,12 +2699,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setRGBTB(final ModelRGB RGBT) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
-
-            if (triImage[i] != null) {
-                triImage[i].setRGBTB(RGBT);
-            }
+        if (triImage[ViewJFrameTriImage.AXIAL_AB] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_AB].setRGBTB(RGBT);
         }
+
+        if (triImage[ViewJFrameTriImage.CORONAL_AB] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_AB].setRGBTB(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.SAGITTAL_AB] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_AB].setRGBTB(RGBT);
+        }
+
+        if (triImage[ViewJFrameTriImage.AXIAL_B] != null) {
+            triImage[ViewJFrameTriImage.AXIAL_B].setRGBTA(RGBT); // must set LUT a because image B is in image A slot
+        }
+
+        if (triImage[ViewJFrameTriImage.CORONAL_B] != null) {
+            triImage[ViewJFrameTriImage.CORONAL_B].setRGBTA(RGBT); // must set LUT a because image B is in image A slot
+        }
+
+        if (triImage[ViewJFrameTriImage.SAGITTAL_B] != null) {
+            triImage[ViewJFrameTriImage.SAGITTAL_B].setRGBTA(RGBT); // must set LUT a because image B is in image A slot
+        }
+        updateImages(true);
     }
 
     /**
@@ -3732,8 +3787,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @return ViewJComponentTriImage
      */
-    protected ViewJComponentTriImage buildTriImage(final ModelImage imageA, final ModelLUT lutA,
-            final ModelImage imageB, final ModelLUT lutB, final int orientation) {
+    protected ViewJComponentTriImage buildTriImage(final ModelImage imageA, final ModelLUT lutA, final ModelRGB RGBTa,
+            final ModelImage imageB, final ModelLUT lutB, final ModelRGB RGBTb, final int orientation) {
         final ViewJComponentTriImage triImage = new ViewJComponentTriImage(this, imageA, lutA, null, imageB, lutB,
                 null, null, zoom, extents, imageA.getLogMagDisplay(), orientation);
 
@@ -3778,6 +3833,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             triImage.setResolutions(tmpResols[0], tmpResols[0]);
         } else {
             triImage.setResolutions(1, 1);
+        }
+        if ( imageA.isColorImage() )
+        {
+        	triImage.setRGBTA( RGBTa );
+        }
+        if ( (imageB != null) && imageB.isColorImage() )
+        {
+        	triImage.setRGBTB( RGBTb );
         }
 
         // triImage.addKeyListener(this);
@@ -3998,33 +4061,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         buildLUTs();
 
         if (imageB != null) {
-            triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
+            triImage[ViewJFrameTriImage.AXIAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.AXIAL);
             triImage[ViewJFrameTriImage.AXIAL_AB].addMouseListener(this);
             triImage[ViewJFrameTriImage.AXIAL_AB].setName( (new Integer(ViewJFrameTriImage.AXIAL_AB)).toString());
-            triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
+            triImage[ViewJFrameTriImage.CORONAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.CORONAL);
             triImage[ViewJFrameTriImage.CORONAL_AB].addMouseListener(this);
             triImage[ViewJFrameTriImage.CORONAL_AB].setName( (new Integer(ViewJFrameTriImage.CORONAL_AB)).toString());
-            triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
+            triImage[ViewJFrameTriImage.SAGITTAL_AB] = buildTriImage(imageA, LUTa, RGBTa, imageB, LUTb, RGBTb, FileInfoBase.SAGITTAL);
             triImage[ViewJFrameTriImage.SAGITTAL_AB].addMouseListener(this);
             triImage[ViewJFrameTriImage.SAGITTAL_AB].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_AB)).toString());
-            triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
+            triImage[ViewJFrameTriImage.AXIAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.AXIAL);
             triImage[ViewJFrameTriImage.AXIAL_B].addMouseListener(this);
             triImage[ViewJFrameTriImage.AXIAL_B].setName( (new Integer(ViewJFrameTriImage.AXIAL_B)).toString());
-            triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
+            triImage[ViewJFrameTriImage.CORONAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.CORONAL);
             triImage[ViewJFrameTriImage.CORONAL_B].addMouseListener(this);
             triImage[ViewJFrameTriImage.CORONAL_B].setName( (new Integer(ViewJFrameTriImage.CORONAL_B)).toString());
-            triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
+            triImage[ViewJFrameTriImage.SAGITTAL_B] = buildTriImage(imageB, LUTb, RGBTb, null, null, null, FileInfoBase.SAGITTAL);
             triImage[ViewJFrameTriImage.SAGITTAL_B].addMouseListener(this);
             triImage[ViewJFrameTriImage.SAGITTAL_B].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_B)).toString());
         }
 
-        triImage[ViewJFrameTriImage.AXIAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.AXIAL);
+        triImage[ViewJFrameTriImage.AXIAL_A] = buildTriImage(imageA, LUTa, RGBTa, null, null, null, FileInfoBase.AXIAL);
         triImage[ViewJFrameTriImage.AXIAL_A].addMouseListener(this);
         triImage[ViewJFrameTriImage.AXIAL_A].setName( (new Integer(ViewJFrameTriImage.AXIAL_A)).toString());
-        triImage[ViewJFrameTriImage.SAGITTAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.SAGITTAL);
+        triImage[ViewJFrameTriImage.SAGITTAL_A] = buildTriImage(imageA, LUTa, RGBTa, null, null, null, FileInfoBase.SAGITTAL);
         triImage[ViewJFrameTriImage.SAGITTAL_A].addMouseListener(this);
         triImage[ViewJFrameTriImage.SAGITTAL_A].setName( (new Integer(ViewJFrameTriImage.SAGITTAL_A)).toString());
-        triImage[ViewJFrameTriImage.CORONAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.CORONAL);
+        triImage[ViewJFrameTriImage.CORONAL_A] = buildTriImage(imageA, LUTa, RGBTa, null, null, null, FileInfoBase.CORONAL);
         triImage[ViewJFrameTriImage.CORONAL_A].addMouseListener(this);
         triImage[ViewJFrameTriImage.CORONAL_A].setName( (new Integer(ViewJFrameTriImage.CORONAL_A)).toString());
 
@@ -4779,23 +4842,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * Displays histoLUT frame.
      * 
      * @param imageAorB ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
+     * @deprecated
      */
     protected void updateHistoLUTFrame(final int imageAorB) {
-        updateImages(true);
-
-        if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_A)
-                && (triImage[ViewJFrameTriImage.AXIAL_A] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_A].getLUTa(), null,
-                    null, true);
-        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_B)
-                && (triImage[ViewJFrameTriImage.AXIAL_B] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB,
-                    triImage[ViewJFrameTriImage.AXIAL_B].getLUTb(), true);
-        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)
-                && (triImage[ViewJFrameTriImage.AXIAL_AB] != null)) {
-            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_AB].getLUTa(), imageB,
-                    triImage[ViewJFrameTriImage.AXIAL_AB].getLUTb(), true);
-        }
+//        updateImages(true);
+//
+//        if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_A)
+//                && (triImage[ViewJFrameTriImage.AXIAL_A] != null)) {
+//            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_A].getLUTa(), null,
+//                    null, true);
+//        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJComponentBase.IMAGE_B)
+//                && (triImage[ViewJFrameTriImage.AXIAL_B] != null)) {
+//            imageA.getHistoLUTFrame().updateHistoLUT(null, null, imageB,
+//                    triImage[ViewJFrameTriImage.AXIAL_B].getLUTb(), true);
+//        } else if ( (imageA.getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)
+//                && (triImage[ViewJFrameTriImage.AXIAL_AB] != null)) {
+//            imageA.getHistoLUTFrame().updateHistoLUT(imageA, triImage[ViewJFrameTriImage.AXIAL_AB].getLUTa(), imageB,
+//                    triImage[ViewJFrameTriImage.AXIAL_AB].getLUTb(), true);
+//        }
     }
 
     /**

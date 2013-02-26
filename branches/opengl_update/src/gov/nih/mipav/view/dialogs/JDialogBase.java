@@ -1548,6 +1548,18 @@ public abstract class JDialogBase extends JDialog
 
         return cancelButton;
     }
+    
+    public static JButton buildCancelButton( String actionCommand, ActionListener parent ) {
+    	JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(parent);
+
+        cancelButton.setActionCommand( actionCommand );
+        cancelButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        cancelButton.setFont(MipavUtil.font12B);
+
+        return cancelButton;
+    }
 
     /**
      * Builds the close button. Sets it internally as well return the just-built button.
@@ -1632,6 +1644,24 @@ public abstract class JDialogBase extends JDialog
      *
      * @return  JButton ok button
      */
+    public static JButton buildOKButton( String actionCommand, ActionListener parent )
+    {
+    	JButton OKButton = new JButton("OK");
+        OKButton.addActionListener(parent);
+
+        OKButton.setActionCommand( actionCommand );
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(MipavUtil.font12B);
+
+        return OKButton;
+    }
+    
+    /**
+     * Builds the OK button. Sets it internally as well return the just-built button.
+     *
+     * @return  JButton ok button
+     */
     protected JButton buildOKButton() {
         OKButton = new JButton("OK");
         OKButton.addActionListener(this);
@@ -1652,7 +1682,7 @@ public abstract class JDialogBase extends JDialog
      *
      * @return  The titled border.
      */
-    protected TitledBorder buildTitledBorder(String title) {
+    public static TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                                 Color.black);
     }

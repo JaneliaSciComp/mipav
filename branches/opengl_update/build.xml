@@ -252,7 +252,11 @@
             <fileset file="${dir.source}/about.txt"/>
             <fileset file="${dir.source}/dicom_dictionary.txt"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
-            <fileset file="${dir.source}/license.html"/>
+        </copy>
+
+        <!-- MIPAV license files/information -->
+        <copy todir="${dir.dest}/license">
+            <fileset dir="${dir.source}/license"/>
         </copy>
     </target>
 

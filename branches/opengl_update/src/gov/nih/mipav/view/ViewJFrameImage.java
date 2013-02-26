@@ -21,7 +21,6 @@ import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotter
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
-import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIFiberTracking;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
@@ -684,15 +683,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 for (int i = 0; i < frameList.size(); i++) {
 
-                    if ( ((ViewJFrameBase) frameList.elementAt(i)) != this) {
-                        ((ViewJFrameBase) frameList.elementAt(i)).closeImageB();
+                    if ( frameList.elementAt(i) instanceof ViewJFrameBase )
+                    {
+                        if ( ((ViewJFrameBase) frameList.elementAt(i)) != this)
+                        {
+                        	((ViewJFrameBase) frameList.elementAt(i)).closeImageB();
+                        }
                     }
                 }
 
-                if (imageA.getHistoLUTFrame() != null) {
-                    imageA.getHistoLUTFrame().removeHistoLUTb();
-                } else if (imageA.getHistoRGBFrame() != null) {
-                    imageA.getHistoRGBFrame().removeHistoRGBb();
+                if (imageA.getHistogramFrame() != null) {
+                    imageA.getHistogramFrame().closeImageB();
                 }
 
                 imageBufferB = null;
@@ -1082,7 +1083,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogExtractObject(this, getActiveImage());
         } else if (command.equals("Bilateral filter")) {
             new JDialogBilateralFilter(this, getActiveImage());
-        } else if (command.equals("Gaussian blur")) {
+        } else if (command.equals("Deconvolution")) {
+            new JDialogDeconvolution(this, getActiveImage());
+        }  else if (command.equals("Gaussian blur")) {
             // JDialogGaussianBlur gb =
             new JDialogGaussianBlur(this, getActiveImage());
         } else if (command.equals("Unsharp mask")) {
@@ -1864,18 +1867,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             try {
-                linkTriFrame = new ViewJFrameTriImage(componentImage.getImageA(), componentImage.getLUTa(),
-                        componentImage.getImageB(), componentImage.getLUTb(), controls, this);
-
-                if (imageA.isColorImage()) {
-                    linkTriFrame.setRGBTA(componentImage.getRGBTA());
-
-                    if (imageB != null) {
-                        linkTriFrame.setRGBTB(componentImage.getRGBTB());
-                    }
-
-                    linkTriFrame.updateImages(true);
-                }
+                linkTriFrame = new ViewJFrameTriImage(componentImage.getImageA(), componentImage.getLUTa(), componentImage.getRGBTA(),
+                        componentImage.getImageB(), componentImage.getLUTb(), componentImage.getRGBTB(), controls, this);
 
                 // to set the radio button correctly in the tri-planar frame
                 linkTriFrame.setActiveImage(getControls().getActiveImage());
@@ -2074,40 +2067,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
                 MipavUtil.displayError(" Cannot change the LUT of a Boolean image.");
             } else {
-
-                if (imageA.getHistoLUTFrame() == null) {
-                    JDialogHistogramLUT histogramDialog = null;
-
-                    if (imageA.isColorImage() == false) {
-
-                        try {
-                            histogramDialog = new JDialogHistogramLUT(this, imageA, imageB, componentImage.getLUTa(),
-                                    componentImage.getLUTb());
-                        } catch (final OutOfMemoryError error) {
-                            MipavUtil.displayError("Out of memory: unable to open LUT frame.");
-                        }
-                    } else {
-
-                        try {
-                            histogramDialog = new JDialogHistogramLUT(this, imageA, imageB, componentImage.getRGBTA(),
-                                    componentImage.getRGBTB());
-                        } catch (final OutOfMemoryError error) {
-                            MipavUtil.displayError("Out of memory: unable to open LUT frame.");
-                        }
-                    }
-
-                    // if there is no VOI Contour type present, do not allow VOI histogram option
-                    boolean foundContour = false;
-                    for (int i = 0; i < getActiveImage().getVOIs().size(); i++) {
-                        if (getActiveImage().getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                            foundContour = true;
-                        }
-                    }
-                    if (foundContour) {
-                        histogramDialog.constructDialog();
-                    } else {
-                        histogramDialog.histogramLUT(true);
-                    }
+                if (imageA.getHistogramFrame() == null)
+                {
+                	ModelStorageBase lutA = imageA.isColorImage() ? componentImage.getRGBTA() : componentImage.getLUTa();
+                	ModelStorageBase lutB = (imageB != null) ? imageB.isColorImage() ? componentImage.getRGBTB() : componentImage.getLUTb() : null;
+                	JFrameHistogram test = new JFrameHistogram( this, imageA, imageB, lutA, lutB );
+                	// if there is no VOI Contour type present, do not allow VOI histogram option
+                	boolean foundContour = false;
+                	for (int i = 0; i < getActiveImage().getVOIs().size(); i++)
+                	{
+                		if (getActiveImage().getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR)
+                		{
+                			foundContour = true;
+                		}
+                	}
+                	if (foundContour)
+                	{
+                		test.constructDialog();
+                	}
+                	else
+                	{
+                		test.histogramLUT(true, true);
+                	}
                 }
             }
         } else if (command.equals("winLevel")) { // new win-level window when it does not exist
@@ -2165,8 +2146,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 componentImage.getLUTb().invertLUT();
             }
 
-            if (getActiveImage().getHistoLUTFrame() != null) {
-                getActiveImage().getHistoLUTFrame().update();
+            if (getActiveImage().getHistogramFrame() != null) {
+                getActiveImage().getHistogramFrame().redrawFrames();
             }
 
             if (getActiveImage() == imageA) {
@@ -2184,8 +2165,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 componentImage.getLUTb().makeLUT(256);
             }
 
-            if (getActiveImage().getHistoLUTFrame() != null) {
-                getActiveImage().getHistoLUTFrame().update();
+            if (getActiveImage().getHistogramFrame() != null) {
+                getActiveImage().getHistogramFrame().redrawFrames();
             }
 
             if (getActiveImage() == imageA) {
@@ -2203,8 +2184,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 componentImage.getLUTb().makeLUT(256);
             }
 
-            if (getActiveImage().getHistoLUTFrame() != null) {
-                getActiveImage().getHistoLUTFrame().update();
+            if (getActiveImage().getHistogramFrame() != null) {
+                getActiveImage().getHistogramFrame().redrawFrames();
             }
 
             if (getActiveImage() == imageA) {
@@ -2224,12 +2205,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("resetLUTs")) {
             componentImage.resetLUTs();
 
-            if ( (getActiveImage().isColorImage()) && (getActiveImage().getHistoRGBFrame() != null)) {
-                getActiveImage().getHistoRGBFrame().update();
-            } else if (getActiveImage().getHistoLUTFrame() != null) {
-                getActiveImage().getHistoLUTFrame().update();
+            if (  getActiveImage().getHistogramFrame() != null ) {
+                getActiveImage().getHistogramFrame().redrawFrames();
             }
-
             if (getActiveImage() == imageA) {
                 getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), false);
             } else {
@@ -2526,10 +2504,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
         ProvenanceRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
 
-        if ( (imageA != null) && (imageA.getHistoLUTFrame() != null)) {
-            imageA.getHistoLUTFrame().dispose();
-        } else if ( (imageA != null) && (imageA.getHistoRGBFrame() != null)) {
-            imageA.getHistoRGBFrame().dispose();
+        if ( (imageA != null) && (imageA.getHistogramFrame() != null)) {
+            imageA.getHistogramFrame().closeFrame();
         }
 
         // Get all imageA frames
@@ -3913,6 +3889,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.setActiveImage(active);
         }
 
+        if ( getActiveImage().getHistogramFrame() != null )
+        {
+        	getActiveImage().getHistogramFrame().setActiveImage(getActiveImage());
+        }
         updateImages(false);
     }
 
@@ -4046,7 +4026,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if ( (imageB != null) && ( !imageB.equals(_imageB))) {
             imageB.disposeLocal(); // Dispose of the memory of the old image
         }
-
+        
         imageB = _imageB;
 
         // imageB.setImageOrder(ModelImage.IMAGE_B);
@@ -4059,14 +4039,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         imageB.addImageDisplayListener(this);
-
-        if ( (imageA.isColorImage() == false) && (imageB.isColorImage() == false)) {
+        ModelStorageBase LUT = null;
+        if ( !imageB.isColorImage())
+        {
             final int[] dimExtentsLUT = new int[2];
 
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
 
-            final ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+            LUT = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
 
             float imgMin = (float) imageB.getMin();
             float imgMax = (float) imageB.getMax();
@@ -4086,21 +4067,41 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 max = (float) imageB.getMax();
             }
 
-            LUT.resetTransferLine(min, imgMin, max, imgMax);
-            imageB.notifyImageDisplayListeners(LUT, true);
+            ((ModelLUT)LUT).resetTransferLine(min, imgMin, max, imgMax);
+        } 
+        else if (imageB.isColorImage())
+        {
+			final float[] x = new float[4];
+			final float[] y = new float[4];
+			final Dimension dim = new Dimension(256, 256);
 
-            if (imageA.getHistoLUTFrame() != null) {
-                imageB.addImageDisplayListener(imageA.getHistoLUTFrame());
-                updateHistoLUTFrame(ViewJFrameBase.IMAGE_B);
-            }
-        } else if (imageA.isColorImage() && imageB.isColorImage()) {
-            imageB.notifyImageDisplayListeners(null, true);
+			// Set ModelRGB min max values;
+			x[0] = 0;
+			y[0] = dim.height - 1;
 
-            if (imageA.getHistoRGBFrame() != null) {
-                imageB.addImageDisplayListener(imageA.getHistoRGBFrame());
-                updateHistoRGBFrame(ViewJFrameBase.IMAGE_B);
-            }
+			x[1] = 255 * 0.333f;
+			y[1] = (dim.height - 1) - ( (dim.height - 1) / 3.0f);
+
+			x[2] = 255 * 0.667f;
+			y[2] = (dim.height - 1) - ( (dim.height - 1) * 0.67f);
+
+			x[3] = 255;
+			y[3] = 0;
+
+			final int[] RGBExtents = new int[2];
+			RGBExtents[0] = 4;
+			RGBExtents[1] = 256;
+			LUT = new ModelRGB(RGBExtents);
+			((ModelRGB)LUT).getRedFunction().importArrays(x, y, 4);
+			((ModelRGB)LUT).getGreenFunction().importArrays(x, y, 4);
+			((ModelRGB)LUT).getBlueFunction().importArrays(x, y, 4);
+			((ModelRGB)LUT).makeRGB( -1);
+        	
         }
+        if (imageA.getHistogramFrame() != null) {
+        	imageA.getHistogramFrame().setImageB(imageB, LUT);
+        }
+
 
         if (getLUTb() != null) {
             getLUTb().zeroToOneLUTAdjust();
@@ -4389,7 +4390,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 int bufferFactor = 1;
 
-                if (imageA.isColorImage()) {
+                if (imageB.isColorImage()) {
                     bufferFactor = 4;
                 }
 
@@ -4936,6 +4937,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Displays histoLUT frame for a gray scale image.
      * 
      * @param imageAorB whether to show the IMAGE_A, IMAGE_B or IMAGE_A_B lut frame
+     * @deprecated
      */
     protected void updateHistoLUTFrame(final int imageAorB) {
         updateHistoLUTFrame(imageAorB, componentImage);
@@ -4946,26 +4948,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @param imageAorB whether to show the IMAGE_A, IMAGE_B or IMAGE_A_B lut frame
      * @param compImg the component image with the image histogram frames to update
+     * @deprecated
      */
     protected void updateHistoLUTFrame(final int imageAorB, final ViewJComponentEditImage compImg) {
-        updateImages(true);
-
-        if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A)) {
-            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(compImg.getImageA(), compImg.getLUTa(), null, null,
-                    true);
-        } else if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_B)) {
-            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(null, null, compImg.getImageB(), compImg.getLUTb(),
-                    true);
-        } else if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)) {
-            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(compImg.getImageA(), compImg.getLUTa(),
-                    compImg.getImageB(), compImg.getLUTb(), true);
-        }
+//        updateImages(true);
+//
+//        if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A)) {
+//            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(compImg.getImageA(), compImg.getLUTa(), null, null,
+//                    true);
+//        } else if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_B)) {
+//            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(null, null, compImg.getImageB(), compImg.getLUTb(),
+//                    true);
+//        } else if ( (compImg.getImageA().getHistoLUTFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)) {
+//            compImg.getImageA().getHistoLUTFrame().updateHistoLUT(compImg.getImageA(), compImg.getLUTa(),
+//                    compImg.getImageB(), compImg.getLUTb(), true);
+//        }
     }
 
     /**
      * Displays histoRGB frame for an RGB image.
      * 
      * @param imageAorB indicates whether to show IMAGE_A, IMAGE_B or IMAGE_A_B (both).
+     * @deprecated
      */
     protected void updateHistoRGBFrame(final int imageAorB) {
         updateHistoRGBFrame(imageAorB, componentImage);
@@ -4976,17 +4980,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @param imageAorB indicates whether to show IMAGE_A, IMAGE_B or IMAGE_A_B (both).
      * @param compImg the component image with the image histogram frames to update
+     * @deprecated
      */
     protected void updateHistoRGBFrame(final int imageAorB, final ViewJComponentEditImage compImg) {
-        updateImages(true);
-
-        if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A)) {
-            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(compImg.getImageA(), null, true);
-        } else if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_B)) {
-            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(null, compImg.getImageB(), true);
-        } else if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)) {
-            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(compImg.getImageA(), compImg.getImageB(), true);
-        }
+//        updateImages(true);
+//
+//        if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A)) {
+//            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(compImg.getImageA(), null, true);
+//        } else if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_B)) {
+//            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(null, compImg.getImageB(), true);
+//        } else if ( (compImg.getImageA().getHistoRGBFrame() != null) && (imageAorB == ViewJFrameBase.IMAGE_A_B)) {
+//            compImg.getImageA().getHistoRGBFrame().updateHistoRGB(compImg.getImageA(), compImg.getImageB(), true);
+//        }
     }
 
     /**

@@ -2873,10 +2873,12 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
     private void loadVisualizationSettings(TransferFunction lut, TransferFunction opac) {
         boolean imageBLoaded = parentFrame.getImageB() != null;
 
-        ((ViewJComponentHistoLUT) parentFrame.getLUTDialog().getHistoLUTComponentA()).getLUT().setTransferFunction(lut);
+        parentFrame.getHistogramDialog().setTransferFunctionA(lut);
+        //((ViewJComponentHistoLUT) parentFrame.getLUTDialog().getHistoLUTComponentA()).getLUT().setTransferFunction(lut);
 
         if (imageBLoaded) {
-            ((ViewJComponentHistoLUT) parentFrame.getLUTDialog().getHistoLUTComponentB()).getLUT().setTransferFunction(lut);
+            parentFrame.getHistogramDialog().setTransferFunctionB(lut);
+            //((ViewJComponentHistoLUT) parentFrame.getLUTDialog().getHistoLUTComponentB()).getLUT().setTransferFunction(lut);
         }
 
         if (((SurfaceRender) renderBase).getDisplayMode3D()) {

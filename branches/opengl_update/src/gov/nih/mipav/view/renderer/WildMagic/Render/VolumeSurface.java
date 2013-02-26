@@ -133,6 +133,9 @@ public class VolumeSurface extends VolumeObject
         m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
         m_kLightShader.SetPerPixelLighting(true);
         m_kLightShaderTransparent.SetPerPixelLighting(true);
+        ModelStorageBase newLUT = kImageA.IsColorImage() ? new ModelRGB() : new ModelLUT();
+        m_kLightShader.SetLUTNew(newLUT);
+        m_kLightShaderTransparent.SetLUTNew(newLUT);
 
         if ( !bHasMaterial )
         {
@@ -243,6 +246,9 @@ public class VolumeSurface extends VolumeObject
         m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
         m_kLightShader.SetPerPixelLighting(true);
         m_kLightShaderTransparent.SetPerPixelLighting(true);
+        ModelStorageBase newLUT = kImageA.IsColorImage() ? new ModelRGB() : new ModelLUT();
+        m_kLightShader.SetLUTNew(newLUT);
+        m_kLightShaderTransparent.SetLUTNew(newLUT);
 
         if ( !bHasMaterial )
         {
@@ -1083,10 +1089,10 @@ public class VolumeSurface extends VolumeObject
      * @param kLUT the new LUT.
      * @param kRGBT the new ModelRGB (for color images).
      */
-    public void SetLUTNew( ModelLUT kLUT, ModelRGB kRGBT )
+    public void SetLUTNew( ModelStorageBase kLUT )
     {
-        m_kLightShader.SetLUTNew(kLUT, kRGBT);
-        m_kLightShaderTransparent.SetLUTNew(kLUT, kRGBT);
+        m_kLightShader.SetLUTNew(kLUT);
+        m_kLightShaderTransparent.SetLUTNew(kLUT);
     }
 
     /**

@@ -9,6 +9,6 @@ import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 public interface ViewJComponentVolOpacityListener
 {
     public void setAdjustersEnabled(boolean enabled);
-    public void update();
+    public void update(boolean isChanging);
     public void updateSlider(ViewJComponentVolOpacityBase childComponent);
 }

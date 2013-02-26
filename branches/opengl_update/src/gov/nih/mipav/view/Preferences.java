@@ -102,17 +102,17 @@ public class Preferences {
      *
      */
     public enum DefaultDisplay {
-        /** Lookuptable table and associated transfer function */
-        LUT("LUT & transfer function default"),
-        /** Window and level settings (will also be reflected as transfer function */
-        WindowLevel("Window & level default"),
-        /** Minimum and maximum settings  */
-        MinMax("Min & max default"),
         /** MIPAV default setting */
-        Mipav("MIPAV default setting"),
-        Default("Default"), //for backwards compatibility
+        Mipav("MIPAV default"),
         /**ImageJ default setting */
-        ImageJ("ImageJ default setting");
+        ImageJ("ImageJ default setting"),
+        /** Window and level settings (will also be reflected as transfer function */
+        WindowLevel("Saved window & level"),
+        /** Minimum and maximum settings  */
+        MinMax("Saved min & max"),
+        /** Lookuptable table and associated transfer function */
+        LUT("User-defined LUT & transfer function"),
+        Default("Default"); //for backwards compatibility
         
         /** The format of default display */
         private String str;
@@ -650,6 +650,12 @@ public class Preferences {
     public static final String PREF_FITBIR_PLUGIN_CSV_DIR = "FITBIRCSVDir";
     
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
+    
+    public static final String PREF_BUG_REPORT_NAME = "BugReportName";
+    
+    public static final String PREF_BUG_REPORT_EMAIL = "BugReportEmail";
+    
+    public static final String PREF_BUG_REPORT_URGENCY = "BugReportUrgency";
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
@@ -1106,7 +1112,22 @@ public class Preferences {
     	if(defaultDisplay == null) {
     		defaultDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
     	}
-    	return DefaultDisplay.valueOf(defaultDisplay);
+    	// if we find the old 'Default' display, force it to the new 'MIPAV default'
+    	if (defaultDisplay.equals(DefaultDisplay.Default.name())) {
+    	    defaultDisplay = DefaultDisplay.Mipav.name();
+    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+    	}
+    	
+    	DefaultDisplay display; 
+    	try {
+    	    display = DefaultDisplay.valueOf(defaultDisplay);
+    	} catch (IllegalArgumentException e) {
+    	    Preferences.debug("Unrecognized default display mode. Resetting to MIPAV default.", Preferences.DEBUG_MINOR);
+    	    display = DefaultDisplay.Mipav;
+    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+    	}
+    	
+    	return display;
     }
     
     /**
@@ -3105,5 +3126,13 @@ public class Preferences {
         }
 
         return Preferences.defaultShortcutTable;
+    }
+    
+    /**
+     * Resets the current MIPAV properties to the defaults and saves the preferences file.  Cannot be undone.
+     */
+    public static void resetToDefaults() {
+    	mipavProps = defaultProps;
+    	save();
     }
 }

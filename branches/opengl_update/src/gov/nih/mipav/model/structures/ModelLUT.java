@@ -5,6 +5,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.Color;
 import java.io.*;
+import java.net.URL;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 
@@ -100,6 +101,14 @@ public class ModelLUT extends ModelStorageBase {
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Default Constructor.
+     */
+    public ModelLUT()
+    {
+        this(ModelLUT.GRAY, 256, new int[]{4,256});
+    }
+    
     /**
      * Constructor.
      * 
@@ -1418,7 +1427,7 @@ public class ModelLUT extends ModelStorageBase {
         }
 
         try {
-            BufferedReader in = ViewJPanelLUT.openLUTFile(name);
+            BufferedReader in = openLUTFile(name);
             String str;
             int i = 0;
 
@@ -1735,5 +1744,29 @@ public class ModelLUT extends ModelStorageBase {
 
     public int[] getIndexedLUT() {
         return indexedLUT;
+    }
+    
+
+    /**
+     * Opens and returns a buffered reader for a given custom LUT name.
+     * 
+     * @param lutName The name of the LUT file (without the extension).
+     * 
+     * @return A LUT file buffered reader.
+     */
+    public static final String customLUTsLocation = "WildMagic/Shaders/LUTs";
+    public static final BufferedReader openLUTFile(String lutName) throws IOException {
+        String filename = customLUTsLocation + "/" + lutName + ".txt";
+
+        // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
+        URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
+
+        if (fileURL == null) {
+            Preferences.debug("Unable to open " + filename + ".\n", Preferences.DEBUG_MINOR);
+            return null;
+        }
+
+        // use buffering this implementation reads one line at a time
+        return new BufferedReader(new InputStreamReader(fileURL.openStream()));
     }
 }

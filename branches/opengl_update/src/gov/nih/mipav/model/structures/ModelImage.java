@@ -1333,11 +1333,33 @@ public class ModelImage extends ModelStorageBase {
 
         return null;
     }
+    
+    
+    /**
+     * Method that returns the Histogram frame if it exists else returns null.
+     * @return Histogram frame associated with this image, or null.
+     */
+    public JFrameHistogram getHistogramFrame() {
+
+        if (frameList != null) {
+
+            for (int i = 0; i < frameList.size(); i++) {
+
+                if (frameList.elementAt(i) instanceof JFrameHistogram) {
+                    return (JFrameHistogram) frameList.elementAt(i);
+                }
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Method that returns the HistoLUT frame if it exists else returns null.
      * 
      * @return histoLUTFrame
+     * @deprecated
+     * @see public JFrameHistogram getHistogramFrame()
      */
     public ViewJFrameHistoLUT getHistoLUTFrame() {
 
@@ -1358,6 +1380,8 @@ public class ModelImage extends ModelStorageBase {
      * Method that returns the HistoRGB frame if it exists else returns null.
      * 
      * @return histoRGBFrame
+     * @deprecated
+     * @see public JFrameHistogram getHistogramFrame()
      */
     public ViewJFrameHistoRGB getHistoRGBFrame() {
 
@@ -1488,7 +1512,10 @@ public class ModelImage extends ModelStorageBase {
             if (frameList != null) {
 
                 for (int i = 0; i < frameList.size(); i++) {
-                    Preferences.debug( ((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
+                	if ( frameList.elementAt(i) instanceof JFrame )
+                	{
+                		Preferences.debug( ((JFrame) (frameList.elementAt(i))).getTitle() + "\n");
+                	}
                 }
             }
 
@@ -2299,24 +2326,19 @@ public class ModelImage extends ModelStorageBase {
 
             }
         }
+    }
 
-        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
-
-            if (getHistoLUTFrame().getImageA() == this) {
-                getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoLUTFrame().getImageB() == this) {
-                getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_B);
-            }
-        }
-
-        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
-
-            if (getHistoRGBFrame().getImageA() == this) {
-                getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoRGBFrame().getImageB() == this) {
-                getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_B);
-            }
-        }
+    /**
+     * Used to notify all frames that display this image model need to be updated for RGB (color) images.
+     * 
+     * @param forceShow force the display method(s) to reload image data and display image slower but needed if image
+     *            model changes.
+     * @param alphaBlend the amount to blend between two images displayed in the same frame.
+     * @param RGBT ModelRGB
+     * @deprecated
+     */
+    public void notifyImageDisplayListeners(final boolean forceShow, final int alphaBlend, final ModelRGB RGBT) {
+    	notifyImageDisplayListeners(forceShow, RGBT);
     }
 
     /**
@@ -2327,7 +2349,7 @@ public class ModelImage extends ModelStorageBase {
      * @param alphaBlend the amount to blend between two images displayed in the same frame.
      * @param RGBT ModelRGB
      */
-    public void notifyImageDisplayListeners(final boolean forceShow, final int alphaBlend, final ModelRGB RGBT) {
+    public void notifyImageDisplayListeners(final boolean forceShow, final ModelRGB RGBT) {
 
         if (frameList == null) {
             return;
@@ -2380,25 +2402,6 @@ public class ModelImage extends ModelStorageBase {
                 }
                 
             }
-
-        }
-
-        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
-
-            if (getHistoLUTFrame().getImageA() == this) {
-                getHistoLUTFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoLUTFrame().getImageB() == this) {
-                getHistoLUTFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_B);
-            }
-        }
-
-        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
-
-            if (getHistoRGBFrame().getImageA() == this) {
-                getHistoRGBFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoRGBFrame().getImageB() == this) {
-                getHistoRGBFrame().notifyOfUpdate(null, ViewJFrameBase.IMAGE_B);
-            }
         }
     }
 
@@ -2432,24 +2435,6 @@ public class ModelImage extends ModelStorageBase {
                 } else if (this == imgB) {
                     frameList.elementAt(i).updateImages(null, LUT, forceShow, interpMode);
                 }
-            }
-        }
-
-        if ( (getHistoLUTFrame() != null) && (forceShow == true)) {
-
-            if (getHistoLUTFrame().getImageA() == this) {
-                getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoLUTFrame().getImageB() == this) {
-                getHistoLUTFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_B);
-            }
-        }
-
-        if ( (getHistoRGBFrame() != null) && (forceShow == true)) {
-
-            if (getHistoRGBFrame().getImageA() == this) {
-                getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_A);
-            } else if (getHistoRGBFrame().getImageB() == this) {
-                getHistoRGBFrame().notifyOfUpdate(LUT, ViewJFrameBase.IMAGE_B);
             }
         }
     }
@@ -4924,7 +4909,7 @@ public class ModelImage extends ModelStorageBase {
 
             try {
                 setLock(ModelStorageBase.W_LOCKED);
-                if ( (imDiff <= 255) && !rescale )
+                if ( (imDiff > 1) && (imDiff <= 255) && !rescale )
                 {
                 	for (i = start, j = 0; j < length; i++, j++) {
                 		if ( (mask != null) && useMask) {

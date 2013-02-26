@@ -1088,10 +1088,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      */
     public boolean loadImage(final Object obj, final ViewJComponentEditImage compImage, final boolean stackFlag,
             final boolean doOrigins, final boolean doOrients, final double defaultValue, final double defaultRed,
-            final double defaultGreen, final double defaultBlue, boolean isQuiet) {
-        //final boolean resample = false;
-        //final int[] axisA;
-       // final int[] axisB;
+            final double defaultGreen, final double defaultBlue, boolean isQuiet)
+    {
         boolean success = false;
 
         // get the model image for the image location
@@ -1112,6 +1110,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 fileIO.setQuiet(isQuiet);
                 
                 imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, imageA.getFileInfo(0), true); // read
+                this.setLUTb(fileIO.getModelLUT());
                 // image!
             } else if (obj instanceof ModelImage) {
                 imageB = (ModelImage) obj;
@@ -1130,12 +1129,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
                 this.setRGBTB(rgb);
             }
-
-            if (imageA.isColorImage() != imageB.isColorImage()) {
-                MipavUtil
-                        .displayError("Image loading failed because the color space is different. Both images must be grayscale or both RGB.");
-
-                return false;
+            else if ( !imageB.isColorImage() && (getLUTb() == null)) {
+            	this.setLUTb(new ModelLUT() );
             }
 
             if ( (imageA.getNDims() == imageB.getNDims()) || ( (imageA.getNDims() == 4) && (imageB.getNDims() == 3))) {
@@ -1147,30 +1142,6 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 return false;
             }
 
-            /*
-             *  // If axis orientation information is available for each of the 3 axes of // image A and image B and the
-             * orientations are not identical, then reorder image B // to have the same orientation as image A if (
-             * (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2) && (axisA[0] !=
-             * FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && ( (axisA[0] != axisB[0]) ||
-             * (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
-             * 
-             * if (reorderAfni(imageB, axisA, axisB) == false) { return false; } }
-             * 
-             * if (isImageResampleable(imageB)) { resample = isResampleNeeded(imageB); }
-             * 
-             * if ( (resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI) &&
-             * (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) { final int result = setImageBAfni(imageA,
-             * imageB);
-             * 
-             * if (result == -1) { return false; } else if (result == 1) { return success = true; // AFNI is a special
-             * case - no need to go on to the rest of the method } }
-             * 
-             * if ( ( (imageA.getNDims() == 3) && (imageB.getNDims() == 3)) || ( (imageA.getNDims() == 2) &&
-             * (imageB.getNDims() == 2))) {
-             * 
-             * if ( !matchImages(imageB, doOrigins, doOrients)) { return false; } } else if (resample) {
-             * loadResampledImage(imageB); } else { setImageB(imageB); } setImageB(imageB);
-             */
             if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
 
                 // load any luts
@@ -1439,6 +1410,85 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             }
 
             img.notifyImageDisplayListeners(lut, true);
+
+        } catch (final IOException error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Error reading LUT: \n" + error.getMessage());
+            }
+        }
+    } // end loadLUTFrom()
+
+    
+
+    /**
+     * Reads the input LUT (ModelLUT or ModelRGB) from file.
+     * @param image
+     * @param lut
+     * @param loadAll
+     * @param filename
+     * @param dirName
+     * @param quietMode
+     */
+    public static void loadLUTandTransferFunctionFrom(ModelImage image, ModelStorageBase lut, boolean loadAll, String filename, String dirName, boolean quietMode) {
+
+        boolean useLUT = !image.isColorImage();
+
+        // if not using a lut (i.e. rgb only), then you
+        // can't loadAll.... there are only functions, so
+        // reset the loadAll variable
+        if ( !useLUT )
+        {
+            loadAll = false;
+        }
+
+        if ( (filename == null) || (dirName == null)) {
+            dirName = image.getFileInfo(0).getFileDirectory();
+
+            if (dirName == null) {
+                dirName = System.getProperties().getProperty("user.dir");
+            }
+
+            final JFileChooser chooser = new JFileChooser();
+
+            chooser.setCurrentDirectory(new File(dirName));
+
+            if (loadAll) {
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.LUT));
+            } else {
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.FUNCT));
+            }
+
+            final int returnVal = chooser.showOpenDialog(null);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                filename = chooser.getSelectedFile().getName();
+                dirName = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            } else if (returnVal == JFileChooser.CANCEL_OPTION) {
+                chooser.setVisible(false);
+                return;
+            }
+        }
+
+        try {
+
+            if (useLUT) {
+            	FileHistoLUT fileHistoLUT = new FileHistoLUT(filename, dirName, image, lut);
+
+                if (loadAll) {
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
+                } else {
+                    fileHistoLUT.readFunctions();
+                }
+            } else {
+            	FileHistoLUT fileHistoLUT = new FileHistoLUT(filename, dirName, image, lut);
+
+                if (loadAll) {
+                    fileHistoLUT.readLUTandTransferFunction(quietMode);
+                } else {
+                    fileHistoLUT.readFunctions();
+                }
+            }
 
         } catch (final IOException error) {
 
@@ -2746,6 +2796,50 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     } // end saveLUTAs()
 
+
+    /**
+     * Saves the LUT associated with the input image (either a ModelLUT or ModelRGB).
+     * @param image
+     * @param lut
+     * @param saveAll
+     */
+    public static void saveLUTAs(ModelImage image, ModelStorageBase lut, boolean saveAll)
+    {
+    	// if filename and/or dirName is null, then get it from user
+    	String dirName = image.getFileInfo(0).getFileDirectory();
+
+    	if (dirName == null) {
+    		dirName = System.getProperties().getProperty("user.dir");
+    	}
+
+    	final JFileChooser chooser = new JFileChooser();
+    	chooser.setCurrentDirectory(new File(dirName));
+        if (saveAll) {
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.LUT));
+        } else {
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.FUNCT));
+        }
+
+    	final int returnVal = chooser.showSaveDialog(null);
+    	String filename = null;
+    	if (returnVal == JFileChooser.APPROVE_OPTION) {
+    		filename = chooser.getSelectedFile().getName();
+    		dirName = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+    	} else if (returnVal == JFileChooser.CANCEL_OPTION) {
+    		chooser.setVisible(false);
+    		return;
+    	}
+
+        try {
+
+        	FileHistoLUT fileHistoLUT = new FileHistoLUT(filename, dirName, image, lut);
+        	fileHistoLUT.writeAll();
+
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
+        }
+    }
+    
     /**
      * This method saves the LUT for the active image. If the image is not a color image then both the functions and the
      * LUT data are saved. If this is a color image, then only the functions are saved.
@@ -2803,6 +2897,28 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         }
 
     } // end saveLUTAs()
+    
+
+    /**
+     * Saves the ModelLUT and transfer function.
+     * @param image
+     * @param lut
+     * @param filename
+     * @param dirName
+     */
+    public static void saveLUTandTransferFunction(ModelImage image, ModelLUT lut, final String filename, final String dirName)
+    {
+    	FileHistoLUT fileHistoLUT;
+    	try {
+    		fileHistoLUT = new FileHistoLUT(filename, dirName, image, lut);
+    		fileHistoLUT.writeLUTandTransferFunction();
+    		Preferences.setDefaultDisplay(DefaultDisplay.LUT);
+
+    	} catch (final IOException error) {
+    		MipavUtil.displayError("Error writing LUT: \n" + error.getMessage());
+    	}
+
+    }
 
     /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
@@ -4222,12 +4338,18 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     
                     break;
                 }
+                
+                y[0] = 255.0f;
+                x[0] = minPref;
 
                 y[1] = 255.0f;
                 x[1] = minPref;
 
                 y[2] = 0;
                 x[2] = maxPref;
+                
+                y[3] = 0;
+                x[3] = maxPref;
 
                 newLUT.getTransferFunction().importArrays(x, y, 4);
                 
@@ -4250,29 +4372,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                     break;
                 }
                 
-                
-
-                if (window == 0) {
-                    window = 1;
-                }
-                
-                x[2] = level + (window / 2);
-
-                if (x[2] > imgMax) {
-                    y[2] = 255.0f * (x[2] - imgMax) / window;
-                    x[2] = imgMax;
-                } else {
-                    y[2] = 0.0f;
-                }
-
-                x[1] = level - (window / 2);
-
-                if (x[1] < imgMin) {
-                    y[1] = 255.0f - (255.0f * (imgMin - x[1]) / window);
-                    x[1] = imgMin;
-                } else {
-                    y[1] = 255.0f;
-                }
+                JDialogWinLevel.calcWinLevTransferFunction(img, window, level, x, y);
 
                 newLUT.getTransferFunction().importArrays(x, y, 4);
                 break;

@@ -22,6 +22,8 @@ import javax.swing.*;
  * Simple panel containing the volume renderer opacity controls.
  *
  * @version  0.1 May, 2003
+ * @deprecated
+ * @see JPanelVolumeOpacity
  */
 public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
@@ -55,6 +57,8 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
      * @param  theParentFrame  Parent frame.
      * @param  _imgA           Source imageA.
      * @param  _imgB           Source imageB.
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacity(RenderViewBase theParentFrame, ModelImage _imgA, ModelImage _imgB) {
         super(theParentFrame);
@@ -72,6 +76,8 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
      * @param  theParentFrame  Parent frame.
      * @param  _imgA           Source imageA.
      * @param  _imgB           Source imageB.
+     * @deprecated
+     * @see JPanelVolumeOpacity
      */
     public JPanelVolOpacity(VolumeTriPlanarInterface theParentFrame, ModelImage _imgA, ModelImage _imgB) {
         super(theParentFrame);

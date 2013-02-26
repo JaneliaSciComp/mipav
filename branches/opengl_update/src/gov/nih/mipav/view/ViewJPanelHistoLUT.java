@@ -76,6 +76,35 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
      * @param  lut        the image lut
      * @param  histogram  the image histogram
      */
+    public ViewJPanelHistoLUT(HistoLUTParent parent, ModelImage image, ModelStorageBase lut, ModelHistogram histogram) {
+
+        this.parent = parent;
+        this.image = image;
+        this.histogram = histogram;
+
+        this.lut = (lut instanceof ModelLUT) ? (ModelLUT)lut : null;
+        this.RGBT = (lut instanceof ModelRGB) ? (ModelRGB)lut : null;
+        if ( this.lut != null )
+        {
+        	this.histoLUTType = GRAY_LUT;
+        }
+        else
+        {
+        	this.histoLUTType = RGB_LUT;
+        }
+
+        initGUI();
+    }
+    
+    /**
+     * Create this panel.
+     *
+     * @param  parent     component which will hold this panel
+     * @param  image      the image
+     * @param  lut        the image lut
+     * @param  histogram  the image histogram
+     * @deprecated
+     */
     public ViewJPanelHistoLUT(HistoLUTParent parent, ModelImage image, ModelLUT lut, ModelHistogram histogram) {
         this.histoLUTType = GRAY_LUT;
 
@@ -94,6 +123,7 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
      * @param  image      ModelImage
      * @param  RGBT       ModelRGB
      * @param  histogram  ModelHistogram
+     * @deprecated
      */
     public ViewJPanelHistoLUT(HistoLUTParent parent, ModelImage image, ModelRGB RGBT, ModelHistogram histogram) {
         this.histoLUTType = RGB_LUT;
@@ -106,8 +136,31 @@ public class ViewJPanelHistoLUT extends JPanel implements HistoLUTParent, MouseL
         initGUI();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * Deletes local memory.
+     */
+    public void disposeLocal()
+    {
+        parent = null;
+        image = null;
+        lut = null;
+        RGBT = null;
+        histogram = null;
 
+        if ( componentLUT != null )
+        {
+        	componentLUT.dispose();
+        	componentLUT = null;
+        }
+        if ( componentHistogram != null )
+        {
+        	componentHistogram.dispose();
+        	componentHistogram = null;
+        }
+    }
+    
+    
+    
     /**
      * {@inheritDoc}
      */

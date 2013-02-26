@@ -16,6 +16,8 @@ import gov.nih.mipav.view.renderer.J3D.volumeview.VolumeRenderer;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.FileNotFoundException;
 import java.util.EventObject;
 
@@ -43,7 +45,7 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
  * @see JDialogView
  * @see JDialogMouseRecorder
  */
-public class SurfaceRender extends RenderViewBase implements KeyListener {
+public class SurfaceRender extends RenderViewBase implements KeyListener, PropertyChangeListener {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -91,9 +93,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * The transformed boxSlices frames used to sample the volume data along diagonal slices:
      */
     private Vector3f[][] boxSliceVertices;
-
-    /** Buffer factor, 1 usually, 4 for color images. */
-    private int bufferFactor = 1;
 
     /** Dialog to turn the clipping palne box on and off. */
     private JPanelClip clipPanel;
@@ -270,7 +269,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     private BranchGroup volBG;
 
     /** Volume opacity control dialog. */
-    private JPanelVolOpacityBase volOpacityPanel;
+    private JPanelVolumeOpacity volOpacityPanel;
 
     /** Volume render branch group. */
     private BranchGroup volRenderBG;
@@ -340,12 +339,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
             imageB.setImageOrder(ModelImage.IMAGE_B);
         }
 
-        bufferFactor = 1;
-
-        if (imageA.isColorImage()) {
-            bufferFactor = 4;
-        }
-
         background.setColor(new Color3f(Color.black));
 
         final int[] dimExtents = imageA.getExtents();
@@ -403,11 +396,8 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
         viewPanel = new JPanelView(this);
         _pBar.updateValueImmed(20);
 
-        if (imageA.isColorImage()) {
-            volOpacityPanel = new JPanelVolOpacityRGB(this, imageA, imageB);
-        } else {
-            volOpacityPanel = new JPanelVolOpacity(this, imageA, imageB);
-        }
+        volOpacityPanel = new JPanelVolumeOpacity(imageA, imageB);
+        volOpacityPanel.addPropertyChangeListener(this);
 
         _pBar.updateValueImmed(25);
 
@@ -660,9 +650,11 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
                 }
             }
 
+            int bufferFactor = imageA.isColorImage() ? 4 : 1;
             imageVolBufferA = new float[bufferFactor * xDim * yDim];
-
-            if (imageB != null) {
+            if (imageB != null)
+            {
+            	bufferFactor = imageB.isColorImage() ? 4 : 1;
                 imageVolBufferB = new float[bufferFactor * imageB.getSliceSize()];
             }
 
@@ -1163,7 +1155,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * 
      * @return volOpacityPanel volume opacity dialog box.
      */
-    public JPanelVolOpacityBase getVolOpacityPanel() {
+    public JPanelVolumeOpacity getVolOpacityPanel() {
         return volOpacityPanel;
     }
 
@@ -1286,9 +1278,11 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
             }
         }
 
+        int bufferFactor = imageA.isColorImage() ? 4 : 1;
         imageVolBufferA = new float[bufferFactor * xDim * yDim];
-
-        if (imageB != null) {
+        if (imageB != null)
+        {
+        	bufferFactor = imageB.isColorImage() ? 4 : 1;
             imageVolBufferB = new float[bufferFactor * imageB.getSliceSize()];
         }
 
@@ -1702,7 +1696,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
     public void setRayBasedRender(final VolumeRenderer _rayBasedRender) {
         rayBasedRender = _rayBasedRender;
         clipPanel.setRayBasedRender(_rayBasedRender);
-        volOpacityPanel.setRayBasedRender(_rayBasedRender);
         surfacePanel.getLightDialog().setRayBasedRender(_rayBasedRender);
         sculptorPanel.setVolumeSculptor(_rayBasedRender);
     }
@@ -2002,6 +1995,10 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
 
         if (volRenderNode == null) {
             configureVolumeFrame();
+        }
+        else
+        {
+        	updateTextureVolumeRender();
         }
 
         if (clipPanel != null) {
@@ -2384,7 +2381,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * @return Confirms successful update.
      */
     public boolean updateImages() {
-
         update3DTriplanar(null, null, false);
         updateVolume(null, null, false);
 
@@ -2399,7 +2395,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      * @return boolean confirming successful update
      */
     public boolean updateImages(final boolean flag) {
-
         if (update3DTriplanar(null, null, flag) == false) {
             return false;
         }
@@ -2422,7 +2417,6 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
      */
     public boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow, final int interpMode) {
         boolean success = false;
-
         if (getDisplayMode3D() == true) {
             success = updateVolume(LUTa, LUTb, forceShow);
         } else {
@@ -3468,5 +3462,14 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
                 }
         }
     }
+
+	@Override
+	public void propertyChange(PropertyChangeEvent arg0)
+	{
+		if ( !volOpacityPanel.isChanging() )
+		{
+			updateImages();
+		}
+	}
 
 }

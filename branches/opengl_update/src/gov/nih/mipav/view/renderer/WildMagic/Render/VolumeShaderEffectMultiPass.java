@@ -347,6 +347,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         if ( m_bMultiHisto )
         {
         	updateLevWidgetState( );
+        } 
+        if ( (pkCProgram != null) && pkCProgram.GetUC("ABBlend") != null ) 
+        {
+        	pkCProgram.GetUC("ABBlend").GetData()[0] = m_afABBlendParam[0];
         }
 
         super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );    
@@ -472,6 +476,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         //System.err.println( kColor.A );
     }
     
+    public boolean GetGradientMagnitude()
+    {
+    	return m_bGradientMag;
+    }
 
     /** 
      * Enables/Disables gradient magnitude filter.
@@ -793,54 +801,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
         }
-        initTexturesVol(m_kPShaderCMP);
                  
         SetVShader(0,m_pkVShader);
         SetPShader(0,m_kPShaderCMP);
     }
-
-
-    protected void initTexturesVol( PixelShader kPShader )
-    {        
-        int iTex = 0;
-        kPShader.SetTextureQuantity(16);
-        kPShader.SetImageName(iTex, m_kSceneTarget.GetName());
-        kPShader.SetTexture(iTex++, m_kSceneTarget);
-
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-        if ( m_kVolumeImageA.GetImage().isColorImage() )
-        {
-        	kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
-        }
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        
-          
-        if ( m_kVolumeImageB.GetImage() != null )
-        {
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
-            if ( m_kVolumeImageB.GetImage().isColorImage() )
-            {
-            	kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
-                kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
-            }
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-        }
-    }
-    
-    
     /**
      * Sets the IsColor shader parameter values.
      */
@@ -909,6 +873,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
     	//System.err.println( super.GetTexture(0,i).GetName() + " " + i );
     	return super.GetTexture(0,i);
+    }
+    
+    public Texture GetTexture (int iPass, String kSamplerImageName)
+    {
+    	return super.GetTexture(0,kSamplerImageName);
     }
 
     public int GetTextureQuantity (int iPass)

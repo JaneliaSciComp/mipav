@@ -1482,12 +1482,12 @@ public class JDialogConvertType extends JDialogScriptableBase
         textInEnd.setEnabled(false);
 
         // check to see if HistoLUT frame is open and threshold values selected
-        if ((image.getHistoLUTFrame() != null) && image.getHistoLUTFrame().isThresholding()) {
+        if ((image.getHistogramFrame() != null) && image.getHistogramFrame().isThresholding()) {
             userRangeRadio.setSelected(true);
             fullRangeRadio.setSelected(false);
 
-            textInStart.setText(makeString(image.getHistoLUTFrame().getLowerThreshold(), 12));
-            textInEnd.setText(makeString(image.getHistoLUTFrame().getUpperThreshold(), 12));
+            textInStart.setText(makeString(image.getHistogramFrame().getLowerThreshold(), 12));
+            textInEnd.setText(makeString(image.getHistogramFrame().getUpperThreshold(), 12));
             inStart.setEnabled(true);
             inEnd.setEnabled(true);
             textInStart.setEnabled(true);

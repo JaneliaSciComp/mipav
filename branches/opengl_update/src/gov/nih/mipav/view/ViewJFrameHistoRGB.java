@@ -25,6 +25,8 @@ import javax.swing.event.*;
  * @author   Matthew J. McAuliffe, Ph.D. (primary)
  * @author   Harman Singh
  * @see      ViewJComponentHistoRGB
+ * @deprecated
+ * @see JFrameHistogram
  */
 public class ViewJFrameHistoRGB extends ViewJFrameBase
         implements ItemListener, ActionListener, KeyListener, WindowListener, ChangeListener, ViewImageUpdateInterface,
@@ -146,6 +148,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
      * @param  _RGBTA       Model RGB
      * @param  _RGBTB       Model RGB
      * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @deprecated
      */
     public ViewJFrameHistoRGB(ModelImage _imageA, ModelImage _imageB, ModelRGB _RGBTA, ModelRGB _RGBTB,
                               boolean _entireFlag) {
@@ -218,6 +221,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
      * @param  _RGBTA         Model RGB
      * @param  _RGBTB         Model RGB
      * @param  _entireFlag    DOCUMENT ME!
+     * @deprecated
      */
     public ViewJFrameHistoRGB(ViewJComponentRegistration _regComponent, ModelImage _imageA, ModelImage _imageB,
                               ModelRGB _RGBTA, ModelRGB _RGBTB, boolean _entireFlag) {

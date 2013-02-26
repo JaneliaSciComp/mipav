@@ -366,6 +366,12 @@ public class VolumeRayCast extends VolumeObject
     {
         m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     }
+    
+    public boolean GetGradientMagnitude()
+    {
+    	return m_kVolumeShaderEffect.GetGradientMagnitude();
+    }
+
 
     /**
      * Enables/Disables Gradient Magnitude filter.

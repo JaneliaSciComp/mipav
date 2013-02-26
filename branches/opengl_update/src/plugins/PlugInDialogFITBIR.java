@@ -108,23 +108,35 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** DOCUMENT ME! */
     private int brightness = 0;
 
-    /** String denoting dev server in URL. */
-    private static final String devServerIndicator = "dev";
+    /** Dev data dictionary server. */
+    private static final String ddDevServer = "http://fitbir-dd-dev.cit.nih.gov/";
     
-    /** String denoting staging server in URL. */
-    private static final String stageServerIndicator = "stage";
+    /** Dev portal auth server. */
+    private static final String authDevServer = "http://fitbir-portal-dev.cit.nih.gov/";
     
-    /** String denoting demo server in URL. */
-    private static final String demoServerIndicator = "demo";
+    /** Stage data dictionary server. */
+    private static final String ddStageServer = "http://fitbir-dd-stage.cit.nih.gov/";
+    
+    /** Stage portal auth server. */
+    private static final String authStageServer = "http://fitbir-portal-stage.cit.nih.gov/";
+    
+    /** Demo data dictionary server. */
+    private static final String ddDemoServer = "http://fitbir-dd-demo.cit.nih.gov/";
+    
+    /** Demo portal auth server. */
+    private static final String authDemoServer = "http://fitbir-portal-demo.cit.nih.gov/";
     
     /** Prod data dictionary server. */
-    private static final String prodServerHostname = "fitbir.nih.gov";
+    private static final String ddProdServer = "https://dictionary.fitbir.nih.gov/";
+    
+    /** Prod portal auth server. */
+    private static final String authProdServer = "https://fitbir.nih.gov/";
     
     /** Full data dictionary server url */
-    private static final String ddServerURL = "http://fitbir-dd-" + demoServerIndicator + ".cit.nih.gov/";
+    private static final String ddServerURL = ddStageServer;
     
     /** Full authentication server url */
-    private static final String authServerURL = "http://fitbir-portal-" + demoServerIndicator + ".cit.nih.gov/";
+    private static final String authServerURL = authStageServer;
 
     private DictionaryProvider dictionaryProvider;
 
