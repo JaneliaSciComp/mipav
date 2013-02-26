@@ -4073,6 +4073,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             ((ModelLUT)LUT).resetTransferLine(min, imgMin, max, imgMax);
+            
+            setLUTb((ModelLUT)LUT);
         } 
         else if (imageB.isColorImage())
         {
@@ -4096,12 +4098,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 			final int[] RGBExtents = new int[2];
 			RGBExtents[0] = 4;
 			RGBExtents[1] = 256;
+			
 			LUT = new ModelRGB(RGBExtents);
 			((ModelRGB)LUT).getRedFunction().importArrays(x, y, 4);
 			((ModelRGB)LUT).getGreenFunction().importArrays(x, y, 4);
 			((ModelRGB)LUT).getBlueFunction().importArrays(x, y, 4);
 			((ModelRGB)LUT).makeRGB( -1);
         	
+			setRGBTB((ModelRGB)LUT);
         }
         if (imageA.getHistogramFrame() != null) {
         	imageA.getHistogramFrame().setImageB(imageB, LUT);
