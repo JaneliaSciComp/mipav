@@ -1123,7 +1123,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     *  v(1:i-1) = 0 and v(i) = 1; v(i+1:n) is stored on exit in A(i,i+1:n),
     *  and tau in TAU(i).
     */
-    private void dgelqf(int m, int n, double A[][], int lda, double tau[], double work[],
+    public void dgelqf(int m, int n, double A[][], int lda, double tau[], double work[],
                         int lwork, int info[]) {
         boolean lquery;
         int i;
@@ -1572,7 +1572,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     *          (and so fails to converge) if the number of passes
     *          through the inner loop exceeds MAXITR*N**2.
     */
-    private void dbdsqr(char uplo, int n, int ncvt, int nru, int ncc, double d[], double e[],
+    public void dbdsqr(char uplo, int n, int ncvt, int nru, int ncc, double d[], double e[],
                         double VT[][], int ldvt, double U[][], int ldu, double C[][], int ldc,
                         double work[], int info[]) {
         int maxitr = 6;
@@ -4266,7 +4266,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     *          = 0:  successful exit
     *          < 0:  if INFO = -i, the i-th argument had an illegal value
     */
-    private void dorgbr(char vect, int m, int n, int k, double A[][], int lda, double tau[],
+    public void dorgbr(char vect, int m, int n, int k, double A[][], int lda, double tau[],
                         double work[], int lwork, int info[]) {
         boolean lquery;
         boolean wantq;
@@ -4472,7 +4472,7 @@ public class GeneralizedInverse2 implements java.io.Serializable {
     *          = 0:  successful exit
     *          < 0:  if INFO = -i, the i-th argument has an illegal value
     */
-    private void dorglq(int m, int n, int k, double A[][], int lda, double tau[], double work[],
+    public void dorglq(int m, int n, int k, double A[][], int lda, double tau[], double work[],
                         int lwork, int info[]) {
         boolean lquery;
         int i;
@@ -5554,7 +5554,7 @@ ib = Math.min(nb, k-i+1);
        *  denotes an element of the vector defining H(i), and ui an element of
        *  the vector defining G(i).
        */
-    private void dgebrd(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
+    public void dgebrd(int m, int n, double A[][], int lda, double d[], double e[], double tauq[],
                         double taup[], double work[], int lwork, int info[]) {
         int i;
         int iinfo[] = new int[1];
@@ -7008,7 +7008,7 @@ ib = Math.min(nb, k-i+1);
        *          = 0:  successful exit
        *          < 0:  if INFO = -i, the i-th argument had an illegal value
        */
-    private void dormbr(char vect, char side, char trans, int m, int n, int k, double A[][],
+    public void dormbr(char vect, char side, char trans, int m, int n, int k, double A[][],
                         int lda, double tau[], double C[][], int ldc, double work[], int lwork,
                         int info[]) {
         boolean applyq;
