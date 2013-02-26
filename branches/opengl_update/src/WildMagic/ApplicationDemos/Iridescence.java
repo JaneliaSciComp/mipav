@@ -114,6 +114,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
     		}
     	});
         frame.setVisible(true);
+        animator.setRunAsFastAsPossible(true);
         animator.start();
 	}
 

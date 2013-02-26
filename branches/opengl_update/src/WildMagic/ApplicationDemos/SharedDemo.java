@@ -74,13 +74,16 @@ public class SharedDemo extends Thread {
     	 GLCanvas glCanvas;
 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
-         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         //Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         Iridescence.main( args);
     	 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
-         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+//         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         Iridescence.main( args);
     	 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
-         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+//         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         Iridescence.main( args);
 
 //         glCanvas = new GLCanvas(caps);
 //         Iridescence.main(glCanvas, null, false );
