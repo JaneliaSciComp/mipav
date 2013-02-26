@@ -319,6 +319,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if ((componentImage.getZoomX() * 100) > max) {
             max = (int) (componentImage.getZoomX() * 100);
         }
+        if (((int)(componentImage.getZoomX() * 100)) < min) {
+            min = (int)(componentImage.getZoomX() * 100);    
+        }
 
         magSlider = new JSlider(JSlider.HORIZONTAL, min, max, (int) (componentImage.getZoomX() * 100));
 
