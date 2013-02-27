@@ -177,6 +177,7 @@ public class SVD implements java.io.Serializable {
           double eps;
           double smlnum;
           double dum[] = new double[1];
+          double dumArr[][] = new double[1][1];
           String name;
           char optsChar[];
           String opts;
@@ -228,7 +229,7 @@ public class SVD implements java.io.Serializable {
           // NB refers to the optimal block size for the immediately
           // following subroutine, as returned by ilaenv.)
     
-          /*if (info[0] == 0) {
+          if (info[0] == 0) {
              minwrk = 1;
              maxwrk = 1;
              if (m >= n && minmn > 0) {
@@ -243,372 +244,383 @@ public class SVD implements java.io.Serializable {
                 bdspac = 5*n;
                 // Compute space needed for dgeqrf
                 ge.dgeqrf(m, n, A, lda, dum, dum, -1, ierr);
-                lwork_dgeqrf = dum[0];
+                lwork_dgeqrf = (int)Math.round(dum[0]);
                 // Compute space needed for dorgqr
                 ge.dorgqr(m, n, n, A, lda, dum, dum, -1, ierr);
-                lwork_dorgqr_n = dum[0];
-                gd.dorgqr(m, m, n, A, lda, dum, dum, -1, ierr);
-                lwork_dorgqr_m = dum[0];
+                lwork_dorgqr_n = (int)Math.round(dum[0]);
+                ge.dorgqr(m, m, n, A, lda, dum, dum, -1, ierr);
+                lwork_dorgqr_m = (int)Math.round(dum[0]);
                 // Compute space needed for dgebrd
                 gi.dgebrd(n, n, A, lda, s, dum, dum, dum, dum, -1, ierr);
-                lwork_dgebrd = dum[0]''
+                lwork_dgebrd = (int)Math.round(dum[0]);
                 // Compute space needed for DORGBR P
-                CALL DORGBR( 'P', N, N, N, A, LDA, DUM(1),
-         $                   DUM(1), -1, IERR )
-                LWORK_DORGBR_P=DUM(1)
-    *           Compute space needed for DORGBR Q
-                CALL DORGBR( 'Q', N, N, N, A, LDA, DUM(1),
-         $                   DUM(1), -1, IERR )
-                LWORK_DORGBR_Q=DUM(1)
-    *
-                IF( M.GE.MNTHR ) THEN
-                   IF( WNTUN ) THEN
-    *
-    *                 Path 1 (M much larger than N, JOBU='N')
-    *
-                      MAXWRK = N + LWORK_DGEQRF
-                      MAXWRK = MAX( MAXWRK, 3*N+LWORK_DGEBRD )
-                      IF( WNTVO .OR. WNTVAS )
-         $               MAXWRK = MAX( MAXWRK, 3*N+LWORK_DORGBR_P )
-                      MAXWRK = MAX( MAXWRK, BDSPAC )
-                      MINWRK = MAX( 4*N, BDSPAC )
-                   ELSE IF( WNTUO .AND. WNTVN ) THEN
-    *
-    *                 Path 2 (M much larger than N, JOBU='O', JOBVT='N')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_N )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = MAX( N*N+WRKBL, N*N+M*N+N )
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUO .AND. WNTVAS ) THEN
-    *
-    *                 Path 3 (M much larger than N, JOBU='O', JOBVT='S' or
-    *                 'A')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_N )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = MAX( N*N+WRKBL, N*N+M*N+N )
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUS .AND. WNTVN ) THEN
-    *
-    *                 Path 4 (M much larger than N, JOBU='S', JOBVT='N')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_N )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUS .AND. WNTVO ) THEN
-    *
-    *                 Path 5 (M much larger than N, JOBU='S', JOBVT='O')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_N )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = 2*N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUS .AND. WNTVAS ) THEN
-    *
-    *                 Path 6 (M much larger than N, JOBU='S', JOBVT='S' or
-    *                 'A')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_N )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUA .AND. WNTVN ) THEN
-    *
-    *                 Path 7 (M much larger than N, JOBU='A', JOBVT='N')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_M )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUA .AND. WNTVO ) THEN
-    *
-    *                 Path 8 (M much larger than N, JOBU='A', JOBVT='O')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_M )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = 2*N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   ELSE IF( WNTUA .AND. WNTVAS ) THEN
-    *
-    *                 Path 9 (M much larger than N, JOBU='A', JOBVT='S' or
-    *                 'A')
-    *
-                      WRKBL = N + LWORK_DGEQRF
-                      WRKBL = MAX( WRKBL, N+LWORK_DORGQR_M )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, 3*N+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = N*N + WRKBL
-                      MINWRK = MAX( 3*N+M, BDSPAC )
-                   END IF
-                ELSE
-    *
-    *              Path 10 (M at least N, but not much larger)
-    *
-                   CALL DGEBRD( M, N, A, LDA, S, DUM(1), DUM(1),
-         $                   DUM(1), DUM(1), -1, IERR )
-                   LWORK_DGEBRD=DUM(1)
-                   MAXWRK = 3*N + LWORK_DGEBRD
-                   IF( WNTUS .OR. WNTUO ) THEN
-                      CALL DORGBR( 'Q', M, N, N, A, LDA, DUM(1),
-         $                   DUM(1), -1, IERR )
-                      LWORK_DORGBR_Q=DUM(1)
-                      MAXWRK = MAX( MAXWRK, 3*N+LWORK_DORGBR_Q )
-                   END IF
-                   IF( WNTUA ) THEN
-                      CALL DORGBR( 'Q', M, M, N, A, LDA, DUM(1),
-         $                   DUM(1), -1, IERR )
-                      LWORK_DORGBR_Q=DUM(1)
-                      MAXWRK = MAX( MAXWRK, 3*N+LWORK_DORGBR_Q )
-                   END IF
-                   IF( .NOT.WNTVN ) THEN
-                     MAXWRK = MAX( MAXWRK, 3*N+LWORK_DORGBR_P )
-                   END IF
-                   MAXWRK = MAX( MAXWRK, BDSPAC )
-                   MINWRK = MAX( 3*N+M, BDSPAC )
-                END IF
-             ELSE IF( MINMN.GT.0 ) THEN
-    *
-    *           Compute space needed for DBDSQR
-    *
-                MNTHR = ILAENV( 6, 'DGESVD', JOBU // JOBVT, M, N, 0, 0 )
-                BDSPAC = 5*M
-    *           Compute space needed for DGELQF
-                CALL DGELQF( M, N, A, LDA, DUM(1), DUM(1), -1, IERR )
-                LWORK_DGELQF=DUM(1)
-    *           Compute space needed for DORGLQ
-                CALL DORGLQ( N, N, M, DUM(1), N, DUM(1), DUM(1), -1, IERR )
-                LWORK_DORGLQ_N=DUM(1)
-                CALL DORGLQ( M, N, M, A, LDA, DUM(1), DUM(1), -1, IERR )
-                LWORK_DORGLQ_M=DUM(1)
-    *           Compute space needed for DGEBRD
-                CALL DGEBRD( M, M, A, LDA, S, DUM(1), DUM(1),
-         $                   DUM(1), DUM(1), -1, IERR )
-                LWORK_DGEBRD=DUM(1)
-    *            Compute space needed for DORGBR P
-                CALL DORGBR( 'P', M, M, M, A, N, DUM(1),
-         $                   DUM(1), -1, IERR )
-                LWORK_DORGBR_P=DUM(1)
-    *           Compute space needed for DORGBR Q
-                CALL DORGBR( 'Q', M, M, M, A, N, DUM(1),
-         $                   DUM(1), -1, IERR )
-                LWORK_DORGBR_Q=DUM(1)
-                IF( N.GE.MNTHR ) THEN
-                   IF( WNTVN ) THEN
-    *
-    *                 Path 1t(N much larger than M, JOBVT='N')
-    *
-                      MAXWRK = M + LWORK_DGELQF
-                      MAXWRK = MAX( MAXWRK, 3*M+LWORK_DGEBRD )
-                      IF( WNTUO .OR. WNTUAS )
-         $               MAXWRK = MAX( MAXWRK, 3*M+LWORK_DORGBR_Q )
-                      MAXWRK = MAX( MAXWRK, BDSPAC )
-                      MINWRK = MAX( 4*M, BDSPAC )
-                   ELSE IF( WNTVO .AND. WNTUN ) THEN
-    *
-    *                 Path 2t(N much larger than M, JOBU='N', JOBVT='O')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_M )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = MAX( M*M+WRKBL, M*M+M*N+M )
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVO .AND. WNTUAS ) THEN
-    *
-    *                 Path 3t(N much larger than M, JOBU='S' or 'A',
-    *                 JOBVT='O')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_M )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = MAX( M*M+WRKBL, M*M+M*N+M )
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVS .AND. WNTUN ) THEN
-    *
-    *                 Path 4t(N much larger than M, JOBU='N', JOBVT='S')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_M )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVS .AND. WNTUO ) THEN
-    *
-    *                 Path 5t(N much larger than M, JOBU='O', JOBVT='S')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_M )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = 2*M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVS .AND. WNTUAS ) THEN
-    *
-    *                 Path 6t(N much larger than M, JOBU='S' or 'A',
-    *                 JOBVT='S')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_M )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVA .AND. WNTUN ) THEN
-    *
-    *                 Path 7t(N much larger than M, JOBU='N', JOBVT='A')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_N )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVA .AND. WNTUO ) THEN
-    *
-    *                 Path 8t(N much larger than M, JOBU='O', JOBVT='A')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_N )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = 2*M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   ELSE IF( WNTVA .AND. WNTUAS ) THEN
-    *
-    *                 Path 9t(N much larger than M, JOBU='S' or 'A',
-    *                 JOBVT='A')
-    *
-                      WRKBL = M + LWORK_DGELQF
-                      WRKBL = MAX( WRKBL, M+LWORK_DORGLQ_N )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DGEBRD )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_P )
-                      WRKBL = MAX( WRKBL, 3*M+LWORK_DORGBR_Q )
-                      WRKBL = MAX( WRKBL, BDSPAC )
-                      MAXWRK = M*M + WRKBL
-                      MINWRK = MAX( 3*M+N, BDSPAC )
-                   END IF
-                ELSE
-    *
-    *              Path 10t(N greater than M, but not much larger)
-    *
-                   CALL DGEBRD( M, N, A, LDA, S, DUM(1), DUM(1),
-         $                   DUM(1), DUM(1), -1, IERR )
-                   LWORK_DGEBRD=DUM(1)
-                   MAXWRK = 3*M + LWORK_DGEBRD
-                   IF( WNTVS .OR. WNTVO ) THEN
-    *                Compute space needed for DORGBR P
-                     CALL DORGBR( 'P', M, N, M, A, N, DUM(1),
-         $                   DUM(1), -1, IERR )
-                     LWORK_DORGBR_P=DUM(1)
-                     MAXWRK = MAX( MAXWRK, 3*M+LWORK_DORGBR_P )
-                   END IF
-                   IF( WNTVA ) THEN
-                     CALL DORGBR( 'P', N, N, M, A, N, DUM(1),
-         $                   DUM(1), -1, IERR )
-                     LWORK_DORGBR_P=DUM(1)
-                     MAXWRK = MAX( MAXWRK, 3*M+LWORK_DORGBR_P )
-                   END IF
-                   IF( .NOT.WNTUN ) THEN
-                      MAXWRK = MAX( MAXWRK, 3*M+LWORK_DORGBR_Q )
-                   END IF
-                   MAXWRK = MAX( MAXWRK, BDSPAC )
-                   MINWRK = MAX( 3*M+N, BDSPAC )
-                END IF
-             END IF
-             MAXWRK = MAX( MAXWRK, MINWRK )
-             WORK( 1 ) = MAXWRK
-    *
-             IF( LWORK.LT.MINWRK .AND. .NOT.LQUERY ) THEN
-                INFO = -13
-             END IF
-          END IF
-    *
-          IF( INFO.NE.0 ) THEN
-             CALL XERBLA( 'DGESVD', -INFO )
-             RETURN
-          ELSE IF( LQUERY ) THEN
-             RETURN
-          END IF
-    *
-    *     Quick return if possible
-    *
-          IF( M.EQ.0 .OR. N.EQ.0 ) THEN
-             RETURN
-          END IF
-    *
-    *     Get machine constants
-    *
-          EPS = DLAMCH( 'P' )
-          SMLNUM = SQRT( DLAMCH( 'S' ) ) / EPS
-          BIGNUM = ONE / SMLNUM
-    *
-    *     Scale A if max element outside range [SMLNUM,BIGNUM]
-    *
-          ANRM = DLANGE( 'M', M, N, A, LDA, DUM )
-          ISCL = 0
-          IF( ANRM.GT.ZERO .AND. ANRM.LT.SMLNUM ) THEN
-             ISCL = 1
-             CALL DLASCL( 'G', 0, 0, ANRM, SMLNUM, M, N, A, LDA, IERR )
-          ELSE IF( ANRM.GT.BIGNUM ) THEN
-             ISCL = 1
-             CALL DLASCL( 'G', 0, 0, ANRM, BIGNUM, M, N, A, LDA, IERR )
-          END IF
-    *
-          IF( M.GE.N ) THEN
-    *
-    *        A has at least as many rows as columns. If A has sufficiently
-    *        more rows than columns, first reduce using the QR
-    *        decomposition (if sufficient workspace available)
-    *
-             IF( M.GE.MNTHR ) THEN
-    *
-                IF( WNTUN ) THEN
-    *
-    *              Path 1 (M much larger than N, JOBU='N')
-    *              No left singular vectors to be computed
-    *
+                gi.dorgbr( 'P', n, n, n, A, lda, dum, dum, -1, ierr);
+                lwork_dorgbr_p = (int)Math.round(dum[0]);
+                // Compute space needed for DORGBR Q
+                gi.dorgbr( 'Q', n, n, n, A, lda, dum, dum, -1, ierr);
+                lwork_dorgbr_q = (int)Math.round(dum[0]);
+     
+                if (m >= mnthr) {
+                   if (wntun) {
+    
+                      // Path 1 (m much larger than n, jobu = 'N')
+     
+                      maxwrk = n + lwork_dgeqrf;
+                      maxwrk = Math.max(maxwrk, 3*n+lwork_dgebrd);
+                      if (wntvo || wntvas) {
+                         maxwrk = Math.max(maxwrk, 3*n+lwork_dorgbr_p);
+                      }
+                      maxwrk = Math.max(maxwrk, bdspac);
+                      minwrk = Math.max(4*n, bdspac);
+                   } // if (wntun)
+                   else if (wntuo && wntvn) {
+     
+                      // Path 2 (m much larger than n, jobu = 'O', jobvt = 'N')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_n);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = Math.max(n*n+wrkbl, n*n+m*n+n);
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntuo && wntvn)
+                   else if (wntuo && wntvas) {
+     
+                      // Path 3 (m much larger than n, jobu = 'O', jobvt = 'S' or 'A')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_n);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = Math.max(n*n+wrkbl, n*n+m*n+n);
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntuo && wntvas)
+                   else if (wntus && wntvn) {
+    
+                      // Path 4 (m much larger than n, job = 'S', jobvt = 'N')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_n);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = n*n + wrkbl;
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntus && wntvn)
+                   else if (wntus && wntvo) {
+     
+                      // Path 5 (m much larger than n, jobu = 'S', jobvt = 'O')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_n);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = 2*n*n + wrkbl;
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntus && wntvo)
+                   else if (wntus && wntvas) {
+     
+                      // Path 6 (m much larger than n, jobu = 'S', jobvt = 'S' or 'A')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_n);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = n*n + wrkbl;
+                      minwrk = Math.max( 3*n+m, bdspac);
+                   } // else if (wntus && wntvas)
+                   else if (wntua && wntvn) {
+     
+                      // Path 7 (m much larger than n, jobu = 'A', jobvt = 'N')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_m);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = n*n + wrkbl;
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntua && wntvn)
+                   else if (wntua && wntvo) {
+     
+                      // Path 8 (m much larger than n, jobu = 'A', jobvt = 'O')
+      
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_m);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = 2*n*n + wrkbl;
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntua && wntvo)
+                   else if (wntua && wntvas) {
+     
+                      // Path 9 (m much larger than n, jobu = 'A', jobvt = 'S' or 'A')
+     
+                      wrkbl = n + lwork_dgeqrf;
+                      wrkbl = Math.max(wrkbl, n+lwork_dorgqr_m);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, 3*n+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = n*n + wrkbl;
+                      minwrk = Math.max(3*n+m, bdspac);
+                   } // else if (wntua && wntvas)
+                } // if (m >= mnthr)
+                else { // m < mnthr
+     
+                   // Path 10 (m at least n, but not much larger)
+     
+                   gi.dgebrd(m, n, A, lda, s, dum, dum, dum, dum, -1, ierr);
+                   lwork_dgebrd = (int)Math.round(dum[0]);
+                   maxwrk = 3*n + lwork_dgebrd;
+                   if (wntus || wntuo) {
+                      gi.dorgbr('Q', m, n, n, A, lda, dum, dum, -1, ierr);
+                      lwork_dorgbr_q = (int)Math.round(dum[0]);
+                      maxwrk = Math.max(maxwrk, 3*n+lwork_dorgbr_q);
+                   } // if (wntus || wntuo)
+                   if (wntua) {
+                      gi.dorgbr('Q', m, m, n, A, lda, dum, dum, -1, ierr);
+                      lwork_dorgbr_q = (int)Math.round(dum[0]);
+                      maxwrk = Math.max(maxwrk, 3*n+lwork_dorgbr_q);
+                   } /// if (wntua)
+                   if (!wntvn) {
+                     maxwrk = Math.max(maxwrk, 3*n+lwork_dorgbr_p);
+                   } // if (!wntvn)
+                   maxwrk = Math.max(maxwrk, bdspac);
+                   minwrk = Math.max(3*n+m, bdspac);
+                } // else m < mnthr
+             } // if (m >= n && minmn > 0)
+             else if (minmn > 0) {
+     
+                // Compute space needed for DBDSQR
+     
+                name = new String("DGESVD");
+                optsChar = new char[2];
+                optsChar[0] = jobu;
+                optsChar[1] = jobvt;
+                opts = new String(optsChar);
+                mnthr = ge.ilaenv( 6, name, opts, m, n, 0, 0);
+                bdspac = 5*m;
+                // Compute space needed for dgelqf
+                gi.dgelqf(m, n, A, lda, dum, dum, -1, ierr);
+                lwork_dgelqf = (int)Math.round(dum[0]);
+                // Compute space needed for dorglq
+                gi.dorglq(n, n, m, dumArr, n, dum, dum, -1, ierr);
+                lwork_dorglq_n = (int)Math.round(dum[0]);
+                gi.dorglq(m, n, m, A, lda, dum, dum, -1, ierr);
+                lwork_dorglq_m = (int)Math.round(dum[0]);
+                // Compute space needed for dgebrd
+                gi.dgebrd(m, m, A, lda, s, dum, dum, dum, dum, -1, ierr);
+                lwork_dgebrd = (int)Math.round(dum[0]);
+                // Compute space needed for dorgbr P
+                gi.dorgbr('P', m, m, m, A, n, dum, dum, -1, ierr);
+                lwork_dorgbr_p = (int)Math.round(dum[0]);
+                // Compute space needed for dorgbr Q
+                gi.dorgbr('Q', m, m, m, A, n, dum, dum, -1, ierr);
+                lwork_dorgbr_q = (int)Math.round(dum[0]);
+                if (n >= mnthr) {
+                   if (wntvn) {
+     
+                      // Path 1t(n much larger than m, jobvt = 'N')
+     
+                      maxwrk = m + lwork_dgelqf;
+                      maxwrk = Math.max(maxwrk, 3*m+lwork_dgebrd);
+                      if (wntuo || wntuas) {
+                         maxwrk = Math.max(maxwrk, 3*m+lwork_dorgbr_q);
+                      }
+                      maxwrk = Math.max(maxwrk, bdspac);
+                      minwrk = Math.max(4*m, bdspac);
+                   } // if (wntvn)
+                   else if (wntvo && wntun) {
+     
+                      // Path 2t(n much larger than m, jobu = 'N', jobvt = 'O')
+     
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_m);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = Math.max(m*m+wrkbl, m*m+m*n+m);
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntvo && wntun)
+                   else if (wntvo && wntuas) {
+     
+                      // Path 3t(n much larger than m, jobu = 'S' or 'A', jobvt = 'O')
+     
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_m);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = Math.max(m*m+wrkbl, m*m+m*n+m);
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntvo && wntuas)
+                   else if (wntvs && wntun) {
+     
+                      // Path 4t(n much larger than m, jobu = 'N', jobvt = 'S')
+    
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_m);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = m*m + wrkbl;
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntvs && wntun)
+                   else if (wntvs && wntuo) {
+    
+                      // Path 5t(n much larger than m, jobu = 'O', jobvt = 'S')
+     
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_m);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = 2*m*m + wrkbl;
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntvs && wntuo)
+                   else if (wntvs && wntuas) {
+     
+                      // Path 6t(n much larger than m, jobu = 'S' or 'A', jobvt = 'S')
+    
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_m);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = m*m + wrkbl;
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntvs && wntuas)
+                   else if (wntva && wntun) {
+     
+                      // Path 7t(n much larger than m, jobu = 'N', jobvt = 'A')
+    
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_n);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = m*m + wrkbl;
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntva && wntun)
+                   else if (wntva && wntuo) {
+     
+                      // Path 8t(n much larger than m, jobu = 'O', jobvt = 'A')
+    
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_n);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = 2*m*m + wrkbl;
+                      minwrk = Math.max(3*m+n, bdspac);
+                   } // else if (wntva && wntuo)
+                   else if (wntva && wntuas) {
+    
+                      // Path 9t(n much larger than m, jobu = 'S' or 'A', jobvt = 'A')
+     
+                      wrkbl = m + lwork_dgelqf;
+                      wrkbl = Math.max(wrkbl, m+lwork_dorglq_n);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dgebrd);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_p);
+                      wrkbl = Math.max(wrkbl, 3*m+lwork_dorgbr_q);
+                      wrkbl = Math.max(wrkbl, bdspac);
+                      maxwrk = m*m + wrkbl;
+                      minwrk = Math.max( 3*m+n, bdspac);
+                   } // else if (wntva && wntuas)
+                } // if (n >= mnthr)
+                else { // n < mnthr
+     
+                   // Path 10t(n greater than m, but not much larger)
+     
+                   gi.dgebrd(m, n, A, lda, s, dum, dum, dum, dum, -1, ierr);
+                   lwork_dgebrd = (int)Math.round(dum[0]);
+                   maxwrk = 3*m + lwork_dgebrd;
+                   if (wntvs || wntvo) {
+                     // Compute space needed for DORGBR P
+                     gi.dorgbr('P', m, n, m, A, n, dum, dum, -1, ierr);
+                     lwork_dorgbr_p = (int)Math.round(dum[0]);
+                     maxwrk = Math.max(maxwrk, 3*m+lwork_dorgbr_p);
+                   } // if (wntvs || wntvo)
+                   if (wntva) {
+                     gi.dorgbr('P', n, n, m, A, n, dum, dum, -1, ierr);
+                     lwork_dorgbr_p = (int)Math.round(dum[0]);
+                     maxwrk = Math.max(maxwrk, 3*m+lwork_dorgbr_p);
+                   } // if (wntva)
+                   if (!wntun ) {
+                      maxwrk = Math.max(maxwrk, 3*m+lwork_dorgbr_q);
+                   }
+                   maxwrk = Math.max(maxwrk, bdspac);
+                   minwrk = Math.max(3*m+n, bdspac);
+                } // else n < mnthr
+             } // else if (minmn > 0)
+             maxwrk = Math.max(maxwrk, minwrk);
+             work[0] = maxwrk;
+    
+             if(lwork < minwrk && !lquery) {
+                info[0] = -13;
+             }
+          } // if (info[0] == 0)
+    
+          if (info[0] != 0) {
+             MipavUtil.displayError("dgesvd had info[0] = " + info[0]);
+             return;
+          }
+          else if (lquery) {
+             return;
+          }
+    
+          // Quick return if possible
+    
+          if (m == 0 || n == 0) {
+             return;
+          }
+    
+          // Get machine constants
+     
+          eps = ge.dlamch('P');
+          smlnum = Math.sqrt(ge.dlamch('S')) / eps;
+          bignum = 1.0 / smlnum;
+     
+          // Scale A if max element outside range [SMLNUM,BIGNUM]
+     
+          anrm = ge.dlange( 'M', m, n, A, lda, dum);
+          iscl = 0;
+          if (anrm > 0.0 && anrm < smlnum) {
+             iscl = 1;
+             ge.dlascl( 'G', 0, 0, anrm, smlnum, m, n, A, lda, ierr);
+          }
+          else if (anrm > bignum) {
+             iscl = 1;
+             ge.dlascl( 'G', 0, 0, anrm, bignum, m, n, A, lda, ierr);
+          }
+    
+          /*if (m >= n) {
+    
+             // A has at least as many rows as columns. If A has sufficiently
+             // more rows than columns, first reduce using the QR
+             // decomposition (if sufficient workspace available)
+     
+             if (m >= mnthr) {
+    
+                if (wntun) {
+    
+                   // Path 1 (m much larger than n, jobu = 'N')
+                   // No left singular vectors to be computed
+    
                    ITAU = 1
                    IWORK = ITAU + N
     *
@@ -656,7 +668,8 @@ public class SVD implements java.io.Serializable {
                    IF( WNTVAS )
          $            CALL DLACPY( 'F', N, N, A, LDA, VT, LDVT )
     *
-                ELSE IF( WNTUO .AND. WNTVN ) THEN
+                } // if (wntun)
+                else if (wntuo && wntvn) {
     *
     *              Path 2 (M much larger than N, JOBU='O', JOBVT='N')
     *              N left singular vectors to be overwritten on A and
@@ -780,6 +793,7 @@ public class SVD implements java.io.Serializable {
     *
                    END IF
     *
+                } // else if (wntuo && wntvn)
                 ELSE IF( WNTUO .AND. WNTVAS ) THEN
     *
     *              Path 3 (M much larger than N, JOBU='O', JOBVT='S' or 'A')
@@ -1882,7 +1896,8 @@ public class SVD implements java.io.Serializable {
     *
                 END IF
     *
-             ELSE
+             } // if (m >= mnthr)
+             else { // m < mnthr
     *
     *           M .LT. MNTHR
     *
@@ -1980,15 +1995,16 @@ public class SVD implements java.io.Serializable {
          $                      LDVT, A, LDA, DUM, 1, WORK( IWORK ), INFO )
                 END IF
     *
-             END IF
-    *
-          ELSE
-    *
-    *        A has more columns than rows. If A has sufficiently more
-    *        columns than rows, first reduce using the LQ decomposition (if
-    *        sufficient workspace available)
-    *
-             IF( N.GE.MNTHR ) THEN
+             } // else m < mnthr
+    
+          } // if (m >= n)
+          else { // m < n
+    
+             // A has more columns than rows. If A has sufficiently more
+             // columns than rows, first reduce using the LQ decomposition (if
+             // sufficient workspace available)
+    
+             if(n >= mnthr) {
     *
                 IF( WNTVN ) THEN
     *
@@ -3274,8 +3290,9 @@ public class SVD implements java.io.Serializable {
                    END IF
     *
                 END IF
-    *
-             ELSE
+     
+             } // if (n >= mnthr)
+             else { // n < mnthr
     *
     *           N .LT. MNTHR
     *
@@ -3372,14 +3389,14 @@ public class SVD implements java.io.Serializable {
                    CALL DBDSQR( 'L', M, NCVT, NRU, 0, S, WORK( IE ), VT,
          $                      LDVT, A, LDA, DUM, 1, WORK( IWORK ), INFO )
                 END IF
-    *
-             END IF
-    *
-          END IF
-    *
-    *     If DBDSQR failed to converge, copy unconverged superdiagonals
-    *     to WORK( 2:MINMN )
-    *
+    
+             } // else n < mnthr
+    
+          } // else m < n
+    
+          // If dbdsqr failed to converge, copy unconverged superdiagonals
+          // to work[1:minmn-1]
+    
           IF( INFO.NE.0 ) THEN
              IF( IE.GT.2 ) THEN
                 DO 50 I = 1, MINMN - 1
@@ -3408,11 +3425,11 @@ public class SVD implements java.io.Serializable {
              IF( INFO.NE.0 .AND. ANRM.LT.SMLNUM )
          $      CALL DLASCL( 'G', 0, 0, SMLNUM, ANRM, MINMN-1, 1, WORK( 2 ),
          $                   MINMN, IERR )
-          END IF*/
+          END IF
     
          // Return optimal workspace in WORK(1)
    
-          //work[0] = maxwrk;
+          work[0] = maxwrk;*/
     
           return;
       } // dgesvd
