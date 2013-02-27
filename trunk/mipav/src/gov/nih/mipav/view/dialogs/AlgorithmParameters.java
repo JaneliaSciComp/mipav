@@ -73,6 +73,9 @@ public class AlgorithmParameters {
 
     /** Label used in ActionDiscovery system for main result image of an algorithm. */
     public static final String RESULT_IMAGE = "result_image";
+    
+    /** Label used for boolean param indicating whether the algorithm should try to use OpenCL. */
+    public static final String USE_OPENCL = "use_opencl";
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------

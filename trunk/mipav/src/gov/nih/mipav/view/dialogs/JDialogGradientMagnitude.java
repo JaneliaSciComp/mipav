@@ -80,6 +80,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
       
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
+    
+    /** Flag indicating whether to use OpenCL processing. */
     private boolean useOCL = false;
 
     /** DOCUMENT ME! */
@@ -483,12 +485,20 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      */
     public void setSeparable(boolean separable) {
         this.separable = separable;
-        sepCheckbox.setSelected( this.separable );
+        if (sepCheckbox != null) {
+        	sepCheckbox.setSelected( this.separable );
+        }
     }
 
+    /** Accessor that sets whether to use OpenCL processing (may still not be set if it is not supported on the system).
+     * 
+     * @param useOCL Whether to try to use OpenCL processing.
+     */
     public void setUseOCL(boolean useOCL) {
         this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
-        useOCLCheckbox.setSelected( this.useOCL );
+        if (useOCLCheckbox != null) {
+        	useOCLCheckbox.setSelected( this.useOCL );
+        }
     }
     
     /**
@@ -907,6 +917,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+        outputImageType = image.getType();
 
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
         sigmaPanel = new JPanelSigmas(image);
@@ -917,6 +928,10 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         setImage25D(scriptParameters.doProcess3DAs25D());
         scriptParameters.setSigmasGUI(sigmaPanel);
         scriptParameters.setColorOptionsGUI(colorChannelPanel);
+        
+        if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
+        	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
+        }
     }
 
     /**
@@ -932,6 +947,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         scriptParameters.storeProcessSeparable(separable);
         scriptParameters.storeSigmas(sigmaPanel);
         scriptParameters.storeColorOptions(colorChannelPanel);
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
 
     /**
