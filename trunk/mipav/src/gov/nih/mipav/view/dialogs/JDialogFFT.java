@@ -226,6 +226,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
     
+    /** Flag indicating whether to use OpenCL processing. */
+    private boolean useOCL = false;
+    
     /** True when double precision testing should be performed, default is float. */
     private boolean testDouble = false;
 
@@ -687,6 +690,28 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     public void setImage25D(boolean image25D) {
         this.image25D = image25D;
     }
+    
+    /** Accessor that sets whether to use OpenCL processing (may still not be set if it is not supported on the system).
+     * 
+     * @param useOCL Whether to try to use OpenCL processing.
+     */
+    public void setUseOCL(boolean useOCL) {
+    	final boolean OCLEnabled = Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable();
+    	
+    	if ( image.isPowerOfTwo() ) {
+        	this.useOCL = useOCL && OCLEnabled;
+        }
+        else if ( image.isSlicePowerOfTwo() ) {
+        	this.useOCL = image25D && useOCL && OCLEnabled;
+        } else {
+        	// opencl version only supports power of 2 data
+        	this.useOCL = false;
+        }
+    	
+        if (useOCLCheckbox != null) {
+        	useOCLCheckbox.setSelected( this.useOCL );
+        }
+    }
 
     /**
      * Accessor that sets the image crop flag.
@@ -762,7 +787,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
-                FFTAlgo.useOCL(useOCLCheckbox.isSelected());
+                FFTAlgo.useOCL(useOCL);
                 createProgressBar(image.getImageName(), FFTAlgo);
 
                 // Hide dialog since the algorithm is about to run
@@ -799,7 +824,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
-                FFTAlgo.useOCL(useOCLCheckbox.isSelected());
+                FFTAlgo.useOCL(useOCL);
 
                 createProgressBar(image.getImageName(), FFTAlgo);
 
@@ -971,6 +996,9 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         constructionMethod = scriptParameters.getParams().getInt("construction_method");
         butterworthOrder = scriptParameters.getParams().getInt("butterworth_order");
         kernelDiameter = scriptParameters.getParams().getInt("kernel_diameter");
+        if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
+        	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
+        }
     }
 
     /**
@@ -992,6 +1020,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
         scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
 
     /**

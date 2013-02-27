@@ -53,6 +53,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
+    
+    /** Flag indicating whether to use OpenCL processing. */
     private boolean useOCL;
 
     /** DOCUMENT ME! */
@@ -230,7 +232,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-     // save the completion status for later
+     
+        // save the completion status for later
         setComplete(algorithm.isCompleted());
 
         if (laplacianAlgo != null) {
@@ -372,12 +375,20 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     
     public void setSeparable(boolean separable) {
         this.separable = separable;
-        sepCheckbox.setSelected( this.separable );
+        if (sepCheckbox != null) {
+        	sepCheckbox.setSelected( this.separable );
+        }
     }
 
+    /** Accessor that sets whether to use OpenCL processing (may still not be set if it is not supported on the system).
+     * 
+     * @param useOCL Whether to try to use OpenCL processing.
+     */
     public void setUseOCL(boolean useOCL) {
         this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
-        useOCLCheckbox.setSelected( this.useOCL );
+        if (useOCLCheckbox != null) {
+        	useOCLCheckbox.setSelected( this.useOCL );
+        }
     }
     
 
@@ -661,6 +672,10 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         scriptParameters.setSigmasGUI(sigmasPanel);
         setAmpFactor(scriptParameters.getParams().getFloat("amplification_factor"));
+        
+        if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
+        	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
+        }
     }
 
     /**
@@ -673,6 +688,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
         scriptParameters.storeSigmas(sigmasPanel);
         scriptParameters.getParams().put(ParameterFactory.newParameter("amplification_factor", ampFactor));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
 
     /**

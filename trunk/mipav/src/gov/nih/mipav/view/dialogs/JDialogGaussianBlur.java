@@ -63,6 +63,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
     
+    /** Flag indicating whether to use OpenCL processing. */
+    private boolean useOCL = false;
+    
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
 
@@ -229,10 +232,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 System.gc();
 
             }
-
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
         } // if (algorithm instanceof AlgorithmGaussianBlur)
 
         if (algorithm instanceof AlgorithmGaussianBlurSep) {
@@ -327,12 +326,12 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 System.gc();
 
             }
-
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
         } // if (algorithm instanceof AlgorithmGaussianBlurSep)
 
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         // save the completion status for later
         setComplete(algorithm.isCompleted());
 
@@ -436,6 +435,17 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     public void setImage25D(final boolean flag) {
         image25D = flag;
     }
+    
+    /** Accessor that sets whether to use OpenCL processing (may still not be set if it is not supported on the system).
+     * 
+     * @param useOCL Whether to try to use OpenCL processing.
+     */
+    public void setUseOCL(boolean useOCL) {
+        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        if (useOCLCheckbox != null) {
+        	useOCLCheckbox.setSelected( this.useOCL );
+        }
+    }
 
     /**
      * Accessor that sets whether or not the separable convolution kernel is used.
@@ -455,7 +465,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
         
         // Check if the algorithm should use OpenCL, calculate and return:
-    	if ( useOCLCheckbox.isSelected() )
+    	if ( useOCL )
     	{
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
     		OpenCLAlgorithmGaussianBlur blurAlgo;
@@ -930,6 +940,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         setImage25D(scriptParameters.doProcess3DAs25D());
         scriptParameters.setSigmasGUI(sigmaPanel);
         scriptParameters.setColorOptionsGUI(colorChannelPanel);
+        if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
+        	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
+        }
     }
 
     /**
@@ -945,6 +958,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         scriptParameters.storeProcessSeparable(separable);
         scriptParameters.storeSigmas(sigmaPanel);
         scriptParameters.storeColorOptions(colorChannelPanel);
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
 
     /**
@@ -1009,6 +1023,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         } else {
             image25D = false;
         }
+        
+        useOCL = useOCLCheckbox.isSelected();
 
         if ( !sigmaPanel.testSigmaValues()) {
             return false;
