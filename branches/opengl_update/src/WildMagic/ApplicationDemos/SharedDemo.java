@@ -33,6 +33,7 @@ import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLDrawableFactory;
+import javax.media.opengl.GLException;
 import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
@@ -128,14 +129,19 @@ public class SharedDemo extends Thread {
     }
     
     private void initShared() {
-        sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
-        //sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
-        //sharedDemo = new Lattice();
+    	caps.setStereo(true);       
+    	try {
+        	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+        } catch ( GLException e ) {
+        	caps.setStereo( false );
+        	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+        }
+    	caps.setStereo( sharedDrawable.getChosenGLCapabilities().getStereo() );
+    	
         sharedDemo = new Iridescence();
         sharedDrawable.addGLEventListener(sharedDemo);
         // init and render one frame, which will setup the Gears display lists
         sharedDrawable.display();
-        //caps.setStereo(true);
     }
 
     protected void releaseShared() {
