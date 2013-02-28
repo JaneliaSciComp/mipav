@@ -1004,7 +1004,7 @@ public class FileAfni extends FileBase {
      * @param      fileName  file name
      * @param      fileDir   file directory
      * @param      loadB     flag indicating if this is a B image
-     * @param      doRead    DOCUMENT ME!
+     * @param      doRead    whether class is created for reading afni file, or for writing
      *
      * @exception  IOException  if there is an error making the file
      */
