@@ -323,7 +323,11 @@ public class FileSpar extends FileBase {
         return image;
     }
     
-    private ModelImage updateTransformMatrix(ModelImage image) {
+    public FileInfoSPAR getFileInfo() {
+		return outInfo;
+	}
+
+	private ModelImage updateTransformMatrix(ModelImage image) {
         TransMatrix toScanner = new TransMatrix(4);
         
         double[] sliceAng = fileInfo.getSliceAngulation();
