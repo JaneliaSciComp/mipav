@@ -26,6 +26,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
@@ -38,6 +39,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.IridescenceEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -149,7 +151,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	 * 
 	 */
 	public Iridescence() {
-		super("Iridescence");
+		super("Iridescence", FrameBuffer.BufferingType.BT_QUAD_STEREO);
         m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 	
@@ -276,6 +278,18 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 
 		InitializeCameraMotion(0.01f, 0.001f);
 		InitializeObjectMotion(m_spkScene);
+		
+
+		byte[] bStereo = new byte[1];
+		arg0.getGL().glGetBooleanv( GL3.GL_STEREO, bStereo, 0 );
+		if ( bStereo[0] == 0 )
+		{
+			System.err.println( "Stereo capable = false" );
+		}
+		else
+		{
+			System.err.println( "Stereo capable = true" );
+		}
 	}
 
 	/**

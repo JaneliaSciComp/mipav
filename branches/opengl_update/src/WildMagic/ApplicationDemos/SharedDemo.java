@@ -27,18 +27,16 @@
  */
  
 package WildMagic.ApplicationDemos;
-import java.awt.GridLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.util.List;
 
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLCapabilitiesImmutable;
 import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLException;
 import javax.media.opengl.GLOffscreenAutoDrawable;
-import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.jogamp.opengl.util.Animator;
@@ -48,16 +46,12 @@ public class SharedDemo extends Thread {
     static GLCapabilities caps;
     static int width, height;
     GLOffscreenAutoDrawable sharedDrawable;
-    //GLPbuffer sharedDrawable;
     DemoBase sharedDemo;
     static boolean init = initClass();
 
     static long duration = 500000; // ms
 
     public static boolean initClass() {
-        //GLProfile.initSingleton(true);
-        //glp = GLProfile.getMaxProgrammable();
-        //GLProfile.initSingleton();
         glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
         caps.setAlphaBits(8);
@@ -129,19 +123,14 @@ public class SharedDemo extends Thread {
     }
     
     private void initShared() {
-    	caps.setStereo(true);       
-    	try {
-        	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
-        } catch ( GLException e ) {
-        	caps.setStereo( false );
-        	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
-        }
-    	caps.setStereo( sharedDrawable.getChosenGLCapabilities().getStereo() );
-    	
+    	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, width, height, null);
+       
         sharedDemo = new Iridescence();
         sharedDrawable.addGLEventListener(sharedDemo);
         // init and render one frame, which will setup the Gears display lists
         sharedDrawable.display();
+        
+        caps.setStereo(true);
     }
 
     protected void releaseShared() {
