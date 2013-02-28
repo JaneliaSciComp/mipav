@@ -3302,7 +3302,7 @@ public class FileNIFTI extends FileBase {
     	
     	
     }
-
+    
     /**
      * Reads a NIFTI image file by reading the header then making a FileRaw to read the file. Image data is left in
      * buffer. If the fileInfo cannot be found, the header will be located and read first. Image is not 'flipped', and
@@ -3315,6 +3315,22 @@ public class FileNIFTI extends FileBase {
      * @see        FileRaw
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
+    	readImage(buffer, 0l);
+    }
+
+    /**
+     * Reads a NIFTI image file by reading the header then making a FileRaw to read the file. Image data is left in
+     * buffer. If the fileInfo cannot be found, the header will be located and read first. Image is not 'flipped', and
+     * neither units of measure nor orientation are set.
+     *
+     * @param      buffer  Image buffer to store image data into.
+     * @param	   offset  Offset a which to start reaing image, can be used to read in a specific slice/subBrick
+     *
+     * @exception  IOException  if there is an error reading the file
+     *
+     * @see        FileRaw
+     */
+    public void readImage(float[] buffer, long userOffset) throws IOException, OutOfMemoryError {
         int i;
         long offset;
 
@@ -3333,13 +3349,13 @@ public class FileNIFTI extends FileBase {
             linkProgress(rawFile);
 
             if (oneFile) {
-                offset = (long) Math.abs(vox_offset);
+                offset = userOffset + (long) Math.abs(vox_offset);
 
                 if (offset < headerSize) { // header length
-                    offset = headerSize;
+                    offset = userOffset + headerSize;
                 }
             } else {
-                offset = 0L;
+            	offset = userOffset;
             }
 
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
