@@ -177,7 +177,6 @@ public class FileIO {
             } else if (fileType == FileUtility.GE_SIGNA4X) {
                 fType = FileUtility.GE_SIGNA4X_MULTIFILE;
             } else if (fileType == FileUtility.GE_GENESIS) {
-                
                 fType = FileUtility.GE_GENESIS_MULTIFILE;
             } else if (fileType == FileUtility.MAGNETOM_VISION) {
                 fType = FileUtility.MAGNETOM_VISION_MULTIFILE;
@@ -2033,9 +2032,508 @@ nList:      for (int i = 0; i < nListImages; i++) {
      * 
      * @return The image that was read in from the file.
      */
-    public FileInfoBase readHeader(final String fileName, final String fileDir, final boolean multiFile) {
-        System.out.println("Reading header"); //TODO: implement header reading here
-        return null;
+    public FileInfoBase readHeader(String fileName, String fileDir, final boolean multiFile) {
+    	int index;
+
+        File file;
+        FileInputStream fis;
+        ZipInputStream zin;
+        GZIPInputStream gzin;
+        CBZip2InputStream bz2in;
+        FileOutputStream out;
+        int bytesRead;
+        
+        String uncompressedName = null;
+        String tempDir = null;
+        if ( (fileName == null) || (fileDir == null)) {
+            return null;
+        }
+        boolean unzip;
+        boolean gunzip;
+        boolean bz2unzip;
+
+        this.fileDir = fileDir;
+        fileName = fileName.trim();
+
+        index = fileName.lastIndexOf(".");
+
+        if (fileName.substring(index + 1).equalsIgnoreCase("zip")) {
+            unzip = true;
+        } else {
+            unzip = false;
+        }
+
+        if (fileName.substring(index + 1).equalsIgnoreCase("gz")) {
+            gunzip = true;
+        } else {
+            gunzip = false;
+        }
+
+        if (fileName.substring(index + 1).equalsIgnoreCase("bz2")) {
+            bz2unzip = true;
+        } else {
+            bz2unzip = false;
+        }
+        boolean niftiCompressed = false;
+        if (unzip || gunzip || bz2unzip) {
+        	Preferences.debug("The entire file will be incrementally loaded into memory while reading the header"+
+        						"\nbecause the file is compressed.  Try uncompressing file for performance improvement.", Preferences.DEBUG_FILEIO);
+            // if NIFTI....dont unzip/gunzip/bz2 and write out to temp dir here..we will directly stream in FileNIFTI
+            final String sub = fileName.substring(0, index);
+            if (sub.substring(sub.lastIndexOf(".") + 1, sub.length()).equalsIgnoreCase("nii")) {
+                niftiCompressed = true;
+            } else {
+                tempDir = Preferences.getFileTempDir();
+                if (tempDir == null) {
+                    tempDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "tempDir"
+                            + File.separator;
+                } else {
+                    tempDir = tempDir + File.separator;
+                }
+                file = new File(tempDir);
+                if ( !file.exists()) {
+                    file.mkdirs();
+                }
+
+                file = new File(fileDir + fileName);
+
+                if (unzip) {
+                    int totalBytesRead = 0;
+
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (final FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
+                        return null;
+                    }
+
+                    try {
+                        zin = new ZipInputStream(new BufferedInputStream(fis));
+                    } catch (final Exception e) {
+                        MipavUtil.displayError("Exception on ZipInputStream for " + fileName);
+                        return null;
+                    }
+
+                    fileName = fileName.substring(0, index);
+                    fileDir = tempDir;
+                    uncompressedName = fileDir + fileName;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return null;
+                    }
+                    final byte[] buffer = new byte[256];
+
+                    try {
+                        while (zin.getNextEntry() != null) {
+                            while (true) {
+
+                                bytesRead = zin.read(buffer);
+
+                                if (bytesRead == -1) {
+                                    break;
+                                }
+
+                                totalBytesRead += bytesRead;
+                                out.write(buffer, 0, bytesRead);
+
+                            }
+                        } // while (zin.getNextEntry() != null)
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException in loop reading entries");
+                        return null;
+                    }
+
+                    try {
+                    	out.flush();
+                        out.close();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return null;
+                    }
+                } // if (unzip)
+                else if (gunzip) {
+                    int totalBytesRead = 0;
+
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (final FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
+                        return null;
+                    }
+
+                    try {
+                        gzin = new GZIPInputStream(new BufferedInputStream(fis));
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on GZIPInputStream for " + fileName);
+                        return null;
+                    }
+
+                    fileName = fileName.substring(0, index);
+                    fileDir = tempDir;
+                    uncompressedName = fileDir + fileName;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return null;
+                    }
+                    final byte[] buffer = new byte[256];
+
+                    while (true) {
+                        try {
+                            bytesRead = gzin.read(buffer);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + uncompressedName);
+                            return null;
+                        }
+
+                        if (bytesRead == -1) {
+                            break;
+                        }
+
+                        totalBytesRead += bytesRead;
+                        try {
+                            out.write(buffer, 0, bytesRead);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                            return null;
+                        }
+                    }
+
+                    try {
+                    	out.flush();
+                        out.close();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return null;
+                    }
+                } // if (gunzip)
+                else if (bz2unzip) {
+                    int totalBytesRead = 0;
+
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch (final FileNotFoundException e) {
+                        MipavUtil.displayError("File not found exception on fis = new FileInputStream(file) for "
+                                + fileName);
+                        return null;
+                    }
+
+                    try {
+                        fis.read();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on fis.read() trying to read byte B");
+                        return null;
+                    }
+
+                    try {
+                        fis.read();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on fis.read() trying to read byte Z");
+                        return null;
+                    }
+
+                    try {
+                        bz2in = new CBZip2InputStream(new BufferedInputStream(fis));
+                    } catch (final Exception e) {
+                        MipavUtil.displayError("Exception on CBZip2InputStream for " + fileName);
+                        return null;
+                    }
+
+                    fileName = fileName.substring(0, index);
+                    fileDir = tempDir;
+                    uncompressedName = fileDir + fileName;
+                    try {
+                        out = new FileOutputStream(uncompressedName);
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on FileOutputStream for " + uncompressedName);
+                        return null;
+                    }
+                    final byte[] buffer = new byte[256];
+
+                    while (true) {
+                        try {
+                            bytesRead = bz2in.read(buffer);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on bz2in.read(buffer) for " + uncompressedName);
+                            return null;
+                        }
+
+                        if (bytesRead == -1) {
+                            break;
+                        }
+
+                        totalBytesRead += bytesRead;
+                        try {
+                            out.write(buffer, 0, bytesRead);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on out.write for " + uncompressedName);
+                            return null;
+                        }
+                    }
+
+                    try {
+                    	out.flush();
+                        out.close();
+                    } catch (final IOException e) {
+                        MipavUtil.displayError("IOException on out.close for " + uncompressedName);
+                        return null;
+                    }
+                } // else if (bz2unzip)
+
+            }
+
+        }
+        
+        int fileType = readFileType(niftiCompressed, multiFile, fileName);
+        FileBase readSrc = null;
+        FileInfoBase fileInfo = null;
+        boolean success = false;
+
+        try {
+
+            switch (fileType) {
+	            case FileUtility.ERROR:
+	            	return null;
+	            	
+	            case FileUtility.UNDEFINED:
+	            	if(isQuiet()) {
+	            		return null;
+	            	}
+	            	break;
+	            	
+                case FileUtility.BMP:
+                case FileUtility.BMP_MULTIFILE:
+                case FileUtility.LIFF:
+                case FileUtility.MATLAB:
+                case FileUtility.TIFF:
+                case FileUtility.TIFF_MULTIFILE:
+                case FileUtility.COR:
+                case FileUtility.BRUKER:
+                case FileUtility.LSM:
+                case FileUtility.LSM_MULTIFILE:
+                case FileUtility.STK:
+                case FileUtility.QT:
+                case FileUtility.RAW:
+                case FileUtility.RAW_MULTIFILE:
+                case FileUtility.METAIMAGE:
+                case FileUtility.MEDIVISION:
+                case FileUtility.MAP:
+                case FileUtility.JIMI:
+                case FileUtility.MINC_HDF: //technically possible, but difficult implementation
+                case FileUtility.INTERFILE:      
+                case FileUtility.INTERFILE_MULTIFILE:
+                case FileUtility.BIORAD:
+                case FileUtility.FITS:
+                case FileUtility.DM3:
+                case FileUtility.TMG:
+                case FileUtility.MRC:
+                case FileUtility.BFLOAT:
+                case FileUtility.GE_GENESIS:     
+                case FileUtility.GE_GENESIS_MULTIFILE:
+                case FileUtility.GE_SIGNA4X:
+                case FileUtility.GE_SIGNA4X_MULTIFILE:
+                case FileUtility.XML:
+                case FileUtility.XML_MULTIFILE:                
+                case FileUtility.JP2:
+                	Preferences.debug("Header reading is not supported for this file "+fileName+
+                						"\nbecause it is of file type "+FileUtility.getFileTypeStr(fileType), Preferences.DEBUG_FILEIO);
+                	break;
+                	
+                case FileUtility.MICRO_CAT:
+                	readSrc = new FileMicroCat(fileName, fileDir);
+                    fileInfo = ((FileMicroCat)readSrc).readHeader();
+                    if(fileInfo == null) {
+                    	success = false;
+                    }
+                    break;
+                	
+                case FileUtility.MAGNETOM_VISION:
+                case FileUtility.MAGNETOM_VISION_MULTIFILE:
+                	readSrc = new FileMagnetomVision(fileName, fileDir);
+                    fileInfo = ((FileMagnetomVision)readSrc).readHeader();
+                    if(fileInfo == null) {
+                    	success = false;
+                    }
+                    break;
+                	
+                case FileUtility.MINC:
+                case FileUtility.MINC_MULTIFILE:
+                	readSrc = new FileMinc(fileName, fileDir);
+                    fileInfo = ((FileMinc)readSrc).readHeader();
+                    if(fileInfo == null) {
+                    	success = false;
+                    }
+                    break;
+                
+                case FileUtility.AVI:
+                	readSrc = new FileAvi(fileName, fileDir);
+                    int result = ((FileAvi)readSrc).readHeader();
+                    if(result != 0) {
+                    	success = false;
+                    }
+                    if(success) {
+                    	fileInfo = ((FileAvi)readSrc).getFileInfo();
+                    }
+                    break;
+                	
+                case FileUtility.SIEMENSTEXT:
+                	readSrc = new FileSiemensText(fileName, fileDir);
+                    success = ((FileSiemensText)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileSiemensText)readSrc).getFileInfo();
+                    }
+                    break;
+                	
+                case FileUtility.ANALYZE:
+                case FileUtility.ANALYZE_MULTIFILE:
+                    readSrc = new FileAnalyze(fileName, fileDir);
+                    success = ((FileAnalyze)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileAnalyze)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.MGH:
+                	readSrc = new FileMGH(fileName, fileDir);
+                    success = ((FileMGH)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileMGH)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.NIFTI:
+                case FileUtility.NIFTI_MULTIFILE:
+                    readSrc = new FileNIFTI(fileName, fileDir);
+                    success = ((FileNIFTI)readSrc).readHeader(fileName, fileDir, niftiCompressed);
+                    if(success) {
+                    	fileInfo = ((FileNIFTI)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.NRRD:
+                case FileUtility.NRRD_MULTIFILE:
+                	readSrc = new FileNRRD(fileName, fileDir);
+                    success = ((FileNRRD)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileNRRD)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.SPM:
+                	readSrc = new FileSPM(fileName, fileDir);
+                    success = ((FileSPM)readSrc).readHeader();
+                    if(success) {
+                    	fileInfo = ((FileSPM)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.CHESHIRE:
+                	readSrc = new FileCheshire(fileName, fileDir, !isQuiet());
+                    success = ((FileCheshire)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileCheshire)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.DICOM:
+                	FileDicom readSrcDicom = new FileDicom(fileName, fileDir);  //FileDicom does not extend FileBase
+                    success = ((FileDicom)readSrcDicom).readHeader(true);
+                    if(success) {
+                    	fileInfo = ((FileDicom)readSrcDicom).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.AFNI:
+                	readSrc = new FileAfni(fileName, fileDir, false, true);  
+                    success = ((FileAfni)readSrc).readHeader();
+                    if(success) {
+                    	fileInfo = ((FileAfni)readSrc).getFileInfo();
+                    }
+                    break;
+                    
+                case FileUtility.ICS:
+                	readSrc = new FileICS(fileName, fileDir);  
+                    success = ((FileICS)readSrc).readHeader();
+                    if(success) {
+                    	fileInfo = ((FileICS)readSrc).getFileInfo();
+                    }
+                    break;
+                    
+                case FileUtility.PARREC:  
+                case FileUtility.PARREC_MULTIFILE:
+                	readSrc = new FilePARREC(fileName, fileDir);  
+                    success = ((FilePARREC)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FilePARREC)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.ZVI:
+                	readSrc = new FileZVI(fileName, fileDir);  
+                    success = ((FileZVI)readSrc).readHeader();
+                    if(success) {
+                    	fileInfo = ((FileZVI)readSrc).getFileInfo();
+                    }
+                    break;
+
+                case FileUtility.VISTA:
+                	readSrc = new FileVista(fileName, fileDir);  
+                    success = ((FileVista)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileVista)readSrc).getFileInfo();
+                    }
+                    break;
+                    
+                case FileUtility.SPAR:
+                	readSrc = new FileSpar(fileName, fileDir);  
+                    success = ((FileSpar)readSrc).readHeader(fileName, fileDir);
+                    if(success) {
+                    	fileInfo = ((FileSpar)readSrc).getFileInfo();
+                    }
+                    break;
+                    
+                case FileUtility.TRACKVIS:
+                	readSrc = new FileTrackVis(fileName, fileDir);  
+                    success = ((FileTrackVis)readSrc).readHeader();
+                    if(success) {
+                    	fileInfo = ((FileTrackVis)readSrc).getFileInfo();
+                    }
+                	break;
+
+                default:
+                    return null;
+            }
+            
+        } catch (final Exception error) {
+
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
+
+            error.printStackTrace();
+
+            if ( !quiet) {
+                MipavUtil.displayError("Unable to load image.  See debug window for more details.");
+            }
+
+            Preferences.debug("Error while loading " + fileDir + fileName + ".\n" + error + "\n",
+                    Preferences.DEBUG_FILEIO);
+
+            return null;
+        }
+        
+        Preferences.debug("Header reading was successful as determined by input reader: "+success, Preferences.DEBUG_FILEIO);
+        if(fileInfo == null) {
+        	Preferences.debug("Error occurred in FileIO.readHeader while attempting to read header from: "+fileDir+File.separator+fileName, Preferences.DEBUG_FILEIO);
+        }
+
+        return fileInfo;
+    	
     }
     
     /**
@@ -2157,9 +2655,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         FileOutputStream out;
         int bytesRead;
         ModelImage image = null;
-        int fileType = FileUtility.UNDEFINED;
-        int userDefinedFileType = 0;
-        String userDefinedSuffix = null;
+        
         String uncompressedName = null;
         String compressedName = null;
         String compressedDir = null;
@@ -2267,6 +2763,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     }
 
                     try {
+                    	out.flush();
                         out.close();
                     } catch (final IOException e) {
                         MipavUtil.displayError("IOException on out.close for " + uncompressedName);
@@ -2324,6 +2821,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     }
 
                     try {
+                    	out.flush();
                         out.close();
                     } catch (final IOException e) {
                         MipavUtil.displayError("IOException on out.close for " + uncompressedName);
@@ -2395,6 +2893,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     }
 
                     try {
+                    	out.flush();
                         out.close();
                     } catch (final IOException e) {
                         MipavUtil.displayError("IOException on out.close for " + uncompressedName);
@@ -2405,36 +2904,21 @@ nList:      for (int i = 0; i < nListImages; i++) {
             }
 
         }
-        if (niftiCompressed) {
-            fileType = FileUtility.NIFTI;
-        } else {
-            boolean zerofunused[] = new boolean[1];
-            fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
-
-            if (fileType == FileUtility.ERROR) {
-                return null;
-            }
-
-            if (fileType == FileUtility.UNDEFINED && isQuiet()) {
-                System.err.println("FileIO read: Unable to get file type from suffix");
-                return null;
-            }
-
-            if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
-                fileType = getFileType(); // dialog to get user to define image type
-                userDefinedFileType = fileType;
-                if (fileName.indexOf(".") != -1) {
-                    userDefinedSuffix = "." + fileName.split("\\.")[1];
-                }
-            }
-
-            fileType = FileIO.chkMultiFile(fileType, multiFile); // for multifile support...
-        }
+        
+        int fileType = readFileType(niftiCompressed, multiFile, fileName);
 
         try {
 
             switch (fileType) {
-
+	            case FileUtility.ERROR:
+	            	return null;
+	            	
+	            case FileUtility.UNDEFINED:
+	            	if(isQuiet()) {
+	            		return null;
+	            	}
+	            	break;
+	            	
                 case FileUtility.BMP:
                     image = readBMP(fileName, fileDir, one);
                     break;
@@ -2755,48 +3239,6 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     image.calcMinMax();
                     // image.setImageDirectory(fileDir);
                 }
-
-                // if file type was a new user defined file type, then we need to save its association
-                // to the preferences if its not already there.
-                // we also need to save this pref as part of both the userDefinedFileTypes and
-                // the userDefinedFileTypes_textField
-                if (userDefinedSuffix != null) {
-                    final String association = userDefinedSuffix + Preferences.DEFINITION_SEPARATOR
-                            + userDefinedFileType;
-                    boolean isPresent = false;
-
-                    if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
-
-                        if ( !Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
-                            final String[] userDefinedFileTypeAssociations = Preferences.getProperty(
-                                    Preferences.PREF_USER_FILETYPE_ASSOC).split(Preferences.ITEM_SEPARATOR);
-
-                            for (final String element : userDefinedFileTypeAssociations) {
-
-                                if (userDefinedSuffix.equals(element.split(Preferences.DEFINITION_SEPARATOR)[0])) {
-                                    isPresent = true;
-                                }
-                            }
-
-                            if ( !isPresent) {
-                                Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, Preferences
-                                        .getProperty(Preferences.PREF_USER_FILETYPE_ASSOC)
-                                        + Preferences.ITEM_SEPARATOR + association);
-                                setUserDefinedFileTypesPref(userDefinedSuffix);
-                                setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-                            }
-
-                        } else {
-                            Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
-                            setUserDefinedFileTypesPref(userDefinedSuffix);
-                            setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-                        }
-                    } else {
-                        Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
-                        setUserDefinedFileTypesPref(userDefinedSuffix);
-                        setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-                    }
-                }
             }
         } catch (final Exception error) {
 
@@ -2817,6 +3259,82 @@ nList:      for (int i = 0; i < nListImages; i++) {
         }
 
         return image;
+    }
+    
+    private int readFileType(boolean niftiCompressed, boolean multiFile, String fileName) {
+    	int fileType = FileUtility.UNDEFINED;
+        int userDefinedFileType = 0;
+        String userDefinedSuffix = null;
+    	
+    	if (niftiCompressed) {
+            fileType = FileUtility.NIFTI;
+        } else {
+            boolean zerofunused[] = new boolean[1];
+            fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
+
+            if (fileType == FileUtility.ERROR) {
+                return fileType;
+            }
+
+            if (fileType == FileUtility.UNDEFINED && isQuiet()) {
+                System.err.println("FileIO read: Unable to get file type from suffix");
+                return fileType;
+            }
+
+            if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
+                fileType = getFileType(); // dialog to get user to define image type
+                userDefinedFileType = fileType;
+                if (fileName.indexOf(".") != -1) {
+                    userDefinedSuffix = "." + fileName.split("\\.")[1];
+                }
+            }
+
+            fileType = FileIO.chkMultiFile(fileType, multiFile); // for multifile support...
+        }
+    	
+    	// if file type was a new user defined file type, then we need to save its association
+        // to the preferences if its not already there.
+        // we also need to save this pref as part of both the userDefinedFileTypes and
+        // the userDefinedFileTypes_textField
+        if (userDefinedSuffix != null) {
+            final String association = userDefinedSuffix + Preferences.DEFINITION_SEPARATOR
+                    + userDefinedFileType;
+            boolean isPresent = false;
+
+            if (Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC) != null) {
+
+                if ( !Preferences.getProperty(Preferences.PREF_USER_FILETYPE_ASSOC).trim().equals("")) {
+                    final String[] userDefinedFileTypeAssociations = Preferences.getProperty(
+                            Preferences.PREF_USER_FILETYPE_ASSOC).split(Preferences.ITEM_SEPARATOR);
+
+                    for (final String element : userDefinedFileTypeAssociations) {
+
+                        if (userDefinedSuffix.equals(element.split(Preferences.DEFINITION_SEPARATOR)[0])) {
+                            isPresent = true;
+                        }
+                    }
+
+                    if ( !isPresent) {
+                        Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, Preferences
+                                .getProperty(Preferences.PREF_USER_FILETYPE_ASSOC)
+                                + Preferences.ITEM_SEPARATOR + association);
+                        setUserDefinedFileTypesPref(userDefinedSuffix);
+                        setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+                    }
+
+                } else {
+                    Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
+                    setUserDefinedFileTypesPref(userDefinedSuffix);
+                    setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+                }
+            } else {
+                Preferences.setProperty(Preferences.PREF_USER_FILETYPE_ASSOC, association);
+                setUserDefinedFileTypesPref(userDefinedSuffix);
+                setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+            }
+        }
+        
+        return fileType;
     }
 
     /**
