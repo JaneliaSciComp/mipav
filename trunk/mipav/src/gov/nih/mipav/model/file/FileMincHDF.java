@@ -153,12 +153,14 @@ public class FileMincHDF extends FileBase {
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
-    public void readHeader(final DefaultMutableTreeNode rootNode) throws Exception {
+    public boolean readHeader(final DefaultMutableTreeNode rootNode) throws Exception {
         // before recursively parsing the tree, get the image dim order from the image var attributes
         parseImageDimOrder(rootNode);
 
         // for now just traverse the tree, see what's there
         parseHDFHeader(rootNode);
+        
+        return true;
     }
 
     /**
