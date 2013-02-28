@@ -377,7 +377,12 @@ public class FileVista extends FileBase {
     
     
     
-    /**
+    public FileInfoVista getFileInfo() {
+		return fileInfo;
+	}
+
+
+	/**
      * writes the header
      * @param image
      * @param rawFile
