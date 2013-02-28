@@ -313,7 +313,11 @@ public class FileAvi extends FileBase {
         return this.fileName;
     }
 
-    /**
+    public FileInfoAvi getFileInfo() {
+		return fileInfo;
+	}
+
+	/**
      * Returns LUT if defined.
      *
      * @return  The LUT if defined, otherwise null.
@@ -3004,7 +3008,7 @@ public class FileAvi extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private int readHeader() throws IOException {
+    public int readHeader() throws IOException {
         long LIST1Marker, LISTsubchunkMarker, marker;
         int loop;
 
