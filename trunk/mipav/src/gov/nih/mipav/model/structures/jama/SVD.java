@@ -143,6 +143,10 @@ public class SVD implements java.io.Serializable {
           int blk;
           int chunk;
           int i;
+          int j;
+          int k;
+          int L;
+          int p;
           int ie;
           int ierr[] = new int[1];
           int ir;
@@ -181,6 +185,12 @@ public class SVD implements java.io.Serializable {
           String name;
           char optsChar[];
           String opts;
+          double workiwork[];
+          double workitauq[];
+          double workitaup[];
+          double workie[];
+          double arr[][];
+          double arr2[][];
          
           //Test the input arguments
     
@@ -621,320 +631,424 @@ public class SVD implements java.io.Serializable {
                    // Path 1 (m much larger than n, jobu = 'N')
                    // No left singular vectors to be computed
     
-                   ITAU = 1
-                   IWORK = ITAU + N
-    *
-    *              Compute A=Q*R
-    *              (Workspace: need 2*N, prefer N+N*NB)
-    *
-                   CALL DGEQRF( M, N, A, LDA, WORK( ITAU ), WORK( IWORK ),
-         $                      LWORK-IWORK+1, IERR )
-    *
-    *              Zero out below R
-    *
-                   CALL DLASET( 'L', N-1, N-1, ZERO, ZERO, A( 2, 1 ), LDA )
-                   IE = 1
-                   ITAUQ = IE + N
-                   ITAUP = ITAUQ + N
-                   IWORK = ITAUP + N
-    *
-    *              Bidiagonalize R in A
-    *              (Workspace: need 4*N, prefer 3*N+2*N*NB)
-    *
-                   CALL DGEBRD( N, N, A, LDA, S, WORK( IE ), WORK( ITAUQ ),
-         $                      WORK( ITAUP ), WORK( IWORK ), LWORK-IWORK+1,
-         $                      IERR )
-                   NCVT = 0
-                   IF( WNTVO .OR. WNTVAS ) THEN
-    *
-    *                 If right singular vectors desired, generate P'.
-    *                 (Workspace: need 4*N-1, prefer 3*N+(N-1)*NB)
-    *
-                      CALL DORGBR( 'P', N, N, N, A, LDA, WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      NCVT = N
-                   END IF
-                   IWORK = IE + N
-    *
-    *              Perform bidiagonal QR iteration, computing right
-    *              singular vectors of A in A if desired
-    *              (Workspace: need BDSPAC)
-    *
-                   CALL DBDSQR( 'U', N, NCVT, 0, 0, S, WORK( IE ), A, LDA,
-         $                      DUM, 1, DUM, 1, WORK( IWORK ), INFO )
-    *
-    *              If right singular vectors desired in VT, copy them there
-    *
-                   IF( WNTVAS )
-         $            CALL DLACPY( 'F', N, N, A, LDA, VT, LDVT )
-    *
+                   itau = 1;
+                   iwork = itau + n;
+    
+                   // Compute A=Q*R
+                   // (Workspace: need 2*n, prefer n+n*nb)
+    
+                   workiwork = new double[Math.max(4*n,Math.max(1, lwork - iwork + 1))];
+                   ge.dgeqrf(m, n, A, lda, work, workiwork, lwork-iwork+1, ierr);
+     
+                   // Zero out below R
+     
+                   arr = new double[n-1][n-1];
+                   for (i = 0; i < n-1; i++) {
+                       for (j = 0; j < n-1; j++) {
+                           arr[i][j] = A[i+1][j];
+                       }
+                   }
+                   // lda is unused in dlaset
+                   ge.dlaset( 'L', n-1, n-1, 0.0, 0.0, arr, n-1);
+                   for (i = 0; i < n-1; i++) {
+                       for (j = 0; j < n-1; j++) {
+                           A[i+1][j] = arr[i][j];
+                       }
+                   }
+                   ie = 1;
+                   itauq = ie + n;
+                   itaup = itauq + n;
+                   iwork = itaup + n;
+                   workitauq = new double[n];
+                   workitaup = new double[n];
+     
+                   // Bidiagonalize R in A
+                   // (Workspace: need 4*n, prefer 3*n+2*n*nb)
+     
+                   gi.dgebrd(n, n, A, lda, s, work, workitauq, workitaup,
+                            workiwork, lwork-iwork+1, ierr);
+                   ncvt = 0;
+                   if (wntvo || wntvas) {
+     
+                      // If right singular vectors desired, generate P'.
+                      // (Workspace: need 4*n-1, prefer 3*n+(n-1)*nb)
+     
+                      gi.dorgbr('P', n, n, n, A, lda, workitaup,
+                                   workiwork, lwork-iwork+1, ierr);
+                      ncvt = n;
+                   } // if (wntvo || wntvas)
+                   iwork = ie + n;
+    
+                   // Perform bidiagonal QR iteration, computing right
+                   // singular vectors of A in A if desired
+                   // (Workspace: need BDSPAC)
+     
+                   gi.dbdsqr( 'U', n, ncvt, 0, 0, s, work, A, lda,
+                              dum, 1, dum, 1, workiwork, info);
+    
+                   // If right singular vectors desired in VT, copy them there
+     
+                   if (wntvas) {
+                      ge.dlacpy( 'F', n, n, A, lda, VT, ldvt);
+                   }
+    
                 } // if (wntun)
                 else if (wntuo && wntvn) {
-    *
-    *              Path 2 (M much larger than N, JOBU='O', JOBVT='N')
-    *              N left singular vectors to be overwritten on A and
-    *              no right singular vectors to be computed
-    *
-                   IF( LWORK.GE.N*N+MAX( 4*N, BDSPAC ) ) THEN
-    *
-    *                 Sufficient workspace for a fast algorithm
-    *
-                      IR = 1
-                      IF( LWORK.GE.MAX( WRKBL, LDA*N+N )+LDA*N ) THEN
-    *
-    *                    WORK(IU) is LDA by N, WORK(IR) is LDA by N
-    *
-                         LDWRKU = LDA
-                         LDWRKR = LDA
-                      ELSE IF( LWORK.GE.MAX( WRKBL, LDA*N+N )+N*N ) THEN
-    *
-    *                    WORK(IU) is LDA by N, WORK(IR) is N by N
-    *
-                         LDWRKU = LDA
-                         LDWRKR = N
-                      ELSE
-    *
-    *                    WORK(IU) is LDWRKU by N, WORK(IR) is N by N
-    *
-                         LDWRKU = ( LWORK-N*N-N ) / N
-                         LDWRKR = N
-                      END IF
-                      ITAU = IR + LDWRKR*N
-                      IWORK = ITAU + N
-    *
-    *                 Compute A=Q*R
-    *                 (Workspace: need N*N+2*N, prefer N*N+N+N*NB)
-    *
-                      CALL DGEQRF( M, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Copy R to WORK(IR) and zero out below it
-    *
-                      CALL DLACPY( 'U', N, N, A, LDA, WORK( IR ), LDWRKR )
-                      CALL DLASET( 'L', N-1, N-1, ZERO, ZERO, WORK( IR+1 ),
-         $                         LDWRKR )
-    *
-    *                 Generate Q in A
-    *                 (Workspace: need N*N+2*N, prefer N*N+N+N*NB)
-    *
-                      CALL DORGQR( M, N, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      IE = ITAU
-                      ITAUQ = IE + N
-                      ITAUP = ITAUQ + N
-                      IWORK = ITAUP + N
-    *
-    *                 Bidiagonalize R in WORK(IR)
-    *                 (Workspace: need N*N+4*N, prefer N*N+3*N+2*N*NB)
-    *
-                      CALL DGEBRD( N, N, WORK( IR ), LDWRKR, S, WORK( IE ),
-         $                         WORK( ITAUQ ), WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Generate left vectors bidiagonalizing R
-    *                 (Workspace: need N*N+4*N, prefer N*N+3*N+N*NB)
-    *
-                      CALL DORGBR( 'Q', N, N, N, WORK( IR ), LDWRKR,
-         $                         WORK( ITAUQ ), WORK( IWORK ),
-         $                         LWORK-IWORK+1, IERR )
-                      IWORK = IE + N
-    *
-    *                 Perform bidiagonal QR iteration, computing left
-    *                 singular vectors of R in WORK(IR)
-    *                 (Workspace: need N*N+BDSPAC)
-    *
-                      CALL DBDSQR( 'U', N, 0, N, 0, S, WORK( IE ), DUM, 1,
-         $                         WORK( IR ), LDWRKR, DUM, 1,
-         $                         WORK( IWORK ), INFO )
-                      IU = IE + N
-    *
-    *                 Multiply Q in A by left singular vectors of R in
-    *                 WORK(IR), storing result in WORK(IU) and copying to A
-    *                 (Workspace: need N*N+2*N, prefer N*N+M*N+N)
-    *
-                      DO 10 I = 1, M, LDWRKU
-                         CHUNK = MIN( M-I+1, LDWRKU )
-                         CALL DGEMM( 'N', 'N', CHUNK, N, N, ONE, A( I, 1 ),
-         $                           LDA, WORK( IR ), LDWRKR, ZERO,
-         $                           WORK( IU ), LDWRKU )
-                         CALL DLACPY( 'F', CHUNK, N, WORK( IU ), LDWRKU,
-         $                            A( I, 1 ), LDA )
-       10             CONTINUE
-    *
-                   ELSE
-    *
-    *                 Insufficient workspace for a fast algorithm
-    *
-                      IE = 1
-                      ITAUQ = IE + N
-                      ITAUP = ITAUQ + N
-                      IWORK = ITAUP + N
-    *
-    *                 Bidiagonalize A
-    *                 (Workspace: need 3*N+M, prefer 3*N+(M+N)*NB)
-    *
-                      CALL DGEBRD( M, N, A, LDA, S, WORK( IE ),
-         $                         WORK( ITAUQ ), WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Generate left vectors bidiagonalizing A
-    *                 (Workspace: need 4*N, prefer 3*N+N*NB)
-    *
-                      CALL DORGBR( 'Q', M, N, N, A, LDA, WORK( ITAUQ ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      IWORK = IE + N
-    *
-    *                 Perform bidiagonal QR iteration, computing left
-    *                 singular vectors of A in A
-    *                 (Workspace: need BDSPAC)
-    *
-                      CALL DBDSQR( 'U', N, 0, M, 0, S, WORK( IE ), DUM, 1,
-         $                         A, LDA, DUM, 1, WORK( IWORK ), INFO )
-    *
-                   END IF
-    *
+     
+                   // Path 2 (m much larger than n, jobu = 'O', jobvt = 'N')
+                   // n left singular vectors to be overwritten on A and
+                   // no right singular vectors to be computed
+    
+                   if (lwork >= n*n+Math.max(4*n, bdspac)) {
+    
+                      // Sufficient workspace for a fast algorithm
+     
+                      ir = 1;
+                      if (lwork >= Math.max(wrkbl, lda*n+n)+lda*n) {
+     
+                         // WORK(IU) is lda by n, WORK(IR) is lda by n
+     
+                         ldwrku = lda;
+                         ldwrkr = lda;
+                      }
+                      else if (lwork >= Math.max(wrkbl, lda*n+n)+n*n) {
+     
+                         // WORK(IU) is lda by n, WORK(IR) is n by n
+    
+                         ldwrku = lda;
+                         ldwrkr = n;
+                      }
+                      else {
+    
+                         // WORK(IU) is ldwrku by n, WORK(IR) is n by n
+    
+                         ldwrku = (lwork-n*n-n) / n;
+                         ldwrkr = n;
+                      }
+                      itau = ir + ldwrkr*n;
+                      iwork = itau + n;
+    
+                      // Compute A=Q*R
+                      // (Workspace: need n*n+2*n, prefer n*n+n+n*nb)
+                      workitau = new double[n];
+                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      ge.dgeqrf(m, n, A, lda, workitau,
+                                workiwork, lwork-iwork+1, ierr);
+     
+                      // Copy R to WORK(IR) and zero out below it
+     
+                      arr = new double[n][n];
+                      ge.dlacpy('U', n, n, A, lda, arr, ldwrkr);
+                      arr2 = new double[n-1][n-1];
+                      for (i = 0; i < n-1; i++) {
+                          for (j = 0; j < n-1; j++) {
+                              arr2[i][j] = arr[i][j+1];
+                          }
+                      }
+                      ge.dlaset( 'L', n-1, n-1, 0.0, 0.0, arr2, ldwrkr);
+                      for (i = 0; i < n-1; i++) {
+                          for (j = 0; j < n-1; j++) {
+                              arr[i][j+1] = arr2[i][j];
+                          }
+                      }
+    
+                      // Generate Q in A
+                      // (Workspace: need n*n+2*n, prefer n*n+n+n*nb)
+    
+                      ge.dorgqr(m, n, n, A, lda, workitau,
+                                workiwork, lwork-iwork+1, ierr);
+                      ie = itau;
+                      itauq = ie + n;
+                      itaup = itauq + n;
+                      iwork = itaup + n;
+    
+                      // Bidiagonalize R in WORK(IR)
+                      // (Workspace: need n*n+4*n, prefer n*n+3*n+2*n*nb)
+                      workie = new double[n];
+                      workitauq = new double[n];
+                      workitaup = new double[n];
+                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      gi.dgebrd(n, n, arr, ldwrkr, s, workie,
+                                workitauq, workitaup,
+                                workiwork, lwork-iwork+1, ierr);
+    
+                      // Generate left vectors bidiagonalizing R
+                      // (Workspace: need n*n+4*n, prefer n*n+3*n+n*nb)
+    
+                      gi.dorgbr('Q', n, n, n, arr, ldwrkr,
+                                workitauq, workiwork,
+                                lwork-iwork+1, ierr);
+                      iwork = ie + n;
+    
+                      // Perform bidiagonal QR iteration, computing left
+                      // singular vectors of R in WORK(IR)
+                      // (Workspace: need n*n+bdspac)
+     
+                      gi.dbdsqr('U', n, 0, n, 0, s, workie, dumArr, 1,
+                                arr, ldwrkr, dumArr, 1, workiwork, info);
+                      iu = ie + n;
+    
+                      // Multiply Q in A by left singular vectors of R in
+                      // WORK(IR), storing result in WORK(IU) and copying to A
+                      // (Workspace: need n*n+2*n, prefer n*n+m*n+n)
+     
+                      for (i = 1; i <= m; i += ldwrku) {
+                         chunk = Math.min(m-i+1, ldwrku);
+                         arr2 = new double[chunk][n];
+                         for (j = 0; j < chunk; j++) {
+                             for (k = 0; k < n; k++) {
+                                 arr2[j][k] = A[i-1+j][k];
+                             }
+                         }
+                         arr3 = new double[chunk][n];
+                         for (j = 0; j < n; j++) {
+                             for (L = 0; L < n; L++) {
+                                 if (arr[L][j] != 0.0) {
+                                     for (p = 0; p < chunk; p++) {
+                                         arr3[p][j] = arr3[p][j] + (arr[L][j] * arr2[p][L]);
+                                     }
+                                 }
+                             }
+                         }
+                         //ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
+                                     //lda, arr, ldwrkr, 0.0,
+                                     //arr3, ldwrku);
+                         for (j = 0; j < chunk; j++) {
+                             for (k = 0; k < n; k++) {
+                                 A[i-1+j][k] = arr3[j][k];
+                             }
+                         }
+                      } // for (i = 1; i <= m; i += ldwrku)
+    
+                   } // if (lwork >= n*n+Math.max(4*n, bdspac))    
+                   else {
+    
+                      // Insufficient workspace for a fast algorithm
+    
+                      ie = 1;
+                      itauq = ie + n;
+                      itaup = itauq + n;
+                      iwork = itaup + n;
+    
+                      // Bidiagonalize A
+                      // (Workspace: need 3*n+m, prefer 3*n+(m+n)*nb)
+                      workitauq = new double[n];
+                      workitaup = new double[n];
+                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      gi.dgebrd(m, n, A, lda, s, work,
+                                workitauq, workitaup,
+                                workiwork, lwork-iwork+1, ierr);
+    
+                      // Generate left vectors bidiagonalizing A
+                      // (Workspace: need 4*n, prefer 3*n+n*nb)
+    
+                      gi.dorgbr('Q', m, n, n, A, lda, workitauq,
+                                workiwork, lwork-iwork+1, ierr);
+                      iwork = ie + n;
+    
+                      // Perform bidiagonal QR iteration, computing left
+                      // singular vectors of A in A
+                      // (Workspace: need bdspac)
+                      workiwork = new double[4*n];
+    
+                      gi.dbdsqr('U', n, 0, m, 0, s, work, dumArr, 1,
+                                A, lda, dumArr, 1, workiwork, info);
+    
+                   } // else 
+    
                 } // else if (wntuo && wntvn)
-                ELSE IF( WNTUO .AND. WNTVAS ) THEN
-    *
-    *              Path 3 (M much larger than N, JOBU='O', JOBVT='S' or 'A')
-    *              N left singular vectors to be overwritten on A and
-    *              N right singular vectors to be computed in VT
-    *
-                   IF( LWORK.GE.N*N+MAX( 4*N, BDSPAC ) ) THEN
-    *
-    *                 Sufficient workspace for a fast algorithm
-    *
-                      IR = 1
-                      IF( LWORK.GE.MAX( WRKBL, LDA*N+N )+LDA*N ) THEN
-    *
-    *                    WORK(IU) is LDA by N and WORK(IR) is LDA by N
-    *
-                         LDWRKU = LDA
-                         LDWRKR = LDA
-                      ELSE IF( LWORK.GE.MAX( WRKBL, LDA*N+N )+N*N ) THEN
-    *
-    *                    WORK(IU) is LDA by N and WORK(IR) is N by N
-    *
-                         LDWRKU = LDA
-                         LDWRKR = N
-                      ELSE
-    *
-    *                    WORK(IU) is LDWRKU by N and WORK(IR) is N by N
-    *
-                         LDWRKU = ( LWORK-N*N-N ) / N
-                         LDWRKR = N
-                      END IF
-                      ITAU = IR + LDWRKR*N
-                      IWORK = ITAU + N
-    *
-    *                 Compute A=Q*R
-    *                 (Workspace: need N*N+2*N, prefer N*N+N+N*NB)
-    *
-                      CALL DGEQRF( M, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Copy R to VT, zeroing out below it
-    *
-                      CALL DLACPY( 'U', N, N, A, LDA, VT, LDVT )
-                      IF( N.GT.1 )
-         $               CALL DLASET( 'L', N-1, N-1, ZERO, ZERO,
-         $                            VT( 2, 1 ), LDVT )
-    *
-    *                 Generate Q in A
-    *                 (Workspace: need N*N+2*N, prefer N*N+N+N*NB)
-    *
-                      CALL DORGQR( M, N, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      IE = ITAU
-                      ITAUQ = IE + N
-                      ITAUP = ITAUQ + N
-                      IWORK = ITAUP + N
-    *
-    *                 Bidiagonalize R in VT, copying result to WORK(IR)
-    *                 (Workspace: need N*N+4*N, prefer N*N+3*N+2*N*NB)
-    *
-                      CALL DGEBRD( N, N, VT, LDVT, S, WORK( IE ),
-         $                         WORK( ITAUQ ), WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      CALL DLACPY( 'L', N, N, VT, LDVT, WORK( IR ), LDWRKR )
-    *
-    *                 Generate left vectors bidiagonalizing R in WORK(IR)
-    *                 (Workspace: need N*N+4*N, prefer N*N+3*N+N*NB)
-    *
-                      CALL DORGBR( 'Q', N, N, N, WORK( IR ), LDWRKR,
-         $                         WORK( ITAUQ ), WORK( IWORK ),
-         $                         LWORK-IWORK+1, IERR )
-    *
-    *                 Generate right vectors bidiagonalizing R in VT
-    *                 (Workspace: need N*N+4*N-1, prefer N*N+3*N+(N-1)*NB)
-    *
-                      CALL DORGBR( 'P', N, N, N, VT, LDVT, WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      IWORK = IE + N
-    *
-    *                 Perform bidiagonal QR iteration, computing left
-    *                 singular vectors of R in WORK(IR) and computing right
-    *                 singular vectors of R in VT
-    *                 (Workspace: need N*N+BDSPAC)
-    *
-                      CALL DBDSQR( 'U', N, N, N, 0, S, WORK( IE ), VT, LDVT,
-         $                         WORK( IR ), LDWRKR, DUM, 1,
-         $                         WORK( IWORK ), INFO )
-                      IU = IE + N
-    *
-    *                 Multiply Q in A by left singular vectors of R in
-    *                 WORK(IR), storing result in WORK(IU) and copying to A
-    *                 (Workspace: need N*N+2*N, prefer N*N+M*N+N)
-    *
-                      DO 20 I = 1, M, LDWRKU
-                         CHUNK = MIN( M-I+1, LDWRKU )
-                         CALL DGEMM( 'N', 'N', CHUNK, N, N, ONE, A( I, 1 ),
-         $                           LDA, WORK( IR ), LDWRKR, ZERO,
-         $                           WORK( IU ), LDWRKU )
-                         CALL DLACPY( 'F', CHUNK, N, WORK( IU ), LDWRKU,
-         $                            A( I, 1 ), LDA )
-       20             CONTINUE
-    *
-                   ELSE
-    *
-    *                 Insufficient workspace for a fast algorithm
-    *
-                      ITAU = 1
-                      IWORK = ITAU + N
-    *
-    *                 Compute A=Q*R
-    *                 (Workspace: need 2*N, prefer N+N*NB)
-    *
-                      CALL DGEQRF( M, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Copy R to VT, zeroing out below it
-    *
-                      CALL DLACPY( 'U', N, N, A, LDA, VT, LDVT )
-                      IF( N.GT.1 )
-         $               CALL DLASET( 'L', N-1, N-1, ZERO, ZERO,
-         $                            VT( 2, 1 ), LDVT )
-    *
-    *                 Generate Q in A
-    *                 (Workspace: need 2*N, prefer N+N*NB)
-    *
-                      CALL DORGQR( M, N, N, A, LDA, WORK( ITAU ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-                      IE = ITAU
-                      ITAUQ = IE + N
-                      ITAUP = ITAUQ + N
-                      IWORK = ITAUP + N
-    *
-    *                 Bidiagonalize R in VT
-    *                 (Workspace: need 4*N, prefer 3*N+2*N*NB)
-    *
-                      CALL DGEBRD( N, N, VT, LDVT, S, WORK( IE ),
-         $                         WORK( ITAUQ ), WORK( ITAUP ),
-         $                         WORK( IWORK ), LWORK-IWORK+1, IERR )
-    *
-    *                 Multiply Q in A by left vectors bidiagonalizing R
-    *                 (Workspace: need 3*N+M, prefer 3*N+M*NB)
-    *
+                else if (wntuo && wntvas) {
+     
+                   // Path 3 (m much larger than n, jobu = 'O', jobvt = 'S' or 'A')
+                   // n left singular vectors to be overwritten on A and
+                   // n right singular vectors to be computed in VT
+    
+                   if (lwork >= n*n+Math.max(4*n, bdspac)) {
+    
+                      // Sufficient workspace for a fast algorithm
+     
+                      ir = 1;
+                      if (lwork >= Math.max(wrkbl, lda*n+n)+lda*n) {
+     
+                         // WORK(IU) is lda by n and WORK(IR) is lda by n
+     
+                         ldwrku = lda;
+                         ldwrkr = lda;
+                      }
+                      else if (lwork >= Math.max(wrkbl, lda*n+n)+n*n) {
+    
+                         // WORK(IU) is lda by n and WORK(IR) is n by n
+    
+                         ldwrku = lda;
+                         ldwrkr = n;
+                      }
+                      else {
+    
+                         // WORK(IU) is ldwrku by n and WORK(IR) is n by n
+    
+                         ldwrku = (lwork-n*n-n) / n;
+                         ldwrkr = n;
+                      }
+                      itau = ir + ldwrkr*n;
+                      iwork = itau + n;
+    
+                      // Compute A=Q*R
+                      // (Workspace: need n*n+2*n, prefer n*n+n+n*nb)
+                      workitau = new double[n];
+                      work[iwork] = new double[Math.max(1, lwork-iwork+1)];
+                      ge.dgeqrf(m, n, A, lda, workitau,
+                                workiwork, lwork-iwork+1, ierr);
+    
+                      // Copy R to VT, zeroing out below it
+    
+                      ge.dlacpy('U', n, n, A, lda, VT, ldvt);
+                      if (n  > 1) {
+                         arr = new double[n-1][n-1];
+                         for (i = 0; i < n-1; i++) {
+                             for (j = 0; j < n-1; j++) {
+                                 arr[i][j] = VT[i+1][j];
+                             }
+                         }
+                         ge.dlaset('L', n-1, n-1, 0.0, 0.0, arr, ldvt);
+                         for (i = 0; i < n-1; i++) {
+                             for (j = 0; j < n-1; j++) {
+                                 VT[i+1][j] = arr[i][j];
+                             }
+                         }
+                      }
+    
+                      // Generate Q in A
+                      // (Workspace: need n*n+2*n, prefer n*n+n+n*nb)
+    
+                      ge.dorgqr(m, n, n, A, lda, workitau,
+                                workiwork, lwork-iwork+1, ierr);
+                      ie = itau;
+                      itauq = ie + n;
+                      itaup = itauq + n;
+                      iwork = itaup + n;
+    
+                      // Bidiagonalize R in VT, copying result to WORK(IR)
+                      // (Workspace: need n*n+4*n, prefer n*n+3*n+2*n*nb)
+                      workie = new double[n];
+                      workitauq = new double[n];
+                      workitaup = new double[n];
+                      workiwork = new double[Math.max(4*n, Math.max(1, lwork-iwork+1))];
+                      gi.dgebrd(n, n, VT, ldvt, s, workie,
+                                workitauq, workitaup,
+                                workiwork, lwork-iwork+1, ierr);
+                      arr = new double[n][n];
+                      ge.dlacpy('L', n, n, VT, ldvt, arr, ldwrkr);
+    
+                      // Generate left vectors bidiagonalizing R in WORK(IR)
+                      // (Workspace: need n*n+4*n, prefer n*n+3*n+n*nb)
+    
+                      gi.dorgbr('Q', n, n, n, arr, ldwrkr,
+                                workitauq, workiwork,
+                                lwork-iwork+1, ierr);
+    
+                      // Generate right vectors bidiagonalizing R in VT
+                      // (Workspace: need n*n+4*n-1, prefer n*n+3*n+(n-1)*nb)
+    
+                      gi.dorgbr('P', n, n, n, VT, ldvt, workitaup,
+                                workiwork, lwork-iwork+1, ierr);
+                      iwork = ie + n;
+    
+                      // Perform bidiagonal QR iteration, computing left
+                      // singular vectors of R in WORK(IR) and computing right
+                      // singular vectors of R in VT
+                      // (Workspace: need n*n+bdspac)
+    
+                      gi.dbdsqr('U', n, n, n, 0, s, workie, VT, ldvt,
+                                arr, ldwrkr, dumArr, 1,
+                                workiwork, info);
+                      iu = ie + n;
+    
+                      //  Multiply Q in A by left singular vectors of R in
+                      // WORK(IR), storing result in WORK(IU) and copying to A
+                      // (Workspace: need n*n+2*n, prefer n*n+m*n+n)
+    
+                     for (i = 1; i <= m; i += ldwrku) {
+                         chunk = Math.min(m-i+1, ldwrku);
+                         arr2 = new double[chunk][n];
+                         for (j = 0; j < chunk; j++) {
+                             for (k = 0; k < n; k++) {
+                                 arr2[j][k] = A[i-1+j][k];
+                             }
+                         }
+                         arr3 = new double[chunk][n];
+                         for (j = 0; j < n; j++) {
+                             for (L = 0; L < n; L++) {
+                                 if (arr[L][j] != 0.0) {
+                                     for (p = 0; p < chunk; p++) {
+                                         arr3[p][j] = arr3[p][j] + (arr[L][j] * arr2[p][L]);
+                                     }
+                                 }
+                             }
+                         }
+                         //ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
+                                     //lda, arr, ldwrkr, 0.0,
+                                     //arr3, ldwrku);
+                         for (j = 0; j < chunk; j++) {
+                             for (k = 0; k < n; k++) {
+                                 A[i-1+j][k] = arr3[j][k];
+                             }
+                         }
+                     } // for (i = 1; i <= m; i += ldwrku)
+    
+                   } // if (lwork >= n*n+Math.max(4*n, bdspac))
+                   else {
+    
+                      // Insufficient workspace for a fast algorithm
+    
+                      itau = 1;
+                      iwork = itau + n;
+    
+                      // Compute A=Q*R
+                      // (Workspace: need 2*n, prefer n+n*nb)
+                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      ge.dgeqrf(m, n, A, lda, work,
+                                workiwork, lwork-iwork+1, ierr);
+    
+                      // Copy R to VT, zeroing out below it
+     
+                      ge.dlacpy('U', n, n, A, lda, VT, ldvt);
+                      if (n  > 1) {
+                         arr = new double[n-1][n-1];
+                         for (i = 0; i < n-1; i++) {
+                             for (j = 0; j < n-1; j++) {
+                                 arr[i][j] = VT[i+1][j];
+                             }
+                         }
+                         ge.dlaset( 'L', n-1, n-1, 0.0, 0.0, arr, ldvt);
+                         for (i = 0; i < n-1; i++) {
+                             for (j = 0; j < n-1; j++) {
+                                 VT[i+1][j] = arr[i][j];
+                             }
+                         }
+                      }
+    
+                      // Generate Q in A
+                      // (Workspace: need 2*n, prefer n+n*nb)
+    
+                      ge.dorgqr(m, n, n, A, lda, work,
+                                workiwork, lwork-iwork+1, ierr);
+                      ie = itau;
+                      itauq = ie + n;
+                      itaup = itauq + n;
+                      iwork = itaup + n;
+    
+                      // Bidiagonalize R in VT
+                      // (Workspace: need 4*N, prefer 3*N+2*N*NB)
+                      workitauq = new double[n];
+                      workitaup = new double[n];
+                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      gi.dgebrd(n, n, VT, ldvt, s, work,
+                                workitauq, workitaup,
+                                workiwork, lwork-iwork+1, ierr);
+    
+                      // Multiply Q in A by left vectors bidiagonalizing R
+                      // (Workspace: need 3*n+m, prefer 3*n+m*nb)
+    
                       CALL DORMBR( 'Q', 'R', 'N', M, N, N, VT, LDVT,
          $                         WORK( ITAUQ ), A, LDA, WORK( IWORK ),
          $                         LWORK-IWORK+1, IERR )
@@ -954,8 +1068,9 @@ public class SVD implements java.io.Serializable {
                       CALL DBDSQR( 'U', N, N, M, 0, S, WORK( IE ), VT, LDVT,
          $                         A, LDA, DUM, 1, WORK( IWORK ), INFO )
     *
-                   END IF
+                   } // else
     *
+                } // else if (wntuo && wntvas)
                 ELSE IF( WNTUS ) THEN
     *
                    IF( WNTVN ) THEN
