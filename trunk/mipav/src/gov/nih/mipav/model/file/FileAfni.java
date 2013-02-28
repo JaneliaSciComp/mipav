@@ -4456,7 +4456,7 @@ public class FileAfni extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    private void readBuffer(int slice, float[] buffer, float scaleFact, int numRead) throws IOException {
+    public void readBuffer(int slice, float[] buffer, float scaleFact, int numRead) throws IOException {
         int i = 0;
         int j;
         int nBytes;
@@ -7674,7 +7674,7 @@ public class FileAfni extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    private void readXYZBuffer(int slice, float[] buffer, float[] dicomBuffer, float scaleFact) throws IOException {
+    public void readXYZBuffer(int slice, float[] buffer, float[] dicomBuffer, float scaleFact) throws IOException {
         int i = 0;
         int j;
         int nBytes;
