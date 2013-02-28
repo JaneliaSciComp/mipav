@@ -367,6 +367,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         GLProfile.initSingleton();
         glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
+        caps.setHardwareAccelerated(true);
         gl_width  = 512;
         gl_height = 512;
         return true;
@@ -3350,7 +3351,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected void initShared() {
     	if ( sharedDrawable == null )
     	{
-            caps.setStereo(true);
+            caps.setStereo(false);
+            //caps.setStereo(true);
             try {
             	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
             } catch ( GLException e ) {

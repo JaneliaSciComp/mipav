@@ -74,12 +74,12 @@ public class SharedDemo extends Thread {
     	 GLCanvas glCanvas;
 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
-         //Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
-         Iridescence.main( args);
+         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         //Iridescence.main( args);
     	 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
-//         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
-         Iridescence.main( args);
+         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
+         //Iridescence.main( args);
     	 
          glCanvas = new GLCanvas(caps, test.sharedDrawable.getContext());
 //         Iridescence.main( glCanvas, test.sharedDemo.GetScene(), true );
@@ -135,7 +135,7 @@ public class SharedDemo extends Thread {
         sharedDrawable.addGLEventListener(sharedDemo);
         // init and render one frame, which will setup the Gears display lists
         sharedDrawable.display();
-        caps.setStereo(true);
+        //caps.setStereo(true);
     }
 
     protected void releaseShared() {
