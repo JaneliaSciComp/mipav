@@ -3351,18 +3351,15 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected void initShared() {
     	if ( sharedDrawable == null )
     	{
-            caps.setStereo(false);
-            //caps.setStereo(true);
-            try {
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
-            } catch ( GLException e ) {
-            	caps.setStereo( !caps.getStereo() );
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
-            }
-    		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
+            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
     		// init and render one frame, which will setup the shared textures
     		sharedDrawable.display();
+    		
+    		// need to check hardware capabilities...
+            caps.setStereo(false);
+            //caps.setStereo(true);
     	}
     	else
     	{
