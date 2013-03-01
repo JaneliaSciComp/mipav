@@ -680,7 +680,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         fireProgressStateChanged(10);
         
-        this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
+        this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0, true); // filter this slice
 
         fireProgressStateChanged("Importing result ...");
         fireProgressStateChanged(90);
@@ -772,7 +772,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
-                                  currentSlice * srcSliceLength);
+                                  currentSlice * srcSliceLength, false);
             }
         } else { // volume kernel requested
             volumeFilterBorder(bdrBuffer, resultBuffer);
@@ -1063,7 +1063,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         fireProgressStateChanged(10);
 
-        this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
+        this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0, true); // filter this slice
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
@@ -1163,7 +1163,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                 fireProgressStateChanged(10 + (80 *currentSlice) / (srcBufferDepth - 1));
               
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
-                                  currentSlice * srcSliceLength);
+                                  currentSlice * srcSliceLength, false);
             }
         } else { // volume kernel requested
             volumeFilterBorder(bdrBuffer, resultBuffer);
@@ -2551,7 +2551,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  destBufferStartingPoint  Starting point for the buffer.
      */
     private void sliceFilterBorder(float[] srcBdrBuffer, float[] destBuffer, int srcBufferStartingPoint,
-                                   int destBufferStartingPoint) {
+                                   int destBufferStartingPoint, boolean showProgress) {
     	int pass;
         int kn;
         boolean loop;
@@ -2576,7 +2576,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
             destBufferIdx = destBufferStartingPoint;
 	        for (destRow = 0; destRow < srcBufferHeight; destRow++) {
-	        	fireProgressStateChanged(10 + (80*pass)/iterations + (80* destRow) / (iterations *(srcBufferHeight - 1)));
+	            if (showProgress) {
+	        	    fireProgressStateChanged(10 + (80*pass)/iterations + (80* destRow) / (iterations *(srcBufferHeight - 1)));
+	            }
 	            srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferOffset;
 	
 	            for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
