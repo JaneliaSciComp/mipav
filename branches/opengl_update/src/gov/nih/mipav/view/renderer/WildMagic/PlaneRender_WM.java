@@ -1362,7 +1362,7 @@ public class PlaneRender_WM extends GPURenderBase
         }
 
         m_kBallPoint = new Polyline( kBuffer, true, true );
-        m_kBallPoint.AttachEffect( new VertexColor3Effect( "ConstantColor", true ) );
+        m_kBallPoint.AttachEffect( new VertexColor3Effect( "ConstantColor" ) );
         m_kBallPoint.AttachGlobalState(m_kZState);
         m_kBallPoint.UpdateRS();
 

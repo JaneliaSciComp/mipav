@@ -48,8 +48,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true));
-        PixelShader kPShader = new PixelShader("SurfaceExtract_P2", false);
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3));
+        PixelShader kPShader = new PixelShader("SurfaceExtract_P2");
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(1);
         kPShader.SetImageName(0,kTexture.GetImage().GetName(), "VolumeExtract");
@@ -69,8 +69,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true ));
-        PixelShader kPShader = new PixelShader("CropClipped", false);
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3 ));
+        PixelShader kPShader = new PixelShader("CropClipped");
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(1);
         kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName(), "volImage");
@@ -93,8 +93,8 @@ public class VolumeCalcEffect extends VolumeClipEffect
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, true ));
-        PixelShader kPShader = new PixelShader("SurfaceExtract", true );
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3 ));
+        PixelShader kPShader = new PixelShader("SurfaceExtract" );
         SetPShader(0,kPShader);
         kPShader.SetTextureQuantity(2);
         kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName(), "bVolumeImageA");

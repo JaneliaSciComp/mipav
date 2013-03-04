@@ -151,7 +151,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	 * 
 	 */
 	public Iridescence() {
-		super("Iridescence", FrameBuffer.BufferingType.BT_QUAD_STEREO);
+		super("Iridescence");
         m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 	
@@ -192,6 +192,9 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
             	m_pkMesh.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
             }
         }
+        
+        m_pkRenderer.ClearScreenOverlay();
+        
 		if ( !m_bStereo) {
 			m_pkRenderer.ClearBuffers();
 			if (m_pkRenderer.BeginScene()) {
@@ -227,6 +230,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 				m_pkRenderer.SetColorMask(true, true, true, true);
 			}
 		}
+        m_pkRenderer.DrawScreenOverlay();
 		m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();
 

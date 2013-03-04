@@ -22,6 +22,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
@@ -3358,8 +3359,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     		sharedDrawable.display();
     		
     		// need to check hardware capabilities...
-            caps.setStereo(false);
-            //caps.setStereo(true);
+            if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+            {
+            	caps.setStereo(true);
+            }
     	}
     	else
     	{

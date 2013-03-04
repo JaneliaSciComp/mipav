@@ -79,14 +79,14 @@ public class VolumeSlices extends VolumeObject
         m_kVolumePreShaderTransparent = new VolumePreRenderEffect[3];
         for ( int i = 0; i < 3; i++ )
         {
-        	m_kBoundingBoxShaderSolid[i] = new VolumePreRenderEffect(false, true, false);
-        	m_kBoundingBoxShaderTransparent[i] = new VolumePreRenderEffect(false, true, true);
+        	m_kBoundingBoxShaderSolid[i] = new VolumePreRenderEffect(false, true);
+        	m_kBoundingBoxShaderTransparent[i] = new VolumePreRenderEffect(false, true);
         	
             m_akPlaneEffect[i] = new VolumePlaneEffect( m_kVolumeImageA, m_kVolumeImageB, true, false );
             m_akPlaneEffectTransparent[i] = new VolumePlaneEffect( m_kVolumeImageA, m_kVolumeImageB, true, true );
             
-            m_kVolumePreShader[i] = new VolumePreRenderEffect(true, true, false);
-            m_kVolumePreShaderTransparent[i] = new VolumePreRenderEffect(false, true, true);
+            m_kVolumePreShader[i] = new VolumePreRenderEffect(true, true);
+            m_kVolumePreShaderTransparent[i] = new VolumePreRenderEffect(false, true);
         }
 
         CreatePlanes( );

@@ -305,8 +305,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	public ClassificationWidgetEffect (Texture kTexture, int type)
 	{
 		SetPassQuantity(1);
-		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
-		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
+		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2  ));
+		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText()));
 
 		m_kWidgetState.UseWidget[0] = 1.0f;
 
@@ -370,8 +370,8 @@ public class ClassificationWidgetEffect extends TextureEffect implements Seriali
 	{
 		String rkBaseName = (String)in.readObject();
 		SetPassQuantity(1);
-		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
-		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText(), true));
+		m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2 ));
+		m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", createProgramText()));
 		m_kWidgetState = (ClassificationWidgetState)in.readObject();
 	}
 	

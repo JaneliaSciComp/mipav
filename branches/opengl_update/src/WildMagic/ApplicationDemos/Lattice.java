@@ -141,8 +141,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 	 * 
 	 */
 	public Lattice() {
-		super( "Lattice", FrameBuffer.BufferingType.BT_QUAD_STEREO );
-		//super( "Lattice"  );
+		super( "Lattice"  );
         m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 

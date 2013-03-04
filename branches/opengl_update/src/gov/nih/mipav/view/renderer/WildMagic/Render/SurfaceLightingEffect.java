@@ -59,7 +59,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
     public SurfaceLightingEffect (VolumeImage kImageA, boolean bTransparent)
     {
         SetPassQuantity(1);
-        m_kVVertexLighting = new VertexShader("MipavLighting", true);
+        m_kVVertexLighting = new VertexShader("MipavLighting");
         if ( !bTransparent )
         {
             m_kPVertexLighting = new PixelShader("PassThrough4");
@@ -74,14 +74,14 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kVolumeLUTNew = new Texture();
         m_kVolumeLUTNew.SetName("ColorMapNew");
         
-        m_kVPixelLighting = new VertexShader("MipavLightingFragmentV", true);
+        m_kVPixelLighting = new VertexShader("MipavLightingFragmentV");
         if ( !bTransparent )
         {
-            m_kPPixelLighting = new PixelShader("MipavLightingFragmentP", true);
+            m_kPPixelLighting = new PixelShader("MipavLightingFragmentP");
         }
         else
         {
-            m_kPPixelLighting = new PixelShader("MipavLightingFragment_TransparencyP", true);
+            m_kPPixelLighting = new PixelShader("MipavLightingFragment_TransparencyP");
         }
         if ( kImageA != null )
         {

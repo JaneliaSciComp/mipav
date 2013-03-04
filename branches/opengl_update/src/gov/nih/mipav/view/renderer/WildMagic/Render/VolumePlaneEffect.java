@@ -42,7 +42,7 @@ implements StreamInterface
     {
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
-        Init( bUnique, bTransparency );
+        Init( bTransparency );
     }
 
     /**
@@ -230,20 +230,20 @@ implements StreamInterface
         } 
     }
     /** Initializes the ShaderEffect vertex and pixel shader programs. */
-    private void Init ( boolean bUnique, boolean bTransparency )
+    private void Init ( boolean bTransparency )
     {
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3, bUnique));
+        SetVShader(0,new VertexShader("TextureV", Shader.vertexShaderTexture3));
         PixelShader kPShader = null;
         if ( !bTransparency )
         {
-            kPShader = new PixelShader("Color_Opacity_TextureP", bUnique);
+            kPShader = new PixelShader("Color_Opacity_TextureP");
         }
         else
         {
-            kPShader = new PixelShader("Color_Opacity_Texture_TransparencyP", bUnique);
-            }
+            kPShader = new PixelShader("Color_Opacity_Texture_TransparencyP");
+        }
         SetPShader(0,kPShader);
 
         kPShader.SetTextureQuantity(5);

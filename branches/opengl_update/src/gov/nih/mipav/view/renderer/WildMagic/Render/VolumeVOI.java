@@ -712,7 +712,7 @@ public class VolumeVOI extends VolumeObject
 	private void scaleVOI()
 	{
 		m_kVOIShader = new VolumeVOIEffect(false);
-		m_kVOIPreShader = new VolumePreRenderEffect(true, true, false);
+		m_kVOIPreShader = new VolumePreRenderEffect(true, true);
 
 		m_kScene = new Node();
 		m_kCull = new CullState();

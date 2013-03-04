@@ -1927,8 +1927,8 @@ public class VolumeSurface extends VolumeObject
     /** Creates the scene graph. */
     private void CreateScene ( )
     {
-        m_kVolumePreShader = new VolumePreRenderEffect(true, true, false);
-        m_kVolumePreShaderTransparent = new VolumePreRenderEffect(true, true, true);
+        m_kVolumePreShader = new VolumePreRenderEffect(true, true);
+        m_kVolumePreShaderTransparent = new VolumePreRenderEffect(true, true);
         m_kScene = new Node();
 
         m_kCull = new CullState();

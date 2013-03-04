@@ -27,6 +27,9 @@
  */
  
 package WildMagic.ApplicationDemos;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
+
 import java.util.List;
 
 import javax.media.opengl.GL3;
@@ -90,7 +93,10 @@ public class SharedDemo extends Thread {
         sharedDrawable.display();
         
         // check hardward for stereo ability...
-        //caps.setStereo(true);
+        if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+        {
+        	caps.setStereo(true);
+        }
     }
 
     protected void releaseShared() {

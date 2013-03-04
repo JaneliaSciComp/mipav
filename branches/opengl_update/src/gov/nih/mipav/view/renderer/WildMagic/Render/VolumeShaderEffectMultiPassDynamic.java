@@ -558,7 +558,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", "", true );
+        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", "" );
         createProgramText();
                  
         SetVShader(0,m_pkVShader);

@@ -17,17 +17,8 @@ public class MipavLightingEffect extends ShaderEffect
     /** Creates a MIPAV lighting effect. */
     public MipavLightingEffect ()
     {
-        this(false);
-    }
-    
-    /**
-     * Create a new MIPAV lighting effect. 
-     * @param bUnique determines if the VertexShader is shared or unique.
-     */
-    public MipavLightingEffect ( boolean bUnique )
-    {
         super(1);
-        m_kVShader.set(0, new VertexShader("MipavLighting", bUnique));
+        m_kVShader.set(0, new VertexShader("MipavLighting"));
         m_kPShader.set(0, new PixelShader("PassThrough4"));
     }
 

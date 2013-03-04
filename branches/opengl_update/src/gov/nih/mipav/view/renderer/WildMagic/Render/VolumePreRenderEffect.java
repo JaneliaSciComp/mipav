@@ -35,24 +35,24 @@ public class VolumePreRenderEffect extends ShaderEffect
     /** Creates an new VolumePreRenderEffect 
      * @param bUnique when true create unique shader programs, when false share shader programs.
      */
-    public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bUnique, boolean bTransparent)
+    public VolumePreRenderEffect (boolean bUseTextureCoords, boolean bTransparent)
     {
         super(1);
         if ( bUseTextureCoords )
         {
-            m_kVShader.set(0, new VertexShader("VolumePreRender", bUnique));
+            m_kVShader.set(0, new VertexShader("VolumePreRender"));
         }
         else
         {
-            m_kVShader.set(0, new VertexShader("VolumePreRenderColor", bUnique));            
+            m_kVShader.set(0, new VertexShader("VolumePreRenderColor"));            
         }
         if ( bTransparent )
         {
-            m_kPShader.set(0, new PixelShader("PassThrough_Transparency4", bUnique));
+            m_kPShader.set(0, new PixelShader("PassThrough_Transparency4"));
         }
         else
         {
-            m_kPShader.set(0, new PixelShader("PassThrough4", bUnique));
+            m_kPShader.set(0, new PixelShader("PassThrough4"));
         }
     }
     
@@ -72,8 +72,8 @@ public class VolumePreRenderEffect extends ShaderEffect
     	    	+ "varColor.a = 1;"
     			+ "}"
     			);
-    	m_kVShader.set( 0,  new VertexShader( "VolumePreRenderMatrix", kShaderText, true ) );
-    	m_kPShader.set( 0, new PixelShader( "PassThrough4", true ) );
+    	m_kVShader.set( 0,  new VertexShader( "VolumePreRenderMatrix", kShaderText ) );
+    	m_kPShader.set( 0, new PixelShader( "PassThrough4" ) );
     }
     
     /**
