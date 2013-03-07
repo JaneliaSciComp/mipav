@@ -210,7 +210,7 @@ public class FileTrackVis extends FileBase {
 			float zRes = image.getResolutions(0)[2];
 			
 			for(int i=0; i<numTracks && raFile.getFilePointer() < raFile.length(); i++) {
-				System.out.println("Track "+i);
+				//System.out.println("Track "+i);
 				int numPoints = this.readInt(bigEndian);
 				for(int j=0; j<numPoints; j++) {
 					x = this.readFloat(bigEndian);
@@ -221,9 +221,9 @@ public class FileTrackVis extends FileBase {
 					y = y / yRes;
 					z = z / zRes;
 					
-					System.out.println("Point: "+x+", "+y+", "+z);
+					//System.out.println("Point: "+x+", "+y+", "+z);
 					
-					xInt = (int)x; //TODO: Provide better method for translating to integer grid
+					xInt = (int)x; //TODO: Import as VOIContours to preserve float specification
 					yInt = (int)y;
 					zInt = (int)z;
 					points[0] = xInt;
@@ -247,12 +247,12 @@ public class FileTrackVis extends FileBase {
 					
 					short s = image.get(points).shortValue();
 					short sTry = image.getShort(xInt, yInt, zInt);
-					System.out.println("S: "+s);
+					//System.out.println("S: "+s);
 					
 					for(int k=3; k<numData; k++) { //in this case must be a 4D dataset
 						points[3] = k-3;
 						data = this.readFloat(bigEndian);
-						System.out.println("Data at point : "+data);
+						//System.out.println("Data at point : "+data);
 						image.set(points, (short)data);
 					}
 				}
