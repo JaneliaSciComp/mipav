@@ -136,6 +136,10 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     private int functionFit;
     
     private int numVariables;
+    
+    private boolean useAltTimeTag = false;
+    
+    private String altTimeTag;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -147,6 +151,16 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
     public AlgorithmTimeFitting(final ModelImage destImage, final ModelImage srcImage, final ModelImage exitStatusImage, final boolean useLog,
             final int functionFit, final int numVariables, boolean findInitialFromData, double initial[], boolean useBounds[],
             double lowBounds[], double highBounds[]) {
+        this(destImage, srcImage, exitStatusImage, useLog, functionFit, numVariables, findInitialFromData, initial, useBounds, lowBounds, highBounds, false, "");
+    }
+    
+    /**
+     * Creates a new AlgorithmTimeFitting object.
+     * 
+     */
+    public AlgorithmTimeFitting(final ModelImage destImage, final ModelImage srcImage, final ModelImage exitStatusImage, final boolean useLog,
+            final int functionFit, final int numVariables, boolean findInitialFromData, double initial[], boolean useBounds[],
+            double lowBounds[], double highBounds[], boolean useAltTimeTag, String altTimeTag) {
 
         super(destImage, srcImage);
         this.exitStatusImage = exitStatusImage;
@@ -158,6 +172,9 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
         this.useBounds = useBounds;
         this.lowBounds = lowBounds;
         this.highBounds = highBounds;
+        // only used if selected by the user, tag is in proper format, and the image is DICOM with the given tag
+        this.useAltTimeTag = useAltTimeTag;
+        this.altTimeTag = altTimeTag;
     }
 
     // ~ Methods
@@ -347,17 +364,33 @@ public class AlgorithmTimeFitting extends AlgorithmBase {
             timeVals[t] = t * srcImage.getFileInfo()[0].getResolutions()[3];
             if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                 if ( ((FileInfoDicom) srcImage.getFileInfo(t)).getTagTable() !=  null) {
-                    // Acquisition time
-                    timeString = ((String) ((FileInfoDicom) srcImage.getFileInfo(t)).getTagTable().getValue("0008,0032"));
-                    if (timeString != null) {
-                        firstColonIndex = timeString.indexOf(":", 0);
-                        lastColonIndex = timeString.lastIndexOf(":", timeString.length() - 1);
-                        hourString = timeString.substring(0, firstColonIndex);
-                        minuteString = timeString.substring(firstColonIndex + 1, lastColonIndex);
-                        secondString = timeString.substring(lastColonIndex + 1);
-                        timeVals[t] = 3600.0 * Double.valueOf(hourString).doubleValue() + 60.0
-                                * Double.valueOf(minuteString).doubleValue() + Double.valueOf(secondString).doubleValue(); 
-                    } // if (timeString != null)
+                	if (useAltTimeTag) {
+                		if (altTimeTag.matches("^[(]?\\p{XDigit}{4}\\s*,\\s*\\p{XDigit}{4}[)]?$")) {
+                			try {
+                				String strVal = ((String) ((FileInfoDicom) srcImage.getFileInfo(t)).getTagTable().getValue(altTimeTag));
+                				if (strVal != null) {
+                					timeVals[t] = Double.parseDouble(strVal);
+                				}
+                			} catch (NumberFormatException e) {
+                				Preferences.debug("Unable to convert value of alt time tag (" + altTimeTag + ") to a double value on slice index " + t + "\n", Preferences.DEBUG_ALGORITHM);
+                				e.printStackTrace();
+                			}
+                    	} else {
+                    		Preferences.debug("Incorrect format for alternate time value DICOM tag: " + useAltTimeTag + ".  It should be in a format like 0008,0032.\n", Preferences.DEBUG_ALGORITHM);
+                    	}
+                	} else {
+	                    // Acquisition time
+	                    timeString = ((String) ((FileInfoDicom) srcImage.getFileInfo(t)).getTagTable().getValue("0008,0032"));
+	                    if (timeString != null) {
+	                        firstColonIndex = timeString.indexOf(":", 0);
+	                        lastColonIndex = timeString.lastIndexOf(":", timeString.length() - 1);
+	                        hourString = timeString.substring(0, firstColonIndex);
+	                        minuteString = timeString.substring(firstColonIndex + 1, lastColonIndex);
+	                        secondString = timeString.substring(lastColonIndex + 1);
+	                        timeVals[t] = 3600.0 * Double.valueOf(hourString).doubleValue() + 60.0
+	                                * Double.valueOf(minuteString).doubleValue() + Double.valueOf(secondString).doubleValue(); 
+	                    } // if (timeString != null)
+                	}
                 }
             }
         }

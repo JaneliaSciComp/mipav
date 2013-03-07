@@ -124,6 +124,16 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     
     private JRadioButton rayleighFit;
     
+    private JCheckBox altTimeCheckBox;
+    
+    private JLabel altTimeTagLabel;
+    
+    private JTextField altTimeTagField;
+    
+    private boolean useAltTime = false;
+	
+    private String altTimeDicomTag;
+    
     private JCheckBox logCheckBox;
     
     private boolean useLog = false;
@@ -594,7 +604,7 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     		exitStatusImage = new ModelImage(ModelStorageBase.INTEGER, statusExtents, image.getImageName() + "_exit_status");
     		
     		tfAlgo = new AlgorithmTimeFitting(resultImage, image, exitStatusImage, useLog, functionFit, numVariables, 
-    		                                  findInitialFromData, initial, useBounds, lowBounds, highBounds);
+    		                                  findInitialFromData, initial, useBounds, lowBounds, highBounds, useAltTime, altTimeDicomTag);
     
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -826,6 +836,33 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         fittingPanel.add(textImage, gbc);
+        
+        altTimeCheckBox = new JCheckBox("Use alternate time values from a DICOM tag instead of time resolution or Acquistion Time (0008,0032)", false);
+        altTimeCheckBox.setFont(serif12);
+        altTimeCheckBox.setForeground(Color.black);
+        altTimeCheckBox.addItemListener(this);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        fittingPanel.add(altTimeCheckBox, gbc);
+        
+        altTimeTagLabel = new JLabel("Alternate time value DICOM tag (use format xxxx,yyyy)");
+        altTimeTagLabel.setForeground(Color.black);
+        altTimeTagLabel.setFont(serif12);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        fittingPanel.add(altTimeTagLabel, gbc);
+        altTimeTagLabel.setEnabled(false);
+        
+        altTimeTagField = new JTextField(30);
+        altTimeTagField.setFont(serif12);
+        altTimeTagField.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        fittingPanel.add(altTimeTagField, gbc);
+        altTimeTagField.setEnabled(false);
         
         logCheckBox = new JCheckBox("Fit the log10 of intensity values", false);
         logCheckBox.setFont(serif12);
@@ -1394,7 +1431,12 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     private boolean setVariables() {
         String tmpStr;
 		
-    	image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
+    	if (imageList.getSelectedItem().toString().equalsIgnoreCase("Load image...")) {
+    		MipavUtil.displayError("You must select an image to perform the time fitting on.");
+    		return false;
+    	} else {
+    		image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
+    	}
     	
     	if(image == null) {
     		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
@@ -1411,7 +1453,13 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     	    MipavUtil.displayError("Image must be a black and white image");
     	    return false;
     	}
-        
+    	
+    	useAltTime = altTimeCheckBox.isSelected();
+    	altTimeDicomTag = altTimeTagField.getText().trim();
+    	if (!altTimeDicomTag.matches("^[(]?\\p{XDigit}{4}\\s*,\\s*\\p{XDigit}{4}[)]?$")) {
+    		Preferences.debug("Incorrect format for alternate time value DICOM tag: " + altTimeDicomTag + ".  It should be in a format like 0008,0032.\n", Preferences.DEBUG_ALGORITHM);
+    		altTimeDicomTag = "";
+    	}
         
     	useLog = logCheckBox.isSelected();
     	
@@ -1642,13 +1690,6 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
     	return true;
     }
     
-    
-    
-    
-	
-
-	
-
 	/**
 	 * set GUI from params
 	 */
@@ -1672,19 +1713,17 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         return resultImage;
     }
     
-    
-	
 	/**
-     * item staate changed
+     * item state changed
      *
      * @param  event  DOCUMENT ME!
      */
     public void itemStateChanged(ItemEvent event) {
-        
+        if (event.getSource() == altTimeCheckBox) {
+        	altTimeTagLabel.setEnabled(altTimeCheckBox.isSelected());
+    		altTimeTagField.setEnabled(altTimeCheckBox.isSelected());
+        }
     }
-
-
-
     
     /**
      *  window closing
@@ -1696,9 +1735,4 @@ public class JDialogTimeFitting extends JDialogScriptableBase implements Algorit
         }
         dispose();
     }
-
-	
-
-
-	
 }
