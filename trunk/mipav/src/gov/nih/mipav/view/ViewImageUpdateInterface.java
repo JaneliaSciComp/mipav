@@ -18,14 +18,14 @@ public interface ViewImageUpdateInterface {
     /**
      * setSlice.
      *
-     * @param  slice  DOCUMENT ME!
+     * @param  slice  Current slice
      */
     void setSlice(int slice);
 
     /**
      * setTimeSlice.
      *
-     * @param  tSlice  DOCUMENT ME!
+     * @param  tSlice  Current time volume
      */
     void setTimeSlice(int tSlice);
 
@@ -34,14 +34,14 @@ public interface ViewImageUpdateInterface {
      * This methods calls the componentImage's REPAINT method to redraw the screen. The extents on this image have
      * changed, so the extents need to be read in again and menus, panes and slide bars adjusted accordingly.
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean confirming successful update
      */
     boolean updateImageExtents();
 
     /**
      * This methods calls the componentImage's REPAINT method to redraw the screen. Without LUT changes or image changes
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean confirming successful update
      */
     boolean updateImages();
 
