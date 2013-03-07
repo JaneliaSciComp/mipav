@@ -255,7 +255,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *            exit.
      */
     protected ViewUserInterface(final boolean forceQuiet) {
-        System.out.println("MIPAV STARTED with forceQuite set as " + forceQuiet);
+        System.out.println("MIPAV STARTED with forceQuiet set as " + forceQuiet);
         MipavUtil.setForceQuiet(forceQuiet);
 
         imageFrameVector = new Vector<Frame>();
