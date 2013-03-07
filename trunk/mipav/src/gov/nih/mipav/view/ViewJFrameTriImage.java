@@ -5186,7 +5186,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /**
      * Convenience method created to simplify configureFrame().
      */
-    private void buildLUTs() {
+    protected void buildLUTs() {
 
         // if not a color image and LUTa is null then make a LUT
         if (imageA.isColorImage() == false) {
@@ -5265,7 +5265,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @return float the zoom value required to show the image on-screen at no more than desiredWidth and no more than
      *         desired height
      */
-    private float getOptimalZoom(final int desiredWidth, final int desiredHeight) {
+    protected float getOptimalZoom(final int desiredWidth, final int desiredHeight) {
         final int[] extentsAxial = triImage[ViewJFrameTriImage.AXIAL_A].getExtents();
         final int[] extentsSagittal = triImage[ViewJFrameTriImage.SAGITTAL_A].getExtents();
         final int[] extentsCoronal = triImage[ViewJFrameTriImage.CORONAL_A].getExtents();
@@ -5296,7 +5296,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @param bLayout the new layout, = 2x2 layout when true and 3x1 when false
      */
-    private void setOldLayout(final boolean bLayout) {
+    protected void setOldLayout(final boolean bLayout) {
         oldLayout = bLayout;
         Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
 
@@ -5397,7 +5397,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @param frame frame the frame number
      */
-    private void zoomInFrame(final int frame) {
+    protected void zoomInFrame(final int frame) {
         final float oldZoom = triImage[frame].getZoomX();
 
         float newZoom = 1;
@@ -5439,7 +5439,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @param frame frame the frame number
      */
-    private void zoomOutFrame(final int frame) {
+    protected void zoomOutFrame(final int frame) {
         final float oldZoom = triImage[frame].getZoomX();
 
         float newZoom = 1;
