@@ -12075,7 +12075,7 @@ ib = Math.min(nb, k-i+1);
        *  RESID   (output) DOUBLE PRECISION
        *          The test ratio:  norm(A - Q * B * P') / ( n * norm(A) * EPS )
        */
-    private void dbdt01(int m, int n, int kd, double[][] A, int lda, double[][] Q,
+    public void dbdt01(int m, int n, int kd, double[][] A, int lda, double[][] Q,
                         int ldq, double[] d, double[] e, double[][] PT, int ldpt,
                         double[] work, double[] resid) {
         int i;
@@ -12300,7 +12300,7 @@ ib = Math.min(nb, k-i+1);
     *          RESID = norm( I - U * U' ) / ( n * EPS ), if ROWCOL = 'R', or
     *          RESID = norm( I - U' * U ) / ( m * EPS ), if ROWCOL = 'C'.
     */
-    private void dort01(char rowcol, int m, int n, double[][] U, int ldu,
+    public void dort01(char rowcol, int m, int n, double[][] U, int ldu,
                         double[][] work, int lwork, double[] resid) {
         char transu;
         int i;
