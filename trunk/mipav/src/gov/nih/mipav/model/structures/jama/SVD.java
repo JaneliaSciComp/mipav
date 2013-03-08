@@ -10,6 +10,530 @@ public class SVD implements java.io.Serializable {
     
     public SVD () {}
     
+    /*  ddrvbd checks the singular value dcomposition (SVD) driver dgesvd.
+      
+       This is a port of a portion of LAPACK test routine DDRVBD.F version 3.4.0 
+       provided by University of Tennessee, University of California Berkeley,
+       University of Colorado Denver, and NAG Ltd.
+       November, 2011
+       
+       dgesvd factors A = U diag(s) VT, where U and VT are
+       orthogonal and diag(s) is diagonal with the entries of the array s
+       on its diagonal. The entries of s are the singular values,
+       nonnegative and stored in decreasing order.  U and VT can be
+       optionally not computed, overwritten on A, or computed partially.
+      
+       A is m by n. Let mnmin = min(m, n). s has dimension mnmin.
+       U can be m by m or m by mnmin. VT can be n by n or mnmin by n.
+      
+       When ddrvbd is called, a number of matrix "sizes" (m's and n's)
+       and a number of matrix "types" are specified.  For each size (m,n)
+       and each type of matrix, and for the minimal workspace as well as
+       workspace adequate to permit blocking, an  m x n  matrix "A" will be
+       generated and used to test the SVD routines.  For each matrix, A will
+       be factored as A = U diag(s) VT and the following 7 tests computed:
+      
+       Test for dgesvd:
+    
+       (1)    | A - U diag(s) VT | / ( |A| max(m,n) ulp )
+    
+       (2)    | I - U'U | / ( m ulp )
+      
+       (3)    | I - VT VT' | / ( n ulp )
+    
+       (4)    s contains mnmin nonnegative values in decreasing order.
+              (Return 0 if true, 1/ulp if false.)
+      
+       (5)    | U - Upartial | / ( m ulp ) where Upartial is a partially
+              computed U.
+      
+       (6)    | VT - VTpartial | / ( n ulp ) where VTpartial is a partially
+              computed VT.
+      
+       (7)    | s - spartial | / ( mnmin ulp |s| ) where spartial is the
+              vector of singular values from the partial SVD
+              
+       The "sizes" are specified by the arrays mm[0:nsizes-1] and
+       nn[0:nsizes-1]; the value of each element pair (mm[j],nn[j])
+       specifies one size.  The "types" are specified by a boolean array
+       dotype[0:ntypes-1]; if dotype[j] is true, then matrix type "j"
+       will be generated.
+       Currently, the list of possible types is:
+      
+       (1)  The zero matrix.
+       (2)  The identity matrix.
+       (3)  A matrix of the form  U D V, where U and V are orthogonal and
+            D has evenly spaced entries 1, ..., ulp with random signs
+            on the diagonal.
+       (4)  Same as (3), but multiplied by the underflow-threshold / ulp.
+       (5)  Same as (3), but multiplied by the overflow-threshold * ulp.
+       
+       @param input int nsizes  
+              The number of matrix sizes (m,n) contained in the vectors mm and nn.
+       @param input int[] mm of dimension nsizes
+              The values of the matrix row dimension m.
+       @param input int[] nn of dimension nsizes
+              The values of the matrix column dimension n.
+       @param input int ntypes 
+              The number of elements in dotype.   If it is zero, ddrvbd
+              does nothing.  It must be at least zero.  If it is maxtyp+1
+              and nsizes is 1, then an additional type, maxtyp+1 is
+              defined, which is to use whatever matrices are in A and B.
+              This is only useful if dotype[0:maxtyp-1] is false and
+              dotype[maxtyp] is true.
+       @param input boolean[] dotype of dimension ntypes.
+              If dotype[j] is .true, then for each size (m,n), a matrix
+              of type j will be generated.  If ntypes is smaller than the
+              maximum number of types defined (PARAMETER maxtyp), then
+              types ntypes+1 through maxtyp will not be generated.  If
+              ntypes is larger than maxtyp, dotype[maxtyp] through
+              dotype[ntypes-1] will be ignored.
+       @param input/output int[] iseed of dimension 4.
+              On entry, the seed of the random number generator.  The array
+              elements should be between 0 and 4095; if not they will be
+              reduced mod 4096.  Also, iseed[3] must be odd.
+              On exit, iseed is changed and can be used in the next call to
+              ddrvbd to continue the same random number sequence.
+       @param input double thresh
+              The threshold value for the test ratios.  A result is
+              included in the output file if result >= thresh.  The test
+              ratios are scaled to be O(1), so thresh should be a small
+              multiple of 1, e.g., 10 or 100.  To have every test ratio
+              printed, use thresh = 0.
+       @param output double[][] of dimension (lda, nmax)
+              where nmax is the maximum value of n in nn.
+       @param input int lda
+              The leading dimension of the array A.  lda >= max(1, mmax).
+              where mmax is the maximum value of m in mm.
+       @param output double[][] U of dimension (ldu, mmax)
+       @param input int ldu
+              The leading dimension of the array U.  ldu >= max(1, mmax).
+       @param out double[][] VT of dimension (ldvt, nmax) 
+       @param input int ldvt
+              The leading dimension of array VT.  ldvt >= max(1, nmax).
+       @param out double[][] ASAV of dimension (lda, nmax)
+       @param out double[][] USAV of dimension (ldu, mmax)
+       @param out double[][] VTSAV of dimension (ldvt, nmax)
+       @param out double[] s of dimension (max(min(mm,nn))
+       @param out double[] ssav of dimension (max(min(mm,nn)) 
+       @param out double[] e of dimension (max(min(mm,nn))
+       @param out double[] work of dimension lwork 
+       @param in int lwork 
+              The number of entries in work.  This must be at least
+              max(3*mn+mx,5*mn-4)+2*mn**2 for all pairs
+              pairs  (mn,mx)=( min(mm[j],nn[j], max(mm[j],nn[j]) ) 
+       @param out int[] iwork of dimension at least 8 * min(m,n)
+       @param out int[] info of dimension 1
+              If 0, then everything ran OK.
+                -1: nsizes < 0
+                -2: Some mm[j] < 0
+                -3: Some nn[j] < 0
+                -4: ntypes < 0
+                -7: thresh < 0
+               -10: lda < 1 or lda < mmax, where mmax is max( mm[j] ).
+               -12: ldu < 1 or ldu < mmax.
+               -14: ldvt < 1 or ldvt < nmax, where nmax is max( nn[j] ).
+               -21: lwork too small.
+                If  dlatms or dgesvd returns an error code, the
+                    absolute value of it is returned.  
+     */
+    
+      private void ddrvbd(int nsizes, int[] mm, int[] nn, int ntypes, boolean[] dotype,
+                          int iseed[], double thresh, double[][] A, int lda, double[][]U,
+                          int ldu, double[][] VT, int ldvt, double[][] ASAV, 
+                          double[][] USAV, double[][] VTSAV, double[] s, double[] ssav,
+                          double[] e, double[] work, int lwork, int[] iwork, int[] info) {
+    
+          final int maxtyp = 5;
+          boolean badmm;
+          boolean badnn;
+          char jobq;
+          char jobu;
+          char jobvt;
+          char[] path = new char[3];
+          int i;
+          int iinfo[] = new int[1];
+          int ijq;
+          int iju;
+          int ijvt;
+          int iws;
+          int iwtmp;
+          int j;
+          int jsize;
+          int jtype;
+          int lswork;
+          int m;
+          int minwrk;
+          int mmax;
+          int mnmax;
+          int mnmin;
+          int mtypes;
+          int n;
+          int nfail;
+          int nmax;
+          int ntest;
+          double anorm = 0.0;
+          double dif;
+          double div;
+          double ovfl[] = new double[1];
+          double ulp;
+          double ulpinv;
+          double unfl[] = new double[1];
+          char cjob[] = new char[]{'N', 'O', 'S', 'A'};
+          int ioldsd[] = new int[4];
+          double result[] = new double[7];
+          boolean lerr;
+          boolean ok;
+          String srnamt;
+          int infot;
+          int nunit;
+          int minmmnn;
+          int maxmmnn;
+          double res[] = new double[1];
+          double workArr[][];
+          
+          // Check for errors
+     
+          info[0] = 0;
+          badmm = false;
+          badnn = false;
+          mmax = 1;
+          nmax = 1;
+          mnmax = 1;
+          minwrk = 1;
+          for (j = 0; j < nsizes; j++) {
+             mmax = Math.max(mmax, mm[j]);
+             if (mm[j] < 0) {
+                badmm = true;
+             }
+             nmax = Math.max(nmax, nn[j]);
+             if (nn[j] < 0) {
+                badnn = true;
+             }
+             mnmax = Math.max(mnmax, Math.min(mm[j], nn[j]));
+             minmmnn = Math.min(mm[j], nn[j]);
+             maxmmnn = Math.max(mm[j], nn[j]);
+             minwrk = Math.max(minwrk, Math.max(3*minmmnn + maxmmnn, 
+                      5*Math.min(mm[j], nn[j]-4 ) )+2*minmmnn*minmmnn);
+          } // for (j = 0; j < nsizes; j++)
+    
+          // Check for errors
+    
+          if (nsizes < 0) {
+             info[0] = -1;
+          }
+          else if (badmm) {
+             info[0] = -2;
+          }
+          else if (badnn) {
+             info[0] = -3;
+          }
+          else if (ntypes < 0) {
+             info[0] = -4;
+          }
+          else if(lda < Math.max(1, mmax)) {
+             info[0] = -10;
+          }
+          else if (ldu < Math.max(1, mmax)) {
+             info[0] = -12;
+          }
+          else if (ldvt < Math.max(1, nmax)) {
+             info[0] = -14;
+          }
+          else if (minwrk > lwork) {
+             info[0] = -21;
+          }
+    
+          if (info[0] != 0) {
+             MipavUtil.displayError("ddrvbd had info[0] = " + info[0]);
+             return;
+          }
+    
+          // Initialize constants
+    
+          path[0] = 'D'; // Double precision
+          path[1] = 'B';
+          path[2] = 'D';
+          nfail = 0;
+          ntest = 0;
+          unfl[0] = ge.dlamch('S'); // Safe minimum
+          ovfl[0] = 1.0 / unfl[0];
+          ge.dlabad(unfl, ovfl);
+          ulp = ge.dlamch('P'); // Precision
+          ulpinv = 1.0 / ulp;
+          infot = 0;
+    
+          // Loop over sizes, types
+    
+          for (jsize = 0; jsize < nsizes; jsize++) {
+             m = mm[jsize];
+             n = nn[jsize];
+             mnmin = Math.min(m, n);
+    
+             if (nsizes != 1) {
+                mtypes = Math.min(maxtyp, ntypes);
+             }
+             else {
+                mtypes = Math.min(maxtyp+1, ntypes);
+             }
+    
+             for (jtype = 1; jtype <= mtypes; jtype++) {
+                if (!dotype[jtype-1]) {
+                   continue;
+                }
+    
+                for (j = 0; j < 4; j++) {
+                   ioldsd[j] = iseed[j];
+                }
+    
+                // Compute "A"
+     
+                if (mtypes <= maxtyp) {
+                    if (jtype == 1) {
+        
+                       // Zero matrix
+        
+                       ge.dlaset('F', m, n, 0.0, 0.0, A, lda);
+        
+                    } // if (jtype == 1)
+                    else if (jtype == 2) {
+        
+                       // Identity matrix
+         
+                       ge.dlaset('F', m, n, 0.0, 1.0, A, lda);
+        
+                    } // else if (jtype == 2)
+                    else {
+        
+                       // (Scaled) random matrix
+        
+                       if (jtype == 3) {
+                          anorm = 1.0;
+                       }
+                       if (jtype == 4) {
+                          anorm = unfl[0] / ulp;
+                       }
+                       if (jtype == 5) {
+                          anorm = ovfl[0]*ulp;
+                       }
+                       ge.dlatms(m, n, 'U', iseed, 'N', s, 4, (double)mnmin,
+                                 anorm, m-1, n-1, 'N', A, lda, work, iinfo);
+                       if (iinfo[0] != 0) {
+                          Preferences.debug("Genrator ddrvbd returned info[0] = " + iinfo[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                          Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                          Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                          Preferences.debug("jtype = " + jtype + "\n", Preferences.DEBUG_ALGORITHM);
+                          for (i = 0; i < 3; i++) {
+                              Preferences.debug("ioldsd["+i+"] = " + ioldsd[i] + "\n", Preferences.DEBUG_ALGORITHM);
+                          }
+                          info[0] = Math.abs(iinfo[0]);
+                          return;
+                       } // if (iinfo[0] != 0)
+                    } // else 
+    
+                } // if (mtypes <= maxtyp)
+                ge.dlacpy('F', m, n, A, lda, ASAV, lda);
+    
+                // Do for minimal and adequate (for blocking) workspace
+    
+                for (iws = 1; iws <= 4; iws++) {
+    
+                   for (j = 0; j < 7; j++) {
+                      result[j] = -1.0;
+                   } // for (j = 0; j < 7; j++)
+     
+                   // Test dgesvd: Factorize A
+    
+                   iwtmp = Math.max(3*Math.min(m, n)+Math.max(m, n), 5*Math.min(m, n));
+                   lswork = iwtmp + (iws-1)*(lwork-iwtmp) / 3;
+                   lswork = Math.min(lswork, lwork);
+                   lswork = Math.max(lswork, 1);
+                   if (iws == 4) {
+                      lswork = lwork;
+                   }
+     
+                   if (iws > 1) {
+                      ge.dlacpy('F', m, n, ASAV, lda, A, lda);
+                   }
+                   srnamt = new String("DGESVD");
+                   dgesvd('A', 'A', m, n, A, lda, ssav, USAV, ldu,
+                          VTSAV, ldvt, work, lswork, iinfo);
+                   if (iinfo[0] != 0) {
+                      Preferences.debug("GESVD ddrvbd returned info[0] = " + iinfo[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                      Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                      Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                      Preferences.debug("jtype = " + jtype + "\n", Preferences.DEBUG_ALGORITHM);
+                      Preferences.debug("lswork = " + lswork + "\n", Preferences.DEBUG_ALGORITHM);
+                      for (i = 0; i < 3; i++) {
+                          Preferences.debug("ioldsd["+i+"] = " + ioldsd[i] + "\n", Preferences.DEBUG_ALGORITHM);
+                      }
+                      info[0] = Math.abs(iinfo[0]);
+                      return;
+                   } // if (iinfo[0] != 0)
+    
+                   // Do tests 1--4
+    
+                   gi.dbdt01(m, n, 0, ASAV, lda, USAV, ldu, ssav, e,
+                                VTSAV, ldvt, work, result);
+                   if (m != 0 && n != 0) {
+                      workArr = new double[Math.max(m,n)][Math.max(m,n)];
+                      gi.dort01('C', m, m, USAV, ldu, workArr, lwork, res);
+                      result[1] = res[0];
+                      gi.dort01('R', n, n, VTSAV, ldvt, workArr, lwork, res);
+                      result[2] = res[0];
+                   } // if (m != 0 && n != 0)
+                   result[3] = 0.0;
+                   for (i = 0; i < mnmin - 1; i++) {
+                      if (ssav[i] < ssav[i+1]) {
+                         result[3] = ulpinv;
+                      }
+                      if (ssav[i] < 0.0) {
+                         result[3] = ulpinv;
+                      }
+                   } // for (i = 0; i < mnmin - 1; i++)
+                   if (mnmin >= 1) {
+                      if (ssav[mnmin-1] < 0.0) {
+                         result[3] = ulpinv;
+                      }
+                   } // if (mnmin >= 1)
+    
+                   // Do partial SVDs, comparing to SSAV, USAV, and VTSAV
+    
+                   result[4] = 0.0;
+                   result[5] = 0.0;
+                   result[6] = 0.0;
+                   for (iju = 0; iju <= 3; iju++) {
+                      for (ijvt = 0; ijvt <= 3; ijvt++) {
+                         if((iju == 3 && ijvt == 3) ||
+                            (iju == 1 && ijvt == 1)) {
+                             continue;
+                         }
+                         jobu = cjob[iju];
+                         jobvt = cjob[ijvt];
+                         ge.dlacpy('F', m, n, ASAV, lda, A, lda);
+                         srnamt = new String("DGESVD");
+                         dgesvd(jobu, jobvt, m, n, A, lda, s, U, ldu,
+                                VT, ldvt, work, lswork, iinfo);
+     
+                         //Compare U
+    
+                         dif = 0.0;
+                        /* if (m > 0 && n > 0) {
+                            if (iju == 1) {
+                               CALL DORT03( 'C', M, MNMIN, M, MNMIN, USAV,
+         $                                  LDU, A, LDA, WORK, LWORK, DIF,
+         $                                  IINFO )
+                            }
+                            else if (iju == 2) {
+                               CALL DORT03( 'C', M, MNMIN, M, MNMIN, USAV,
+         $                                  LDU, U, LDU, WORK, LWORK, DIF,
+         $                                  IINFO )
+                            }
+                            else if (iju == 3) {
+                               CALL DORT03( 'C', M, M, M, MNMIN, USAV, LDU,
+         $                                  U, LDU, WORK, LWORK, DIF,
+         $                                  IINFO )
+                            }
+                         } // if (m > 0 && n > 0)
+                         result[4] = Math.max(result[4], dif);
+    
+                         // Compare VT
+    
+                         dif = 0.0;
+                         if (m > 0 && n > 0) {
+                            if (ijvt == 1) {
+                               CALL DORT03( 'R', N, MNMIN, N, MNMIN, VTSAV,
+         $                                  LDVT, A, LDA, WORK, LWORK, DIF,
+         $                                  IINFO )
+                            }
+                            else if (ijvt == 2) {
+                               CALL DORT03( 'R', N, MNMIN, N, MNMIN, VTSAV,
+         $                                  LDVT, VT, LDVT, WORK, LWORK,
+         $                                  DIF, IINFO )
+                            }
+                            else if (ijvt == 3) {
+                               CALL DORT03( 'R', N, N, N, MNMIN, VTSAV,
+         $                                  LDVT, VT, LDVT, WORK, LWORK,
+         $                                  DIF, IINFO )
+                            }
+                         } // if (m > 0 && n > 0)*/
+                         result[5] = Math.max(result[5], dif);
+    
+                         // Compare s
+    
+                         dif = 0.0;
+                         div = Math.max(mnmin*ulp*s[0], unfl[0]);
+                         for (i = 0; i < mnmin - 1; i++) {
+                            if (ssav[i] < ssav[i+1]) {
+                               dif = ulpinv;
+                            }
+                            if (ssav[i] < 0.0) {
+                               dif = ulpinv;
+                            }
+                            dif = Math.max(dif, Math.abs(ssav[i] - s[i]) / div);
+                         } // for (i = 0; i < mnmin - 1; i++)
+                         result[6] = Math.max(result[6], dif);
+                      } // for (ijvt = 0; ijvt <= 3; ijvt++)
+                   } // for (iju = 0; iju <= 3; iju++)
+    
+                   // End of Loop -- Check for result[j] >= thresh
+    
+                   for (j = 0; j < 7; j++) {
+                      if (result[j] >= thresh) {
+                         if (nfail == 0) {
+                            Preferences.debug("SVD -- Real Singular Value Decompostion Driver\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("Matrix types (see ddrvbd for details) :\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("1 = Zero matrix\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("2 = Identity matrix\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("3 = Evenly spaced singular values near 1\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("4 = Evenly spaced singular values near underflow\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("5 = Evenly spaced singular values near overflow\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("Test performed: (A is dense, U and V are orthogonal\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("s is an array, and Upartial, VTpartial, and\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("spartial are partially computed U, VT, and s\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("1 = | A - U diag(s) VT | / ( |A| max(m,n) ulp)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("2 = | I - U**T U | / ( m ulp)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("3 = | I - VT VT**T | / (n ulp)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("4 = 0 if s contains min(m,n) nonnegative values in decreasing order, else 1/ulp\n",
+                                               Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("5 = | U - Upartial | / (m ulp)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("6 = | VT - VTpartial | / (n ulp)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("7 = | s - spartial | / (min(m,n) ulp |s| )\n", Preferences.DEBUG_ALGORITHM);
+                         } // if (nfail == 0)
+                         Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("jtype = " + jtype + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("iws = " + iws + "\n", Preferences.DEBUG_ALGORITHM);
+                         for (i = 0; i < 3; i++) {
+                             Preferences.debug("ioldsd["+i+"] = " + ioldsd[i] + "\n", Preferences.DEBUG_ALGORITHM);
+                         }
+                         Preferences.debug("result["+j+"] = " + result[j] + "\n", Preferences.DEBUG_ALGORITHM);
+                         nfail = nfail + 1;
+                      } // if (result[j] >= thresh)
+                   } // for (j = 0; j < 7; j++)
+                   ntest = ntest + 7;
+    
+                } // for (iws = 1; iws <= 4; iws++)
+             } // for (jtype = 1; jtype <= mtypes; jtype++)
+          } // for (jsize = 0; jsize < nsizes; jsize++)
+     
+          // Summary
+     
+          if (nfail > 0) {
+              Preferences.debug(nfail + " out of " + ntest + " dgesvd tests failed by being >= the threshold\n",
+                                Preferences.DEBUG_ALGORITHM);
+              System.out.println(nfail + " out of " + ntest + " dgesvd tests failed by being >= the threshold");
+          }
+          else {
+              Preferences.debug("All " + ntest + " dgesvd tests passed by being less than the threshold\n",
+                                 Preferences.DEBUG_ALGORITHM);
+              System.out.println("All " + ntest + " dgesvd tests passed by being less than the threshold");
+          }
+      
+          return;
+      } // ddrvbd
+
+    
     /* dgesvd computes the singular value decomposition (SVD) for GE matrices.
      
        This is a port of LAPACK driver routine (version 3.4.1) DGESVD.f of April, 2012 
@@ -158,7 +682,7 @@ public class SVD implements java.io.Serializable {
           int iwork;
           int ldwrkr;
           int ldwrku;
-          int maxwrk;
+          int maxwrk = 0;
           int minmn;
           int minwrk;
           int mnthr = 0;
@@ -3953,24 +4477,55 @@ public class SVD implements java.io.Serializable {
     
           // Undo scaling if necessary
     
-          /*if (iscl == 1) {
+          if (iscl == 1) {
              if (anrm > bignum) {
-                ge.dlascl( 'G', 0, 0, bignum, anrm, minmn, 1, s, minmn, ierr);
+                arr = new double[minmn][1];
+                for (i = 0; i < minmn; i++) {
+                    arr[i][0] = s[i];
+                }
+                ge.dlascl('G', 0, 0, bignum, anrm, minmn, 1, arr, minmn, ierr);
+                for (i = 0; i < minmn; i++) {
+                    s[i] = arr[i][0];
+                }
              }
-             ( INFO.NE.0 .AND. ANRM.GT.BIGNUM )
-         $      CALL DLASCL( 'G', 0, 0, BIGNUM, ANRM, MINMN-1, 1, WORK( 2 ),
-         $                   MINMN, IERR )
-             IF( ANRM.LT.SMLNUM )
-         $      CALL DLASCL( 'G', 0, 0, SMLNUM, ANRM, MINMN, 1, S, MINMN,
-         $                   IERR )
-             IF( INFO.NE.0 .AND. ANRM.LT.SMLNUM )
-         $      CALL DLASCL( 'G', 0, 0, SMLNUM, ANRM, MINMN-1, 1, WORK( 2 ),
-         $                   MINMN, IERR )
+             if (info[0] != 0 && anrm >  bignum) {
+                arr = new double[minmn-1][1];
+                for (i = 0; i < minmn-1; i++) {
+                    arr[i][0] = work[i+1];
+                }
+                ge.dlascl('G', 0, 0, bignum, anrm, minmn-1, 1, arr,
+                          minmn, ierr);
+                for (i = 0; i < minmn-1; i++) {
+                    work[i+1] = arr[i][0];
+                }
+             }
+             if (anrm < smlnum) {
+                 arr = new double[minmn][1];
+                 for (i = 0; i < minmn; i++) {
+                     arr[i][0] = s[i];
+                 }
+                 ge.dlascl('G', 0, 0, smlnum, anrm, minmn, 1, arr, minmn,
+                           ierr);
+                 for (i = 0; i < minmn; i++) {
+                     s[i] = arr[i][0];
+                 }
+             }
+             if (info[0] != 0 && anrm < smlnum) {
+                 arr = new double[minmn-1][1];
+                 for (i = 0; i < minmn-1; i++) {
+                     arr[i][0] = work[i+1];
+                 }
+                 ge.dlascl('G', 0, 0, smlnum, anrm, minmn-1, 1, arr,
+                             minmn, ierr);
+                 for (i = 0; i < minmn-1; i++) {
+                    work[i+1] = arr[i][0];
+                }            
+             }
           } // if (iscl == 1)
     
          // Return optimal workspace in WORK(1)
    
-          work[0] = maxwrk;*/
+          work[0] = maxwrk;
     
           return;
       } // dgesvd
