@@ -30,7 +30,7 @@ public class FileDicomKey extends ModelSerialCloneable {
      * The dicom tag identifier in the format 'group,element'. 'x' is allowed in the group number for wildcards in the
      * dicom dictionary. E.g., '0002,0010' or '50xx,00E1'.
      */
-    private String key;
+    protected String key;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -119,7 +119,11 @@ public class FileDicomKey extends ModelSerialCloneable {
         try {
             Integer.parseInt(keyStr.substring(commaplace + 1), 0x10);
         } catch (NumberFormatException badElement) {
-            throw new IllegalArgumentException("Not a DICOM element");
+        	String elementString = keyStr.substring(commaplace+1);
+            
+            if (elementString.indexOf("xx") == -1) {
+                throw new IllegalArgumentException("Not a DICOM element");
+            }
         }
 
         if ((keyStr.substring(0, commaplace).length() != 4) && (keyStr.substring(commaplace + 1).length() != 4)) {
