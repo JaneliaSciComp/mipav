@@ -1760,7 +1760,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         i++;
         tagsModel.addRow(rowData);
         tagsModel.setValueAt(null, i, 0);
-        if (imageA.isColorImage()) {
+        if (imageA != null && imageA.isColorImage()) {
             tagsModel.setValueAt("Min red", i, 2);
             tagsModel.setValueAt(new Double(DicomInfo.getMinR()), i, 3);
             tagsModel.addRow(rowData);
@@ -1870,26 +1870,28 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsModel.setValueAt("Transformation Matrix", i, 2);
         tagsModel.setValueAt(null, i, 0);
 
-        final String matrixString = imageA.getMatrix().matrixToString(8, 4);
-        int nextIndex = 0, index = 0;
-        String subStr = new String();
-
-        for (int ii = 0; ii < imageA.getMatrix().getDim(); ii++) {
-            i++;
-            nextIndex = matrixString.indexOf("\n", index);
-
-            if (nextIndex != -1) {
-                subStr = matrixString.substring(index, nextIndex);
-                index = nextIndex + 1;
-                tagsModel.addRow(rowData);
-                tagsModel.setValueAt(subStr, i, 3);
-                tagsModel.setValueAt(null, i, 0);
-            } else {
-                subStr = matrixString.substring(index, matrixString.length());
-                tagsModel.addRow(rowData);
-                tagsModel.setValueAt(subStr, i, 3);
-                tagsModel.setValueAt(null, i, 0);
-            }
+        if(imageA != null) {
+	        final String matrixString = imageA.getMatrix().matrixToString(8, 4);
+	        int nextIndex = 0, index = 0;
+	        String subStr = new String();
+	
+	        for (int ii = 0; ii < imageA.getMatrix().getDim(); ii++) {
+	            i++;
+	            nextIndex = matrixString.indexOf("\n", index);
+	
+	            if (nextIndex != -1) {
+	                subStr = matrixString.substring(index, nextIndex);
+	                index = nextIndex + 1;
+	                tagsModel.addRow(rowData);
+	                tagsModel.setValueAt(subStr, i, 3);
+	                tagsModel.setValueAt(null, i, 0);
+	            } else {
+	                subStr = matrixString.substring(index, matrixString.length());
+	                tagsModel.addRow(rowData);
+	                tagsModel.setValueAt(subStr, i, 3);
+	                tagsModel.setValueAt(null, i, 0);
+	            }
+	        }
         }
 
         tagsModel.addRow(rowData);
@@ -2395,7 +2397,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
             final TableCellRenderer refRenderer = table.getCellRenderer(row, 1);
             if (refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag()
-                    && row > 16 + (imageA.getNDims() - 1) * 2) {
+                    && (imageA == null || row > 16 + (imageA.getNDims() - 1) * 2)) {
                 setBackground( ((TagCodeRenderer) refRenderer).getBackground());
             } else {
                 final int[] rows = table.getSelectedRows();
@@ -2431,9 +2433,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     break;
                 }
             }
-            if ( !rowSelected) {
+            if (!rowSelected) {
                 if (column == 1 && value instanceof String && ((String) value).length() == 11
-                        && row > 16 + (imageA.getNDims() - 1) * 2) {
+                        && (imageA == null || (row > 16 + (imageA.getNDims() - 1) * 2))) {
                     hasValidTag = true;
                     final String name = ((String) value).substring(1, ((String) value).length() - 1);
                     final String group = name.substring(0, 4);
