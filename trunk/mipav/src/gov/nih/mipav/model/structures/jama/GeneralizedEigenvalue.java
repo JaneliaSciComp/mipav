@@ -33155,7 +33155,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * NVALUE (input) INTEGER The value of the parameter specified by ISPEC.
      */
-    private void xlaenv(final int ispec, final int nvalue) {
+    public void xlaenv(final int ispec, final int nvalue) {
         if ( (ispec >= 1) && (ispec <= 9)) {
             iparms[ispec - 1] = nvalue;
         }
