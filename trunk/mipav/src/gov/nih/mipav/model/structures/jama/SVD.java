@@ -7,8 +7,142 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class SVD implements java.io.Serializable {
     GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     GeneralizedInverse2 gi = new GeneralizedInverse2();
+    /** Common variables in testing routines. */
+    private ViewUserInterface UI = ViewUserInterface.getReference();
+    private int iparms[];
     
     public SVD () {}
+    
+    /**
+     * This routine is an extraction from the FORTRAN program version 3.4.1 DCHKEE of the code needed to drive ddrvbd in
+     * order to run ddrvbd in order to test the singular value decomposition driver dgesvd.
+     * Numerical values were obtained from the svd.in datafile. Original DCHKEE created by Univ. of Tennessee,
+     * Univ. of California Berkeley, University of Colorado Denver, and NAG Ltd., April, 2012
+     */
+    public void ddrvbd_test() {
+
+        // The number of values of m and n contained in the vectors mval and nval.
+        // The matrix sizes are used in pairs (m, n).
+        int nsizes = 19;
+
+        // The values of the matrix row dimension m
+        int[] mval = new int[] {0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 10, 10, 16, 16, 30, 30, 40, 40};
+        
+        // The values of the matrix column dimension n
+        int[] nval = new int[] {0, 1, 3, 0, 1, 2, 0, 1, 0, 1, 3, 10, 16, 10, 16, 30, 40, 30, 40};
+
+        // Number of values of NB, NBMIN, NX, and NRHS.
+        int nparms = 5;
+
+        // Values of blocksize NB
+        int[] nbval = new int[] { 1, 3, 3, 3, 20 };
+
+        // Values for the minimum blocksize NBMIN
+        int[] nbmin = new int[] { 2, 2, 2, 2, 2 };
+        
+        // Values for the nx crossover point, NXVAL
+        int[] nxval = new int[] { 1, 0, 5, 9, 1};
+
+        // The values for the number of right hand sides nrhs.
+        int[] nsval = new int[] { 2, 0, 2, 2, 2 };
+
+        // Threshold value for the test ratios.  Information will be printed
+        // about each test for which the test ratio is greater than or equal
+        // to threshold.
+        double thresh = 50.0;
+
+        // Test the LAPACK driver
+        boolean tstdrv = true;
+
+        // Test the error exits for the LAPACK routines and driver routines.
+        // Passed all 38 exits on test.
+        // Put at false so as not to have to hit okay to 38 displayError messages.
+        boolean tsterr = false;
+
+        // Code describing how to set the random number seed.
+        // = 0: Set the seed to a default number before each run.
+        // = 1: Initialize the seed to a default value only before the first
+        // run.
+        // = 2: Like 1, but use the seed values in the 4 integer array
+        // ioldsd
+        int newsd = 1;
+        // Number of matrix test types
+        int maxtyp = 16;
+        boolean[] dotype = new boolean[maxtyp];
+        int[] ioldsd = new int[] { 0, 0, 0, 1 };
+        int[] iseed = new int[] { 0, 0, 0, 1 };
+        int nmax = 132;
+        int lwork = (nmax * ((5 * nmax) + 5)) + 1;
+        double[] work = new double[lwork];
+        int[] info = new int[1];
+        int liwork = nmax * (5 * nmax + 20);
+        int[] iwork = new int[liwork];
+        double[][] A;
+        double[][] ASAV;
+        double[] e;
+        double[] s;
+        double[] ssav;
+        double[][] U;
+        double[][] USAV;
+        double[][] VT;
+        double[][] VTSAV;
+
+        int i;
+        int k;
+        int nrhs;
+
+        for (i = 0; i < maxtyp; i++) {
+            dotype[i] = true;
+        }
+
+        iparms = new int[9];
+        A = new double[nmax][nmax];
+        ASAV = new double[nmax][nmax];
+        e = new double[nmax];
+        s = new double[nmax];
+        ssav = new double[nmax];
+        U = new double[nmax][nmax];
+        USAV = new double[nmax][nmax];
+        VT = new double[nmax][nmax];
+        VTSAV = new double[nmax][nmax];
+        
+        xlaenv(1, 1);
+        xlaenv(9, 25);
+        
+        if (tsterr && tstdrv) {
+            //derred();
+        }
+
+        for (i = 1; i <= nparms; i++) {
+
+            nrhs = nsval[i-1];
+            xlaenv(1, nbval[i-1]);
+            xlaenv(2, nbmin[i-1]);
+            xlaenv(3, nxval[i-1]);
+            if (newsd == 0) {
+
+                for (k = 0; k < 4; k++) {
+                    iseed[k] = ioldsd[k];
+                }
+            } // if (newsd == 0)
+
+            Preferences.debug("Paramter " + i + " for ddrvbd\n");
+            Preferences.debug("Blocksize nb = " + nbval[i-1] + "\n");
+            Preferences.debug("Minimum blocksize nbmin = " + nbmin[i - 1] + "\n");
+            Preferences.debug("Crossover point nx = " + nxval[i-1] + "\n");
+            Preferences.debug("Number of right hand sides nrhs = " + nrhs + "\n");
+
+            if (tstdrv) {
+                ddrvbd(nsizes, mval, nval, maxtyp, dotype, iseed, thresh, A,
+                       nmax,  U, nmax, VT, nmax, ASAV, USAV, VTSAV, s, ssav, e,
+                       work, lwork, iwork, info);
+
+                if (info[0] != 0) {
+                    MipavUtil.displayError("ddrvbd had info = " + info[0]);
+                }
+            } // if (tstdrv)
+        } // for (i = 1; i <= nparms; i++)
+    } // ddrvbd_test
     
     /*  ddrvbd checks the singular value dcomposition (SVD) driver dgesvd.
       
@@ -147,13 +281,11 @@ public class SVD implements java.io.Serializable {
           final int maxtyp = 5;
           boolean badmm;
           boolean badnn;
-          char jobq;
           char jobu;
           char jobvt;
           char[] path = new char[3];
           int i;
           int iinfo[] = new int[1];
-          int ijq;
           int iju;
           int ijvt;
           int iws;
@@ -173,7 +305,7 @@ public class SVD implements java.io.Serializable {
           int nmax;
           int ntest;
           double anorm = 0.0;
-          double dif;
+          double dif[] = new double[1];
           double div;
           double ovfl[] = new double[1];
           double ulp;
@@ -182,11 +314,6 @@ public class SVD implements java.io.Serializable {
           char cjob[] = new char[]{'N', 'O', 'S', 'A'};
           int ioldsd[] = new int[4];
           double result[] = new double[7];
-          boolean lerr;
-          boolean ok;
-          String srnamt;
-          int infot;
-          int nunit;
           int minmmnn;
           int maxmmnn;
           double res[] = new double[1];
@@ -261,7 +388,6 @@ public class SVD implements java.io.Serializable {
           ge.dlabad(unfl, ovfl);
           ulp = ge.dlamch('P'); // Precision
           ulpinv = 1.0 / ulp;
-          infot = 0;
     
           // Loop over sizes, types
     
@@ -355,7 +481,6 @@ public class SVD implements java.io.Serializable {
                    if (iws > 1) {
                       ge.dlacpy('F', m, n, ASAV, lda, A, lda);
                    }
-                   srnamt = new String("DGESVD");
                    dgesvd('A', 'A', m, n, A, lda, ssav, USAV, ldu,
                           VTSAV, ldvt, work, lswork, iinfo);
                    if (iinfo[0] != 0) {
@@ -411,68 +536,67 @@ public class SVD implements java.io.Serializable {
                          jobu = cjob[iju];
                          jobvt = cjob[ijvt];
                          ge.dlacpy('F', m, n, ASAV, lda, A, lda);
-                         srnamt = new String("DGESVD");
                          dgesvd(jobu, jobvt, m, n, A, lda, s, U, ldu,
                                 VT, ldvt, work, lswork, iinfo);
      
                          //Compare U
     
-                         dif = 0.0;
-                        /* if (m > 0 && n > 0) {
+                         dif[0] = 0.0;
+                         if (m > 0 && n > 0) {
                             if (iju == 1) {
-                               CALL DORT03( 'C', M, MNMIN, M, MNMIN, USAV,
-         $                                  LDU, A, LDA, WORK, LWORK, DIF,
-         $                                  IINFO )
+                               dort03('C', m, mnmin, m, mnmin, USAV,
+                                       ldu, A, lda, work, lwork, dif,
+                                       iinfo);
                             }
                             else if (iju == 2) {
-                               CALL DORT03( 'C', M, MNMIN, M, MNMIN, USAV,
-         $                                  LDU, U, LDU, WORK, LWORK, DIF,
-         $                                  IINFO )
+                               dort03('C', m, mnmin, m, mnmin, USAV,
+                                      ldu, U, ldu, work, lwork, dif,
+                                      iinfo);
                             }
                             else if (iju == 3) {
-                               CALL DORT03( 'C', M, M, M, MNMIN, USAV, LDU,
-         $                                  U, LDU, WORK, LWORK, DIF,
-         $                                  IINFO )
+                               dort03('C', m, m, m, mnmin, USAV, ldu,
+                                      U, ldu, work, lwork, dif,
+                                      iinfo);
                             }
                          } // if (m > 0 && n > 0)
-                         result[4] = Math.max(result[4], dif);
+                         result[4] = Math.max(result[4], dif[0]);
     
                          // Compare VT
     
-                         dif = 0.0;
+                         dif[0] = 0.0;
                          if (m > 0 && n > 0) {
                             if (ijvt == 1) {
-                               CALL DORT03( 'R', N, MNMIN, N, MNMIN, VTSAV,
-         $                                  LDVT, A, LDA, WORK, LWORK, DIF,
-         $                                  IINFO )
+                               dort03('R', n, mnmin, n, mnmin, VTSAV,
+                                      ldvt, A, lda, work, lwork, dif,
+                                      iinfo);
                             }
                             else if (ijvt == 2) {
-                               CALL DORT03( 'R', N, MNMIN, N, MNMIN, VTSAV,
-         $                                  LDVT, VT, LDVT, WORK, LWORK,
-         $                                  DIF, IINFO )
+                               dort03('R', n, mnmin, n, mnmin, VTSAV,
+                                      ldvt, VT, ldvt, work, lwork,
+                                      dif, iinfo);
                             }
                             else if (ijvt == 3) {
-                               CALL DORT03( 'R', N, N, N, MNMIN, VTSAV,
-         $                                  LDVT, VT, LDVT, WORK, LWORK,
-         $                                  DIF, IINFO )
+                               dort03('R', n, n, n, mnmin, VTSAV,
+                                      ldvt, VT, ldvt, work, lwork,
+                                      dif, iinfo);
                             }
-                         } // if (m > 0 && n > 0)*/
-                         result[5] = Math.max(result[5], dif);
+                         } // if (m > 0 && n > 0)
+                         result[5] = Math.max(result[5], dif[0]);
     
                          // Compare s
     
-                         dif = 0.0;
+                         dif[0] = 0.0;
                          div = Math.max(mnmin*ulp*s[0], unfl[0]);
                          for (i = 0; i < mnmin - 1; i++) {
                             if (ssav[i] < ssav[i+1]) {
-                               dif = ulpinv;
+                               dif[0] = ulpinv;
                             }
                             if (ssav[i] < 0.0) {
-                               dif = ulpinv;
+                               dif[0] = ulpinv;
                             }
-                            dif = Math.max(dif, Math.abs(ssav[i] - s[i]) / div);
+                            dif[0] = Math.max(dif[0], Math.abs(ssav[i] - s[i]) / div);
                          } // for (i = 0; i < mnmin - 1; i++)
-                         result[6] = Math.max(result[6], dif);
+                         result[6] = Math.max(result[6], dif[0]);
                       } // for (ijvt = 0; ijvt <= 3; ijvt++)
                    } // for (iju = 0; iju <= 3; iju++)
     
@@ -522,16 +646,229 @@ public class SVD implements java.io.Serializable {
           if (nfail > 0) {
               Preferences.debug(nfail + " out of " + ntest + " dgesvd tests failed by being >= the threshold\n",
                                 Preferences.DEBUG_ALGORITHM);
-              System.out.println(nfail + " out of " + ntest + " dgesvd tests failed by being >= the threshold");
+              UI.setDataText(nfail + " out of " + ntest + " dgesvd tests failed by being >= the threshold\n");
           }
           else {
               Preferences.debug("All " + ntest + " dgesvd tests passed by being less than the threshold\n",
                                  Preferences.DEBUG_ALGORITHM);
-              System.out.println("All " + ntest + " dgesvd tests passed by being less than the threshold");
+              UI.setDataText("All " + ntest + " dgesvd tests passed by being less than the threshold\n");
           }
       
           return;
       } // ddrvbd
+      
+      /* This is a port of version 3.4.0 test routine DORT03.f of LAPACK provided by  Univ. of Tennessee, 
+      Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd.
+      November 2011
+      
+      dort03 compares two orthogonal matrices U and V to see if their
+      corresponding rows or columns span the same spaces.  The rows are
+      checked if rc = 'R', and the columns are checked ifrcC = 'C'.
+      
+      result is the maximum of
+      
+      | V*V' - I | / ( mv ulp ), if rc = 'R', or
+      
+      | V'*V - I | / ( mv ulp ), if RC = 'C',
+      
+      and the maximum over rows (or columns) 1 to k of
+     
+      | U[i] - s*V[i] |/ ( n ulp )
+      
+      where s is +-1 (chosen to minimize the expression), U[i] is the i-th
+      row (column) of U, and V(i) is the i-th row (column) of V.\
+      
+      @param input char rc
+             If rc = 'R' the rows of U and V are to be compared.
+             If rc = 'C' the columns of U and V are to be compared.
+      @param input int mu
+             The number of rows of U if rc = 'R', and the number of
+             columns if rc = 'C'.  If mu = 0 dort03 does nothing.
+             mu must be at least zero.
+      @param input int mv
+             The number of rows of V if rc = 'R', and the number of
+             columns if rc = 'C'.  If mv = 0 dort03 does nothing.
+             mv must be at least zero.
+      @param input int n
+             If rc = 'R', the number of columns in the matrices U and V,
+             and if rc = 'C', the number of rows in U and V.  If n = 0
+             dort03 does nothing.  n must be at least zero.
+      @param input int k
+             The number of rows or columns of U and V to compare.
+             0 <= k <= max(mu,mv).
+      @param input double[][] U of dimension (ldu,n)
+             The first matrix to compare.  If rc = 'R', U is mu by n, and
+             if rc = 'C', U is n by mu.
+      @param input int ldu
+             The leading dimension of U.  If rc = 'R', ldu >= max(1,mu),
+             and if rc = 'C', ldu >= max(1,n).
+      @param input double[][] V of dimension (ldv,n)
+             The second matrix to compare.  If rc = 'R', V is mv by n, and
+             if rc = 'C', V is n by mv.
+      @param input int ldv
+             The leading dimension of V.  If rc = 'R', ldv >= max(1,mv),
+             and if rc = 'C', ldv >= max(1,n).
+      @param output double[] work of dimension (lwork)
+      @param input int lwork
+             The length of the array work.  For best performance, lwork
+             should be at least n*n if rc = 'C' or m*m if rc = 'R', but
+             the tests will be done even if lwork is 0.
+      @param output double[] result of dimension (1)
+             The value computed by the test described above.  result is
+             limited to 1/ulp to avoid overflow.
+      @param output int[] info of dimension (1)
+             0  indicates a successful exit
+             -k indicates the k-th parameter had an illegal value
+      */
+      private void dort03(char rc, int mu, int mv, int n, int k, double[][] U,
+                          int ldu, double[][] V, int ldv, double work[], int lwork,
+                          double result[], int info[]) {
+     
+            int i;
+            int irc;
+            int j;
+            int lmx;
+            double res1;
+            double res2[] = new double[1]; 
+            double s;
+            double ulp;
+            int p;
+            double maxVal;
+            double s1;
+            double s2;
+            double workArr[][] = new double[Math.min(mv, n)][Math.min(mv, n)];
+          
+            // Check inputs
+      
+            info[0] = 0;
+            if ((rc == 'R') || (rc == 'r')) {
+               irc = 0;
+            }
+            else if ((rc == 'C') || (rc == 'c')) {
+               irc = 1;
+            }
+            else {
+               irc = -1;
+            }
+            if (irc == -1) {
+               info[0] = -1;
+            }
+            else if (mu < 0) {
+               info[0] = -2;
+            }
+            else if (mv < 0) {
+               info[0] = -3;
+            }
+            else if (n < 0) {
+               info[0] = -4;
+            }
+            else if (k < 0 || k > Math.max(mu, mv)) {
+               info[0] = -5;
+            }
+            else if ((irc == 0 && ldu < Math.max(1, mu)) ||
+                     (irc == 1 && ldu < Math.max(1, n))) {
+               info[0] = -7;
+            }
+            else if ((irc == 0 && ldv < Math.max(1, mv)) ||
+                     (irc == 1 && ldv < Math.max(1, n))) {
+               info[0] = -9;
+            }
+            if (info[0] != 0) {
+               MipavUtil.displayError("dort03 had info[0] = " + info[0]);
+               return;
+            }
+     
+            // Initialize result
+      
+            result[0] = 0.0;
+            if (mu == 0 || mv == 0 || n == 0) {
+               return;
+            }
+       
+            // Machine constants
+       
+            ulp = ge.dlamch('P'); // Precision
+      
+            if (irc == 0) {
+      
+               // Compare rows
+       
+               res1 = 0.0;
+               for (i = 0; i < k; i++) {
+                  lmx = 0;
+                  maxVal = Math.abs(U[i][0]);
+                  for (p = 1; p < n; p++) {
+                      if (Math.abs(U[i][p]) > maxVal) {
+                          maxVal = Math.abs(U[i][p]);
+                          lmx = p;
+                      }
+                  } // for (p = 1; p < n; p++)
+                  if (U[i][lmx] >= 0.0) {
+                      s1 = 1.0;
+                  }
+                  else {
+                      s1 = -1.0;
+                  }
+                  if (V[i][lmx] >= 0.0) {
+                      s2 = 1.0;
+                  }
+                  else {
+                      s2 = -1.0;
+                  }
+                  s = s1 * s2;
+                  for (j = 0; j < n; j++) {
+                     res1 = Math.max(res1, Math.abs(U[i][j]-s*V[i][j]));
+                  } // for (j = 0; j < n; j++)
+               } // for (i = 0; i < k; i++)
+               res1 = res1 / ((double)n * ulp);
+       
+               // Compute orthogonality of rows of V.
+       
+               gi.dort01('R', mv, n, V, ldv, workArr, lwork, res2);
+      
+            } // if (irc == 0)
+            else {
+      
+               // Compare columns
+      
+               res1 = 0.0;
+               for (i = 0; i < k; i++) {
+                   lmx = 0;
+                   maxVal = Math.abs(U[0][i]);
+                   for (p = 1; p < n; p++) {
+                       if (Math.abs(U[p][i]) > maxVal) {
+                           maxVal = Math.abs(U[p][i]);
+                           lmx = p;
+                       }
+                   } // for (p = 1; p < n; p++)
+                   if (U[lmx][i] >= 0.0) {
+                       s1 = 1.0;
+                   }
+                   else {
+                       s1 = -1.0;
+                   }
+                   if (V[lmx][i] >= 0.0) {
+                       s2 = 1.0;
+                   }
+                   else {
+                       s2 = -1.0;
+                   }
+                   s = s1 * s2;
+                   for (j = 0; j < n; j++) {
+                       res1 = Math.max(res1, Math.abs(U[j][i]-s*V[j][i]));
+                    } // for (j = 0; j < n; j++)
+               } // for (i = 0; i < k; i++)
+               res1 = res1 / ((double)n*ulp);
+      
+               // Compute orthogonality of columns of V.
+       
+               gi.dort01('C', n, mv, V, ldv, workArr, lwork, res2);
+            } // else
+      
+            result[0] = Math.min(Math.max(res1, res2[0]), 1.0 / ulp);
+            return;
+      } // dortt03
+
 
     
     /* dgesvd computes the singular value decomposition (SVD) for GE matrices.
@@ -1567,7 +1904,7 @@ public class SVD implements java.io.Serializable {
                       // (Workspace: need 4*N, prefer 3*N+2*N*NB)
                       workitauq = new double[n];
                       workitaup = new double[n];
-                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      workiwork = new double[Math.max(4*n,Math.max(1, lwork-iwork+1))];
                       gi.dgebrd(n, n, VT, ldvt, s, work,
                                 workitauq, workitaup,
                                 workiwork, lwork-iwork+1, ierr);
@@ -4529,5 +4866,39 @@ public class SVD implements java.io.Serializable {
     
           return;
       } // dgesvd
+      
+      /**
+       * This is a port of version 3.1 LAPACK auxiliary routine XLAENV. Univ. of Tennessee, Univ. of California Berkeley
+       * and NAG Ltd.. November 2006
+       * 
+       * .. Scalar Arguments .. INTEGER ISPEC, NVALUE ..
+       * 
+       * Purpose =======
+       * 
+       * XLAENV sets certain machine- and problem-dependent quantities which will later be retrieved by ILAENV.
+       * 
+       * Arguments =========
+       * 
+       * ISPEC (input) INTEGER Specifies the parameter to be set in the COMMON array IPARMS. = 1: the optimal blocksize;
+       * if this value is 1, an unblocked algorithm will give the best performance. = 2: the minimum block size for which
+       * the block routine should be used; if the usable block size is less than this value, an unblocked routine should
+       * be used. = 3: the crossover point (in a block routine, for N less than this value, an unblocked routine should be
+       * used) = 4: the number of shifts, used in the nonsymmetric eigenvalue routines = 5: the minimum column dimension
+       * for blocking to be used; rectangular blocks must have dimension at least k by m, where k is given by
+       * ILAENV(2,...) and m by ILAENV(5,...) = 6: the crossover point for the SVD (when reducing an m by n matrix to
+       * bidiagonal form, if max(m,n)/min(m,n) exceeds this value, a QR factorization is used first to reduce the matrix
+       * to a triangular form) = 7: the number of processors = 8: another crossover point, for the multishift QR and QZ
+       * methods for nonsymmetric eigenvalue problems. = 9: maximum size of the subproblems at the bottom of the
+       * computation tree in the divide-and-conquer algorithm (used by xGELSD and xGESDD) =10: ieee NaN arithmetic can be
+       * trusted not to trap =11: infinity arithmetic can be trusted not to trap
+       * 
+       * NVALUE (input) INTEGER The value of the parameter specified by ISPEC.
+       */
+      public void xlaenv(final int ispec, final int nvalue) {
+          if ( (ispec >= 1) && (ispec <= 9)) {
+              iparms[ispec - 1] = nvalue;
+          }
+          return;
+      } // xlaenv
 
 }
