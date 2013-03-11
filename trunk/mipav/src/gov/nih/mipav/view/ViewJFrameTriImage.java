@@ -438,7 +438,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     
     private int currentOrientation;
 
-    private ModelRGB RGBTa, RGBTb;
+    /** RGB tables for imageA and imageB */
+    protected ModelRGB RGBTa, RGBTb;
     
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
