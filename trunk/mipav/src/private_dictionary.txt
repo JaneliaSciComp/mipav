@@ -1,47 +1,44 @@
-/*=========================================================================
+#DICOM dictionary contains private tags from GDCM source code that have 
+#undergone additional processing and correction at the National Intrepid 
+#Center of Excellence, Bethesda, MD, USA.  Those tags added from this source
+#contain a VERS value of "GDCM"  Original copyright status is 
+#printed below, as requested:
+#
+#
+#  Program: GDCM (Grassroots DICOM). A DICOM library
+#  Module:  http://gdcm.sourceforge.net/Copyright.html
+#
+#Copyright (c) 2006-2011 Mathieu Malaterre
+#Copyright (c) 1993-2005 CREATIS
+#(CREATIS = Centre de Recherche et d'Applications en Traitement de l'Image)
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without
+#modification, are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither name of Mathieu Malaterre, or CREATIS, nor the names of any
+#   contributors (CNRS, INSERM, UCB, Universite Lyon I), may be used to
+#   endorse or promote products derived from this software without specific
+#   prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+#AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+#IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
+#ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+#OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-DICOM dictionary contains private tags from GDCM source code that have 
-undergone additional processing and correction at the National Intrepid 
-Center of Excellence, Bethesda, MD, USA.  Those tags added from this source
-contain a VERS value of "GDCM"  Original copyright status is 
-printed below, as requested:
-
-
-  Program: GDCM (Grassroots DICOM). A DICOM library
-  Module:  http://gdcm.sourceforge.net/Copyright.html
-
-Copyright (c) 2006-2011 Mathieu Malaterre
-Copyright (c) 1993-2005 CREATIS
-(CREATIS = Centre de Recherche et d'Applications en Traitement de l'Image)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
- * Neither name of Mathieu Malaterre, or CREATIS, nor the names of any
-   contributors (CNRS, INSERM, UCB, Universite Lyon I), may be used to
-   endorse or promote products derived from this software without specific
-   prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-=========================================================================*/
 
 
 Publisher: 1.2.840.113663.1
@@ -2102,7 +2099,7 @@ Publisher: GEMS_FUNCTOOL_01
 (0051,xx03) VERS="GDCM" VR="SL"   VM="1"	Keyword="Bias of Functional Image"		Name="Bias of Functional Image"
 (0051,xx04) VERS="GDCM" VR="FL"   VM="1"	Keyword="Scale of Functional Image"		Name="Scale of Functional Image"
 (0051,xx05) VERS="GDCM" VR="SL"   VM="1"	Keyword="Length of Parameters String"		Name="Length of Parameters String"
-(0051,xx06) VERS="GDCM" VR="LT"   VM="1"	Keyword="Store Parameters string"		Name="delimited by character ESC=0x1B (27)"
+(0051,xx06) VERS="GDCM" VR="LT"   VM="1"	Keyword="Store Parameters string"		Name="delimited by character ESC,0x1B (27)"
 (0051,xx07) VERS="GDCM" VR="LO"   VM="1"	Keyword="Functional Image Version"		Name="Functional Image Version"
 (0051,xx08) VERS="GDCM" VR="SL"   VM="1"	Keyword="Store Color Ramp"		Name="Store Color Ramp"
 (0051,xx09) VERS="GDCM" VR="SL"   VM="1"	Keyword="Store Width of Functional Image"		Name="Store Width of Functional Image"
@@ -2664,7 +2661,7 @@ Publisher: GEMS_PARM_01
 (0043,xx35) VERS="GDCM" VR="UL"   VM="1"	Keyword="User_usage_tag"		Name="User_usage_tag"
 (0043,xx36) VERS="GDCM" VR="UL"   VM="1"	Keyword="User_fill_map_MSW"		Name="User_fill_map_MSW"
 (0043,xx37) VERS="GDCM" VR="UL"   VM="1"	Keyword="User_fill_map_LSW"		Name="User_fill_map_LSW"
-(0043,xx38) VERS="GDCM" VR="FL"   VM="24"	Keyword="User data 25...User data 48 {User48=Effective Resolution for spiral}"		Name="User data 25...User data 48 {User48=Effective Resolution for spiral}"
+(0043,xx38) VERS="GDCM" VR="FL"   VM="24"	Keyword="User data 25...User data 48 {User48 is Effective Resolution for spiral}"		Name="User data 25...User data 48 {User48 is Effective Resolution for spiral}"
 (0043,xx39) VERS="GDCM" VR="IS"   VM="4"	Keyword="Slop_int_6... slop_int_9"		Name="Slop_int_6... slop_int_9"
 (0043,xx40) VERS="GDCM" VR="FL"   VM="4"	Keyword="Trigger on position"		Name="Trigger on position"
 (0043,xx41) VERS="GDCM" VR="FL"   VM="4"	Keyword="Degree of rotation"		Name="Degree of rotation"
@@ -6634,7 +6631,7 @@ Publisher: SIEMENS MED NM
 (0055,xx50) VERS="GDCM" VR="SS"   VM="1"	Keyword="Prone Flag 0 Supine 1 Prone"		Name="Prone Flag 0 Supine 1 Prone"
 (0055,xx51) VERS="GDCM" VR="SS"   VM="1"	Keyword="Orbit 0 Circular 1 Elliptical"		Name="Orbit 0 Circular 1 Elliptical"
 (0055,xx52) VERS="GDCM" VR="SS"   VM="1"	Keyword="Total Rotation in Degrees"		Name="Total Rotation in Degrees"
-(0055,xx53) VERS="GDCM" VR="CS"   VM="1"	Keyword="Zero Location (T=Top B=Bottom)"		Name="Zero Location (T=Top B=Bottom)"
+(0055,xx53) VERS="GDCM" VR="CS"   VM="1"	Keyword="Zero Location (T is Top B is Bottom)"		Name="Zero Location (T is Top B is Bottom)"
 (0055,xx54) VERS="GDCM" VR="FL"   VM="1"	Keyword="Angular Step"		Name="Angular Step"
 (0055,xx55) VERS="GDCM" VR="FL"   VM="1"	Keyword="Start Angle"		Name="Start Angle"
 (0055,xx56) VERS="GDCM" VR="SS"   VM="1"	Keyword="Decay Corr. Flag 1 Corr"		Name="Decay Corr. Flag 1 Corr"
