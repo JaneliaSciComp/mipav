@@ -1848,10 +1848,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  {
 			  m_kVolumeBox.SetBackgroundColor( kColor );
 		  }
-		  if ( m_kSlices != null )
-		  {
-			  m_kSlices.SetBackgroundColor( kColor );
-		  }
 	  }
 
 	  /**

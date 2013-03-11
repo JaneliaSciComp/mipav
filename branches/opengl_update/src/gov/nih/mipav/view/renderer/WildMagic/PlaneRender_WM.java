@@ -250,7 +250,7 @@ public class PlaneRender_WM extends GPURenderBase
 		kWorld.addSlices(kVolumeSlice);
 		/* Animator serves the purpose of the idle function, calls display: */
     	final Animator animator = new Animator( kWorld.GetCanvas() );
-        animator.setRunAsFastAsPossible(true);
+        //animator.setRunAsFastAsPossible(true);
         animator.start();
 		if ( displayInSeparateFrame )
 		{
@@ -853,15 +853,15 @@ public class PlaneRender_WM extends GPURenderBase
     	
         if (iWidth > 0 && iHeight > 0)
         {            
-            if ( m_bUpdateSpacing )
+        	m_iLabelX_SpacingX = (int) (m_kXArrow[1].VBuffer.GetPosition3fX(1) * iWidth + 2);
+        	m_iLabelX_SpacingY = (int) (m_kXArrow[1].VBuffer.GetPosition3fY(1) * iHeight) - 5;
+        	m_iLabelY_SpacingX = (int) (m_kYArrow[1].VBuffer.GetPosition3fX(2) * iWidth - 5);
+        	m_iLabelY_SpacingY = (int) (m_kYArrow[1].VBuffer.GetPosition3fY(2) * iHeight);
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                m_iLabelX_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelX_SpacingY *= (float)iHeight/(float)m_iHeight;
-                m_iLabelY_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelY_SpacingY *= (float)iHeight/(float)m_iHeight;
+            	m_iLabelX_SpacingY = iHeight - m_iLabelX_SpacingY;
+            	m_iLabelY_SpacingY = iHeight - m_iLabelY_SpacingY + 20;
             }
-            m_bUpdateSpacing = true;
-            
             
             if (m_pkRenderer != null)
             {
@@ -884,9 +884,7 @@ public class PlaneRender_WM extends GPURenderBase
                     afData[4], afData[5], afData[6], afData[7], 
                     afData[8], afData[9], afData[10], afData[11], 
                     afData[12], afData[13], afData[14], afData[15] );
-            //System.err.println( m_kPVWMatrix.ToString() );
         }
-        
     }
 
     
@@ -1300,6 +1298,17 @@ public class PlaneRender_WM extends GPURenderBase
             m_kYArrow[1].UpdateGS();
             m_kYArrow[1].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[1]);
+        }
+        
+
+    	m_iLabelX_SpacingX = (int) (m_kXArrow[1].VBuffer.GetPosition3fX(1) * m_iWidth + 2);
+    	m_iLabelX_SpacingY = (int) (m_kXArrow[1].VBuffer.GetPosition3fY(1) * m_iHeight) - 5;
+    	m_iLabelY_SpacingX = (int) (m_kYArrow[1].VBuffer.GetPosition3fX(2) * m_iWidth - 5);
+    	m_iLabelY_SpacingY = (int) (m_kYArrow[1].VBuffer.GetPosition3fY(2) * m_iHeight);
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+        {
+        	m_iLabelX_SpacingY = m_iHeight - m_iLabelX_SpacingY;
+        	m_iLabelY_SpacingY = m_iHeight - m_iLabelY_SpacingY + 20;
         }
     }
 
@@ -2268,21 +2277,7 @@ public class PlaneRender_WM extends GPURenderBase
                 m_kLabelXDisplay = new String( "R" );
             }
         }
-        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
-        {
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 20;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 68;
-        }
-        else
-        {     
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 10;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 55;
-        }
-
+        
         ModelImage kImageA = m_kVolumeImageA.GetImage();
         //System.err.println( m_iPlaneOrientation + " " + m_fX + " " + m_fY + " " + m_fZ + " " + fMax );
         
