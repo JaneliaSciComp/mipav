@@ -1105,7 +1105,13 @@ public class FileInfoDicom extends FileInfoBase {
                 }
             } else if(tagKey.equals("0028,1201") || tagKey.equals("0028,1202") || tagKey.equals("0028,1203")) {
             //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
-                int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
+                if(lut == null) {
+                	final int[] dimExtents = new int[2];
+                    dimExtents[0] = 4;
+                    dimExtents[1] = 256;
+                	lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+                }
+            	int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
                 Object data = tag.getValue(false);
                 if (data instanceof Number[]) {
                     final int lutVals = ((Number[])data).length;
