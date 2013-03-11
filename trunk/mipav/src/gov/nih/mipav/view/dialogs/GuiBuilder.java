@@ -3,26 +3,13 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.*;
 
 /**
  * These enumerations are used by the GuiBuilder to indicate the pre-processing results of user
@@ -123,6 +110,19 @@ public class GuiBuilder implements ActionListener {
         JLabel label = new JLabel(labelText);
         label.setFont(MipavUtil.font12);
         JTextField text = new JTextField(initText);
+        text.setColumns(8);
+        panel.add(label);
+        panel.add(text);
+        return text;
+    }
+    
+    public JPasswordField buildPasswordField(String labelText, String initText) {
+        FlowLayout f = new FlowLayout();
+        f.setAlignment(FlowLayout.LEFT);
+        JPanel panel = new JPanel(f);
+        JLabel label = new JLabel(labelText);
+        label.setFont(MipavUtil.font12);
+        JPasswordField text = new JPasswordField(initText);
         text.setColumns(8);
         panel.add(label);
         panel.add(text);
