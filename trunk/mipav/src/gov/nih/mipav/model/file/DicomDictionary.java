@@ -71,19 +71,19 @@ public class DicomDictionary {
     public static final String SUBSET_DICTIONARY_FILENAME = "dicomsave.dictionary";
 
     /** DOCUMENT ME! */
-    private static final int DEFAULT_DICTIONARY = 1;
+    protected static final int DEFAULT_DICTIONARY = 1;
 
     /** DOCUMENT ME! */
-    private static final int SUBSET_DICTIONARY = 2;
+    protected static final int SUBSET_DICTIONARY = 2;
 
     /** Hashtable filled with known DICOM tags with empty value attributes. */
-    private static Hashtable<FileDicomKey, FileDicomTagInfo> masterHashtable;
+    protected static Hashtable<FileDicomKey, FileDicomTagInfo> masterHashtable;
 
     /**
      * Hashtable filled with DICOM tags which are a subset (not necessarily a proper subset) of dicom tags in the master
      * table. This subset is then used to export dicom tags to the XML image format.
      */
-    private static Hashtable<FileDicomKey, FileDicomTagInfo> subsetHashtable;
+    protected static Hashtable<FileDicomKey, FileDicomTagInfo> subsetHashtable;
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -503,7 +503,7 @@ public class DicomDictionary {
      * Converts group numbers of 60xx or 50xx dicom key elements so that the dicom dictionary will be able to find them.
      */
 
-    private static FileDicomKey convertToWildKey(final FileDicomKey key) {
+    protected static FileDicomKey convertToWildKey(final FileDicomKey key) {
         final String wildCheck = key.getGroup().substring(0, 2);
         // if key group is not a 50xx or 60xx, then returning the masterHashtable evaluation is enough
         if ( !wildCheck.equals("50") && !wildCheck.equals("60")) {
@@ -525,7 +525,7 @@ public class DicomDictionary {
      * 
      * @return A reader for the given file name.
      */
-    private static BufferedReader getFileReader(final String filename) {
+    protected static BufferedReader getFileReader(final String filename) {
 
         try {
             String filepath;
@@ -569,7 +569,7 @@ public class DicomDictionary {
      * 
      * @see FileDicomTagInfo
      */
-    private static void parseFile(final int dictionary_type) {
+    protected static void parseFile(final int dictionary_type) {
         String filename;
         final Hashtable<FileDicomKey, FileDicomTagInfo> hashtable = new Hashtable<FileDicomKey, FileDicomTagInfo>();
 
