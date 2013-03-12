@@ -7,7 +7,7 @@ package gov.nih.mipav.model.file;
  * @author justinsenseney
  *
  */
-public class PrivateFileDicomKey extends FileDicomKey {
+public class PrivateFileDicomKey extends FileDicomKey implements Comparable<FileDicomKey> {
 
 	public static final String NO_PUBLISHER = "No publisher";
 	
@@ -51,4 +51,8 @@ public class PrivateFileDicomKey extends FileDicomKey {
         return "Publisher: "+publisher+"\t"+key;
     }
 
+	@Override
+	public int compareTo(FileDicomKey dicomKey) {
+		return this.toString().compareTo(dicomKey.toString());
+	}
 }
