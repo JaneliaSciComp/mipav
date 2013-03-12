@@ -1809,18 +1809,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
                 dtiSliceCounter = 0;
                 int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
-                int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads 
+                int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads
                 ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
                 for (int i = 0; i < instanceNumsLength; i++) {
-                    String savedFileGradFirst = (String)savedFileInfos[0].getTagTable().getValue("0019,10BB")+
-                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BC")+
-                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BD") ;
-                    String savedFileGradSecond = (String)savedFileInfos[1].getTagTable().getValue("0019,10BB")+
-                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BC")+
-                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BD") ;
-                    String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0019,10BB")+
-                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BC")+
-                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BD") ;
+                    String savedFileGradFirst = generateGEID(savedFileInfos[0].getTagTable());
+                    String savedFileGradSecond = generateGEID(savedFileInfos[1].getTagTable());
+                    String savedFileGradI = generateGEID(savedFileInfos[i].getTagTable());
                     String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
                     String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
                     String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
@@ -1900,6 +1894,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
         
         return dtiSliceCounter;
         
+    }
+
+    private static String generateGEID(FileDicomTagTable tagTable) {
+    	return (String)tagTable.getValue("0019,10BB")+
+                (String)tagTable.getValue("0019,10BC")+
+                (String)tagTable.getValue("0019,10BD");
     }
 
     /**
