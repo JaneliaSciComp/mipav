@@ -55,8 +55,8 @@ public class SVD implements java.io.Serializable {
         boolean tstdrv = true;
 
         // Test the error exits for the LAPACK routines and driver routines.
-        // Passed all 38 exits on test.
-        // Put at false so as not to have to hit okay to 38 displayError messages.
+        // Passed all 8 exits on test.
+        // Put at false so as not to have to hit okay to 8 displayError messages.
         boolean tsterr = false;
 
         // Code describing how to set the random number seed.
@@ -110,7 +110,7 @@ public class SVD implements java.io.Serializable {
         xlaenv(9, 25);
         
         if (tsterr && tstdrv) {
-            //derred();
+            derred();
         }
 
         for (i = 1; i <= nparms; i++) {
@@ -143,6 +143,83 @@ public class SVD implements java.io.Serializable {
             } // if (tstdrv)
         } // for (i = 1; i <= nparms; i++)
     } // ddrvbd_test
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DERRED.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * This routine checks the error exits of dgesvd
+     */
+    private void derred() {
+        int nmax = 4;
+        int info[] = new int[1];
+        double A[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        double U[][] = new double[nmax][nmax];
+        double VT[][] = new double[nmax][nmax];
+        double w[] = new double[4*nmax];
+        int npass = 8;
+        final int ntotal = 8;
+        dgesvd('X', 'N', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgesvd('X', 'N', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('N', 'X', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgesvd('N', 'X', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('O', 'O', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgesvd('O', 'O', 0, 0, A, 1, s, U, 1, VT, 1, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('N', 'N', -1, 0, A, 1, s, U, 1, VT, 1, w, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgesvd('N', 'N', -1, 0, A, 1, s, U, 1, VT, 1, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('N', 'N', 0, -1, A, 1, s, U, 1, VT, 1, w, 1, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgesvd('N', 'N', 0, -1, A, 1, s, U, 1, VT, 1, w, 1, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('N', 'N', 2, 1, A, 1, s, U, 1, VT, 1, w, 5, info);
+        if (info[0] != -6) {
+            Preferences.debug("dgesvd('N', 'N', 2, 1, A, 1, s, U, 1, VT, 1, w, 5, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -6\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('A', 'N', 2, 1, A, 2, s, U, 1, VT, 1, w, 5, info);
+        if (info[0] != -9) {
+            Preferences.debug("dgesvd('A', 'N', 2, 1, A, 2, s, U, 1, VT, 1, w, 5, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -9\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        dgesvd('N', 'A', 1, 2, A, 1, s, U, 1, VT, 1, w, 5, info);
+        if (info[0] != -11) {
+            Preferences.debug("dgesvd('N', 'A', 1, 2, A, 1, s, U, 1, VT, 1, w, 5, info) produced info[0] = " + info[0] +
+                              " instead of info[0] = -11\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
+        }
+        
+        Preferences.debug("dgesvd correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+        
+    } // derred
     
     /*  ddrvbd checks the singular value dcomposition (SVD) driver dgesvd.
       
