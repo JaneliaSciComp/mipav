@@ -2686,7 +2686,7 @@ public class SVD implements java.io.Serializable {
                          ge.dlaset('L', n-1, n-1, 0.0, 0.0, arr2, ldwrku);
                          for (i = 0; i < n-1; i++) {
                              for (j = 0; j < n-1; j++) {
-                                 arr[i+1][j] = arr[i][j];
+                                 arr[i+1][j] = arr2[i][j];
                              }
                          }
                          ie = itau;
