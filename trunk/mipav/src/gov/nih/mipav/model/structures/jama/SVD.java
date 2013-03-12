@@ -1630,7 +1630,7 @@ public class SVD implements java.io.Serializable {
                       workie = new double[n];
                       workitauq = new double[n];
                       workitaup = new double[n];
-                      workiwork = new double[Math.max(1, lwork-iwork+1)];
+                      workiwork = new double[Math.max(4*n, Math.max(1, lwork-iwork+1))];
                       gi.dgebrd(n, n, arr, ldwrkr, s, workie,
                                 workitauq, workitaup,
                                 workiwork, lwork-iwork+1, ierr);
@@ -1664,18 +1664,9 @@ public class SVD implements java.io.Serializable {
                              }
                          }
                          arr3 = new double[chunk][n];
-                         for (j = 0; j < n; j++) {
-                             for (L = 0; L < n; L++) {
-                                 if (arr[L][j] != 0.0) {
-                                     for (p = 0; p < chunk; p++) {
-                                         arr3[p][j] = arr3[p][j] + (arr[L][j] * arr2[p][L]);
-                                     }
-                                 }
-                             }
-                         }
-                         //ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
-                                     //lda, arr, ldwrkr, 0.0,
-                                     //arr3, ldwrku);
+                         ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
+                                     lda, arr, ldwrkr, 0.0,
+                                     arr3, ldwrku);
                          for (j = 0; j < chunk; j++) {
                              for (k = 0; k < n; k++) {
                                  A[i-1+j][k] = arr3[j][k];
@@ -1839,18 +1830,9 @@ public class SVD implements java.io.Serializable {
                              }
                          }
                          arr3 = new double[chunk][n];
-                         for (j = 0; j < n; j++) {
-                             for (L = 0; L < n; L++) {
-                                 if (arr[L][j] != 0.0) {
-                                     for (p = 0; p < chunk; p++) {
-                                         arr3[p][j] = arr3[p][j] + (arr[L][j] * arr2[p][L]);
-                                     }
-                                 }
-                             }
-                         }
-                         //ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
-                                     //lda, arr, ldwrkr, 0.0,
-                                     //arr3, ldwrku);
+                         ge.dgemm('N', 'N', chunk, n, n, 1.0, arr2,
+                                     lda, arr, ldwrkr, 0.0,
+                                     arr3, ldwrku);
                          for (j = 0; j < chunk; j++) {
                              for (k = 0; k < n; k++) {
                                  A[i-1+j][k] = arr3[j][k];
@@ -1974,14 +1956,14 @@ public class SVD implements java.io.Serializable {
                          ge.dlacpy( 'U', n, n, A, lda, arr, ldwrkr);
                          arr2 = new double[n-1][n-1];
                          for (i = 0; i < n-1; i++) {
-                             for (j = 0 ; j < n-1; j++) {
+                             for (j = 0; j < n-1; j++) {
                                  arr2[i][j] = arr[i+1][j];
                              }
                          }
                          ge.dlaset('L', n-1, n-1, 0.0, 0.0,
                                    arr2, ldwrkr);
                          for (i = 0; i < n-1; i++) {
-                             for (j = 0 ; j < n-1; j++) {
+                             for (j = 0; j < n-1; j++) {
                                  arr[i+1][j] = arr2[i][j];
                              }
                          }
@@ -2551,7 +2533,7 @@ public class SVD implements java.io.Serializable {
                          // (Workspace: need n*n+4*n, prefer n*n+3*n+n*nb)
      
                          gi.dorgbr('Q', n, n, n, arr, ldwrkr,
-                                   workiwork, workiwork,
+                                   workitauq, workiwork,
                                    lwork-iwork+1, ierr);
                          iwork = ie + n;
     
