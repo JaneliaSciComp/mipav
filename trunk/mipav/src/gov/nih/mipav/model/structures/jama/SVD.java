@@ -2881,7 +2881,7 @@ public class SVD implements java.io.Serializable {
                          }
                          
                          ie = itau;
-                         itauq = ie+ n;
+                         itauq = ie + n;
                          itaup = itauq + n;
                          iwork = itaup + n;
     
@@ -3255,7 +3255,7 @@ public class SVD implements java.io.Serializable {
                           }
                       }
                       ge.dlaset('U', m-1, m-1, 0.0, 0.0,
-                                arr, ldwrkr);
+                                arr2, ldwrkr);
                       for (i = 0; i < m-1; i++) {
                           for (j = 0; j < m-1; j++) {
                               arr[i][j+1] = arr2[i][j];
