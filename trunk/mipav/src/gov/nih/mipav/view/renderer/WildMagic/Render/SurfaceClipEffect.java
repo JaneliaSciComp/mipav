@@ -17,7 +17,7 @@ public class SurfaceClipEffect extends VolumeClipEffect
     public SurfaceClipEffect ()
     {
         SetPassQuantity(1);
-        m_kVShader.set(0, new VertexShader("SurfaceClipV", true) );
+        m_kVShader.set(0, new VertexShader("SurfaceClipV") );
         m_kPShader.set(0, new PixelShader("SurfaceClipP") );
     }
     /**

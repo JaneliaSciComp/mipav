@@ -25,12 +25,15 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.ScreenCoordinateListener;
 
 import java.awt.Cursor;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
 import java.util.Vector;
 
@@ -39,6 +42,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 
+import WildMagic.ApplicationDemos.Iridescence;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -53,6 +57,7 @@ import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
@@ -232,6 +237,45 @@ public class PlaneRender_WM extends GPURenderBase
         setOrientation();
         m_kWinLevel = new WindowLevel(); 
     }
+    
+    
+	/**
+	 */
+	public static PlaneRender_WM main(GLCanvas kCanvas, VolumeTriPlanarInterface kParent, Animator kAnimator, 
+            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB,
+            int iPlane, VolumeSlices kVolumeSlice, boolean displayInSeparateFrame )
+	{
+		PlaneRender_WM kWorld = new PlaneRender_WM(kCanvas, kParent, kAnimator, 
+	            kVolumeImageA, kVolumeImageB, iPlane);
+		kWorld.addSlices(kVolumeSlice);
+		/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+        //animator.setRunAsFastAsPossible(true);
+        animator.start();
+		if ( displayInSeparateFrame )
+		{
+			Frame frame = new Frame(kWorld.GetWindowTitle());
+			frame.add( kWorld.GetCanvas() );
+			frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+			/* Animator serves the purpose of the idle function, calls display: */
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// Run this on another thread than the AWT event queue to
+					// avoid deadlocks on shutdown on some platforms
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							animator.stop();
+							System.exit(0);
+						}
+					}).start();
+				}
+			});
+			frame.setVisible(true);
+		}
+        return kWorld;
+	}
 
     
     /**
@@ -809,15 +853,15 @@ public class PlaneRender_WM extends GPURenderBase
     	
         if (iWidth > 0 && iHeight > 0)
         {            
-            if ( m_bUpdateSpacing )
+        	m_iLabelX_SpacingX = (int) (m_kXArrow[1].VBuffer.GetPosition3fX(1) * iWidth + 2);
+        	m_iLabelX_SpacingY = (int) (m_kXArrow[1].VBuffer.GetPosition3fY(1) * iHeight) - 5;
+        	m_iLabelY_SpacingX = (int) (m_kYArrow[1].VBuffer.GetPosition3fX(2) * iWidth - 5);
+        	m_iLabelY_SpacingY = (int) (m_kYArrow[1].VBuffer.GetPosition3fY(2) * iHeight);
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
             {
-                m_iLabelX_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelX_SpacingY *= (float)iHeight/(float)m_iHeight;
-                m_iLabelY_SpacingX *= (float)iWidth/(float)m_iWidth;
-                m_iLabelY_SpacingY *= (float)iHeight/(float)m_iHeight;
+            	m_iLabelX_SpacingY = iHeight - m_iLabelX_SpacingY;
+            	m_iLabelY_SpacingY = iHeight - m_iLabelY_SpacingY + 20;
             }
-            m_bUpdateSpacing = true;
-            
             
             if (m_pkRenderer != null)
             {
@@ -840,9 +884,7 @@ public class PlaneRender_WM extends GPURenderBase
                     afData[4], afData[5], afData[6], afData[7], 
                     afData[8], afData[9], afData[10], afData[11], 
                     afData[12], afData[13], afData[14], afData[15] );
-            //System.err.println( m_kPVWMatrix.ToString() );
         }
-        
     }
 
     
@@ -1257,6 +1299,17 @@ public class PlaneRender_WM extends GPURenderBase
             m_kYArrow[1].UpdateRS();
             m_pkRenderer.LoadResources(m_kYArrow[1]);
         }
+        
+
+    	m_iLabelX_SpacingX = (int) (m_kXArrow[1].VBuffer.GetPosition3fX(1) * m_iWidth + 2);
+    	m_iLabelX_SpacingY = (int) (m_kXArrow[1].VBuffer.GetPosition3fY(1) * m_iHeight) - 5;
+    	m_iLabelY_SpacingX = (int) (m_kYArrow[1].VBuffer.GetPosition3fX(2) * m_iWidth - 5);
+    	m_iLabelY_SpacingY = (int) (m_kYArrow[1].VBuffer.GetPosition3fY(2) * m_iHeight);
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
+        {
+        	m_iLabelX_SpacingY = m_iHeight - m_iLabelX_SpacingY;
+        	m_iLabelY_SpacingY = m_iHeight - m_iLabelY_SpacingY + 20;
+        }
     }
 
     /**
@@ -1318,7 +1371,7 @@ public class PlaneRender_WM extends GPURenderBase
         }
 
         m_kBallPoint = new Polyline( kBuffer, true, true );
-        m_kBallPoint.AttachEffect( new VertexColor3Effect( "ConstantColor", true ) );
+        m_kBallPoint.AttachEffect( new VertexColor3Effect( "ConstantColor" ) );
         m_kBallPoint.AttachGlobalState(m_kZState);
         m_kBallPoint.UpdateRS();
 
@@ -2224,21 +2277,7 @@ public class PlaneRender_WM extends GPURenderBase
                 m_kLabelXDisplay = new String( "R" );
             }
         }
-        if ( m_iPlaneOrientation == FileInfoBase.AXIAL) 
-        {
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 20;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 68;
-        }
-        else
-        {     
-            m_iLabelX_SpacingX = 50;
-            m_iLabelX_SpacingY = 10;
-            m_iLabelY_SpacingX = 10;
-            m_iLabelY_SpacingY = 55;
-        }
-
+        
         ModelImage kImageA = m_kVolumeImageA.GetImage();
         //System.err.println( m_iPlaneOrientation + " " + m_fX + " " + m_fY + " " + m_fZ + " " + fMax );
         

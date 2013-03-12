@@ -46,18 +46,18 @@ implements StreamInterface
         SetPassQuantity(1);
         if ( iType == COLLAPSE_COLUMNS )
         {
-            kVShader = new VertexShader("VolumeHistogramColumnsV", true);
-            kPShader = new PixelShader("VolumeHistogramColumnsP", true);
+            kVShader = new VertexShader("VolumeHistogramColumnsV");
+            kPShader = new PixelShader("VolumeHistogramColumnsP");
         }
         else if ( iType == COLLAPSE_ROWS )
         {
-            kVShader = new VertexShader("VolumeHistogramRowsV", true);
-            kPShader = new PixelShader("VolumeHistogramRowsP", true);
+            kVShader = new VertexShader("VolumeHistogramRowsV");
+            kPShader = new PixelShader("VolumeHistogramRowsP");
         }
         else
         {
-            kVShader = new VertexShader("VolumeHistogramPassThroughV", true);
-            kPShader = new PixelShader("TextureP", Shader.pixelShaderTexture2, true );
+            kVShader = new VertexShader("VolumeHistogramPassThroughV");
+            kPShader = new PixelShader("TextureP", Shader.pixelShaderTexture2);
         }
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
@@ -100,8 +100,8 @@ implements StreamInterface
 
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        VertexShader kVShader = new VertexShader("VolumeHistogram2DV", true);
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
+        VertexShader kVShader = new VertexShader("VolumeHistogram2DV");
+        PixelShader kPShader = new PixelShader("VolumeHistogramP");
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         

@@ -14,6 +14,8 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -192,7 +194,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	 public VolumeTriPlanarRenderBase( VolumeImage kVolumeImageA  )
 	 {
 		 super();
-		 m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+         if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+         {
+        	 m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+         }
 		 m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
 				 m_eBuffering, m_eMultisampling,
 				 m_iWidth, m_iHeight );
@@ -228,7 +233,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
 	 {
 		 super();
-		 m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+         if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+         {
+        	 m_eBuffering = FrameBuffer.BufferingType.BT_QUAD_STEREO;
+         }
 		 m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
 				 m_eBuffering, m_eMultisampling,
 				 m_iWidth, m_iHeight );
@@ -1839,10 +1847,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  if ( m_kVolumeBox != null )
 		  {
 			  m_kVolumeBox.SetBackgroundColor( kColor );
-		  }
-		  if ( m_kSlices != null )
-		  {
-			  m_kSlices.SetBackgroundColor( kColor );
 		  }
 	  }
 

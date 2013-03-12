@@ -26,6 +26,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
@@ -33,6 +34,7 @@ import javax.media.opengl.awt.GLCanvas;
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.LatticeEffect;
 import WildMagic.LibGraphics.Effects.LightingEffect;
@@ -82,6 +84,38 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
         frame.setVisible(true);
         animator.start();
 	}
+	
+	public static void main(GLCanvas kWindow, Node scene, boolean bShared) {
+		Lattice kWorld = new Lattice(kWindow,scene,bShared);
+		/* Animator serves the purpose of the idle function, calls display: */
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
+			public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
+					public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.start();
+	}
+
+    /** For testing the frame rate: */
+    protected boolean m_bTestFrameRate = false;
+    /** Rotation during frame rate tests: */
+    protected Matrix3f m_kRotate = new Matrix3f();
+	
 	private LatticeEffect m_spkEffect;
 
 	private TriMesh m_pkMesh;
@@ -107,7 +141,8 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 	 * 
 	 */
 	public Lattice() {
-		super( "Lattice", FrameBuffer.BufferingType.BT_QUAD_STEREO );
+		super( "Lattice"  );
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 
 	public Lattice(GLCanvas kWindow, Node scene, boolean bShared) {
@@ -115,6 +150,7 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 
 		m_spkScene = scene;
 		m_bShared = bShared;
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 
 	/**
@@ -133,6 +169,19 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 			m_spkScene.UpdateGS();
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
+        if ( m_bTestFrameRate )
+        {
+            Matrix3f kRotate = m_spkScene.Local.GetRotate();
+            kRotate.mult(m_kRotate);
+            m_spkScene.Local.SetRotate(kRotate);
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+            
+            if ( m_pkMesh != null )
+            {
+            	m_pkMesh.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+            }
+        }
 		if (m_pkRenderer.BeginScene()) {
 			if ( m_bStereo )
 			{
@@ -212,6 +261,17 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 
 		InitializeCameraMotion(0.01f, 0.001f);
 		InitializeObjectMotion(m_spkScene);
+
+		byte[] bStereo = new byte[1];
+		arg0.getGL().glGetBooleanv( GL3.GL_STEREO, bStereo, 0 );
+		if ( bStereo[0] == 0 )
+		{
+			System.err.println( "Stereo capable = false" );
+		}
+		else
+		{
+			System.err.println( "Stereo capable = true" );
+		}
 	}
 
 	/**
@@ -224,6 +284,13 @@ public class Lattice extends DemoBase implements GLEventListener, KeyListener {
 		char ucKey = e.getKeyChar();
 		super.keyPressed(e);
 		switch (ucKey) {
+        case 'f':
+            m_bTestFrameRate = !m_bTestFrameRate;
+            if ( m_bTestFrameRate )
+            {
+                ResetTime();
+            }
+            return;
 		case 'l':
 		case 'L':
 			if ( m_spkEffect != null )

@@ -26,8 +26,10 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -37,6 +39,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.IridescenceEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.CullState;
+import WildMagic.LibGraphics.Rendering.FrameBuffer;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -82,6 +85,39 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
     		}
     	});
         frame.setVisible(true);
+        animator.setRunAsFastAsPossible(true);
+        animator.start();
+	}	
+	
+	/**
+	 * Iridescence.main creates the Iridescence object and window frame to contain the GLCanvas. An Animator object is
+	 * created with the GLCanvas as an argument. The Animator provides the same function as the glutMainLoop() function
+	 * call commonly used in OpenGL applications.
+	 */
+	public static void main(GLCanvas kWindow, Node scene, boolean bShared) {
+		Iridescence kWorld = new Iridescence(kWindow,scene,bShared);
+		/* Animator serves the purpose of the idle function, calls display: */
+    	Frame frame = new Frame(kWorld.GetWindowTitle());
+    	frame.add( kWorld.GetCanvas() );
+    	frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+    	/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	frame.addWindowListener(new WindowAdapter() {
+    		@Override
+			public void windowClosing(WindowEvent e) {
+    			// Run this on another thread than the AWT event queue to
+    			// avoid deadlocks on shutdown on some platforms
+    			new Thread(new Runnable() {
+    				@Override
+					public void run() {
+    					animator.stop();
+    					System.exit(0);
+    				}
+    			}).start();
+    		}
+    	});
+        frame.setVisible(true);
+        animator.setRunAsFastAsPossible(true);
         animator.start();
 	}
 
@@ -99,6 +135,12 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 
 	private boolean m_bRight = true;
 
+    /** For testing the frame rate: */
+    protected boolean m_bTestFrameRate = false;
+    /** Rotation during frame rate tests: */
+    protected Matrix3f m_kRotate = new Matrix3f();
+	private TriMesh m_pkMesh;
+
 
 	/**
 	 * The constructor initializes the OpenGLRender, and sets up the GLEvent, KeyEvent, and Mouse listeners. The last
@@ -110,6 +152,16 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 	 */
 	public Iridescence() {
 		super("Iridescence");
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
+	}
+	
+	
+
+	public Iridescence(GLCanvas kWindow, Node scene, boolean bShared) {
+		super("Iridescence", kWindow);
+		m_spkScene = scene;
+		m_bShared = bShared;
+        m_kRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
 	}
 	/**
 	 * Iridescence.display() displays the scene. The frame rate is measured. Any camera motion that has occurred since
@@ -127,6 +179,20 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 			m_spkScene.UpdateGS();
 			m_kCuller.ComputeVisibleSet(m_spkScene);
 		}
+        if ( m_bTestFrameRate )
+        {
+            Matrix3f kRotate = m_spkScene.Local.GetRotate();
+            kRotate.mult(m_kRotate);
+            m_spkScene.Local.SetRotate(kRotate);
+            m_spkScene.UpdateGS();
+            m_kCuller.ComputeVisibleSet(m_spkScene);
+            
+            if ( m_pkMesh != null )
+            {
+            	m_pkMesh.Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+            }
+        }
+                
 		if ( !m_bStereo) {
 			m_pkRenderer.ClearBuffers();
 			if (m_pkRenderer.BeginScene()) {
@@ -165,7 +231,7 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 		m_pkRenderer.DisplayBackBuffer();
 		UpdateFrameCount();
 
-		if (m_kShaderParamsWindow == null) {
+		if (m_kShaderParamsWindow == null && !m_bShared) {
 			m_kShaderParamsWindow = new ApplicationGUI();
 			m_kShaderParamsWindow.setParent(this);
 			m_kShaderParamsWindow.AddUserVariables(m_spkEffect.GetCProgram(0));
@@ -198,11 +264,14 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
 		m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
-		CreateScene();
+		if ( !m_bShared )
+		{
+			CreateScene();
 
-		// initial update of objects
-		m_spkScene.UpdateGS();
-		m_spkScene.UpdateRS();
+			// initial update of objects
+			m_spkScene.UpdateGS();
+			m_spkScene.UpdateRS();
+		}
 
 		// initial culling of scene
 		m_kCuller.SetCamera(m_spkCamera);
@@ -210,6 +279,18 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 
 		InitializeCameraMotion(0.01f, 0.001f);
 		InitializeObjectMotion(m_spkScene);
+		
+
+		byte[] bStereo = new byte[1];
+		arg0.getGL().glGetBooleanv( GL3.GL_STEREO, bStereo, 0 );
+		if ( bStereo[0] == 0 )
+		{
+			System.err.println( "Stereo capable = false" );
+		}
+		else
+		{
+			System.err.println( "Stereo capable = true" );
+		}
 	}
 
 	/**
@@ -312,19 +393,19 @@ public class Iridescence extends DemoBase implements GLEventListener, KeyListene
 		kAttr.SetNChannels(3);
 		kAttr.SetTChannels(0, 2);
 		StandardMesh kSM = new StandardMesh(kAttr);
-		TriMesh pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
+		m_pkMesh = kSM.Torus(200, 200, 2.0f, 1.0f);
 
-		pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
+		m_pkMesh.Local.SetMatrix(new Matrix3f(new Vector3f(0f, 0f, 1f), new Vector3f(0.707f, 0.707f, 0f), new Vector3f(
 				-0.707f, 0.707f, 0f), false));
-		m_spkScene.AttachChild(pkMesh);
+		m_spkScene.AttachChild(m_pkMesh);
 
 		m_spkEffect = new IridescenceEffect("Leaf", "Gradient");
 		m_spkEffect.SetInterpolateFactor(0.5f);
 		int iPassQuantity = m_spkEffect.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
-			m_spkEffect.LoadPrograms(m_pkRenderer, pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
+			m_spkEffect.LoadPrograms(m_pkRenderer, m_pkMesh, iPass, m_pkRenderer.GetMaxColors(), m_pkRenderer.GetMaxTCoords(),
 					m_pkRenderer.GetMaxVShaderImages(), m_pkRenderer.GetMaxPShaderImages());
 		}
-		pkMesh.AttachEffect(m_spkEffect);
+		m_pkMesh.AttachEffect(m_spkEffect);
 	}	
 }

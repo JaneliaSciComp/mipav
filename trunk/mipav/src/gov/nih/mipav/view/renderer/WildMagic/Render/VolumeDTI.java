@@ -206,8 +206,8 @@ public class VolumeDTI extends VolumeObject
 
 			
 			VolumePreRenderEffect[] shaders = new VolumePreRenderEffect[4];
-			shaders[0] = new VolumePreRenderEffect(true, true, false); // pre-render non transparent
-			shaders[1] = new VolumePreRenderEffect(false, true, true); // pre-render transparent
+			shaders[0] = new VolumePreRenderEffect(true, true); // pre-render non transparent
+			shaders[1] = new VolumePreRenderEffect(false, true); // pre-render transparent
 			shaders[2] = new VolumePreRenderEffect();
 			m_kShaders.put( iIGroup, shaders );
 

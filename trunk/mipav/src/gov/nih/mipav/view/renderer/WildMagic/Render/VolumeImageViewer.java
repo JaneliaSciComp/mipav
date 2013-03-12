@@ -348,7 +348,7 @@ public class VolumeImageViewer extends JavaApplication3D
     protected void CreateScene ()
     {
         CreatePlaneNode();
-        m_spkEffect = new VolumePlaneEffect( m_kVolumeImage, null, true, false );
+        m_spkEffect = new VolumePlaneEffect( m_kVolumeImage, null, false );
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
         m_pkPlane.DetachAllEffects();

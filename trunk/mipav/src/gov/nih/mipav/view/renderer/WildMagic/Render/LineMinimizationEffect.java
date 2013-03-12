@@ -56,14 +56,14 @@ public class LineMinimizationEffect extends ShaderEffect
         VertexShader kVShader = null;
         if ( bIs2D )
         {
-            kVShader = new VertexShader("LineMinimizationV", true);
+            kVShader = new VertexShader("LineMinimizationV");
         }
         else
         {
-            kVShader = new VertexShader("LineMinimization3DV", true);
+            kVShader = new VertexShader("LineMinimization3DV");
         }
         
-        PixelShader kPShader = new PixelShader("PassThrough4", true);
+        PixelShader kPShader = new PixelShader("PassThrough4");
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         /*
@@ -87,8 +87,8 @@ public class LineMinimizationEffect extends ShaderEffect
         m_dNumSamples = dNumSamples;
         m_fDim = iDim;
         
-        VertexShader kVShader = new VertexShader("LineMinimizationStep2V", true);
-        PixelShader kPShader = new PixelShader("PassThrough4", true);
+        VertexShader kVShader = new VertexShader("LineMinimizationStep2V");
+        PixelShader kPShader = new PixelShader("PassThrough4");
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
 
@@ -108,8 +108,8 @@ public class LineMinimizationEffect extends ShaderEffect
 
         /* Set single-pass rendering: */
         SetPassQuantity(1);
-        VertexShader kVShader = new VertexShader("VolumeHistogramTransformV", true);
-        PixelShader kPShader = new PixelShader("VolumeHistogramP", true);
+        VertexShader kVShader = new VertexShader("VolumeHistogramTransformV");
+        PixelShader kPShader = new PixelShader("VolumeHistogramP");
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         
