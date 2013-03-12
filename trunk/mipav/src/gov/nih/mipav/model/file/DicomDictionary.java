@@ -77,13 +77,13 @@ public class DicomDictionary {
     protected static final int SUBSET_DICTIONARY = 2;
 
     /** Hashtable filled with known DICOM tags with empty value attributes. */
-    protected static Hashtable<FileDicomKey, FileDicomTagInfo> masterHashtable;
+    private static Hashtable<FileDicomKey, FileDicomTagInfo> masterHashtable;
 
     /**
      * Hashtable filled with DICOM tags which are a subset (not necessarily a proper subset) of dicom tags in the master
      * table. This subset is then used to export dicom tags to the XML image format.
      */
-    protected static Hashtable<FileDicomKey, FileDicomTagInfo> subsetHashtable;
+    private static Hashtable<FileDicomKey, FileDicomTagInfo> subsetHashtable;
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
