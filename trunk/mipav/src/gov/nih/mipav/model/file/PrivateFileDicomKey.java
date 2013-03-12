@@ -13,7 +13,7 @@ public class PrivateFileDicomKey extends FileDicomKey {
 	
 	/** The publisher for this tag. */
 	private String publisher;
-	
+
 	public PrivateFileDicomKey(String keyStr) {
 		this(NO_PUBLISHER, keyStr);
 	}
@@ -33,5 +33,22 @@ public class PrivateFileDicomKey extends FileDicomKey {
 		super(group, element);
 		this.publisher = publisher;
 	}
+	
+	public String getPublisher() {
+		return publisher;
+	}
+	
+	public void setPublisher(String publisher) {
+		this.publisher = publisher;
+	}
+
+	/**
+     * Returns the unique identifier.
+     *
+     * @return  The unique identifier.
+     */
+    public String toString() {
+        return "Publisher: "+publisher+"\t"+key;
+    }
 
 }
