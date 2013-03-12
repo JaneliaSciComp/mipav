@@ -1787,7 +1787,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                 //Checks for incomplete DWI series                                  
                 if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
-                    dtiSliceCounter = -1; //Not complete DWI series
+                		isDTISort = false; //Not complete DWI series
                     }
                     
                 else{
@@ -1858,7 +1858,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                }                              
                         }
                         else{
-                            dtiSliceCounter = -1; //Not complete DWI series
+                        	isDTISort = false; //Not complete DWI series
                         }
                     }
 
@@ -1874,19 +1874,19 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                }
                            }                                  
                     } else {
-                        dtiSliceCounter = -1; //Not complete DWI series 
+                    	isDTISort = false; //Not complete DWI series 
                     }
 
                 } else {
-                    dtiSliceCounter = -1; //Not complete DWI series 
+                	isDTISort = false; //Not complete DWI series 
                 }
 
              }  
         } else{ //For DTI dicom data not aquired from GE or Philips scanners
-            dtiSliceCounter = -1;
+        	isDTISort = false;
         }
         
-        if(dtiSliceCounter != -1) {
+        if(isDTISort && dtiSliceCounter != -1) {
             for(int i=0; i<indices.length; i++) {
                 indices[i] = zInst[i];
             }
