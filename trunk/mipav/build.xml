@@ -54,7 +54,7 @@
     <property name="debug" value="true" />
     <property name="deprecation" value="true" />
     <property name="optimize" value="false" />
-    <property name="javac.target" value="1.5+" />
+    <property name="javac.target" value="1.6+" />
     <property name="verbose" value="no" />
     <property name="nowarn" value="no" />
     <property name="listfiles" value="no" />
