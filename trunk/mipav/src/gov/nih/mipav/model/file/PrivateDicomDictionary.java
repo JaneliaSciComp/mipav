@@ -145,7 +145,7 @@ public class PrivateDicomDictionary {
         }
     }
     
-    private static final FileDicomTagInfo groupLengthInfo = new FileDicomTagInfo(null, VR.SH, 1, "Group Length", "Group Length");
+    private static final FileDicomTagInfo groupLengthInfo = new FileDicomTagInfo(null, VR.UL, 1, "Group Length", "Group Length");
     private static final FileDicomTagInfo groupNameInfo = new FileDicomTagInfo(null, VR.SH, 1, "Group Name", "Group Name");
     
     /**

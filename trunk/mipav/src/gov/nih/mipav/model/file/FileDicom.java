@@ -680,7 +680,7 @@ public class FileDicom extends FileDicomBase {
             }
             int bPtrOld = getFilePointer();
             try {
-                flag = processNextTag(tagTable, key, endianess, false);
+            	flag = processNextTag(tagTable, key, endianess, false);
                 if (flag == false && imageLoadReady == false) {
                     Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
                     break;
@@ -793,13 +793,18 @@ public class FileDicom extends FileDicomBase {
         		tagInfo = putPrivateTagInfo(tagTable, key, true);
         	}
         	
-            vr = tagInfo.getType();
-            tagVM = tagInfo.getValueMultiplicity();
+        	if(tagInfo != null) {
+        		vr = tagInfo.getType();
+                tagVM = tagInfo.getValueMultiplicity();
+        	} else {
+        		tagVM = elementLength;
+        	}
 
             // the tag was not found in the dictionaries
             if (vr == null) {
                 if(Integer.parseInt(key.getElement(), 16) == 0) {
                     vr = VR.UL;
+                    tagVM = elementLength / ((NumType)vr.getType()).getNumBytes();
                 } else {
                     vr = VR.UN;
                     tagVM = 1;
