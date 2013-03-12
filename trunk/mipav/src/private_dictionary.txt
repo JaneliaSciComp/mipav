@@ -1,9 +1,14 @@
-#DICOM dictionary contains private tags from GDCM source code that have 
+#DICOM dictionary contains private tags, including from GDCM source code that have 
 #undergone additional processing and correction at the National Intrepid 
-#Center of Excellence, Bethesda, MD, USA.  Those tags added from this source
-#contain a VERS value of "GDCM"  Original copyright status is 
-#printed below, as requested:
+#Center of Excellence, Bethesda, MD, USA (justin.s.senseney.civ@health.mil). DTI tags  
+#have also been added with VERS value of "NISH"
 #
+#
+#
+#
+#
+#Those tags added from the below source contain a VERS value of "GDCM"  
+#Original copyright status is printed below, as requested:
 #
 #  Program: GDCM (Grassroots DICOM). A DICOM library
 #  Module:  http://gdcm.sourceforge.net/Copyright.html
