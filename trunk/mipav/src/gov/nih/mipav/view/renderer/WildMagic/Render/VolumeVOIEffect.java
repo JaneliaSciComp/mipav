@@ -31,14 +31,14 @@ public class VolumeVOIEffect extends ShaderEffect
     public VolumeVOIEffect (boolean bTransparent)
     {
         super(1);
-        m_kVShader.set(0, new VertexShader("VOIVertex", true));            
+        m_kVShader.set(0, new VertexShader("VOIVertex"));            
         if ( bTransparent )
         {
-            m_kPShader.set(0, new PixelShader("VOITransparency", true));
+            m_kPShader.set(0, new PixelShader("VOITransparency"));
         }
         else
         {
-            m_kPShader.set(0, new PixelShader("VOISolid", true));
+            m_kPShader.set(0, new PixelShader("VOISolid"));
         }
     }
         

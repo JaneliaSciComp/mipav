@@ -121,7 +121,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
         //GetCanvas().getContext().setSwapInterval(0);  
-        GetCanvas().getContext().setSynchronized(true);  
+        //GetCanvas().getContext().setSynchronized(true);  
         m_kTarget = kTarget;
         m_kMoving = kMoving;
         String kExternalDirs = MipavInitGPU.getExternalDirs();        

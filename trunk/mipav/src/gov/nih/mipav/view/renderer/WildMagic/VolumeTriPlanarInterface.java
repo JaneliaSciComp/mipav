@@ -22,6 +22,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
@@ -92,6 +93,7 @@ import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLException;
+import javax.media.opengl.GLOffscreenAutoDrawable;
 import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -356,19 +358,17 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected boolean m_bDependentInterfaceInit = false;
 
-    //protected GLOffscreenAutoDrawable sharedDrawable = null;
-    protected GLPbuffer sharedDrawable = null;
+    protected GLOffscreenAutoDrawable sharedDrawable = null;
 
     protected VolumeTriPlanarRender sharedRenderer;
 
     protected static boolean init = initClass();
 
     public static boolean initClass() {
-        GLProfile.initSingleton(true);
-        glp = GLProfile.getMaxProgrammable();
-        //GLProfile.initSingleton();
-        //glp = GLProfile.getMaxProgrammable(true);
+        GLProfile.initSingleton();
+        glp = GLProfile.getMaxProgrammable(true);
         caps = new GLCapabilities(glp);
+        caps.setHardwareAccelerated(true);
         gl_width  = 512;
         gl_height = 512;
         return true;
@@ -663,11 +663,25 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     public void addSlices(final VolumeSlices kSlices) {
     	if ( m_akPlaneRender != null )
     	{
-    		for (int i = 0; i < 3; i++) {
-    			if (m_akPlaneRender[i] != null) {
-    				m_akPlaneRender[i].addSlices(kSlices);
-    			}
-    		}
+			if ( (m_akPlaneRender[0] == null) )
+			{
+				m_akPlaneRender[0] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+						m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL, kSlices, false);
+		        m_akPlaneRender[1] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL, kSlices, false);
+		        m_akPlaneRender[2] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL, kSlices, false);
+		        
+		        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
+		        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
+		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+		        setModified();
+			}
+//    		for (int i = 0; i < 3; i++) {
+//    			if (m_akPlaneRender[i] != null) {
+//    				m_akPlaneRender[i].addSlices(kSlices);
+//    			}
+//    		}
     	}
     }
 
@@ -3014,9 +3028,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         menuObj.setMenuItemEnabled("4D toolbar", m_kVolumeImageA.GetImage().is4DImage());
         setTitle(m_kVolumeImageA.GetImage().getImageName());
 
-        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
-        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
-        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
+//        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
+//        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
+//        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
         gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
         gpuPanel.setVisible(true);
 
@@ -3299,11 +3313,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         
         m_akPlaneRender = new PlaneRender_WM[3];
         
-        m_akPlaneRender[0] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
-        m_akPlaneRender[1] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
-                FileInfoBase.SAGITTAL);
-        m_akPlaneRender[2] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
-                FileInfoBase.CORONAL);
+//        m_akPlaneRender[0] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
+//        m_akPlaneRender[1] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
+//                FileInfoBase.SAGITTAL);
+//        m_akPlaneRender[2] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
+//                FileInfoBase.CORONAL);
 
         if (progressBar != null) {
             progressBar.updateValueImmed(progressBar.getValue() + iStep);
@@ -3338,19 +3352,17 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     protected void initShared() {
     	if ( sharedDrawable == null )
     	{
-            caps.setStereo(true);
-            try {
-            	//sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
-                sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
-            } catch ( GLException e ) {
-            	caps.setStereo( !caps.getStereo() );
-            	//sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
-                sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
-            }
-    		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
+            sharedDrawable = GLDrawableFactory.getFactory(glp).createOffscreenAutoDrawable(null, caps, null, gl_width, gl_height, null);
+            sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
     		// init and render one frame, which will setup the shared textures
     		sharedDrawable.display();
+    		
+    		// need to check hardware capabilities...
+            if ( Preferences.OperatingSystem.getOS() != OperatingSystem.OS_MAC )
+            {
+            	caps.setStereo(true);
+            }
     	}
     	else
     	{

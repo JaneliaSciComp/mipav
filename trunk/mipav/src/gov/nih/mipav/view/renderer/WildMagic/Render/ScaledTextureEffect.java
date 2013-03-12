@@ -19,7 +19,7 @@ public class ScaledTextureEffect extends ShaderEffect
     public ScaledTextureEffect (final String rkBaseName, float fVal)
     {
         super(1);
-        m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2, true ));
+        m_kVShader.set(0, new VertexShader("TextureV", Shader.vertexShaderTexture2 ));
         m_kPShader.set(0, new PixelShader("ScaledTextureP"));
 
         m_kPShader.get(0).SetTextureQuantity(1);

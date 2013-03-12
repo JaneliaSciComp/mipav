@@ -19,8 +19,8 @@ public class ImageReduceEffect extends ShaderEffect
         super(1);
         m_dNumSamples = dNumSamples;
         
-        VertexShader kVShader = new VertexShader("EntropyV", true);
-        PixelShader kPShader = new PixelShader("EntropyP", true);
+        VertexShader kVShader = new VertexShader("EntropyV");
+        PixelShader kPShader = new PixelShader("EntropyP");
         SetVShader(0,kVShader);
         SetPShader(0,kPShader);
         

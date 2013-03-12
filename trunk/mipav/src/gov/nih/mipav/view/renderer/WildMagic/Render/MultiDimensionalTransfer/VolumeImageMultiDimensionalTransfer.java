@@ -2,17 +2,22 @@ package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRenderBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -25,6 +30,8 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
+
+import com.jogamp.opengl.util.Animator;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -102,6 +109,47 @@ implements GLEventListener, KeyListener
 		createContainer(GetCanvas());
 		m_bDisplay = true;
 	}
+    
+    
+	/**
+	 * Iridescence.main creates the Iridescence object and window frame to contain the GLCanvas. An Animator object is
+	 * created with the GLCanvas as an argument. The Animator provides the same function as the glutMainLoop() function
+	 * call commonly used in OpenGL applications.
+	 */
+	public static VolumeImageMultiDimensionalTransfer main(GLCanvas kCanvas, VolumeTriPlanarInterface kParent, 
+            VolumeImage kVolumeImageA, boolean displayInSeparateFrame )
+	{
+		VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(kCanvas, kParent, kVolumeImageA);
+		
+		/* Animator serves the purpose of the idle function, calls display: */
+    	final Animator animator = new Animator( kWorld.GetCanvas() );
+        animator.setRunAsFastAsPossible(true);
+        animator.start();
+		if ( displayInSeparateFrame )
+		{
+			Frame frame = new Frame(kWorld.GetWindowTitle());
+			frame.add( kWorld.GetCanvas() );
+			frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+			/* Animator serves the purpose of the idle function, calls display: */
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// Run this on another thread than the AWT event queue to
+					// avoid deadlocks on shutdown on some platforms
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							animator.stop();
+							System.exit(0);
+						}
+					}).start();
+				}
+			});
+			frame.setVisible(true);
+		}
+        return kWorld;
+	}
+
 	
 	public void clearAllWidgets()
 	{
@@ -139,10 +187,10 @@ implements GLEventListener, KeyListener
 			return;
 		}
 		// return early if the animator is null:
-		if ( m_kAnimator == null )
-		{
-			return;
-		}      
+//		if ( m_kAnimator == null )
+//		{
+//			return;
+//		}      
 		// Set the drawable in the renderer:
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		// if dispose, call the dispose function and return.
@@ -294,7 +342,7 @@ implements GLEventListener, KeyListener
 		// Update the scene graph:
 		m_spkScene.UpdateGS();
 		m_spkScene.UpdateRS();
-		m_kAnimator.add( GetCanvas() );
+		//m_kAnimator.add( GetCanvas() );
 		
 		m_kCuller.SetCamera(m_spkCamera);
 

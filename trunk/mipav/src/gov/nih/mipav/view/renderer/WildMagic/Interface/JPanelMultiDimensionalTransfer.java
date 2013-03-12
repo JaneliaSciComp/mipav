@@ -94,8 +94,8 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	public JPanelMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface parent,
 			Animator kAnimator, VolumeImage kVolumeImage) {
 		m_kVolumeViewer = parent;
-		m_kMultiHistogram = new VolumeImageMultiDimensionalTransfer( canvas, parent, kVolumeImage);
-		m_kMultiHistogram.SetAnimator(kAnimator);
+		m_kMultiHistogram = VolumeImageMultiDimensionalTransfer.main( canvas, parent, kVolumeImage, false);
+		//m_kMultiHistogram.SetAnimator(kAnimator);
 		m_kMultiHistogram.SetInterface(this);
 
 		init(!kVolumeImage.GetImage().isColorImage());

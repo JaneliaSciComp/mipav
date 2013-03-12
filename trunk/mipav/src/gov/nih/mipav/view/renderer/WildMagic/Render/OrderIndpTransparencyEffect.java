@@ -43,6 +43,6 @@ public class OrderIndpTransparencyEffect extends ShaderEffect
             kPShader.SetImageName( i, akTextures[i].GetName(), "ColorTex" + i );
         }
         SetPShader(0, kPShader);
-        SetVShader(0, new VertexShader( "TextureV", Shader.vertexShaderTexture2, true ));
+        SetVShader(0, new VertexShader( "TextureV", Shader.vertexShaderTexture2 ));
     }
 }

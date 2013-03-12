@@ -971,20 +971,20 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		kMaterial.Specular.Copy(ColorRGB.WHITE);
 		kMaterial.Shininess = 83.2f;
 		kSphere1.AttachGlobalState(kMaterial);
-		kSphere1.AttachEffect(new MipavLightingEffect(true));
+		kSphere1.AttachEffect(new MipavLightingEffect());
 		kSpherePoints.AttachChild(kSphere1);
 
 
 		TriMesh kSphere2 = kSM.Sphere(64,64,.05f);
 		kSphere2.Local.SetTranslate( kCylinderTranslate );
 		kSphere2.AttachGlobalState(kMaterial);
-		kSphere2.AttachEffect(new MipavLightingEffect(true));
+		kSphere2.AttachEffect(new MipavLightingEffect());
 		kCylinderPoints.AttachChild(kSphere2);        
 
 		TriMesh kSphere3 = kSM.Sphere(64,64,.015f);
 		kSphere3.Local.SetTranslate( kMeshTranslate );
 		kSphere3.AttachGlobalState(kMaterial);
-		kSphere3.AttachEffect(new MipavLightingEffect(true));
+		kSphere3.AttachEffect(new MipavLightingEffect());
 		m_kMeshPoints.AttachChild(kSphere3);
 
 		m_iNumPicked++;
