@@ -97,7 +97,7 @@ public class DicomDictionary {
      */
     public static boolean containsTag(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -125,7 +125,7 @@ public class DicomDictionary {
      */
     public static Hashtable<FileDicomKey, FileDicomTagInfo> getDicomTagTable(final boolean forceReload) {
 
-        if ( (DicomDictionary.masterHashtable == null) || (forceReload == true)) {
+        if ( (DicomDictionary.doParseFile()) || (forceReload == true)) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -152,7 +152,7 @@ public class DicomDictionary {
      */
     public static FileDicomTagInfo getInfo(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -201,7 +201,7 @@ public class DicomDictionary {
      */
     public static String getKeyword(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -227,7 +227,7 @@ public class DicomDictionary {
      */
     public static String getName(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -297,7 +297,7 @@ public class DicomDictionary {
      */
     public static VR getType(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -323,7 +323,7 @@ public class DicomDictionary {
      */
     public static int getVM(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -350,7 +350,7 @@ public class DicomDictionary {
      */
     public static VR getVR(FileDicomKey key) {
 
-        if (DicomDictionary.masterHashtable == null) {
+        if (DicomDictionary.doParseFile()) {
             DicomDictionary.parseFile(DicomDictionary.DEFAULT_DICTIONARY);
         }
 
@@ -445,7 +445,7 @@ public class DicomDictionary {
      */
     public static void writeFile(final File dictFile, final Hashtable<FileDicomKey, FileDicomTagInfo> dicomHash)
             throws IOException {
-        DicomDictionary.writeFile(dictFile, dicomHash, null);
+    	DicomDictionary.writeFile(dictFile, dicomHash, null);
     }
 
     /**
@@ -535,10 +535,10 @@ public class DicomDictionary {
 
                 return new BufferedReader(new InputStreamReader(fileURL.openStream()));
             } else {
-                filepath = GetPath.getPath(filename, Purpose.FOR_READING);
+                filepath = GetPath.getPath(filename, Purpose.FOR_READING) + File.separator;
             }
 
-            if (filepath == null) {
+            if (filepath == null || filepath.equals(File.separator)) {
                 filepath = "";
             }
 
@@ -587,7 +587,7 @@ public class DicomDictionary {
             return;
         }
 
-        FileDicomKey key;
+        FileDicomKey key = null;
 
         try {
             String s;
@@ -724,5 +724,9 @@ public class DicomDictionary {
                 DicomDictionary.masterHashtable = hashtable;
             }
         }
+    }
+    
+    protected static boolean doParseFile() {
+    	return DicomDictionary.masterHashtable == null;
     }
 }
