@@ -3596,7 +3596,7 @@ public class SVD implements java.io.Serializable {
                          // (Workspace: need M*M+2*M, prefer M*M+M+M*NB)
                          workitau = new double[m];
                          workiwork = new double[Math.max(1, lwork-iwork+1)];
-                         gi.dgelqf(m, n, A, lda, workiwork,
+                         gi.dgelqf(m, n, A, lda, workitau,
                                    workiwork, lwork-iwork+1, ierr);
     
                          // Copy L to WORK(IR), zeroing out above it
