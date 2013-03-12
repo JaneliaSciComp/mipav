@@ -758,7 +758,7 @@ public class FileDicom extends FileDicomBase {
 		if(tagInfo != null) {
 			tagInfoInstance = new FileDicomTagInfo(key, tagInfo.getType(), tagInfo.getValueMultiplicity(), tagInfo.getKeyword(), tagInfo.getName());
 		} else {
-			tagInfoInstance = new FileDicomTagInfo(key, VR.UN, 1, "Private tag", "Private tag");
+			tagInfoInstance = new FileDicomTagInfo(key, VR.SH, 1, "Private tag", "Private tag");
 		}
 		
     	tagTable.putPrivateTagValue(tagInfoInstance);
