@@ -113,7 +113,7 @@ public class PrivateDicomDictionary {
         try {
             String filepath;
 
-            if (filename.equals(DicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
+            if (filename.equals(PrivateDicomDictionary.DEFAULT_DICTIONARY_FILENAME)) {
                 final URL fileURL = Thread.currentThread().getContextClassLoader().getResource(filename);
 
                 return new BufferedReader(new InputStreamReader(fileURL.openStream()));
