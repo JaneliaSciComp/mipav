@@ -667,6 +667,7 @@ public class VolumeVOI extends VolumeObject
 		else
 		{
 			m_kVOITicMarks.VBuffer = kVBuffer;
+			m_kVOITicMarks.Reload(true);
 		}
 
 	}
@@ -702,6 +703,7 @@ public class VolumeVOI extends VolumeObject
 		else
 		{
 			m_kVOITicMarks.VBuffer = kVBuffer;
+			m_kVOITicMarks.Reload(true);
 		}
 
 	}
@@ -826,6 +828,7 @@ public class VolumeVOI extends VolumeObject
 		else
 		{
 			m_kVOITicMarks.VBuffer = kVBuffer;
+			m_kVOITicMarks.Reload(true);
 		}
 
 	}
