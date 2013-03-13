@@ -276,17 +276,17 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             TrainingData[i-1].Lines = Lines;
             TrainingData[i-1].I = I;
             /*if (i == 1) {
-                float xArr[] = new float[2];
-                float yArr[] = new float[2];
-                float zArr[] = new float[2];
-                for (int j = 0; j < Lines.length; j++) {
-                //for (int j = 0; j < Vertices.length; j++) {
+                float xArr[] = new float[1];
+                float yArr[] = new float[1];
+                float zArr[] = new float[1];
+                //for (int j = 0; j < Lines.length; j++) {
+                for (int j = 0; j < Vertices.length; j++) {
                     VOI newPtVOI = new VOI((short) (j+1), String.valueOf(j+1), VOI.POINT, -1.0f);
                     newPtVOI.setColor(Color.RED);
-                    //xArr[0] = (float)Vertices[j][0];
-                    //yArr[0] = (float)Vertices[j][1];
-                    xArr[0] = (float)Vertices[Lines[j][0]][0];
-                    yArr[0] = (float)Vertices[Lines[j][0]][1];
+                    xArr[0] = (float)Vertices[j][0];
+                    yArr[0] = (float)Vertices[j][1];
+                    //xArr[0] = (float)Vertices[Lines[j][0]][0];
+                    //yArr[0] = (float)Vertices[Lines[j][0]][1];
                     zArr[0] = 0.0f;
                     newPtVOI.importCurve(xArr, yArr, zArr);
                     ((VOIPoint) (newPtVOI.getCurves().elementAt(0))).setFixed(true);
@@ -303,7 +303,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         ShapeData = new SData();
         ASM_MakeShapeModel2D(TrainingData, ShapeData);
         
-        /*boolean testme = true;
+        boolean testme = false;
         if (testme) {
             double xtest[] = new double[ShapeData.x_mean.length];
             for (i = 0; i < Math.min(5, ShapeData.Evalues.length-1); i++) {
@@ -328,7 +328,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
                         newPtVOI.setColor(Color.CYAN);
                     }
                     else if (i == 4) {
-                        newPtVOI.setColor(Color.YELLOW);
+                        newPtVOI.setColor(Color.WHITE);
                     }
                     else if (i == 5) {
                         newPtVOI.setColor(Color.MAGENTA);
@@ -343,7 +343,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             }
             new ViewJFrameImage(TrainingData[0].I);
             return;
-        }*/
+        }
         
         // Appearance model
         // Make the appearance model, which samples an intensity pixel profile/line
@@ -1105,7 +1105,7 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
         // gtc: Columns with the sampled lines perpendicular to the contour
         // dgtc: The first order derivatives of the sampled lines
         
-        // Original function written by D. Kroon University of Twnete (February 2010)
+        // Original function written by D. Kroon University of Twente (February 2010)
         
         int cf;
         int i;
@@ -1295,8 +1295,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
             LL[i] = Math.sqrt(D[i][0]*D[i][0] + D[i][1]*D[i][1]);
         }
         for (i = 0; i < V.length; i++) {
-            N[i][0] = D[i][1]/LL[i];
-            N[i][1] = -D[i][0]/LL[i];
+            N[i][0] = -D[i][1]/LL[i];
+            N[i][1] = D[i][0]/LL[i];
         }
         return N;
     }
