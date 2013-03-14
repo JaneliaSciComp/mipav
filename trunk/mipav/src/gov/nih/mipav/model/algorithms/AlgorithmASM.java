@@ -206,6 +206,8 @@ public class AlgorithmASM extends AlgorithmBase implements ActionListener {
     }
 
     public void ASM_2D_example() {
+        // Note that both original MATLAB code and Java port trace 4 fingers correctly, but they do not
+        // trace the thumb correctly.
         int i;
         String is;
         String number;
