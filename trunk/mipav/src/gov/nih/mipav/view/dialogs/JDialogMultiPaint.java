@@ -2144,7 +2144,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         img.getParentFrame().updateImages(true);
 
         if (img.getTriImageFrame() != null) {
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < img.getTriImageFrame().triImage.length; i++) {
                 if (img.getTriImageFrame().triImage[i] != null) {
                     img.getTriImageFrame().triImage[i].setPaintMask(obj);
                 }
@@ -2627,7 +2627,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     	image.getParentFrame().getComponentImage().removeMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
     	image.getParentFrame().getComponentImage().removeMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
     	if (image.getTriImageFrame() != null) {
-    		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+    		for (int i = 0; i < image.getTriImageFrame().triImage.length; i++) {
                 if (image.getTriImageFrame().triImage[i] != null) {
                 	image.getTriImageFrame().triImage[i].removeMouseListener(image.getTriImageFrame().triImage[i]);
                 	image.getTriImageFrame().triImage[i].removeMouseMotionListener(image.getTriImageFrame().triImage[i]);
@@ -2722,7 +2722,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             	image.getParentFrame().getComponentImage().addMouseListener(image.getParentFrame().getComponentImage().getVOIHandler());
             	image.getParentFrame().getComponentImage().addMouseMotionListener(image.getParentFrame().getComponentImage().getVOIHandler());
             	if (image.getTriImageFrame() != null) {
-            		for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            		for (int i = 0; i < ViewJFrameTriImage.MAX_INITIAL_TRI_IMAGES; i++) {
                         if (image.getTriImageFrame().triImage[i] != null) {
                         	image.getTriImageFrame().triImage[i].addMouseListener(image.getTriImageFrame().triImage[i]);
                         	image.getTriImageFrame().triImage[i].addMouseMotionListener(image.getTriImageFrame().triImage[i]);

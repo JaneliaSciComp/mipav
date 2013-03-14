@@ -196,8 +196,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected static final int NUM_INVISIBLE_BUTTONS = 4;
 
-    /** Maximum number of tri-images! */
-    public static final int MAX_TRI_IMAGES = 9;
+    /** Maximum number of initial tri-images! */
+    public static final int MAX_INITIAL_TRI_IMAGES = 9;
 
     /** A constant for which to test in the actionPerformed. */
     protected static final String OLD_LAYOUT = "OldLayout";
@@ -214,17 +214,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** DOCUMENT ME! */
     // protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public JScrollPane[] scrollPane = new JScrollPane[ViewJFrameTriImage.MAX_TRI_IMAGES];
+    public JScrollPane[] scrollPane = new JScrollPane[ViewJFrameTriImage.MAX_INITIAL_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     // protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[ViewJFrameTriImage.MAX_TRI_IMAGES];
+    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[ViewJFrameTriImage.MAX_INITIAL_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     // protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
     // made public for use by visualization plug-ins (PLB)
-    public JPanel[] triImagePanel = new JPanel[ViewJFrameTriImage.MAX_TRI_IMAGES];
+    public JPanel[] triImagePanel = new JPanel[ViewJFrameTriImage.MAX_INITIAL_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     protected JToggleButton[] btnInvisible = new JToggleButton[ViewJFrameTriImage.NUM_INVISIBLE_BUTTONS];
@@ -553,7 +553,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             return;
         } else if (command.equals("ShowAxes")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].displayAxes(menuObj.isMenuItemSelected("Show axes"));
@@ -563,7 +563,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             updateImages(true);
         } else if (command.equals("ShowXHairs")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].displayXHairs(menuObj.isMenuItemSelected("Show crosshairs"));
@@ -599,7 +599,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             menuObj.setMenuItemSelected("ShowXHairs", !showTalairachGrid);
             menuObj.setMenuItemSelected("ShowAxes", !showTalairachGrid);
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].showTalairachGrid(showTalairachGrid);
@@ -620,7 +620,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             final boolean showGridMarkers = sourceCheckbox.isSelected();
             chkShowTalairachGridMarkers.setSelected(showGridMarkers);
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].showTalairachGridmarkers(showGridMarkers);
@@ -633,7 +633,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.PAINT_VOI);
@@ -645,7 +645,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         } else if (command.equals("Dropper")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DROPPER_PAINT);
@@ -660,7 +660,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.ERASER_PAINT);
@@ -671,7 +671,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             }
         } else if (command.equals("EraseAll")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     // triImage[i].setProtractorVisible(false);
@@ -703,7 +703,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 radioImageBoth.setEnabled(true);
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -719,7 +719,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             btnInvisible[3].setSelected( !centerButtonSelected);
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -734,7 +734,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             } else {
 
-                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < triImage.length; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].setDoCenter(false);
@@ -755,7 +755,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     radioImageBoth.setEnabled(true);
                 }
 
-                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < triImage.length; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].makeProtractor();
@@ -764,7 +764,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 }
             } else {
 
-                for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                for (int i = 0; i < triImage.length; i++) {
 
                     if (triImage[i] != null) {
                         triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -898,7 +898,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             updateImages(true);
         } else if (command.equals("PaintCan")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.PAINT_CAN);
@@ -915,7 +915,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             final Vector<PaintGrowListener> listeners = new Vector<PaintGrowListener>();
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     listeners.add(triImage[i]);
@@ -924,7 +924,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             final JDialogPaintGrow jdpg = new JDialogPaintGrow(this, listeners);
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].growDialog = jdpg;
@@ -932,7 +932,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             }
         } else if (command.equals("UndoPaint")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].undoLastPaint();
@@ -965,7 +965,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 newZoom = 0.5f * triImage[ViewJFrameTriImage.AXIAL_A].getZoomX();
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
@@ -1005,7 +1005,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setZoom(newZoom, newZoom);
@@ -1028,7 +1028,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             setTitle();
         } else if (command.equals("ZoomOne")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     final float oldZoom = triImage[i].getZoomX();
@@ -1055,7 +1055,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             setTitle();
         } else if (command.equals("IndivMagImage")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
 
@@ -1068,7 +1068,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         } else if (command.equals("IndivMinImage")) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCursorMode(ViewJComponentBase.ZOOMING_OUT);
@@ -1098,7 +1098,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             btnInvisible[1].setSelected( !showBoundingRect);
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setShowBoundingRect(showBoundingRect);
@@ -1456,7 +1456,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         if (imageB != null) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
                 triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
             }
 
@@ -1508,7 +1508,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             volumePositionFrame = null;
         }
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].disposeLocal(true);
@@ -1750,7 +1750,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         if (source.equals(paintBox)) {
             final int index = paintBox.getSelectedIndex();
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
                 if (triImage[i] != null) {
                     triImage[i].loadPaintBrush(paintBrushNames[index], false);
                 }
@@ -1815,7 +1815,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
                     if (quickPaintBrushIndex == index) {
 
-                        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                        for (int i = 0; i < triImage.length; i++) {
 
                             if (triImage[i] != null) {
                                 triImage[i].quickSwitchBrush();
@@ -1831,7 +1831,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
                         if (name != null) {
 
-                            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                            for (int i = 0; i < triImage.length; i++) {
 
                                 if (triImage[i] != null) {
                                     triImage[i].loadPaintBrush(name, true);
@@ -1901,7 +1901,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 if (paintBrushLocked) {
 
                     // getControls().getTools().setPaintBrush(previousPaintBrushIndex);
-                    for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                    for (int i = 0; i < triImage.length; i++) {
 
                         if (triImage[i] != null) {
                             triImage[i].quickSwitchBrush();
@@ -1984,7 +1984,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     final float zoomX = triImage[0].getZoomX();
                     boolean test = true;
 
-                    for (int i = 1; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                    for (int i = 1; i < triImage.length; i++) {
 
                         if (triImage[i] != null) {
 
@@ -2034,7 +2034,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     final float zoomX = triImage[0].getZoomX();
                     boolean test = true;
 
-                    for (int i = 1; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                    for (int i = 1; i < triImage.length; i++) {
 
                         if (triImage[i] != null) {
 
@@ -2117,7 +2117,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param active ViewJComponentBase.IMAGE_A or ViewJComponentBase.IMAGE_B
      */
     public void setActiveImage(final int active) {
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setActiveImage(active);
@@ -2150,7 +2150,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setAlphaBlend(final int value) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setAlphaBlend(value);
@@ -2200,7 +2200,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         setVolumeCenter(i, j, k);
 
-        for (int image = 0; image < ViewJFrameTriImage.MAX_TRI_IMAGES; image++) {
+        for (int image = 0; image < triImage.length; image++) {
 
             if (triImage[image] != null) {
                 triImage[image].setCenter(i, j, k);
@@ -2324,7 +2324,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setCrop(final Vector3f lower, final Vector3f upper) {
 
         /* set the crop dimensions for each triImage: */
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCrop(lower, upper);
@@ -2340,7 +2340,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setDefault() {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -2355,7 +2355,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setEnabled(final boolean flag) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setEnabled(flag);
@@ -2374,7 +2374,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setImageA(final ModelImage image) {
         super.setImageA(image);
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setImageA(image);
@@ -2489,7 +2489,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         zoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM, ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(zoom, zoom);
@@ -2541,7 +2541,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setIntensityDropper(final float intensityDropper) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setIntensityDropper(intensityDropper);
@@ -2645,7 +2645,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         colorPaintButton.setBackground(color);
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].getActiveImage().notifyImageDisplayListeners(null, true);
@@ -2911,7 +2911,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             radioImageBoth.setEnabled(true);
         }
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setCursorMode(ViewJComponentBase.DEFAULT);
@@ -2954,7 +2954,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setXSliceHairColor(final Color c) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setXSliceHairColor(c);
@@ -2971,7 +2971,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setYSliceHairColor(final Color c) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setYSliceHairColor(c);
@@ -2988,7 +2988,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setZSliceHairColor(final Color c) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZSliceHairColor(c);
@@ -3013,7 +3013,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         } else if (source.equals(intensitySpinner)) {
             final float paintIntensity = ((SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setIntensityDropper(paintIntensity);
@@ -3023,7 +3023,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             final int crosshairPixelGap = ((SpinnerNumberModel) crosshairSpinner.getModel()).getNumber().intValue();
 
             // System.err.println(crosshairPixelGap);
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setCrosshairPixelGap(crosshairPixelGap);
@@ -3090,7 +3090,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean forceShow, final int interpMode) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null && triImage[i].isVisible()) {
             	
@@ -3133,7 +3133,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         if (linkTriFrame != null) {
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < this.triImage.length; i++) {
 
                 if (triImage == this.triImage[i]) {
                     linkTriFrame.updateImageSubset(linkTriFrame.getTriImage(i));
@@ -4149,7 +4149,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         // these lines of code set up the initial crosshair position - centered in the image and independent of
         // orientation
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(zoom, zoom);
@@ -4775,7 +4775,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected void setImageActiveInTriComponents(final int activeImage) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
@@ -5079,7 +5079,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected void updatePaint(final BitSet paintMap) {
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setPaintMask(paintMap);
@@ -5304,7 +5304,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         final float optimalZoom = getOptimalZoom(ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM,
                 ViewJFrameTriImage.DEFAULT_OPTIMAL_ZOOM);
 
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(optimalZoom, optimalZoom);
@@ -5497,7 +5497,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 controls.getTools().setPaintColor(color);
             }
 
-            for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+            for (int i = 0; i < triImage.length; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].getActiveImage().notifyImageDisplayListeners(null, true);
@@ -5738,7 +5738,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @see java.awt.Window#setCursor(java.awt.Cursor)
      */
     public void setCursor(final Cursor kCursor) {
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
             if (triImage[i] != null) {
                 triImage[i].setCursor(kCursor);
             }
@@ -5767,7 +5767,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#setModified()
      */
     public void setModified() {
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].paintComponent(triImage[i].getGraphics());
@@ -5825,7 +5825,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
     @Override
     public void setPaintMask(final BitSet mask) {
-        for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+        for (int i = 0; i < triImage.length; i++) {
 
             if (triImage[i] != null) {
                 triImage[i].setPaintMask(mask);

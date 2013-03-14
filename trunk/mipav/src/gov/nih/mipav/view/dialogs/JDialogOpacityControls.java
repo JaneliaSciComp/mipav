@@ -282,7 +282,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
                 }
                 
                 if (parentFrame instanceof ViewJFrameTriImage) {
-                	for (int i = 0; i < ViewJFrameTriImage.MAX_TRI_IMAGES; i++) {
+                	for (int i = 0; i < ((ViewJFrameTriImage)parentFrame).triImage.length; i++) {
 
                 		if (((ViewJFrameTriImage)parentFrame).getTriImage(i) != null) {
                 			((ViewJFrameTriImage)parentFrame).getTriImage(i).getActiveImage().notifyImageDisplayListeners(null, true);
