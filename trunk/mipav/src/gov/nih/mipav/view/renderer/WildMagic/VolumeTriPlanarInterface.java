@@ -17,20 +17,12 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.JPanelHistoLUT;
-import gov.nih.mipav.view.renderer.JPanelHistoRGB;
-import gov.nih.mipav.view.renderer.JPanelVolOpacityRGB;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
-import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacity;
-import gov.nih.mipav.view.renderer.J3D.JPanelVolOpacityBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
@@ -51,8 +43,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender;
@@ -74,7 +64,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -92,9 +81,7 @@ import java.util.Vector;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawableFactory;
-import javax.media.opengl.GLException;
 import javax.media.opengl.GLOffscreenAutoDrawable;
-import javax.media.opengl.GLPbuffer;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.BorderFactory;
@@ -676,12 +663,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 		        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
 		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 		        setModified();
+		        mainPane.revalidate();
 			}
-//    		for (int i = 0; i < 3; i++) {
-//    			if (m_akPlaneRender[i] != null) {
-//    				m_akPlaneRender[i].addSlices(kSlices);
-//    			}
-//    		}
     	}
     }
 
