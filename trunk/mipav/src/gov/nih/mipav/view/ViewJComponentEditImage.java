@@ -2486,8 +2486,12 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         	return;
         }
         
-        int scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
-    	int scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        int scrollX = 0;
+    	int scrollY = 0;
+    	if (frame instanceof ViewJFrameImage) {
+    		scrollX = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+    		scrollY = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+    	}
 
         
     	float imageX = imageActive.getExtents()[0]*getZoomX();
