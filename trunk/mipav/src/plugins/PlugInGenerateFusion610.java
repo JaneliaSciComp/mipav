@@ -31,7 +31,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 
-import nibib.spim.PlugInDialogGenerateFusion544c;
+import nibib.spim.PlugInDialogGenerateFusion610;
 
 /**
  * 
@@ -45,14 +45,14 @@ import nibib.spim.PlugInDialogGenerateFusion544c;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGenerateFusion544c implements PlugInGeneric {
+public class PlugInGenerateFusion610 implements PlugInGeneric {
 
     public static final String[] CATEGORY = {"SPIM"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     public void run() {
-        PlugInDialogGenerateFusion544c test = new PlugInDialogGenerateFusion544c(false);
+        PlugInDialogGenerateFusion610 test = new PlugInDialogGenerateFusion610(false);
         
     }
 }
