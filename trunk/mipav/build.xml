@@ -251,6 +251,8 @@
             <fileset file="${dir.source}/../splash.png"/>
             <fileset file="${dir.source}/about.txt"/>
             <fileset file="${dir.source}/dicom_dictionary.txt"/>
+            <fileset file="${dir.source}/private_dictionary.txt"/>
+            <fileset file="${dir.source}/tDist.csv"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
         </copy>
 
