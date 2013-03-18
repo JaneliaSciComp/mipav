@@ -506,9 +506,12 @@ public class FileIO {
 
             // if length is 0...this means that extents were not set...and this is becasue..in the case
             // of dicom spectroscopy images, the image data is not under FileDicom.IMAGE_TAG
-            if (length == 0) {
+            if (length == 0 && !quiet) {
                 MipavUtil.displayError("Unable to open DICOM Spectroscopy image");
                 return null;
+            } else if(length == 0) { //is quiet
+            	Preferences.debug("FileIO: Unable to open DICOM Spectroscopy image\n", Preferences.DEBUG_FILEIO);
+            	return null;
             }
 
             // TODO: should both of these always be allocated?
