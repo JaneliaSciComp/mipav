@@ -2793,7 +2793,7 @@ public class FileDicom extends FileDicomBase {
             // get channel lut specification.
             final String specKey = palleteKey.getGroup() + ","
                     + Integer.toString(Integer.parseInt(palleteKey.getElement()) - 100);
-            final FileDicomTag palletSpec = fileInfo.getTagTable().get(specKey);
+            final FileDicomTag palletSpec = tagTable.get(specKey);
 
             // values are now loaded, try loading the LUT
             int numberOfLUTValues = ( ((Short) (palletSpec.getValueList()[0])).intValue() == 0) ? (int) Math.pow(2, 16)
