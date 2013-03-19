@@ -1021,7 +1021,7 @@ public class SVD implements java.io.Serializable {
            if jobu = 'N' or 'O', U is not referenced. 
            
        @param input int ldu  The leading dimension of the array U.  ldu >= 1; if
-           lobu = 'S' or 'A', ldu >= m.
+           jobu = 'S' or 'A', ldu >= m.
            
        @param output double[][] VT of dim ldvt by n.
            If jobvt = 'A', VT contains the n-by-n orthogonal matrix V**T;
