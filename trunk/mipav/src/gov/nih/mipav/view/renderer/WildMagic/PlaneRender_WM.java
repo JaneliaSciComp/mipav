@@ -801,7 +801,7 @@ public class PlaneRender_WM extends GPURenderBase
     @Override
 	public void mouseWheelMoved(MouseWheelEvent e)
     {
-        if ( e.getWheelRotation() == 1 )
+        if ( e.getWheelRotation() > 0 )
         {
             m_fZoomScale -= 0.05;
         }
