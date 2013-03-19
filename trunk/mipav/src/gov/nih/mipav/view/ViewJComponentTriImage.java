@@ -140,19 +140,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
 
     /** If true, show XY, XZ, or ZY orientation axes in a corner of the component. */
-    private boolean showAxes = true;
+    protected boolean showAxes = true;
 
     /** Specifies whether the user wants to show the cropping / paint bounds rectangle. */
-    private boolean showBoundingRect = false;
+    protected boolean showBoundingRect = false;
 
     /** If true, show crosshairs indicating the currently position within the component. */
-    private boolean showCrosshairs = true;
+    protected boolean showCrosshairs = true;
 
     /** Whether to show the talairach grid on the component. */
-    private boolean showTalairachGrid = false;
+    protected boolean showTalairachGrid = false;
 
     /** Whether to show the talairach gridmarkers on the component. */
-    private boolean showTalairachGridmarkers = false;
+    protected boolean showTalairachGridmarkers = false;
 
     /** DOCUMENT ME! */
     private final Color talairachMajorLineColor = new Color(253, 253, 253);
@@ -161,7 +161,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private final Color talairachMinorLineColor = new Color(213, 178, 183);
 
     /** The tri image frame of which this object is a component. */
-    private final ViewJFrameTriImage triImageFrame;
+    protected final ViewJFrameTriImage triImageFrame;
 
     /** DOCUMENT ME! */
     private int[] verticalTalGridPts;
