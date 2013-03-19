@@ -1114,9 +1114,13 @@ public class FileInfoDicom extends FileInfoBase {
             	int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
                 Object data = tag.getValue(false);
                 if (data instanceof Number[]) {
-                    final int lutVals = ((Number[])data).length;
+                    final int lutVals = ((Number[])data).length < 256 ? ((Number[])data).length : 256;
+                    int lutValue;
                     for (int qq = 0; qq < lutVals; qq++) {
-                        lut.set(keyNum, qq, (((Number[]) data)[qq]).intValue());
+                        lutValue = (((Number[]) data)[qq]).intValue();
+                        if(lutValue > -1) {
+                        	lut.set(keyNum, qq, lutValue);
+                        }
                     }
                 }
                 if(lut.get(1) != null && lut.get(2) != null && lut.get(3) != null) {
