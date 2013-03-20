@@ -31461,7 +31461,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldb input int On entry, ldb specifies the first dimension of B as declared in the calling (sub) program.
      *            ldb must be at least max(1,m).
      */
-    private void dtrmm(final char side, final char uplo, final char transa, final char diag, final int m, final int n,
+    public void dtrmm(final char side, final char uplo, final char transa, final char diag, final int m, final int n,
             final double alpha, final double[][] A, final int lda, final double[][] B, final int ldb) {
         boolean lside;
         boolean nounit;
