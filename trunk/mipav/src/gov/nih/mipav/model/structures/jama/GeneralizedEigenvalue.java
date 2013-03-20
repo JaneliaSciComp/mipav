@@ -31782,7 +31782,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            must contain the n element vector x. On exit, array x is is overwritten with the transformed vector x.
      * @param incx input int On entry, incx specifies the increment for the elements of x. incx must not be zero.
      */
-    private void dtrmv(final char uplo, final char trans, final char diag, final int n, final double[][] A,
+    public void dtrmv(final char uplo, final char trans, final char diag, final int n, final double[][] A,
             final int lda, final double[] x, final int incx) {
         double temp;
         int i;
