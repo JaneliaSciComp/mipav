@@ -345,7 +345,7 @@ public class ViewJProgressBar extends JFrame
         int value = e.getValue();
 
         if ((value == PROGRESS_WINDOW_CLOSING) || ((value == 100) && readyToDispose)) {
-            dispose();
+            setVisible(false);
 
             return;
         }
