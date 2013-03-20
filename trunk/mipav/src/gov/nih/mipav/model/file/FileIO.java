@@ -762,7 +762,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
             }
             
             if(fileList.length != savedFileInfos.length) {
-                progressBar.dispose();
+            	progressBar.setVisible(false);
+                progressBar = null;
                 return readDicom(selectedFileName, fileList, performSort); //fileList has been modified, read dicom based on this new file list
             }
             
@@ -1259,7 +1260,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     imageFile.readImage(bufferFloat, curFileInfo.getDataType(), start);
                 } else if (imageFile.isDir()) {
                     if (progressBar != null) {
-                        progressBar.dispose();
+                    	progressBar.setVisible(false);
+                        progressBar = null;
                     }
                     return null;
                 } else if (curFileInfo.getDataType() == ModelStorageBase.UINTEGER) {
@@ -1563,7 +1565,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         }
 
         if (progressBar != null) {
-            progressBar.dispose();
+        	progressBar.setVisible(false);
+            progressBar = null;
         }
         imageFile.finalize();
         imageFile = null;
@@ -2515,7 +2518,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         } catch (final Exception error) {
 
             if (progressBar != null) {
-                progressBar.dispose();
+            	progressBar.setVisible(false);
+                progressBar = null;
             }
 
             error.printStackTrace();
@@ -3233,7 +3237,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 ProvenanceRecorder.getReference().addLine(new ActionOpenImage(image));
 
                 if (progressBar != null) {
-                    progressBar.dispose();
+                	progressBar.setVisible(false);
+                    progressBar = null;
                 }
 
                 if ( (image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
@@ -3246,7 +3251,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         } catch (final Exception error) {
 
             if (progressBar != null) {
-                progressBar.dispose();
+            	progressBar.setVisible(false);
+                progressBar = null;
             }
 
             error.printStackTrace();
@@ -3583,7 +3589,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         } finally {
 
             if (progressBar != null) {
-                progressBar.dispose();
+            	progressBar.setVisible(false);
+                progressBar = null;
             }
 
             modelImageTemp.disposeLocal();
@@ -3804,7 +3811,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         } finally {
 
             if (progressBar != null) {
-                progressBar.dispose();
+            	progressBar.setVisible(false);
+                progressBar = null;
             }
 
             modelImageTemp.disposeLocal();
@@ -5224,7 +5232,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         } // if (zip || gzip || bz2zip)
 
         if (progressBar != null) {
-            progressBar.dispose();
+        	progressBar.setVisible(false);
+            progressBar = null;
         }
 
         // now checks to make sure we're not writing NDAR srb transfers (xml header only)
@@ -13354,7 +13363,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
             }
 
             // error.printStackTrace();
-            progressBar.dispose();
+            progressBar.setVisible(false);
+            progressBar = null;
             return null;
         } catch (final OutOfMemoryError error) {
 
@@ -13370,7 +13380,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
             }
 
             error.printStackTrace();
-            progressBar.dispose();
+            progressBar.setVisible(false);
+            progressBar = null;
             return null;
         }
 
@@ -16542,7 +16553,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
             return false;
         }
-        progressBar.dispose();
+        progressBar.setVisible(false);
         progressBar = null;
         return true;
     }
