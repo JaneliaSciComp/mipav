@@ -28325,7 +28325,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param lda (input) int On entry, lda specifies the first dimension of A as declared in the calling (sub) program.
      *            lda must be at least max(1,n). Unchanged on exit.
      */
-    private void dsyr(final char uplo, final int n, final double alpha, final double[] x, final int incx,
+    public void dsyr(final char uplo, final int n, final double alpha, final double[] x, final int incx,
             final double[][] A, final int lda) {
         double temp;
         int i;
