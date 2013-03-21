@@ -105,6 +105,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
     /** Button for inserting new tags */
 	private JButton newTagButton;
+	
+	/** Light red color (used for private tags). */
+	private static final Color lightRed = new Color(0xffcccc);
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1277,8 +1280,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      * Determines whether the given row should be shown. Show indicates whether private tags are being displayed.
      */
     private static boolean addRow(final Object[] rowData, final boolean show) {
-        if (rowData[2].toString().contains("Private Tag") || rowData[2].toString().contains("private tag")
-                || rowData[2].toString().contains("Private tag")) {
+    	String key = rowData[1].toString().substring(rowData[1].toString().indexOf("(") + 1, rowData[1].toString().lastIndexOf(")"));
+    	
+        if (!DicomDictionary.containsTag(new FileDicomKey(key))) {
             if (show) {
                 return true;
             }
@@ -2445,7 +2449,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         if(subgr.equals("50") || subgr.equals("60")) {
                             f = groupColorMap.get(subgr+"xx");
                         } else {
-                            f = new Color(0xffcccc); // light red
+                            f = lightRed; // light red
                         }
                     }
 
