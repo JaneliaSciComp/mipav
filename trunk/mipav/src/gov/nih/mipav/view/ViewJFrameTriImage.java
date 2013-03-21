@@ -426,9 +426,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
 
+    /** Menu displaying VOI options */
     protected JMenu voiMenu;
 
-    private VOIManagerInterface voiManager;
+    /** The VOI managers for each triComponent */
+    protected VOIManagerInterface voiManager;
 
     /** talaraich intensity label* */
     protected JLabel iTalLabel;
@@ -5602,7 +5604,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /**
      * Initialize the 3D VOI interface.
      */
-    private void initVOI() {
+    protected void initVOI() {
         int iActiveCount = 0;
         for (final ViewJComponentTriImage element : triImage) {
             if (element != null) {
