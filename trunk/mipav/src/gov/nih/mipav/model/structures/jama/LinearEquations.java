@@ -23,6 +23,332 @@ public class LinearEquations implements java.io.Serializable {
     public LinearEquations() {}
     
     /**
+     * This is a port of LAPACK version test routine 3.4.0 DPOT01.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., November 2011.
+     * 
+     * dpot01 reconstructs a symmetric positive definite matrix  A  from
+       its L*L' or U'*U factorization and computes the residual
+       norm( L*L' - A ) / ( N * norm(A) * eps) or
+       norm( U'*U - A ) / ( N * norm(A) * eps),
+       where eps is the machine epsilon.
+       @param input char uplo
+           Specifies whether the upper or lower triangular part of the
+           symmetric matrix A is stored:
+           = 'U':  Upper triangular
+           = 'L':  Lower triangular
+       @param input int n  The number of rows and columns of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n).  The original symmetric matrix A.
+       @param input int lda  The leading dimension of the array A.  lda >= max(1, n).
+       @param (input/output) double[][] afac of dimension (ldafac, n).
+           On entry, the factor L or U from the L*L' or U'*U
+           factorization of A.
+           Overwritten with the reconstructed matrix, and then with the
+           difference L*L' - A (or U'*U - A).
+       @param input int ldafac  The leading dimension of the array afac.  ldafac >= max(1, n).
+       @param output double[] rwork of dimension n
+       @param output double[] resid of dimension 1
+           If uplo = 'L', norm(L*L' - A) / (n * norm(A) * eps)
+           If uplo = 'U', norm(U'*U - A) / (n * norm(A) * eps)
+     */
+     private void dpot01(char uplo, int n, double[][] A, int lda, double[][] afac, int ldafac, double rwork[], double resid[]) {
+         int i;
+         int j;
+         int k;
+         double anorm;
+         double eps;
+         double t;
+         double vec[];
+         double arr[][];
+         
+         // Quick exit if n = 0.
+     
+         if (n <= 0) {
+             resid[0] = 0.0;
+             return;
+         }
+     
+         // Exit with resid[0] = 1/eps if anorm = 0.
+     
+         eps = ge.dlamch('E'); // Epsilon
+         anorm = ge.dlansy('1', uplo, n, A, lda, rwork);
+         if (anorm <= 0.0) {
+             resid[0] = 1.0 / eps;
+              return;
+         }
+     
+         if ((uplo == 'U') || (uplo == 'u')) {
+          // Compute the product U'*U, overwriting U.
+             for (k = n; k >= 1; k--) {
+     
+                 // Compute the [k-1][k-1] element of the result.
+                 vec = new double[k];
+                 for (i = 0; i < k; i++) {
+                     vec[i] = afac[i][k-1];
+                 }
+                 t = ge.ddot(k, vec, 1, vec, 1);
+                 afac[k-1][k-1] = t;
+      
+                 // Compute the rest of column k-1.
+                 for (i = 0; i < k-1; i++) {
+                     vec[i] = afac[i][k-1];
+                 }
+                 ge.dtrmv('U', 'T', 'N', k-1, afac,
+                          ldafac, vec, 1 );
+                 for (i = 0; i < k-1; i++) {
+                     afac[i][k-1] = vec[i];
+                 }
+             } // for (k = n; k >= 1; k--)
+         } // if ((uplo == 'U') || (uplo == 'u'))
+         else { 
+             //  Compute the product L*L', overwriting L.
+             for (k = n; k >= 1; k--) {
+     
+                 // Add a multiple of column k-1 of the factor L to each of
+                 // columns k through n-1.
+      
+                 if (k+1 <= n) {
+                     vec = new double[n-k];
+                     for (i = 0; i < n-k; i++) {
+                         vec[i] = afac[k+i][k-1];
+                     }
+                     arr = new double[n-k][n-k];
+                     for (i = 0; i < n-k; i++) {
+                         for (j = 0; j < n-k; j++) {
+                             arr[i][j] = afac[k+i][k+j];
+                         }
+                     }
+                     ge.dsyr('L', n-k, 1.0, vec, 1,
+                             arr, ldafac);
+                     for (i = 0; i < n-k; i++) {
+                         for (j = 0; j < n-k; j++) {
+                             afac[k+i][k+j] = arr[i][j];
+                         }
+                     }
+                 } // if (k+1 <= n)
+      
+                 // Scale column k-1 by the diagonal element.
+      
+                 t = afac[k-1][k-1];
+                 vec = new double[n-k+1];
+                 for (i = 0; i < n-k+1; i++) {
+                     vec[i] = afac[k-1+i][k-1];
+                 }
+                 ge.dscal(n-k+1, t, vec, 1);
+                 for (i = 0; i < n-k+1; i++) {
+                     afac[k-1+i][k-1] = vec[i];
+                 }
+             } // for (k = n; k >= 1; k--)
+         } // else 
+         
+         // Compute the difference  L*L' - A (or U'*U - A).
+      
+         if ((uplo == 'U') || (uplo == 'u')) {
+             for (j = 1; j <= n; j++) {
+                 for (i = 1; i <= j; i++) {
+                     afac[i-1][j-1] = afac[i-1][j-1] - A[i-1][j-1];
+                 } 
+             } // for (j = 1; j <= n; j++);
+         } // if ((uplo == 'U') || (uplo == 'u'))
+         else {
+             for (j = 1; j <= n; j++) {
+                 for (i = j; i <= n; i++) {
+                     afac[i-1][j-1] = afac[i-1][j-1] - A[i-1][j-1];   
+                 } // for (i = j; i <= n; i++)
+             } // for (j = 1; j <= n; j++)
+         } // else
+     
+         // Compute norm( L*U - A ) / (n * norm(A) * eps)
+     
+         resid[0] = ge.dlansy('1', uplo, n, afac, ldafac, rwork);
+     
+         resid[0] = ((resid[0] / (double)( n ) ) / anorm ) / eps;
+     
+         return;
+
+     } // dpot01
+     
+     /**
+      * This is a port of LAPACK version test routine 3.4.0 DPOT02.F created by the University of Tennessee, University
+      * of California Berkeley, University of Colorado Denver, and NAG Ltd., November 2011.
+      *
+      * dpot02 computes the residual for the solution of a symmetric system
+        of linear equations  A*x = b:
+
+        resid[0] = norm(B - A*X) / ( norm(A) * norm(X) * eps),
+        where eps is the machine epsilon.
+
+        @param input char uplo
+            Specifies whether the upper or lower triangular part of the
+            symmetric matrix A is stored:
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+        @param input int n  The number of rows and columns of the matrix A.  n >= 0.
+        @param input int nrhs  The number of columns of B, the matrix of right hand sides.  nrhs >= 0.
+        @param input double[][] A of dimension (lda, n).  The original symmetric matrix A.
+        @param input int lda  The leading dimension of the array A.  lda >= max(1, n).
+        @param input double[][] X of dimension (ldx, nrhs).
+            The computed solution vectors for the system of linear equations.
+        @param (input/output) double[][] B of dimension (ldb, nrhs)
+            On entry, the right hand side vectors for the system of
+            linear equations.
+            On exit, B is overwritten with the difference B - A*X.
+        @param input int ldb  The leading dimension of the array B.  ldb >= max(1, n).
+        @param output double[] rwork of dimension n
+        @param output double[] resid of dimension 1
+            The maximum over the number of right hand sides of
+            norm(B - A*X) / ( norm(A) * norm(X) * eps).
+      */
+      private void dpot02(char uplo, int n, int nrhs, double[][] A, int lda, double[][] X, int ldx,
+                          double[][] B, int ldb, double[] rwork, double[] resid) {
+          int j;
+          double eps;
+          double anorm;
+          double bnorm;
+          double xnorm;
+          int i;
+          
+          // Quick exit if n = 0 or nrhs = 0.
+       
+          if (n <= 0 || nrhs <= 0) {
+              resid[0] = 0.0;
+              return;
+          }
+      
+          // Exit with resid[0] = 1/eps if anorm = 0.
+      
+          eps = ge.dlamch('E'); // Epsilon
+          anorm = ge.dlansy('1', uplo, n, A, lda, rwork);
+          if (anorm <= 0.0) {
+              resid[0] = 1.0 / eps;
+              return;
+          }
+      
+          // Compute  B - A*X
+      
+          ge.dsymm('L', uplo, n, nrhs, -1.0, A, lda, X, ldx, 1.0, B, ldb);
+      
+          // Compute the maximum over the number of right hand sides of
+          // norm( B - A*X ) / ( norm(A) * norm(X) * eps) .
+      
+          resid[0] = 0.0;
+          for (j = 0; j < nrhs; j++) {
+               bnorm = 0.0;
+               for (i = 0; i < n; i++) {
+                   bnorm += Math.abs(B[i][j]);
+               }
+               xnorm = 0.0;
+               for (i = 0; i < n; i++) {
+                   xnorm += Math.abs(X[i][j]);
+               }
+               if (xnorm <= 0.0) {
+                   resid[0] = 1.0 / eps;
+               }
+               else {
+                   resid[0] = Math.max(resid[0], ( ( bnorm / anorm ) / xnorm ) / eps );
+               }
+          } // for (j = 0; j < nrhs; j++)
+          
+          return;
+
+      } // dpot02
+      
+    /**
+     * This is a port of LAPACK version test routine 3.4.0 DPOT03.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., November 2011.
+     * 
+     * dpot03 computes the residual for a symmetric matrix times its inverse:
+       norm( I - A*AINV ) / (n * norm(A) * norm(AINV) * eps),
+       where eps is the machine epsilon.
+       @param input char uplo
+           Specifies whether the upper or lower triangular part of the
+           symmetric matrix A is stored:
+           = 'U':  Upper triangular
+           = 'L':  Lower triangular
+       @param input int n  The number of rows and columns of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n).  The original symmetric matrix A.
+       @param input int lda  The leading dimension of the array A.  lda >= max(1, n).
+       @param (input/output) double[][] AINV of dimension (ldainv, n)
+           On entry, the inverse of the matrix A, stored as a symmetric
+           matrix in the same format as A.
+           In this version, AINV is expanded into a full matrix and
+           multiplied by A, so the opposing triangle of AINV will be
+           changed; i.e., if the upper triangular part of AINV is
+           stored, the lower triangular part will be used as work space.
+       @param input int ldainv  The leading dimension of the array AINV.  ldainv >= max(1, n).
+       @param output double[][] work of dimension (ldwork, n).
+       @param input int ldwork  The leading dimension of the array work.  ldwork >= max(1, n).
+       @param output double[] rwork of dimension n
+       @param output double[] rcond of dimension 1
+           The reciprocal of the condition number of A, computed as
+           ( 1/norm(A) ) / norm(AINV).
+       @param output double[] resid of dimension 1
+           norm(I - A*AINV) / (n * norm(A) * norm(AINV) * eps)
+     */
+     private void dpot03(char uplo, int n, double[][] A, int lda, double[][] AINV, int ldainv,
+                         double[][] work, int ldwork, double rwork[], double[] rcond, double[] resid) {
+         int i;
+         int j;
+         double ainvnm;
+         double anorm;
+         double eps;
+         
+         // Quick exit if n = 0.
+     
+         if (n <= 0) {
+             rcond[0] = 1.0;
+             resid[0] = 0.0;
+             return;
+         }
+     
+         // Exit with resid[0] = 1/eps if anorm = 0 or ainvnm = 0.
+     
+         eps = ge.dlamch('E'); // Epsilon
+         anorm = ge.dlansy('1', uplo, n, A, lda, rwork);
+         ainvnm = ge.dlansy('1', uplo, n, AINV, ldainv, rwork);
+         if (anorm <= 0.0 || ainvnm <= 0.0) {
+             rcond[0] = 0.0;
+             resid[0] = 1.0 / eps;
+             return;
+         }
+         rcond[0] = ( 1.0 / anorm ) / ainvnm;
+     
+         // Expand AINV into a full matrix and call dsymm to multiply
+         // AINV on the left by A.
+      
+         if ((uplo == 'U') || (uplo == 'u')) {
+             for (j = 1; j <= n; j++) {
+                 for (i = 1; i <= j-1; i++) {
+                     AINV[j-1][i-1] = AINV[i-1][j-1];
+                 }
+             } // for (j = 1; j <= n; j++)
+         }
+         else {
+             for (j = 1; j <= n; j++) {
+                 for (i = j+1; i <= n; i++) {
+                     AINV[j-1][i-1] = AINV[i-1][j-1];
+                 }
+             } // for (j = 1; j <= n; j++)
+         }
+         ge.dsymm('L', uplo, n, n, -1.0, A, lda, AINV, ldainv, 0.0,
+                  work, ldwork);
+     
+         // Add the identity matrix to WORK .
+     
+         for (i = 0; i < n; i++) {
+             work[i][i] = work[i][i] + 1.0;
+         }
+     
+         // Compute norm(I - A*AINV) / (n * norm(A) * norm(AINV) * eps)
+     
+         resid[0] = ge.dlange('1', n, n, work, ldwork, rwork);
+     
+         resid[0] = ( (resid[0]*rcond[0] ) / eps ) / (double)( n );
+     
+         return;
+
+     } // dpot03
+    
+    /**
      * This is a port of LAPACK version routine 3.4.0 DPOSV.F created by the University of Tennessee, University
      * of California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2011.
      * 
@@ -620,7 +946,330 @@ public class LinearEquations implements java.io.Serializable {
     } // dpotf2
     
     /**
-     * This is a port of LAPACK version auxiliairy routine 3.4.2 DLAUU2.F created by the University of Tennessee, University
+     * This is a port of LAPACK version routine 3.4.0 DPOTRI.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., November 2011.
+     * 
+     * dpotri computes the inverse of a real symmetric positive definite
+       matrix A using the Cholesky factorization A = U**T*U or A = L*L**T
+       computed by dpotrf.
+       
+       @param input char uplo
+           = 'U': Upper triangle of A is stored;
+           = 'L': Lower triangle of A is stored.
+       @param input int n  The order of the matrix A.  n >= 0.
+       @param (input/output) double[][] of dimension (lda, n)
+           On entry, the triangular factor U or L from the Cholesky
+           factorization A = U**T*U or A = L*L**T, as computed by dpotrf.
+           On exit, the upper or lower triangle of the (symmetric)
+           inverse of A, overwriting the input factor U or L.
+       @param input int lda  The leading dimension of the array A.   lda >= max(1,n).
+       @param output int[] of dimension 1.
+           = 0: successful exit
+           < 0: if info = -i, the i-th argument had an illegal value
+           > 0: if info = i, the [i-1][i-1] element of the factor U or L is zero,
+                and the inverse could not be computed.
+     */
+    private void dpotri(char uplo, int n, double[][] A, int lda, int info[]) {
+     // Test the input parameters.
+        
+        info[0] = 0;
+        if (!((uplo == 'U') || (uplo == 'u')) && !((uplo == 'L') || (uplo == 'l')) ) {
+           info[0] = -1;
+        }
+        else if (n < 0) {
+           info[0] = -2;
+        }
+        else if (lda < Math.max(1, n)) {
+           info[0] = -4;
+        }
+        if (info[0] != 0) {
+           MipavUtil.displayError("dpotri had info[0] = " + info[0]);
+           return;
+        }
+  
+        // Quick return if possible
+  
+        if (n == 0) {
+           return;
+        }   
+        
+        // Invert the triangular Cholesky factor U or L.
+        
+        dtrtri(uplo, 'N', n, A, lda, info);
+        if (info[0] > 0) {
+            return;
+        }
+        
+        // Form inv(U) * inv(U)**T or inv(L)**T * inv(L).
+        
+        dlauum(uplo, n, A, lda, info);
+        
+        return;
+
+    } // dpotri
+    
+    /**
+     * This is a port of LAPACK version auxiliary routine 3.4.2 DLAUUM.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., September 2012.
+     *
+     * dlauum computes the product UUH or LHL, where U and L are upper or lower triangular matrices (blocked algorithm).
+     * 
+     * dlauum computes the product U * U**T or L**T * L, where the triangular
+       factor U or L is stored in the upper or lower triangular part of the array A.
+
+       If uplo = 'U' or 'u' then the upper triangle of the result is stored,
+       overwriting the factor U in A.
+       If uplo = 'L' or 'l' then the lower triangle of the result is stored,
+       overwriting the factor L in A.
+
+       This is the blocked form of the algorithm
+       @param input char uplo  Specifies whether the triangular factor stored in the array 
+           is upper or lower triangular:
+           = 'U':  Upper triangular
+           = 'L':  Lower triangular
+       @param input int n  The order of the triangular factor U or L.  n >= 0.
+       @param (input/output) double[][] A of dimension (lda, n)
+           On entry, the triangular factor U or L.
+           On exit, if uplo = 'U', the upper triangle of A is
+           overwritten with the upper triangle of the product U * U**T;
+           if uplo = 'L', the lower triangle of A is overwritten with
+           the lower triangle of the product L**T * L.
+       @param input int lda  The leading dimension of array A.  lda >= max(1, n).
+       @param output int[] info of dimension 1.
+           = 0: successful exit
+           < 0: If info[0] = -k, the k-th argument had an illegal value
+     */
+     private void dlauum(char uplo, int n, double[][] A, int lda, int info[]) {
+         boolean upper;
+         int i;
+         int ib;
+         int nb;
+         int j;
+         double arr[][];
+         int k;
+         String name;
+         char charOpts[] = new char[1];
+         String opts;
+         double arr2[][];
+         double arr3[][];
+         
+         // Test the input parameters.
+         
+         info[0] = 0;
+         upper = ((uplo == 'U') || (uplo == 'u'));
+         if (!upper && !((uplo == 'L') || (uplo == 'l')) ) {
+            info[0] = -1;
+         }
+         else if (n < 0) {
+            info[0] = -2;
+         }
+         else if (lda < Math.max(1, n)) {
+            info[0] = -4;
+         }
+         if (info[0] != 0) {
+            MipavUtil.displayError("dlauum had info[0] = " + info[0]);
+            return;
+         }
+   
+         // Quick return if possible
+   
+         if (n == 0) {
+            return;
+         }
+         
+         // Determine the block size for this environment.
+     
+         name = new String("DLAUUM");
+         charOpts[0] = uplo;
+         opts = new String(charOpts);
+         nb = ge.ilaenv(1, name, opts, n, -1, -1, -1);
+     
+         if (nb <= 1 || nb >= n) {
+     
+             // Use unblocked code
+     
+             dlauu2(uplo, n, A, lda, info);
+         }
+         else { 
+     
+             // Use blocked code
+   
+             if (upper) {
+     
+                 // Compute the product U * U**T.
+     
+                 for (i = 1; i <= n; i += nb) {
+                     ib = Math.min(nb, n-i+1);
+                     arr = new double[ib][ib];
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                             arr[j][k] = A[i-1+j][i-1+k];
+                         }
+                     }
+                     arr2 = new double[i-1][ib];
+                     for (j = 0; j < i-1; j++) {
+                         for (k = 0; k < ib; k++) {
+                             arr2[j][k] = A[j][i-1+k];
+                         }
+                     }
+                     ge.dtrmm('R', 'U', 'T', 'N',
+                              i-1, ib, 1.0, arr, lda, arr2, lda);
+                     for (j = 0; j < i-1; j++) {
+                         for (k = 0; k < ib; k++) {
+                             A[j][i-1+k] = arr2[j][k];
+                         }
+                     }
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                             arr[j][k] = A[i-1+j][i-1+k];
+                         }
+                     }
+                     dlauu2('U', ib, arr, lda, info);
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                              A[i-1+j][i-1+k] = arr[j][k];
+                         }
+                     }
+                     if (i+ib <= n) {
+                         arr = new double[i-1][n-i-ib+1];
+                         for (j = 0; j < i-1; j++) {
+                             for (k = 0; k < n-i-ib+1; k++) {
+                                 arr[j][k] = A[j][i+ib-1+k];
+                             }
+                         }
+                         arr2 = new double[ib][n-i-ib+1];
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < n-i-ib+1; k++) {
+                                 arr2[j][k] = A[i-1+j][i+ib-1+k];
+                             }
+                         }
+                         arr3 = new double[i-1][ib];
+                         for (j = 0; j < i-1; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 arr3[j][k] = A[j][i-1+k];
+                             }
+                         }
+                         ge.dgemm('N', 'T', i-1, ib,
+                                   n-i-ib+1, 1.0, arr, lda,
+                                   arr2, lda, 1.0, arr3, lda);
+                         for (j = 0; j < i-1; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 A[j][i-1+k] = arr3[j][k];
+                             }
+                         }
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < n-i-ib+1; k++) {
+                                 arr2[j][k] = A[i-1+j][i+ib-1+k];
+                             }
+                         }
+                         arr = new double[ib][ib];
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 arr[j][k] = A[i-1+j][i-1+k];
+                             }
+                         }
+                         ge.dsyrk('U', 'N', ib, n-i-ib+1,
+                                  1.0, arr2, lda, 1.0, arr, lda);
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 A[i-1+j][i-1+k] = arr[j][k];
+                             }
+                         }
+                     } // if (i+ib <= n)
+                 } // for (i = 1; i <= n; i += nb)
+             } // if (upper)
+             else { // lower
+     
+                 // Compute the product L**T * L.
+     
+                 for (i = 1; i <= n; i += nb) {
+                     ib = Math.min(nb, n-i+1);
+                     arr = new double[ib][ib];
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                             arr[j][k] = A[i-1+j][i-1+k];
+                         }
+                     }
+                     arr2 = new double[ib][i-1];
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < i-1; k++) {
+                             arr2[j][k] = A[i-1+j][k];
+                         }
+                     }
+                     ge.dtrmm('L', 'L', 'T', 'N', ib,
+                              i-1, 1.0, arr, lda, arr2, lda);
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < i-1; k++) {
+                             A[i-1+j][k] = arr2[j][k];
+                         }
+                     }
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                             arr[j][k] = A[i-1+j][i-1+k];
+                         }
+                     }
+                     dlauu2('L', ib, arr, lda, info);
+                     for (j = 0; j < ib; j++) {
+                         for (k = 0; k < ib; k++) {
+                             A[i-1+j][i-1+k] = arr[j][k];
+                         }
+                     }
+                     if (i+ib <= n) {
+                         arr = new double[n-i-ib+1][ib];
+                         for (j = 0; j < n-i-ib+1; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 arr[j][k] = A[i+ib-1+j][i-1+k];
+                             }
+                         }
+                         arr2 = new double[n-i-ib+1][i-1];
+                         for (j = 0; j < n-i-ib+1; j++) {
+                             for (k = 0; k < i-1; k++) {
+                                 arr2[j][k] = A[i+ib-1+j][k];
+                             }
+                         }
+                         arr3 = new double[ib][i-1];
+                         for (j = 0; j < ib; j ++) {
+                             for (k = 0; k < i-1; k++) {
+                                 arr3[j][k] = A[i-1+j][k];
+                             }
+                         }
+                         ge.dgemm('T', 'N', ib, i-1,
+                                  n-i-ib+1, 1.0, arr, lda,
+                                  arr2, lda, 1.0, arr3, lda);
+                         for (j = 0; j < ib; j ++) {
+                             for (k = 0; k < i-1; k++) {
+                                 A[i-1+j][k] = arr3[j][k];
+                             }
+                         }
+                         for (j = 0; j < n-i-ib+1; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 arr[j][k] = A[i+ib-1+j][i-1+k];
+                             }
+                         }
+                         arr2 = new double[ib][ib];
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 arr2[j][k] = A[i-1+j][i-1+k];
+                             }
+                         }
+                         ge.dsyrk('L', 'T', ib, n-i-ib+1, 1.0,
+                                  arr, lda, 1.0, arr2, lda);
+                         for (j = 0; j < ib; j++) {
+                             for (k = 0; k < ib; k++) {
+                                 A[i-1+j][i-1+k] = arr2[j][k];
+                             }
+                         }
+                     } // if (i+ib <= n)
+                 } // for (i = 1; i <= n; i += nb)
+             } // else lower
+         } // else use blocked code
+     
+         return;
+
+     } // dlauum
+    
+    /**
+     * This is a port of LAPACK version auxiliary routine 3.4.2 DLAUU2.F created by the University of Tennessee, University
      * of California Berkeley, University of Colorado Denver, and NAG Ltd., September 2012.
      *
      * dlauu2 computes the product UUH or LHL, where U and L are upper or lower triangular matrices (unblocked algorithm).
