@@ -2998,9 +2998,8 @@ public class FileNIFTI extends FileBase {
                         		start = start + floatBuff2.length;
                         	}
                         } catch (IOException e) {
-                        	e.printStackTrace();
-                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-                            return null;
+                            Preferences.debug("IOException on gzin.read(buffer) for " + fileName, Preferences.DEBUG_FILEIO);
+                            throw e;
                         } 
                     }
             	}else if(ext.equalsIgnoreCase("bz2")) {
@@ -3124,9 +3123,8 @@ public class FileNIFTI extends FileBase {
                         		start = start + floatBuff2.length;
                         	}
                         } catch (IOException e) {
-                        	e.printStackTrace();
-                            MipavUtil.displayError("IOException on gzin.read(buffer) for " + fileName);
-                            return null;
+                        	Preferences.debug("IOException on gzin.read(buffer) for " + fileName, Preferences.DEBUG_FILEIO);
+                            throw e;
                         } 
                     }
             	}
@@ -3240,7 +3238,7 @@ public class FileNIFTI extends FileBase {
 
             fireProgressStateChanged(100);
         } catch (IOException error) {
-            throw new IOException("FileNIFTI: " + error);
+            throw error;
         } catch (OutOfMemoryError e) {
             throw (e);
         }
@@ -3256,8 +3254,9 @@ public class FileNIFTI extends FileBase {
      * @param off
      * @param fullBufferSize
      * @return
+     * @throws IOException 
      */
-    private byte[] getFullBuffer(InputStream in, byte[] buff, int off, int fullBufferSize) {
+    private byte[] getFullBuffer(InputStream in, byte[] buff, int off, int fullBufferSize) throws IOException {
     	
     	int bytesRead = 0;
     	int offset = off;
@@ -3281,9 +3280,7 @@ public class FileNIFTI extends FileBase {
              }
            
          } catch (IOException e) {
-        	 e.printStackTrace();
-             MipavUtil.displayError("IOException on gzin.read(buffer)");
-             
+        	 throw e;
          }
          
     	}
