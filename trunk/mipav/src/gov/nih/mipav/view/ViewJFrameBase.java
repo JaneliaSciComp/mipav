@@ -4239,6 +4239,10 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
     public static ModelLUT initLUT(final ModelImage img) throws OutOfMemoryError {
         ModelLUT newLUT = null;
 
+        if(img == null) {
+        	return null;
+        }
+        
         // only make a lut for non color images
         if (img.isColorImage() == false) {
             final int[] dimExtentsLUT = new int[2];
