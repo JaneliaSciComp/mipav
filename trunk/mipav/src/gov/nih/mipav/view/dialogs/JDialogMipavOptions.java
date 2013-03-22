@@ -1939,7 +1939,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeMultiThreadingEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        multiThreadingEnabledCheckBox = new JCheckBox("Multi-Threading Enabled(" + ThreadUtil.getAvailableCores()
+        multiThreadingEnabledCheckBox = new JCheckBox("Multi-threading enabled (" + ThreadUtil.getAvailableCores()
                 + " cores)");
         multiThreadingEnabledCheckBox.setFont(MipavUtil.font12);
         multiThreadingEnabledCheckBox.setForeground(Color.black);
@@ -1957,7 +1957,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeGpuCompEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        gpuCompEnabledCheckBox = new JCheckBox("GPU Computing Enabled"); 
+        gpuCompEnabledCheckBox = new JCheckBox("GPU computing enabled"); 
         gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
         gpuCompEnabledCheckBox.setForeground(Color.black);
         gpuCompEnabledCheckBox.addActionListener(this);
@@ -1972,7 +1972,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gpuCompEnabledCheckBox.setEnabled(OpenCLAlgorithmBase.isOCLAvailable());
         
 
-        gpuInfoButton = new JButton("GPU Info");
+        gpuInfoButton = new JButton("GPU info");
         gpuInfoButton.setToolTipText(logFilename);
         gpuInfoButton.setFont(MipavUtil.font12);
         gbc.insets = new Insets(0, 0, 0, 0);
