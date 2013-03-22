@@ -1,0 +1,2317 @@
+=================================
+----
+lib/axiom-api-*.jar
+lib/axiom-dom-*.jar
+lib/axiom-impl-*.jar
+lib/commons-logging-*.jar
+lib/xstx-asl-*.jar
+lib/axis2-kernel-*.jar
+lib/commons-codec-*.jar
+lib/commons-httpclient-*.jar
+lib/neethi-*.jar
+lib/XmlSchema-*.jar
+lib/rampart-core-ndar-*.jar
+lib/rampart-policy-*.jar
+lib/rampart-trust-*.jar
+lib/wss4j-*.jar
+lib/xmlsec-*.jar
+lib/fontbox-*.jar
+lib/jempbox-*.jar
+lib/pdfbox-*.jar
+----
+
+Apache libraries, distributed under version 2 of the Apache License.
+
+----
+
+See http://www.apache.org/licenses/LICENSE-2.0.html
+
+=================================
+----
+jj2kpack.jar
+----
+
+Required copyright notice + LGPL. See http://code.google.com/p/jj2000/
+
+----
+
+Original copyright notice:
+
+------------------
+
+COPYRIGHT:
+
+This software module was originally developed by Rapha?l Grosbois and
+Diego Santa Cruz (Swiss Federal Institute of Technology-EPFL); Joel
+Askel?f (Ericsson Radio Systems AB); and Bertrand Berthelot, David
+Bouchard, F?lix Henry, Gerard Mozelle and Patrice Onno (Canon Research
+Centre France S.A) in the course of development of the JPEG2000
+standard as specified by ISO/IEC 15444 (JPEG 2000 Standard). This
+software module is an implementation of a part of the JPEG 2000
+Standard. Swiss Federal Institute of Technology-EPFL, Ericsson Radio
+Systems AB and Canon Research Centre France S.A (collectively JJ2000
+Partners) agree not to assert against ISO/IEC and users of the JPEG
+2000 Standard (Users) any of their rights under the copyright, not
+including other intellectual property rights, for this software module
+with respect to the usage by ISO/IEC and Users of this software module
+or modifications thereof for use in hardware or software products
+claiming conformance to the JPEG 2000 Standard. Those intending to use
+this software module in hardware or software products are advised that
+their use may infringe existing patents. The original developers of
+this software module, JJ2000 Partners and ISO/IEC assume no liability
+for use of this software module or modifications thereof. No license
+or right to this software module is granted for non JPEG 2000 Standard
+conforming products. JJ2000 Partners have full right to use this
+software module for his/her own purpose, assign or donate this
+software module to any third party and to inhibit third parties from
+using this software module for non JPEG 2000 Standard conforming
+products. This copyright notice must be included in all copies or
+derivative works of this software module.
+
+Copyright (c) 1999/2000 JJ2000 Partners.
+
+------------------
+
+GNU LESSER GENERAL PUBLIC LICENSE
+
+Version 3, 29 June 2007
+
+Copyright й 2007 Free Software Foundation, Inc. <http://fsf.org/>
+
+Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+
+This version of the GNU Lesser General Public License incorporates the terms and conditions of version 3 of the GNU General Public License, supplemented by the additional permissions listed below.
+0. Additional Definitions.
+
+As used herein, "this License" refers to version 3 of the GNU Lesser General Public License, and the "GNU GPL" refers to version 3 of the GNU General Public License.
+
+"The Library" refers to a covered work governed by this License, other than an Application or a Combined Work as defined below.
+
+An "Application" is any work that makes use of an interface provided by the Library, but which is not otherwise based on the Library. Defining a subclass of a class defined by the Library is deemed a mode of using an interface provided by the Library.
+
+A "Combined Work" is a work produced by combining or linking an Application with the Library. The particular version of the Library with which the Combined Work was made is also called the "Linked Version".
+
+The "Minimal Corresponding Source" for a Combined Work means the Corresponding Source for the Combined Work, excluding any source code for portions of the Combined Work that, considered in isolation, are based on the Application, and not on the Linked Version.
+
+The "Corresponding Application Code" for a Combined Work means the object code and/or source code for the Application, including any data and utility programs needed for reproducing the Combined Work from the Application, but excluding the System Libraries of the Combined Work.
+1. Exception to Section 3 of the GNU GPL.
+
+You may convey a covered work under sections 3 and 4 of this License without being bound by section 3 of the GNU GPL.
+2. Conveying Modified Versions.
+
+If you modify a copy of the Library, and, in your modifications, a facility refers to a function or data to be supplied by an Application that uses the facility (other than as an argument passed when the facility is invoked), then you may convey a copy of the modified version:
+
+    * a) under this License, provided that you make a good faith effort to ensure that, in the event an Application does not supply the function or data, the facility still operates, and performs whatever part of its purpose remains meaningful, or
+    * b) under the GNU GPL, with none of the additional permissions of this License applicable to that copy.
+
+3. Object Code Incorporating Material from Library Header Files.
+
+The object code form of an Application may incorporate material from a header file that is part of the Library. You may convey such object code under terms of your choice, provided that, if the incorporated material is not limited to numerical parameters, data structure layouts and accessors, or small macros, inline functions and templates (ten or fewer lines in length), you do both of the following:
+
+    * a) Give prominent notice with each copy of the object code that the Library is used in it and that the Library and its use are covered by this License.
+    * b) Accompany the object code with a copy of the GNU GPL and this license document.
+
+4. Combined Works.
+
+You may convey a Combined Work under terms of your choice that, taken together, effectively do not restrict modification of the portions of the Library contained in the Combined Work and reverse engineering for debugging such modifications, if you also do each of the following:
+
+    * a) Give prominent notice with each copy of the Combined Work that the Library is used in it and that the Library and its use are covered by this License.
+    * b) Accompany the Combined Work with a copy of the GNU GPL and this license document.
+    * c) For a Combined Work that displays copyright notices during execution, include the copyright notice for the Library among these notices, as well as a reference directing the user to the copies of the GNU GPL and this license document.
+    * d) Do one of the following:
+          o 0) Convey the Minimal Corresponding Source under the terms of this License, and the Corresponding Application Code in a form suitable for, and under terms that permit, the user to recombine or relink the Application with a modified version of the Linked Version to produce a modified Combined Work, in the manner specified by section 6 of the GNU GPL for conveying Corresponding Source.
+          o 1) Use a suitable shared library mechanism for linking with the Library. A suitable mechanism is one that (a) uses at run time a copy of the Library already present on the user's computer system, and (b) will operate properly with a modified version of the Library that is interface-compatible with the Linked Version.
+    * e) Provide Installation Information, but only if you would otherwise be required to provide such information under section 6 of the GNU GPL, and only to the extent that such information is necessary to install and execute a modified version of the Combined Work produced by recombining or relinking the Application with a modified version of the Linked Version. (If you use option 4d0, the Installation Information must accompany the Minimal Corresponding Source and Corresponding Application Code. If you use option 4d1, you must provide the Installation Information in the manner specified by section 6 of the GNU GPL for conveying Corresponding Source.)
+
+5. Combined Libraries.
+
+You may place library facilities that are a work based on the Library side by side in a single library together with other library facilities that are not Applications and are not covered by this License, and convey such a combined library under terms of your choice, if you do both of the following:
+
+    * a) Accompany the combined library with a copy of the same work based on the Library, uncombined with any other library facilities, conveyed under the terms of this License.
+    * b) Give prominent notice with the combined library that part of it is a work based on the Library, and explaining where to find the accompanying uncombined form of the same work.
+
+6. Revised Versions of the GNU Lesser General Public License.
+
+The Free Software Foundation may publish revised and/or new versions of the GNU Lesser General Public License from time to time. Such new versions will be similar in spirit to the present version, but may differ in detail to address new problems or concerns.
+
+Each version is given a distinguishing version number. If the Library as you received it specifies that a certain numbered version of the GNU Lesser General Public License "or any later version" applies to it, you have the option of following the terms and conditions either of that published version or of any later version published by the Free Software Foundation. If the Library as you received it does not specify a version number of the GNU Lesser General Public License, you may choose any version of the GNU Lesser General Public License ever published by the Free Software Foundation.
+
+If the Library as you received it specifies that a proxy can decide whether future versions of the GNU Lesser General Public License shall apply, that proxy's public statement of acceptance of any version is permanent authorization for you to choose that version for the Library.
+
+==================================
+----
+hyperapplet.jar
+----
+
+LGPL v 2.1.
+
+----
+
+		  GNU LESSER GENERAL PUBLIC LICENSE
+		       Version 2.1, February 1999
+
+ Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+[This is the first released version of the Lesser GPL.  It also counts
+ as the successor of the GNU Library Public License, version 2, hence
+ the version number 2.1.]
+
+			    Preamble
+
+  The licenses for most software are designed to take away your
+freedom to share and change it.  By contrast, the GNU General Public
+Licenses are intended to guarantee your freedom to share and change
+free software--to make sure the software is free for all its users.
+
+  This license, the Lesser General Public License, applies to some
+specially designated software packages--typically libraries--of the
+Free Software Foundation and other authors who decide to use it.  You
+can use it too, but we suggest you first think carefully about whether
+this license or the ordinary General Public License is the better
+strategy to use in any particular case, based on the explanations below.
+
+  When we speak of free software, we are referring to freedom of use,
+not price.  Our General Public Licenses are designed to make sure that
+you have the freedom to distribute copies of free software (and charge
+for this service if you wish); that you receive source code or can get
+it if you want it; that you can change the software and use pieces of
+it in new free programs; and that you are informed that you can do
+these things.
+
+  To protect your rights, we need to make restrictions that forbid
+distributors to deny you these rights or to ask you to surrender these
+rights.  These restrictions translate to certain responsibilities for
+you if you distribute copies of the library or if you modify it.
+
+  For example, if you distribute copies of the library, whether gratis
+or for a fee, you must give the recipients all the rights that we gave
+you.  You must make sure that they, too, receive or can get the source
+code.  If you link other code with the library, you must provide
+complete object files to the recipients, so that they can relink them
+with the library after making changes to the library and recompiling
+it.  And you must show them these terms so they know their rights.
+
+  We protect your rights with a two-step method: (1) we copyright the
+library, and (2) we offer you this license, which gives you legal
+permission to copy, distribute and/or modify the library.
+
+  To protect each distributor, we want to make it very clear that
+there is no warranty for the free library.  Also, if the library is
+modified by someone else and passed on, the recipients should know
+that what they have is not the original version, so that the original
+author's reputation will not be affected by problems that might be
+introduced by others.
+
+  Finally, software patents pose a constant threat to the existence of
+any free program.  We wish to make sure that a company cannot
+effectively restrict the users of a free program by obtaining a
+restrictive license from a patent holder.  Therefore, we insist that
+any patent license obtained for a version of the library must be
+consistent with the full freedom of use specified in this license.
+
+  Most GNU software, including some libraries, is covered by the
+ordinary GNU General Public License.  This license, the GNU Lesser
+General Public License, applies to certain designated libraries, and
+is quite different from the ordinary General Public License.  We use
+this license for certain libraries in order to permit linking those
+libraries into non-free programs.
+
+  When a program is linked with a library, whether statically or using
+a shared library, the combination of the two is legally speaking a
+combined work, a derivative of the original library.  The ordinary
+General Public License therefore permits such linking only if the
+entire combination fits its criteria of freedom.  The Lesser General
+Public License permits more lax criteria for linking other code with
+the library.
+
+  We call this license the "Lesser" General Public License because it
+does Less to protect the user's freedom than the ordinary General
+Public License.  It also provides other free software developers Less
+of an advantage over competing non-free programs.  These disadvantages
+are the reason we use the ordinary General Public License for many
+libraries.  However, the Lesser license provides advantages in certain
+special circumstances.
+
+  For example, on rare occasions, there may be a special need to
+encourage the widest possible use of a certain library, so that it becomes
+a de-facto standard.  To achieve this, non-free programs must be
+allowed to use the library.  A more frequent case is that a free
+library does the same job as widely used non-free libraries.  In this
+case, there is little to gain by limiting the free library to free
+software only, so we use the Lesser General Public License.
+
+  In other cases, permission to use a particular library in non-free
+programs enables a greater number of people to use a large body of
+free software.  For example, permission to use the GNU C Library in
+non-free programs enables many more people to use the whole GNU
+operating system, as well as its variant, the GNU/Linux operating
+system.
+
+  Although the Lesser General Public License is Less protective of the
+users' freedom, it does ensure that the user of a program that is
+linked with the Library has the freedom and the wherewithal to run
+that program using a modified version of the Library.
+
+  The precise terms and conditions for copying, distribution and
+modification follow.  Pay close attention to the difference between a
+"work based on the library" and a "work that uses the library".  The
+former contains code derived from the library, whereas the latter must
+be combined with the library in order to run.
+
+		  GNU LESSER GENERAL PUBLIC LICENSE
+   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+
+  0. This License Agreement applies to any software library or other
+program which contains a notice placed by the copyright holder or
+other authorized party saying it may be distributed under the terms of
+this Lesser General Public License (also called "this License").
+Each licensee is addressed as "you".
+
+  A "library" means a collection of software functions and/or data
+prepared so as to be conveniently linked with application programs
+(which use some of those functions and data) to form executables.
+
+  The "Library", below, refers to any such software library or work
+which has been distributed under these terms.  A "work based on the
+Library" means either the Library or any derivative work under
+copyright law: that is to say, a work containing the Library or a
+portion of it, either verbatim or with modifications and/or translated
+straightforwardly into another language.  (Hereinafter, translation is
+included without limitation in the term "modification".)
+
+  "Source code" for a work means the preferred form of the work for
+making modifications to it.  For a library, complete source code means
+all the source code for all modules it contains, plus any associated
+interface definition files, plus the scripts used to control compilation
+and installation of the library.
+
+  Activities other than copying, distribution and modification are not
+covered by this License; they are outside its scope.  The act of
+running a program using the Library is not restricted, and output from
+such a program is covered only if its contents constitute a work based
+on the Library (independent of the use of the Library in a tool for
+writing it).  Whether that is true depends on what the Library does
+and what the program that uses the Library does.
+  
+  1. You may copy and distribute verbatim copies of the Library's
+complete source code as you receive it, in any medium, provided that
+you conspicuously and appropriately publish on each copy an
+appropriate copyright notice and disclaimer of warranty; keep intact
+all the notices that refer to this License and to the absence of any
+warranty; and distribute a copy of this License along with the
+Library.
+
+  You may charge a fee for the physical act of transferring a copy,
+and you may at your option offer warranty protection in exchange for a
+fee.
+
+  2. You may modify your copy or copies of the Library or any portion
+of it, thus forming a work based on the Library, and copy and
+distribute such modifications or work under the terms of Section 1
+above, provided that you also meet all of these conditions:
+
+    a) The modified work must itself be a software library.
+
+    b) You must cause the files modified to carry prominent notices
+    stating that you changed the files and the date of any change.
+
+    c) You must cause the whole of the work to be licensed at no
+    charge to all third parties under the terms of this License.
+
+    d) If a facility in the modified Library refers to a function or a
+    table of data to be supplied by an application program that uses
+    the facility, other than as an argument passed when the facility
+    is invoked, then you must make a good faith effort to ensure that,
+    in the event an application does not supply such function or
+    table, the facility still operates, and performs whatever part of
+    its purpose remains meaningful.
+
+    (For example, a function in a library to compute square roots has
+    a purpose that is entirely well-defined independent of the
+    application.  Therefore, Subsection 2d requires that any
+    application-supplied function or table used by this function must
+    be optional: if the application does not supply it, the square
+    root function must still compute square roots.)
+
+These requirements apply to the modified work as a whole.  If
+identifiable sections of that work are not derived from the Library,
+and can be reasonably considered independent and separate works in
+themselves, then this License, and its terms, do not apply to those
+sections when you distribute them as separate works.  But when you
+distribute the same sections as part of a whole which is a work based
+on the Library, the distribution of the whole must be on the terms of
+this License, whose permissions for other licensees extend to the
+entire whole, and thus to each and every part regardless of who wrote
+it.
+
+Thus, it is not the intent of this section to claim rights or contest
+your rights to work written entirely by you; rather, the intent is to
+exercise the right to control the distribution of derivative or
+collective works based on the Library.
+
+In addition, mere aggregation of another work not based on the Library
+with the Library (or with a work based on the Library) on a volume of
+a storage or distribution medium does not bring the other work under
+the scope of this License.
+
+  3. You may opt to apply the terms of the ordinary GNU General Public
+License instead of this License to a given copy of the Library.  To do
+this, you must alter all the notices that refer to this License, so
+that they refer to the ordinary GNU General Public License, version 2,
+instead of to this License.  (If a newer version than version 2 of the
+ordinary GNU General Public License has appeared, then you can specify
+that version instead if you wish.)  Do not make any other change in
+these notices.
+
+  Once this change is made in a given copy, it is irreversible for
+that copy, so the ordinary GNU General Public License applies to all
+subsequent copies and derivative works made from that copy.
+
+  This option is useful when you wish to copy part of the code of
+the Library into a program that is not a library.
+
+  4. You may copy and distribute the Library (or a portion or
+derivative of it, under Section 2) in object code or executable form
+under the terms of Sections 1 and 2 above provided that you accompany
+it with the complete corresponding machine-readable source code, which
+must be distributed under the terms of Sections 1 and 2 above on a
+medium customarily used for software interchange.
+
+  If distribution of object code is made by offering access to copy
+from a designated place, then offering equivalent access to copy the
+source code from the same place satisfies the requirement to
+distribute the source code, even though third parties are not
+compelled to copy the source along with the object code.
+
+  5. A program that contains no derivative of any portion of the
+Library, but is designed to work with the Library by being compiled or
+linked with it, is called a "work that uses the Library".  Such a
+work, in isolation, is not a derivative work of the Library, and
+therefore falls outside the scope of this License.
+
+  However, linking a "work that uses the Library" with the Library
+creates an executable that is a derivative of the Library (because it
+contains portions of the Library), rather than a "work that uses the
+library".  The executable is therefore covered by this License.
+Section 6 states terms for distribution of such executables.
+
+  When a "work that uses the Library" uses material from a header file
+that is part of the Library, the object code for the work may be a
+derivative work of the Library even though the source code is not.
+Whether this is true is especially significant if the work can be
+linked without the Library, or if the work is itself a library.  The
+threshold for this to be true is not precisely defined by law.
+
+  If such an object file uses only numerical parameters, data
+structure layouts and accessors, and small macros and small inline
+functions (ten lines or less in length), then the use of the object
+file is unrestricted, regardless of whether it is legally a derivative
+work.  (Executables containing this object code plus portions of the
+Library will still fall under Section 6.)
+
+  Otherwise, if the work is a derivative of the Library, you may
+distribute the object code for the work under the terms of Section 6.
+Any executables containing that work also fall under Section 6,
+whether or not they are linked directly with the Library itself.
+
+  6. As an exception to the Sections above, you may also combine or
+link a "work that uses the Library" with the Library to produce a
+work containing portions of the Library, and distribute that work
+under terms of your choice, provided that the terms permit
+modification of the work for the customer's own use and reverse
+engineering for debugging such modifications.
+
+  You must give prominent notice with each copy of the work that the
+Library is used in it and that the Library and its use are covered by
+this License.  You must supply a copy of this License.  If the work
+during execution displays copyright notices, you must include the
+copyright notice for the Library among them, as well as a reference
+directing the user to the copy of this License.  Also, you must do one
+of these things:
+
+    a) Accompany the work with the complete corresponding
+    machine-readable source code for the Library including whatever
+    changes were used in the work (which must be distributed under
+    Sections 1 and 2 above); and, if the work is an executable linked
+    with the Library, with the complete machine-readable "work that
+    uses the Library", as object code and/or source code, so that the
+    user can modify the Library and then relink to produce a modified
+    executable containing the modified Library.  (It is understood
+    that the user who changes the contents of definitions files in the
+    Library will not necessarily be able to recompile the application
+    to use the modified definitions.)
+
+    b) Use a suitable shared library mechanism for linking with the
+    Library.  A suitable mechanism is one that (1) uses at run time a
+    copy of the library already present on the user's computer system,
+    rather than copying library functions into the executable, and (2)
+    will operate properly with a modified version of the library, if
+    the user installs one, as long as the modified version is
+    interface-compatible with the version that the work was made with.
+
+    c) Accompany the work with a written offer, valid for at
+    least three years, to give the same user the materials
+    specified in Subsection 6a, above, for a charge no more
+    than the cost of performing this distribution.
+
+    d) If distribution of the work is made by offering access to copy
+    from a designated place, offer equivalent access to copy the above
+    specified materials from the same place.
+
+    e) Verify that the user has already received a copy of these
+    materials or that you have already sent this user a copy.
+
+  For an executable, the required form of the "work that uses the
+Library" must include any data and utility programs needed for
+reproducing the executable from it.  However, as a special exception,
+the materials to be distributed need not include anything that is
+normally distributed (in either source or binary form) with the major
+components (compiler, kernel, and so on) of the operating system on
+which the executable runs, unless that component itself accompanies
+the executable.
+
+  It may happen that this requirement contradicts the license
+restrictions of other proprietary libraries that do not normally
+accompany the operating system.  Such a contradiction means you cannot
+use both them and the Library together in an executable that you
+distribute.
+
+  7. You may place library facilities that are a work based on the
+Library side-by-side in a single library together with other library
+facilities not covered by this License, and distribute such a combined
+library, provided that the separate distribution of the work based on
+the Library and of the other library facilities is otherwise
+permitted, and provided that you do these two things:
+
+    a) Accompany the combined library with a copy of the same work
+    based on the Library, uncombined with any other library
+    facilities.  This must be distributed under the terms of the
+    Sections above.
+
+    b) Give prominent notice with the combined library of the fact
+    that part of it is a work based on the Library, and explaining
+    where to find the accompanying uncombined form of the same work.
+
+  8. You may not copy, modify, sublicense, link with, or distribute
+the Library except as expressly provided under this License.  Any
+attempt otherwise to copy, modify, sublicense, link with, or
+distribute the Library is void, and will automatically terminate your
+rights under this License.  However, parties who have received copies,
+or rights, from you under this License will not have their licenses
+terminated so long as such parties remain in full compliance.
+
+  9. You are not required to accept this License, since you have not
+signed it.  However, nothing else grants you permission to modify or
+distribute the Library or its derivative works.  These actions are
+prohibited by law if you do not accept this License.  Therefore, by
+modifying or distributing the Library (or any work based on the
+Library), you indicate your acceptance of this License to do so, and
+all its terms and conditions for copying, distributing or modifying
+the Library or works based on it.
+
+  10. Each time you redistribute the Library (or any work based on the
+Library), the recipient automatically receives a license from the
+original licensor to copy, distribute, link with or modify the Library
+subject to these terms and conditions.  You may not impose any further
+restrictions on the recipients' exercise of the rights granted herein.
+You are not responsible for enforcing compliance by third parties with
+this License.
+
+  11. If, as a consequence of a court judgment or allegation of patent
+infringement or for any other reason (not limited to patent issues),
+conditions are imposed on you (whether by court order, agreement or
+otherwise) that contradict the conditions of this License, they do not
+excuse you from the conditions of this License.  If you cannot
+distribute so as to satisfy simultaneously your obligations under this
+License and any other pertinent obligations, then as a consequence you
+may not distribute the Library at all.  For example, if a patent
+license would not permit royalty-free redistribution of the Library by
+all those who receive copies directly or indirectly through you, then
+the only way you could satisfy both it and this License would be to
+refrain entirely from distribution of the Library.
+
+If any portion of this section is held invalid or unenforceable under any
+particular circumstance, the balance of the section is intended to apply,
+and the section as a whole is intended to apply in other circumstances.
+
+It is not the purpose of this section to induce you to infringe any
+patents or other property right claims or to contest validity of any
+such claims; this section has the sole purpose of protecting the
+integrity of the free software distribution system which is
+implemented by public license practices.  Many people have made
+generous contributions to the wide range of software distributed
+through that system in reliance on consistent application of that
+system; it is up to the author/donor to decide if he or she is willing
+to distribute software through any other system and a licensee cannot
+impose that choice.
+
+This section is intended to make thoroughly clear what is believed to
+be a consequence of the rest of this License.
+
+  12. If the distribution and/or use of the Library is restricted in
+certain countries either by patents or by copyrighted interfaces, the
+original copyright holder who places the Library under this License may add
+an explicit geographical distribution limitation excluding those countries,
+so that distribution is permitted only in or among countries not thus
+excluded.  In such case, this License incorporates the limitation as if
+written in the body of this License.
+
+  13. The Free Software Foundation may publish revised and/or new
+versions of the Lesser General Public License from time to time.
+Such new versions will be similar in spirit to the present version,
+but may differ in detail to address new problems or concerns.
+
+Each version is given a distinguishing version number.  If the Library
+specifies a version number of this License which applies to it and
+"any later version", you have the option of following the terms and
+conditions either of that version or of any later version published by
+the Free Software Foundation.  If the Library does not specify a
+license version number, you may choose any version ever published by
+the Free Software Foundation.
+
+  14. If you wish to incorporate parts of the Library into other free
+programs whose distribution conditions are incompatible with these,
+write to the author to ask for permission.  For software which is
+copyrighted by the Free Software Foundation, write to the Free
+Software Foundation; we sometimes make exceptions for this.  Our
+decision will be guided by the two goals of preserving the free status
+of all derivatives of our free software and of promoting the sharing
+and reuse of software generally.
+
+			    NO WARRANTY
+
+  15. BECAUSE THE LIBRARY IS LICENSED FREE OF CHARGE, THERE IS NO
+WARRANTY FOR THE LIBRARY, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
+EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR
+OTHER PARTIES PROVIDE THE LIBRARY "AS IS" WITHOUT WARRANTY OF ANY
+KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+LIBRARY IS WITH YOU.  SHOULD THE LIBRARY PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+
+  16. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY
+AND/OR REDISTRIBUTE THE LIBRARY AS PERMITTED ABOVE, BE LIABLE TO YOU
+FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+LIBRARY (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE LIBRARY TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+		     END OF TERMS AND CONDITIONS
+
+==================================
+----
+TableLayout-*.jar
+----
+
+Unmodified binary redistribution fine with no restrictions.
+
+----
+
+/*
+ * ====================================================================
+ *
+ * The Clearthought Software License, Version 2.0
+ *
+ * Copyright (c) 2001 Daniel Barbalace.  All rights reserved.
+ *
+ * Project maintained at https://tablelayout.dev.java.net
+ *
+ * I. Terms for redistribution of original source and binaries
+ *
+ * Redistribution and use of unmodified source and/or binaries are
+ * permitted provided that the following condition is met:
+ *
+ * 1. Redistributions of original source code must retain the above
+ *    copyright notice and license.  You are not required to redistribute
+ *    the original source; you may choose to redistribute only the
+ *    binaries.
+ *
+ * Basically, if you distribute unmodified source, you meet
+ * automatically comply with the license with no additional effort on
+ * your part.
+ *
+ * II. Terms for distribution of derived works via subclassing and/or
+ *     composition.
+ *
+ * You may generate derived works by means of subclassing and/or
+ * composition (e.g., the Adaptor Pattern), provided that the following
+ * conditions are met:
+ *
+ * 1. Redistributions of original source code must retain the above
+ *    copyright notice and license.  You are not required to redistribute
+ *    the original source; you may choose to redistribute only the
+ *    binaries.
+ *
+ * 2. The original software is not altered.
+ *
+ * 3. Derived works are not contained in the info.clearthought
+ *    namespace/package or any subpackage of info.clearthought.
+ *
+ * 4. Derived works do not use the class or interface names from the
+ *    info.clearthought... packages
+ *
+ * For example, you may define a class with the following full name:
+ *    org.nameOfMyOrganization.layouts.RowMajorTableLayout
+ *
+ * However, you may not define a class with the either of the
+ * following full names:
+ *    info.clearthought.layout.RowMajorTableLayout
+ *    org.nameOfMyOrganization.layouts.TableLayout
+ *
+ * III. Terms for redistribution of source modified via patch files.
+ *
+ * You may generate derived works by means of patch files provided
+ * that the following conditions are met:
+ *
+ * 1. Redistributions of original source code must retain the above
+ *    copyright notice and license.  You are not required to
+ *    redistribute the original source; you may choose to redistribute
+ *    only the binaries resulting from the patch files.
+ *
+ * 2. The original source files are not altered.  All alteration is
+ *    done in patch files.
+ *
+ * 3. Derived works are not contained in the info.clearthought
+ *    namespace/package or any subpackage of info.clearthought.  This
+ *    means that your patch files must change the namespace/package
+ *    for the derived work.  See section II for examples.
+ *
+ * 4. Derived works do not use the class or interface names from the
+ *    info.clearthought... packages.  This means your patch files
+ *    must change the names of the interfaces and classes they alter.
+ *    See section II for examples.
+ *
+ * 5. Derived works must include the following disclaimer.
+ *    "This work is derived from Clearthought's TableLayout,
+ *     https://tablelayout.dev.java.net, by means of patch files
+ *     rather than subclassing or composition.  Therefore, this work
+ *     might not contain the latest fixes and features of TableLayout."
+ *
+ * IV. Terms for repackaging, transcoding, and compiling of binaries.
+ *
+ * You may do any of the following with the binaries of the
+ * original software.
+ *
+ * 1. You may move binaries (.class files) from the original .jar file
+ *    to your own .jar file.
+ *
+ * 2. You may move binaries from the original .jar file to other
+ *    resource containing files, including but not limited to .zip,
+ *    .gz, .tar, .dll, .exe files.
+ *
+ * 3. You may backend compile the binaries to any platform, including
+ *    but not limited to Win32, Win64, MAC OS, Linux, Palm OS, any
+ *    handheld or embedded platform.
+ *
+ * 4. You may transcribe the binaries to other virtual machine byte
+ *    code protocols, including but not limited to .NET.
+ *
+ * V. License Disclaimer.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR, AFFILATED BUSINESSES,
+ * OR ANYONE ELSE BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ====================================================================
+ */
+
+==================================
+----
+jmf.jar, mediaplayer.jar
+----
+
+Sun Binary Code License Agreement, with Supplement. See http://java.sun.com/javase/technologies/desktop/media/jmf/2.1.1/download.html
+
+----
+
+JavaTM Media Framework (JMF) 2.1.x
+Binary Code License Agreement
+
+READ THE TERMS OF THIS AGREEMENT AND ANY PROVIDED SUPPLEMENTAL LICENSE TERMS (COLLECTIVELY "AGREEMENT") CAREFULLY BEFORE OPENING THE SOFTWARE MEDIA PACKAGE. BY OPENING THE SOFTWARE MEDIA PACKAGE, YOU AGREE TO THE TERMS OF THIS AGREEMENT. IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, INDICATE YOUR ACCEPTANCE OF THESE TERMS BY SELECTING THE "ACCEPT" BUTTON AT THE END OF THIS AGREEMENT. IF YOU DO NOT AGREE TO ALL OF THE TERMS, PROMPTLY RETURN THE UNUSED SOFTWARE TO YOUR PLACE OF PURCHASE FOR A REFUND OR, IF THE SOFTWARE IS ACCESSED ELECTRONICALLY, SELECT THE "DECLINE" BUTTON AT THE END OF THIS AGREEMENT.
+
+1. License to Use. Sun Microsystems, Inc. ("Sun") grants you a non-exclusive and non-transferable license for the internal use only of the accompanying software and documentation and any error corrections provided by Sun (collectively "Software"), by the number of users and the class of computer hardware for which the corresponding fee has been paid.
+
+2. Restrictions. Software is confidential and copyrighted. Title to Software and all associated intellectual property rights is retained by Sun and/or its licensors. Except as specifically authorized in any Supplemental License Terms, you may not make copies of Software, other than a single copy of Software for archival purposes. Unless enforcement is prohibited by applicable law, you may not modify, decompile, or reverse engineer Software. You acknowledge that Software is not designed or intended for use in the design, construction, operation or maintenance of any nuclear facility. Sun disclaims any express or implied warranty of fitness for such uses. No right, title or interest in or to any trademark, service mark, logo or trade name of Sun or its licensors is granted under this Agreement.
+
+3. Limited Warranty. Sun warrants to you that for a period of ninety (90) days from the date of purchase, as evidenced by a copy of the receipt, the media on which Software is furnished (if any) will be free of defects in materials and workmanship under normal use. Except for the foregoing, Software is provided "AS IS". Your exclusive remedy and Sun's entire liability under this limited warranty will be at Sun's option to replace Software media or refund the fee paid for Software.
+
+4. DISCLAIMER OF WARRANTY. UNLESS SPECIFIED IN THIS AGREEMENT, ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO BE LEGALLY INVALID.
+
+5. LIMITATION OF LIABILITY. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF OR RELATED TO THE USE OF OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. In no event will Sun's liability to you, whether in contract, tort (including negligence), or otherwise, exceed the amount paid by you for Software under this Agreement. The foregoing limitations will apply even if the above stated warranty fails of its essential purpose.
+
+6. Termination. This Agreement is effective until terminated. You may terminate this Agreement at any time by destroying all copies of Software. This Agreement will terminate immediately without notice from Sun if you fail to comply with any provision of this Agreement. Upon Termination, you must destroy all copies of Software.
+
+7. Export Regulations. All Software and technical data delivered under this Agreement are subject to US export control laws and may be subject to export or import regulations in other countries. You agree to comply strictly with all such laws and regulations and acknowledge that you have the responsibility to obtain such licenses to export, re-export, or import as may be required after delivery to you.
+
+8. U.S. Government Restricted Rights. If Software is being acquired by or on behalf of the U.S. Government or by a U.S. Government prime contractor or subcontractor (at any tier), then the Government's rights in Software and accompanying documentation will be only as set forth in this Agreement; this is in accordance with 48 C.F.R. 227.7202-4 (for Department of Defense (DOD) acquisitions) and with 48 CFR 2.101 and 12.212 (for non-DOD acquisitions).
+
+9. Governing Law. Any action related to this Agreement will be governed by California law and controlling U.S. federal law. No choice of law rules of any jurisdiction will apply.
+
+10. Severability. If any provision of this Agreement is held to be unenforceable, this Agreement will remain in effect with the provision omitted, unless omission would frustrate the intent of the parties, in which case this Agreement will immediately terminate.
+
+11. Integration. This Agreement is the entire agreement between you and Sun relating to its subject matter. It supersedes all prior or contemporaneous oral or written communications, proposals, representations and warranties and prevails over any conflicting or additional terms of any quote, order, acknowledgment, or other communication between the parties relating to its subject matter during the term of this Agreement. No modification of this Agreement will be binding, unless in writing and signed by an authorized representative of each party.
+
+JavaTM Media Framework (JMF) 2.1.x
+Supplemental License Terms
+
+These supplemental license terms ("Supplemental Terms") add to or modify the terms of the Binary Code License Agreement (collectively, the "Agreement"). Capitalized terms not defined in these Supplemental Terms shall have the same meanings ascribed to them in the Agreement. These Supplemental Terms shall supersede any inconsistent or conflicting terms in the Agreement, or in any license contained within the Software.
+
+1. Software Internal Use and Development License Grant. Subject to the terms and conditions of this Agreement, including, but not limited to Section 3 (Java Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce internally and use internally the binary form of the Software, complete and unmodified, for the sole purpose of designing, developing and testing your Java applets and applications ("Programs").
+
+2. License to Distribute Software. In addition to the license granted in Section 1 (Software Internal Use and Development License Grant) of these Supplemental Terms, subject to the terms and conditions of this Agreement, including but not limited to, Section 3 (Java Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce and distribute the Software in binary code form only, provided that you: (i) distribute the Software complete and unmodified, except that you may omit those files specifically identified as"optional" in the Software "README" file, which include samples, documents, and bin files, or that are removable by using the Software customizer tool provided, only as part of and for the sole purpose of running your Program into which the Software is incorporated; (ii) do not distribute additional software intended to replace any components of the Software; (iii) do not remove or alter any proprietary legends or notices contained in the Software; (iv) only distribute the Software subject to a license agreement that protects Sun's interests consistent with the terms contained in this Agreement; and (v) agree to defend and indemnify Sun and its licensors from and against any damages, costs, liabilities, settlement amounts or expenses, including attorneys' fees, incurred in connection with any claim, lawsuit or action by any third party that arises or results from the use or distribution of any and all Programs or Software.
+
+3. Java Technology Restrictions. You may not modify the Java Platform Interface ("JPI", identified as classes contained within the "java" package or any subpackages of the "java" package), by creating additional classes within the JPI or otherwise causing the addition to or modification of the classes in the JPI. In the event that you create an additional class and associated API's, which: (i) extends the functionality of the Java platform, and (ii) is exposed to third party software developers for the purpose of developing additional software which invokes such additional API, you must promptly publish broadly an accurate specification for such API for free use by all developers. You may not create, or authorize your licensees to create additional classes, interfaces, packages or subpackages that are in any way identified as "java", "javax", "sun" or similar convention as specified by Sun in any class file naming convention designation.
+
+4. Java Runtime Availability. Refer to the appropriate version of the Java Runtime Environment binary code license (currently located at http://www.java.sun.com/jdk/index.html) for the availability of runtime code which may be distributed with Java applets and applications.
+
+5. Trademarks and Logos. You acknowledge and agree as between you and Sun that Sun owns the SUN, SOLARIS, JAVA, JINI, FORTE, STAROFFICE, STARPORTAL and iPLANET trademarks and all SUN, SOLARIS, JAVA, JINI, FORTE, STAROFFICE, STARPORTAL and iPLANET-related trademarks, service marks, logos and other brand designations ("Sun Marks"), and you agree to comply with the Sun Trademark and Logo Usage Requirements currently located at http://www.sun.com/policies/trademarks. Any use you make of the Sun Marks inures to Sun's benefit.
+
+6. Source Code. Software may contain source code that is provided solely for reference purposes pursuant to the terms of this Agreement. Source code may not be redistributed unless expressly provided for in this Agreement.
+
+7. Termination for Infringement. Either party may terminate this Agreement immediately should any Software become, or in either party's opinion be likely to become, the subject of a claim of infringement of any intellectual property right.
+
+For inquiries please contact: Sun Microsystems, Inc. 4150 Network Circle, Santa Clara, California 95054.
+
+LFI# 129621/Form ID#011801 
+
+==================================
+----
+jhall.jar
+----
+
+Sun Binary Code License Agreement, with Supplement.  See http://java.sun.com/javase/technologies/desktop/javahelp/download_binary.html
+
+----
+
+Sun Microsystems, Inc.
+Binary Code License Agreement
+
+READ THE TERMS OF THIS AGREEMENT AND ANY PROVIDED SUPPLEMENTAL LICENSE TERMS (COLLECTIVELY "AGREEMENT") CAREFULLY BEFORE OPENING THE SOFTWARE MEDIA PACKAGE.с BY OPENING THE SOFTWARE MEDIA PACKAGE, YOU AGREE TO THE TERMS OF THIS AGREEMENT.с IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, INDICATE YOUR ACCEPTANCE OF THESE TERMS BY SELECTING THE "ACCEPT" BUTTON AT THE END OF THIS AGREEMENT.с IF YOU DO NOT AGREE TO ALL THESE TERMS, PROMPTLY RETURN THE UNUSED SOFTWARE TO YOUR PLACE OF PURCHASE FOR A REFUND OR, IF THE SOFTWARE IS ACCESSED ELECTRONICALLY, SELECT THE "DECLINE" BUTTON AT THE END OF THIS AGREEMENT.
+
+1.с LICENSE TO USE.с Sun grants you a non-exclusive and non-transferable license for the internal use only of the accompanying software and documentation and any error corrections provided by Sun (collectively "Software"), by the number of users and the class of computer hardware for which the corresponding fee has been paid.
+
+2.с RESTRICTIONS.с Software is confidential and copyrighted. Title to Software and all associated intellectual property rights is retained by Sun and/or its licensors.с Except as specifically authorized in any Supplemental License Terms, you may not make copies of Software, other than a single copy of Software for archival purposes.с Unless enforcement is prohibited by applicable law, you may not modify, decompile, or reverse engineer Software.с You acknowledge that Software is not designed, licensed or intended for use in the design, construction, operation or maintenance of any nuclear facility.с Sun disclaims any express or implied warranty of fitness for such uses.с No right, title or interest in or to any trademark, service mark, logo or trade name of Sun or its licensors is granted under this Agreement.
+
+3. LIMITED WARRANTY.с Sun warrants to you that for a period of ninety (90) days from the date of purchase, as evidenced by a copy of the receipt, the media on which Software is furnished (if any) will be free of defects in materials and workmanship under normal use.с Except for the foregoing, Software is provided "AS IS".с Your exclusive remedy and Sun's entire liability under this limited warranty will be at Sun's option to replace Software media or refund the fee paid for Software.
+
+4.с DISCLAIMER OF WARRANTY.с UNLESS SPECIFIED IN THIS AGREEMENT, ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO BE LEGALLY INVALID.
+
+5.с LIMITATION OF LIABILITY.с TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF OR RELATED TO THE USE OF OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.с In no event will Sun's liability to you, whether in contract, tort (including negligence), or otherwise, exceed the amount paid by you for Software under this Agreement.с The foregoing limitations will apply even if the above stated warranty fails of its essential purpose.
+
+6.с Termination.с This Agreement is effective until terminated.с You may terminate this Agreement at any time by destroying all copies of Software.с This Agreement will terminate immediately without notice from Sun if you fail to comply with any provision of this Agreement.с Upon Termination, you must destroy all copies of Software.
+
+7. Export Regulations. All Software and technical data delivered under this Agreement are subject to US export control laws and may be subject to export or import regulations in other countries.с You agree to comply strictly with all such laws and regulations and acknowledge that you have the responsibility to obtain such licenses to export, re-export, or import as may be required after delivery to you.
+
+8.сс U.S. Government Restricted Rights.с If Software is being acquired by or on behalf of the U.S. Government or by a U.S. Government prime contractor or subcontractor (at any tier), then the Government's rights in Software and accompanying documentation will be only as set forth in this Agreement; this is in accordance with 48 CFR 227.7201 through 227.7202-4 (for Department of Defense (DOD) acquisitions) and with 48 CFR 2.101 and 12.212 (for non-DOD acquisitions).
+
+9.с Governing Law.с Any action related to this Agreement will be governed by California law and controlling U.S. federal law.с No choice of law rules of any jurisdiction will apply.
+
+10.с Severability. If any provision of this Agreement is held to be unenforceable, this Agreement will remain in effect with the provision omitted, unless omission would frustrate the intent of the parties, in which case this Agreement will immediately terminate.
+
+11.с Integration.с This Agreement is the entire agreement between you and Sun relating to its subject matter.с It supersedes all prior or contemporaneous oral or written communications, proposals, representations and warranties and prevails over any conflicting or additional terms of any quote, order, acknowledgment, or other communication between the parties relating to its subject matter during the term of this Agreement.с No modification of this Agreement will be binding, unless in writing and signed by an authorized representative of each party.
+
+JAVAHELP(TM) VERSION 2.0
+SUPPLEMENTAL LICENSE TERMS
+
+
+These supplemental license terms ("Supplemental Terms") add to or modify the terms of the Binary Code License Agreement (collectively, the "Agreement"). Capitalized terms not defined in these Supplemental Terms shall have the same meanings ascribed to them in the Agreement. These Supplemental Terms shall supersede any inconsistent or conflicting terms in the Agreement, or in any license contained within the Software.
+
+1. Software Internal Use and Development License Grant. Subject to the terms and conditions of this Agreement, including, but not limited to Section 4 (Java(TM) Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce internally and use internally the binary form of the Software complete and unmodified for the sole purpose of designing, developing and testing your Java applets and applications intended to run on the Java platform ("Programs").
+
+2. License to Distribute Software.с In addition to the license granted in Section 1 (Software Internal Use and Development License Grant) of these Supplemental Terms, subject to the terms and conditions of this Agreement, including but not limited to Section 4 (Java Technology Restrictions), Sun grants you a non-exclusive, non-transferable, limited license to reproduce and distribute the Software in binary form only, provided that you (i) distribute the Software complete and unmodified and only bundled as part of your Programs, (ii) do not distribute additional software intended to replace any component(s) of the Software, (iii) do not remove or alter any proprietary legends or notices contained in the Software, (iv) only distribute the Software subject to a license agreement that protects Sun's interests consistent with the terms contained in this Agreement, and (v) agree to defend and indemnify Sun and its licensors from and against any damages, costs, liabilities, settlement amounts and/or expenses (including attorneys' fees) incurred in connection with any claim, lawsuit or action by any third party that arises or results from the use or distribution of any and all Programs and/or Software.
+
+3. License to Distribute Redistributables.с In addition to the license granted in Section 1 (Software Internal Use and Development License Grant) of these Supplemental Terms, subject to the terms and conditions of this Agreement, including but not limited to Section 3 (Java Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce and distribute those files specifically identified as redistributable in the Software "README" file ("Redistributables") provided that: (i) you distribute the Redistributables complete and unmodified (unless otherwise specified in the applicable README file), and only bundled as part of your Programs, (ii) you do not distribute additional software intended to supersede any component(s) of the Redistributables, (iii) you do not remove or alter any proprietary legends or notices contained in or on the Redistributables, (iv) you only distribute the Redistributables pursuant to a license agreement that protects Sun's interests consistent with the terms contained in the Agreement, and (v) you agree to defend and indemnify Sun and its licensors from and against any damages, costs, liabilities, settlement amounts and/or expenses (including attorneys' fees) incurred in connection with any claim, lawsuit or action by any third party that arises or results from the use or distribution of any and all Programs and/or Software.
+
+4. Java Technology Restrictions. You may not modify the Java Platform Interface ("JPI", identified as classes contained within the "java" package or any subpackages of the "java" package), by creating additional classes within the JPI or otherwise causing the addition to or modification of the classes in the JPI.с In the event that you create an additional class and associated API(s) which (i) extends the functionality of the Java platform, and (ii) is exposed to third party software developers for the purpose of developing additional software which invokes such additional API, you must promptly publish broadly an accurate specification for such API for free use by all developers. You may not create, or authorize your licensees to create, additional classes, interfaces, or subpackages that are in any way identified as "java", "javax", "sun" or similar convention as specified by Sun in any naming convention designation.
+
+5. Java Runtime Availability.с Refer to the appropriate version of the Java Runtime Environment binary code license (currently located at http://www.java.sun.com/jdk/index.html) for the availability of runtime code which may be distributed with Java applets and applications.
+
+6. Trademarks and Logos. You acknowledge and agree as between you and Sun that Sun owns the SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET trademarks and all SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET-related trademarks, service marks, logos and other brand designations ("Sun Marks"), and you agree to comply with the Sun Trademark and Logo Usage Requirements currently located at http://www.sun.com/policies/trademarks. Any use you make of the Sun Marks inures to Sun's benefit.
+
+7. Source Code. Software may contain source code that is provided solely for reference purposes pursuant to the terms of this Agreement. Source code may not be redistributed unless expressly provided for in this Agreement. Some source code may contain alternative license terms that apply only to that source code file.
+
+8. Termination for Infringement.с Either party may terminate this Agreement immediately should any Software become, or in either party's opinion be likely to become, the subject of a claim of infringement of any intellectual property right.
+
+For inquiries please contact: Sun Microsystems, Inc. 4150 Network Circle, Santa Clara, California 95054.
+(LFI#135834/Form ID#011801)
+
+==================================
+----
+jdom.jar
+----
+
+Apache-style w/o required attribution.  See http://www.jdom.org/docs/faq.html#a0030.
+
+----
+
+/*-- 
+
+ $Id: LICENSE.txt,v 1.11 2004/02/06 09:32:57 jhunter Exp $
+
+ Copyright (C) 2000-2004 Jason Hunter & Brett McLaughlin.
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions, and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions, and the disclaimer that follows 
+    these conditions in the documentation and/or other materials 
+    provided with the distribution.
+
+ 3. The name "JDOM" must not be used to endorse or promote products
+    derived from this software without prior written permission.  For
+    written permission, please contact <request_AT_jdom_DOT_org>.
+ 
+ 4. Products derived from this software may not be called "JDOM", nor
+    may "JDOM" appear in their name, without prior written permission
+    from the JDOM Project Management <request_AT_jdom_DOT_org>.
+ 
+ In addition, we request (but do not require) that you include in the 
+ end-user documentation provided with the redistribution and/or in the 
+ software itself an acknowledgement equivalent to the following:
+     "This product includes software developed by the
+      JDOM Project (http://www.jdom.org/)."
+ Alternatively, the acknowledgment may be graphical using the logos 
+ available at http://www.jdom.org/images/logos.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED.  IN NO EVENT SHALL THE JDOM AUTHORS OR THE PROJECT
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+ This software consists of voluntary contributions made by many 
+ individuals on behalf of the JDOM Project and was originally 
+ created by Jason Hunter <jhunter_AT_jdom_DOT_org> and
+ Brett McLaughlin <brett_AT_jdom_DOT_org>.  For more information
+ on the JDOM Project, please see <http://www.jdom.org/>. 
+
+ */
+
+==================================
+----
+lib/bcprov-*.jar
+----
+
+MIT license adaptation.  See http://www.bouncycastle.org/licence.html
+
+----
+
+Copyright (c) 2000 - 2009 The Legion Of The Bouncy Castle (http://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+
+=================================
+----
+lib/jax-qname.jar
+lib/jaxp/dom.jar
+lib/jaxp/sax.jar
+lib/jaxp/xalan.jar
+lib/jaxp/xercesImpl.jar
+----
+
+
+
+----
+
+JAVA WEB SERVICES DEVELOPER PACK, VERSION 1.6
+Sun Microsystems Inc. Software License Agreement
+
+
+SUN IS WILLING TO LICENSE THE ACCOMPANYING BINARY SOFTWARE IN MACHINE-READABLE FORM, TOGETHER WITH ACCOMPANYING DOCUMENTATION (COLLECTIVELY "SOFTWARE") TO YOU ONLY UPON THE CONDITION THAT YOU ACCEPT ALL OF THE TERMS AND CONDITION CONTAINED IN THIS SOFTWARE LICENSE AGREEMENT. READ THE TERMS AND CONDITIONS OF THIS SOFTWARE LICENSE AGREEMENT CAREFULLY BEFORE OPENING THE SOFTWARE MEDIA PACKAGE. BY OPENING THE SOFTWARE MEDIA PACKAGE, YOU AGREE TO THE TERMS OF THIS SOFTWARE LICENSE AGREEMENT. IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, INDICATE YOUR ACCEPTANCE OF THESE TERMS BY SELECTING THE "ACCEPT" BUTTON AT THE END OF THIS SOFTWARE LICENSE AGREEMENT. IF YOU DO NOT AGREE TO ALL THESE TERMS, PROMPTLY RETURN THE UNUSED SOFTWARE TO YOUR PLACE OF PURCHASE FOR A REFUND OR, IF THE SOFTWARE IS ACCESSED ELECTRONICALLY, SELECT THE "DECLINE" BUTTON AT THE END OF THIS SOFTWARE LICENSE AGREEMENT. 
+
+LICENSE TO EVALUATE EA SOFTWARE: The Binary Code License Agreement ("BCL") and the Evaluation Terms ("Evaluation Terms") below shall apply to the portions of the Software identified as Early Access in the Software's Release Notes. The BCL and the Evaluation Terms shall collectively be referred to as the Evaluation Agreement ("Evaluation Agreement"). 
+
+LICENSE TO USE FCS SOFTWARE: The BCL and the Supplemental Terms ("Supplemental Terms") provided following the BCL shall apply to portions of the Software identified as FCS Software in the Software's Release Notes. BCL and the Supplemental Terms shall collectively be referred to as the Agreement ("Agreement"). 
+
+
+EVALUATION TERMS
+
+The terms of the Evaluation Agreement shall apply to portions of Software identified as Early Access in the Software's Release Notes ("Software"). These Evaluation Terms add to or modify the terms of the BCL. Capitalized terms not defined in these Evaluation Terms shall have the same meanings ascribed to them in the BCL. These Evaluation Terms shall supersede any inconsistent or conflicting terms in the BCL below, or in any license contained within the Software.  
+
+I. LICENSE TO EVALUATE. Sun grants to you, a non-exclusive, non-transferable, royalty-free and limited license to use one (1) copy of the Software internally for the purposes of evaluation only for one hundred eighty (180) days after the date you download the Software from Sun ("Evaluation Period"). No license is granted to you for any other purpose. You may not sell, rent, loan or otherwise encumber or transfer the Software in whole or in part, to any third party. Licensee shall have no right to use the Software for productive or commercial use. 
+
+II. DUTIES. You agree to evaluate and test the Software for use in your software environment and provide feedback to Sun in a manner reasonably requested by Sun. Any and all test results, error data, reports or other information, feedback or materials made or provided by you relating to Software (collectively, "Feedback") is the exclusive property of Sun and you hereby assigns all Feedback to Sun at no cost to Sun. Sun may use such Feedback in any manner and for any purpose, without limitation, liability or obligation to you. 
+
+III. CONFIDENTIAL INFORMATION. For purposes of the Evaluation Agreement, "Confidential Information" means: (i) business and technical information and any source code or binary code, which Sun discloses to Licensee related to Software; (ii) Licensee's feedback based on Software; and (iii) the terms, conditions, and existence of this Agreement. Licensee may not disclose or use Confidential Information, except for the purposes specified in this Agreement. You will protect the Confidential Information with the same degree of care, but not less than a reasonable degree of care, as Licensee uses to protect its own Confidential Information. You must restrict access to Confidential Information to your employees or contractors with a need for access to perform their employment or contractual obligations and who have agreed in writing to be bound by a confidentiality obligation, which incorporates the protections and restrictions substantially as set forth in this Agreement. Your obligations regarding Confidential Information will expire no less than five (5) years from the date of receipt of the Confidential Information, except for Sun source code which will be protected in perpetuity. You agree that Software contains Sun trade secrets. Notwithstanding any provisions contained in this Agreement concerning nondisclosure and non-use of the Confidential Information, the nondisclosure obligations of this section will not apply to any portion of Confidential Information that you can demonstrate in writing is: (i) now, or hereafter through no act or failure to act on the part of you becomes, generally known to the public; (ii) known to you at the time of receiving the Confidential Information without an obligation of confidentiality; (iii) hereafter rightfully furnished to you by a third party without restriction on disclosure; or (iv) independently developed by you without any use ofthe Confidential Information. 
+
+IV. TERMINATION AND/OR EXPIRATION. Upon expiration of the Evaluation Period, unless terminated earlier by Sun, you agree to immediately cease use of and destroy Software.  Either party may terminate this Evaluation Agreement upon ten (10) days' written notice to the other party. However, Sun may terminate this Evaluation Agreement immediately should any Software become, or in Sun's opinion be likely to become, the subject of a claim of infringement of a patent, trade secret or copyright. Sun may terminate this Evaluation Agreement immediately should you materially breach any of its provisions or take any action in derogation of Sun's rights to the Confidential Information licensed to you. Upon termination or expiration of this Evaluation Agreement, you will immediately cease use of and destroy Software, any copies thereof and provide to Sun a written statement certifying that you have complied with the foregoing obligations. Rights and obligations under this Evaluation Agreement which by their nature should survive, will remain in effect after termination or expiration hereof.
+
+V. NO SUPPORT. Sun is under no obligation to support Software or to provide upgrades or error corrections ("Software Updates") to the Software. If Sun, at its sole option, supplies Software Updates to you, the Software Updates will be considered part of Software, and subject to the terms of this Agreement. 
+
+VI. LIMITATION OF LIABILITY. Licensee acknowledges that the Software may be experimental and that the Software may have defects or deficiencies, which cannot or will not be corrected by Sun.  Licensee will hold Sun harmless from any claims based on Licensee's use of the Software for any purposes other than those of internal evaluation, and from any claims that later versions or releases of any Software furnished to Licensee are incompatible with the Software provided to Licensee under this Agreement. 
+
+VII. NO SUPPLEMENTAL TERMS. The Supplemental Terms following the BCL do not apply to the Evaluation Agreement. Portions of Software identified as Early Access in the Software's Release Notes may not be redistributed even if identified as Redistributable in the Software's Release Notes.
+
+VIII. Trademarks and Logos. You acknowledge and agree as between you and Sun that Sun owns the SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET trademarks and all SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET-related trademarks, service marks, logos and other brand designations ("Sun Marks"), and you agree to comply with the Sun Trademark and Logo Usage Requirements currently located at http://www.sun.com/policies/trademarks. Any use you make of the Sun Marks inures to Sun's benefit. 
+
+IX. Source Code. Software may contain source code that is provided solely for reference purposes pursuant to the terms of this Agreement. Source code may not be redistributed.
+
+X. Third Party Licenses. Additional copyright notices and license terms applicable to portions of the software are set forth in the THIRDPARTYLICENSEREADME file.
+
+Sun Microsystems, Inc. 
+Binary Code License Agreement
+
+READ THE TERMS OF THIS AGREEMENT AND ANY PROVIDED SUPPLEMENTAL LICENSE TERMS (COLLECTIVELY "AGREEMENT") CAREFULLY BEFORE OPENING THE SOFTWARE MEDIA PACKAGE. BY OPENING THE SOFTWARE MEDIA PACKAGE, YOU AGREE TO THE TERMS OF THIS AGREEMENT. IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, INDICATE YOUR ACCEPTANCE OF THESE TERMS BY SELECTING THE "ACCEPT" BUTTON AT THE END OF THIS AGREEMENT. IF YOU DO NOT AGREE TO ALL THESE TERMS, PROMPTLY RETURN THE UNUSED SOFTWARE TO YOUR PLACE OF PURCHASE FOR A REFUND OR, IF THE SOFTWARE IS ACCESSED ELECTRONICALLY, SELECT THE "DECLINE" BUTTON AT THE END OF THIS AGREEMENT. 
+
+1. LICENSE TO USE. Sun grants you a non-exclusive and non-transferable license for the internal use only of the accompanying software and documentation and any error corrections provided by Sun (collectively "Software"), by the number of users and the class of computer hardware for which the corresponding fee has been paid. 
+
+2. RESTRICTIONS. Software is confidential and copyrighted. Title to Software and all associated intellectual property rights is retained by Sun and/or its licensors. Except as specifically authorized in any Supplemental License Terms, you may not make copies of Software, other than a single copy of Software for archival purposes. Unless enforcement is prohibited by applicable law, you may not modify, decompile, or reverse engineer Software. Licensee acknowledges that Licensed Software is not designed or intended for use in the design, construction, operation or maintenance of any nuclear facility. Sun Microsystems, Inc. disclaims any express or implied warranty of fitness for such uses.  No right, title or interest in or to any trademark, service mark, logo or trade name of Sun or its licensors is granted under this Agreement. 
+
+3.  LIMITED WARRANTY. Sun warrants to you that for a period of ninety (90) days from the date of purchase, as evidenced by a copy of the receipt, the media on which Software is furnished (if any) will be free of defects in materials and workmanship under normal use. Except for the foregoing, Software is provided "AS IS". Your exclusive remedy and Sun's entire liability under this limited warranty will be at Sun's option to replace Software media or refund the fee paid for Software. 
+
+4. DISCLAIMER OF WARRANTY. UNLESS SPECIFIED IN THIS AGREEMENT, ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO BE LEGALLY INVALID. 
+
+5. LIMITATION OF LIABILITY. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF OR RELATED TO THE USE OF OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. In no event will Sun's liability to you, whether in contract, tort (including negligence), or otherwise, exceed the amount paid by you for Software under this Agreement. The foregoing limitations will apply even if the above stated warranty fails of its essential purpose. 
+
+6. Termination. This Agreement is effective until terminated. You may terminate this Agreement at any time by destroying all copies of Software. This Agreement will terminate immediately without notice from Sun if you fail to comply with any provision of this Agreement. Upon Termination, you must destroy all copies of Software. 
+
+7.  Export Regulations. All Software and technical data delivered under this Agreement are subject to US export control laws and may be subject to export or import regulations in other countries. You agree to comply strictly with all such laws and regulations and acknowledge that you have the responsibility to obtain such licenses to export, re-export, or import as may be required after delivery to you. 
+
+8. U.S. Government Restricted Rights. If Software is being acquired by or on behalf of the U.S. Government or by a U.S. Government prime contractor or subcontractor (at any tier), then the Government's rights in Software and accompanying documentation will be only as set forth in this Agreement; this is in accordance with 48 CFR 227.7201 through 227.7202-4 (for Department of Defense (DOD) acquisitions) and with 48 CFR 2.101 and 12.212 (for non-DOD acquisitions). 
+
+9. Governing Law. Any action related to this Agreement will be governed by California law and controlling U.S. federal law. No choice of law rules of any jurisdiction will apply. 
+
+10. Severability. If any provision of this Agreement is held to be unenforceable, this Agreement will remain in effect with the provision omitted, unless omission would frustrate the intent of the parties, in which case this Agreement will immediately terminate. 
+
+11. Integration. This Agreement is the entire agreement between you and Sun relating to its subject matter. It supersedes all prior or contemporaneous oral or written communications, proposals, representations and warranties and prevails over any conflicting or additional terms of any quote, order, acknowledgment, or other communication between the parties relating to its subject matter during the term of this Agreement. No modification of this Agreement will be binding, unless in writing and signed by an authorized representative of each party. 
+
+SUPPLEMENTAL LICENSE TERMS
+
+These supplemental license terms ("Supplemental Terms") add to or modify the terms of the Binary Code License Agreement (collectively, the "Agreement"). Capitalized terms not defined in these Supplemental Terms shall have the same meanings ascribed to them in the Agreement. These Supplemental Terms shall supersede any inconsistent or conflicting terms in the Agreement, or in any license contained within the Software. 
+
+A. Software Internal Use and Development License Grant. Subject to the terms and conditions of this Agreement, including, but not limited to Section C (Java Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce internally and use internally the binary form of the Software complete and unmodified for the purposes of designing, developing, testing, and running your Java applets and applications intended to run on the Java platform ("Programs"), except for certain files identified in the Software "Release Notes" file which may only be used for the purposes of designing, developing, and testing Programs.
+
+B. License to Distribute Redistributables.  Subject to the terms and conditions of this Agreement, including but not limited to Section C (Java Technology Restrictions) of these Supplemental Terms, Sun grants you a non-exclusive, non-transferable, limited license to reproduce and distribute those components specifically identified as redistributable in the Software "Release Notes" file ("Redistributables") provided that: (i) you distribute the Redistributables complete and unmodified (unless otherwise specified in the applicable Release Notes file), and only bundled as part of your Programs, (ii) you do not distribute additional software intended to supersede any portion of the Redistributables, (iii) you do not remove or alter any proprietary legends or notices contained in or on the Redistributables, (iv) you only distribute the Redistributables pursuant to a license agreement that protects Sun's interests consistent with the terms contained in the Agreement, (v) you agree to defend and indemnify Sun and its licensors from and against any damages, costs, liabilities, settlement amounts and/or expenses (including attorneys' fees) incurred in connection with any claim, lawsuit or action by any third party that arises or results from the use or distribution of any and all Programs and/or Software, and (vi) if you distribute the Java Secure Socket Extension package, include the following statement as part of product documentation (whether hard copy or electronic), as a part of a copyright page or proprietary rights notice page, in an "About" box or in any other form reasonably designed to make the statement visible to users of the Software: "This product includes code licensed from RSA Data Security".
+
+C. Java Technology Restrictions. You may not modify the Java Platform Interface ("JPI", identified as classes contained within the "java" package or any subpackages of the "java" package), by creating additional classes within the JPI or otherwise causing the addition to or modification of the classes in the JPI.  In the event that you create an additional class and associated API(s) which (i) extends the functionality of the Java platform, and (ii) is exposed to third party software developers for the purpose of developing additional software which invokes such additional API, you must promptly publish broadly an accurate specification for such API for free use by all developers. You may not create, or authorize your licensees to create, additional classes, interfaces, or subpackages that are in any way identified as "java", "javax", "sun" or similar convention as specified by Sun in any naming convention designation. 
+
+D. Java Runtime Availability. Refer to the appropriate version of the Java Runtime Environment binary code license (currently located at http://www.java.sun.com/jdk/index.html) for the availability of runtime code which may be distributed with Java applets and applications. 
+
+E. Trademarks and Logos. You acknowledge and agree as between you and Sun that Sun owns the SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET trademarks and all SUN, SOLARIS, JAVA, JINI, FORTE, and iPLANET-related trademarks, service marks, logos and other brand designations ("Sun Marks"), and you agree to comply with the Sun Trademark and Logo Usage Requirements currently located at http://www.sun.com/policies/trademarks. Any use you make of the Sun Marks inures to Sun's benefit. 
+
+F. Source Code. Software may contain source code that is provided solely for reference purposes pursuant to the terms of this Agreement.  Source code may not be redistributed unless expressly provided for in this Agreement.
+
+G. Third Party Licenses. Additional copyright notices and license terms applicable to portions of the software are set forth in the THIRDPARTYLICENSEREADME file.
+
+H. Termination for Infringement. Either party may terminate this Agreement immediately should any Software become, or in either party'sopinion be likely to become, the subject of a claim of infringement of any intellectual property right.
+
+For inquiries please contact: Sun Microsystems, Inc. 4150 Network Circle, Santa Clara, California 95054.
+
+==================================
+----
+lib/JimiProClasses.jar
+----
+
+Sun Binary Code License Agreement, with Supplement from http://java.sun.com/products/jimi/.
+
+----
+
+Sun Microsystems, Inc. 
+Binary Code License Agreement
+
+READ THE TERMS OF THIS AGREEMENT AND ANY PROVIDED SUPPLEMENTAL LICENSE TERMS (COLLECTIVELY "AGREEMENT") CAREFULLY BEFORE DOWNLOADING OR USING THE SOFTWARE. BY DOWNLOADING OR USING THE SOFTWARE, YOU AGREE TO THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE TO ALL THESE TERMS, YOU ARE NOT AUTHORIZED TO DOWNLOAD OR USE THE SOFTWARE IN ANY MANNER.
+
+1. LICENSE TO USE.  Sun grants you a non-exclusive and non-transferable license for the internal use only, for the accompanying software and documentation (collectively "Software"). This is a one time code drop and will not be updated or otherwise supported by Sun.
+
+2. RESTRICTIONS Software is confidential and copyrighted. Title to Software and all associated intellectual property rights is retained by Sun and/or its licensors. Except as specifically authorized in any Supplemental License Terms, you may not make copies of Software, other than a single copy of Software for archival purposes. Unless enforcement is prohibited by applicable law, you may not modify, decompile, reverse engineer Software. 
+
+3. LIMITED WARRANTY. Sun warrants to you that for a period of ninety (90) days from the date of purchase, as evidenced by a copy of the receipt, the media on which Software is furnished (if any) will be free of defects in materials and workmanship under normal use. Except for the foregoing, Software is provided "AS IS". Your exclusive remedy and Sun's entire liability under this limited warranty will be at Sun's option to replace Software media or refund the fee paid for Software.
+
+4. DISCLAIMER OF WARRANTY. UNLESS SPECIFIED IN THIS AGREEMENT, ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT, ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO BE LEGALLY INVALID. YOU ACKNOWLEDGE THAT SOFTWARE IS NOT DESIGNED OR INTENDED FOR USE IN THE DESIGN, CONSTRUCTION, OPERATION, OR MAINTENANCE OF ANY NUCLEAR FACILITY. SUN DISCLAIMS ANY EXPRESS OR IMPLIED WARRANTY OF FITNESS FOR SUCH USES.
+
+5. LIMITATION OF LIABILITY. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF OR RELATED TO THE USE OF OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. In no event will Sun's liability to you, whether in contract, tort (including negligence), or otherwise, exceed the amount paid by you for Software under this Agreement. The foregoing limitations will apply even if the above stated warranty fails of its essential purpose.
+
+6. Termination. This Agreement is effective until terminated. You may terminate this Agreement at any time by destroying all copies of Software. This Agreement will terminate immediately without notice from Sun if you fail to comply with any provision of this Agreement. Upon Termination, you must destroy all copies of Software.
+
+7. Export Regulations. All Software and technical data delivered under this Agreement are subject to US export control laws and may be subject to export or import regulations in other countries. You agree to comply strictly with all such laws and regulations and acknowledge that you have the responsibility to obtain such licenses to export, re-export, or import as may be required after delivery to you.
+
+8. U.S. Government Restricted Rights. Use, duplication, or disclosure by the U.S. Government is subject to restrictions set forth in this Agreement and as provided in DFARS 227.7202-1 (a) and 227.7202-3(a) (1995), DFARS 252.227-7013 (c)(1)(ii)(Oct 1988), FAR 12.212 (a) (1995), FAR 52.227-19 (June 1987), or FAR 52.227-14(ALT III) (June 1987), as applicable.
+
+9. Governing Law. Any action related to this Agreement will be governed by California law and controlling U.S. federal law. No choice of law rules of any jurisdiction will apply.
+
+10. Severability. If any provision of this Agreement is held to be unenforceable, This Agreement will remain in effect with the provision omitted, unless omission would frustrate the intent of the parties, in which case this Agreement will immediately terminate.
+
+11. Integration. This Agreement is the entire agreement between you and Sun relating to its subject matter. It supersedes all prior or contemporaneous oral or written communications, proposals, representations and warranties and prevails over any conflicting or additional terms of any quote, order, acknowledgment, or other communication between the parties relating to its subject matter during the term of this Agreement. No modification of this Agreement will be binding, unless in writing and signed by an authorized representative of each party.
+
+For inquiries please contact: Sun Microsystems, Inc. 901 San Antonio Road, Palo Alto, California 94303
+
+
+
+JIMI SDK, Version 2.0
+SUPPLEMENTAL LICENSE TERMS
+
+These supplemental terms ("Supplement") add to the terms of the Binary Code License Agreement ("Agreement"). Capitalized terms not defined herein shall have the same meanings ascribed to them in the Agreement. The Supplement terms shall supersede any inconsistent or conflicting terms in the Agreement.
+
+1. Limited License Grant. 
+
+a. Software Development License. Subject to your obligation to indemnify Sun pursuant to Section 3 below, Sun grants to you a non-exclusive, non-transferable limited license to use the Software without fee for evaluation of the Software and for development of Java(TM) applets and applications provided that you may not re-distribute the Software in whole or in part, except as provided in Section 1.b below. The Software may contain source code which is provided for reference purposes only, and may not be modified (except for the purpose of correcting errors) or redistributed.
+
+b. License to Distribute Runtime. Subject to your obligation to indemnify Sun pursuant to Section 3 below, Sun grants to you a non-exclusive, non-transferable limited, royalty-free license to reproduce, distribute offer to sell and sell the Software provided that you: (i)distribute the Software complete and unmodified (except for error corrections), only as part of, and for the sole purpose of running, your Java applet or application ("Program") into which the Software is incorporated; (ii) do not distribute additional software intended to replace any component(s) of the Software; (iii) do not remove or alter any proprietary legends or notices contained in the Software; (iv) only distribute the Program subject to a license agreement that protects Sun's interests consistent with the terms contained herein; and (v) may not create, or authorize your licensees to create additional classes, interfaces, or subpackages that are contained in the "java" or "sun" packages or similar as specified by Sun in any class file naming convention.
+
+ 2. Java Platform Interface. In the event that Licensee creates an additional API(s) which: (i) extends the functionality of a Java Environment; and, (ii) is exposed to third party software developers for the purpose of developing additional software which invokes such additional API, Licensee must promptly publish broadly an accurate specification for such API for free use by all developers.
+
+3.Indemnity to Sun. As a condition precedent to each license grant in this Agreement, you agree to indemnify, hold harmless, and defend Sun and its licensors from and against any and all claims, lawsuits, liabilities, demands and expenses (including attorneys' fees), that arise or result from the use or distribution of the Software or the Program, including without limitation, those brought by Unisys Corporation, its successors and assigns, with respect to U.S. Patent Number 4,558,302 and all foreign counterparts thereto which Unisys Corporation may now have or acquire in the future (the "LZW Patents") relating to your making, using, selling, licensing, importing, offering to sell, or otherwise transferring the GIF encoding and/or decoding feature of the Software or the Program. This Agreement does not grant any rights to you with respect to the LZW Patents. 
+
+4. Trademarks and Logos. This Agreement does not authorize you to use any Sun name, trademark or logo. Licensee acknowledges as between it and Sun that Sun owns the Java trademark and all Java-related trademarks, logos and icons including the Coffee Cup and Duke ("Java Marks") and agrees to comply with the Java Trademark Guidelines at http://java.sun.com/trademarks.html.
+
+
+==================================
+----
+lib/tar.jar
+----
+
+Public domain.
+
+----
+
+    ----  Public Domain  ----
+
+This work was autored by Timothy Gerard Endres, time@gjt.org.
+
+This work has been placed into the public domain.
+
+You are free to use this work in any way you wish.
+
+DISCLAIMER
+
+THIS SOFTWARE IS PROVIDED AS-IS, WITH ABSOLUTELY NO WARRANTY.
+YOU ASSUME ALL RESPONSIBILITY FOR ANY AND ALL CONSEQUENCES
+THAT MAY RESULT FROM THE USE OF THIS SOFTWARE!
+
+=============================
+----
+lib/jaxen-*.jar
+----
+
+Attribution required for distribution.
+
+----
+
+/*
+ $Id: LICENSE.txt,v 1.5 2006/02/05 21:49:04 elharo Exp $
+
+ Copyright 2003-2006 The Werken Company. All Rights Reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  * Neither the name of the Jaxen Project nor the names of its
+    contributors may be used to endorse or promote products derived 
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ */
+
+=================================
+----
+lib/jTEM.jar
+----
+
+BSD license
+
+----
+
+All jTEM projects are licensed under the FreeBSD license 
+or 2-clause BSD license (see http://www.opensource.org/licenses/bsd-license.php). 
+
+Copyright (c) 2006-2010, Technische Universit├дt Berlin, jTEM
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+-	Redistributions of source code must retain the above copyright notice, 
+	this list of conditions and the following disclaimer.
+
+-	Redistributions in binary form must reproduce the above copyright notice, 
+	this list of conditions and the following disclaimer in the documentation 
+	and/or other materials provided with the distribution.
+ 
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS 
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, 
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+OF SUCH DAMAGE.
+
+=================================
+----
+lib/wsdl4j-*.jar, lib/junit-*.jar
+----
+
+Common Public License - v 1.0
+
+----
+
+See http://www.opensource.org/licenses/cpl1.0.php and http://junit.sourceforge.net/cpl-v10.html
+
+=================================
+----
+lib/jhdf5.jar
+lib/jhdf5obj.jar
+lib/jhdfobj.jar
+----
+
+Attribution/acknowledgement required in publications mentioning use of the libraries.
+
+----
+
+HDF Java Products
+Copyright 2006-2010 by The HDF Group.
+
+NCSA HDF Java Products
+Copyright 1988-2006 by the Board of Trustees of the University of Illinois.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted for any purpose (including commercial purposes)
+provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions, and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions, and the following disclaimer in the documentation
+   and/or materials provided with the distribution.
+
+3. In addition, redistributions of modified forms of the source or binary
+   code must carry prominent notices stating that the original code was
+   changed and the date of the change.
+
+4. All publications or advertising materials mentioning features or use of 
+   this software are asked, but not required, to acknowledge that it was 
+   developed by The HDF Group and by the National Center for Supercomputing 
+   Applications at the University of Illinois at Urbana-Champaign and 
+   credit the contributors.
+
+5. Neither the name of The HDF Group, the name of the University, nor the 
+   name of any Contributor may be used to endorse or promote products derived 
+   from this software without specific prior written permission from The HDF 
+   Group, the University, or the Contributor, respectively.
+
+DISCLAIMER: 
+THIS SOFTWARE IS PROVIDED BY THE HDF GROUP AND THE CONTRIBUTORS "AS IS" 
+WITH NO WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED.  In no event 
+shall The HDF Group or the Contributors be liable for any damages suffered 
+by the users arising out of the use of this software, even if advised of 
+the possibility of such damage. 
+
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+
+Contributors: National Center for Supercomputing Applications (NCSA) at 
+the University of Illinois, Lawrence Livermore National Laboratory (LLNL), 
+Sandia National Laboratories (SNL), Los Alamos National Laboratory (LANL), 
+Fortner Software, Unidata Program Center (netCDF), The Independent JPEG 
+Group (JPEG), Jean-loup Gailly and Mark Adler (gzip), and Digital Equipment 
+Corporation (DEC). 
+
+--------------------------------------------------------------------------
+
+Portions of the HDF Java Products were developed with support from the 
+University of California, Lawrence Livermore National Laboratory (UC LLNL).
+The following statement applies to those portions of the product
+and must be retained in any redistribution of source code, binaries,
+documentation, and/or accompanying materials:
+
+    This work was partially produced at the University of California,
+    Lawrence Livermore National Laboratory (UC LLNL) under contract no.
+    W-7405-ENG-48 (Contract 48) between the U.S. Department of Energy 
+    (DOE) and The Regents of the University of California (University) 
+    for the operation of UC LLNL.
+
+    DISCLAIMER:
+    This work was prepared as an account of work sponsored by an agency 
+    of the United States Government.  Neither the United States 
+    Government nor the University of California nor any of their 
+    employees, makes any warranty, express or implied, or assumes any 
+    liability or responsibility for the accuracy, completeness, or 
+    usefulness of any information, apparatus, product, or process 
+    disclosed, or represents that its use would not infringe privately-
+    owned rights.  Reference herein to any specific commercial products, 
+    process, or service by trade name, trademark, manufacturer, or 
+    otherwise, does not necessarily constitute or imply its endorsement, 
+    recommendation, or favoring by the United States Government or the 
+    University of California.  The views and opinions of authors 
+    expressed herein do not necessarily state or reflect those of the 
+    United States Government or the University of California, and shall 
+    not be used for advertising or product endorsement purposes.
+
+--------------------------------------------------------------------------
+
+==================================
+----
+hdf5.dll/.so files included in JREs
+----
+
+Attribution/acknowledgement required in publications mentioning use of the libraries.
+
+----
+
+Copyright Notice and License Terms for 
+HDF5 (Hierarchical Data Format 5) Software Library and Utilities
+-----------------------------------------------------------------------------
+
+HDF5 (Hierarchical Data Format 5) Software Library and Utilities
+Copyright 2006-2009 by The HDF Group.
+
+NCSA HDF5 (Hierarchical Data Format 5) Software Library and Utilities
+Copyright 1998-2006 by the Board of Trustees of the University of Illinois.
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted for any purpose (including commercial purposes) 
+provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, 
+   this list of conditions, and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, 
+   this list of conditions, and the following disclaimer in the documentation 
+   and/or materials provided with the distribution.
+
+3. In addition, redistributions of modified forms of the source or binary 
+   code must carry prominent notices stating that the original code was 
+   changed and the date of the change.
+
+4. All publications or advertising materials mentioning features or use of 
+   this software are asked, but not required, to acknowledge that it was 
+   developed by The HDF Group and by the National Center for Supercomputing 
+   Applications at the University of Illinois at Urbana-Champaign and 
+   credit the contributors.
+
+5. Neither the name of The HDF Group, the name of the University, nor the 
+   name of any Contributor may be used to endorse or promote products derived 
+   from this software without specific prior written permission from 
+   The HDF Group, the University, or the Contributor, respectively.
+
+DISCLAIMER: 
+THIS SOFTWARE IS PROVIDED BY THE HDF GROUP AND THE CONTRIBUTORS 
+"AS IS" WITH NO WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED.  In no 
+event shall The HDF Group or the Contributors be liable for any damages 
+suffered by the users arising out of the use of this software, even if 
+advised of the possibility of such damage. 
+
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+
+Contributors:   National Center for Supercomputing Applications (NCSA) at 
+the University of Illinois, Fortner Software, Unidata Program Center (netCDF), 
+The Independent JPEG Group (JPEG), Jean-loup Gailly and Mark Adler (gzip), 
+and Digital Equipment Corporation (DEC).
+
+-----------------------------------------------------------------------------
+
+Portions of HDF5 were developed with support from the University of 
+California, Lawrence Livermore National Laboratory (UC LLNL).  
+The following statement applies to those portions of the product and must 
+be retained in any redistribution of source code, binaries, documentation, 
+and/or accompanying materials:
+
+   This work was partially produced at the University of California, 
+   Lawrence Livermore National Laboratory (UC LLNL) under contract 
+   no. W-7405-ENG-48 (Contract 48) between the U.S. Department of Energy 
+   (DOE) and The Regents of the University of California (University) 
+   for the operation of UC LLNL.
+
+   DISCLAIMER: 
+   This work was prepared as an account of work sponsored by an agency of 
+   the United States Government. Neither the United States Government nor 
+   the University of California nor any of their employees, makes any 
+   warranty, express or implied, or assumes any liability or responsibility 
+   for the accuracy, completeness, or usefulness of any information, 
+   apparatus, product, or process disclosed, or represents that its use 
+   would not infringe privately- owned rights. Reference herein to any 
+   specific commercial products, process, or service by trade name, 
+   trademark, manufacturer, or otherwise, does not necessarily constitute 
+   or imply its endorsement, recommendation, or favoring by the United 
+   States Government or the University of California. The views and 
+   opinions of authors expressed herein do not necessarily state or reflect 
+   those of the United States Government or the University of California, 
+   and shall not be used for advertising or product endorsement purposes.
+-----------------------------------------------------------------------------
+
+==================================
+----
+InsightToolkit/**
+----
+
+From ITK (http://www.itk.org/ITK/project/license.html).
+
+----
+
+Copyright (c) 1999-2008 Insight Software Consortium All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    * Neither the name of the Insight Software Consortium nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+================================
+---
+AlgorithmRegionGrow
+----
+
+Port of fuzzy connectedness code from ITK.
+
+----
+
+Versions of ITK previous to ITK 3.6 are still distributed under the original license:
+
+Copyright (c) 1999-2008 Insight Software Consortium All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+    * The name of the Insight Software Consortium, nor the names of any consortium members, nor of any contributors, may be used to endorse or promote products derived from this software without specific prior written permission.
+    * Modified source versions must be plainly marked as such, and must not be misrepresented as being the original software.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=================================
+----
+AlgorithmIHN3Correction
+----
+
+Port of N3 correction code from MNI by John G. Sled.
+
+----
+
+Copyright 1996, John G. Sled
+McConnell Brain Imaging Centre,
+Montreal Neurological Institute, McGill University.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies.  The
+author and McGill University make no representations about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+=================================
+----
+Gamma, Hypergeometric, JacobianElliptic, Psi
+----
+
+Ported from FORTRAN code from Computation of Special Functions by Shanjie Zhang and Jianming Jin.
+
+----
+
+The FORTRAN code this class is based upon is by Shanjie Zhang and Jianming Jin and copyright 1996 John Wiley & Sons, Inc.
+
+Excerpt from Appendix C:
+
+All the programs and subroutines contained in this diskette are copyrighted. However, we give permission
+to the reader who purchases this book to incorporate any of these programs into his or her programs provided that the
+copyright is acknowledged.
+
+...
+
+DISCLAIMER OF WARRANTY
+
+Although we have made a great effort to test and validate the 
+computer programs, we make no warranties, express or implied, that 
+these  programs  are  free  of  error,  or are consistent with any 
+particular  standard  of  merchantability,  or that they will meet 
+your requirements for any particular application.  They should not 
+be relied on for  solving problems  whose incorrect solution could 
+result in  injury to  a person or loss of property.  If you do use 
+the programs in such a manner, it is at your own risk. The authors 
+and publisher  disclaim all liability for  direct or consequential 
+damages resulting from your use of the programs.
+
+=================================
+----
+gov.nih.mipav.model.dicomcomm.*
+----
+
+Loosely based on Java Dicom Package (zdicom) library, originally.
+
+----
+
+   Java Dicom Package (com.zmed.dicom)
+
+   Copyright (c) 1996-1997 Z Medical Imaging Systems, Inc.
+
+   This software is provided, as is, for non-commercial educational
+   purposes only.   Use or incorporation of this software or derivative
+   works in commercial applications requires written consent from
+   Z Medical Imaging Systems, Inc.
+   
+   Z MEDICAL IMAGING SYSTEMS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT
+   THE SUITABILITY OF THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS
+   FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR CONFORMANCE TO ANY
+   SPECIFICATION OR STANDARD.  Z MEDICAL IMAGING SYSTEMS SHALL NOT BE
+   LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING OR
+   MODIFYING THIS SOFTWARE OR ITS DERIVATIVES.
+
+=============================================================================
+
+    This software package is implemented similarly to the UC Davis public
+    domain C++ DICOM implementation which contains the following copyright
+    notice:
+
+          Copyright (C) 1995, University of California, Davis
+
+          THIS SOFTWARE IS MADE AVAILABLE, AS IS, AND THE UNIVERSITY
+          OF CALIFORNIA DOES NOT MAKE ANY WARRANTY ABOUT THE SOFTWARE, ITS
+          PERFORMANCE, ITS MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+          USE, FREEDOM FROM ANY COMPUTER DISEASES OR ITS CONFORMITY TO ANY
+          SPECIFICATION. THE ENTIRE RISK AS TO QUALITY AND PERFORMANCE OF
+          THE SOFTWARE IS WITH THE USER.
+
+          Copyright of the software and supporting documentation is
+          owned by the University of California, and free access
+          is hereby granted as a license to use this software, copy this
+          software and prepare derivative works based upon this software.
+          However, any distribution of this software source code or
+          supporting documentation or derivative works (source code and
+          supporting documentation) must include this copyright notice.
+
+    The UC Davis C++ source code is publicly available from the following
+    anonymous ftp site:
+
+          ftp://imrad.ucdmc.ucdavis.edu/pub/dicom/UCDMC/
+
+=================================
+----
+AlgorithmWaveletThreshold
+----
+
+Ported from Numerical Recipes in C wavelet methods, which are in the public domain (see http://www.nr.com/public-domain.html).
+
+=================================
+----
+SwingWorker
+----
+
+Obtained from SDN site.
+
+----
+
+Code sample
+License
+					
+Copyright 1994-2009 Sun Microsystems, Inc. All Rights Reserved.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ 
+
+    * Redistribution of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+    * Redistribution in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+ 
+Neither the name of Sun Microsystems, Inc. or the names of contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ 
+This software is provided "AS IS," without a warranty of any kind. ALL EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT, ARE HEREBY EXCLUDED. SUN MICROSYSTEMS, INC. ("SUN") AND ITS LICENSORS SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES. IN NO EVENT WILL SUN OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF THE USE OF OR INABILITY TO USE THIS SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+ 
+You acknowledge that this software is not designed, licensed or intended for use in the design, construction, operation or maintenance of any nuclear facility. 
+
+=================================
+----
+GeneralizedEigenvalue, GeneralizedInverse
+----
+
+Port of FORTRAN LAPACK 3.0 and 3.1 methods.
+
+----
+
+Copyright (c) 1992-2007 The University of Tennessee. All rights reserved.
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: - Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.  - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer listed in this license in the documentation and/or other materials provided with the distribution.- Neither the name of the copyright holders nor the names of its contributors may be used to endorse or promoteproducts derived from this software without specific prior written permissionTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+
+=================================
+----
+Jama/*
+----
+
+Classes taken from the public domain Jama project.
+
+----
+
+This software is a cooperative product of The MathWorks and the National Institute of Standards and Technology (NIST) which has been released to the public domain. Neither The MathWorks nor NIST assumes any responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic. Releasing software into the public domain means that the authors are relinquishing any rights that they have to the software.  It can be used for any purpose by anyone.  No strings attached.
+
+=================================
+----
+TableSorter
+----
+
+Taken from Sun example code.
+
+----
+
+Copyright (c) 1995 - 2008 Sun Microsystems, Inc.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  - Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  - Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+
+  - Neither the name of Sun Microsystems nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=================================
+----
+BZip2Constants, CBZip2InputStream, CBZip2OutputStream, CRC
+----
+
+Code distributed under the Apache Software License, version 1.1.
+
+----
+
+See http://apache.org/licenses/LICENSE-1.1
+
+=================================
+----
+FileDM3, FileFits
+----
+
+Contains some code from ImageJ.
+
+----
+
+ImageJ disclaimer:
+
+ImageJ is being developed at the National Institutes of Health by an employee of the Federal Government in the course of his official duties. Pursuant to Title 17, Section 105 of the United States Code, this software is not subject to copyright protection and is in the public domain. ImageJ is an experimental system. NIH assumes no responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic.
+
+=================================
+----
+TIFFLZWDecoder
+----
+
+Taken from Sun example code.
+
+----
+
+Copyright (c) 2001 Sun Microsystems, Inc. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+-Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+
+-Redistribution in binary form must reproduct the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
+
+Neither the name of Sun Microsystems, Inc. or the names of contributors may
+be used to endorse or promote products derived from this software without
+specific prior written permission.
+
+This software is provided "AS IS," without a warranty of any kind. ALL
+EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY
+IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR
+NON-INFRINGEMENT, ARE HEREBY EXCLUDED. SUN AND ITS LICENSORS SHALL NOT BE
+LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING
+OR DISTRIBUTING THE SOFTWARE OR ITS DERIVATIVES. IN NO EVENT WILL SUN OR ITS
+LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR DIRECT,
+INDIRECT, SPECIAL, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER
+CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF THE USE OF
+OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+You acknowledge that Software is not designed,licensed or intended for use in
+the design, construction, operation or maintenance of any nuclear facility.
+
+=================================
+----
+FileDicomJPEG
+----
+
+Ported from code from Cornell, UC Berkeley and IJC.
+
+----
+
+Copyright (c) 1993 Cornell University, Kongji Huang
+ All rights reserved.
+ 
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for research purposes, without fee, and without written
+ agreement is hereby granted, provided that the above copyright notice
+ and the following two paragraphs appear in all copies of this
+ software.
+ 
+ IN NO EVENT SHALL THE CORNELL UNIVERSITY BE LIABLE TO ANY PARTY FOR
+ DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING
+ OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE
+ UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+ DAMAGE.
+ 
+ THE CORNELL UNIVERSITY SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+ CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ ENHANCEMENTS, OR MODIFICATIONS.
+ 
+---
+
+ Copyright (c) 1993 The Regents of the University of California, Brian
+ C. Smith All rights reserved.
+ 
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose, without fee, and without written
+ agreement is hereby granted, provided that the above copyright notice
+ and the following two paragraphs appear in all copies of this
+ software.
+ 
+ IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
+ FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF
+ THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+ 
+ THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+ PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+ CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ ENHANCEMENTS, OR MODIFICATIONS.
+
+--- 
+
+ IJG Copyright
+ 
+ The authors make NO WARRANTY or representation, either express or
+ implied, with respect to this software, its quality, accuracy,
+ merchantability, or fitness for a particular purpose.  This software is
+ provided "AS IS", and you, its user, assume the entire risk as to its
+ quality and accuracy.
+ 
+ This software is copyright (C) 1991, 1992, Thomas G. Lane.  All Rights
+ Reserved except as specified below.
+ 
+ Permission is hereby granted to use, copy, modify, and distribute this
+ software (or portions thereof) for any purpose, without fee, subject to
+ these conditions:  (1) If any part of the source code for this software
+ is distributed, then this README file must be included, with this
+ copyright and no-warranty notice unaltered; and any additions,
+ deletions, or changes to the original files must be clearly indicated
+ in accompanying documentation.  (2) If only executable code is
+ distributed, then the accompanying documentation must state that "this
+ software is based in part on the work of the Independent JPEG Group".
+ (3) Permission for use of this software is granted only if the user
+ accepts full responsibility for any undesirable consequences; the
+ authors accept NO LIABILITY for damages of any kind.
+ 
+ Permission is NOT granted for the use of any IJG author's name or
+ company name in advertising or publicity relating to this software or
+ products derived from it.  This software may be referred to only as
+ "the Independent JPEG Group's software".
+ 
+ We specifically permit and encourage the use of this software as the
+ basis of commercial products, provided that all warranty or liability
+ claims are assumed by the product vendor.
+
+=================================
+----
+Bessel, InverseLaplace2, NL2sol
+----
+
+From ACM.
+
+----
+
+ACM Software License Agreement
+
+All software, both binary and source published by the Association for Computing Machinery (hereafter, Software) is copyrighted by the Association (hereafter, ACM) and ownership of all right, title and interest in and to the Software remains with ACM. By using or copying the Software, User agrees to abide by the terms of this Agreement.
+
+Noncommercial Use
+
+The ACM grants to you (hereafter, User) a royalty-free, nonexclusive right to execute, copy, modify and distribute both the binary and source code solely for academic, research and other similar noncommercial uses, subject to the following conditions:
+
+1. User acknowledges that the Software is still in the development stage and that it is being supplied &quot;as is,&quot; without any support services from ACM. Neither ACM nor the author makes any representations or warranties, express or implied, including, without limitation, any representations or warranties of the merchantability or fitness for any particular purpose, or that the application of the software, will not infringe on any patents or other proprietary rights of others.
+2. ACM shall not be held liable for direct, indirect, incidental or consequential damages arising from any claim by User or any third party with respect to uses allowed under this Agreement, or from any use of the Software.
+3. User agrees to fully indemnify and hold harmless ACM and/or the author(s) of the original work from and against any and all claims, demands, suits, losses, damages, costs and expenses arising out of the User's use of the Software, including, without limitation, arising out of the User's modification of the Software.
+4. User may modify the Software and distribute that modified work to third parties provided that: (a) if posted separately, it clearly acknowledges that it contains material copyrighted by ACM (b) no charge is associated with such copies, (c) User agrees to notify ACM and the Author(s) of the distribution, and (d) User clearly notifies secondary users that such modified work is not the original Software.
+5. User agrees that ACM, the authors of the original work and others may enjoy a royalty-free, non-exclusive license to use, copy, modify and redistribute these modifications to the Software made by the User and distributed to third parties as a derivative work under this agreement.
+6. This agreement will terminate immediately upon User's breach of, or non-compliance with, any of its terms. User may be held liable for any copyright infringement or the infringement of any other proprietary rights in the Software that is caused or facilitated by the User's failure to abide by the terms of this agreement.
+7. This agreement will be construed and enforced in accordance with the law of the state of New York applicable to contracts performed entirely within the State. The parties irrevocably consent to the exclusive jurisdiction of the state or federal courts located in the City of New York for all disputes concerning this agreement. 
+
+Commercial Use
+
+Any User wishing to make a commercial use of the Software must contact ACM at permissions@acm.org to arrange an appropriate license. Commercial use includes (1) integrating or incorporating all or part of the source code into a product for sale or license by, or on behalf of, User to third parties, or (2) distribution of the binary or source code to third parties for use with a commercial product sold or licensed by, or on behalf of, User.
+
+Revised 6/98
+
+=================================
+----
+AlgorithmNLNoiseReduction
+----
+
+Based on code from http://users.fmrib.ox.ac.uk/~steve/susan/.  Non-commercial restriction.  Had a patent, but it appears to be lapsed.
+
+----
+
+Note: the program is й Copyright 1995-1999, Defence and Evaluation Research Agency, UK. DERA has now become QinetiQ, who until recently held the patent on SUSAN, which now now lapsed.
+
+--
+
+  SUSAN Version 2l by Stephen Smith
+  Oxford Centre for Functional Magnetic Resonance Imaging of the Brain,
+  Department of Clinical Neurology, Oxford University, Oxford, UK
+  (Previously in Computer Vision and Image Processing Group - now
+  Computer Vision and Electro Optics Group - DERA Chertsey, UK)
+  Email:    steve@fmrib.ox.ac.uk
+  WWW:      http://www.fmrib.ox.ac.uk/~steve
+
+  (C) Crown Copyright (1995-1999), Defence Evaluation and Research Agency,
+  Farnborough, Hampshire, GU14 6TD, UK
+  DERA WWW site:
+  http://www.dera.gov.uk/
+  DERA Computer Vision and Electro Optics Group WWW site:
+  http://www.dera.gov.uk/imageprocessing/dera/group_home.html
+  DERA Computer Vision and Electro Optics Group point of contact:
+  Dr. John Savage, jtsavage@dera.gov.uk, +44 1344 633203
+
+  A UK patent has been granted: "Method for digitally processing
+  images to determine the position of edges and/or corners therein for
+  guidance of unmanned vehicle", UK Patent 2272285. Proprietor:
+  Secretary of State for Defence, UK. 15 January 1997
+
+  This code is issued for research purposes only and remains the
+  property of the UK Secretary of State for Defence. This code must
+  not be passed on without this header information being kept
+  intact. This code must not be sold.
+
+=================================
+----
+ConfluentHypergeometric
+----
+
+Contains ports of code from ACM and Computation of Special Functions by Shanjie Zhang and Jianming Jin.
+
+----
+
+ACM Software License Agreement
+
+All software, both binary and source published by the Association for Computing Machinery (hereafter, Software) is copyrighted by the Association (hereafter, ACM) and ownership of all right, title and interest in and to the Software remains with ACM. By using or copying the Software, User agrees to abide by the terms of this Agreement.
+
+Noncommercial Use
+
+The ACM grants to you (hereafter, User) a royalty-free, nonexclusive right to execute, copy, modify and distribute both the binary and source code solely for academic, research and other similar noncommercial uses, subject to the following conditions:
+
+1. User acknowledges that the Software is still in the development stage and that it is being supplied &quot;as is,&quot; without any support services from ACM. Neither ACM nor the author makes any representations or warranties, express or implied, including, without limitation, any representations or warranties of the merchantability or fitness for any particular purpose, or that the application of the software, will not infringe on any patents or other proprietary rights of others.
+2. ACM shall not be held liable for direct, indirect, incidental or consequential damages arising from any claim by User or any third party with respect to uses allowed under this Agreement, or from any use of the Software.
+3. User agrees to fully indemnify and hold harmless ACM and/or the author(s) of the original work from and against any and all claims, demands, suits, losses, damages, costs and expenses arising out of the User's use of the Software, including, without limitation, arising out of the User's modification of the Software.
+4. User may modify the Software and distribute that modified work to third parties provided that: (a) if posted separately, it clearly acknowledges that it contains material copyrighted by ACM (b) no charge is associated with such copies, (c) User agrees to notify ACM and the Author(s) of the distribution, and (d) User clearly notifies secondary users that such modified work is not the original Software.
+5. User agrees that ACM, the authors of the original work and others may enjoy a royalty-free, non-exclusive license to use, copy, modify and redistribute these modifications to the Software made by the User and distributed to third parties as a derivative work under this agreement.
+6. This agreement will terminate immediately upon User's breach of, or non-compliance with, any of its terms. User may be held liable for any copyright infringement or the infringement of any other proprietary rights in the Software that is caused or facilitated by the User's failure to abide by the terms of this agreement.
+7. This agreement will be construed and enforced in accordance with the law of the state of New York applicable to contracts performed entirely within the State. The parties irrevocably consent to the exclusive jurisdiction of the state or federal courts located in the City of New York for all disputes concerning this agreement. 
+
+Commercial Use
+
+Any User wishing to make a commercial use of the Software must contact ACM at permissions@acm.org to arrange an appropriate license. Commercial use includes (1) integrating or incorporating all or part of the source code into a product for sale or license by, or on behalf of, User to third parties, or (2) distribution of the binary or source code to third parties for use with a commercial product sold or licensed by, or on behalf of, User.
+
+Revised 6/98
+
+--
+
+Excerpt from Appendix C of Computation of Special Functions by Shanjie Zhang and Jianming Jin:
+
+All the programs and subroutines contained in this diskette are copyrighted. However, we give permission
+to the reader who purchases this book to incorporate any of these programs into his or her programs provided that the
+copyright is acknowledged.
+
+...
+
+DISCLAIMER OF WARRANTY
+
+Although we have made a great effort to test and validate the 
+computer programs, we make no warranties, express or implied, that 
+these  programs  are  free  of  error,  or are consistent with any 
+particular  standard  of  merchantability,  or that they will meet 
+your requirements for any particular application.  They should not 
+be relied on for  solving problems  whose incorrect solution could 
+result in  injury to  a person or loss of property.  If you do use 
+the programs in such a manner, it is at your own risk. The authors 
+and publisher  disclaim all liability for  direct or consequential 
+damages resulting from your use of the programs.
+
+=================================
+----
+InverseLaplace
+----
+
+Ported from MATLAB INVLAP.M by Karl Hollenbeck.
+
+----
+
+From the original MATLAB file:Copyright: Karl Hollenbeck Department of Hydrodynamics and Water Resources Technical University of Denmark, DK-2800 Lyngby email: karl@isv16.isva.dtu.dk  22 Nov 1996, MATLAB 5 version 27 Jun 1997 updated 1 Oct 1998  IF YOU PUBLISH WORK BENEFITING FROM THIS M-FILE, PLEASE CITE IT AS: Hollenbeck, K. J. (1998) INVLAP.M: A matlab function for numerical  inversion of Laplace transforms by the de Hoog algorithm,  http://www.isva.dtu.dk/staff/karl/invlap.htm
+
+=================================
+----
+AlgorithmKernelRegression
+----
+
+This is a port of MATLAB routines contained in kernelRegressionBasedImageProcessingToolBox_ver1-2beta written by Hiroyuki Takeda, Sina Farsiu, and Peyman Milanfar.  http://users.soe.ucsc.edu/~htakeda/KernelToolBox.htm
+
+----
+
+This is experimental software. It is provided for noncommercial research purposes only. Use at your own risk. No warranty is implied by this distribution. Copyright й 2007 by University of California. 
+
+=================================
+----
+Integration2, Integration2EP
+----
+
+Based on FORTRAN numerical integration routines in QUADPACK.
+
+----
+
+This is a port of FORTRAN numerical integration routines in QUADPACK found at http://www.netlib.org/quadpack
+
+Reference: R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner Quadpack: a Subroutine Package for Automatic
+Integration Springer Verlag, 1983. Series in Computational Mathematics v. 1
+
+The original dqage, dqagie, dqagpe, dqagse, dqawce, dqawfe, dqawoe, adn dqawse routines were written by Robert
+Piessens and Elise de Doncker.
+
+The original dqng routine was written by Robert Piessens and Elise de Doncker and modified by David Kahaner.
+
+The original dqc25c, dqc25f, dqc25s, dqcheb, dqelg, dqk15, dqk15i, dqk15w, dqk21, dqk31, dqk41, dqk51, dqk61, dqmomo,
+dqpsrt, dqwgtc, dqwgtf, and dqwgts routines were written by Robert Piessens and Elise de Doncker.
+
+The simple contents of dqwgtc, dqwgtf, and dqwgts are incorporated into dqk15w.
+
+The linpack routine dgtsl was written by Jack Dongarra of the Argonne National Laboratory.
+
+Self tests 1 to 15 come from quadpack_prb.f90 by John Burkardt.
+
+Porting was performed by William Gandler.
+
+The QUADPACK code is made freely available, with the following restrictions:
+
+Re-distributions of the source code should credit Quadpack and retain the notice with the names of the original authors;
+the names of the copyright holders or contributors may not be used to endorse or promote any derived software without prior permission;
+the Quadpack software is provided &quot;as is&quot;, without warranties;
+Quadpack and the authors deny any liability for situations resulting from the use of this software.
+
+=================================
+----
+InverseLaplaceqd
+----
+
+This is a port of niltqd.m, a fast numerical inverse Laplace transform based on FFT and quotient-difference algorithm by Lubomir Brancik, 2001, Brno University of Technology.
+
+----
+
+Use allowed by the author with inclusion of the above acknowledgement.
+
+=================================
+----
+NLConstrainedEngine, NLConstrainedEngineEP, AlgorithmConstELSUNCOpt3D, AlgorithmELSUNCOpt2D, AlgorithmELSUNCOpt3D
+----
+
+Port of ELSUNC algorithm.
+
+----
+
+Use allowed by the author with acknowledgement:
+
+Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems by Per
+Lindstrom and Per-Ake Wedin, Institute of Information Processing, University of Umea, S-901 87 Umea, Sweden This can
+be downleaded from http://www.cs.umu.se/~perl/reports/alg.ps.gz
+
+=================================
+----
+AlgorithmEllipsoidFit
+----
+
+The part of the code up to the derivation of v[0] through v[9] for the
+3D ellipsoid model comes from the port of MATLAB code provided by Lecturer Qingde Li Department of Computer Science,
+University of Hull, Hull HU6 7RX, UK [q.li@hull.ac.uk] Reference: "Least Squares Ellipsoid Specific Fitting" by
+Qingde Li and John G. Griffiths, Proceedings of the Geometric Modeling and Processing 2004, IEEE Computer Society.
+
+
+----
+
+Use allowed by the author with the inclusion of the above statement.
+
+=================================
+----
+DoubleDouble
+----
+
+Based on DoubleDouble class written by Martin Davis and distributed under the BSD license.
+
+----
+
+Copyright й 2008-2012 Martin Davis. All Rights Reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+following disclaimer in the documentation and/or other materials provided with the distribution.
+
+3. The name of the author may not be used to endorse or promote products derived from this software without specific
+prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY Martin Davis "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+=================================
+----
+FFTUtility, FFTUtilityEP
+----
+
+This class is based on the Fortran/C code for R. C. Singleton's mixed radix FFT algorithm, released under the below
+license by Mark Olesen on NETLIB (netlib.org).
+
+
+----
+
+Copyright(c)1995,97 Mark Olesen <olesen@me.QueensU.CA>
+    	Queen's Univ at Kingston (Canada)
+
+Permission to use, copy, modify, and distribute this software for
+any purpose without fee is hereby granted, provided that this
+entire notice is included in all copies of any software which is
+or includes a copy or modification of this software and in all
+copies of the supporting documentation for such software.
+
+THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTY.  IN PARTICULAR, NEITHER THE AUTHOR NOR QUEEN'S
+UNIVERSITY AT KINGSTON MAKES ANY REPRESENTATION OR WARRANTY OF ANY
+KIND CONCERNING THE MERCHANTABILITY OF THIS SOFTWARE OR ITS
+FITNESS FOR ANY PARTICULAR PURPOSE.
+
+All of which is to say that you can do what you like with this
+source code provided you don't try to sell it as your own and you
+include an unaltered copy of this message (including the
+copyright).
+
+It is also implicitly understood that bug fixes and improvements
+should make their way back to the general Internet community so
+that everyone benefits.
+
+=================================
+----
+AlgorithmColocalizationEM
+----
+
+EM algorithm derived from code by Ismet Bayraktaroglu (ismet@bayraktaroglu.org).
+
+----
+
+Permission received from Ismet Bayraktaroglu for distribution under BSD license with MIPAV.
+
+=================================
+----
+Lmmin
+----
+
+Freely available under the below license.
+
+----
+
+lmfit is released under the LMFIT-BEER-WARE licence:
+
+In writing this software, I borrowed heavily from the public domain,
+especially from work by Burton S. Garbow, Kenneth E. Hillstrom,
+Jorge J. More`, Steve Moshier, and the authors of lapack. To avoid
+unneccessary complications, I put my additions and amendments also
+into the public domain. Please retain this notice. Otherwise feel
+free to do whatever you want with this stuff. If we meet some day,
+and you think this work is worth it, you can buy me a beer in return.
+
+=================================
+----
+ij.jar
+----
+
+Developed by Wayne Rasband of NIH. http://rsbweb.nih.gov/ij/disclaimer.html
+
+----
+
+ImageJ is being developed at the National Institutes of Health by an employee of the Federal Government in the course of his official duties. Pursuant to Title 17, Section 105 of the United States Code, this software is not subject to copyright protection and is in the public domain. ImageJ is an experimental system. NIH assumes no responsibility whatsoever for its use by other parties, and makes no guarantees, expressed or implied, about its quality, reliability, or any other characteristic. 
+
+=================================
+----
+camino.jar
+----
+
+The Software is made available for use under the Open Source-approved Artistic Licence 2.0. The Owner draws your attention to the fact that the Software has been developed for and is intended for use in a research environment only. No endorsement can be given for other use including, but not limited to, use in a clinical environment.
+
+http://www.perlfoundation.org/artistic_license_2_0
+
+----
+
+The copyright in this software and its associated electronic documentation (together "the Software") is owned by University College London of Gower Street, London WC1E 7HN [change this to Camino explanation] ("the Owner"). By proceeding to use the Software you (an individual or legal entity) agree with the Owner to be bound by the terms of this Agreement which will govern your use of the Software.
+
+The Software is made available for use under the Open Source-approved Artistic Licence 2.0, the terms of which are displayed below.  The Owner draws your attention to the fact that the Software has been developed for and is intended for use in a research environment only.  No endorsement can be given for other use including, but not limited to, use in a clinical environment.
+
+Artistic License 2.0
+
+Copyright (c) 2000-2006, The Perl Foundation.
+
+Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+Preamble
+
+This license establishes the terms under which a given free software Package may be copied, modified, distributed, and/or redistributed. The intent is that the Copyright Holder maintains some artistic control over the development of that Package while still keeping the Package available as open source and free software.
+
+You are always permitted to make arrangements wholly outside of this license directly with the Copyright Holder of a given Package. If the terms of this license do not permit the full use that you propose to make of the Package, you should contact the Copyright Holder and seek a different licensing arrangement.
+Definitions
+
+"Copyright Holder" means the individual(s) or organization(s) named in the copyright notice for the entire Package.
+
+"Contributor" means any party that has contributed code or other material to the Package, in accordance with the Copyright Holder's procedures.
+
+"You" and "your" means any person who would like to copy, distribute, or modify the Package.
+
+"Package" means the collection of files distributed by the Copyright Holder, and derivatives of that collection and/or of those files. A given Package may consist of either the Standard Version, or a Modified Version.
+
+"Distribute" means providing a copy of the Package or making it accessible to anyone else, or in the case of a company or organization, to others outside of your company or organization.
+
+"Distributor Fee" means any fee that you charge for Distributing this Package or providing support for this Package to another party. It does not mean licensing fees.
+
+"Standard Version" refers to the Package if it has not been modified, or has been modified only in ways explicitly requested by the Copyright Holder.
+
+"Modified Version" means the Package, if it has been changed, and such changes were not explicitly requested by the Copyright Holder.
+
+"Original License" means this Artistic License as Distributed with the Standard Version of the Package, in its current version or as it may be modified by The Perl Foundation in the future.
+
+"Source" form means the source code, documentation source, and configuration files for the Package.
+
+"Compiled" form means the compiled bytecode, object code, binary, or any other form resulting from mechanical transformation or translation of the Source form.
+Permission for Use and Modification Without Distribution
+
+(1) You are permitted to use the Standard Version and create and use Modified Versions for any purpose without restriction, provided that you do not Distribute the Modified Version.
+Permissions for Redistribution of the Standard Version
+
+(2) You may Distribute verbatim copies of the Source form of the Standard Version of this Package in any medium without restriction, either gratis or for a Distributor Fee, provided that you duplicate all of the original copyright notices and associated disclaimers. At your discretion, such verbatim copies may or may not include a Compiled form of the Package.
+
+(3) You may apply any bug fixes, portability changes, and other modifications made available from the Copyright Holder. The resulting Package will still be considered the Standard Version, and as such will be subject to the Original License.
+Distribution of Modified Versions of the Package as Source
+
+(4) You may Distribute your Modified Version as Source (either gratis or for a Distributor Fee, and with or without a Compiled form of the Modified Version) provided that you clearly document how it differs from the Standard Version, including, but not limited to, documenting any non-standard features, executables, or modules, and provided that you do at least ONE of the following:
+
+(a) make the Modified Version available to the Copyright Holder of the Standard Version, under the Original License, so that the Copyright Holder may include your modifications in the Standard Version.
+(b) ensure that installation of your Modified Version does not prevent the user installing or running the Standard Version. In addition, the Modified Version must bear a name that is different from the name of the Standard Version.
+(c) allow anyone who receives a copy of the Modified Version to make the Source form of the Modified Version available to others under
+(i) the Original License or
+(ii) a license that permits the licensee to freely copy, modify and redistribute the Modified Version using the same licensing terms that apply to the copy that the licensee received, and requires that the Source form of the Modified Version, and of any works derived from it, be made freely available in that license fees are prohibited but Distributor Fees are allowed.
+Distribution of Compiled Forms of the Standard Version or Modified Versions without the Source
+
+(5) You may Distribute Compiled forms of the Standard Version without the Source, provided that you include complete instructions on how to get the Source of the Standard Version. Such instructions must be valid at the time of your distribution. If these instructions, at any time while you are carrying out such distribution, become invalid, you must provide new instructions on demand or cease further distribution. If you provide valid instructions or cease distribution within thirty days after you become aware that the instructions are invalid, then you do not forfeit any of your rights under this license.
+
+(6) You may Distribute a Modified Version in Compiled form without the Source, provided that you comply with Section 4 with respect to the Source of the Modified Version.
+Aggregating or Linking the Package
+
+(7) You may aggregate the Package (either the Standard Version or Modified Version) with other packages and Distribute the resulting aggregation provided that you do not charge a licensing fee for the Package. Distributor Fees are permitted, and licensing fees for other components in the aggregation are permitted. The terms of this license apply to the use and Distribution of the Standard or Modified Versions as included in the aggregation.
+
+(8) You are permitted to link Modified and Standard Versions with other works, to embed the Package in a larger work of your own, or to build stand-alone binary or bytecode versions of applications that include the Package, and Distribute the result without restriction, provided the result does not expose a direct interface to the Package.
+Items That are Not Considered Part of a Modified Version
+
+(9) Works (including, but not limited to, modules and scripts) that merely extend or make use of the Package, do not, by themselves, cause the Package to be a Modified Version. In addition, such works are not considered parts of the Package itself, and are not subject to the terms of this license.
+General Provisions
+
+(10) Any use, modification, and distribution of the Standard or Modified Versions is governed by this Artistic License. By using, modifying or distributing the Package, you accept this license. Do not use, modify, or distribute the Package, if you do not accept this license.
+
+(11) If your Modified Version has been derived from a Modified Version made by someone other than you, you are nevertheless required to ensure that your Modified Version complies with the requirements of this license.
+
+(12) This license does not grant you the right to use any trademark, service mark, tradename, or logo of the Copyright Holder.
+
+(13) This license includes the non-exclusive, worldwide, free-of-charge patent license to make, have made, use, offer to sell, sell, import and otherwise transfer the Package with respect to any patent claims licensable by the Copyright Holder that are necessarily infringed by the Package. If you institute patent litigation (including a cross-claim or counterclaim) against any party alleging that the Package constitutes direct or contributory patent infringement, then this Artistic License to you shall terminate on the date that such litigation is filed.
+
+(14) Disclaimer of Warranty: THE PACKAGE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES. THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT ARE DISCLAIMED TO THE EXTENT PERMITTED BY YOUR LOCAL LAW. UNLESS REQUIRED BY LAW, NO COPYRIGHT HOLDER OR CONTRIBUTOR WILL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+=================================
+----
+AlgorithmAAM, AlgorithmASM
+----
+
+Ported from MATLAB code distributed under a BSD-style license.
+
+----
+
+Copyright (c) 2010, Dirk-Jan Kroon
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are 
+met:
+
+    * Redistributions of source code must retain the above copyright 
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright 
+      notice, this list of conditions and the following disclaimer in 
+      the documentation and/or other materials provided with the distribution
+      
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+POSSIBILITY OF SUCH DAMAGE.
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
+=================================
+----
+
+----
+
+
+
+----
+
+
+
