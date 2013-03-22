@@ -19,7 +19,7 @@ with MIPAV for more information.
 	       Center for Information Technology (CIT) 
 	         National Institutes of Health (NIH)
 
-Version:	 6.0.1  (2012-11-14)
+Version:	 7.0.0  (2013-03-22)
 
 Project Leader:
 
