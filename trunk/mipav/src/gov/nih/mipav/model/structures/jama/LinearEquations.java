@@ -7,6 +7,9 @@ import gov.nih.mipav.view.ViewUserInterface;
 
 public class LinearEquations implements java.io.Serializable {
     GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
+    private ViewUserInterface UI = ViewUserInterface.getReference();
+    
+    private int iparms[];
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -21,6 +24,417 @@ public class LinearEquations implements java.io.Serializable {
      * Creates a new LinearEquations object.
      */
     public LinearEquations() {}
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DCHKPO.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * This routine tests dpotrf, dpotri, and dpotrs.
+     * 
+     * @param input boolean[] dotype of dimension (ntypes)
+           The matrix types to be used for testing.  Matrices of type j
+           (for 0 <= j <= ntypes-1) are used for testing if dotype[j] = true;
+           if dotype[j] = false, then type j is not used
+       @param input int nn
+           The number of values of n contained in the vector nval.
+       @param input int[] nval of dimension (nn)
+           The values of the matrix dimension n.
+       @param input int nnb
+           The number of values of nb contained in the vector nbval.
+       @param input int[] nbval of dimension (nnb)
+           The values of the blocksize nb.
+       @param input int nns
+           The number of values of nrhs contained in the vector nsval.
+       @param input int[] nsval of dimension (nns)
+           The values of the number of right hand sides nrhs.
+       @param input double thresh
+           The threshold value for the test ratios.  A result is
+           included in the output file if result[0] >= thresh.  To have
+           every test ratio printed, use thresh = 0.
+       @param input int nmax
+           The maximum value permitted for n, used in dimensioning the
+           work arrays.
+       @param output double[][] A of dimension (nmax, nmax) 
+       @param output double[][] AFAC of dimension (nmax, nmax)
+       @param output double[][] AINV of dimension (nmax, nmax)
+       @param output double[][] B of dimension (nmax, nsmax) where nsmax is the largest entry in nsval.
+       @param output double[][] X of dimension (nmax, nsmax)
+       @param output double[][] XACT of dimension (nmax, nsmax)
+       @param output double[][] WORK of dimension (nmax, max(3, nsmax))
+       @param output double[] rwork of dimension (max(nmax, 2*nsmax))
+       @param output int[] iwork of dimension (nmax)
+     */
+    private void dchkpo(boolean[] dotype, int nn, int[] nval, int nnb, int[] nbval, int nns, int[] nsval,
+                        double thresh, int nmax, double[][] A, double[][] AFAC, double[][] AINV,
+                        double[][] B, double[][] X, double[][] XACT, double[][] WORK, double[] rwork,
+                        int[] iwork) {
+        final int ntypes = 9;
+        final int ntests = 4;
+        boolean zerot;
+        char dist[] = new char[1];
+        char type[] = new char[1];
+        char uplo;
+        char xtype;
+        String path;
+        int i;
+        int imat;
+        int in;
+        int inb;
+        int info[] = new int[1];
+        int ioff;
+        int irhs;
+        int iuplo;
+        int izero;
+        int k;
+        int kl[] = new int[1];
+        int ku[] = new int[1];
+        int lda;
+        int mode[] = new int[1];
+        int n;
+        int nb;
+        int nerrs;
+        int nfail;
+        int nimat;
+        int nrhs;
+        int nrun;
+        double anorm[] = new double[1];
+        double cndnum[] = new double[1];
+        double rcond;
+        double rcondc;
+        char uplos[] = new char[]{'U','L'};
+        int iseed[] = new int[4];
+        int iseedy[] = new int[]{1988, 1989, 1990, 1991};
+        double result[] = new double[ntests];
+        boolean lerr;
+        boolean ok;
+        int infot;
+        String srnamt;
+        double workspace[];
+        
+        // Initialize constants and the random number seed.
+        
+        path = new String("DPO"); // Double precision
+        nrun = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+        
+        infot = 0;
+        xlaenv(2, 2);
+        
+        // Do for each value of n in nval
+        for (in = 1; in <= nn; in++) {
+            n = nval[in-1];
+            lda = Math.max(n, 1);
+            xtype = 'N';
+            nimat = ntypes;
+            if (n <= 0) {
+                nimat = 1;
+            }
+            
+            izero = 0;
+            for (imat = 1; imat <= nimat; imat++) {
+            
+                // Do the tests only if dotype[imat-1] is true.
+                
+                if (!dotype[imat-1]) {
+                    continue;
+                }
+                
+                // Skip types 3, 4, or 5 if the matrix size is too small.
+                
+                zerot = imat >= 3 && imat <= 5;
+                if (zerot && n < imat-2) {
+                    continue;
+                }
+                
+                // Do first for UPLO = 'U', then for uplo = 'L'
+                
+                for (iuplo = 1; iuplo <= 2; iuplo++) {
+                    uplo = uplos[iuplo-1];
+                    
+                    // Set up parameters with dlatb4 and generate a test matrix
+                    // with dlatms.
+                    
+                    ge.dlatb4(path, imat, n, n, type, kl, ku, anorm, mode, cndnum, dist);
+                    
+                    srnamt = new String("DLATMS");
+                    workspace = new double[3*n];
+                    ge.dlatms(n, n, dist[0], iseed, type[0], rwork, mode[0], 
+                              cndnum[0], anorm[0], kl[0], ku[0], uplo, A, lda, workspace, info);
+                    
+                    // Check error code from dlatms
+                    if (info[0] != 0) {
+                        // Print the header if this is the first error message
+                        if (nfail == 0 && nerrs == 0) {
+                            Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                            // Po matrix types
+                            Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+                        } // if (nfail == 0 && nerrs == 0)
+                        nerrs++;
+                        
+                        // Print the message detailing the error
+                        Preferences.debug("Error code from dlatms info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                        continue;
+                    } // if (info[0] != 0)
+                    
+                    // For types 3-5, zero one row and column of the matrix to
+                    // test that info[0] is returned correctly
+                    
+                    if (zerot) {
+                        
+                    } // if (zerot)
+                    else {
+                        izero = 0;
+                    }
+                } // for (iuplo = 1; iuplo <= 2; iuplo++)
+            } // for (imat = 1; imat <= nimat; imat++)
+        } // for (in = 1; in <= nn; in++)
+    } // dchkpo
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DERRPO.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * This routine checks the error exits of dpotrf, dpotf2, dpotri, and dpotrs.
+     * 
+     * derrpo correctly found 14 of 14 error exits.
+     */
+     public void derrpo() {
+         int nmax = 4;
+         int info[] = new int[1];
+         double A[][] = new double[nmax][nmax];
+         double B[][] = new double[nmax][nmax];
+         int npass = 14;
+         final int ntotal = 14; 
+         int i;
+         int j;
+         
+         // Set the variables to innocuous values.
+         for (j = 0; j < nmax; j++) {
+             for (i = 0; i < nmax; i++) {
+                 A[i][j] = 1.0/(double)(i+j);
+                 B[i][j] = 1.0/(double)(i+j);
+             }
+         }
+         
+         // Test error exits of routines that use the Cholesky 
+         // decomposition of a symmetric positive definite matrix.
+         
+         // dpotrf
+         dpotrf('/', 0, A, 1, info);
+         if (info[0] != -1) {
+             Preferences.debug("dpotrf('/', 0, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrf('U', -1, A, 1, info);
+         if (info[0] != -2) {
+             Preferences.debug("dpotrf('U', -1, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrf('U', 2, A, 1, info);
+         if (info[0] != -4) {
+             Preferences.debug("dpotrf('U', 2, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         // dpotf2
+         dpotf2('/', 0, A, 1, info);
+         if (info[0] != -1) {
+             Preferences.debug("dpotf2('/', 0, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotf2('U', -1, A, 1, info);
+         if (info[0] != -2) {
+             Preferences.debug("dpotf2('U', -1, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotf2('U', 2, A, 1, info);
+         if (info[0] != -4) {
+             Preferences.debug("dpotf2('U', 2, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         // dpotri
+         dpotri('/', 0, A, 1, info);
+         if (info[0] != -1) {
+             Preferences.debug("dpotri('/', 0, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotri('U', -1, A, 1, info);
+         if (info[0] != -2) {
+             Preferences.debug("dpotri('U', -1, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotri('U', 2, A, 1, info);
+         if (info[0] != -4) {
+             Preferences.debug("dpotri('U', 2, A, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         // dpotrs
+         dpotrs('/', 0, 0, A, 1, B, 1, info);
+         if (info[0] != -1) {
+             Preferences.debug("dpotrs('/', 0, 0, A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrs('U', -1, 0, A, 1, B, 1, info);
+         if (info[0] != -2) {
+             Preferences.debug("dpotrs('U', -1, 0, A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrs('U', 0, -1, A, 1, B, 1, info);
+         if (info[0] != -3) {
+             Preferences.debug("dpotrs('U', 0, -1, A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrs('U', 2, 1, A, 1, B, 2, info);
+         if (info[0] != -5) {
+             Preferences.debug("dpotrs('U', 2, 1, A, 1, B, 2, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dpotrs('U', 2, 1, A, 2, B, 1, info);
+         if (info[0] != -7) {
+             Preferences.debug("dpotrs('U', 2, 1, A, 2, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -7\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         Preferences.debug("derrpo correctly found " + npass + " of " + ntotal + " error exits\n", Preferences.DEBUG_ALGORITHM);
+         UI.setDataText("derrpo correctly found " + npass + " of " + ntotal + " error exits\n");
+         return;
+     } // derrpo
+    
+    /**
+     * This is a port of LAPACK version test routine 3.4.0 DGET04.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., November 2011.
+     * 
+     * dget04 computes the difference between a computed solution and the
+       true solution to a system of linear equations.
+
+       resid[0] =  ( norm(X-XACT) * rcond) / ( norm(XACT) * eps),
+       where rcond is the reciprocal of the condition number and eps is the
+       machine epsilon.
+       
+       @param input int n  The number of rows of the matrices X and XACT.  n >= 0.
+       @param input int nrhs  The number of columns of the matrices X and XACT.  nrhs >= 0.
+       @param input double[][] X of dimension (ldx, nrhs)
+           The computed solution vectors.  Each vector is stored as a column of the matrix X.
+       @param input int ldx  The leading dimension of the array X.  ldx >= max(1, n).
+       @param input double[][] XACT of dimension (ldx, nrhs)
+           The exact solution vectors.  Each vector is stored as a column of the matrix XACT.
+       @param input int ldxact  The leading dimension of the array XACT.  ldxact >= max(1, n).
+       @param input double rcond  
+           The reciprocal of the condition number of the coefficient
+           matrix in the system of equations.
+       @param output double[] of dimension 1
+           The maximum over the NRHS solution vectors of
+           ( norm(X-XACT) * rcond) / ( norm(XACT) * eps)
+     */
+    private void dget04(int n, int nrhs, double[][] X, int ldx, double[][] XACT, int ldxact,
+                        double rcond, double[] resid) {
+        int i;
+        int ix;
+        int j;
+        double diffnm;
+        double eps;
+        double xnorm;
+        int k;
+        double maxVal;
+        
+        // Quick exit if n = 0 or nrhs = 0.
+    
+        if (n <= 0 || nrhs <= 0) {
+            resid[0] = 0.0;
+            return;
+        }
+    
+        // Exit with resid[0] = 1/eps if rcond is invalid.
+    
+        eps = ge.dlamch('E'); // Epsilon
+        if (rcond < 0.0) {
+             resid[0] = 1.0 / eps;
+             return;
+        }
+    
+        // Compute the maximum of
+        // norm(X - XACT) / ( norm(XACT) * eps)
+        // over all the vectors X and XACT .
+    
+          resid[0] = 0.0;
+          for (j = 0; j < nrhs; j++) {
+             ix = 0;
+             maxVal = Math.abs(XACT[0][j]);
+             for (k = 1; k < n; k++) {
+                 if (Math.abs(XACT[k][j]) > maxVal) {
+                     maxVal = Math.abs(XACT[k][j]);
+                     ix = k;
+                 }
+             }
+             xnorm = Math.abs(XACT[ix][j]);
+             diffnm = 0.0;
+             for (i = 0; i < n; i++) {
+                 diffnm = Math.max(diffnm, Math.abs( X[i][j]-XACT[i][j] ) );
+             }
+             if (xnorm <= 0.0) {
+                if (diffnm > 0.0) {
+                   resid[0] = 1.0 / eps;
+                }
+             }
+             else {
+                resid[0] = Math.max(resid[0], ( diffnm / xnorm )*rcond );
+             }
+          } // for (j = 0; j < nrhs; j++)
+          if (resid[0]*eps < 1.0) {
+             resid[0] = resid[0] / eps;
+          }
+    
+          return;
+
+    } // dget04
     
     /**
      * This is a port of LAPACK version test routine 3.4.0 DPOT01.F created by the University of Tennessee, University
@@ -1774,5 +2188,39 @@ public class LinearEquations implements java.io.Serializable {
           return;
 
       } // dtrti2
+      
+      /**
+       * This is a port of version 3.1 LAPACK auxiliary routine XLAENV. Univ. of Tennessee, Univ. of California Berkeley
+       * and NAG Ltd.. November 2006
+       * 
+       * .. Scalar Arguments .. INTEGER ISPEC, NVALUE ..
+       * 
+       * Purpose =======
+       * 
+       * XLAENV sets certain machine- and problem-dependent quantities which will later be retrieved by ILAENV.
+       * 
+       * Arguments =========
+       * 
+       * ISPEC (input) INTEGER Specifies the parameter to be set in the COMMON array IPARMS. = 1: the optimal blocksize;
+       * if this value is 1, an unblocked algorithm will give the best performance. = 2: the minimum block size for which
+       * the block routine should be used; if the usable block size is less than this value, an unblocked routine should
+       * be used. = 3: the crossover point (in a block routine, for N less than this value, an unblocked routine should be
+       * used) = 4: the number of shifts, used in the nonsymmetric eigenvalue routines = 5: the minimum column dimension
+       * for blocking to be used; rectangular blocks must have dimension at least k by m, where k is given by
+       * ILAENV(2,...) and m by ILAENV(5,...) = 6: the crossover point for the SVD (when reducing an m by n matrix to
+       * bidiagonal form, if max(m,n)/min(m,n) exceeds this value, a QR factorization is used first to reduce the matrix
+       * to a triangular form) = 7: the number of processors = 8: another crossover point, for the multishift QR and QZ
+       * methods for nonsymmetric eigenvalue problems. = 9: maximum size of the subproblems at the bottom of the
+       * computation tree in the divide-and-conquer algorithm (used by xGELSD and xGESDD) =10: ieee NaN arithmetic can be
+       * trusted not to trap =11: infinity arithmetic can be trusted not to trap
+       * 
+       * NVALUE (input) INTEGER The value of the parameter specified by ISPEC.
+       */
+      public void xlaenv(final int ispec, final int nvalue) {
+          if ( (ispec >= 1) && (ispec <= 9)) {
+              iparms[ispec - 1] = nvalue;
+          }
+          return;
+      } // xlaenv
     
 }
