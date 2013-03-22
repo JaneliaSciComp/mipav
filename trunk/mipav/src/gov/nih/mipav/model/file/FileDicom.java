@@ -22,6 +22,7 @@ import java.io.*;
 import java.util.*;
 import java.util.Map.Entry;
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 
 import jj2000.j2k.encoder.Encoder;
@@ -979,7 +980,9 @@ public class FileDicom extends FileDicomBase {
                     || strValue.trim().equals(DICOM_Constants.UID_EnhancedXAStorage)) {
                 isEnhanced = true;
             }
-        } else if (isEnhanced && name.equals("0028,0008")) {
+        } else if (/*isEnhanced &&*/ name.equals("0028,0008")) {
+        	// if we find 0028,0008 we assume that the image is multi-frame even if 0002,0002 was a non-enhanced UID.
+        	// This was an issue for OCT multi-frame data (since not all OCT UID data is multi-frame).
             final int nImages = Integer.valueOf(strValue.trim()).intValue();
             fileInfo.setIsEnhancedDicom(true);
             if (nImages > 1) {
@@ -2627,7 +2630,13 @@ public class FileDicom extends FileDicomBase {
         int w = 0, h = 0;
         
         final ByteArrayInputStream stream = new ByteArrayInputStream(imageFrag);
-        final BufferedImage img = ImageIO.read(stream);
+        BufferedImage img;
+        try {
+        	img = ImageIO.read(stream);
+        } catch (IIOException e) {
+        	e.printStackTrace();
+        	img = null;
+        }
         if (img == null) {
         	// JPEG2000 only has signed BYTE, SHORT and INTEGER.
         	// getFixedPoint(0) and getNomRangeBits(0) are used to calculate
