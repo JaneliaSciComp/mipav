@@ -507,10 +507,10 @@ public class FileIO {
             // if length is 0...this means that extents were not set...and this is becasue..in the case
             // of dicom spectroscopy images, the image data is not under FileDicom.IMAGE_TAG
             if (length == 0 && !quiet) {
-                MipavUtil.displayError("Unable to open DICOM Spectroscopy image");
+                MipavUtil.displayError("Unable to open DICOM image. There was a problem reading the image extents or data.");
                 return null;
             } else if(length == 0) { //is quiet
-            	Preferences.debug("FileIO: Unable to open DICOM Spectroscopy image\n", Preferences.DEBUG_FILEIO);
+            	Preferences.debug("FileIO: Unable to open DICOM image. There was a problem reading the image extents or data.\n", Preferences.DEBUG_FILEIO);
             	return null;
             }
 
