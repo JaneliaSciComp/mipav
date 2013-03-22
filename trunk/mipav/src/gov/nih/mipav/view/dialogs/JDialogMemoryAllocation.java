@@ -424,8 +424,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 final OperatingSystem os = OperatingSystem.getOS();
                 final SystemArchitecture arch = SystemArchitecture.getArch();
 
-                // cannot automatically restart on Macs or 64-bit windows (due to mipav.bat startup work-around)
-                if (!os.equals(OperatingSystem.OS_MAC) && !arch.equals(SystemArchitecture.ARCH_AMD64)) {
+                // cannot automatically restart on Macs
+                // changed because we're trying to switch back to not having to use mipav.bat workaround
+                if (!os.equals(OperatingSystem.OS_MAC) /*&& !arch.equals(SystemArchitecture.ARCH_AMD64)*/) {
                     final int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase()
                             + " to apply memory changes?", "Restart needed", JOptionPane.YES_NO_OPTION,
                             JOptionPane.INFORMATION_MESSAGE);
