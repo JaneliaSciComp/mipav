@@ -18522,8 +18522,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
     } // dlasv2
 
     /**
-     * This is a port of version 3.1 LAPACK test routine DLATB4. Univ. of Tennessee, Univ. of California Berkeley and
-     * NAG Ltd.. November 2006
+     * This is a port of version 3.4.0 LAPACK test routine DLATB4. Univ. of Tennessee, Univ. of California Berkeley,
+     * University of Colorado and NAG Ltd.. November 2011
      * 
      * .. Scalar Arguments .. CHARACTER DIST, TYPE CHARACTER*3 PATH INTEGER IMAT, KL, KU, M, MODE, N DOUBLE PRECISION
      * ANORM, CNDNUM ..
