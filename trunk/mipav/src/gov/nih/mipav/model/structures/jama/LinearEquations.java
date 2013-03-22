@@ -110,6 +110,9 @@ public class LinearEquations implements java.io.Serializable {
         int infot;
         String srnamt;
         double workspace[];
+        int itot;
+        int irow;
+        int icol;
         
         // Initialize constants and the random number seed.
         
@@ -202,7 +205,49 @@ public class LinearEquations implements java.io.Serializable {
                     // test that info[0] is returned correctly
                     
                     if (zerot) {
+                        if (imat == 3) {
+                            izero = 1;
+                        }
+                        else if (imat == 4) {
+                            izero = n;
+                        }
+                        else {
+                            izero = n/2 + 1;
+                        }
+                        ioff = (izero - 1)*lda;
                         
+                        // Set row and column izero of A to 0.
+                        if (iuplo == 1) {
+                            for (i = 1; i <= izero-1; i++) {
+                                itot = ioff + i;
+                                irow = itot % lda;
+                                icol = itot / lda;
+                                A[irow-1][icol-1] = 0.0;
+                            }
+                            ioff = ioff + izero;
+                            for (i = izero; i <= n; i++) {
+                                irow = ioff % lda;
+                                icol = ioff / lda;
+                                A[irow-1][icol-1] = 0.0;
+                                ioff = ioff + lda;
+                            }
+                        } // if (iuplo == 1)
+                        else {
+                            ioff = izero;
+                            for (i = 1; i <= izero-1; i++) {
+                                irow = ioff % lda;
+                                icol = ioff / lda;
+                                A[irow-1][icol-1] = 0.0;
+                                ioff = ioff + lda;
+                            }
+                            ioff = ioff - izero;
+                            for (i = izero; i <= n; i++) {
+                                itot = ioff + i;
+                                irow = itot % lda;
+                                icol = itot / lda;
+                                A[irow-1][icol-1] = 0.0;
+                            }
+                        }
                     } // if (zerot)
                     else {
                         izero = 0;
