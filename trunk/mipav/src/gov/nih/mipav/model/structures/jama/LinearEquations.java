@@ -26,6 +26,582 @@ public class LinearEquations implements java.io.Serializable {
     public LinearEquations() {}
     
     /*
+     * This is a port of a portion of LAPACK test routine DDRVPO.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * ddrvpo tests the driver routine dpsov.
+     * 
+     * @param input boolean[] dotype of dimension (ntypes)
+           The matrix types to be used for testing.  Matrices of type j
+           (for 0 <= j <= ntypes-1) are used for testing if dotype[j] = true;
+           if dotype[j] = false, then type j is not used
+       @param input int nn
+           The number of values of n contained in the vector nval.
+       @param input int[] nval of dimension (nn)
+           The values of the matrix dimension n
+       @param input int nrhs
+           The number of right hand side vectors to be generated for
+           each linear system.
+       @param input double thresh
+           The threshold value for the test ratios.  A result is
+           included in the output file if result >= THRESH.  To have
+           every test ratio printed, use thresh = 0.
+       @param input int nmax
+           The maximum value permitted for n, used in dimensioning the
+           work arrays.
+       @param output double[][] A of dimension (nmax, nmax)
+       @param output double[][] AFAC of dimension (nmax, nmax)
+       @param output double[][] ASAV of dimension (nmax, nmax)
+       @param output double[][] B of dimension (nmax, nrhs)
+       @param output double[][] BSAV of dimension (nmax, nrhs)
+       @param output double[][] X of dimension (nmax, nrhs)
+       @param output double[][] XACT of dimension (nmax, nrhs)
+       @param output double[] s of dimension (nmax)
+       @param output double[][] WORK of dimension (nmax, max(3,nrhs))
+       @param output double[] rwork of dimension (nmax + 2*nrhs)
+       @param output int[] iwork of dimension (nmax)
+     */
+     private void ddrvpo(boolean[] dotype, int nn, int[] nval, int nrhs, double thresh, int nmax,
+                         double[][] A, double[][] AFAC, double[][] ASAV, double[][] B, double[][] BSAV,
+                         double[][] X, double[][] XACT, double[] s, double[][] WORK, double[] rwork,
+                         int[] iwork) {
+         final int ntypes = 9;
+         final int ntests = 3;
+         
+         boolean equil;
+         boolean nofact;
+         boolean prefac;
+         boolean zerot;
+         char dist[] = new char[1];
+         char equed[] = new char[1];
+         char fact;
+         char type[] = new char[1];
+         char uplo;
+         char xtype;
+         String path;
+         int i;
+         int iequed;
+         int ifact;
+         int imat;
+         int in;
+         int info[] = new int[1];
+         int ioff;
+         int iuplo;
+         int izero;
+         int k;
+         int k1;
+         int kL[] = new int[1];
+         int ku[] = new int[1];
+         int lda;
+         int mode[] = new int[1];
+         int n;
+         int nb;
+         int nbmin;
+         int nerrs;
+         int nfact;
+         int nfail;
+         int nimat;
+         int nrun;
+         int nt;
+         double ainvnm;
+         double amax[] = new double[1];
+         double anorm[] = new double[1];
+         double cndnum[] = new double[1];
+         double rcond;
+         double rcondc;
+         double roldc;
+         double scond[] = new double[1];
+         char[] equeds = new char[]{'N', 'Y'};
+         char[] facts = new char[]{'F', 'N', 'E'};
+         char[] uplos = new char[]{'U', 'L'};
+         int[] iseed = new int[4];
+         int[] iseedy = new int[]{1988, 1989, 1990, 1991};
+         double[] result = new double[ntests];
+         double[] res = new double[1];
+         boolean lerr;
+         boolean ok;
+         String srnamt;
+         int infot;
+         double[] workspace;
+         int itot;
+         int irow;
+         int icol;
+         
+         // Initialize constants and the random number seed.
+         
+         path = new String("DPO"); // Double precision
+         nrun = 0;
+         nfail = 0;
+         nerrs = 0;
+         for (i = 0; i < 4; i++) {
+             iseed[i] = iseedy[i];
+         }
+         
+         // Set the block size and minimum block size for testing
+         nb = 1;
+         nbmin = 2;
+         xlaenv(1, nb);
+         xlaenv(2, nbmin);
+         
+         // Do for each value of n in nval
+         for (in = 1; in <= nn; in++) {
+             n = nval[in-1];
+             lda = Math.max(1, n);
+             xtype = 'N';
+             nimat = ntypes;
+             if (n <= 0) {
+                 nimat = 1;
+             }
+             
+             for (imat = 1; imat <= nimat; imat++) {
+                 
+                 // Do the tests only if dotype[imat] is true;
+                 
+                 if (!dotype[imat-1]) {
+                     continue;
+                 }
+                 
+                 // Skip types 3, 4, or 5 if the matrix size is too small.
+                 
+                 zerot = imat >= 3 && imat <= 5;
+                 if (zerot && n < imat-2) {
+                     continue;
+                 }
+                 
+                 // Do first for UPLO = 'U', then for uplo = 'L'
+                 
+                 for (iuplo = 1; iuplo <= 2; iuplo++) {
+                     uplo = uplos[iuplo-1];
+                     
+                  // Set up parameters with dlatb4 and generate a test matrix
+                     // with dlatms.
+                     
+                     ge.dlatb4(path, imat, n, n, type, kL, ku, anorm, mode, cndnum, dist);
+                    
+                     srnamt = new String("DLATMS");
+                     workspace = new double[3*n];
+                     ge.dlatms(n, n, dist[0], iseed, type[0], rwork, mode[0], 
+                               cndnum[0], anorm[0], kL[0], ku[0], uplo, A, lda, workspace, info);
+                     
+                     // Check error code from dlatms
+                     if (info[0] != 0) {
+                         // Print the header if this is the first error message
+                         if (nfail == 0 && nerrs == 0) {
+                             Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                             // Po matrix types
+                             Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                             Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+                         } // if (nfail == 0 && nerrs == 0)
+                         nerrs++;
+                         
+                         // Print the message detailing the error
+                         Preferences.debug("Error code from dlatms info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                         Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                         continue;
+                     } // if (info[0] != 0)
+                     
+                  // For types 3-5, zero one row and column of the matrix to
+                     // test that info[0] is returned correctly
+                     
+                     if (zerot) {
+                         if (imat == 3) {
+                             izero = 1;
+                         }
+                         else if (imat == 4) {
+                             izero = n;
+                         }
+                         else {
+                             izero = n/2 + 1;
+                         }
+                         ioff = (izero - 1)*lda;
+                         
+                         // Set row and column izero of A to 0.
+                         if (iuplo == 1) {
+                             for (i = 1; i <= izero-1; i++) {
+                                 itot = ioff + i;
+                                 irow = itot % lda;
+                                 icol = itot / lda;
+                                 A[irow-1][icol-1] = 0.0;
+                             }
+                             ioff = ioff + izero;
+                             for (i = izero; i <= n; i++) {
+                                 irow = ioff % lda;
+                                 icol = ioff / lda;
+                                 A[irow-1][icol-1] = 0.0;
+                                 ioff = ioff + lda;
+                             }
+                         } // if (iuplo == 1)
+                         else {
+                             ioff = izero;
+                             for (i = 1; i <= izero-1; i++) {
+                                 irow = ioff % lda;
+                                 icol = ioff / lda;
+                                 A[irow-1][icol-1] = 0.0;
+                                 ioff = ioff + lda;
+                             }
+                             ioff = ioff - izero;
+                             for (i = izero; i <= n; i++) {
+                                 itot = ioff + i;
+                                 irow = itot % lda;
+                                 icol = itot / lda;
+                                 A[irow-1][icol-1] = 0.0;
+                             }
+                         }
+                     } // if (zerot)
+                     else {
+                         izero = 0;
+                     }
+                     
+                     // Save a copy of the matrix A in ASAV.
+                     
+                     ge.dlacpy(uplo, n, n, A, lda, ASAV, lda);
+                     
+                     for (iequed = 1; iequed <= 2; iequed++) {
+                         equed[0] = equeds[iequed-1];
+                         if (iequed == 1) {
+                             nfact = 3;
+                         }
+                         else {
+                             nfact = 1;
+                         }
+                         
+                         for (ifact = 1; ifact <= nfact; ifact++) {
+                             fact = facts[ifact-1];
+                             prefac = (fact == 'F');
+                             nofact = (fact == 'N');
+                             equil = (fact == 'E');
+                             
+                             if (zerot) {
+                                 if (prefac) {
+                                     continue;
+                                 }
+                                 rcondc = 0.0;
+                             } // if (zerot)
+                             else if (!(fact == 'N')) {
+                                 
+                                 // Compute the condition number for comparison with
+                                 // the value returned by dposvx (fact == 'N' reuses
+                                 // the condition number from the previous iteration 
+                                 // with fact == 'F').
+                                 
+                                 ge.dlacpy(uplo, n, n, ASAV, lda, AFAC, lda);
+                                 if (equil || iequed > 1) {
+                                     
+                                     // Compute row and column scale factors to
+                                     // equilibrate the matrix A.
+                                     
+                                     dpoequ(n, AFAC, lda, s, scond, amax, info);
+                                     if (info[0] == 0 && n > 0) {
+                                         if (iequed > 1) {
+                                             scond[0] = 0.0;
+                                         }
+                                         
+                                         // Equilibrate the matrix
+                                         dlaqsy(uplo, n, AFAC, lda, s, scond[0], amax[0], equed);
+                                     } // if (info[0] == 0 && n > 0)
+                                 } // if (equail || iequed > 1)
+                             } // else if (!(fact == 'N'))
+                         } // for (ifact = 1; ifact <= nfact; ifact++)
+                     } // for (iequed = 1; iequed <= 2; iequed++)
+                 } // for (iuplo = 1; iuplo <= 2; iuplo++)
+             } // for (imat = 1; imat <= nimat; imat++)
+         } // for (in = 1; in <= nn; in++)
+     } // ddrvpo
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DERRVX.f version 3.4.1
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., April, 2012
+     * This routine checks the error exits of dposv.
+     * 
+     * derrvx correctly found 5 of 5 dposv error exits.
+     */
+     public void derrvx() {
+         int nmax = 4;
+         int info[] = new int[1];
+         double A[][] = new double[nmax][nmax];
+         double B[][] = new double[nmax][nmax];
+         int npass = 5;
+         final int ntotal = 5; 
+         int i;
+         int j;
+         
+         // Set the variables to innocuous values.
+         for (j = 0; j < nmax; j++) {
+             for (i = 0; i < nmax; i++) {
+                 A[i][j] = 1.0/(double)(i+j);
+                 B[i][j] = 1.0/(double)(i+j);
+             }
+         }
+         
+         // Tests the error exits of dposv
+         dposv('/', 0, 0, A, 1, B, 1, info);
+         if (info[0] != -1) {
+             Preferences.debug("dposv('/', 0, 0, A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposv('U', -1, 0, A, 1, B, 1, info);
+         if (info[0] != -2) {
+             Preferences.debug("dposv('U', -1, 0, A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposv('U', 0, -1, A, 1, B, 1, info);
+         if (info[0] != -3) {
+             Preferences.debug("dposv('U', 0, -1. A, 1, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposv('U', 2, 0, A, 1, B, 2, info);
+         if (info[0] != -5) {
+             Preferences.debug("dposv('U', 2, 0. A, 1, B, 2, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposv('U', 2, 0, A, 2, B, 1, info);
+         if (info[0] != -7) {
+             Preferences.debug("dposv('U', 2, 0. A, 2, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -7\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         Preferences.debug("derrvx correctly found " + npass + " of " + ntotal + " dposv error exits\n", Preferences.DEBUG_ALGORITHM);
+         UI.setDataText("derrvx correctly found " + npass + " of " + ntotal + " dpsov error exits\n");
+         return;
+     } // derrvx
+     
+     /*
+      * This is a port of a portion of LAPACK auxiliary routine DLAQSY.f version 3.4.2
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., September, 2012
+      * 
+      * dlaqsy scales a symmetric/Hermitian matrix, using scaling factors computed by dpoequ.
+      * 
+      * dlaqsy equilibrates a symmetric matrix A using the scaling factors in the vector s.
+      * 
+      * @param input char uplo
+      *     Specifies whether the upper or lower triangular part of the
+            symmetric matrix A is stored.
+            = 'U':  Upper triangular
+            = 'L':  Lower triangular
+        @param input int n
+            The order of the matrix A.  n >= 0.
+        @param (input/output) double[][] A of dimension (lda, n).
+            On entry, the symmetric matrix A.  If uplo = 'U', the leading
+            n by n upper triangular part of A contains the upper
+            triangular part of the matrix A, and the strictly lower
+            triangular part of A is not referenced.  If uplo = 'L', the
+            leading n by n lower triangular part of A contains the lower
+            triangular part of the matrix A, and the strictly upper
+            triangular part of A is not referenced.
+
+            On exit, if equed[0] = 'Y', the equilibrated matrix:
+            diag(s) * A * diag(s).
+        @param input int lda
+            The leading dimension of the array A.  lda >= max(n,1).
+        @param input double[] s of dimension (n)
+            The scale factors for A.
+        @param input double scond
+            Ratio of the smallest s[i] to the largest s[i].
+        @param input double amax
+            Absolute value of largest matrix entry.
+        @param output char[] equed of dimension (1).
+            Specifies whether or not equilibration was done.
+            = 'N':  No equilibration.
+            = 'Y':  Equilibration was done, i.e., A has been replaced by
+                    diag(s) * A * diag(s).
+
+      */
+     private void dlaqsy(char uplo, int n, double[][] A, int lda, double[] s, double scond, double amax,
+                         char[] equed) {
+         //  thresh is a threshold value used to decide if scaling should be done
+         //  based on the ratio of the scaling factors.  If scond < thresh,
+         //  scaling is done.
+         final double thresh = 0.1;
+         //  large and small are threshold values used to decide if scaling should
+         //  be done based on the absolute size of the largest matrix element.
+         //  If amax > large or amax < small, scaling is done.
+         double large;
+         double small;
+         int i;
+         int j;
+         double cj;
+         
+         // Quick return if possible
+     
+         if (n <= 0) {
+             equed[0] = 'N';
+             return;
+         }
+     
+         // Initialize large and small.
+     
+         small = ge.dlamch('S') / ge.dlamch('P'); // Safe minimum / precision
+         large = 1.0/small;
+     
+         if (scond >= thresh && amax >= small && amax <= large) {
+     
+             // No equilibration
+     
+             equed[0] = 'N';
+         }
+         else {
+     
+             // Replace A by diag(s) * A * diag(s).
+     
+             if ((uplo == 'U') || (uplo == 'u')) {
+     
+                 // Upper triangle of A is stored.
+     
+                 for (j = 1; j <= n; j++) {
+                    cj = s[j-1];
+                    for (i = 1; i <= j; i++) {
+                       A[i-1][j-1] = cj*s[i-1]*A[i-1][j-1];
+                    } // for (i = 1; i <= j; i++)
+                 } // for (j = 1; j <= n; j++)
+             }
+             else {
+     
+                 // Lower triangle of A is stored.
+     
+                 for (j = 1; j <= n; j++) {
+                    cj = s[j-1];
+                    for (i = j; i <= n; i++) {
+                       A[i-1][j-1] = cj*s[i-1]*A[i-1][j-1];
+                    } // for (i = j; i <= n; i++)
+                 } // for (j = 1; j <= n; j++)
+             } // else
+             equed[0] = 'Y';
+         } // else
+     
+         return;
+
+     } // dlaqsy
+     
+     /*
+      * This is a port of a portion of LAPACK computational routine DPOEQU.f version 3.4.0
+      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+      * University of Colorado Denver, and NAG Ltd., November, 2011
+      * 
+      * dpoequ computes row and column scalings intended to equilibrate a
+        symmetric positive definite matrix A and reduce its condition number
+        (with respect to the two-norm).  s contains the scale factors,
+        s[i] = 1/sqrt(A[i][i]), chosen so that the scaled matrix B with
+        elements B[i][j] = s[i]*A[i][j]*s[j] has ones on the diagonal.  This
+        choice of s puts the condition number of B within a factor n of the
+        smallest possible condition number over all possible diagonal
+        scalings.
+        
+        @param input int n The order of the matrix A.  n >= 0.
+        @param input double[][] A of dimension (lda, n)
+            The n-by-n symmetric positive definite matrix whose scaling
+            factors are to be computed.  Only the diagonal elements of A
+            are referenced.
+        @param input int lda  
+            The leading dimension of the array A.  lda >= max(1,n).
+        @param output double[] s of dimension (n)
+            If info[0] = 0, s contains the scale factors for A.
+        @param output double[] scond of dimension (1).
+            If info[0] = 0, scond[0] contains the ratio of the smallest s[i] to
+            the largest s[i].  If scond[0] >= 0.1 and amax[0] is neither too
+            large nor too small, it is not worth scaling by scond[0].
+        @param output double[] amax of dimension (1).
+            Absolute value of largest matrix element.  If amax[0] is very
+            close to overflow or very close to underflow, the matrix
+            should be scaled.
+        @param output int[] of dimension (1).
+            = 0:  successful exit
+            < 0:  if info[0] = -i, the i-th argument had an illegal value
+            > 0:  if info[0] = i, the i-th diagonal element is nonpositive.
+      */
+     private void dpoequ(int n, double[][] A, int lda, double[] s, double[] scond, double[] amax, int info[]) {
+         int i;
+         double smin;
+         
+         // Test the input parameters
+         
+         info[0] = 0;
+         if (n < 0) {
+            info[0] = -1;
+         }
+         else if (lda < Math.max(1, n)) {
+            info[0] = -3;
+         }
+         if(info[0] != 0) {
+            MipavUtil.displayError("dpoequ had info[0] = " + info[0]);
+            return;
+         }
+    
+         // Quick return if possible
+    
+         if (n == 0) {
+            scond[0] = 1.0;
+            amax[0] = 0.0;
+            return;
+         }
+   
+         // Find the minimum and maximum diagonal elements.
+   
+         s[0] = A[0][0];
+         smin = s[0];
+         amax[0] = s[0];
+         for (i = 1; i < n; i++) {
+            s[i] = A[i][i];
+            smin = Math.min(smin, s[i]);
+            amax[0] = Math.max(amax[0], s[i]);
+         } // for (i = 1; i < n; i++)
+   
+         if (smin <= 0.0) {
+   
+            // Find the first non-positive diagonal element and return.
+   
+            for (i = 1; i <= n; i++) {
+               if (s[i-1] <= 0.0) {
+                  info[0] = i;
+                  return;
+               } // if (s[i] <= 0.0)
+            } // for (i = 1; i <= n; i++)
+         }
+         else {
+   
+            // Set the scale factors to the reciprocals
+            // of the diagonal elements.
+    
+            for (i = 0; i < n; i++) {
+               s[i] = 1.0 / Math.sqrt(s[i]);
+            }
+   
+            // Compute scond[0] = min(s[i]) / max(s[i])
+   
+            scond[0] = Math.sqrt(smin) / Math.sqrt(amax[0]);
+         } // else
+         return;
+
+     } // dpoequ
+    
+    /*
      * This is a port of a portion of LAPACK test routine DCHKPO.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
@@ -74,7 +650,6 @@ public class LinearEquations implements java.io.Serializable {
         char dist[] = new char[1];
         char type[] = new char[1];
         char uplo;
-        char xtype;
         String path;
         int i;
         int imat;
@@ -99,20 +674,18 @@ public class LinearEquations implements java.io.Serializable {
         int nrun;
         double anorm[] = new double[1];
         double cndnum[] = new double[1];
-        double rcond;
-        double rcondc;
+        double rcondc[] = new double[1];
         char uplos[] = new char[]{'U','L'};
         int iseed[] = new int[4];
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
         double result[] = new double[ntests];
-        boolean lerr;
-        boolean ok;
-        int infot;
-        String srnamt;
         double workspace[];
         int itot;
         int irow;
         int icol;
+        double res[] = new double[1];
+        int j;
+        double vec[];
         
         // Initialize constants and the random number seed.
         
@@ -124,14 +697,12 @@ public class LinearEquations implements java.io.Serializable {
             iseed[i] = iseedy[i];
         }
         
-        infot = 0;
         xlaenv(2, 2);
         
         // Do for each value of n in nval
         for (in = 1; in <= nn; in++) {
             n = nval[in-1];
             lda = Math.max(n, 1);
-            xtype = 'N';
             nimat = ntypes;
             if (n <= 0) {
                 nimat = 1;
@@ -162,8 +733,7 @@ public class LinearEquations implements java.io.Serializable {
                     // with dlatms.
                     
                     ge.dlatb4(path, imat, n, n, type, kl, ku, anorm, mode, cndnum, dist);
-                    
-                    srnamt = new String("DLATMS");
+                   
                     workspace = new double[3*n];
                     ge.dlatms(n, n, dist[0], iseed, type[0], rwork, mode[0], 
                               cndnum[0], anorm[0], kl[0], ku[0], uplo, A, lda, workspace, info);
@@ -252,9 +822,273 @@ public class LinearEquations implements java.io.Serializable {
                     else {
                         izero = 0;
                     }
+                    
+                    // Do for each value of nb in nbval
+                    for (inb = 1; inb <= nnb; inb++) {
+                        nb = nbval[inb-1];
+                        xlaenv(1, nb);
+                        
+                        // Compute the L*L' or U'*U factorization fo the matrix
+                        ge.dlacpy(uplo, n, n, A, lda, AFAC, lda);
+                        dpotrf(uplo, n, AFAC, lda, info);
+                        
+                        // Check error code from dpotrf.
+                        
+                        if (info[0] != izero) {
+                         // Print the header if this is the first error message
+                            if (nfail == 0 && nerrs == 0) {
+                                Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                                // Po matrix types
+                                Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (nfail == 0 && nerrs == 0)
+                            nerrs++;
+                            
+                            // Print the message detailing the error
+                            if (info[0] != izero && izero != 0) {
+                                Preferences.debug("dpotrf returned with info[0] = " + info[0] + " instead of " + izero,
+                                                  Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != izero && izero != 0) 
+                            else {
+                                Preferences.debug("Error code from dpotrf info[0] = " + info[0], Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // else
+                            if (info[0] != 0) {
+                                Preferences.debug("Doing only the condition estimate for this case\n", Preferences.DEBUG_ALGORITHM);
+                            }
+                            continue;
+                        } // if (info[0] != izero)
+                        
+                        // Skip tests if info[0] is not 0.
+                        if (info[0] != 0) {
+                            continue;
+                        }
+                        
+                        // Test 1
+                        // Reconstruct matrix from factors and compute residual.
+                        
+                        ge.dlacpy(uplo, n, n, AFAC, lda, AINV, lda);
+                        dpot01(uplo, n, A, lda, AINV, lda, rwork, result);
+                        
+                        // Test 2
+                        // Form the inverse and compute the residual
+                        
+                        ge.dlacpy(uplo, n, n, AFAC, lda, AINV, lda);
+                        dpotri(uplo, n, AINV, lda, info);
+                        
+                        // Check error code from dpotri.
+                        
+                        if (info[0] != 0) {
+                            // Print the header if this is the first error message
+                            if (nfail == 0 && nerrs == 0) {
+                                Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                                // Po matrix types
+                                Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (nfail == 0 && nerrs == 0)
+                            nerrs++;
+                            
+                            // Print the message detailing the error
+                            Preferences.debug("Error code from dpotri info[0] = " + info[0], Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                        } // if (info[0] != 0)
+                        
+                        dpot03(uplo, n, A, lda, AINV, lda, WORK, lda, rwork, rcondc, res);
+                        result[1] = res[0];
+                        
+                        // Print information about tests that did not pass the threshold.
+                        for (k = 0; k <= 1; k++) {
+                            if (result[k] >= thresh) {
+                                if (nfail == 0 && nerrs == 0) {
+                                    Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                                    // Po matrix types
+                                    Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);    
+                                } // if (nfail == 0 && nerrs == 0)
+                                Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Test = " + (k+1) + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("Ratio = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                nfail++;
+                            } // if (result[k] >= thresh)
+                        } // for (k = 0; k <= 1; k++)
+                        nrun = nrun + 2;
+                        
+                        // Skip the rest of the tests unless this is the first blocksize
+                        if (inb != 1) {
+                            continue;
+                        }
+                        
+                        for (irhs = 1; irhs <= nns; irhs++) {
+                            nrhs = nsval[irhs-1];
+                            
+                            // Test 3
+                            // Solve and compute the residual for A * X = B
+                            
+                            vec = new double[n];
+                            for (j = 0; j < nrhs; j++) {
+                                ge.dlarnv(2, iseed, n, vec);
+                                for (k = 0; k < n; k++) {
+                                    XACT[k][j] = vec[k];
+                                }
+                            } // for (j = 0; j < nrhs; j++)
+                            // Symmetric matrix, 2-D storage
+                            ge.dsymm('L', uplo, n, nrhs, 1.0, A, lda, XACT, lda, 0.0, B, lda);
+                            ge.dlacpy('F', n, nrhs, B, lda, X, lda);
+                            
+                            dpotrs(uplo, n, nrhs, AFAC, lda, X, lda, info);
+                            
+                            // Check error code from dpotrs.
+                            
+                            if (info[0] != 0) {
+                                // Print the header if this is the first error message
+                                if (nfail == 0 && nerrs == 0) {
+                                    Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                                    // Po matrix types
+                                    Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                } // if (nfail == 0 && nerrs == 0)
+                                nerrs++;
+                                
+                                // Print the message detailing the error  
+                                Preferences.debug("Error code from dpotrs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != 0)
+                            
+                            ge.dlacpy('F', n, nrhs, B, lda, WORK, lda);
+                            dpot02(uplo, n, nrhs, A, lda, X, lda, WORK, lda, rwork, res);
+                            result[2] = res[0];
+                            
+                            // Test 4
+                            // Check solution generated from exact solution
+                            dget04(n, nrhs, X, lda, XACT, lda, rcondc[0], res);
+                            result[3] = res[0];
+                            
+                         // Print information about tests that did not pass the threshold.
+                            for (k = 2; k <= 3; k++) {
+                                if (result[k] >= thresh) {
+                                    if (nfail == 0 && nerrs == 0) {
+                                        Preferences.debug("DPO, Symmetric positive definite matrices\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+                                        // Po matrix types
+                                        Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("2. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("3. First row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("4. Last row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("5. Middle row and column zero\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("6. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("7. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("8. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("9. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("1. norm(UT * U - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("or norm(L * LT - A) / (n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("2. norm(I - A*AINV) / (n * norm(A)  * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("3. norm(B - A *X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);    
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    Preferences.debug("uplo = " + uplo + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Test = " + (k+1) + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Ratio = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    nfail++;
+                                } // if (result[k] >= thresh)
+                            } // for (k = 2; k <= 3; k++)
+                            nrun = nrun + 2;
+                        } // for (irhs = 1; irhs <= nns; irhs++)    
+                    } // for (inb = 1; inb <= nnb; inb++)
                 } // for (iuplo = 1; iuplo <= 2; iuplo++)
             } // for (imat = 1; imat <= nimat; imat++)
         } // for (in = 1; in <= nn; in++)
+        
+        // Print a summary of results
+        if (nfail > 0) {
+            Preferences.debug("dchkpo: " + nfail + "out of " + nrun + " tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("dchkpo: " + nfail + "out of " + nrun + " tests failed with values >= threshold\n");
+        }
+        else {
+            Preferences.debug("All " + nrun + " tests for dchkpo passed\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("All " + nrun + " tests for dchkpo passed\n");
+        }
+        if (nerrs > 0) {
+            Preferences.debug("dchkpo: " + nerrs + " error messages recorded\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("dchkpo: " + nerrs + " error messages recorded\n");
+        }
+        
+        return;
     } // dchkpo
     
     /*
