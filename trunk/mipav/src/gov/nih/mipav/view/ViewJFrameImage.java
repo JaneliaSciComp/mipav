@@ -33,6 +33,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.util.*;
 
+import javax.media.opengl.GLException;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 
@@ -1964,12 +1965,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             imageInfoDialog.toFront();
                         }
                     } else {
-                        new VolumeTriPlanarInterface(imageA, imageB);
-                        // new VolumeTriPlanarDialog(imageA, imageB);
+                        try {
+                        	new VolumeTriPlanarInterface(imageA, imageB);
+                        	// new VolumeTriPlanarDialog(imageA, imageB);
+                        } catch (GLException e) {
+                        	e.printStackTrace();
+                        	MipavUtil.displayError("Unable to start GPU renderer.\n" +
+                        			               "Your GPU/driver/OS combination may not support the\n" +
+                        			               "version of OpenGL the renderer requires.");
+                        }
                     }
                 } else {
-                    new VolumeTriPlanarInterface(imageA, imageB);
-                    // new VolumeTriPlanarDialog(imageA, imageB);
+                	try {
+                    	new VolumeTriPlanarInterface(imageA, imageB);
+                    	// new VolumeTriPlanarDialog(imageA, imageB);
+                    } catch (GLException e) {
+                    	e.printStackTrace();
+                    	MipavUtil.displayError("Unable to start GPU renderer.\n" +
+                    			               "Your GPU/driver/OS combination may not support the\n" +
+                    			               "version of OpenGL the renderer requires.");
+                    }
                 }
             } catch (final OutOfMemoryError error) {
                 MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
