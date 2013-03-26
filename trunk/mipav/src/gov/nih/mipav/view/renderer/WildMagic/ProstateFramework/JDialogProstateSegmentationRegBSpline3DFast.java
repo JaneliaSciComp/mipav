@@ -9,6 +9,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogRegistrationBSpline.Controls;
+import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
@@ -43,69 +44,71 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @author Ruida Cheng
  * 
  */
-public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
-		implements AlgorithmInterface {
+public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase implements AlgorithmInterface {
 
 	/** global user interface to get the three active images. */
 	private ViewUserInterface UI;
-
+	
 	/** number of slices to trace, start from the apex and base VOIs */
-	private int tracingSliceNumber = 3;
-
-	// image type constants
-	/** Axial image type */
-	private static int Axial = 0;
-	/** Sagittal image type */
+	private int tracingSliceNumber = 2;	
+	
+	
+    private JComboBox axisList;
+    /** Axial image type */
+    private static int Axial = 0;
+    /** Sagittal image type */
 	private static int Sagittal = 1;
 	/** Coronal image type */
 	private static int Coronal = 2;
-
+	
+	private int axis = Axial;
+	
 	// Axial start, end and mid slice number of VOI contours
 	private JLabel labelAxis;
 	private JLabel labelStartVOIAxial;
 	private JTextField textFieldStartVOIAxial;
-
+	
 	private JLabel labelEndVOIAxial;
 	private JTextField textFieldEndVOIAxial;
-
+	
 	private JLabel labelMidVOIAxial;
 	private JTextField textFieldMidVOIAxial;
-
+	
 	int startVOIAxial, endVOIAxial, midVOIAxial;
-
+	
 	// Sagittal start, end and mid slice number of VOI contours
 	private JLabel labelSagittal;
 	private JLabel labelStartVOISagittal;
 	private JTextField textFieldStartVOISagittal;
-
+	
 	private JLabel labelEndVOISagittal;
 	private JTextField textFieldEndVOISagittal;
-
+	
 	private JLabel labelMidVOISagittal;
 	private JTextField textFieldMidVOISagittal;
-
+	
 	int startVOISagittal, endVOISagittal, midVOISagittal;
-
+	
 	// Coronal start, end and mid slice number of VOI contours
 	private JLabel labelCoronal;
 	private JLabel labelStartVOICoronal;
 	private JTextField textFieldStartVOICoronal;
-
+	
 	private JLabel labelEndVOICoronal;
 	private JTextField textFieldEndVOICoronal;
-
+	
 	private JLabel labelMidVOICoronal;
 	private JTextField textFieldMidVOICoronal;
-
+	
 	private JRadioButton radioBSpline;
 	private JRadioButton radioOAR;
-
+	
 	private int startVOICoronal, endVOICoronal, midVOICoronal;
 	private ModelImage imageAxial, imageSagittal, imageCoronal;
-
+	
 	/** Flag to indicate to use B-Spline registration or OAR registration */
 	private boolean useBSpline = false;
-
+	
 	/**
 	 * GUI interface for semi-automatic MR prostate segmentation.
 	 * 
@@ -115,20 +118,20 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	public JDialogProstateSegmentationRegBSpline3DFast(Frame theParentFrame) {
 		super(theParentFrame, false);
 		UI = ViewUserInterface.getReference();
-
+		
 		Enumeration<ModelImage> images = UI.getRegisteredImages();
 		while (images.hasMoreElements()) {
 			ModelImage tempImage = images.nextElement();
 			String name = tempImage.getImageName();
-			if (name.contains("ax") || name.contains("Axial")) {
-				imageAxial = tempImage;
-			} else if (name.contains("sag") || name.contains("Sagittal")) {
-				imageSagittal = tempImage;
-			} else if (name.contains("cor") || name.contains("Coronal")) {
-				imageCoronal = tempImage;
-			}
-		}
-
+	    	if ( name.contains("ax") || name.contains("Axial")) {
+	    		imageAxial = tempImage;
+	    	} else if ( name.contains("sag") || name.contains("Sagittal")) {
+	    		imageSagittal = tempImage;
+	    	} else if ( name.contains("cor") || name.contains("Coronal")) {
+	    		imageCoronal = tempImage;
+	    	}
+	    }
+		
 		autoConfigVOIsNumbers();
 		init();
 		setVisible(true);
@@ -140,7 +143,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * image, the drawn VOIs slices number is auto configured to appear in the
 	 * dialog GUI interface.
 	 */
-	public void autoConfigVOIsNumbers() {
+    public void autoConfigVOIsNumbers() {
 		int[] slices = new int[3];
 		configVOIsNumbers(imageAxial, slices);
 		startVOIAxial = slices[0];
@@ -156,9 +159,9 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		startVOICoronal = slices[0];
 		midVOICoronal = slices[1];
 		endVOICoronal = slices[2];
-	}
-
-	/**
+    }
+	
+    /**
 	 * Configure the mid, apex and base VOIs, sort them in order.
 	 * 
 	 * @param image
@@ -166,118 +169,109 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param slices
 	 *            Slice array to store the mid, apex and base VOIs slice number.
 	 */
-	public void configVOIsNumbers(ModelImage image, int[] slices) {
-
-		VOIVector src = image.getVOIs();
-		int zDim = image.getExtents()[2];
-		int count = 0;
-		for (int j = 0; j < 3; j++) {
-			Vector<VOIBase>[] vArray = src.VOIAt(j).getSortedCurves(
-					VOIBase.ZPLANE, zDim);
-			for (int i = 0; i < zDim; i++) {
-				if (vArray[i].size() > 0) {
+    public void configVOIsNumbers(ModelImage image,int[] slices) {
+    	
+    	VOIVector src = image.getVOIs();
+    	int zDim = image.getExtents()[2];
+    	int count = 0;
+    	for ( int j = 0; j < 3; j++ ) {
+			Vector<VOIBase>[] vArray = src.VOIAt(j).getSortedCurves(VOIBase.ZPLANE, zDim);
+		    for (int i = 0; i < zDim; i++ ) {	
+		    	if (vArray[i].size() > 0) {
 					VOIBase v = vArray[i].get(0);
 					if (v != null && v.size() > 0) {
-						slices[count] = i;
-						// System.err.println(" i = " + slices[count]);
-						count++;
+					   slices[count] = i;
+					   // System.err.println(" i = " + slices[count]);
+					   count++;
 					}
-				}
-			} // end for i loop
-		}
-		int min, max, mid = 0;
-		min = Math.min(slices[2], Math.min(slices[0], slices[1]));
-		max = Math.max(slices[2], Math.max(slices[0], slices[1]));
-		for (int i = 0; i < 3; i++) {
-			if (slices[i] != min && slices[i] != max) {
-				mid = slices[i];
-				break;
-			}
-		}
-		slices[0] = min;
-		slices[1] = mid;
-		slices[2] = max;
-
-	}
-
-	/**
+				}			
+		    } // end for i loop
+    	}
+	    int min, max, mid = 0;
+	    min = Math.min(slices[2], Math.min(slices[0], slices[1]));
+	    max = Math.max(slices[2], Math.max(slices[0], slices[1]));
+	    for ( int i = 0; i < 3; i++ ) {
+	    	if ( slices[i] != min && slices[i] != max ) {
+	    		mid = slices[i];
+	    		break;
+	    	}
+	    }
+	    slices[0] = min;
+	    slices[1] = mid;
+	    slices[2] = max;
+		
+    }
+    
+    /**
 	 * Just handle GUI button clicks event.
 	 */
 	public void actionPerformed(ActionEvent event) {
 		Object source = event.getSource();
 		String command = event.getActionCommand();
 		if (command.equals("OK")) {
-
-			if (radioBSpline.isEnabled()) {
+			
+			if ( radioBSpline.isEnabled() ) {
 				useBSpline = true;
 			} else {
 				useBSpline = false;
 			}
-
+			
 			long startTime = System.currentTimeMillis();
-
-			// Configure the mid, start, and end VOI numbers for each axial,
-			// sagittal, and coronal images.
+			
+			// coarseFill = coarseFillCheckBox.isSelected();
 			startVOIAxial = Integer.valueOf(textFieldStartVOIAxial.getText());
 			endVOIAxial = Integer.valueOf(textFieldEndVOIAxial.getText());
 			midVOIAxial = Integer.valueOf(textFieldMidVOIAxial.getText());
-
-			startVOISagittal = Integer.valueOf(textFieldStartVOISagittal
-					.getText());
+			
+			startVOISagittal = Integer.valueOf(textFieldStartVOISagittal.getText());
 			endVOISagittal = Integer.valueOf(textFieldEndVOISagittal.getText());
 			midVOISagittal = Integer.valueOf(textFieldMidVOISagittal.getText());
-
-			startVOICoronal = Integer.valueOf(textFieldStartVOICoronal
-					.getText());
+			
+			startVOICoronal = Integer.valueOf(textFieldStartVOICoronal.getText());
 			endVOICoronal = Integer.valueOf(textFieldEndVOICoronal.getText());
 			midVOICoronal = Integer.valueOf(textFieldMidVOICoronal.getText());
-
+		
 			adjustVOIs(imageAxial);
 			adjustVOIs(imageSagittal);
 			adjustVOIs(imageCoronal);
-			
+		
 			// Parallel processing the prostate segmentation concurrently.
-			int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime
-					.getRuntime().availableProcessors() - 2 : 1;
+			int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors() - 2 : 1;
 			ExecutorService exec = Executors.newFixedThreadPool(numberCore);
-			exec.execute(createTask(imageAxial, midVOIAxial, startVOIAxial,
-					endVOIAxial));
-			exec.execute(createTask(imageSagittal, midVOISagittal,
-					startVOISagittal, endVOISagittal));
-			exec.execute(createTask(imageCoronal, midVOICoronal,
-					startVOICoronal, endVOICoronal));
+			exec.execute(createTask(imageAxial, midVOIAxial, startVOIAxial,endVOIAxial));
+			exec.execute(createTask(imageSagittal, midVOISagittal,startVOISagittal, endVOISagittal));
+			exec.execute(createTask(imageCoronal, midVOICoronal, startVOICoronal, endVOICoronal));
 			exec.shutdown();
 
 			// setup the upper limit waiting time.
 			try {
-				exec.awaitTermination(5, TimeUnit.MINUTES);
+				exec.awaitTermination(3, TimeUnit.MINUTES);
 			} catch (InterruptedException e) {
 				MipavUtil.displayError("Program did not execute correctly");
 				e.printStackTrace();
 			}
-
+			
 			// When the VOIs is over interpolated at the apex and base,
-			// use central gland contours based projections to eliminate the
-			// extra contours at the two ends.
+						// use central gland contours based projections to eliminate the
+						// extra contours at the two ends.
 			removeContourFromOtherOrientation();
-
-			// computer the VOI binary mask based volume.
+			
 			calculateVOIsVolume();
-
+		
 			long endTime = System.currentTimeMillis();
 			int min = (int) ((endTime - startTime) / 1000f / 60f);
 			int sec = (int) ((endTime - startTime) / 1000f % 60f);
-			System.err.println("time elapse = " + min + "  mins  " + sec
-					+ "  sec");
-
+			Preferences.debug("time elapse = " + min + "  mins  " + sec + "  sec");
+		
+			
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
 			//MipavUtil.showHelp("Haral1001");
 		    MipavUtil.showWebHelp("Filters_(Spatial):_Haralick_Texture");
-		} else {
-            super.actionPerformed(event);
-        }
+		} else if (command.equals("SetAxis")) {
+			axis = axisList.getSelectedIndex();
+		}
 
 	}
 
@@ -288,16 +282,17 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		VOIVector voiAxial;
 		VOIVector voiSagittal;
 		VOIVector voiCoronal;
-
+		
 		voiAxial = imageAxial.getVOIs();
 		voiSagittal = imageSagittal.getVOIs();
 		voiCoronal = imageCoronal.getVOIs();
-
+		
 		printVolume(imageAxial, voiAxial, Axial);
 		printVolume(imageSagittal, voiSagittal, Sagittal);
 		printVolume(imageCoronal, voiCoronal, Coronal);
 	}
-
+	
+	
 	/**
 	 * Print out the three VOIs volume in system console out.
 	 * 
@@ -308,53 +303,44 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param viewOrientation
 	 *            view axis orientation: axial, or sagittal or coronal.
 	 */
-	public void printVolume(ModelImage srcImage, VOIVector voiVector,
-			int viewOrientation) {
-		int nVox;
-		float volume, area;
-		VOI calcSelectedVOI = voiVector.get(0);
+	public void printVolume(ModelImage srcImage, VOIVector voiVector, int viewOrientation) {
+		 int nVox;
+		 float volume, area;
+        VOI calcSelectedVOI = voiVector.get(0);
+        
+        int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
+        int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
+        int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
+        FileInfoBase fileInfo = srcImage.getFileInfo()[zDim/2];
+      
+        xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
+        yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
+        zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
+        
+        BitSet mask = new BitSet( xDim * yDim * zDim );
+        calcSelectedVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
+        
+        nVox = mask.cardinality();
 
-		int xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0]
-				: 1;
-		int yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1]
-				: 1;
-		int zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2]
-				: 1;
-		FileInfoBase fileInfo = srcImage.getFileInfo()[zDim / 2];
-
-		xDim = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
-		yDim = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
-		zDim = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
-
-		BitSet mask = new BitSet(xDim * yDim * zDim);
-		calcSelectedVOI.createBinaryMask3D(mask, xDim, yDim, false, false);
-
-		nVox = mask.cardinality();
-
-		area = nVox
-				* (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
-		volume = nVox
-				* (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo
-						.getResolutions()[2]);
-
-		String unitString;
-
-		int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
-		unitString = Unit.getUnitFromLegacyNum(xUnits).getAbbrev();
-
-		if (viewOrientation == Axial) {
-			System.err.println("Axial image VOIs:  number of voxels = " + nVox
-					+ "  volume = " + volume + " " + unitString + "^3");
-		} else if (viewOrientation == Sagittal) {
-			System.err.println("Sagittal image VOIs:  number of voxels = "
-					+ nVox + "  volume = " + volume + " " + unitString + "^3");
-		} else if (viewOrientation == Coronal) {
-			System.err.println("Coronal image VOIs:  number of voxels = "
-					+ nVox + "  volume = " + volume + " " + unitString + "^3");
-		}
-
+        area = nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+        volume = nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
+    
+        String unitString;
+        
+        int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+        unitString = Unit.getUnitFromLegacyNum(xUnits).getAbbrev();    
+       
+        
+        if ( viewOrientation == Axial) {
+        	Preferences.debug("Axial image VOIs:  number of voxels = " + nVox + "  volume = " + volume + " " + unitString + "^3");
+        } else if ( viewOrientation == Sagittal ) {
+        	Preferences.debug("Sagittal image VOIs:  number of voxels = " + nVox + "  volume = " + volume + " " + unitString + "^3");
+        } else if ( viewOrientation == Coronal ) {
+        	Preferences.debug("Coronal image VOIs:  number of voxels = " + nVox + "  volume = " + volume + " " + unitString + "^3");
+        }
+		
 	}
-
+		
 	/**
 	 * User central gland contours projection to remove the extra interpolated
 	 * VOIs contours at the apex and base. Parallel processing the algorithm
@@ -365,32 +351,24 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		VOIVector voiAxial;
 		VOIVector voiSagittal;
 		VOIVector voiCoronal;
-
+		
 		Vector<Vector3f> voiAxialDicom = new Vector<Vector3f>();
-		Vector<Vector3f> voiSagittalDicom = new Vector<Vector3f>();
+		Vector<Vector3f> voiSagittalDicom  = new Vector<Vector3f>();
 		Vector<Vector3f> voiCoronalDicom = new Vector<Vector3f>();
-
-		voiAxial = imageAxial.getVOIs();
-		voiSagittal = imageSagittal.getVOIs();
-		voiCoronal = imageCoronal.getVOIs();
-
-		// convert the VOIs contours from image space to dicom space.
-		convertVOIToDicomSpace(voiAxial, voiAxialDicom, imageAxial,
-				startVOIAxial, endVOIAxial);
-		convertVOIToDicomSpace(voiSagittal, voiSagittalDicom, imageSagittal,
-				startVOISagittal, endVOISagittal);
-		convertVOIToDicomSpace(voiCoronal, voiCoronalDicom, imageCoronal,
-				startVOICoronal, endVOICoronal);
-
-		int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime
-				.getRuntime().availableProcessors() - 2 : 1;
+		
+	    voiAxial = imageAxial.getVOIs();
+	    voiSagittal = imageSagittal.getVOIs();
+	    voiCoronal = imageCoronal.getVOIs();
+	    
+	    convertVOIToDicomSpace(voiAxial, voiAxialDicom, imageAxial, startVOIAxial, endVOIAxial);
+	    convertVOIToDicomSpace(voiSagittal, voiSagittalDicom, imageSagittal, startVOISagittal, endVOISagittal);
+	    convertVOIToDicomSpace(voiCoronal, voiCoronalDicom, imageCoronal, startVOICoronal, endVOICoronal);
+		
+	    int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors() - 2 : 1;
 		ExecutorService exec = Executors.newFixedThreadPool(numberCore);
-		exec.execute(trimVOIsInSingleImage(imageAxial, startVOIAxial,
-				endVOIAxial, voiSagittalDicom, voiCoronalDicom, Axial));
-		exec.execute(trimVOIsInSingleImage(imageSagittal, startVOISagittal,
-				endVOISagittal, voiAxialDicom, voiCoronalDicom, Sagittal));
-		exec.execute(trimVOIsInSingleImage(imageCoronal, startVOICoronal,
-				endVOICoronal, voiAxialDicom, voiSagittalDicom, Coronal));
+		exec.execute(trimVOIsInSingleImage(imageAxial, startVOIAxial, endVOIAxial, voiSagittalDicom, voiCoronalDicom, Axial));
+		exec.execute(trimVOIsInSingleImage(imageSagittal, startVOISagittal, endVOISagittal, voiAxialDicom, voiCoronalDicom, Sagittal));
+		exec.execute(trimVOIsInSingleImage(imageCoronal, startVOICoronal, endVOICoronal, voiAxialDicom, voiSagittalDicom, Coronal));
 		exec.shutdown();
 
 		try {
@@ -400,7 +378,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			e.printStackTrace();
 		}
 	}
-
+	
 	/**
 	 * In Dicom space, central contours projections to eliminate the extra
 	 * contours at the apex and base. For example, axial image, project the
@@ -424,143 +402,135 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 *            image axis orientation
 	 * @return
 	 */
-	public Runnable trimVOIsInSingleImage(final ModelImage image,
-			final int startVOI, final int endVOI,
-			final Vector<Vector3f> firstVOI, final Vector<Vector3f> secondVOI,
-			final int viewOrientation) {
-		return new Runnable() {
-			public void run() {
-				int startSlice = startVOI - 1;
-				int endSlice = 0;
-				Vector3f center = image.getImageCenter();
-				float zDicom = 0;
-				for (int z = startSlice; z > endSlice; z--) {
-					Vector3f ptImg = new Vector3f(center.X, center.Y, z);
-					Vector3f ptDicom = new Vector3f();
-					MipavCoordinateSystems.fileToScanner(ptImg, ptDicom, image);
-					if (viewOrientation == Axial) {
-						zDicom = ptDicom.Z;
-					} else if (viewOrientation == Sagittal) {
-						zDicom = ptDicom.X;
-					} else if (viewOrientation == Coronal) {
-						zDicom = ptDicom.Y;
+	  public Runnable trimVOIsInSingleImage(final ModelImage image, final int startVOI, final int endVOI, 
+	    		final Vector<Vector3f> firstVOI, final Vector<Vector3f> secondVOI, final int viewOrientation) {
+			return new Runnable() {
+				public void run() {
+					int startSlice = startVOI - 1;
+					int endSlice = 0;
+					Vector3f center = image.getImageCenter();
+					float zDicom = 0;
+					for (int z = startSlice; z > endSlice; z--) {
+						Vector3f ptImg = new Vector3f(center.X, center.Y, z);
+						Vector3f ptDicom = new Vector3f();
+						MipavCoordinateSystems.fileToScanner(ptImg, ptDicom, image);
+						if (viewOrientation == Axial) {
+							zDicom = ptDicom.Z;
+						} else if (viewOrientation == Sagittal) {
+							zDicom = ptDicom.X;
+						} else if (viewOrientation == Coronal) {
+							zDicom = ptDicom.Y;
+						}
+						removeVOIsInDicomSpace(z, zDicom, image, firstVOI, secondVOI, viewOrientation);
+					} // end z loop
+					int zDim = image.getExtents()[2];
+					startSlice = endVOI + 1;
+					for (int z = startSlice; z < zDim; z++) {
+						Vector3f ptImg = new Vector3f(center.X, center.Y, z);
+						Vector3f ptDicom = new Vector3f();
+						MipavCoordinateSystems.fileToScanner(ptImg, ptDicom, image);
+						if (viewOrientation == Axial) {
+							zDicom = ptDicom.Z;
+						} else if (viewOrientation == Sagittal) {
+							zDicom = ptDicom.X;
+						} else if (viewOrientation == Coronal) {
+							zDicom = ptDicom.Y;
+						}
+						removeVOIsInDicomSpace(z, zDicom, image, firstVOI, secondVOI, viewOrientation);
 					}
-					removeVOIsInDicomSpace(z, zDicom, image, firstVOI,
-							secondVOI, viewOrientation);
-				} // end z loop
-				int zDim = image.getExtents()[2];
-				startSlice = endVOI + 1;
-				for (int z = startSlice; z < zDim; z++) {
-					Vector3f ptImg = new Vector3f(center.X, center.Y, z);
-					Vector3f ptDicom = new Vector3f();
-					MipavCoordinateSystems.fileToScanner(ptImg, ptDicom, image);
-					if (viewOrientation == Axial) {
-						zDicom = ptDicom.Z;
-					} else if (viewOrientation == Sagittal) {
-						zDicom = ptDicom.X;
-					} else if (viewOrientation == Coronal) {
-						zDicom = ptDicom.Y;
-					}
-					removeVOIsInDicomSpace(z, zDicom, image, firstVOI,
-							secondVOI, viewOrientation);
 				}
-			}
-		};
-	}
-
-	/**
-	 * Remove the extra VOIs contours in Dicom space.
-	 * 
-	 * @param zSlice
-	 *            axial z slice number
-	 * @param zDicom
-	 *            z slice number corresponding Dicom value
-	 * @param image
-	 *            original MRI image
-	 * @param firstVOI
-	 *            sagittal VOI
-	 * @param secondVOI
-	 *            coronal VOI
-	 * @param viewOrientation
-	 *            view axis
-	 */
-	public void removeVOIsInDicomSpace(int zSlice, float zDicom,
-			ModelImage image, Vector<Vector3f> firstVOI,
-			Vector<Vector3f> secondVOI, int viewOrientation) {
-
-		Vector<Vector3f> pointsFind = new Vector<Vector3f>();
-		Vector3f v;
-		for (int i = 0; i < firstVOI.size(); i++) {
-			v = (Vector3f) firstVOI.get(i);
-			if (viewOrientation == Axial) {
-				if (zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			} else if (viewOrientation == Sagittal) {
-				if (zDicom <= (v.X + 0.5f) && zDicom >= (v.X - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			} else if (viewOrientation == Coronal) {
-				if (zDicom <= (v.Y + 0.5f) && zDicom >= (v.Y - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			}
-		}
-		for (int i = 0; i < secondVOI.size(); i++) {
-			v = (Vector3f) secondVOI.get(i);
-			if (viewOrientation == Axial) {
-				if (zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			} else if (viewOrientation == Sagittal) {
-				if (zDicom <= (v.X + 0.5f) && zDicom >= (v.X - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			} else if (viewOrientation == Coronal) {
-				if (zDicom <= (v.Y + 0.5f) && zDicom >= (v.Y - 0.5f)) {
-					pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
-				}
-			}
-		}
-
-		int size = pointsFind.size();
-
-		// if there is no VOI points, remove the voi
-		if (size < 30) {
-			VOIVector voiVectorNew = image.getVOIs();
-			VOI voi = voiVectorNew.get(0);
-			Vector<VOIBase> curves = voi.getSliceCurves(zSlice);
-			for (int k = 0; k < curves.size(); k++) {
-				VOIBase curve = curves.get(k);
-				voi.removeCurve(curve);
-			}
-		}
-
-	}
-
-	/**
-	 * Conver the VOIs from image space to Dicom space
-	 * 
-	 * @param src
-	 *            source VOIs
-	 * @param target
-	 *            converted target VOIs
-	 * @param image
-	 *            original MRI image
-	 * @param startSlice
-	 *            starting slice
-	 * @param endSlice
-	 *            ending slice
-	 */
-	public void convertVOIToDicomSpace(VOIVector src, Vector<Vector3f> target,
-			ModelImage image, int startSlice, int endSlice) {
+			};
+	    }
+	
+	  /**
+		 * Remove the extra VOIs contours in Dicom space.
+		 * 
+		 * @param zSlice
+		 *            axial z slice number
+		 * @param zDicom
+		 *            z slice number corresponding Dicom value
+		 * @param image
+		 *            original MRI image
+		 * @param firstVOI
+		 *            sagittal VOI
+		 * @param secondVOI
+		 *            coronal VOI
+		 * @param viewOrientation
+		 *            view axis
+		 */  
+	  public void removeVOIsInDicomSpace(int zSlice, float zDicom, ModelImage image, Vector<Vector3f> firstVOI, Vector<Vector3f> secondVOI, int viewOrientation) {
+	    	 
+	    	 Vector<Vector3f> pointsFind = new Vector<Vector3f>();
+	    	 Vector3f v;
+	         for (int i = 0; i < firstVOI.size(); i++) {
+	             v = (Vector3f) firstVOI.get(i);
+	             if ( viewOrientation == Axial ) {
+	            	 if ( zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f) ) {
+	                	 pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 } 
+	             } else if ( viewOrientation == Sagittal ) {
+	                 if ( zDicom <= (v.X + 0.5f) && zDicom >= (v.X - 0.5f) ) {
+	            	     pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 }
+	             } else if ( viewOrientation == Coronal ) {
+	            	 if ( zDicom <= (v.Y + 0.5f) && zDicom >= (v.Y - 0.5f) ) {
+	            	     pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 }
+	             }
+	         }
+	         for (int i = 0; i < secondVOI.size(); i++) {
+	             v = (Vector3f) secondVOI.get(i);
+	             if ( viewOrientation == Axial ) {
+	            	 if ( zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f) ) {
+	                	 pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 } 
+	             } else if ( viewOrientation == Sagittal ) {
+	                 if ( zDicom <= (v.X + 0.5f) && zDicom >= (v.X - 0.5f) ) {
+	            	     pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 }
+	             } else if ( viewOrientation == Coronal ) {
+	            	 if ( zDicom <= (v.Y + 0.5f) && zDicom >= (v.Y - 0.5f) ) {
+	            	     pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
+	                 }
+	             }
+	         }
+	         
+	         int size = pointsFind.size();
+	         
+	         // if there is no VOI points, remove the voi
+	 		 if (size < 30) {
+	 			VOIVector voiVectorNew = image.getVOIs();
+	 			VOI voi = voiVectorNew.get(0); 
+	 			Vector<VOIBase> curves = voi.getSliceCurves(zSlice);
+                for  ( int k = 0; k < curves.size(); k++ ) {
+                	VOIBase curve = curves.get(k);
+                	voi.removeCurve(curve);
+                }
+	 		 }
+	         
+	    }  
+	
+	  /**
+		 * Conver the VOIs from image space to Dicom space
+		 * 
+		 * @param src
+		 *            source VOIs
+		 * @param target
+		 *            converted target VOIs
+		 * @param image
+		 *            original MRI image
+		 * @param startSlice
+		 *            starting slice
+		 * @param endSlice
+		 *            ending slice
+		 */
+	public void convertVOIToDicomSpace(VOIVector src, Vector<Vector3f> target, ModelImage image, int startSlice, int endSlice) {
 
 		int zDim = image.getExtents()[2];
-		Vector<VOIBase>[] vArray = src.VOIAt(0).getSortedCurves(VOIBase.ZPLANE,
-				zDim);
-
-		for (int i = startSlice; i <= endSlice; i++) {
-
+		Vector<VOIBase>[] vArray = src.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
+		
+	    for (int i = startSlice; i <= endSlice; i++ ) {	
+			
 			if (vArray[i].size() > 0) {
 				VOIBase v = vArray[i].get(0);
 				if (v != null && v.size() > 0) {
@@ -575,15 +545,15 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 						Vector3f ptIn;
 						final Vector3f ptOut = new Vector3f();
 						ptIn = new Vector3f(xPts[j], yPts[j], zPts[j]);
-						MipavCoordinateSystems
-								.fileToScanner(ptIn, ptOut, image);
+						MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
 						target.add(new Vector3f(ptOut.X, ptOut.Y, ptOut.Z));
 					}
 				}
 			}
-		} // end for i loop
+	    } // end for i loop
 	}
 
+	
 	/**
 	 * Parallel processing the automatic segmentation algorithm to all the three
 	 * images concurrently.
@@ -600,8 +570,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 *            view axis
 	 * @return
 	 */
-	private Runnable createTask(final ModelImage image, final int midVOI,
-			final int startVOI, final int endVOI) {
+	private Runnable createTask(final ModelImage image, final int midVOI, final int startVOI, final int endVOI ) {
 		return new Runnable() {
 
 			public void run() {
@@ -612,30 +581,26 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				int[] yBounds = new int[2];
 				int[] zBounds = new int[2];
 				int[] boundingBox = new int[4];
-
-				cropImage = cropROI(image, xBounds, yBounds, zBounds,
-						boundingBox, midVOI);
+				
+				cropImage = cropROI(image, xBounds, yBounds, zBounds, boundingBox, midVOI);
 				coherenceEnhancingDiffusionImage = calculateCoherenceEnhancingDiffusion(cropImage);
 				sortImageVOIsInit(image, midVOI, startVOI, endVOI);
-				sortCEDImageVOIs(coherenceEnhancingDiffusionImage, midVOI,
-						startVOI, endVOI);
-				doRegistrationMid(image, coherenceEnhancingDiffusionImage,
-						imageStackFuzzyC, midVOI, startVOI, endVOI, boundingBox);
-				doRegistrationStart(image, coherenceEnhancingDiffusionImage,
-						imageStackFuzzyC, startVOI, boundingBox);
-				doRegistrationEnd(image, coherenceEnhancingDiffusionImage,
-						imageStackFuzzyC, endVOI, boundingBox);
+				sortCEDImageVOIs(coherenceEnhancingDiffusionImage, midVOI, startVOI, endVOI);
+				
+				doRegistrationMid(image, coherenceEnhancingDiffusionImage, imageStackFuzzyC, midVOI, startVOI, endVOI, boundingBox);
+				doRegistrationStart(image, coherenceEnhancingDiffusionImage, imageStackFuzzyC, startVOI, boundingBox);
+				doRegistrationEnd(image, coherenceEnhancingDiffusionImage, imageStackFuzzyC, endVOI, boundingBox);
 				sortImageVOIs(image);
-
+				
 				// dispose function local memory
 				cropImage.disposeLocal();
 				cropImage = null;
 				coherenceEnhancingDiffusionImage.disposeLocal();
 				coherenceEnhancingDiffusionImage = null;
-
-				for (int i = 0; i < imageStackFuzzyC.size(); i++) {
+				
+				for ( int i = 0; i < imageStackFuzzyC.size(); i++ ) {
 					Vector<ModelImage> element = imageStackFuzzyC.get(i);
-					for (int j = 0; j < element.size(); j++) {
+					for (int j = 0; j < element.size(); j++ ) {
 						ModelImage temp = element.get(j);
 						temp.disposeLocal();
 						temp = null;
@@ -649,12 +614,13 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				boundingBox = null;
 
 				// System.gc();
-
+				
 			}
 		};
 
 	}
-
+	
+	
 	/**
 	 * This method is required if the AlgorithmPerformed interface is
 	 * implemented. It is called by the algorithms when it has completed or
@@ -666,49 +632,63 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 
+		if (algorithm instanceof AlgorithmRegBSpline) {
+		
+		} else if (algorithm instanceof AlgorithmBSmooth) {
+
+		} else if (algorithm instanceof AlgorithmFuzzyCMeans) {
+			
+		} else if (algorithm instanceof AlgorithmVOIExtraction) {
+
+		} else if (algorithm instanceof AlgorithmMorphology2D) {
+			
+		} else if (algorithm instanceof AlgorithmThresholdDual) {
+		
+		} 
+		
 	}
 
-	/**
-	 * Pauses the display until the user hits enter.
-	 */
-	public static void pause() {
-		int count = 0;
-
-		try {
-			// eat any pending characters
-			for (int av = System.in.available(); av > 0; av--) {
-				System.in.read();
-			}
-			System.in.read();// wait for user to hit Enter, discard result
-		} catch (IOException e) {
-			System.err.println("keyboard failed: " + e);
-		}
-	}
-
-	/**
-	 * Apply the coherence enhancing diffusion filter to the croppred MR image.
-	 * 
-	 * @param cropImage
-	 *            cropped image
-	 * @return the coherence enhancing diffusion image.
-	 */
+	 /**
+	  * Pauses the display until the user hits enter.
+	  */
+	  public static void pause() {
+	    int count = 0;
+	    
+	    try {
+	      // eat any pending characters
+	      for ( int av=System.in.available(); av>0; av-- ) {
+	        System.in.read();
+	      }
+	      System.in.read();// wait for user to hit Enter, discard result
+	    } catch ( IOException e ) {
+	      System.err.println( "keyboard failed: "+e);
+	    }
+	  }
+	  
+		/**
+		 * Apply the coherence enhancing diffusion filter to the croppred MR image.
+		 * 
+		 * @param cropImage
+		 *            cropped image
+		 * @return the coherence enhancing diffusion image.
+		 */
 	private ModelImage calculateCoherenceEnhancingDiffusion(ModelImage cropImage) {
-
-		int numIterations;
-		float diffusitivityDenom;
-		float derivativeScale;
-		float gaussianScale;
-		boolean do25D;
-		boolean entireImage;
-
-		derivativeScale = 0.5f;
-		diffusitivityDenom = 0.001f;
-		gaussianScale = 2.0f;
-		numIterations = 50;
-		do25D = true;
-		entireImage = true;
-		ModelImage coherenceEnhancingDiffusionImage;
-
+		 
+		 int numIterations;
+		 float diffusitivityDenom;
+		 float derivativeScale;
+		 float gaussianScale;
+		 boolean do25D;
+		 boolean entireImage;
+		
+	     derivativeScale = 0.5f;
+         diffusitivityDenom = 0.001f;
+         gaussianScale = 2.0f;
+         numIterations = 50;
+         do25D = true;
+         entireImage = true;
+         ModelImage coherenceEnhancingDiffusionImage;
+		
 		try {
 			coherenceEnhancingDiffusionImage = (ModelImage) cropImage.clone();
 			coherenceEnhancingDiffusionImage.setType(ModelStorageBase.FLOAT);
@@ -727,25 +707,29 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			coherenceEnhancingDiffusionAlgo = null;
 
 		} catch (OutOfMemoryError x) {
-			MipavUtil
-					.displayError("Dialog GaborFilter: unable to allocate enough memory");
+            MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
 
-			return null;
-		}
-
-		return coherenceEnhancingDiffusionImage;
-	}
-
+            return null;
+        }
+        
+        return coherenceEnhancingDiffusionImage;
+   }
+	
 	/**
-	 * Check the registration accuracy.  Check to see if the registration runs into errors.   Check criterion include VOI area, VOI center, etc. 
-	 * If area and center difference exceed specified threshold, registration runs into error.  
-	 * @param currentSlice     current image slice
-	 * @param resultImage      result image after registration
-	 * @param refImage         registration reference slice
-	 * @return   true          registration wrong, false, registration wrong. 
+	 * Check the registration accuracy. Check to see if the registration runs
+	 * into errors. Check criterion include VOI area, VOI center, etc. If area
+	 * and center difference exceed specified threshold, registration runs into
+	 * error.
+	 * 
+	 * @param currentSlice
+	 *            current image slice
+	 * @param resultImage
+	 *            result image after registration
+	 * @param refImage
+	 *            registration reference slice
+	 * @return true registration wrong, false, registration wrong.
 	 */
-	private boolean isVOIsCloseEnough(int currentSlice, ModelImage resultImage,
-			ModelImage refImage) {
+	private boolean isVOIsCloseEnough(int currentSlice, ModelImage resultImage, ModelImage refImage) {
 
 		VOIVector VOIsRef = refImage.getVOIs();
 		VOIVector VOIsSolution = resultImage.getVOIs();
@@ -754,9 +738,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		float centerRefX = 0, centerRefY = 0;
 		float centerSolutionX = 0, centerSolutionY = 0;
 
-		if (VOIsRef.size() <= 0)
-			return true;
-
+		if ( VOIsRef.size() <= 0 ) return true;
+		
 		Vector<VOIBase>[] vArray = VOIsRef.VOIAt(0).getSortedCurves(
 				VOIBase.ZPLANE, 1);
 		VOIBase v = vArray[0].get(0);
@@ -831,8 +814,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				+ (centerSolutionY - centerRefY)
 				* (centerSolutionY - centerRefY));
 
-		System.err.println("Slice: " + currentSlice + "\tareaDiff = "
-				+ areaDiff + " \tcenterDiff = " + centerDiff);
+		Preferences.debug("Slice: " + currentSlice + "\tareaDiff = " + areaDiff + " \tcenterDiff = " + centerDiff);
 
 		if (centerDiff >= 150 || areaDiff >= 15000) {
 			return false;
@@ -841,30 +823,100 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		}
 	}
 
+	
 	/**
 	 * Convert the mask image to VOI with 50 points
-	 * @param maskImage        binary mask image
-	 * @param resultImage      result image
+	 * 
+	 * @param maskImage
+	 *            binary mask image
+	 * @param resultImage
+	 *            result image
+	 */	
+	public void smoothVOI50(ModelImage maskImage, ModelImage resultImage) {
+
+		VOIVector v = maskImage.getVOIs();
+		if (v.size() == 0 ) return;
+		v.VOIAt(0).setActive(true);
+		v.VOIAt(0).setAllActive(true);
+
+		// new ViewJFrameImage(maskImage);
+		try {
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 50, false);
+			smoothAlgo.addListener(this);
+			smoothAlgo.run();
+			
+			VOIVector resultVOIs = resultImage.getVOIs();
+			VOI resultVOI = smoothAlgo.getResultVOI();
+			resultVOIs.VOIAt(0).removeCurves();
+			resultVOIs.VOIAt(0).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo.finalize();
+			smoothAlgo = null;
+		} catch (OutOfMemoryError x) {
+			MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+
+			return;
+		}
+	}
+	
+	/**
+	 * Convert the mask image to VOI with 120 points.
+	 * 
+	 * @param maskImage
+	 *            binary mask image
+	 * @param resultImage
+	 *            result image
 	 */
+	public void smoothVOI120(ModelImage maskImage, ModelImage resultImage) {
+
+		maskImage.getVOIs().removeAllElements();
+		maskImage.addVOIs(resultImage.getVOIs());
+		
+		VOIVector v = maskImage.getVOIs();
+		if (v.size() == 0 ) return;
+		v.VOIAt(0).setActive(true);
+		v.VOIAt(0).setAllActive(true);
+
+		// new ViewJFrameImage(maskImage);
+		try {
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 120, false);
+			smoothAlgo.addListener(this);
+			smoothAlgo.run();
+			
+			VOIVector resultVOIs = resultImage.getVOIs();
+			VOI resultVOI = smoothAlgo.getResultVOI();
+			resultVOIs.VOIAt(0).removeCurves();
+			resultVOIs.VOIAt(0).setCurves(resultVOI.getCurves());
+			resultImage.notifyImageDisplayListeners(null, true);
+			// new ViewJFrameImage(resultImage);
+			smoothAlgo.finalize();
+			smoothAlgo = null;
+		} catch (OutOfMemoryError x) {
+			MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
+
+			return;
+		}
+	}
+	
+	
 	public void smoothVOI50(ModelImage resultImage) {
 
-		ModelImage maskImage = (ModelImage) resultImage.clone();
+		ModelImage maskImage = (ModelImage)resultImage.clone();
 		maskImage.getVOIs().removeAllElements();
 		maskImage.addVOIs(resultImage.getVOIs());
-
+		
 		VOIVector v = maskImage.getVOIs();
-		if (v.size() == 0)
-			return;
+		if (v.size() == 0 ) return;
 		v.VOIAt(0).setActive(true);
 		v.VOIAt(0).setAllActive(true);
 
 		// new ViewJFrameImage(maskImage);
 		try {
-			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage,
-					v.VOIAt(0), 50, false);
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 50, false);
 			smoothAlgo.addListener(this);
 			smoothAlgo.run();
-
+			
 			VOIVector resultVOIs = resultImage.getVOIs();
 			VOI resultVOI = smoothAlgo.getResultVOI();
 			resultVOIs.VOIAt(0).removeCurves();
@@ -874,37 +926,30 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			smoothAlgo.finalize();
 			smoothAlgo = null;
 		} catch (OutOfMemoryError x) {
-			MipavUtil
-					.displayError("Dialog Smooth: unable to allocate enough memory");
+			MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
 
 			return;
 		}
 	}
-
-	/**
-	 * Convert the mask image to VOI with 120 points. 
-	 * @param maskImage          binary mask image
-	 * @param resultImage		result image
-	 */
+	
+	
 	public void smoothVOI120(ModelImage resultImage) {
 
-		ModelImage maskImage = (ModelImage) resultImage.clone();
+		ModelImage maskImage = (ModelImage)resultImage.clone();
 		maskImage.getVOIs().removeAllElements();
 		maskImage.addVOIs(resultImage.getVOIs());
-
+		
 		VOIVector v = maskImage.getVOIs();
-		if (v.size() == 0)
-			return;
+		if (v.size() == 0 ) return;
 		v.VOIAt(0).setActive(true);
 		v.VOIAt(0).setAllActive(true);
 
 		// new ViewJFrameImage(maskImage);
 		try {
-			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage,
-					v.VOIAt(0), 120, false);
+			AlgorithmBSmooth smoothAlgo = new AlgorithmBSmooth(maskImage, v.VOIAt(0), 120, false);
 			smoothAlgo.addListener(this);
 			smoothAlgo.run();
-
+			
 			VOIVector resultVOIs = resultImage.getVOIs();
 			VOI resultVOI = smoothAlgo.getResultVOI();
 			resultVOIs.VOIAt(0).removeCurves();
@@ -914,13 +959,12 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			smoothAlgo.finalize();
 			smoothAlgo = null;
 		} catch (OutOfMemoryError x) {
-			MipavUtil
-					.displayError("Dialog Smooth: unable to allocate enough memory");
+			MipavUtil.displayError("Dialog Smooth: unable to allocate enough memory");
 
 			return;
 		}
 	}
-
+	
 	/**
 	 * Transform the the resulting VOI from cropped image to oringal MR image.
 	 * 
@@ -933,16 +977,10 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param currentSlice
 	 *            current image slice
 	 */
-	public void transformVOI(ModelImage image, ModelImage resultImage,
-			ModelImage refImage, ModelImage testImage, int[] boundingBox,
-			int currentSlice) {
-
+	public void transformVOI(ModelImage image, ModelImage resultImage, ModelImage refImage, ModelImage testImage,  int []boundingBox, int currentSlice) {
+		
 		VOIVector resultingVOIs = null;
-
-		// new ViewJFrameImage((ModelImage) refImage.clone());
-		// new ViewJFrameImage((ModelImage) testImage.clone());
-		// new ViewJFrameImage((ModelImage) resultImage.clone());
-
+		
 		try {
 			if (isVOIsCloseEnough(currentSlice, resultImage, refImage)) {
 				resultingVOIs = resultImage.getVOIs();
@@ -969,10 +1007,9 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		smoothVOI50(resultImage);
 		smoothVOI120(resultImage);
-
+		
 		resultingVOIs = resultImage.getVOIs();
-		Vector<VOIBase>[] vArray = resultingVOIs.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, 1);
+		Vector<VOIBase>[] vArray = resultingVOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, 1);
 
 		VOIBase v = vArray[0].get(0);
 		// VOI totalVOI = v.getGroup();
@@ -990,8 +1027,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			vTemp.exportArrays(xPts, yPts, zPts);
 
 			for (int u = 0; u < nPts; u++) {
-				xPts[u] = xPts[u] + boundingBox[0]; // boxXmin;
-				yPts[u] = yPts[u] + boundingBox[2]; // boxYmin;
+				xPts[u] = xPts[u] + boundingBox[0];  // boxXmin;
+				yPts[u] = yPts[u] + boundingBox[2];  // boxYmin;
 				zPtsZero[u] = currentSlice;
 			}
 
@@ -1004,6 +1041,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		}
 	}
 
+	
 	/**
 	 * Sorting image VOI
 	 * 
@@ -1011,10 +1049,10 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 *            original MR image
 	 */
 	public void sortImageVOIs(ModelImage image) {
-		int zDim = image.getExtents()[2] - 1;
+		int zDim = image.getExtents()[2]-1;
 		image.getVOIs().VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 	}
-
+	
 	/**
 	 * Sort the original MR image's specified VOIs
 	 * 
@@ -1027,36 +1065,32 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param endVOI
 	 *            base slice VOI
 	 */
-	public void sortImageVOIsInit(ModelImage image, int midVOI, int startVOI,
-			int endVOI) {
+	public void sortImageVOIsInit(ModelImage image, int midVOI, int startVOI, int endVOI) {
 		VOIVector VOIsSrc;
-		VOI voiNew = new VOI((short) 0, "ImageVOI");
-		int zDim = image.getExtents()[2] - 1;
+		VOI voiNew = new VOI((short)0, "ImageVOI");
+		int zDim = image.getExtents()[2]-1;
 		// if (image.getVOIs() != null) {
-		VOIsSrc = image.getVOIs();
+	    VOIsSrc = image.getVOIs();
 		// }
-
-		Vector<VOIBase>[] vArrayCenter = VOIsSrc.VOIAt(1).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		
+		Vector<VOIBase>[] vArrayCenter = VOIsSrc.VOIAt(1).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vCenter = vArrayCenter[midVOI].get(0);
 		voiNew.importCurve(vCenter);
-
-		Vector<VOIBase>[] vArrayStart = VOIsSrc.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		
+		Vector<VOIBase>[] vArrayStart = VOIsSrc.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vStart = vArrayStart[startVOI].get(0);
 		voiNew.importCurve(vStart);
-
-		Vector<VOIBase>[] vArrayEnd = VOIsSrc.VOIAt(2).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		
+		Vector<VOIBase>[] vArrayEnd = VOIsSrc.VOIAt(2).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vEnd = vArrayEnd[endVOI].get(0);
 		voiNew.importCurve(vEnd);
-
-		voiNew.getSortedCurves(zDim);
-
-		VOIsSrc.removeAllElements();
-		VOIsSrc.add(voiNew);
+		
+        voiNew.getSortedCurves(zDim);
+		
+        VOIsSrc.removeAllElements();
+        VOIsSrc.add(voiNew);
 	}
-
+	
 	/**
 	 * Sort the CED image VOIs
 	 * 
@@ -1069,428 +1103,38 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param endVOI
 	 *            base slice VOI
 	 */
-	public void sortCEDImageVOIs(ModelImage coherenceEnhancingDiffusionImage,
-			int midVOI, int startVOI, int endVOI) {
-
-		VOI voiNew = new VOI((short) 0, "CED_VOI");
+    public void sortCEDImageVOIs(ModelImage coherenceEnhancingDiffusionImage, int midVOI, int startVOI, int endVOI) {
+		
+		VOI voiNew = new VOI((short)0, "CED_VOI");
 		VOIVector VOIs;
-		int zDim = coherenceEnhancingDiffusionImage.getExtents()[2] - 1;
-
+		int zDim = coherenceEnhancingDiffusionImage.getExtents()[2]-1;
+		
 		// if (coherenceEnhancingDiffusionImage.getVOIs() != null) {
 		VOIs = coherenceEnhancingDiffusionImage.getVOIs();
 		// }
-
-		Vector<VOIBase>[] vArrayCenter = VOIs.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
-		VOIBase vCenter = vArrayCenter[midVOI].get(1);
+		
+		Vector<VOIBase>[] vArrayCenter = VOIs.VOIAt(1).getSortedCurves(VOIBase.ZPLANE, zDim);
+		VOIBase vCenter = vArrayCenter[midVOI].get(0);
 		voiNew.importCurve(vCenter);
-
-		Vector<VOIBase>[] vArrayStart = VOIs.VOIAt(1).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		
+		Vector<VOIBase>[] vArrayStart = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vStart = vArrayStart[startVOI].get(0);
 		voiNew.importCurve(vStart);
-
-		Vector<VOIBase>[] vArrayEnd = VOIs.VOIAt(2).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		
+		Vector<VOIBase>[] vArrayEnd = VOIs.VOIAt(2).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vEnd = vArrayEnd[endVOI].get(0);
 		voiNew.importCurve(vEnd);
-
+		
 		voiNew.getSortedCurves(zDim);
-
+		
 		VOIs.removeAllElements();
 		VOIs.add(voiNew);
-
+		
 	}
+	
+	
 
-	/**
-	 * Generate the Fuzzy-C means classes from the CED image
-	 * 
-	 * @param coherenceEnhancingDiffusionImage
-	 *            CED image
-	 * @param imageStackFuzzyC
-	 *            Fuzzy-C means classes image stack.
-	 */
-	public void doFuzzyCmean(ModelImage coherenceEnhancingDiffusionImage,
-			Vector<Vector<ModelImage>> imageStackFuzzyC) {
-
-		int xDim = coherenceEnhancingDiffusionImage.getExtents()[0];
-		int yDim = coherenceEnhancingDiffusionImage.getExtents()[1];
-		int zDim = coherenceEnhancingDiffusionImage.getExtents()[2];
-
-		int[] destExtents = new int[2];
-		destExtents[0] = coherenceEnhancingDiffusionImage.getExtents()[0];
-		destExtents[1] = coherenceEnhancingDiffusionImage.getExtents()[1];
-
-		int sliceSize = xDim * yDim;
-		int midSlice = (int) ((zDim) / 2f);
-		System.err.println("loadMask: midSlice = " + midSlice);
-		for (int z = 0; z < zDim; z++) {
-
-			try {
-				// currentSlice = z;
-				int start = z * sliceSize;
-				double[] sourceBuffer = new double[sliceSize];
-				ModelImage[] resultImageFuzzyC = null;
-				coherenceEnhancingDiffusionImage.exportData(start, sliceSize,
-						sourceBuffer);
-
-				ModelImage testImageFuzzyC = new ModelImage(
-						coherenceEnhancingDiffusionImage.getType(),
-						destExtents, "testFuzzyC" + z);
-				testImageFuzzyC.importData(0, sourceBuffer, true);
-				boolean endianness = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getEndianess();
-				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getModality();
-				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getResolutions();
-				float[] newRes = { res[0], res[1] };
-				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getExtents();
-				int[] newExts = { exts[0], exts[1] };
-				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getUnitsOfMeasure();
-				int[] newUnits = { units[0], units[1] };
-				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(
-						0).getImageOrientation();
-				int[] axisOrient = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getAxisOrientation();
-				int[] newAxisOrient = { axisOrient[0], axisOrient[1] };
-				float[] origin = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getOrigin();
-				float[] newOrigin = { origin[0], origin[1] };
-
-				FileInfoImageXML fileInfo = new FileInfoImageXML(
-						coherenceEnhancingDiffusionImage.getImageName(), null,
-						FileUtility.XML);
-				fileInfo.setDataType(ModelStorageBase.FLOAT);
-				fileInfo.setEndianess(endianness);
-				fileInfo.setExtents(newExts);
-				fileInfo.setModality(modality);
-				fileInfo.setResolutions(newRes);
-				fileInfo.setUnitsOfMeasure(newUnits);
-				fileInfo.setImageOrientation(imageOrient);
-				fileInfo.setAxisOrientation(newAxisOrient);
-				fileInfo.setOrigin(newOrigin);
-
-				FileInfoImageXML[] fileInfos = { fileInfo };
-				testImageFuzzyC.setFileInfo(fileInfos);
-
-				boolean regionFlag = true;
-				int nClasses = 5;
-				float q = 2.0f;
-				boolean cropBackground = false;
-				float endTol = 0.01f;
-				int maxIter = 200;
-				int segmentation = AlgorithmFuzzyCMeans.BOTH_FUZZY_HARD;
-				int resultNumber = 6;
-				int nPyramid = 4;
-				int oneJacobiIter = 1;
-				float oneSmooth = 20000;
-				boolean outputGainField = false;
-				int twoJacobiIter = 2;
-				float twoSmooth = 200000;
-				float threshold = 0;
-
-				try {
-					resultImageFuzzyC = new ModelImage[resultNumber];
-					int presentNumber = 0;
-
-					for (int i = 0; i < nClasses; i++) {
-						String name = makeImageName(
-								testImageFuzzyC.getImageName(), "_class"
-										+ (i + 1));
-						resultImageFuzzyC[presentNumber++] = new ModelImage(
-								ModelStorageBase.FLOAT, destExtents, name);
-					}
-					resultImageFuzzyC[presentNumber++] = new ModelImage(
-							ModelStorageBase.UBYTE, destExtents, makeImageName(
-									testImageFuzzyC.getImageName(), "_seg"));
-
-					// fuzzyC parameters
-
-					// Make algorithm
-					AlgorithmFuzzyCMeans fcmAlgo = new AlgorithmFuzzyCMeans(
-							resultImageFuzzyC, testImageFuzzyC, nClasses,
-							nPyramid, oneJacobiIter, twoJacobiIter, q,
-							oneSmooth, twoSmooth, outputGainField,
-							segmentation, cropBackground, threshold, maxIter,
-							endTol, regionFlag);
-
-					fcmAlgo.addListener(this);
-
-					float[] centroids = null;
-					centroids = getCentroids(testImageFuzzyC, fcmAlgo,
-							centroids);
-
-					fcmAlgo.setCentroids(centroids);
-					// fcmAlgo.setThreshold(threshold);
-					fcmAlgo.run();
-
-					centroids = null;
-
-					int ii;
-					testImageFuzzyC.clearMask();
-					Vector<ModelImage> imageStackElement = new Vector<ModelImage>();
-					for (ii = 0; ii < resultNumber; ii++) {
-						updateFileInfo(testImageFuzzyC, resultImageFuzzyC[ii]);
-						resultImageFuzzyC[ii].clearMask();
-						imageStackElement.add(resultImageFuzzyC[ii]);
-					}
-					imageStackFuzzyC.add(imageStackElement);
-					testImageFuzzyC.disposeLocal();
-					testImageFuzzyC = null;
-
-					fcmAlgo.finalize();
-					fcmAlgo = null;
-
-				} catch (OutOfMemoryError x) {
-
-					if (resultImageFuzzyC != null) {
-						for (int i = 0; i < resultNumber; i++) {
-							if (resultImageFuzzyC[i] != null) {
-								resultImageFuzzyC[i].disposeLocal();
-								resultImageFuzzyC[i] = null;
-							}
-						}
-						resultImageFuzzyC = null;
-					}
-
-					// System.gc();
-					MipavUtil
-							.displayError("MS Fuzzy CMeans: unable to allocate enough memory");
-					return;
-				}
-
-				// z = endSlice; // debug ending condition.
-				sourceBuffer = null;
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			// z = endSlice;
-
-		} // end z loop
-
-	}
-
-	/**
-	 * Gets the minimum and maximum of each image and initializes the centroids
-	 * dialog appropriately.
-	 * 
-	 * @return Flag indicating a successful get.
-	 */
-	private float[] getCentroids(ModelImage srcImage,
-			AlgorithmFuzzyCMeans fcmAlgo, float[] centroids) {
-		boolean regionFlag = true;
-		int nClasses = 5;
-		float q = 2.0f;
-		boolean cropBackground = false;
-		float endTol = 0.01f;
-		int maxIter = 200;
-		int segmentation = AlgorithmFuzzyCMeans.BOTH_FUZZY_HARD;
-		int resultNumber = 6;
-		int nPyramid = 4;
-		int oneJacobiIter = 1;
-		float oneSmooth = 20000;
-		boolean outputGainField = false;
-		int twoJacobiIter = 2;
-		float twoSmooth = 200000;
-		float threshold = 0;
-
-		int i;
-		float minimum, maximum;
-		int xDim = srcImage.getExtents()[0];
-		int yDim = srcImage.getExtents()[1];
-		int zDim;
-
-		if (srcImage.getNDims() > 2) {
-			zDim = srcImage.getExtents()[2];
-		} else {
-			zDim = 1;
-		}
-
-		int sliceSize = xDim * yDim;
-		int volSize = xDim * yDim * zDim;
-		float[] buffer = null;
-		int yStepIn, yStepOut, zStepIn, zStepOut;
-		int x, y, z, index, newXDim, newYDim, newZDim, newSliceSize;
-
-		try {
-			buffer = new float[volSize];
-			srcImage.exportData(0, volSize, buffer);
-
-			srcImage.calcMinMax();
-			minimum = (float) srcImage.getMin();
-			maximum = (float) srcImage.getMax();
-
-			if (!regionFlag) {
-				maximum = -Float.MAX_VALUE;
-				minimum = Float.MAX_VALUE;
-
-				for (i = 0; i < volSize; i++) {
-
-					if (fcmAlgo.getMask().get(i)) {
-
-						if (buffer[i] > maximum) {
-							maximum = buffer[i];
-						}
-
-						if (buffer[i] < minimum) {
-							minimum = buffer[i];
-						}
-					}
-				}
-			} // if (!wholeImage)
-
-			int xLow = 0;
-			int yLow = 0;
-			int zLow = 0;
-			int xHigh = xDim - 1;
-			int yHigh = yDim - 1;
-			int zHigh = zDim - 1;
-
-			if (cropBackground) {
-
-				// Find the smallest bounding box for the data
-				xLow = xDim - 1;
-				yLow = yDim - 1;
-				zLow = zDim - 1;
-				xHigh = 0;
-				yHigh = 0;
-				zHigh = 0;
-
-				for (z = 0; z < zDim; z++) {
-					zStepIn = z * sliceSize;
-
-					for (y = 0; y < yDim; y++) {
-						yStepIn = (y * xDim) + zStepIn;
-
-						for (x = 0; x < xDim; x++) {
-							index = x + yStepIn;
-
-							if (buffer[index] >= threshold) {
-
-								if (x < xLow) {
-									xLow = x;
-								}
-
-								if (x > xHigh) {
-									xHigh = x;
-								}
-
-								if (y < yLow) {
-									yLow = y;
-								}
-
-								if (y > yHigh) {
-									yHigh = y;
-								}
-
-								if (z < zLow) {
-									zLow = z;
-								}
-
-								if (z > zHigh) {
-									zHigh = z;
-								}
-							} // if (buffer[index] > threshold)
-						} // for (x = 0; x < xDim; x++)
-					} // for (y = 0; y < yDim; y++)
-				} // for (z = 0; z < zDim; z++)
-
-				if ((xLow > 0) || (xHigh < (xDim - 1)) || (yLow > 0)
-						|| (yHigh < (yDim - 1)) || (zLow > 0)
-						|| (zHigh < (zDim - 1))) {
-
-					// A smaller bounding box has been found for the data
-					// Recopy area to smaller data array to save space
-					newXDim = xHigh - xLow + 1;
-					newYDim = yHigh - yLow + 1;
-					newZDim = zHigh - zLow + 1;
-
-					float[] buffer2 = new float[newXDim * newYDim * newZDim];
-					newSliceSize = newXDim * newYDim;
-
-					for (z = zLow; z <= zHigh; z++) {
-						zStepOut = z * sliceSize;
-						zStepIn = ((z - zLow) * newSliceSize) - xLow
-								- (yLow * newXDim);
-
-						for (y = yLow; y <= yHigh; y++) {
-							yStepIn = (y * newXDim) + zStepIn;
-							yStepOut = (y * xDim) + zStepOut;
-
-							for (x = xLow; x <= xHigh; x++) {
-								buffer2[x + yStepIn] = buffer[x + yStepOut];
-							} // for (x = xLow; x <= xHigh; x++)
-						} // for (y = yLow; y <= yHigh; y++)
-					} // for (z = zLow; z <= zHigh; z++)
-
-					xDim = newXDim;
-					yDim = newYDim;
-					zDim = newZDim;
-					sliceSize = xDim * yDim;
-					volSize = sliceSize * zDim;
-					buffer = new float[volSize];
-
-					for (i = 0; i < sliceSize; i++) {
-						buffer[i] = buffer2[i];
-					}
-
-					buffer2 = null;
-
-					// Find the new minimum
-					minimum = maximum;
-
-					for (i = 0; i < volSize; i++) {
-
-						if (buffer[i] < minimum) {
-							minimum = buffer[i];
-						} // if (buffer[i] < minimum)
-					} // for (i = 0; i < sliceSize; i++)
-				} // if ((xLow > 0) || (xHigh < (xDim-1)) || (yLow > 0) ||
-					// (yHigh < (yDim - 1)))
-			} // if (cropBackground)
-		} catch (java.io.IOException ioe) {
-			buffer = null;
-			// System.gc();
-			MipavUtil.displayError("Error trying to get centroids.");
-
-			return null;
-		} catch (OutOfMemoryError error) {
-			buffer = null;
-			// System.gc();
-			MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n"
-					+ error.toString());
-
-			return null;
-		}
-
-		buffer = null;
-
-		// Autodetect initial centroids
-		centroids = new float[nClasses];
-
-		JDialogInitialCentroids dialogInitialCentroids = new JDialogInitialCentroids(
-				parentFrame, nClasses, minimum, maximum, false);
-		dialogInitialCentroids.run();
-
-		if (dialogInitialCentroids.isCancelled()) {
-			centroids = null;
-			return null;
-		} else {
-
-			for (i = 0; i < centroids.length; i++) {
-				centroids[i] = dialogInitialCentroids.getCentroids()[i];
-			}
-		}
-
-		return centroids;
-	}
-
-	/**
+    /**
 	 * The proposed model uses 2D registration to register 2D slices from the
 	 * middle slice to the adjacent slice. It then generates a new VOI, and
 	 * takes the VOI as the new initial estimate for the next slice in the
@@ -1514,16 +1158,14 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param axis
 	 *            axis orientation
 	 */
-	public void doRegistrationMid(ModelImage image,
-			ModelImage coherenceEnhancingDiffusionImage,
-			Vector<Vector<ModelImage>> imageStackFuzzyC, int midVOI,
-			int startVOI, int endVOI, int[] boundingBox) {
+	public void doRegistrationMid(ModelImage image, ModelImage coherenceEnhancingDiffusionImage, Vector<Vector<ModelImage>> imageStackFuzzyC, 
+			                       int midVOI, int startVOI, int endVOI, int[] boundingBox) {
 
 		VOIVector VOIs;
 		VOIVector VOIsSrc;
 		ModelImage refImage = null;
 		ModelImage testImage = null;
-
+		
 		// Registration OAR 2D
 		int costChoice = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
 		int DOF = 7;
@@ -1538,19 +1180,19 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		int baseNumIter = 2;
 		int numMinima = 3;
 		boolean doJTEM = false;
-
+		
 		int currentSlice;
 
 		ModelImage m_kImageDef = null;
-
-		// ************************ Bspline parameters start
-		// ***********************************
+		
+		
+		// ************************    Bspline parameters  start ***********************************
 		AlgorithmRegBSpline.Options m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
 		AlgorithmRegBSpline.Options m_kOptionsPass2 = null;
 		Controls m_kControlsPass1;
 		RegistrationMeasure m_kRegMeasure = null;
-
-		m_kControlsPass1 = new Controls(this);
+		
+		m_kControlsPass1 = new Controls(this);		
 		// Set defaults for Pass 1.
 		m_kOptionsPass1.iBSplineDegree = 2;
 		m_kOptionsPass1.iBSplineNumControlPoints = 8;
@@ -1561,11 +1203,12 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		m_kOptionsPass1.bSubsample = true;
 		m_kControlsPass1.setValues(m_kOptionsPass1);
 
+		
 		// What is the text that appears in the combo box?
-		final String kStrDescription = "Normalized Mutual Information";
-		// "Least Squares"
-		// "Correlation Ratio",
-		// "Normalized Mutual Information"
+		final String kStrDescription =   "Normalized Mutual Information"; 
+														// "Least Squares"
+														// "Correlation Ratio",
+														// "Normalized Mutual Information"
 
 		// Match that text to the known cost functions.
 		if (RegistrationMeasureLeastSquares.getStaticName() == kStrDescription) {
@@ -1576,9 +1219,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				.getStaticName() == kStrDescription) {
 			m_kRegMeasure = new RegistrationMeasureNormalizedMutualInformation();
 		}
-		// *********************** end
-		// ********************************************************
-
+        // ***********************   end ********************************************************
+		
 		int xDim = coherenceEnhancingDiffusionImage.getExtents()[0];
 		int yDim = coherenceEnhancingDiffusionImage.getExtents()[1];
 		int zDim = coherenceEnhancingDiffusionImage.getExtents()[2] - 1;
@@ -1588,13 +1230,13 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		destExtents[1] = coherenceEnhancingDiffusionImage.getExtents()[1];
 
 		int sliceSize = xDim * yDim;
-		int midSlice = midVOI; // (int) ((zDim) / 2f);
+		int midSlice = midVOI;      // (int) ((zDim) / 2f);
 		System.err.println("loadMask: midSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
 		// new ViewJFrameImage(coherenceEnhancingDiffusionImage);
-
+		
 		// if (coherenceEnhancingDiffusionImage.getVOIs() != null) {
 		VOIs = coherenceEnhancingDiffusionImage.getVOIs();
 		// }
@@ -1604,8 +1246,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		// }
 
 		// find the intersection of the lower bound with the VOI.
-		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase v = vArray[midSlice].get(0);
 		// VOI totalVOI = v.getGroup();
 
@@ -1634,23 +1275,18 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		// get the mid slice
 		try {
-			refImage = new ModelImage(
-					coherenceEnhancingDiffusionImage.getType(), destExtents,
-					"ref" + midSlice);
-			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize,
-					sliceSize, midBuffer);
+			refImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents, "ref"
+					+ midSlice);
+			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize, sliceSize, midBuffer);
 			refImage.importData(0, midBuffer, true);
 			refImage.addVOIs(voiVectorNew);
 			// new ViewJFrameImage(refImage);
 
 			FileInfoImageXML fileInfoTarget = new FileInfoImageXML(
-					coherenceEnhancingDiffusionImage.getImageName(), null,
-					FileUtility.XML);
-			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getResolutions();
+					coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
+			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 			float[] newResTarget = { resTarget[0], resTarget[1] };
-			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getExtents();
+			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 			int[] newExtsTarget = { extsTarget[0], extsTarget[1] };
 			fileInfoTarget.setExtents(newExtsTarget);
 			fileInfoTarget.setResolutions(newResTarget);
@@ -1670,39 +1306,28 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				currentSlice = z;
 				int start = z * sliceSize;
 				double[] sourceBuffer = new double[sliceSize];
-				coherenceEnhancingDiffusionImage.exportData(start, sliceSize,
-						sourceBuffer);
+				coherenceEnhancingDiffusionImage.exportData(start, sliceSize, sourceBuffer);
 
-				testImage = new ModelImage(
-						coherenceEnhancingDiffusionImage.getType(),
-						destExtents, "test" + z);
+				testImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents, "test" + z);
 				testImage.importData(0, sourceBuffer, true);
-				boolean endianness = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getEndianess();
-				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getModality();
-				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getResolutions();
+				boolean endianness = coherenceEnhancingDiffusionImage.getFileInfo(0).getEndianess();
+				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0).getModality();
+				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 				float[] newRes = { res[0], res[1] };
-				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getExtents();
+				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 				int[] newExts = { exts[0], exts[1] };
-				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getUnitsOfMeasure();
+				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0).getUnitsOfMeasure();
 				int[] newUnits = { units[0], units[1] };
-				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(
-						0).getImageOrientation();
-				int[] axisOrient = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getAxisOrientation();
+				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getImageOrientation();
+				int[] axisOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getAxisOrientation();
 				int[] newAxisOrient = { axisOrient[0], axisOrient[1] };
-				float[] origin = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getOrigin();
+				float[] origin = coherenceEnhancingDiffusionImage.getFileInfo(0).getOrigin();
 				float[] newOrigin = { origin[0], origin[1] };
 
 				// testImage.addVOIs(voiVectorNew);
-				FileInfoImageXML fileInfo = new FileInfoImageXML(
-						coherenceEnhancingDiffusionImage.getImageName(), null,
-						FileUtility.XML);
+				FileInfoImageXML fileInfo = new FileInfoImageXML(coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
 				fileInfo.setDataType(ModelStorageBase.FLOAT);
 				fileInfo.setEndianess(endianness);
 				fileInfo.setExtents(newExts);
@@ -1716,25 +1341,25 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				FileInfoImageXML[] fileInfos = { fileInfo };
 				testImage.setFileInfo(fileInfos);
 
-				ModelImage resultImage = new ModelImage(testImage.getType(),
-						destExtents, "result" + z);
+				ModelImage resultImage = new ModelImage(testImage.getType(), destExtents,
+						"result" + z);
 				resultImage.importData(0, sourceBuffer, true);
 				resultImage.getVOIs().removeAllElements();
 
-				if (useBSpline) {
+
+				if ( useBSpline ) {
 					int[] aiExtentsReg = new int[2];
 					aiExtentsReg = testImage.getExtents();
-
+	
 					m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg);
-
-					AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(
-							resultImage, refImage, testImage, m_kImageDef,
-							m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+	
+					AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(resultImage,
+							refImage, testImage, m_kImageDef, m_kRegMeasure,
+							m_kOptionsPass1, m_kOptionsPass2);
 					m_kAlgorithmReg.addListener(this);
 					m_kAlgorithmReg.run();
-
-					if (m_kAlgorithmReg != null
-							&& m_kAlgorithmReg.isCompleted()) {
+					
+					if ( m_kAlgorithmReg != null && m_kAlgorithmReg.isCompleted()) {
 						m_kAlgorithmReg.setCompleted(true);
 						m_kAlgorithmReg.disposeLocal();
 						m_kAlgorithmReg = null;
@@ -1792,11 +1417,9 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 					}
 				}
 				// new ViewJFrameImage(resultImage);
-				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice,
-				// resultImage, refImage, testImage);
-				transformVOI(image, resultImage, refImage, testImage,
-						boundingBox, currentSlice);
-
+				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice, resultImage, refImage, testImage);
+				transformVOI(image, resultImage, refImage, testImage, boundingBox, currentSlice);
+				
 				// Switch the images, copy current slice image to refImage
 				// testImage will be the next slice.
 				refImage.importData(0, sourceBuffer, true);
@@ -1804,7 +1427,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				VOIVector resultingVOIs = resultImage.getVOIs();
 				refImage.addVOIs(resultingVOIs);
 				refImage.setImageName("ref" + (z - 1));
-
+				
 				testImage.disposeLocal();
 				testImage = null;
 				resultImage.disposeLocal();
@@ -1822,7 +1445,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		refImage.disposeLocal();
 		refImage = null;
-
+		
 		/************* copy the middle slice VOI *****************/
 
 		vArray = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
@@ -1843,23 +1466,18 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		/************* copy the middle slice VOI end ***************/
 		try {
-			refImage = new ModelImage(
-					coherenceEnhancingDiffusionImage.getType(), destExtents,
-					"ref" + midSlice);
-			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize,
-					sliceSize, midBuffer);
+			refImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents, "ref"
+					+ midSlice);
+			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize, sliceSize, midBuffer);
 			refImage.importData(0, midBuffer, true);
 			refImage.addVOIs(voiVectorNew);
 			// new ViewJFrameImage(refImage);
 
 			FileInfoImageXML fileInfoTarget = new FileInfoImageXML(
-					coherenceEnhancingDiffusionImage.getImageName(), null,
-					FileUtility.XML);
-			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getResolutions();
+					coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
+			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 			float[] newResTarget = { resTarget[0], resTarget[1] };
-			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getExtents();
+			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 			int[] newExtsTarget = { extsTarget[0], extsTarget[1] };
 			fileInfoTarget.setExtents(newExtsTarget);
 			fileInfoTarget.setResolutions(newResTarget);
@@ -1879,38 +1497,28 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				currentSlice = z;
 				int start = z * sliceSize;
 				double[] sourceBuffer = new double[sliceSize];
-				coherenceEnhancingDiffusionImage.exportData(start, sliceSize,
-						sourceBuffer);
+				coherenceEnhancingDiffusionImage.exportData(start, sliceSize, sourceBuffer);
 
-				testImage = new ModelImage(
-						coherenceEnhancingDiffusionImage.getType(),
-						destExtents, "test" + z);
+				testImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents,
+						"test" + z);
 				testImage.importData(0, sourceBuffer, true);
-				boolean endianness = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getEndianess();
-				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getModality();
-				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getResolutions();
+				boolean endianness = coherenceEnhancingDiffusionImage.getFileInfo(0).getEndianess();
+				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0).getModality();
+				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 				float[] newRes = { res[0], res[1] };
-				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getExtents();
+				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 				int[] newExts = { exts[0], exts[1] };
-				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getUnitsOfMeasure();
+				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0).getUnitsOfMeasure();
 				int[] newUnits = { units[0], units[1] };
-				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(
-						0).getImageOrientation();
-				int[] axisOrient = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getAxisOrientation();
+				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getImageOrientation();
+				int[] axisOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getAxisOrientation();
 				int[] newAxisOrient = { axisOrient[0], axisOrient[1] };
-				float[] origin = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getOrigin();
+				float[] origin = coherenceEnhancingDiffusionImage.getFileInfo(0).getOrigin();
 				float[] newOrigin = { origin[0], origin[1] };
 
-				FileInfoImageXML fileInfo = new FileInfoImageXML(
-						coherenceEnhancingDiffusionImage.getImageName(), null,
-						FileUtility.XML);
+				FileInfoImageXML fileInfo = new FileInfoImageXML(coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
 				fileInfo.setDataType(ModelStorageBase.FLOAT);
 				fileInfo.setEndianess(endianness);
 				fileInfo.setExtents(newExts);
@@ -1924,8 +1532,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				FileInfoImageXML[] fileInfos = { fileInfo };
 				testImage.setFileInfo(fileInfos);
 
-				ModelImage resultImage = new ModelImage(testImage.getType(),
-						destExtents, "result" + z);
+				ModelImage resultImage = new ModelImage(testImage.getType(), destExtents, "result" + z);
 				resultImage.importData(0, sourceBuffer, true);
 				resultImage.getVOIs().removeAllElements();
 
@@ -1999,17 +1606,15 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 						}
 					}
 				}
-				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice,
-				// resultImage, refImage, testImage);
-				transformVOI(image, resultImage, refImage, testImage,
-						boundingBox, currentSlice);
+				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice, resultImage, refImage, testImage);
+				transformVOI(image, resultImage, refImage, testImage, boundingBox, currentSlice);
 
 				refImage.importData(0, sourceBuffer, true);
 				refImage.getVOIs().removeAllElements();
 				VOIVector resultingVOIs = resultImage.getVOIs();
 				refImage.addVOIs(resultingVOIs);
 				refImage.setImageName("ref" + (z - 1));
-
+				
 				testImage.disposeLocal();
 				testImage = null;
 				resultImage.disposeLocal();
@@ -2043,10 +1648,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param axis
 	 *            axis orientation
 	 */
-	public void doRegistrationStart(ModelImage image,
-			ModelImage coherenceEnhancingDiffusionImage,
-			Vector<Vector<ModelImage>> imageStackFuzzyC, int startVOI,
-			int[] boundingBox) {
+	public void doRegistrationStart(ModelImage image, ModelImage coherenceEnhancingDiffusionImage, Vector<Vector<ModelImage>> imageStackFuzzyC, 
+			int startVOI, int[] boundingBox) {
 
 		VOIVector VOIs;
 		VOIVector VOIsSrc;
@@ -2054,7 +1657,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		ModelImage testImage = null;
 		ModelImage m_kImageDef = null;
 		int currentSlice;
-
+		
 		// Registration OAR 2D
 		int costChoice = AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED;
 		int DOF = 7;
@@ -2069,14 +1672,13 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		int baseNumIter = 2;
 		int numMinima = 3;
 		boolean doJTEM = false;
-
-		// ************************** Bspline parameters start
-		// *******************************************
+		
+		// **************************  Bspline parameters start *******************************************
 		AlgorithmRegBSpline.Options m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
 		AlgorithmRegBSpline.Options m_kOptionsPass2 = null;
 		Controls m_kControlsPass1;
 		RegistrationMeasure m_kRegMeasure = null;
-
+		
 		m_kControlsPass1 = new Controls(this);
 		// Set defaults for Pass 1.
 		m_kOptionsPass1.iBSplineDegree = 2;
@@ -2089,10 +1691,10 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		m_kControlsPass1.setValues(m_kOptionsPass1);
 
 		// What is the text that appears in the combo box?
-		final String kStrDescription = "Normalized Mutual Information";
-		// "Least Squares"
-		// "Correlation Ratio",
-		// "Normalized Mutual Information"
+		final String kStrDescription =   "Normalized Mutual Information"; 
+														// "Least Squares"
+														// "Correlation Ratio",
+														// "Normalized Mutual Information"
 
 		// Match that text to the known cost functions.
 		if (RegistrationMeasureLeastSquares.getStaticName() == kStrDescription) {
@@ -2103,8 +1705,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				.getStaticName() == kStrDescription) {
 			m_kRegMeasure = new RegistrationMeasureNormalizedMutualInformation();
 		}
-		// ******************************** end
-		// *********************************************
+		// ********************************  end *********************************************
 
 		int xDim = coherenceEnhancingDiffusionImage.getExtents()[0];
 		int yDim = coherenceEnhancingDiffusionImage.getExtents()[1];
@@ -2115,30 +1716,29 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		destExtents[1] = coherenceEnhancingDiffusionImage.getExtents()[1];
 
 		int sliceSize = xDim * yDim;
-		int midSlice = startVOI; // (int) ((zDim) / 2f);
+		int midSlice = startVOI;      // (int) ((zDim) / 2f);
 		System.err.println("loadMask: startSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
-		// UI.registerImage(coherenceEnhancingDiffusionImage);
-		// new ViewJFrameImage(coherenceEnhancingDiffusionImage);
-
+	    // UI.registerImage(coherenceEnhancingDiffusionImage);
+	    // new ViewJFrameImage(coherenceEnhancingDiffusionImage);
+		
 		// if (coherenceEnhancingDiffusionImage.getVOIs() != null) {
 		VOIs = coherenceEnhancingDiffusionImage.getVOIs();
 		// }
-
+    
+		
 		// if (image.getVOIs() != null) {
 		VOIsSrc = image.getVOIs();
 		// }
 
 		// find the intersection of the lower bound with the VOI.
-		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase v = vArray[midSlice].get(0);
 		// VOI totalVOI = v.getGroup();
 
-		Vector<VOIBase>[] vArraySrc = VOIsSrc.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArraySrc = VOIsSrc.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vSrc = vArraySrc[midSlice].get(0);
 		VOI totalVOISrc = vSrc.getGroup();
 
@@ -2162,23 +1762,18 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		// get the mid slice
 		try {
-			refImage = new ModelImage(
-					coherenceEnhancingDiffusionImage.getType(), destExtents,
-					"ref" + midSlice);
-			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize,
-					sliceSize, midBuffer);
+			refImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents, "ref"
+					+ midSlice);
+			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize, sliceSize, midBuffer);
 			refImage.importData(0, midBuffer, true);
 			refImage.addVOIs(voiVectorNew);
 			// new ViewJFrameImage(refImage);
 
 			FileInfoImageXML fileInfoTarget = new FileInfoImageXML(
-					coherenceEnhancingDiffusionImage.getImageName(), null,
-					FileUtility.XML);
-			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getResolutions();
+					coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
+			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 			float[] newResTarget = { resTarget[0], resTarget[1] };
-			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getExtents();
+			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 			int[] newExtsTarget = { extsTarget[0], extsTarget[1] };
 			fileInfoTarget.setExtents(newExtsTarget);
 			fileInfoTarget.setResolutions(newResTarget);
@@ -2198,39 +1793,30 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				currentSlice = z;
 				int start = z * sliceSize;
 				double[] sourceBuffer = new double[sliceSize];
-				coherenceEnhancingDiffusionImage.exportData(start, sliceSize,
-						sourceBuffer);
+				coherenceEnhancingDiffusionImage.exportData(start, sliceSize, sourceBuffer);
 
-				testImage = new ModelImage(
-						coherenceEnhancingDiffusionImage.getType(),
-						destExtents, "test" + z);
+				testImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents,
+						"test" + z);
 				testImage.importData(0, sourceBuffer, true);
-				boolean endianness = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getEndianess();
-				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getModality();
-				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getResolutions();
+				boolean endianness = coherenceEnhancingDiffusionImage.getFileInfo(0).getEndianess();
+				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0).getModality();
+				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 				float[] newRes = { res[0], res[1] };
-				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getExtents();
+				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 				int[] newExts = { exts[0], exts[1] };
-				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getUnitsOfMeasure();
+				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0).getUnitsOfMeasure();
 				int[] newUnits = { units[0], units[1] };
-				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(
-						0).getImageOrientation();
-				int[] axisOrient = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getAxisOrientation();
+				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getImageOrientation();
+				int[] axisOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getAxisOrientation();
 				int[] newAxisOrient = { axisOrient[0], axisOrient[1] };
-				float[] origin = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getOrigin();
+				float[] origin = coherenceEnhancingDiffusionImage.getFileInfo(0).getOrigin();
 				float[] newOrigin = { origin[0], origin[1] };
 
 				// testImage.addVOIs(voiVectorNew);
 				FileInfoImageXML fileInfo = new FileInfoImageXML(
-						coherenceEnhancingDiffusionImage.getImageName(), null,
-						FileUtility.XML);
+						coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
 				fileInfo.setDataType(ModelStorageBase.FLOAT);
 				fileInfo.setEndianess(endianness);
 				fileInfo.setExtents(newExts);
@@ -2244,87 +1830,84 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				FileInfoImageXML[] fileInfos = { fileInfo };
 				testImage.setFileInfo(fileInfos);
 
-				ModelImage resultImage = new ModelImage(testImage.getType(),
-						destExtents, "result" + z);
+				ModelImage resultImage = new ModelImage(testImage.getType(), destExtents,
+						"result" + z);
 				resultImage.importData(0, sourceBuffer, true);
 				resultImage.getVOIs().removeAllElements();
 
-				if (useBSpline) {
-					int[] aiExtentsReg = new int[2];
-					aiExtentsReg = testImage.getExtents();
+				  if ( useBSpline ) {
+				    	int[] aiExtentsReg = new int[2];
+						aiExtentsReg = testImage.getExtents();
 
-					m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg);
+						m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg);
 
-					AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(
-							resultImage, refImage, testImage, m_kImageDef,
-							m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
-					m_kAlgorithmReg.addListener(this);
-					m_kAlgorithmReg.run();
+						AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(resultImage,
+								refImage, testImage, m_kImageDef, m_kRegMeasure,
+								m_kOptionsPass1, m_kOptionsPass2);
+						m_kAlgorithmReg.addListener(this);
+						m_kAlgorithmReg.run();
+						
+						if ( m_kAlgorithmReg != null && m_kAlgorithmReg.isCompleted() ) {
+							m_kAlgorithmReg.setCompleted(true);
+							m_kAlgorithmReg.disposeLocal();
+							m_kAlgorithmReg = null;
+						}
+					} else {
+						AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(testImage,
+								refImage, costChoice, DOF, interp, rotateBegin,
+								rotateEnd, coarseRate, fineRate, doSubsample,
+								doMultiThread, bracketBound, baseNumIter);
 
-					if (m_kAlgorithmReg != null
-							&& m_kAlgorithmReg.isCompleted()) {
-						m_kAlgorithmReg.setCompleted(true);
-						m_kAlgorithmReg.disposeLocal();
-						m_kAlgorithmReg = null;
-					}
-				} else {
-					AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(testImage,
-							refImage, costChoice, DOF, interp, rotateBegin,
-							rotateEnd, coarseRate, fineRate, doSubsample,
-							doMultiThread, bracketBound, baseNumIter);
+						reg2.setJTEM(doJTEM);
+						reg2.addListener(this);
+						reg2.run();
 
-					reg2.setJTEM(doJTEM);
-					reg2.addListener(this);
-					reg2.run();
+						int interp2 = AlgorithmTransform.BSPLINE3;
+						float fillValue = 0.0f;
+						boolean findSolution = false;
+						if (reg2 != null && reg2.isCompleted()) {
+							final TransMatrix finalMatrix = reg2.getTransform();
 
-					int interp2 = AlgorithmTransform.BSPLINE3;
-					float fillValue = 0.0f;
-					boolean findSolution = false;
-					if (reg2 != null && reg2.isCompleted()) {
-						final TransMatrix finalMatrix = reg2.getTransform();
+							if (finalMatrix != null) {
+								findSolution = true;
+								ModelImage tempImage = testImage;
 
-						if (finalMatrix != null) {
-							findSolution = true;
-							ModelImage tempImage = testImage;
+								final int xdimA = tempImage.getExtents()[0];
+								final int ydimA = tempImage.getExtents()[1];
 
-							final int xdimA = tempImage.getExtents()[0];
-							final int ydimA = tempImage.getExtents()[1];
+								final float xresA = tempImage.getFileInfo(0)
+										.getResolutions()[0];
+								final float yresA = tempImage.getFileInfo(0)
+										.getResolutions()[1];
 
-							final float xresA = tempImage.getFileInfo(0)
-									.getResolutions()[0];
-							final float yresA = tempImage.getFileInfo(0)
-									.getResolutions()[1];
+								// final String name =
+								// JDialogBase.makeImageName(refImageSlice.getImageName(),
+								// "_register1");
 
-							// final String name =
-							// JDialogBase.makeImageName(refImageSlice.getImageName(),
-							// "_register1");
+								AlgorithmTransform transform = new AlgorithmTransform(
+										refImage, finalMatrix, interp2, xresA,
+										yresA, xdimA, ydimA, true, false, false);
 
-							AlgorithmTransform transform = new AlgorithmTransform(
-									refImage, finalMatrix, interp2, xresA,
-									yresA, xdimA, ydimA, true, false, false);
+								transform.setUpdateOriginFlag(true);
+								transform.setFillValue(fillValue);
+								transform.run();
+								resultImage = transform.getTransformedImage();
+								transform.finalize();
 
-							transform.setUpdateOriginFlag(true);
-							transform.setFillValue(fillValue);
-							transform.run();
-							resultImage = transform.getTransformedImage();
-							transform.finalize();
-
-							resultImage.calcMinMax();
-							// resultImage.setImageName(name);
-							resultImage.setType(refImage.getType());
-							if (transform != null) {
-								transform.disposeLocal();
-								transform = null;
+								resultImage.calcMinMax();
+								// resultImage.setImageName(name);
+								resultImage.setType(refImage.getType());
+								if (transform != null) {
+									transform.disposeLocal();
+									transform = null;
+								}
 							}
 						}
 					}
-				}
-				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice,
-				// resultImage, refImage, testImage);
-				transformVOI(image, resultImage, refImage, testImage,
-						boundingBox, currentSlice);
+				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice, resultImage, refImage, testImage);
+				transformVOI(image, resultImage, refImage, testImage, boundingBox, currentSlice);
 				// new ViewJFrameImage(resultImage);
-
+				
 				// Switch the images, copy current slice image to refImage
 				// testImage will be the next slice.
 				refImage.importData(0, sourceBuffer, true);
@@ -2332,7 +1915,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				VOIVector resultingVOIs = resultImage.getVOIs();
 				refImage.addVOIs(resultingVOIs);
 				refImage.setImageName("ref" + (z - 1));
-
+				
 				testImage.disposeLocal();
 				testImage = null;
 				resultImage.disposeLocal();
@@ -2371,12 +1954,10 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 * @param axis
 	 *            axis orientation
 	 */
-	public void doRegistrationEnd(ModelImage image,
-			ModelImage coherenceEnhancingDiffusionImage,
-			Vector<Vector<ModelImage>> imageStackFuzzyC, int endVOI,
-			int[] boundingBox) {
-		ModelImage refImage = null;
-		ModelImage testImage = null;
+	public void doRegistrationEnd(ModelImage image, ModelImage coherenceEnhancingDiffusionImage, 
+			Vector<Vector<ModelImage>> imageStackFuzzyC, int endVOI, int[] boundingBox) {
+        ModelImage refImage = null;
+        ModelImage testImage = null;
 		VOIVector VOIs;
 		VOIVector VOIsSrc;
 		ModelImage m_kImageDef = null;
@@ -2396,14 +1977,13 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		int baseNumIter = 2;
 		int numMinima = 3;
 		boolean doJTEM = false;
-
-		// ****************** Bspline parameters start
-		// **************************************
+		
+		// ******************   Bspline parameters start **************************************
 		AlgorithmRegBSpline.Options m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
 		AlgorithmRegBSpline.Options m_kOptionsPass2 = null;
 		Controls m_kControlsPass1;
 		RegistrationMeasure m_kRegMeasure = null;
-
+		
 		m_kControlsPass1 = new Controls(this);
 		// Set defaults for Pass 1.
 		m_kOptionsPass1.iBSplineDegree = 2;
@@ -2416,10 +1996,10 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		m_kControlsPass1.setValues(m_kOptionsPass1);
 
 		// What is the text that appears in the combo box?
-		final String kStrDescription = "Normalized Mutual Information";
-		// "Least Squares"
-		// "Correlation Ratio",
-		// "Normalized Mutual Information"
+		final String kStrDescription =   "Normalized Mutual Information"; 
+														// "Least Squares"
+														// "Correlation Ratio",
+														// "Normalized Mutual Information"
 
 		// Match that text to the known cost functions.
 		if (RegistrationMeasureLeastSquares.getStaticName() == kStrDescription) {
@@ -2430,9 +2010,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				.getStaticName() == kStrDescription) {
 			m_kRegMeasure = new RegistrationMeasureNormalizedMutualInformation();
 		}
-		// ************************* end
-		// ***************************************************
-
+        // *************************   end ***************************************************
+		
 		int xDim = coherenceEnhancingDiffusionImage.getExtents()[0];
 		int yDim = coherenceEnhancingDiffusionImage.getExtents()[1];
 		int zDim = coherenceEnhancingDiffusionImage.getExtents()[2] - 1;
@@ -2442,30 +2021,29 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		destExtents[1] = coherenceEnhancingDiffusionImage.getExtents()[1];
 
 		int sliceSize = xDim * yDim;
-		int midSlice = endVOI; // (int) ((zDim) / 2f);
+		int midSlice = endVOI;      // (int) ((zDim) / 2f);
 		System.err.println("loadMask: startSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
-		// UI.registerImage(coherenceEnhancingDiffusionImage);
-		// new ViewJFrameImage(coherenceEnhancingDiffusionImage);
-
+	    // UI.registerImage(coherenceEnhancingDiffusionImage);
+	    // new ViewJFrameImage(coherenceEnhancingDiffusionImage);
+		
 		// if (coherenceEnhancingDiffusionImage.getVOIs() != null) {
 		VOIs = coherenceEnhancingDiffusionImage.getVOIs();
 		// }
-
+    
+		
 		// if (image.getVOIs() != null) {
 		VOIsSrc = image.getVOIs();
 		// }
 
 		// find the intersection of the lower bound with the VOI.
-		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArray = VOIs.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase v = vArray[midSlice].get(0);
 		// VOI totalVOI = v.getGroup();
 
-		Vector<VOIBase>[] vArraySrc = VOIsSrc.VOIAt(0).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArraySrc = VOIsSrc.VOIAt(0).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase vSrc = vArraySrc[midSlice].get(0);
 		VOI totalVOISrc = vSrc.getGroup();
 
@@ -2489,23 +2067,18 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		// get the mid slice
 		try {
-			refImage = new ModelImage(
-					coherenceEnhancingDiffusionImage.getType(), destExtents,
-					"ref" + midSlice);
-			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize,
-					sliceSize, midBuffer);
+			refImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents, "ref"
+					+ midSlice);
+			coherenceEnhancingDiffusionImage.exportData(midSlice * sliceSize, sliceSize, midBuffer);
 			refImage.importData(0, midBuffer, true);
 			refImage.addVOIs(voiVectorNew);
 			// new ViewJFrameImage(refImage);
 
 			FileInfoImageXML fileInfoTarget = new FileInfoImageXML(
-					coherenceEnhancingDiffusionImage.getImageName(), null,
-					FileUtility.XML);
-			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getResolutions();
+					coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
+			float[] resTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 			float[] newResTarget = { resTarget[0], resTarget[1] };
-			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0)
-					.getExtents();
+			int[] extsTarget = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 			int[] newExtsTarget = { extsTarget[0], extsTarget[1] };
 			fileInfoTarget.setExtents(newExtsTarget);
 			fileInfoTarget.setResolutions(newResTarget);
@@ -2525,39 +2098,30 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				currentSlice = z;
 				int start = z * sliceSize;
 				double[] sourceBuffer = new double[sliceSize];
-				coherenceEnhancingDiffusionImage.exportData(start, sliceSize,
-						sourceBuffer);
+				coherenceEnhancingDiffusionImage.exportData(start, sliceSize, sourceBuffer);
 
-				testImage = new ModelImage(
-						coherenceEnhancingDiffusionImage.getType(),
-						destExtents, "test" + z);
+				testImage = new ModelImage(coherenceEnhancingDiffusionImage.getType(), destExtents,
+						"test" + z);
 				testImage.importData(0, sourceBuffer, true);
-				boolean endianness = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getEndianess();
-				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getModality();
-				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getResolutions();
+				boolean endianness = coherenceEnhancingDiffusionImage.getFileInfo(0).getEndianess();
+				int modality = coherenceEnhancingDiffusionImage.getFileInfo(0).getModality();
+				float[] res = coherenceEnhancingDiffusionImage.getFileInfo(0).getResolutions();
 				float[] newRes = { res[0], res[1] };
-				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getExtents();
+				int[] exts = coherenceEnhancingDiffusionImage.getFileInfo(0).getExtents();
 				int[] newExts = { exts[0], exts[1] };
-				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0)
-						.getUnitsOfMeasure();
+				int[] units = coherenceEnhancingDiffusionImage.getFileInfo(0).getUnitsOfMeasure();
 				int[] newUnits = { units[0], units[1] };
-				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(
-						0).getImageOrientation();
-				int[] axisOrient = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getAxisOrientation();
+				int imageOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getImageOrientation();
+				int[] axisOrient = coherenceEnhancingDiffusionImage.getFileInfo(0)
+						.getAxisOrientation();
 				int[] newAxisOrient = { axisOrient[0], axisOrient[1] };
-				float[] origin = coherenceEnhancingDiffusionImage
-						.getFileInfo(0).getOrigin();
+				float[] origin = coherenceEnhancingDiffusionImage.getFileInfo(0).getOrigin();
 				float[] newOrigin = { origin[0], origin[1] };
 
 				// testImage.addVOIs(voiVectorNew);
 				FileInfoImageXML fileInfo = new FileInfoImageXML(
-						coherenceEnhancingDiffusionImage.getImageName(), null,
-						FileUtility.XML);
+						coherenceEnhancingDiffusionImage.getImageName(), null, FileUtility.XML);
 				fileInfo.setDataType(ModelStorageBase.FLOAT);
 				fileInfo.setEndianess(endianness);
 				fileInfo.setExtents(newExts);
@@ -2571,24 +2135,23 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				FileInfoImageXML[] fileInfos = { fileInfo };
 				testImage.setFileInfo(fileInfos);
 
-				ModelImage resultImage = new ModelImage(testImage.getType(),
-						destExtents, "result" + z);
+				ModelImage resultImage = new ModelImage(testImage.getType(), destExtents,
+						"result" + z);
 				resultImage.importData(0, sourceBuffer, true);
 				resultImage.getVOIs().removeAllElements();
-				if (useBSpline) {
+				if ( useBSpline ) {
 					int[] aiExtentsReg = new int[2];
 					aiExtentsReg = testImage.getExtents();
-
+	
 					m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg);
-
-					AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(
-							resultImage, refImage, testImage, m_kImageDef,
-							m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+	
+					AlgorithmRegBSpline2D m_kAlgorithmReg = new AlgorithmRegBSpline2D(resultImage,
+							refImage, testImage, m_kImageDef, m_kRegMeasure,
+							m_kOptionsPass1, m_kOptionsPass2);
 					m_kAlgorithmReg.addListener(this);
 					m_kAlgorithmReg.run();
-
-					if (m_kAlgorithmReg != null
-							&& m_kAlgorithmReg.isCompleted()) {
+					
+					if ( m_kAlgorithmReg != null && m_kAlgorithmReg.isCompleted() ) {
 						m_kAlgorithmReg.setCompleted(true);
 						m_kAlgorithmReg.disposeLocal();
 						m_kAlgorithmReg = null;
@@ -2646,10 +2209,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 					}
 				}
 
-				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice,
-				// resultImage, refImage, testImage);
-				transformVOI(image, resultImage, refImage, testImage,
-						boundingBox, currentSlice);
+				// segmentFromFuzzyC(imageStackFuzzyC, currentSlice, resultImage, refImage, testImage);
+				transformVOI(image, resultImage, refImage, testImage, boundingBox, currentSlice);
 				// new ViewJFrameImage(resultImage);
 
 				// Switch the images, copy current slice image to refImage
@@ -2659,7 +2220,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				VOIVector resultingVOIs = resultImage.getVOIs();
 				refImage.addVOIs(resultingVOIs);
 				refImage.setImageName("ref" + (z - 1));
-
+				
 				testImage.disposeLocal();
 				testImage = null;
 				resultImage.disposeLocal();
@@ -2677,13 +2238,15 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		midBuffer = null;
 
 	}
-
 	
 	/**
-	 * When user draws the 3 VOIs out of order, adjust the VOIs in ascending order
-	 * @param image  source image, axial, sagittal or coronal 
+	 * When user draws the 3 VOIs out of order, adjust the VOIs in ascending
+	 * order
+	 * 
+	 * @param image
+	 *            source image, axial, sagittal or coronal
 	 */
-    public void adjustVOIs(ModelImage image) {
+	public void adjustVOIs(ModelImage image) {
 		
 		int[] extents = (int[]) image.getFileInfo(0).getExtents();
 		int zDim = extents[2] - 1;
@@ -2773,7 +2336,6 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	    	
 	}
 
-	
 	/**
 	 * Crop MR image with specified X, Y, Z bounds Use the mid slice as the
 	 * initial guidance to find the bounds.
@@ -2792,10 +2354,9 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	 *            mid slice VOI
 	 * @return
 	 */
-	public ModelImage cropROI(ModelImage image, int[] xBounds, int[] yBounds,
-			int[] zBounds, int[] boundingBox, int midVOI) {
+	public ModelImage cropROI(ModelImage image, int[] xBounds, int[] yBounds, int[] zBounds, int[] boundingBox, int midVOI) {
 
-		VOIVector VOIs;
+		 VOIVector VOIs;
 		int minX = 999, maxX = -999;
 		int minY = 999, maxY = -999;
 
@@ -2807,7 +2368,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		int i;
 
 		ModelImage cropImage;
-
+		
 		int[] extents = (int[]) image.getFileInfo(0).getExtents();
 
 		zDim = extents[2] - 1;
@@ -2817,12 +2378,11 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		// System.err.println("cropROI: middleSlice = " + middleSlice);
 
 		// if (image.getVOIs() != null) {
-		VOIs = image.getVOIs();
+	    VOIs = image.getVOIs();
 		// }
 
 		// find the intersection of the lower bound with the VOI.
-		Vector<VOIBase>[] vArray = VOIs.VOIAt(1).getSortedCurves(
-				VOIBase.ZPLANE, zDim);
+		Vector<VOIBase>[] vArray = VOIs.VOIAt(1).getSortedCurves(VOIBase.ZPLANE, zDim);
 		VOIBase v = vArray[midVOI].get(0);
 
 		int nPts = v.size();
@@ -2864,7 +2424,8 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		boundingBox[1] = boxXmax;
 		boundingBox[2] = boxYmin;
 		boundingBox[3] = boxYmax;
-
+		
+		
 		zBounds[0] = 0;
 		zBounds[1] = zDim;
 		System.err.println("zBound[1] = " + zBounds[1]);
@@ -2921,8 +2482,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			}
 
 			// Make result image
-			cropImage = new ModelImage(image.getType(), destExtents,
-					makeImageName(image.getImageName(), "_crop"));
+			cropImage = new ModelImage(image.getType(), destExtents, makeImageName(image.getImageName(), "_crop"));
 
 			int[] xCrop = new int[] { 0, 0 };
 			int[] yCrop = new int[] { 0, 0 };
@@ -2943,8 +2503,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 				zCrop[0] = -1 * (zBounds[0]);
 				zCrop[1] = -1 * (zBounds[1] + 1);
 			}
-			AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(image,
-					cropImage, xCrop, yCrop, zCrop);
+			AlgorithmAddMargins cropAlgo = new AlgorithmAddMargins(image, cropImage, xCrop, yCrop, zCrop);
 
 			cropAlgo.addListener(this);
 
@@ -2953,7 +2512,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 			cropAlgo.run();
 			cropAlgo.finalize();
 			cropAlgo = null;
-
+			
 		} catch (OutOfMemoryError e) {
 			MipavUtil
 					.displayError("Dialog Crop: unable to allocate enough memory");
@@ -2974,7 +2533,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		mainPanel = new JPanel();
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-
+		
 		final GridBagConstraints gbc = new GridBagConstraints();
 
 		gbc.gridx = 0;
@@ -2982,26 +2541,26 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
-
-		// ************************* Axial Image ******************************
+	    	
+		// *************************  Axial Image ******************************
 		JPanel imageSelectionPanelAxial = new JPanel();
 		imageSelectionPanelAxial.setLayout(new GridLayout(4, 2));
 		imageSelectionPanelAxial.setBorder(buildTitledBorder("Axial Image"));
-
+		
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		labelAxis = new JLabel("Axis: Axial");
 		labelAxis.setFont(serif12);
 		labelAxis.setForeground(Color.black);
-
-		JLabel emptyLabelAxial = new JLabel("");
-		imageSelectionPanelAxial.add(labelAxis, gbc);
-		gbc.gridx = 1;
-		imageSelectionPanelAxial.add(emptyLabelAxial, gbc);
-
+        
+	    JLabel emptyLabelAxial = new JLabel("");
+	    imageSelectionPanelAxial.add(labelAxis, gbc);
+	    gbc.gridx = 1;
+	    imageSelectionPanelAxial.add(emptyLabelAxial, gbc);
+		
 		// Enter the start, end and mid slice numbers
-
-		// start VOI
+		
+        // start VOI 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		labelStartVOIAxial = new JLabel("Start VOI: ");
@@ -3016,7 +2575,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		gbc.gridx = 1;
 		imageSelectionPanelAxial.add(textFieldStartVOIAxial, gbc);
-
+		
 		// Mid VOI
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -3031,7 +2590,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldMidVOIAxial.setText(String.valueOf(midVOIAxial));
 		gbc.gridx = 1;
 		imageSelectionPanelAxial.add(textFieldMidVOIAxial, gbc);
-
+		
 		// end VOI
 		gbc.gridx = 0;
 		gbc.gridy = 3;
@@ -3044,33 +2603,32 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldEndVOIAxial = new JTextField(10);
 		textFieldEndVOIAxial.setFont(serif12);
 		textFieldEndVOIAxial.setText(String.valueOf(endVOIAxial));
-
+		
 		gbc.gridx = 1;
 		imageSelectionPanelAxial.add(textFieldEndVOIAxial, gbc);
-
+		
 		// mainPanel.add(svmOptionsPanel, BorderLayout.CENTER);
-		mainPanel.add(imageSelectionPanelAxial);
-
-		// ************************* Sagittal Image ***************************
-		JPanel imageSelectionPanelSagittal = new JPanel();
-		imageSelectionPanelSagittal.setLayout(new GridLayout(4, 2));
-		imageSelectionPanelSagittal
-				.setBorder(buildTitledBorder("Sagittal Image"));
-
-		gbc.gridx = 0;
+	    mainPanel.add(imageSelectionPanelAxial);
+	    
+	    // *************************  Sagittal Image ***************************
+	    JPanel imageSelectionPanelSagittal = new JPanel();
+	    imageSelectionPanelSagittal.setLayout(new GridLayout(4, 2));
+	    imageSelectionPanelSagittal.setBorder(buildTitledBorder("Sagittal Image"));
+	    
+	    gbc.gridx = 0;
 		gbc.gridy = 0;
 		labelSagittal = new JLabel("Axis: Sagittal");
 		labelSagittal.setFont(serif12);
 		labelSagittal.setForeground(Color.black);
-
-		JLabel emptyLabelSagittal = new JLabel("");
-		imageSelectionPanelSagittal.add(labelSagittal, gbc);
-		gbc.gridx = 1;
-		imageSelectionPanelSagittal.add(emptyLabelSagittal, gbc);
-
+        
+	    JLabel emptyLabelSagittal = new JLabel("");
+	    imageSelectionPanelSagittal.add(labelSagittal, gbc);
+	    gbc.gridx = 1;
+	    imageSelectionPanelSagittal.add(emptyLabelSagittal, gbc);
+		
 		// Enter the start, end and mid slice numbers
-
-		// start VOI
+		
+        // start VOI 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		labelStartVOISagittal = new JLabel("Start VOI: ");
@@ -3085,7 +2643,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		gbc.gridx = 1;
 		imageSelectionPanelSagittal.add(textFieldStartVOISagittal, gbc);
-
+		
 		// Mid VOI
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -3100,7 +2658,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldMidVOISagittal.setText(String.valueOf(midVOISagittal));
 		gbc.gridx = 1;
 		imageSelectionPanelSagittal.add(textFieldMidVOISagittal, gbc);
-
+		
 		// end VOI
 		gbc.gridx = 0;
 		gbc.gridy = 3;
@@ -3113,32 +2671,31 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldEndVOISagittal = new JTextField(10);
 		textFieldEndVOISagittal.setFont(serif12);
 		textFieldEndVOISagittal.setText(String.valueOf(endVOISagittal));
-
+		
 		gbc.gridx = 1;
 		imageSelectionPanelSagittal.add(textFieldEndVOISagittal, gbc);
-
-		mainPanel.add(imageSelectionPanelSagittal);
-
-		// ************************* Coronal Image ***************************
-		JPanel imageSelectionPanelCoronal = new JPanel();
-		imageSelectionPanelCoronal.setLayout(new GridLayout(4, 2));
-		imageSelectionPanelCoronal
-				.setBorder(buildTitledBorder("Coronal Image"));
-
-		gbc.gridx = 0;
+		
+	    mainPanel.add(imageSelectionPanelSagittal);
+	    
+	    // *************************  Coronal Image ***************************
+	    JPanel imageSelectionPanelCoronal = new JPanel();
+	    imageSelectionPanelCoronal.setLayout(new GridLayout(4, 2));
+	    imageSelectionPanelCoronal.setBorder(buildTitledBorder("Coronal Image"));
+	    
+	    gbc.gridx = 0;
 		gbc.gridy = 0;
 		labelCoronal = new JLabel("Axis: Coronal");
 		labelCoronal.setFont(serif12);
 		labelCoronal.setForeground(Color.black);
-
-		JLabel emptyLabelCoronal = new JLabel("");
-		imageSelectionPanelCoronal.add(labelCoronal, gbc);
-		gbc.gridx = 1;
-		imageSelectionPanelCoronal.add(emptyLabelCoronal, gbc);
-
+        
+	    JLabel emptyLabelCoronal = new JLabel("");
+	    imageSelectionPanelCoronal.add(labelCoronal, gbc);
+	    gbc.gridx = 1;
+	    imageSelectionPanelCoronal.add(emptyLabelCoronal, gbc);
+		
 		// Enter the start, end and mid slice numbers
-
-		// start VOI
+		
+        // start VOI 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
 		labelStartVOICoronal = new JLabel("Start VOI: ");
@@ -3153,7 +2710,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 
 		gbc.gridx = 1;
 		imageSelectionPanelCoronal.add(textFieldStartVOICoronal, gbc);
-
+		
 		// Mid VOI
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -3168,7 +2725,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldMidVOICoronal.setText(String.valueOf(midVOICoronal));
 		gbc.gridx = 1;
 		imageSelectionPanelCoronal.add(textFieldMidVOICoronal, gbc);
-
+		
 		// end VOI
 		gbc.gridx = 0;
 		gbc.gridy = 3;
@@ -3181,33 +2738,33 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		textFieldEndVOICoronal = new JTextField(10);
 		textFieldEndVOICoronal.setFont(serif12);
 		textFieldEndVOICoronal.setText(String.valueOf(endVOICoronal));
-
+		
 		gbc.gridx = 1;
 		imageSelectionPanelCoronal.add(textFieldEndVOICoronal, gbc);
+		
+	    mainPanel.add(imageSelectionPanelCoronal);
+	    
+	    // ***************  Registration Panel *****************************
+	    JPanel registrationPanel = new JPanel();
+	    registrationPanel.setLayout(new GridLayout(1, 2));
+	    registrationPanel.setBorder(buildTitledBorder("Registration"));
+	    
+	    final ButtonGroup group1 = new ButtonGroup();
+        radioBSpline = new JRadioButton("B-Spline", true);
+        radioBSpline.setFont(MipavUtil.font12);
+        group1.add(radioBSpline);
+        radioBSpline.addActionListener(this);
+        registrationPanel.add(radioBSpline);
 
-		mainPanel.add(imageSelectionPanelCoronal);
-
-		// *************** Registration Panel *****************************
-		JPanel registrationPanel = new JPanel();
-		registrationPanel.setLayout(new GridLayout(1, 2));
-		registrationPanel.setBorder(buildTitledBorder("Registration"));
-
-		final ButtonGroup group1 = new ButtonGroup();
-		radioBSpline = new JRadioButton("B-Spline", true);
-		radioBSpline.setFont(MipavUtil.font12);
-		group1.add(radioBSpline);
-		radioBSpline.addActionListener(this);
-		registrationPanel.add(radioBSpline);
-
-		radioOAR = new JRadioButton("OAR", false);
-		radioOAR.setFont(MipavUtil.font12);
-		group1.add(radioOAR);
-		radioOAR.addActionListener(this);
-		registrationPanel.add(radioOAR);
-
-		mainPanel.add(registrationPanel);
-
-		// *********************** Ok Buttons ***********************
+        radioOAR = new JRadioButton("OAR", false);
+        radioOAR.setFont(MipavUtil.font12);
+        group1.add(radioOAR);
+        radioOAR.addActionListener(this);
+        registrationPanel.add(radioOAR);
+	    
+        mainPanel.add(registrationPanel);
+	    
+	    // ***********************  Ok Buttons ***********************
 		mainPanel.add(buildButtons());
 
 		getContentPane().add(mainPanel);
@@ -3215,6 +2772,7 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 		setResizable(true);
 	}
 
+	
 	class Edge {
 
 		float weight;
@@ -3305,3 +2863,5 @@ public class JDialogProstateSegmentationRegBSpline3DFast extends JDialogBase
 	}
 
 }
+
+
