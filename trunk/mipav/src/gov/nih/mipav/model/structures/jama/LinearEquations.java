@@ -108,7 +108,7 @@ public class LinearEquations implements java.io.Serializable {
          double amax[] = new double[1];
          double anorm[] = new double[1];
          double cndnum[] = new double[1];
-         double rcond = 0.0;
+         double rcond[] = new double[1];
          double rcondc = 0.0;
          double roldc = 0.0;
          double scond[] = new double[1];
@@ -506,6 +506,13 @@ public class LinearEquations implements java.io.Serializable {
                              // using dposvx.
                              
                              srnamt = new String("DPOSVX");
+                             vec = new double[nrhs];
+                             workspace = new double[3*n];
+                             dposvx(fact, uplo, n, nrhs, A, lda, AFAC, lda, equed, s, B, lda,
+                                    X, lda, rcond, rwork, vec, workspace, iwork, info);
+                             for (j = 0; j < nrhs; j++) {
+                                 rwork[nrhs + j] = vec[j];
+                             }
                              
                              // Check the error code from dposvx.
                              
@@ -610,7 +617,7 @@ public class LinearEquations implements java.io.Serializable {
                              
                              // Compare rcond from dposvx with the computed value in rcondc.
                              
-                             result[5] = dget06(rcond, rcondc);
+                             result[5] = dget06(rcond[0], rcondc);
                              
                              // Print information about the tests that did not pass threshold
                              for (k = k1-1; k < 6; k++) {
@@ -683,17 +690,26 @@ public class LinearEquations implements java.io.Serializable {
      * This is a port of a portion of LAPACK test routine DERRVX.f version 3.4.1
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., April, 2012
-     * This routine checks the error exits of dposv.
+     * This routine checks the error exits of dposv and dposvx.
      * 
-     * derrvx correctly found 5 of 5 dposv error exits.
+     * derrvx correctly found 15 of 15 dposv and dposvx error exits.
      */
      public void derrvx() {
          int nmax = 4;
          int info[] = new int[1];
+         int iw[] = new int[nmax];
          double A[][] = new double[nmax][nmax];
+         double AF[][] = new double[nmax][nmax];
          double B[][] = new double[nmax][nmax];
-         int npass = 5;
-         final int ntotal = 5; 
+         double c[] = new double[nmax];
+         double rcond[] = new double[1];
+         double r1[] = new double[nmax];
+         double r2[] = new double[nmax];
+         double w[] = new double[2*nmax];
+         double X[][] = new double[nmax][nmax];
+         char eq[] = new char[]{' '};
+         int npass = 15;
+         final int ntotal = 15; 
          int i;
          int j;
          
@@ -701,6 +717,7 @@ public class LinearEquations implements java.io.Serializable {
          for (j = 0; j < nmax; j++) {
              for (i = 0; i < nmax; i++) {
                  A[i][j] = 1.0/(double)(i+j);
+                 AF[i][j] = 1.0/(double)(i+j);
                  B[i][j] = 1.0/(double)(i+j);
              }
          }
@@ -741,8 +758,81 @@ public class LinearEquations implements java.io.Serializable {
              npass--;
          }
          
-         Preferences.debug("derrvx correctly found " + npass + " of " + ntotal + " dposv error exits\n", Preferences.DEBUG_ALGORITHM);
-         UI.setDataText("derrvx correctly found " + npass + " of " + ntotal + " dpsov error exits\n");
+         // Tests the error exits of dposvx
+         dposvx('/', 'U', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -1) {
+             Preferences.debug("dposvx('/', 'U', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposvx('N', '/', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -2) {
+             Preferences.debug("dposvx('N', '/', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+     
+         dposvx('N', 'U', -1, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -3) {
+             Preferences.debug("dposvx('N', 'U', -1, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+                 
+         dposvx('N', 'U', 0, -1, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -4) {
+             Preferences.debug("dposvx('N', 'U', 0, -1, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposvx('N', 'U', 2, 0, A, 1, AF, 2, eq, c, B, 2, X, 2, rcond, r1, r2, w, iw, info);
+         if (info[0] != -6) {
+             Preferences.debug("dposvx('N', 'U', 2, 0, A, 1, AF, 2, eq, c, B, 2, X, 2, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -6\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposvx('N', 'U', 2, 0, A, 2, AF, 1, eq, c, B, 2, X, 2, rcond, r1, r2, w, iw, info);
+         if (info[0] != -8) {
+             Preferences.debug("dposvx('N', 'U', 2, 0, A, 2, AF, 1, eq, c, B, 2, X, 2, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -8\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+                 
+         eq[0] = '/';
+         dposvx('F', 'U', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -9) {
+             Preferences.debug("dposvx('F', 'U', 0, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -9\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }      
+                
+         eq[0] = 'Y';
+         dposvx('F', 'U', 1, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -10) {
+             Preferences.debug("dposvx('F', 'U', 1, 0, A, 1, AF, 1, eq, c, B, 1, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -10\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         }
+         
+         dposvx('N', 'U', 2, 0, A, 2, AF, 2, eq, c, B, 1, X, 2, rcond, r1, r2, w, iw, info);
+         if (info[0] != -12) {
+             Preferences.debug("dposvx('N', 'U', 2, 0, A, 2, AF, 2, eq, c, B, 1, X, 2, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -12\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         } 
+         
+         dposvx('N', 'U', 2, 0, A, 2, AF, 2, eq, c, B, 2, X, 1, rcond, r1, r2, w, iw, info);
+         if (info[0] != -14) {
+             Preferences.debug("dposvx('N', 'U', 2, 0, A, 2, AF, 2, eq, c, B, 2, X, 1, rcond, r1, r2, w, iw, info) produced info[0] = " +
+                                info[0] + " instead of info[0] = -14\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+         } 
+                 
+         Preferences.debug("derrvx correctly found " + npass + " of " + ntotal + " dposv and dposvx error exits\n", Preferences.DEBUG_ALGORITHM);
+         UI.setDataText("derrvx correctly found " + npass + " of " + ntotal + " dposv and dposvx error exits\n");
          return;
      } // derrvx
      
@@ -2458,6 +2548,173 @@ public class LinearEquations implements java.io.Serializable {
                        computed solution can be more accurate than the
                        value of rcond would suggest.
      */
+    public void dposvx(char fact, char uplo, int n, int nrhs, double[][] A, int lda, double[][] AF,
+                       int ldaf, char[] equed, double[] s, double[][] B, int ldb, double[][] X,
+                       int ldx, double[] rcond, double[] ferr, double[] berr, double[] work,
+                       int[] iwork, int[] info) {
+        boolean equil;
+        boolean nofact;
+        boolean rcequ;
+        int i;
+        int infequ[] = new int[1];
+        int j;
+        double amax[] = new double[1];
+        double anorm;
+        double smlnum = ge.dlamch('S'); // Sagfe minimum
+        double bignum = 1.0/smlnum;
+        double scond[] = new double[1];
+        double smax;
+        double smin;
+        
+        info[0] = 0;
+        nofact = (fact == 'N');
+        equil = (fact == 'E');
+        if (nofact || equil) {
+           equed[0] = 'N';
+           rcequ = false;
+        }
+        else {
+           rcequ = (equed[0] == 'Y');
+           smlnum = ge.dlamch('S'); // Safe minimum
+           bignum = 1.0 / smlnum;
+        }
+  
+        // Test the input parameters.
+  
+        if (!nofact && !equil && !(fact == 'F')) {
+           info[0] = -1;
+        }
+        else if (!((uplo == 'U') || (uplo == 'u')) && !((uplo == 'L') || (uplo == 'l'))) {
+           info[0] = -2;
+        }
+        else if (n < 0) {
+           info[0] = -3;
+        }
+        else if (nrhs < 0) {
+           info[0] = -4;
+        }
+        else if (lda < Math.max(1, n)) {
+           info[0] = -6;
+        }
+        else if (ldaf < Math.max(1, n)) {
+           info[0] = -8;
+        }
+        else if ((fact == 'F') && !(rcequ || (equed[0] == 'N'))) {
+           info[0] = -9;
+        }
+        else {
+           if (rcequ) {
+              smin = bignum;
+              smax = 0.0;
+              for (j = 0; j < n; j++) {
+                 smin = Math.min(smin, s[j]);
+                 smax = Math.max(smax, s[j]);
+              } // for (j = 0; j < n; j++)
+              if (smin <= 0.0) {
+                 info[0] = -10;
+              }
+              else if (n > 0) {
+                 scond[0] = Math.max(smin, smlnum) / Math.min(smax, bignum);
+              }
+              else {
+                 scond[0] = 1.0;
+              }
+           } // if (rcequ)
+           if (info[0] == 0) {
+              if (ldb < Math.max(1, n)) {
+                 info[0] = -12;
+              }
+              else if (ldx < Math.max(1, n)) {
+                 info[0] = -14;
+              }
+           } // if (info[0] == 0)
+        } // else
+  
+        if (info[0] != 0) {
+           MipavUtil.displayError("dposvx had info[0] = " + info[0]);
+           return;
+        }
+  
+        if (equil) {
+  
+          //  Compute row and column scalings to equilibrate the matrix A.
+   
+           dpoequ(n, A, lda, s, scond, amax, infequ);
+           if (infequ[0] == 0) {
+  
+              // Equilibrate the matrix.
+  
+              dlaqsy(uplo, n, A, lda, s, scond[0], amax[0], equed);
+              rcequ = (equed[0] == 'Y');
+           } // if (infequ == 0)
+        } // if (equil)
+  
+        // Scale the right hand side.
+  
+        if (rcequ) {
+           for (j = 0; j < nrhs; j++) {
+              for (i = 0; i < n; i++) {
+                 B[i][j] = s[i]*B[i][j];
+              } // for (i = 0; i < n; i++)
+           } // for (j = 0; j < nrhs; j++)
+        } // if (rcequ)
+  
+        if (nofact || equil) {
+  
+           // Compute the Cholesky factorization A = U**T *U or A = L*L**T.
+  
+           ge.dlacpy(uplo, n, n, A, lda, AF, ldaf);
+           dpotrf(uplo, n, AF, ldaf, info);
+  
+           // Return if INFO is non-zero.
+  
+           if (info[0] > 0) {
+              rcond[0] = 0.0;
+              return;
+           } // if (info[0] > 0)
+        } // if (nofact || equil)
+  
+        // Compute the norm of the matrix A.
+  
+        anorm = ge.dlansy('1', uplo, n, A, lda, work);
+  
+        // Compute the reciprocal of the condition number of A.
+  
+        //CALL DPOCON( UPLO, N, AF, LDAF, ANORM, RCOND, WORK, IWORK, INFO )
+  
+        // Compute the solution matrix X.
+  
+        ge.dlacpy('F', n, nrhs, B, ldb, X, ldx);
+        dpotrs(uplo, n, nrhs, AF, ldaf, X, ldx, info);
+  
+        // Use iterative refinement to improve the computed solution and
+        // compute error bounds and backward error estimates for it.
+  
+        //CALL DPORFS( UPLO, N, NRHS, A, LDA, AF, LDAF, B, LDB, X, LDX,
+       //$             FERR, BERR, WORK, IWORK, INFO )
+  
+        // Transform the solution matrix X to a solution of the original system.
+  
+        if (rcequ) {
+           for (j = 0; j < nrhs; j++) {
+              for (i = 0; i < n; i++) {
+                  X[i][j] = s[i]*X[i][j];
+              } // for (i = 0; i < n; i++)
+           } // for (j = 0; j < nrhs; j++)
+           for (j = 0; j < nrhs; j++) {
+              ferr[j] = ferr[j] / scond[0];
+           } // for (j = 0; j < nrhs; j++)
+        } // if (rcequ)
+   
+        // Set info[0] = n+1 if the matrix is singular to working precision.
+  
+        if (rcond[0] < ge.dlamch('E')) {
+           info[0] = n + 1;
+        }
+  
+        return;
+
+    } // dposvx
     
     /**
      * This is a port of LAPACK version routine 3.4.0 DPOTRF.F created by the University of Tennessee, University
@@ -3036,6 +3293,932 @@ public class LinearEquations implements java.io.Serializable {
         return;
 
     } // dpotri
+    
+    /**
+     * This is a port of LAPACK version auxiliary routine 3.4.2 DLACN2.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., September 2012.
+     * 
+     * Contributor: Nick Higham, University of Manchester
+     * 
+     * Reference: N.J. Higham, "FORTRAN codes for estimating the one-norm of
+       a real or complex matrix, with applications to condition estimation",
+       ACM Trans. Math. Soft., vol. 14, no. 4, pp. 381-396, December 1988.
+     * 
+     * dlacn2 estimates the 1-norm of a square matrix, using reverse communication for evaluating matrix-vector products.
+     * 
+     * dlacn2 estimates the 1-norm of a square, real matrix A.
+       Reverse communication is used for evaluating matrix-vector products.
+        
+       @param input int n
+           The order of the matrix.  n >= 1.
+       @param output double[] v of dimension (n).
+           On the final return, V = A*W,  where  EST = norm(V)/norm(W)
+           (W is not returned).
+       @param (input/output) double[] x of dimension (n).
+           On an intermediate return, x should be overwritten by
+                 A * x,   if KASE=1,
+                 A**T * x,  if KASE=2,
+           and dlacn2 must be re-called with all the other parameters
+           unchanged.
+       @param output int[] isgn of dimension (n).
+       @param (input/output) double[] est of dimension (1).
+           On entry with kase[0] = 1 or 2 and isave[0] = 3, est should be
+           unchanged from the previous call to dlacn2.
+           On exit, est[0] is an estimate (a lower bound) for norm(A). 
+       @param (input/output) int[] kase of dimension (1).
+           On the initial call to dlacn2, kase[0] should be 0.
+           On an intermediate return, kase[0] will be 1 or 2, indicating
+           whether x should be overwritten by A * x  or A**T * x.
+           On the final return from dlacn2, kase[0] will again be 0.
+       @param (input/output) int[] isave of dimension (3).
+           isave is used to save variables between calls to dlacn2
+     */
+    private void dlacn2(int n, double[] v, double[] x, int[] isgn, double[] est, int[] kase, int[] isave) {
+        final int itmax = 5;
+        int i;
+        int jlast;
+        double altsgn;
+        double estold;
+        double temp;
+        double maxVal;
+        int isgn2;
+        boolean converged;
+        double absSum;
+        
+        if (kase[0] == 0) {
+            for (i = 0; i < n; i++) {
+                x[i] = 1.0 / (double)n;
+            } // for (i = 0; i < n; i++)
+            kase[0] = 1;
+            isave[0] = 1;
+            return;
+        } // if (kase[0] == 0)
+        
+        if (isave[0] == 1) {
+            // ENTRY   (isave[0] = 1)
+            // FIRST ITERATION.  x HAS BEEN OVERWRITTEN BY A*x. 
+            if (n == 1) {
+                v[0] = x[0];
+                est[0] = Math.abs(v[0]);
+                // QUIT
+                kase[0] = 0;
+                return;
+            } // if (n == 1)
+            est[0] = Math.abs(x[0]);
+            for (i = 1; i < n; i++) {
+                est[0] += Math.abs(x[i]);
+            }
+    
+            for (i = 0; i < n; i++) {
+                if (x[i] >= 0) {
+                    x[i] = 1.0;
+                }
+                else {
+                    x[i] = -1.0;
+                }
+                isgn[i] = (int)Math.round(x[i]);
+            } // for (i = 0; i < n; i++)
+            kase[0] = 2;
+            isave[0] = 2;
+            return;
+        } // if (isave[0] == 1)
+        else if (isave[0] == 2) {
+            // ENTRY   (isave[0] = 2)
+            // FIRST ITERATION.  x HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*x.
+        
+            isave[1] = 0;
+            maxVal = Math.abs(x[0]);
+            for (i = 1; i < n; i++) {
+                if (Math.abs(x[i]) > maxVal) {
+                    maxVal = Math.abs(x[i]);
+                    isave[1] = i;
+                }
+            }
+            isave[2] = 2;
+            
+            // MAIN LOOP - ITERATIONS 2,3,...,ITMAX.
+            for (i = 0; i < n; i++) {
+                x[i] = 0.0;
+            }
+            x[isave[1]] = 1.0;
+            kase[0] = 1;
+            isave[0] = 3;
+            return;    
+        } // else if (isave[0] == 2)
+        else if (isave[0] == 3) {
+            // ENTRY   (isave[0] = 3)
+            // x HAS BEEN OVERWRITTEN BY A*x.
+            for (i = 0; i < n; i++) {
+                v[i] = x[i];
+            }
+            estold = est[0];
+            est[0] = Math.abs(v[0]);
+            for (i = 1; i < n; i++) {
+                est[0] += Math.abs(v[i]);
+            }
+            converged = true;
+            for (i = 0; i < n; i++) {
+                if (x[i] >= 0) {
+                    isgn2 = 1;
+                }
+                else {
+                    isgn2 = -1;
+                }
+                if (isgn2 != isgn[i]) {
+                    if (est[0] > estold) {
+                        converged = false;
+                    }
+                    break;
+                }
+            } // for (i = 0; i < n; i++)
+            if (converged) {
+                altsgn = 1.0;
+                for (i = 1; i <= n; i++) {
+                    x[i] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
+                    altsgn = -altsgn;
+                } // for (i = 1; i <= n; i++)
+                kase[0] = 1;
+                isave[0] = 5;
+                return;    
+            } // if converged
+            else {
+                for (i = 0; i < n; i++) {
+                    if (x[i] >= 0.0) {
+                        x[i] = 1.0;
+                    }
+                    else {
+                        x[i] = -1.0;
+                    }
+                    isgn[i] = (int)Math.round(x[i]);
+                } // for (i = 0; i < n; i++)
+                kase[0] = 2;
+                isave[0] = 4;
+                return;
+            } // else not converged
+        } // else if (isave[0] == 3)
+        else if (isave[0] == 4) {
+            // ENTRY   (isave[0] = 4)
+            // x HAS BEEN OVERWRITTEN BY TRANSPOSE(A)*x.
+            
+            jlast = isave[1];
+            isave[1] = 0;
+            maxVal = Math.abs(x[0]);
+            for (i = 1; i < n; i++) {
+                if (Math.abs(x[i]) > maxVal) {
+                    maxVal = Math.abs(x[i]);
+                    isave[1] = i;
+                }
+            }
+            if ((x[jlast] != Math.abs(x[isave[1]])) && (isave[2] < itmax)) {
+                isave[2] = isave[2] + 1;
+                for (i = 0; i < n; i++) {
+                    x[i] = 0.0;
+                }
+                x[isave[1]] = 1.0;
+                kase[0] = 1;
+                isave[0] = 3;
+                return;    
+            }
+            
+            // ITERATION COMPLETE.  FINAL STAGE.
+            
+            altsgn = 1.0;
+            for (i = 1; i <= n; i++) {
+                x[i] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
+                altsgn = -altsgn;
+            } // for (i = 1; i <= n; i++)
+            kase[0] = 1;
+            isave[0] = 5;
+            return;    
+        } // else if (isave[0] == 4)
+        else if (isave[0] == 5) {
+            // ENTRY   (isave[0] = 5)
+            // x HAS BEEN OVERWRITTEN BY A*x.
+            absSum = Math.abs(x[0]);
+            for (i = 1; i < n; i++) {
+                absSum += Math.abs(x[i]);
+            }
+            temp = 2.0 * (absSum / (double)(3*n));
+            if (temp > est[0]) {
+                for (i = 0; i < n; i++) {
+                    v[i] = x[i];
+                }
+                est[0] = temp;
+            } // if (temp > est[0])
+            
+            kase[0] = 0;
+            return;   
+        } // else if (isave[0] == 5)
+
+     
+    } // dlacn2
+    
+    /**
+     * This is a port of LAPACK version auxiliary routine 3.4.2 DLATRS.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., September 2012.
+     * 
+     * dlatrs solves a triangular system of equations with the scale factor set to prevent overflow.
+     * 
+     * dlatrs solves one of the triangular systems
+
+       A *x = s*b  or  A**T *x = s*b
+
+       with scaling to prevent overflow.  Here A is an upper or lower
+       triangular matrix, A**T denotes the transpose of A, x and b are
+       n-element vectors, and s is a scaling factor, usually less than
+       or equal to 1, chosen so that the components of x will be less than
+       the overflow threshold.  If the unscaled problem will not cause
+       overflow, the Level 2 BLAS routine DTRSV is called.  If the matrix A
+       is singular (A[j][j] = 0 for some j), then s is set to 0 and a
+       non-trivial solution to A*x = 0 is returned.
+       
+       A rough bound on x is computed; if that is less than overflow, dtrsv
+       is called, otherwise, specific code is used which checks for possible
+       overflow or divide-by-zero at every operation.
+ 
+       A columnwise scheme is used for solving A*x = b.  The basic algorithm
+       if A is lower triangular is
+
+       x[1:n] := b[1:n]
+       for j = 1, ..., n
+            x(j) := x(j) / A(j,j)
+            x[j+1:n] := x[j+1:n] - x(j) * A[j+1:n,j]
+       end
+
+       Define bounds on the components of x after j iterations of the loop:
+          M(j) = bound on x[1:j]
+          G(j) = bound on x[j+1:n]
+       Initially, let M(0) = 0 and G(0) = max{x(i), i=1,...,n}.
+
+       Then for iteration j+1 we have
+          M(j+1) <= G(j) / | A(j+1,j+1) |
+          G(j+1) <= G(j) + M(j+1) * | A[j+2:n,j+1] |
+                 <= G(j) ( 1 + cnorm(j+1) / | A(j+1,j+1) | )
+
+       where cnorm(j+1) is greater than or equal to the infinity-norm of
+       column j+1 of A, not counting the diagonal.  Hence
+
+          G(j) <= G(0) product ( 1 + CNORM(i) / | A(i,i) | )
+                       1<=i<=j
+    and
+
+          |x(j)| <= ( G(0) / |A(j,j)| ) product ( 1 + CNORM(i) / |A(i,i)| )
+                                        1<=i< j
+
+       Since |x(j)| <= M(j), we use the Level 2 BLAS routine DTRSV if the
+       reciprocal of the largest M(j), j=1,..,n, is larger than
+       max(underflow, 1/overflow).
+
+       The bound on x(j) is also used to determine when a step in the
+       columnwise method can be performed without fear of overflow.  If
+       the computed bound is greater than a large constant, x is scaled to
+       prevent overflow, but if the bound overflows, x is set to 0, x(j) to
+       1, and scale to 0, and a non-trivial solution to A*x = 0 is found.
+
+       Similarly, a row-wise scheme is used to solve A**T*x = b.  The basic
+       algorithm for A upper triangular is
+
+         for j = 1, ..., n
+              x(j) := ( b(j) - A[1:j-1,j]**T * x[1:j-1] ) / A(j,j)
+         end
+ 
+       We simultaneously compute two bounds
+            G(j) = bound on ( b(i) - A[1:i-1,i]**T * x[1:i-1] ), 1<=i<=j
+            M(j) = bound on x(i), 1<=i<=j
+
+       The initial values are G(0) = 0, M(0) = max{b(i), i=1,..,n}, and we
+       add the constraint G(j) >= G(j-1) and M(j) >= M(j-1) for j >= 1.
+       Then the bound on x(j) is
+
+            M(j) <= M(j-1) * ( 1 + CNORM(j) ) / | A(j,j) |
+
+                 <= M(0) * product ( ( 1 + CNORM(i) ) / |A(i,i)| )
+                           1<=i<=j
+
+       and we can safely call DTRSV if 1/M(n) and 1/G(n) are both greater
+       than max(underflow, 1/overflow).
+
+       @param input char uplo
+           Specifies whether the matrix A is upper or lower triangular.
+           = 'U':  Upper triangular
+           = 'L':  Lower triangular
+       @param input char trans
+           Specifies the operation applied to A.
+           = 'N':  Solve A * x = s*b  (No transpose)
+           = 'T':  Solve A**T* x = s*b  (Transpose)
+           = 'C':  Solve A**T* x = s*b  (Conjugate transpose = Transpose)
+       @param input char diag
+           Specifies whether or not the matrix A is unit triangular.
+           = 'N':  Non-unit triangular
+           = 'U':  Unit triangular
+       @param input char normin
+           Specifies whether cnorm has been set or not.
+           = 'Y':  cnorm contains the column norms on entry
+           = 'N':  cnorm is not set on entry.  On exit, the norms will
+                   be computed and stored in cnorm.
+       @param input int n
+           The order of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The triangular matrix A.  If uplo = 'U', the leading n by n
+           upper triangular part of the array A contains the upper
+           triangular matrix, and the strictly lower triangular part of
+           A is not referenced.  If uplo = 'L', the leading n by n lower
+           triangular part of the array A contains the lower triangular
+           matrix, and the strictly upper triangular part of A is not
+           referenced.  If diag = 'U', the diagonal elements of A are
+           also not referenced and are assumed to be 1.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max (1,n).
+       @param (input/output) double[] x of dimension (n).
+           On entry, the right hand side b of the triangular system.
+           On exit, x is overwritten by the solution vector x.
+       @param output double[] scale of dimension (1)
+           The scaling factor s for the triangular system
+               A * x = s*b  or  A**T* x = s*b.
+           If scale[0] = 0, the matrix A is singular or badly scaled, and
+           the vector x is an exact or approximate solution to A*x = 0.
+       @param (input/output) double[] cnorm of dimension (n)
+           If normin = 'Y', cnorm is an input argument and cnorm[j]
+           contains the norm of the off-diagonal part of the j-th column
+           of A.  If trans = 'N', cnorm[j] must be greater than or equal
+           to the infinity-norm, and if trans = 'T' or 'C', cnorm[j]
+           must be greater than or equal to the 1-norm.
+
+           If normin = 'N', cnorm is an output argument and cnorm[j]
+           returns the 1-norm of the offdiagonal part of the j-th column
+           of A.
+       @param output int[] info of dimension (1)
+           = 0:  successful exit
+           < 0:  if INFO = -k, the k-th argument had an illegal value
+     */
+    private void dlatrs(char uplo, char trans, char diag, char normin, int n, double[][] A, int lda, double[] x,
+                        double[] scale, double[] cnorm, int[] info) {
+        boolean notran;
+        boolean nounit;
+        boolean upper;
+        int i;
+        int imax;
+        int j;
+        int jfirst;
+        int jinc;
+        int jlast;
+        double bignum;
+        double grow;
+        double rec;
+        double smlnum;
+        double sumj;
+        double tjj;
+        double tjjs;
+        double tmax;
+        double tscal;
+        double uscal;
+        double xbnd;
+        double xj;
+        double xmax;
+        double maxVal;
+        boolean assignGrow;
+        
+        info[0] = 0;
+        upper = ((uplo == 'U') || (uplo == 'u'));
+        notran = ((trans == 'N') || (trans == 'n'));
+        nounit = ((diag == 'N') || (diag == 'n'));
+  
+        // Test the input parameters.
+   
+        if (!upper && !((uplo == 'L') || (uplo == 'l'))) {
+           info[0] = -1;
+        }
+        else if (!notran && !((trans == 'T') || (trans == 't')) && !((trans == 'C') || (trans == 'c'))) {
+           info[0] = -2;
+        }
+        else if (!nounit && !((diag == 'U') || (diag == 'u'))) {
+           info[0] = -3;
+        }
+        else if (!((normin == 'Y') || (normin == 'y')) && !((normin == 'N') || (normin == 'n'))) {
+           info[0] = -4;
+        }
+        else if (n < 0) {
+           info[0] = -5;
+        }
+        else if(lda < Math.max(1, n)) {
+           info[0] = -7;
+        }
+        if(info[0] != 0) {
+           MipavUtil.displayError("dlatrs had info[0] = " + info[0]);
+           return;
+        }
+  
+        // Quick return if possible
+  
+        if (n == 0) {
+           return;
+        }
+  
+        // Determine machine dependent parameters to control overflow.
+  
+        smlnum = ge.dlamch('S') / ge.dlamch('P');
+        bignum = 1.0 / smlnum;
+        scale[0] = 1.0;
+  
+        if((normin == 'N') || (normin == 'n')) {
+  
+           // Compute the 1-norm of each column, not including the diagonal.
+  
+           if (upper) {
+   
+              // A is upper triangular.
+   
+              for (j = 1; j <= n; j++) {
+                 cnorm[j-1] = Math.abs(A[0][j-1]);
+                 for (i = 1; i < j-1; i++) {
+                     cnorm[j-1] += Math.abs(A[i][j-1]);
+                 }
+              } // for (j = 1; j <= n; j++)
+           }
+           else {
+   
+              // A is lower triangular.
+   
+              for (j = 1; j <= n-1; j++) {
+                 cnorm[j-1] = Math.abs(A[j][j-1]);
+                 for (i = 1; i < n-j; i++) {
+                     cnorm[j-1] += Math.abs(A[j+i][j-1]);
+                 }
+              } // for (j = 1; j <= n-1; j++)
+              cnorm[n-1] = 0.0;
+           }
+        } // if((normin == 'N') || (normin == 'n'))
+  
+        // Scale the column norms by tscal if the maximum element in cnorm is
+        // greater than bignum.
+  
+        imax = 0;
+        maxVal = Math.abs(cnorm[0]);
+        for (i = 1; i < n; i++) {
+            if (Math.abs(cnorm[i]) > maxVal) {
+                maxVal = Math.abs(cnorm[i]);
+                imax = i;
+            }
+        }
+        tmax = cnorm[imax];
+        if (tmax <= bignum) {
+           tscal = 1.0;
+        }
+        else {
+           tscal = 1.0 / ( smlnum*tmax );
+           ge.dscal(n, tscal, cnorm, 1);
+        }
+  
+        // Compute a bound on the computed solution vector to see if the
+        // Level 2 BLAS routine dtrsv can be used.
+   
+        j = 0;
+        xmax = Math.abs(x[0]);
+        for (i = 1; i < n; i++) {
+            if (Math.abs(x[i]) > xmax) {
+                xmax = Math.abs(x[i]);
+                j = i;
+            }
+        }
+        xbnd = xmax;
+        /*if (notran) {
+  
+           // Compute the growth in A * x = b.
+  
+           if (upper) {
+              jfirst = n;
+              jlast = 1;
+              jinc = -1;
+           }
+           else {
+              jfirst = 1;
+              jlast = n;
+              jinc = 1;
+           }
+  
+           if(tscal != 1.0) {
+              grow = 0.0;
+           }
+           else if (nounit) {
+   
+              // A is non-unit triangular.
+   
+              // Compute GROW = 1/G(j) and XBND = 1/M(j).
+              // Initially, G(0) = max{x(i), i=1,...,n}.
+   
+              grow = 1.0 / Math.max(xbnd, smlnum);
+              xbnd = grow;
+              assignGrow = true;
+              if (jinc == 1) {
+                  for (j = jfirst - 1; j < jlast; j++) {
+  
+                      // Exit the loop if the growth factor is too small.
+  
+                     if (grow <= smlnum) {
+                         assignGrow = false;
+                         break;
+                     }
+   
+                     // M(j) = G(j-1) / abs(A[j][j])
+   
+                     tjj = Math.abs( A[j][j]);
+                     xbnd = Math.min(xbnd, Math.min(1.0, tjj)*grow);
+                 IF( TJJ+CNORM( J ).GE.SMLNUM ) THEN
+  *
+  *                 G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
+  *
+                    GROW = GROW*( TJJ / ( TJJ+CNORM( J ) ) )
+                 ELSE
+  *
+  *                 G(j) could overflow, set GROW to 0.
+  *
+                    GROW = ZERO
+                 END IF
+                  } // for (j = jfirst - 1; j < jlast; j++)
+              } // if (jinc == 1)
+              else { // jinc == -1
+                  
+              } // else jinc == -1
+              if (assignGrow) {
+                  grow = xbnd;
+              }
+           } // else if (nounit)
+           else { 
+  *
+  *           A is unit triangular.
+  *
+  *           Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+  *
+              GROW = MIN( ONE, ONE / MAX( XBND, SMLNUM ) )
+              DO 40 J = JFIRST, JLAST, JINC
+  *
+  *              Exit the loop if the growth factor is too small.
+  *
+                 IF( GROW.LE.SMLNUM )
+       $            GO TO 50
+  *
+  *              G(j) = G(j-1)*( 1 + CNORM(j) )
+  *
+                 GROW = GROW*( ONE / ( ONE+CNORM( J ) ) )
+     40       CONTINUE
+           } //else
+     50    CONTINUE
+  
+        } // if (notran)      
+        else { !notran
+  *
+  *        Compute the growth in A**T * x = b.
+  *
+           IF( UPPER ) THEN
+              JFIRST = 1
+              JLAST = N
+              JINC = 1
+           ELSE
+              JFIRST = N
+              JLAST = 1
+              JINC = -1
+           END IF
+  *
+           IF( TSCAL.NE.ONE ) THEN
+              GROW = ZERO
+              GO TO 80
+           END IF
+  *
+           IF( NOUNIT ) THEN
+  *
+  *           A is non-unit triangular.
+  *
+  *           Compute GROW = 1/G(j) and XBND = 1/M(j).
+  *           Initially, M(0) = max{x(i), i=1,...,n}.
+  *
+              GROW = ONE / MAX( XBND, SMLNUM )
+              XBND = GROW
+              DO 60 J = JFIRST, JLAST, JINC
+  *
+  *              Exit the loop if the growth factor is too small.
+  *
+                 IF( GROW.LE.SMLNUM )
+       $            GO TO 80
+  *
+  *              G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
+  *
+                 XJ = ONE + CNORM( J )
+                 GROW = MIN( GROW, XBND / XJ )
+  *
+  *              M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
+  *
+                 TJJ = ABS( A( J, J ) )
+                 IF( XJ.GT.TJJ )
+       $            XBND = XBND*( TJJ / XJ )
+     60       CONTINUE
+              GROW = MIN( GROW, XBND )
+           ELSE
+  *
+  *           A is unit triangular.
+  *
+  *           Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+  *
+              GROW = MIN( ONE, ONE / MAX( XBND, SMLNUM ) )
+              DO 70 J = JFIRST, JLAST, JINC
+  *
+  *              Exit the loop if the growth factor is too small.
+  *
+                 IF( GROW.LE.SMLNUM )
+       $            GO TO 80
+  *
+  *              G(j) = ( 1 + CNORM(j) )*G(j-1)
+  *
+                 XJ = ONE + CNORM( J )
+                 GROW = GROW / XJ
+     70       CONTINUE
+           END IF
+     80    CONTINUE
+        } // else !notran
+  *
+        IF( ( GROW*TSCAL ).GT.SMLNUM ) THEN
+  *
+  *        Use the Level 2 BLAS solve if the reciprocal of the bound on
+  *        elements of X is not too small.
+  *
+           CALL DTRSV( UPLO, TRANS, DIAG, N, A, LDA, X, 1 )
+        ELSE
+  *
+  *        Use a Level 1 BLAS solve, scaling intermediate results.
+  *
+           IF( XMAX.GT.BIGNUM ) THEN
+  *
+  *           Scale X so that its components are less than or equal to
+  *           BIGNUM in absolute value.
+  *
+              SCALE = BIGNUM / XMAX
+              CALL DSCAL( N, SCALE, X, 1 )
+              XMAX = BIGNUM
+           END IF
+  *
+           IF( NOTRAN ) THEN
+  *
+  *           Solve A * x = b
+  *
+              DO 110 J = JFIRST, JLAST, JINC
+  *
+  *              Compute x(j) = b(j) / A(j,j), scaling x if necessary.
+  *
+                 XJ = ABS( X( J ) )
+                 IF( NOUNIT ) THEN
+                    TJJS = A( J, J )*TSCAL
+                 ELSE
+                    TJJS = TSCAL
+                    IF( TSCAL.EQ.ONE )
+       $               GO TO 100
+                 END IF
+                 TJJ = ABS( TJJS )
+                 IF( TJJ.GT.SMLNUM ) THEN
+  *
+  *                    abs(A(j,j)) > SMLNUM:
+  *
+                    IF( TJJ.LT.ONE ) THEN
+                       IF( XJ.GT.TJJ*BIGNUM ) THEN
+  *
+  *                          Scale x by 1/b(j).
+  *
+                          REC = ONE / XJ
+                          CALL DSCAL( N, REC, X, 1 )
+                          SCALE = SCALE*REC
+                          XMAX = XMAX*REC
+                       END IF
+                    END IF
+                    X( J ) = X( J ) / TJJS
+                    XJ = ABS( X( J ) )
+                 ELSE IF( TJJ.GT.ZERO ) THEN
+  *
+  *                    0 < abs(A(j,j)) <= SMLNUM:
+  *
+                    IF( XJ.GT.TJJ*BIGNUM ) THEN
+  *
+  *                       Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM
+  *                       to avoid overflow when dividing by A(j,j).
+  *
+                       REC = ( TJJ*BIGNUM ) / XJ
+                       IF( CNORM( J ).GT.ONE ) THEN
+  *
+  *                          Scale by 1/CNORM(j) to avoid overflow when
+  *                          multiplying x(j) times column j.
+  *
+                          REC = REC / CNORM( J )
+                       END IF
+                       CALL DSCAL( N, REC, X, 1 )
+                       SCALE = SCALE*REC
+                       XMAX = XMAX*REC
+                    END IF
+                    X( J ) = X( J ) / TJJS
+                    XJ = ABS( X( J ) )
+                 ELSE
+  *
+  *                    A(j,j) = 0:  Set x(1:n) = 0, x(j) = 1, and
+  *                    scale = 0, and compute a solution to A*x = 0.
+  *
+                    DO 90 I = 1, N
+                       X( I ) = ZERO
+     90             CONTINUE
+                    X( J ) = ONE
+                    XJ = ONE
+                    SCALE = ZERO
+                    XMAX = ZERO
+                 END IF
+    100          CONTINUE
+  *
+  *              Scale x if necessary to avoid overflow when adding a
+  *              multiple of column j of A.
+  *
+                 IF( XJ.GT.ONE ) THEN
+                    REC = ONE / XJ
+                    IF( CNORM( J ).GT.( BIGNUM-XMAX )*REC ) THEN
+  *
+  *                    Scale x by 1/(2*abs(x(j))).
+  *
+                       REC = REC*HALF
+                       CALL DSCAL( N, REC, X, 1 )
+                       SCALE = SCALE*REC
+                    END IF
+                 ELSE IF( XJ*CNORM( J ).GT.( BIGNUM-XMAX ) ) THEN
+  *
+  *                 Scale x by 1/2.
+  *
+                    CALL DSCAL( N, HALF, X, 1 )
+                    SCALE = SCALE*HALF
+                 END IF
+  *
+                 IF( UPPER ) THEN
+                    IF( J.GT.1 ) THEN
+  *
+  *                    Compute the update
+  *                       x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
+  *
+                       CALL DAXPY( J-1, -X( J )*TSCAL, A( 1, J ), 1, X,
+       $                           1 )
+                       I = IDAMAX( J-1, X, 1 )
+                       XMAX = ABS( X( I ) )
+                    END IF
+                 ELSE
+                    IF( J.LT.N ) THEN
+  *
+  *                    Compute the update
+  *                       x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
+  *
+                       CALL DAXPY( N-J, -X( J )*TSCAL, A( J+1, J ), 1,
+       $                           X( J+1 ), 1 )
+                       I = J + IDAMAX( N-J, X( J+1 ), 1 )
+                       XMAX = ABS( X( I ) )
+                    END IF
+                 END IF
+    110       CONTINUE
+  *
+           ELSE
+  *
+  *           Solve A**T * x = b
+  *
+              DO 160 J = JFIRST, JLAST, JINC
+  *
+  *              Compute x(j) = b(j) - sum A(k,j)*x(k).
+  *                                    k<>j
+  *
+                 XJ = ABS( X( J ) )
+                 USCAL = TSCAL
+                 REC = ONE / MAX( XMAX, ONE )
+                 IF( CNORM( J ).GT.( BIGNUM-XJ )*REC ) THEN
+  *
+  *                 If x(j) could overflow, scale x by 1/(2*XMAX).
+  *
+                    REC = REC*HALF
+                    IF( NOUNIT ) THEN
+                       TJJS = A( J, J )*TSCAL
+                    ELSE
+                       TJJS = TSCAL
+                    END IF
+                    TJJ = ABS( TJJS )
+                    IF( TJJ.GT.ONE ) THEN
+  *
+  *                       Divide by A(j,j) when scaling x if A(j,j) > 1.
+  *
+                       REC = MIN( ONE, REC*TJJ )
+                       USCAL = USCAL / TJJS
+                    END IF
+                    IF( REC.LT.ONE ) THEN
+                       CALL DSCAL( N, REC, X, 1 )
+                       SCALE = SCALE*REC
+                       XMAX = XMAX*REC
+                    END IF
+                 END IF
+  *
+                 SUMJ = ZERO
+                 IF( USCAL.EQ.ONE ) THEN
+  *
+  *                 If the scaling needed for A in the dot product is 1,
+  *                 call DDOT to perform the dot product.
+  *
+                    IF( UPPER ) THEN
+                       SUMJ = DDOT( J-1, A( 1, J ), 1, X, 1 )
+                    ELSE IF( J.LT.N ) THEN
+                       SUMJ = DDOT( N-J, A( J+1, J ), 1, X( J+1 ), 1 )
+                    END IF
+                 ELSE
+  *
+  *                 Otherwise, use in-line code for the dot product.
+  *
+                    IF( UPPER ) THEN
+                       DO 120 I = 1, J - 1
+                          SUMJ = SUMJ + ( A( I, J )*USCAL )*X( I )
+    120                CONTINUE
+                    ELSE IF( J.LT.N ) THEN
+                       DO 130 I = J + 1, N
+                          SUMJ = SUMJ + ( A( I, J )*USCAL )*X( I )
+    130                CONTINUE
+                    END IF
+                 END IF
+  *
+                 IF( USCAL.EQ.TSCAL ) THEN
+  *
+  *                 Compute x(j) := ( x(j) - sumj ) / A(j,j) if 1/A(j,j)
+  *                 was not used to scale the dotproduct.
+  *
+                    X( J ) = X( J ) - SUMJ
+                    XJ = ABS( X( J ) )
+                    IF( NOUNIT ) THEN
+                       TJJS = A( J, J )*TSCAL
+                    ELSE
+                       TJJS = TSCAL
+                       IF( TSCAL.EQ.ONE )
+       $                  GO TO 150
+                    END IF
+  *
+  *                    Compute x(j) = x(j) / A(j,j), scaling if necessary.
+  *
+                    TJJ = ABS( TJJS )
+                    IF( TJJ.GT.SMLNUM ) THEN
+  *
+  *                       abs(A(j,j)) > SMLNUM:
+  *
+                       IF( TJJ.LT.ONE ) THEN
+                          IF( XJ.GT.TJJ*BIGNUM ) THEN
+  *
+  *                             Scale X by 1/abs(x(j)).
+  *
+                             REC = ONE / XJ
+                             CALL DSCAL( N, REC, X, 1 )
+                             SCALE = SCALE*REC
+                             XMAX = XMAX*REC
+                          END IF
+                       END IF
+                       X( J ) = X( J ) / TJJS
+                    ELSE IF( TJJ.GT.ZERO ) THEN
+  *
+  *                       0 < abs(A(j,j)) <= SMLNUM:
+  *
+                       IF( XJ.GT.TJJ*BIGNUM ) THEN
+  *
+  *                          Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM.
+  *
+                          REC = ( TJJ*BIGNUM ) / XJ
+                          CALL DSCAL( N, REC, X, 1 )
+                          SCALE = SCALE*REC
+                          XMAX = XMAX*REC
+                       END IF
+                       X( J ) = X( J ) / TJJS
+                    ELSE
+  *
+  *                       A(j,j) = 0:  Set x(1:n) = 0, x(j) = 1, and
+  *                       scale = 0, and compute a solution to A**T*x = 0.
+  *
+                       DO 140 I = 1, N
+                          X( I ) = ZERO
+    140                CONTINUE
+                       X( J ) = ONE
+                       SCALE = ZERO
+                       XMAX = ZERO
+                    END IF
+    150             CONTINUE
+                 ELSE
+  *
+  *                 Compute x(j) := x(j) / A(j,j)  - sumj if the dot
+  *                 product has already been divided by 1/A(j,j).
+  *
+                    X( J ) = X( J ) / TJJS - SUMJ
+                 END IF
+                 XMAX = MAX( XMAX, ABS( X( J ) ) )
+    160       CONTINUE
+           END IF
+           SCALE = SCALE / TSCAL
+        END IF
+  *
+  *     Scale the column norms by 1/TSCAL for return.
+  *
+        IF( TSCAL.NE.ONE ) THEN
+           CALL DSCAL( N, ONE / TSCAL, CNORM, 1 )
+        END IF
+  *
+        RETURN*/
+
+    } // dlatrs
     
     /**
      * This is a port of LAPACK version auxiliary routine 3.4.2 DLAUUM.F created by the University of Tennessee, University
