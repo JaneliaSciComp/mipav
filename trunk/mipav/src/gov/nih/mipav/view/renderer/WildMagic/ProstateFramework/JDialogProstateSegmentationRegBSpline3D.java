@@ -180,7 +180,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 					VOIBase v = vArray[i].get(0);
 					if (v != null && v.size() > 0) {
 						slices[count] = i;
-						// System.err.println(" i = " + slices[count]);
+						// System.out.println(" i = " + slices[count]);
 						count++;
 					}
 				}
@@ -252,7 +252,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 			// setup the upper limit waiting time.
 			try {
-				exec.awaitTermination(15, TimeUnit.MINUTES);
+				exec.awaitTermination(3, TimeUnit.MINUTES);
 			} catch (InterruptedException e) {
 				MipavUtil.displayError("Program did not execute correctly");
 				e.printStackTrace();
@@ -270,7 +270,9 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 			long endTime = System.currentTimeMillis();
 			int min = (int) ((endTime - startTime) / 1000f / 60f);
 			int sec = (int) ((endTime - startTime) / 1000f % 60f);
-			System.err.println("time elapse = " + min + "  mins  " + sec
+			Preferences.debug("time elapse = " + min + "  mins  " + sec
+					+ "  sec\n");
+			System.out.println("time elapse = " + min + "  mins  " + sec
 					+ "  sec");
 
 		} else if (command.equals("Cancel")) {
@@ -346,13 +348,19 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		unitString = Unit.getUnitFromLegacyNum(xUnits).getAbbrev();
 
 		if (viewOrientation == Axial) {
-			System.err.println("Axial image VOIs:  number of voxels = " + nVox
+			Preferences.debug("Axial image VOIs:  number of voxels = " + nVox
+					+ "  volume = " + volume + " " + unitString + "^3\n");
+			System.out.println("Axial image VOIs:  number of voxels = " + nVox
 					+ "  volume = " + volume + " " + unitString + "^3");
 		} else if (viewOrientation == Sagittal) {
-			System.err.println("Sagittal image VOIs:  number of voxels = "
+			Preferences.debug("Sagittal image VOIs:  number of voxels = "
+					+ nVox + "  volume = " + volume + " " + unitString + "^3\n");
+			System.out.println("Sagittal image VOIs:  number of voxels = "
 					+ nVox + "  volume = " + volume + " " + unitString + "^3");
 		} else if (viewOrientation == Coronal) {
-			System.err.println("Coronal image VOIs:  number of voxels = "
+			Preferences.debug("Coronal image VOIs:  number of voxels = "
+					+ nVox + "  volume = " + volume + " " + unitString + "^3\n");
+			System.out.println("Coronal image VOIs:  number of voxels = "
 					+ nVox + "  volume = " + volume + " " + unitString + "^3");
 		}
 
@@ -397,7 +405,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		exec.shutdown();
 
 		try {
-			exec.awaitTermination(10, TimeUnit.MINUTES);
+			exec.awaitTermination(2, TimeUnit.MINUTES);
 		} catch (InterruptedException e) {
 			MipavUtil.displayError("Program did not execute correctly");
 			e.printStackTrace();
@@ -684,7 +692,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 			}
 			System.in.read();// wait for user to hit Enter, discard result
 		} catch (IOException e) {
-			System.err.println("keyboard failed: " + e);
+			System.out.println("keyboard failed: " + e);
 		}
 	}
 
@@ -842,7 +850,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 				+ (centerSolutionY - centerRefY)
 				* (centerSolutionY - centerRefY));
 
-		System.err.println("Slice: " + currentSlice + "\tareaDiff = "
+		System.out.println("Slice: " + currentSlice + "\tareaDiff = "
 				+ areaDiff + " \tcenterDiff = " + centerDiff);
 
 		if (centerDiff >= 150 || areaDiff >= 15000) {
@@ -1954,7 +1962,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		int sliceSize = xDim * yDim;
 		int midSlice = (int) ((zDim) / 2f);
-		System.err.println("loadMask: midSlice = " + midSlice);
+		System.out.println("loadMask: midSlice = " + midSlice);
 		for (int z = 0; z < zDim; z++) {
 
 			try {
@@ -2420,7 +2428,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		int sliceSize = xDim * yDim;
 		int midSlice = midVOI; // (int) ((zDim) / 2f);
-		System.err.println("loadMask: midSlice = " + midSlice);
+		System.out.println("loadMask: midSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
@@ -2944,7 +2952,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		int sliceSize = xDim * yDim;
 		int midSlice = startVOI; // (int) ((zDim) / 2f);
-		System.err.println("loadMask: startSlice = " + midSlice);
+		System.out.println("loadMask: startSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
@@ -3274,7 +3282,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		int sliceSize = xDim * yDim;
 		int midSlice = endVOI; // (int) ((zDim) / 2f);
-		System.err.println("loadMask: startSlice = " + midSlice);
+		System.out.println("loadMask: startSlice = " + midSlice);
 
 		double[] midBuffer = new double[sliceSize];
 
@@ -3644,7 +3652,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		// middleSlice = (int) (zDim / 2);
 
-		// System.err.println("cropROI: middleSlice = " + middleSlice);
+		// System.out.println("cropROI: middleSlice = " + middleSlice);
 
 		// if (image.getVOIs() != null) {
 		VOIs = image.getVOIs();
@@ -3697,7 +3705,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 
 		zBounds[0] = 0;
 		zBounds[1] = zDim;
-		System.err.println("zBound[1] = " + zBounds[1]);
+		System.out.println("zBound[1] = " + zBounds[1]);
 
 		int borderSize = 0;
 
