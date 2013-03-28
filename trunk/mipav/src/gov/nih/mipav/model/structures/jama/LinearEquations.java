@@ -2717,6 +2717,313 @@ public class LinearEquations implements java.io.Serializable {
     } // dposvx
     
     /**
+     * This is a port of LAPACK version routine 3.4.0 DPORFS.F created by the University of Tennessee, University
+     * of California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2011.
+     * 
+     * dporfs improves the computed solution to a system of linear
+       equations when the coefficient matrix is symmetric positive definite,
+       and provides error bounds and backward error estimates for the
+       solution.
+
+       @param input char uplo
+           = 'U':  Upper triangle of A is stored;
+           = 'L':  Lower triangle of A is stored.
+       @param input int n
+           The order of the matrix A.  n >= 0.
+       @param input int nrhs
+           The number of right hand sides, i.e., the number of columns
+           of the matrices B and X.  nrhs >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The symmetric matrix A.  If uplo = 'U', the leading n-by-n
+           upper triangular part of A contains the upper triangular part
+           of the matrix A, and the strictly lower triangular part of A
+           is not referenced.  If uplo = 'L', the leading n-by-n lower
+           triangular part of A contains the lower triangular part of
+           the matrix A, and the strictly upper triangular part of A is
+           not referenced.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input double[][] AF of dimension (ldaf, n)
+           The triangular factor U or L from the Cholesky factorization
+           A = U**T*U or A = L*L**T, as computed by dpotrf.
+       @param input int ldaf
+           The leading dimension of the array AF.  ldaf >= max(1,n).
+       @param input double[][] B of dimension (ldb, nrhs)
+           The right hand side matrix B.
+       @param input int ldb
+           The leading dimension of the array B.  ldb >= max(1,n).
+       @param (input/output) double[][] X of dimension (ldx, nrhs)
+           On entry, the solution matrix X, as computed by dpotrs.
+           On exit, the improved solution matrix X
+       @param input int ldx
+           The leading dimension of the array X.  ldx >= max(1,n).
+       @param output double[] ferr of dimension (nrhs)
+           The estimated forward error bound for each solution vector
+           X(j) (the j-th column of the solution matrix X).
+           If XTRUE is the true solution corresponding to X(j), ferr[j]
+           is an estimated upper bound for the magnitude of the largest
+           element in (X(j) - XTRUE) divided by the magnitude of the
+           largest element in X(j).  The estimate is as reliable as
+           the estimate for rcond, and is almost always a slight
+           overestimate of the true error.
+       @param output double[] berr of dimension (nrhs)
+           The componentwise relative backward error of each solution
+           vector X(j) (i.e., the smallest relative change in
+           any element of A or B that makes X(j) an exact solution).
+       @param output double[] work of dimension (3*n)
+       @param output int[] iwork of dimension (n).
+       @param output int[] info of dimension (1).
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+     */
+    private void dporfs(char uplo, int n, int nrhs, double[][] A, int lda, double[][] AF, int ldaf,
+                        double[][] B, int ldb, double[][] X, int ldx, double[] ferr, double[] berr,
+                        double[] work, int[] iwork, int[] info) {
+        // itmax is the maximum number of steps of iterative refinement.
+        final int itmax = 5;
+        boolean upper;
+        int count;
+        int i;
+        int j;
+        int k;
+        int kase;
+        int nz;
+        int isave[] = new int[3];
+        double eps;
+        double lstres;
+        double s;
+        double safe1;
+        double safe2;
+        double safmin;
+        double xk;
+        double work2[] = new double[n];
+        double work3[] = new double[n];
+        double vec[];
+        double arr[][];
+        
+        // Test the input parameters.
+        
+        info[0] = 0;
+        upper = ((uplo == 'U') || (uplo == 'u'));
+        if (!upper && !((uplo == 'L') || (uplo == 'l'))) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (nrhs < 0) {
+            info[0] = -3;
+        }
+        else if (lda < Math.max(1, n)) {
+            info[0] = -5;
+        }
+        else if (ldaf < Math.max(1, n)) {
+            info[0] = -7;
+        }
+        else if (ldb < Math.max(1, n)) {
+            info[0] = -9;
+        }
+        else if (ldx < Math.max(1, n)) {
+            info[0] = -11;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("dporfs had info[0] = " + info[0]);
+            return;
+        }
+
+        // Quick return if possible
+
+        if (n == 0 || nrhs == 0) {
+            for (j = 0; j < nrhs; j++) {
+                ferr[j] = 0.0;
+                berr[j] = 0.0;
+            } // for (j = 0; j < nrhs; j++)
+            return;
+        } // if (n == 0 || nrhs == 0)
+
+        // nz = maximum number of nonzero elements in each row of A, plus 1
+
+        nz = n + 1;
+        eps = ge.dlamch('E'); // Epsilon
+        safmin = ge.dlamch('S'); // Safe minimum
+        safe1 = nz*safmin;
+        safe2 = safe1 / eps;
+
+        // Do for each right hand side
+
+        for (j = 0; j < nrhs; j++) {
+
+            count = 1;
+            lstres = 3.0;
+            while (true) {
+
+                // Loop until stopping criterion is satisfied.
+
+                // Compute residual R = B - A * X
+
+                for (i = 0; i < n; i++) {
+                    work2[i] = B[i][j];
+                }
+                vec = new double[n];
+                for (i = 0; i < n; i++) {
+                    vec[i] = X[i][j];
+                }
+                ge.dsymv(uplo, n, -1.0, A, lda, vec, 1, 1.0, work2, 1);
+
+                // Compute componentwise relative backward error from formula
+
+                // max(i) ( abs(R(i)) / ( abs(A)*abs(X) + abs(B) )(i) )
+ 
+                // where abs(Z) is the componentwise absolute value of the matrix
+                // or vector Z.  If the i-th component of the denominator is less
+                // than safe2, then safe1 is added to the i-th components of the
+                // numerator and denominator before dividing.
+
+                for (i = 0; i < n; i++) {
+                    work[i] = Math.abs(B[i][j]);
+                }
+
+                // Compute abs(A)*abs(X) + abs(B).
+
+                if (upper) {
+                    for (k = 1; k <= n; k++) {
+                        s = 0.0;
+                        xk = Math.abs(X[k-1][j]);
+                        for (i = 1; i <= k-1; i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][k-1])*xk;
+                            s = s + Math.abs(A[i-1][k-1])*Math.abs(X[i-1][j]);
+                        } // for (i = 1; i <= k-1; i++)
+                        work[k-1] = work[k-1] + Math.abs(A[k-1][k-1])*xk + s;
+                    } // for (k = 1; k <= n; k++)
+                } // if (upper)
+                else { // lower
+                    for (k = 1; k <= n; k++) {
+                        s = 0.0;
+                        xk = Math.abs(X[k-1][j]);
+                        work[k-1] = work[k-1] + Math.abs(A[k-1][k-1])*xk;
+                        for (i = k+1; i <= n; i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][k-1])*xk;
+                            s = s + Math.abs(A[i-1][k-1])*Math.abs(X[i-1][j]);
+                        } // for (i = k+1; i <= n; i++)
+                        work[k-1] = work[k-1] + s;
+                    } // for (k = 1; k <= n; k++)
+                } // else lower
+                s = 0.0;
+                for (i = 0; i < n; i++) {
+                    if (work[i] > safe2) {
+                        s = Math.max(s, Math.abs(work2[i]) / work[i]);
+                    }
+                    else {
+                        s = Math.max(s, (Math.abs(work2[i])+safe1 ) / (work[i]+safe1 ));
+                    }
+                } // for (i = 0; i < n; i++)
+                berr[j] = s;
+
+                // Test stopping criterion. Continue iterating if
+                // 1) The residual berr[j] is larger than machine epsilon, and
+                // 2) berr[j] decreased by at least a factor of 2 during the
+                // last iteration, and
+                // 3) At most itmax iterations tried.
+
+                if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax) {
+
+                    // Update solution and try again.
+
+                    arr = new double[n][1];
+                    for (i = 0; i < n; i++) {
+                        arr[i][0] = work2[i];
+                    }
+                    dpotrs(uplo, n, 1, AF, ldaf, arr, n, info);
+                    for (i = 0; i < n; i++) {
+                        work2[i] = arr[i][0];
+                    }
+                    vec = new double[n];
+                    for (i = 0; i < n; i++) {
+                        vec[i] = X[i][j];
+                    }
+                    ge.daxpy(n, 1.0, work2, 1, vec, 1 );
+                    for (i = 0; i < n; i++) {
+                        X[i][j] = vec[i];
+                    }
+                    lstres = berr[j];
+                    count++;
+                    continue;
+                } // if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax)
+                break;
+            } // while (true)
+
+            // Bound error from formula
+
+            // norm(X - XTRUE) / norm(X) .le. FERR =
+            // norm( abs(inv(A))*
+            //    ( abs(R) + NZ*EPS*( abs(A)*abs(X)+abs(B) ))) / norm(X)
+
+            // where
+            //   norm(Z) is the magnitude of the largest component of Z
+            //   inv(A) is the inverse of A
+            //   abs(Z) is the componentwise absolute value of the matrix or
+            //      vector Z
+            //   nz is the maximum number of nonzeros in any row of A, plus 1
+            //   eps is machine epsilon
+
+            // The i-th component of abs(R)+nz*eps*(abs(A)*abs(X)+abs(B))
+            // is incremented by safe1 if the i-th component of
+            // abs(A)*abs(X) + abs(B) is less than safe2.
+
+            // Use dlacn2 to estimate the infinity-norm of the matrix
+            //    inv(A) * diag(W),
+            // where W = abs(R) + nz*eps*( abs(A)*abs(X)+abs(B) )))
+
+            for (i = 0; i < n; i++) {
+                if (work[i] > safe2) {
+                    work[i] = Math.abs(work2[i]) + nz*eps*work[i];
+                }
+                else {
+                    work[i] = Math.abs(work2[i]) + nz*eps*work[i] + safe1;
+                }
+            } // for (i = 0; i < n; i++0
+
+            kase = 0;
+  /*100    CONTINUE
+         CALL DLACN2( N, WORK( 2*N+1 ), WORK( N+1 ), IWORK, FERR( J ),
+     $                KASE, ISAVE )
+         IF( KASE.NE.0 ) THEN
+            IF( KASE.EQ.1 ) THEN
+*
+*              Multiply by diag(W)*inv(A**T).
+*
+               CALL DPOTRS( UPLO, N, 1, AF, LDAF, WORK( N+1 ), N, INFO )
+               DO 110 I = 1, N
+                  WORK( N+I ) = WORK( I )*WORK( N+I )
+  110          CONTINUE
+            ELSE IF( KASE.EQ.2 ) THEN
+*
+*              Multiply by inv(A)*diag(W).
+*
+               DO 120 I = 1, N
+                  WORK( N+I ) = WORK( I )*WORK( N+I )
+  120          CONTINUE
+               CALL DPOTRS( UPLO, N, 1, AF, LDAF, WORK( N+1 ), N, INFO )
+            END IF
+            GO TO 100
+         END IF
+*
+*        Normalize error.
+*
+         LSTRES = ZERO
+         DO 130 I = 1, N
+            LSTRES = MAX( LSTRES, ABS( X( I, J ) ) )
+  130    CONTINUE
+         IF( LSTRES.NE.ZERO )
+     $      FERR( J ) = FERR( J ) / LSTRES*/
+
+        } // for (j = 0; j < nrhs; j++)
+
+        return;
+
+    } // dporfs
+    
+    /**
      * This is a port of LAPACK version routine 3.4.0 DPOTRF.F created by the University of Tennessee, University
      * of California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2011.
      * 
@@ -3668,7 +3975,7 @@ public class LinearEquations implements java.io.Serializable {
         double smlnum;
         double sumj;
         double tjj;
-        double tjjs;
+        double tjjs = 1.0;
         double tmax;
         double tscal;
         double uscal;
@@ -3677,6 +3984,10 @@ public class LinearEquations implements java.io.Serializable {
         double xmax;
         double maxVal;
         boolean assignGrow;
+        boolean doBlock;
+        double vec[];
+        int k;
+        double vec2[];
         
         info[0] = 0;
         upper = ((uplo == 'U') || (uplo == 'u'));
@@ -3781,7 +4092,7 @@ public class LinearEquations implements java.io.Serializable {
             }
         }
         xbnd = xmax;
-        /*if (notran) {
+        if (notran) {
   
            // Compute the growth in A * x = b.
   
@@ -3823,400 +4134,847 @@ public class LinearEquations implements java.io.Serializable {
    
                      tjj = Math.abs( A[j][j]);
                      xbnd = Math.min(xbnd, Math.min(1.0, tjj)*grow);
-                 IF( TJJ+CNORM( J ).GE.SMLNUM ) THEN
-  *
-  *                 G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
-  *
-                    GROW = GROW*( TJJ / ( TJJ+CNORM( J ) ) )
-                 ELSE
-  *
-  *                 G(j) could overflow, set GROW to 0.
-  *
-                    GROW = ZERO
-                 END IF
+                     if (tjj+cnorm[j] >= smlnum) {
+  
+                         // G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
+  
+                         grow = grow*(tjj / (tjj+cnorm[j]));
+                     }
+                     else {
+  
+                         // G(j) could overflow, set GROW to 0.
+  
+                         grow = 0.0;
+                     } // else
                   } // for (j = jfirst - 1; j < jlast; j++)
               } // if (jinc == 1)
               else { // jinc == -1
-                  
+                  for (j = jfirst - 1; j >= jlast-1; j--) {
+                      
+                      // Exit the loop if the growth factor is too small.
+  
+                     if (grow <= smlnum) {
+                         assignGrow = false;
+                         break;
+                     }
+   
+                     // M(j) = G(j-1) / abs(A[j][j])
+   
+                     tjj = Math.abs( A[j][j]);
+                     xbnd = Math.min(xbnd, Math.min(1.0, tjj)*grow);
+                     if (tjj+cnorm[j] >= smlnum) {
+  
+                         // G(j) = G(j-1)*( 1 + CNORM(j) / abs(A(j,j)) )
+  
+                         grow = grow*(tjj / (tjj+cnorm[j]));
+                     }
+                     else {
+  
+                         // G(j) could overflow, set GROW to 0.
+  
+                         grow = 0.0;
+                     } // else
+                  } // for (j = jfirst - 1; j < jlast; j++)    
               } // else jinc == -1
               if (assignGrow) {
                   grow = xbnd;
               }
            } // else if (nounit)
            else { 
-  *
-  *           A is unit triangular.
-  *
-  *           Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
-  *
-              GROW = MIN( ONE, ONE / MAX( XBND, SMLNUM ) )
-              DO 40 J = JFIRST, JLAST, JINC
-  *
-  *              Exit the loop if the growth factor is too small.
-  *
-                 IF( GROW.LE.SMLNUM )
-       $            GO TO 50
-  *
-  *              G(j) = G(j-1)*( 1 + CNORM(j) )
-  *
-                 GROW = GROW*( ONE / ( ONE+CNORM( J ) ) )
-     40       CONTINUE
-           } //else
-     50    CONTINUE
   
+               // A is unit triangular.
+  
+               // Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+   
+               grow = Math.min(1.0, 1.0 / Math.max(xbnd, smlnum));
+               if (jinc == 1) {
+                   for (j = jfirst - 1; j < jlast; j++) {
+  
+                       // Exit the loop if the growth factor is too small.
+   
+                       if (grow <= smlnum) {
+                           break;
+                       }
+  
+                       // G(j) = G(j-1)*( 1 + CNORM(j) )
+   
+                       grow = grow*(1.0 / ( 1.0+cnorm[j]));
+                   } // for (j = jfirst - 1; j < jlast; j++)
+               } // if (jinc == 1)
+               else { // jinc == -1
+                   for (j = jfirst - 1; j >= jlast-1; j--) {
+
+                       // Exit the loop if the growth factor is too small.
+   
+                       if (grow <= smlnum) {
+                           break;
+                       }
+  
+                       // G(j) = G(j-1)*( 1 + CNORM(j) )
+   
+                       grow = grow*(1.0 / ( 1.0+cnorm[j]));    
+                   } // for (j = jfirst - 1; j >= jlast-1; j--)
+               } // else jinc == -1
+           } //else
         } // if (notran)      
-        else { !notran
-  *
-  *        Compute the growth in A**T * x = b.
-  *
-           IF( UPPER ) THEN
-              JFIRST = 1
-              JLAST = N
-              JINC = 1
-           ELSE
-              JFIRST = N
-              JLAST = 1
-              JINC = -1
-           END IF
-  *
-           IF( TSCAL.NE.ONE ) THEN
-              GROW = ZERO
-              GO TO 80
-           END IF
-  *
-           IF( NOUNIT ) THEN
-  *
-  *           A is non-unit triangular.
-  *
-  *           Compute GROW = 1/G(j) and XBND = 1/M(j).
-  *           Initially, M(0) = max{x(i), i=1,...,n}.
-  *
-              GROW = ONE / MAX( XBND, SMLNUM )
-              XBND = GROW
-              DO 60 J = JFIRST, JLAST, JINC
-  *
-  *              Exit the loop if the growth factor is too small.
-  *
-                 IF( GROW.LE.SMLNUM )
-       $            GO TO 80
-  *
-  *              G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
-  *
-                 XJ = ONE + CNORM( J )
-                 GROW = MIN( GROW, XBND / XJ )
-  *
-  *              M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
-  *
-                 TJJ = ABS( A( J, J ) )
-                 IF( XJ.GT.TJJ )
-       $            XBND = XBND*( TJJ / XJ )
-     60       CONTINUE
-              GROW = MIN( GROW, XBND )
-           ELSE
-  *
-  *           A is unit triangular.
-  *
-  *           Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
-  *
-              GROW = MIN( ONE, ONE / MAX( XBND, SMLNUM ) )
-              DO 70 J = JFIRST, JLAST, JINC
-  *
-  *              Exit the loop if the growth factor is too small.
-  *
-                 IF( GROW.LE.SMLNUM )
-       $            GO TO 80
-  *
-  *              G(j) = ( 1 + CNORM(j) )*G(j-1)
-  *
-                 XJ = ONE + CNORM( J )
-                 GROW = GROW / XJ
-     70       CONTINUE
-           END IF
-     80    CONTINUE
+        else { // !notran
+  
+            // Compute the growth in A**T * x = b.
+  
+            if (upper) {
+                jfirst = 1;
+                jlast = n;
+                jinc = 1;
+            }
+            else {
+                jfirst = n;
+                jlast = 1;
+                jinc = -1;
+            }
+  
+            if (tscal != 1.0) {
+                grow = 0.0;
+            } // if (tscal != 1.0)
+            else if (nounit) {
+  
+                // A is non-unit triangular.
+  
+                // Compute GROW = 1/G(j) and XBND = 1/M(j).
+                // Initially, M(0) = max{x(i), i=1,...,n}.
+   
+                grow = 1.0 / Math.max(xbnd, smlnum);
+                xbnd = grow;
+                assignGrow = true;
+                if (jinc == 1) {        
+                    for (j = jfirst - 1; j < jlast; j++) {
+  
+                        // Exit the loop if the growth factor is too small.
+   
+                        if (grow <= smlnum) {
+                            assignGrow = false;
+                            break;
+                        }
+  
+                        // G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
+  
+                        xj = 1.0 + cnorm[j];
+                        grow = Math.min(grow, xbnd / xj);
+  
+                        // M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
+  
+                        tjj = Math.abs(A[j][j]);
+                        if (xj > tjj) {
+                            xbnd = xbnd*(tjj / xj);
+                        }
+                    } // for (j = jfirst - 1; j < jlast; j++)
+                } // if (jinc == 1)
+                else { // jinc == -1
+                    for (j = jfirst - 1; j >= jlast-1; j--) {
+
+                        // Exit the loop if the growth factor is too small.
+   
+                        if (grow <= smlnum) {
+                            assignGrow = false;
+                            break;
+                        }
+  
+                        // G(j) = max( G(j-1), M(j-1)*( 1 + CNORM(j) ) )
+  
+                        xj = 1.0 + cnorm[j];
+                        grow = Math.min(grow, xbnd / xj);
+  
+                        // M(j) = M(j-1)*( 1 + CNORM(j) ) / abs(A(j,j))
+  
+                        tjj = Math.abs(A[j][j]);
+                        if (xj > tjj) {
+                            xbnd = xbnd*(tjj / xj);
+                        }    
+                    } // for (j = jfirst - 1; j >= jlast-1; j--)
+                } // else jinc == -1
+                if (assignGrow) {
+                    grow = Math.min(grow, xbnd);
+                } // if (assignGrow)
+            } // else if (nounit)
+            else {
+   
+                // A is unit triangular.
+  
+                // Compute GROW = 1/G(j), where G(0) = max{x(i), i=1,...,n}.
+  
+                grow = Math.min(1.0, 1.0 / Math.max(xbnd, smlnum));
+                if (jinc == 1) {
+                    for (j = jfirst - 1; j < jlast; j++) {
+  
+                        // Exit the loop if the growth factor is too small.
+  
+                        if (grow <= smlnum) {
+                            break;
+                        }
+  
+                        // G(j) = ( 1 + CNORM(j) )*G(j-1)
+  
+                        xj = 1.0 + cnorm[j];
+                        grow = grow / xj;
+                    } // for (j = jfirst - 1; j < jlast; j++)
+                } // if (jinc == 1)
+                else { // jinc == -1
+                    for (j = jfirst - 1; j >= jlast-1; j--) {
+
+                        // Exit the loop if the growth factor is too small.
+  
+                        if (grow <= smlnum) {
+                            break;
+                        }
+  
+                        // G(j) = ( 1 + CNORM(j) )*G(j-1)
+  
+                        xj = 1.0 + cnorm[j];
+                        grow = grow / xj;
+                    } // for (j = jfirst - 1; j >= jlast-1; j--)
+                } // else jinc == -1
+            } // else
         } // else !notran
-  *
-        IF( ( GROW*TSCAL ).GT.SMLNUM ) THEN
-  *
-  *        Use the Level 2 BLAS solve if the reciprocal of the bound on
-  *        elements of X is not too small.
-  *
-           CALL DTRSV( UPLO, TRANS, DIAG, N, A, LDA, X, 1 )
-        ELSE
-  *
-  *        Use a Level 1 BLAS solve, scaling intermediate results.
-  *
-           IF( XMAX.GT.BIGNUM ) THEN
-  *
-  *           Scale X so that its components are less than or equal to
-  *           BIGNUM in absolute value.
-  *
-              SCALE = BIGNUM / XMAX
-              CALL DSCAL( N, SCALE, X, 1 )
-              XMAX = BIGNUM
-           END IF
-  *
-           IF( NOTRAN ) THEN
-  *
-  *           Solve A * x = b
-  *
-              DO 110 J = JFIRST, JLAST, JINC
-  *
-  *              Compute x(j) = b(j) / A(j,j), scaling x if necessary.
-  *
-                 XJ = ABS( X( J ) )
-                 IF( NOUNIT ) THEN
-                    TJJS = A( J, J )*TSCAL
-                 ELSE
-                    TJJS = TSCAL
-                    IF( TSCAL.EQ.ONE )
-       $               GO TO 100
-                 END IF
-                 TJJ = ABS( TJJS )
-                 IF( TJJ.GT.SMLNUM ) THEN
-  *
-  *                    abs(A(j,j)) > SMLNUM:
-  *
-                    IF( TJJ.LT.ONE ) THEN
-                       IF( XJ.GT.TJJ*BIGNUM ) THEN
-  *
-  *                          Scale x by 1/b(j).
-  *
-                          REC = ONE / XJ
-                          CALL DSCAL( N, REC, X, 1 )
-                          SCALE = SCALE*REC
-                          XMAX = XMAX*REC
-                       END IF
-                    END IF
-                    X( J ) = X( J ) / TJJS
-                    XJ = ABS( X( J ) )
-                 ELSE IF( TJJ.GT.ZERO ) THEN
-  *
-  *                    0 < abs(A(j,j)) <= SMLNUM:
-  *
-                    IF( XJ.GT.TJJ*BIGNUM ) THEN
-  *
-  *                       Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM
-  *                       to avoid overflow when dividing by A(j,j).
-  *
-                       REC = ( TJJ*BIGNUM ) / XJ
-                       IF( CNORM( J ).GT.ONE ) THEN
-  *
-  *                          Scale by 1/CNORM(j) to avoid overflow when
-  *                          multiplying x(j) times column j.
-  *
-                          REC = REC / CNORM( J )
-                       END IF
-                       CALL DSCAL( N, REC, X, 1 )
-                       SCALE = SCALE*REC
-                       XMAX = XMAX*REC
-                    END IF
-                    X( J ) = X( J ) / TJJS
-                    XJ = ABS( X( J ) )
-                 ELSE
-  *
-  *                    A(j,j) = 0:  Set x(1:n) = 0, x(j) = 1, and
-  *                    scale = 0, and compute a solution to A*x = 0.
-  *
-                    DO 90 I = 1, N
-                       X( I ) = ZERO
-     90             CONTINUE
-                    X( J ) = ONE
-                    XJ = ONE
-                    SCALE = ZERO
-                    XMAX = ZERO
-                 END IF
-    100          CONTINUE
-  *
-  *              Scale x if necessary to avoid overflow when adding a
-  *              multiple of column j of A.
-  *
-                 IF( XJ.GT.ONE ) THEN
-                    REC = ONE / XJ
-                    IF( CNORM( J ).GT.( BIGNUM-XMAX )*REC ) THEN
-  *
-  *                    Scale x by 1/(2*abs(x(j))).
-  *
-                       REC = REC*HALF
-                       CALL DSCAL( N, REC, X, 1 )
-                       SCALE = SCALE*REC
-                    END IF
-                 ELSE IF( XJ*CNORM( J ).GT.( BIGNUM-XMAX ) ) THEN
-  *
-  *                 Scale x by 1/2.
-  *
-                    CALL DSCAL( N, HALF, X, 1 )
-                    SCALE = SCALE*HALF
-                 END IF
-  *
-                 IF( UPPER ) THEN
-                    IF( J.GT.1 ) THEN
-  *
-  *                    Compute the update
-  *                       x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
-  *
-                       CALL DAXPY( J-1, -X( J )*TSCAL, A( 1, J ), 1, X,
-       $                           1 )
-                       I = IDAMAX( J-1, X, 1 )
-                       XMAX = ABS( X( I ) )
-                    END IF
-                 ELSE
-                    IF( J.LT.N ) THEN
-  *
-  *                    Compute the update
-  *                       x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
-  *
-                       CALL DAXPY( N-J, -X( J )*TSCAL, A( J+1, J ), 1,
-       $                           X( J+1 ), 1 )
-                       I = J + IDAMAX( N-J, X( J+1 ), 1 )
-                       XMAX = ABS( X( I ) )
-                    END IF
-                 END IF
-    110       CONTINUE
-  *
-           ELSE
-  *
-  *           Solve A**T * x = b
-  *
-              DO 160 J = JFIRST, JLAST, JINC
-  *
-  *              Compute x(j) = b(j) - sum A(k,j)*x(k).
-  *                                    k<>j
-  *
-                 XJ = ABS( X( J ) )
-                 USCAL = TSCAL
-                 REC = ONE / MAX( XMAX, ONE )
-                 IF( CNORM( J ).GT.( BIGNUM-XJ )*REC ) THEN
-  *
-  *                 If x(j) could overflow, scale x by 1/(2*XMAX).
-  *
-                    REC = REC*HALF
-                    IF( NOUNIT ) THEN
-                       TJJS = A( J, J )*TSCAL
-                    ELSE
-                       TJJS = TSCAL
-                    END IF
-                    TJJ = ABS( TJJS )
-                    IF( TJJ.GT.ONE ) THEN
-  *
-  *                       Divide by A(j,j) when scaling x if A(j,j) > 1.
-  *
-                       REC = MIN( ONE, REC*TJJ )
-                       USCAL = USCAL / TJJS
-                    END IF
-                    IF( REC.LT.ONE ) THEN
-                       CALL DSCAL( N, REC, X, 1 )
-                       SCALE = SCALE*REC
-                       XMAX = XMAX*REC
-                    END IF
-                 END IF
-  *
-                 SUMJ = ZERO
-                 IF( USCAL.EQ.ONE ) THEN
-  *
-  *                 If the scaling needed for A in the dot product is 1,
-  *                 call DDOT to perform the dot product.
-  *
-                    IF( UPPER ) THEN
-                       SUMJ = DDOT( J-1, A( 1, J ), 1, X, 1 )
-                    ELSE IF( J.LT.N ) THEN
-                       SUMJ = DDOT( N-J, A( J+1, J ), 1, X( J+1 ), 1 )
-                    END IF
-                 ELSE
-  *
-  *                 Otherwise, use in-line code for the dot product.
-  *
-                    IF( UPPER ) THEN
-                       DO 120 I = 1, J - 1
-                          SUMJ = SUMJ + ( A( I, J )*USCAL )*X( I )
-    120                CONTINUE
-                    ELSE IF( J.LT.N ) THEN
-                       DO 130 I = J + 1, N
-                          SUMJ = SUMJ + ( A( I, J )*USCAL )*X( I )
-    130                CONTINUE
-                    END IF
-                 END IF
-  *
-                 IF( USCAL.EQ.TSCAL ) THEN
-  *
-  *                 Compute x(j) := ( x(j) - sumj ) / A(j,j) if 1/A(j,j)
-  *                 was not used to scale the dotproduct.
-  *
-                    X( J ) = X( J ) - SUMJ
-                    XJ = ABS( X( J ) )
-                    IF( NOUNIT ) THEN
-                       TJJS = A( J, J )*TSCAL
-                    ELSE
-                       TJJS = TSCAL
-                       IF( TSCAL.EQ.ONE )
-       $                  GO TO 150
-                    END IF
-  *
-  *                    Compute x(j) = x(j) / A(j,j), scaling if necessary.
-  *
-                    TJJ = ABS( TJJS )
-                    IF( TJJ.GT.SMLNUM ) THEN
-  *
-  *                       abs(A(j,j)) > SMLNUM:
-  *
-                       IF( TJJ.LT.ONE ) THEN
-                          IF( XJ.GT.TJJ*BIGNUM ) THEN
-  *
-  *                             Scale X by 1/abs(x(j)).
-  *
-                             REC = ONE / XJ
-                             CALL DSCAL( N, REC, X, 1 )
-                             SCALE = SCALE*REC
-                             XMAX = XMAX*REC
-                          END IF
-                       END IF
-                       X( J ) = X( J ) / TJJS
-                    ELSE IF( TJJ.GT.ZERO ) THEN
-  *
-  *                       0 < abs(A(j,j)) <= SMLNUM:
-  *
-                       IF( XJ.GT.TJJ*BIGNUM ) THEN
-  *
-  *                          Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM.
-  *
-                          REC = ( TJJ*BIGNUM ) / XJ
-                          CALL DSCAL( N, REC, X, 1 )
-                          SCALE = SCALE*REC
-                          XMAX = XMAX*REC
-                       END IF
-                       X( J ) = X( J ) / TJJS
-                    ELSE
-  *
-  *                       A(j,j) = 0:  Set x(1:n) = 0, x(j) = 1, and
-  *                       scale = 0, and compute a solution to A**T*x = 0.
-  *
-                       DO 140 I = 1, N
-                          X( I ) = ZERO
-    140                CONTINUE
-                       X( J ) = ONE
-                       SCALE = ZERO
-                       XMAX = ZERO
-                    END IF
-    150             CONTINUE
-                 ELSE
-  *
-  *                 Compute x(j) := x(j) / A(j,j)  - sumj if the dot
-  *                 product has already been divided by 1/A(j,j).
-  *
-                    X( J ) = X( J ) / TJJS - SUMJ
-                 END IF
-                 XMAX = MAX( XMAX, ABS( X( J ) ) )
-    160       CONTINUE
-           END IF
-           SCALE = SCALE / TSCAL
-        END IF
-  *
-  *     Scale the column norms by 1/TSCAL for return.
-  *
-        IF( TSCAL.NE.ONE ) THEN
-           CALL DSCAL( N, ONE / TSCAL, CNORM, 1 )
-        END IF
-  *
-        RETURN*/
+  
+        if ((grow*tscal) > smlnum) {
+  
+            // Use the Level 2 BLAS solve if the reciprocal of the bound on
+            // elements of x is not too small.
+   
+            ge.dtrsv(uplo, trans, diag, n, A, lda, x, 1);
+        } // if ((grow*tscal) > smlnum)
+        else { // ((grow*tscal) <= smlnum
+  
+            // Use a Level 1 BLAS solve, scaling intermediate results.
+  
+            if (xmax > bignum) {
+  
+                // Scale x so that its components are less than or equal to
+                // bignum in absolute value.
+   
+                scale[0] = bignum / xmax;
+                ge.dscal(n, scale[0], x, 1);
+                xmax = bignum;
+            } // if (xmax > bignum)
+  
+            if (notran) {
+  
+                // Solve A * x = b
+            
+                if (jinc == 1) {
+                    for (j = jfirst; j <= jlast; j++) {
+  
+                        // Compute x(j) = b(j) / A(j,j), scaling x if necessary.
+  
+                        xj = Math.abs(x[j-1]);
+                        doBlock = true;
+                        if (nounit) {
+                            tjjs = A[j-1][j-1]*tscal;
+                        } // if (nounit)
+                        else {
+                            tjjs = tscal;
+                            if (tscal == 1.0) {
+                                doBlock = false;;
+                            }
+                        } // else
+                        if (doBlock) {
+                            tjj = Math.abs(tjjs);
+                            if (tjj > smlnum) {
+  
+                                // abs(A[j)[j]) > smlnum:
+  
+                                if (tjj < 1.0) {
+                                    if (xj > tjj*bignum) {
+  
+                                        // Scale x by 1/b(j).
+  
+                                        rec = 1.0 / xj;
+                                        ge.dscal(n, rec, x, 1);
+                                        scale[0] = scale[0]*rec;
+                                        xmax = xmax*rec;
+                                    } // if (xj > tjj*bignum)
+                                } // if (tjj < 1.0)
+                                x[j-1] = x[j-1] / tjjs;
+                                xj = Math.abs(x[j-1]);
+                            } // if (tjj > smlnum)
+                            else if (tjj > 0.0) {
+  
+                                // 0 < abs(A[j][j]) <= smlnum:
+  
+                                if (xj > tjj*bignum) {
+  
+                                    // Scale x by (1/abs(x(j)))*abs(A[j][j])*bignum
+                                    // to avoid overflow when dividing by A[j][j].
+  
+                                    rec = (tjj*bignum) / xj;
+                                    if (cnorm[j-1] > 1.0) {
+   
+                                        // Scale by 1/cnorm[j] to avoid overflow when
+                                        // multiplying x[j] times column j.
+   
+                                        rec = rec / cnorm[j-1];
+                                    } // if (cnorm[j] > 1.0)
+                                    ge.dscal(n, rec, x, 1);
+                                    scale[0] = scale[0]*rec;
+                                    xmax = xmax*rec;
+                                } // if (xj > tjj*bignum)
+                                x[j-1] = x[j-1] / tjjs;
+                                xj = Math.abs(x[j-1]);
+                            } // else if (tjj > 0.0)
+                            else {
+   
+                                // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                // scale[0] = 0, and compute a solution to A*x = 0.
+   
+                                for (i = 0; i < n; i++) {
+                                    x[i] = 0.0;
+                                } // for (i = 0; i < n; i++)
+                                x[j-1] = 1.0;
+                                xj = 1.0;
+                                scale[0] = 0.0;
+                                xmax = 0.0;
+                            } // else 
+                        } // if (doBlock)
+  
+                        // Scale x if necessary to avoid overflow when adding a
+                        // multiple of column j of A.
+  
+                        if (xj > 1.0) {
+                            rec = 1.0 / xj;
+                            if (cnorm[j-1] > (bignum-xmax)*rec) {
+  
+                                // Scale x by 1/(2*abs(x(j))).
+   
+                                rec = rec*0.5;
+                                ge.dscal(n, rec, x, 1);
+                                scale[0] = scale[0]*rec;
+                            } // if (cnorm[j-1] > (bignum-xmax)*rec) 
+                        } // if (xj > 1.0)
+                        else if (xj*cnorm[j-1] > (bignum-xmax)) {
+   
+                            // Scale x by 1/2.
+   
+                            ge.dscal(n, 0.5, x, 1);
+                            scale[0] = scale[0]*05;
+                        } // else if (xj*cnorm[j-1] > (bignum-xmax))
+  
+                        if (upper) {
+                            if (j > 1) {
+  
+                                // Compute the update
+                                // x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
+              
+                                vec = new double[j-1];
+                                for (i = 0; i < j-1; i++) {
+                                    vec[i] = A[i][j-1];
+                                }
+                                ge.daxpy(j-1, -x[j-1]*tscal, vec, 1, x, 1);
+                                i = 0;
+                                xmax = Math.abs(x[0]);
+                                for (k = 1; k < j-1; k++) {
+                                    if (Math.abs(x[k]) > xmax) {
+                                        xmax = Math.abs(x[k]);
+                                        i = k;
+                                    }
+                                }
+                            } // if (j > 1)
+                        } // if (upper)
+                        else { // lower
+                            if (j < n) {
+  
+                                // Compute the update
+                                // x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
+  
+                                vec = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec[i] = A[j+i][j-1];
+                                }
+                                vec2 = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec2[i] = x[j+i];
+                                }
+                                ge.daxpy(n-j, -x[j-1]*tscal, vec, 1, vec2, 1);
+                                for (i = 0; i < n-j; i++) {
+                                    x[j+i] = vec2[i];
+                                }
+                                i = j;
+                                xmax = Math.abs(x[j]);
+                                for (k = 1; k < n-j; k++) {
+                                    if (Math.abs(x[j+k]) > xmax) {
+                                        xmax = Math.abs(x[j+k]);
+                                        i = j+k;
+                                    }
+                                }
+                            } // if (j < n)
+                        } // else lower
+                    } // for (j = jfirst; j <= jlast; j++)
+                } // if (jinc == 1)
+                else { // jinc == -1
+                    for (j = jfirst; j >= jlast; j--) {
+
+                        // Compute x(j) = b(j) / A(j,j), scaling x if necessary.
+  
+                        xj = Math.abs(x[j-1]);
+                        doBlock = true;
+                        if (nounit) {
+                            tjjs = A[j-1][j-1]*tscal;
+                        } // if (nounit)
+                        else {
+                            tjjs = tscal;
+                            if (tscal == 1.0) {
+                                doBlock = false;;
+                            }
+                        } // else
+                        if (doBlock) {
+                            tjj = Math.abs(tjjs);
+                            if (tjj > smlnum) {
+  
+                                // abs(A[j)[j]) > smlnum:
+  
+                                if (tjj < 1.0) {
+                                    if (xj > tjj*bignum) {
+  
+                                        // Scale x by 1/b(j).
+  
+                                        rec = 1.0 / xj;
+                                        ge.dscal(n, rec, x, 1);
+                                        scale[0] = scale[0]*rec;
+                                        xmax = xmax*rec;
+                                    } // if (xj > tjj*bignum)
+                                } // if (tjj < 1.0)
+                                x[j-1] = x[j-1] / tjjs;
+                                xj = Math.abs(x[j-1]);
+                            } // if (tjj > smlnum)
+                            else if (tjj > 0.0) {
+  
+                                // 0 < abs(A[j][j]) <= smlnum:
+  
+                                if (xj > tjj*bignum) {
+  
+                                    // Scale x by (1/abs(x(j)))*abs(A[j][j])*bignum
+                                    // to avoid overflow when dividing by A[j][j].
+  
+                                    rec = (tjj*bignum) / xj;
+                                    if (cnorm[j-1] > 1.0) {
+   
+                                        // Scale by 1/cnorm[j] to avoid overflow when
+                                        // multiplying x[j] times column j.
+   
+                                        rec = rec / cnorm[j-1];
+                                    } // if (cnorm[j] > 1.0)
+                                    ge.dscal(n, rec, x, 1);
+                                    scale[0] = scale[0]*rec;
+                                    xmax = xmax*rec;
+                                } // if (xj > tjj*bignum)
+                                x[j-1] = x[j-1] / tjjs;
+                                xj = Math.abs(x[j-1]);
+                            } // else if (tjj > 0.0)
+                            else {
+   
+                                // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                // scale[0] = 0, and compute a solution to A*x = 0.
+   
+                                for (i = 0; i < n; i++) {
+                                    x[i] = 0.0;
+                                } // for (i = 0; i < n; i++)
+                                x[j-1] = 1.0;
+                                xj = 1.0;
+                                scale[0] = 0.0;
+                                xmax = 0.0;
+                            } // else 
+                        } // if (doBlock)
+  
+                        // Scale x if necessary to avoid overflow when adding a
+                        // multiple of column j of A.
+  
+                        if (xj > 1.0) {
+                            rec = 1.0 / xj;
+                            if (cnorm[j-1] > (bignum-xmax)*rec) {
+  
+                                // Scale x by 1/(2*abs(x(j))).
+   
+                                rec = rec*0.5;
+                                ge.dscal(n, rec, x, 1);
+                                scale[0] = scale[0]*rec;
+                            } // if (cnorm[j-1] > (bignum-xmax)*rec) 
+                        } // if (xj > 1.0)
+                        else if (xj*cnorm[j-1] > (bignum-xmax)) {
+   
+                            // Scale x by 1/2.
+   
+                            ge.dscal(n, 0.5, x, 1);
+                            scale[0] = scale[0]*05;
+                        } // else if (xj*cnorm[j-1] > (bignum-xmax))
+  
+                        if (upper) {
+                            if (j > 1) {
+  
+                                // Compute the update
+                                // x(1:j-1) := x(1:j-1) - x(j) * A(1:j-1,j)
+              
+                                vec = new double[j-1];
+                                for (i = 0; i < j-1; i++) {
+                                    vec[i] = A[i][j-1];
+                                }
+                                ge.daxpy(j-1, -x[j-1]*tscal, vec, 1, x, 1);
+                                i = 0;
+                                xmax = Math.abs(x[0]);
+                                for (k = 1; k < j-1; k++) {
+                                    if (Math.abs(x[k]) > xmax) {
+                                        xmax = Math.abs(x[k]);
+                                        i = k;
+                                    }
+                                }
+                            } // if (j > 1)
+                        } // if (upper)
+                        else { // lower
+                            if (j < n) {
+  
+                                // Compute the update
+                                // x(j+1:n) := x(j+1:n) - x(j) * A(j+1:n,j)
+  
+                                vec = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec[i] = A[j+i][j-1];
+                                }
+                                vec2 = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec2[i] = x[j+i];
+                                }
+                                ge.daxpy(n-j, -x[j-1]*tscal, vec, 1, vec2, 1);
+                                for (i = 0; i < n-j; i++) {
+                                    x[j+i] = vec2[i];
+                                }
+                                i = j;
+                                xmax = Math.abs(x[j]);
+                                for (k = 1; k < n-j; k++) {
+                                    if (Math.abs(x[j+k]) > xmax) {
+                                        xmax = Math.abs(x[j+k]);
+                                        i = j+k;
+                                    }
+                                }
+                            } // if (j < n)
+                        } // else lower    
+                    } // for (j = jfirst; j >= jlast; j--)
+                } // else jinc == -1
+            } // if (notran)
+            else { // !notran
+  
+                // Solve A**T * x = b
+                if (jinc == 1) {
+                    for (j = jfirst; j <= jlast; j++) {
+  
+                        // Compute x(j) = b(j) - sum A(k,j)*x(k).
+                        //                       k<>j
+  
+                        xj = Math.abs(x[j-1]);
+                        uscal = tscal;
+                        rec = 1.0 / Math.max(xmax, 1.0);
+                        if (cnorm[j-1] > (bignum-xj)*rec) {
+  
+                            // If x(j) could overflow, scale x by 1/(2*XMAX).
+  
+                            rec = rec*0.5;
+                            if (nounit) {
+                                tjjs = A[j-1][j-1]*tscal;
+                            }
+                            else {
+                                tjjs = tscal;
+                            }
+                            tjj = Math.abs(tjjs);
+                            if (tjj > 1.0) {
+  
+                                // Divide by A(j,j) when scaling x if A(j,j) > 1.
+   
+                                rec = Math.min(1.0, rec*tjj);
+                                uscal = uscal / tjjs;
+                            } // if (tjj > 1.0)
+                            if (rec < 1.0) {
+                                ge.dscal(n, rec, x, 1);
+                                scale[0] = scale[0]*rec;
+                                xmax = xmax*rec;
+                            } // if (rec < 1.0)
+                        } // (cnorm[j-1] > (bignum-xj)*rec)
+  
+                        sumj = 0.0;
+                        if (uscal == 1.0) {
+  
+                            // If the scaling needed for A in the dot product is 1,
+                            // call ddot to perform the dot product.
+   
+                            if (upper) {
+                                vec = new double[j-1];
+                                for (i = 0; i < j-1; i++) {
+                                    vec[i] = A[i][j-1];
+                                }
+                                sumj = ge.ddot(j-1, vec, 1, x, 1);
+                            } // if (upper)
+                            else if (j < n) {
+                                vec = new double[n-j];
+                                vec2 = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec[i] = A[j+i][j-1];
+                                    vec2[i] = x[j+i];
+                                }
+                                sumj = ge.ddot(n-j, vec, 1, vec2, 1);
+                            } // else if (j < n)
+                        } // if (uscal == 1.0)
+                        else { // uscal != 1.0
+       
+                            // Otherwise, use in-line code for the dot product.
+  
+                            if (upper) {
+                                for (i = 1; i <= j-1; i++) {
+                                    sumj = sumj + (A[i-1][j-1]*uscal)*x[i-1];
+                                } // for (i = 1; i <= j-1; i++)
+                            } // if (upper)
+                            else if (j < n) {
+                                for (i = j+1; i <= n; i++) {
+                                    sumj = sumj + (A[i-1][j-1]*uscal)*x[i-1];
+                                } // for (i = j+1; i <= n; i++)
+                            } // else if (j < n)
+                        } // else uscal != 1.0
+  
+                        if (uscal == tscal) {
+  
+                            // Compute x(j) := ( x(j) - sumj ) / A(j,j) if 1/A(j,j)
+                            // was not used to scale the dotproduct.
+  
+                            x[j-1] = x[j-1] - sumj;
+                            xj = Math.abs(x[j-1]);
+                            doBlock = true;
+                            if (nounit) {
+                                tjjs = A[j-1][j-1]*tscal;
+                            }
+                            else {
+                                tjjs = tscal;
+                                if (tscal == 1.0) {
+                                    doBlock = false;
+                                }
+                            } // else
+                            if (doBlock) {
+  
+                                // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+  
+                                tjj = Math.abs(tjjs);
+                                if (tjj > smlnum) {
+  
+                                    // abs(A[j][j]) > smlnum:
+  
+                                    if (tjj  < 1.0) {
+                                        if (xj > tjj*bignum) {
+  
+                                            // Scale X by 1/abs(x(j)).
+  
+                                            rec = 1.0 / xj;
+                                            ge.dscal(n, rec, x, 1);
+                                            scale[0] = scale[0]*rec;
+                                            xmax = xmax*rec;
+                                        } // if (xj > tjj*bignum)
+                                    } // if (tjj < 1.0)
+                                    x[j-1] = x[j-1] / tjjs;
+                                } // if (tjj > smlnum)
+                                else if (tjj > 0.0) {
+  
+                                    // 0 < abs(A[j][j]) <= smlnum:
+  
+                                    if (xj > tjj*bignum) {
+  
+                                        // Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM.
+  
+                                        rec = (tjj*bignum) / xj;
+                                        ge.dscal(n, rec, x, 1);
+                                        scale[0] = scale[0]*rec;
+                                        xmax = xmax*rec;
+                                    } // if (xj > tjj*bignum)
+                                    x[j-1] = x[j-1] / tjjs;
+                                } // else if (tjj > 0)
+                                else {
+  
+                                    // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                    // scale[0] = 0, and compute a solution to A**T*x = 0.
+  
+                                    for (i = 0; i < n; i++) {
+                                        x[i] = 0.0;
+                                    } // for (i = 0; i < n; i++)
+                                    x[j-1] = 1.0;
+                                    scale[0] = 0.0;
+                                    xmax = 0.0;
+                                } // else
+                            } // if (doBlock)
+                        } // if (uscal == tscal)
+                        else { // uscal != tscal
+  
+                            // Compute x(j) := x(j) / A(j,j)  - sumj if the dot
+                            // product has already been divided by 1/A(j,j).
+  
+                            x[j-1] = x[j-1] / tjjs - sumj;
+                        } // else uscal != tscal
+                        xmax = Math.max(xmax, Math.abs(x[j-1]));
+                    } // for (j = jfirst; j <= jlast; j++)
+                } // if (jinc == 1)
+                else { // jinc == -1
+                    for (j = jfirst; j >= jlast; j--) {
+
+                        // Compute x(j) = b(j) - sum A(k,j)*x(k).
+                        //                       k<>j
+  
+                        xj = Math.abs(x[j-1]);
+                        uscal = tscal;
+                        rec = 1.0 / Math.max(xmax, 1.0);
+                        if (cnorm[j-1] > (bignum-xj)*rec) {
+  
+                            // If x(j) could overflow, scale x by 1/(2*XMAX).
+  
+                            rec = rec*0.5;
+                            if (nounit) {
+                                tjjs = A[j-1][j-1]*tscal;
+                            }
+                            else {
+                                tjjs = tscal;
+                            }
+                            tjj = Math.abs(tjjs);
+                            if (tjj > 1.0) {
+  
+                                // Divide by A(j,j) when scaling x if A(j,j) > 1.
+   
+                                rec = Math.min(1.0, rec*tjj);
+                                uscal = uscal / tjjs;
+                            } // if (tjj > 1.0)
+                            if (rec < 1.0) {
+                                ge.dscal(n, rec, x, 1);
+                                scale[0] = scale[0]*rec;
+                                xmax = xmax*rec;
+                            } // if (rec < 1.0)
+                        } // (cnorm[j-1] > (bignum-xj)*rec)
+  
+                        sumj = 0.0;
+                        if (uscal == 1.0) {
+  
+                            // If the scaling needed for A in the dot product is 1,
+                            // call ddot to perform the dot product.
+   
+                            if (upper) {
+                                vec = new double[j-1];
+                                for (i = 0; i < j-1; i++) {
+                                    vec[i] = A[i][j-1];
+                                }
+                                sumj = ge.ddot(j-1, vec, 1, x, 1);
+                            } // if (upper)
+                            else if (j < n) {
+                                vec = new double[n-j];
+                                vec2 = new double[n-j];
+                                for (i = 0; i < n-j; i++) {
+                                    vec[i] = A[j+i][j-1];
+                                    vec2[i] = x[j+i];
+                                }
+                                sumj = ge.ddot(n-j, vec, 1, vec2, 1);
+                            } // else if (j < n)
+                        } // if (uscal == 1.0)
+                        else { // uscal != 1.0
+       
+                            // Otherwise, use in-line code for the dot product.
+  
+                            if (upper) {
+                                for (i = 1; i <= j-1; i++) {
+                                    sumj = sumj + (A[i-1][j-1]*uscal)*x[i-1];
+                                } // for (i = 1; i <= j-1; i++)
+                            } // if (upper)
+                            else if (j < n) {
+                                for (i = j+1; i <= n; i++) {
+                                    sumj = sumj + (A[i-1][j-1]*uscal)*x[i-1];
+                                } // for (i = j+1; i <= n; i++)
+                            } // else if (j < n)
+                        } // else uscal != 1.0
+  
+                        if (uscal == tscal) {
+  
+                            // Compute x(j) := ( x(j) - sumj ) / A(j,j) if 1/A(j,j)
+                            // was not used to scale the dotproduct.
+  
+                            x[j-1] = x[j-1] - sumj;
+                            xj = Math.abs(x[j-1]);
+                            doBlock = true;
+                            if (nounit) {
+                                tjjs = A[j-1][j-1]*tscal;
+                            }
+                            else {
+                                tjjs = tscal;
+                                if (tscal == 1.0) {
+                                    doBlock = false;
+                                }
+                            } // else
+                            if (doBlock) {
+  
+                                // Compute x(j) = x(j) / A(j,j), scaling if necessary.
+  
+                                tjj = Math.abs(tjjs);
+                                if (tjj > smlnum) {
+  
+                                    // abs(A[j][j]) > smlnum:
+  
+                                    if (tjj  < 1.0) {
+                                        if (xj > tjj*bignum) {
+  
+                                            // Scale X by 1/abs(x(j)).
+  
+                                            rec = 1.0 / xj;
+                                            ge.dscal(n, rec, x, 1);
+                                            scale[0] = scale[0]*rec;
+                                            xmax = xmax*rec;
+                                        } // if (xj > tjj*bignum)
+                                    } // if (tjj < 1.0)
+                                    x[j-1] = x[j-1] / tjjs;
+                                } // if (tjj > smlnum)
+                                else if (tjj > 0.0) {
+  
+                                    // 0 < abs(A[j][j]) <= smlnum:
+  
+                                    if (xj > tjj*bignum) {
+  
+                                        // Scale x by (1/abs(x(j)))*abs(A(j,j))*BIGNUM.
+  
+                                        rec = (tjj*bignum) / xj;
+                                        ge.dscal(n, rec, x, 1);
+                                        scale[0] = scale[0]*rec;
+                                        xmax = xmax*rec;
+                                    } // if (xj > tjj*bignum)
+                                    x[j-1] = x[j-1] / tjjs;
+                                } // else if (tjj > 0)
+                                else {
+  
+                                    // A[j][j] = 0:  Set x(1:n) = 0, x[j] = 1, and
+                                    // scale[0] = 0, and compute a solution to A**T*x = 0.
+  
+                                    for (i = 0; i < n; i++) {
+                                        x[i] = 0.0;
+                                    } // for (i = 0; i < n; i++)
+                                    x[j-1] = 1.0;
+                                    scale[0] = 0.0;
+                                    xmax = 0.0;
+                                } // else
+                            } // if (doBlock)
+                        } // if (uscal == tscal)
+                        else { // uscal != tscal
+  
+                            // Compute x(j) := x(j) / A(j,j)  - sumj if the dot
+                            // product has already been divided by 1/A(j,j).
+  
+                            x[j-1] = x[j-1] / tjjs - sumj;
+                        } // else uscal != tscal
+                        xmax = Math.max(xmax, Math.abs(x[j-1]));    
+                    } // for (j = jfirst; j >= jlast; j--)
+                } // else jinc == -1
+            } // else !notran
+            scale[0] = scale[0] / tscal;
+        } // // ((grow*tscal) <= smlnum
+  
+        // Scale the column norms by 1/tscal for return.
+  
+        if (tscal != 1.0) {
+            ge.dscal(n, 1.0 / tscal, cnorm, 1);
+        }
+  
+        return;
 
     } // dlatrs
     
