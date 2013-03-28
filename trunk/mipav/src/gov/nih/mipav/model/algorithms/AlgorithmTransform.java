@@ -6281,7 +6281,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 		        }
 		
 		        // ******* Make algorithm for VOI extraction.
-		        if (index2 == curves.size()-1) {
+		        if ((curves != null) && (index2 == curves.size()-1)) {
 		        	indexC++;
 			        tmpMask.calcMinMax();
 			

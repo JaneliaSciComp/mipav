@@ -99,7 +99,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         m_kSceneTarget = kSceneTarget;
 
         m_iPasses = 1;
-        super.SetPassQuantity(m_iPasses);
+        super.SetPassQuantity(1);
+        super.SetRepeatQuantity(m_iPasses);
         m_fSamples = (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f;
 
 		for ( int i = 0; i < m_akLevWidget.length; i++ )
@@ -567,7 +568,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_fSamples = fSample;    	
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
         //System.err.println( "Samples " + m_iPasses );
-        SetPassQuantity(m_iPasses);
+        SetRepeatQuantity(m_iPasses);
         Program pkCProgram = GetCProgram(0);
         SetVShader(0,m_pkVShader);
         /* The pixel shader defaults to CMP: */
@@ -863,41 +864,41 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         pkRenderer.SetAlphaState(m_kAlphaState.get(0));
         m_kAlphaState.set(0, spkSave);
     }
-
-    public SamplerInformation GetSamplerInformation (int iPass, int i)
-    {
-    	return super.GetSamplerInformation(0,i);
-    }
-    
-    public Texture GetTexture (int iPass, int i)
-    {
-    	//System.err.println( super.GetTexture(0,i).GetName() + " " + i );
-    	return super.GetTexture(0,i);
-    }
-    
-    public Texture GetTexture (int iPass, String kSamplerImageName)
-    {
-    	return super.GetTexture(0,kSamplerImageName);
-    }
-
-    public int GetTextureQuantity (int iPass)
-    {
-    	return super.GetTextureQuantity(0);
-    }
-    
-    public Program GetCProgram (int iPass)
-    {
-    	return super.GetCProgram(0);
-    }
-    
-    	
-    public void SetPassQuantity (int iPassQuantity)
-    {
-        if ( iPassQuantity > 0 )
-        {
-        	m_iPassQuantity = iPassQuantity;
-        }
-    }
+//
+//    public SamplerInformation GetSamplerInformation (int iPass, int i)
+//    {
+//    	return super.GetSamplerInformation(0,i);
+//    }
+//    
+//    public Texture GetTexture (int iPass, int i)
+//    {
+//    	//System.err.println( super.GetTexture(0,i).GetName() + " " + i );
+//    	return super.GetTexture(0,i);
+//    }
+//    
+//    public Texture GetTexture (int iPass, String kSamplerImageName)
+//    {
+//    	return super.GetTexture(0,kSamplerImageName);
+//    }
+//
+//    public int GetTextureQuantity (int iPass)
+//    {
+//    	return super.GetTextureQuantity(0);
+//    }
+//    
+//    public Program GetCProgram (int iPass)
+//    {
+//    	return super.GetCProgram(0);
+//    }
+//    
+//    	
+//    public void SetPassQuantity (int iPassQuantity)
+//    {
+//        if ( iPassQuantity > 0 )
+//        {
+//        	m_iPassQuantity = iPassQuantity;
+//        }
+//    }
 
     public void SetGlobalState (int iPass, Renderer pkRenderer,
                                 boolean bPrimaryEffect)
@@ -909,57 +910,57 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     	m_kAlphaState.set(0, spkSave);
     }
     
-    public void LoadPrograms (Renderer kRenderer, Geometry pkGeometry, int iPass, int iMaxColors, int iMaxTCoords,
-            int iMaxVShaderImages, int iMaxPShaderImages)
-    {
-    	super.LoadPrograms(kRenderer, pkGeometry, 0, iMaxColors, iMaxTCoords, iMaxVShaderImages, iMaxPShaderImages );
-    }
+//    public void LoadPrograms (Renderer kRenderer, Geometry pkGeometry, int iPass, int iMaxColors, int iMaxTCoords,
+//            int iMaxVShaderImages, int iMaxPShaderImages)
+//    {
+//    	super.LoadPrograms(kRenderer, pkGeometry, 0, iMaxColors, iMaxTCoords, iMaxVShaderImages, iMaxPShaderImages );
+//    }
 
-    public void LoadResources (Renderer pkRenderer, Geometry pkGeometry)
-    {
-    	LoadPrograms(pkRenderer, pkGeometry, 0,pkRenderer.GetMaxColors(),
-    			pkRenderer.GetMaxTCoords(),pkRenderer.GetMaxVShaderImages(),
-    			pkRenderer.GetMaxPShaderImages());
-
-    	// Load the programs into video memory.
-    	//Program pkVProgram = m_kVShader.get(iPass).GetProgram();
-    	//pkRenderer.LoadVProgram(pkVProgram);
-    	//pkRenderer.LoadPProgram(m_kPShader.get(iPass).GetProgram());
-    	Program pkCProgram = m_kCompiledPrograms.get(0);
-    	pkRenderer.LoadProgram(pkCProgram);
-
-    	// Load the textures into video memory.
-    	final int iPTQuantity = GetTextureQuantity(0);
-    	for (int i = 0; i < iPTQuantity; i++)
-    	{
-    		pkRenderer.LoadTexture(m_kPShader.get(0).GetTexture(i));
-    	}
-
-    	if (pkGeometry != null)
-    	{
-    		pkRenderer.LoadVAO(pkGeometry);
-    	}
-    }
-
-    public void ReleaseResources (Renderer pkRenderer,
-    		Geometry pkGeometry)
-    {
-    	final int iPTQuantity = GetTextureQuantity(0);
-    	for (int i = 0; i < iPTQuantity; i++)
-    	{
-    		pkRenderer.ReleaseTexture(m_kPShader.get(0).GetTexture(i));
-    	}
-
-    	// Release the programs from video memory.            
-    	if ( m_kCompiledPrograms != null )
-    	{
-    		Program pkCProgram = m_kCompiledPrograms.get(0);
-    		pkRenderer.ReleaseProgram(pkCProgram);
-
-    		// Release the programs from the shader objects.
-    		ReleasePrograms(0);
-    	}
-    }
+//    public void LoadResources (Renderer pkRenderer, Geometry pkGeometry)
+//    {
+//    	LoadPrograms(pkRenderer, pkGeometry, 0,pkRenderer.GetMaxColors(),
+//    			pkRenderer.GetMaxTCoords(),pkRenderer.GetMaxVShaderImages(),
+//    			pkRenderer.GetMaxPShaderImages());
+//
+//    	// Load the programs into video memory.
+//    	//Program pkVProgram = m_kVShader.get(iPass).GetProgram();
+//    	//pkRenderer.LoadVProgram(pkVProgram);
+//    	//pkRenderer.LoadPProgram(m_kPShader.get(iPass).GetProgram());
+//    	Program pkCProgram = m_kCompiledPrograms.get(0);
+//    	pkRenderer.LoadProgram(pkCProgram);
+//
+//    	// Load the textures into video memory.
+//    	final int iPTQuantity = GetTextureQuantity(0);
+//    	for (int i = 0; i < iPTQuantity; i++)
+//    	{
+//    		pkRenderer.LoadTexture(m_kPShader.get(0).GetTexture(i));
+//    	}
+//
+//    	if (pkGeometry != null)
+//    	{
+//    		pkRenderer.LoadVAO(pkGeometry);
+//    	}
+//    }
+//
+//    public void ReleaseResources (Renderer pkRenderer,
+//    		Geometry pkGeometry)
+//    {
+//    	final int iPTQuantity = GetTextureQuantity(0);
+//    	for (int i = 0; i < iPTQuantity; i++)
+//    	{
+//    		pkRenderer.ReleaseTexture(m_kPShader.get(0).GetTexture(i));
+//    	}
+//
+//    	// Release the programs from video memory.            
+//    	if ( m_kCompiledPrograms != null )
+//    	{
+//    		Program pkCProgram = m_kCompiledPrograms.get(0);
+//    		pkRenderer.ReleaseProgram(pkCProgram);
+//
+//    		// Release the programs from the shader objects.
+//    		ReleasePrograms(0);
+//    	}
+//    }
 
 
 }

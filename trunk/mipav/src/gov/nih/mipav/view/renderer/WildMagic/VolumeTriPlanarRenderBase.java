@@ -83,6 +83,10 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
 
+//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+// -Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
+//import com.mentorgen.tools.profile.runtime.Profile;
+
 
 public class VolumeTriPlanarRenderBase extends GPURenderBase
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, ChangeListener
@@ -536,10 +540,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 
 		 Move();
 		 Pick();
+		 
+		 if ( profile )
+		 {
+//			  Profile.clear();
+//			  Profile.start();
+		 }
 
 		 updateVOIs( m_kVolumeImageA.GetImage().getVOIs() );            
 		 Render(arg0);
 		 UpdateFrameCount();
+
+	     //System.err.println( "fps: " + m_dFrameRate);
 
 		 if ( m_iUpdateNormals == 1 )
 		 {
@@ -573,6 +585,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 }
 			 UpdateSceneRotation();
 			 updateLighting( m_akLights );
+		 }
+		 if ( profile )
+		 {
+//			  Profile.stop();
+//			  Profile.setFileName( "volume_render_profile" );
+//			  Profile.shutdown();
+//			  System.err.println( "Profile DONE" );
+			  profile = false;
 		 }
 	 }
 
@@ -1431,17 +1451,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			  setVolumeSamplesMouseReleased( .7f );
 			  setVolumeSamplesMouseDragged( .7f );
 			  break;
-		  case 'z':
-			  //Profile.stop();
-			  //Profile.setFileName( "newWM_profile" );
-			  //Profile.shutdown();
-			  //System.err.println( "Profile DONE" );
-			  break;
 		  case 't':
 			  m_kVolumeRayCast.printProgram();
+			  break;
+		  case 'w':
+			  profile = true;
+//			  Profile.clear();
+//			  Profile.start();
+			  break;
+		  case 'W':
+//			  Profile.stop();
+//			  Profile.setFileName( "volume_render_profile" );
+//			  Profile.shutdown();
+//			  System.err.println( "Profile DONE" );
+			  profile = false;
+			  break;
 		  }
 		  return;
 	  }
+	  boolean profile = false;
 
 	  /**
 	   * Display the volume in MIP mode.
