@@ -73,6 +73,22 @@ public class GuiBuilder implements ActionListener {
         return exit;
     }
 
+    private static GridBagConstraints gbc = new GridBagConstraints();
+    private static GridBagLayout gbLayout = new GridBagLayout();
+    
+    private static void initGB() {
+    	gbc = new GridBagConstraints();
+        gbLayout = new GridBagLayout();
+    	gbc.gridx = 0;
+    	gbc.gridy = 0;
+    	gbc.weightx = 1;
+    	gbc.weighty = 1;
+    	gbc.gridheight = 1;
+    	gbc.gridwidth = 1;
+    	gbc.anchor = GridBagConstraints.WEST;
+    	gbc.fill = GridBagConstraints.HORIZONTAL;
+    }
+    
     public ActionListener[] getListenerList() {
         ActionListener[] list = new ActionListener[listenerList.size()];
         for(int i=0; i<listenerList.size(); i++) {
@@ -82,50 +98,50 @@ public class GuiBuilder implements ActionListener {
     }
 
     public JRadioButton buildRadioButton(String label, boolean selected) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel radioPanel = new JPanel(f);
+        initGB();
+        JPanel radioPanel = new JPanel(gbLayout);
         JRadioButton radioButton = new JRadioButton(label);
         radioButton.setFont(MipavUtil.font12);
         radioButton.setSelected(selected);
-        radioPanel.add(radioButton);
+        radioPanel.add(radioButton, gbc);
         return radioButton;
     }
 
     public JCheckBox buildCheckBox(String label, boolean selected) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel checkPanel = new JPanel(f);
+        initGB();
+        JPanel checkPanel = new JPanel(gbLayout);
         JCheckBox checkBox = new JCheckBox(label);
         checkBox.setFont(MipavUtil.font12);
         checkBox.setSelected(selected);
-        checkPanel.add(checkBox);
+        checkPanel.add(checkBox, gbc);
         return checkBox;
     }
     
     public JTextField buildField(String labelText, String initText) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel panel = new JPanel(f);
+        initGB();
+    	JPanel panel = new JPanel(gbLayout);
         JLabel label = new JLabel(labelText);
         label.setFont(MipavUtil.font12);
         JTextField text = new JTextField(initText);
-        text.setColumns(8);
-        panel.add(label);
-        panel.add(text);
+        gbc.weightx = .2;
+        panel.add(label, gbc);
+        gbc.weightx = .8;
+        gbc.gridx++;
+        panel.add(text, gbc);
         return text;
     }
     
     public JPasswordField buildPasswordField(String labelText, String initText) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel panel = new JPanel(f);
+        initGB();
+        JPanel panel = new JPanel(gbLayout);
         JLabel label = new JLabel(labelText);
         label.setFont(MipavUtil.font12);
         JPasswordField text = new JPasswordField(initText);
-        text.setColumns(8);
-        panel.add(label);
-        panel.add(text);
+        gbc.weightx = .2;
+        panel.add(label, gbc);
+        gbc.weightx = .8;
+        gbc.gridx++;
+        panel.add(text, gbc);
         return text;
     }
         
@@ -308,21 +324,22 @@ public class GuiBuilder implements ActionListener {
     }
     
     public JComboBox buildComboBox(String labelText, Object[] options) {
-        FlowLayout f = new FlowLayout();
-        f.setAlignment(FlowLayout.LEFT);
-        JPanel panel = new JPanel(f);
+        initGB();
+        JPanel panel = new JPanel(gbLayout);
         JLabel label = new JLabel(labelText);
         label.setFont(MipavUtil.font12);
         JComboBox comboBox = null;
         if(options != null) {
-            
             comboBox = new JComboBox(options);
         } else {
             comboBox = new JComboBox(new String[]{"a", "B"});
         }
      
-        panel.add(label);
-        panel.add(comboBox);
+        gbc.weightx = .2;
+        panel.add(label, gbc);
+        gbc.weightx = .8;
+        gbc.gridx++;
+        panel.add(comboBox, gbc);
         return comboBox;
     }
     
