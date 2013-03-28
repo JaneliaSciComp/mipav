@@ -2103,7 +2103,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 	}
                 	if (foundContour)
                 	{
-                		test.constructDialog();
+                		test.constructDialog(true);
                 	}
                 	else
                 	{

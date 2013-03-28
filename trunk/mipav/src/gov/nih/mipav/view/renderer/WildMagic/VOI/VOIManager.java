@@ -1214,8 +1214,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			return;
 		}
 		if (m_bLeftMousePressed) {
-			//-javaagent:E:\MagicConsulting\mipav\src\lib\profile.jar
-			// -Dprofile.properties=E:\MagicConsulting\mipav\src\lib\profile.properties
+			//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+			// -Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
 			//Profile.clear();
 			//Profile.start();
 			if ( kEvent.isAltDown() && m_kCurrentVOI != null )

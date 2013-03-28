@@ -191,7 +191,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
                             if (componentImage.getActiveImage().getVOIs().size() == 0) {
                                 histogramDialog.histogramLUT(true,true);
                             } else {
-                                histogramDialog.constructDialog();
+                                histogramDialog.constructDialog(true);
                             }
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");
@@ -205,7 +205,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
                             if (componentImage.getActiveImage().getVOIs().size() == 0) {
                                 histogramDialog.histogramLUT(true,true);
                             } else {
-                                histogramDialog.constructDialog();
+                                histogramDialog.constructDialog(true);
                             }
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: unable to open LUT frame.");

@@ -18,6 +18,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewMenuBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -89,6 +90,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -277,6 +279,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     /** Menu bar. */
     protected JMenuBar menuBar;
+    protected JMenu voiMenu;
     
     protected JFrameHistogram frameHistogram;
 
@@ -441,8 +444,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
-
-        if (command.equals("Extract")) {
+        
+        if ( (voiMenu != null) && ViewMenuBar.isMenuCommand(voiMenu, command) && (m_kVOIInterface != null)) {
+        	m_kVOIInterface.actionPerformed(event);
+        } else if (command.equals("Extract")) {
             raycastRenderWM.updateImageFromRotation();
         } else if (command.equals("ExtractMeshFromVolume")) {
             raycastRenderWM.extractMeshFromVolume();
@@ -2394,6 +2399,18 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             gpuPanel.remove(raycastRenderWM.GetCanvas());
         }
         if (m_akPlaneRender != null) {
+        	if ( m_akPlaneRender[0] != null )
+        	{
+        		panelAxial.remove(m_akPlaneRender[0].GetCanvas());
+        	}
+        	if ( m_akPlaneRender[1] != null )
+        	{
+        		panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
+        	}
+        	if ( m_akPlaneRender[2] != null )
+        	{
+        		panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
+        	}
 	        for (int i = 0; i < 3; i++) {
 	
 	            if (m_akPlaneRender[i] != null) {
@@ -2402,9 +2419,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 	            }
 	        }
         }
-        panelAxial.remove(m_akPlaneRender[0].GetCanvas());
-        panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
-        panelCoronal.remove(m_akPlaneRender[2].GetCanvas());
         
         if ( sharedRenderer != null )
         {
@@ -2489,6 +2503,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     m_akPlaneRender[i].GetCanvas(), m_akPlaneRender[i], 
                     m_akPlaneRender[i].getOrientation() );
         }
+        menuBar.add(voiMenu);
     }
 
     private void LoadState() {
@@ -2994,7 +3009,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         if (foundContour)
         {
-        	frameHistogram.constructDialog();
+        	frameHistogram.constructDialog(false);
         }
         else
         {
@@ -3066,8 +3081,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         final JSeparator separator = new JSeparator();
 
         menuObj = new ViewMenuBuilder(this);
+        ViewMenuBar menuBarMaker = new ViewMenuBar(menuObj);
 
         final JMenuBar menuBar = new JMenuBar();
+        voiMenu = menuBarMaker.makeVOIMenu();
 
         menuBar.add(menuObj.makeMenu("File", false, new JComponent[] {separator,
         		// Use VoluemTriPlanarRendererDTI instead? Systems analysis -> DTI -> visualization...

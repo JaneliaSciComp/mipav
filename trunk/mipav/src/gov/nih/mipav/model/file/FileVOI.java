@@ -969,6 +969,11 @@ public class FileVOI extends FileXML {
         raFile.close();
     }
 
+    public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException 
+    {
+    	writeXML(voi, saveAllContours, false);
+    }
+    
     /**
      * Writes VOI to an XML formatted file.
      * 
@@ -977,7 +982,7 @@ public class FileVOI extends FileXML {
      * 
      * @throws IOException exception thrown if there is an error writing the file
      */
-    public void writeXML(final VOI voi, final boolean saveAllContours) throws IOException {
+    public void writeXML(final VOI voi, final boolean saveAllContours, final boolean overwriteFile ) throws IOException {
         int i, j, k, m;
         int nPts;
         int nContours, nActiveContours;
@@ -993,36 +998,44 @@ public class FileVOI extends FileXML {
         // single copy is necessary for correct implementation of openTag(), closeTag(), etc
         // BufferedWriter bw;
 
-        while (file.exists() == true) {
-            final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
-                    "File exists", JOptionPane.YES_NO_OPTION);
+        if ( !overwriteFile )
+        {
+        	while (file.exists() == true) {
+        		final int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?",
+        				"File exists", JOptionPane.YES_NO_OPTION);
 
-            if (response == JOptionPane.YES_OPTION) {
-                file.delete();
-                file = new File(fileDir + fileName);
+        		if (response == JOptionPane.YES_OPTION) {
+        			file.delete();
+        			file = new File(fileDir + fileName);
 
-                break;
-            } else {
-                final JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Save VOI as");
-                chooser.setCurrentDirectory(file);
+        			break;
+        		} else {
+        			final JFileChooser chooser = new JFileChooser();
+        			chooser.setDialogTitle("Save VOI as");
+        			chooser.setCurrentDirectory(file);
 
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
+        			chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml"}));
 
-                final int returnVal = chooser.showSaveDialog(null);
+        			final int returnVal = chooser.showSaveDialog(null);
 
-                if (returnVal == JFileChooser.APPROVE_OPTION) {
-                    fileName = chooser.getSelectedFile().getName();
-                    if(!fileName.endsWith(".xml")) {
-                    	MipavUtil.displayError("VOI files must end in .xml");
-                    	return;
-                    }
-                    fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                    file = new File(fileDir + fileName);
-                } else {
-                    return;
-                }
-            }
+        			if (returnVal == JFileChooser.APPROVE_OPTION) {
+        				fileName = chooser.getSelectedFile().getName();
+        				if(!fileName.endsWith(".xml")) {
+        					MipavUtil.displayError("VOI files must end in .xml");
+        					return;
+        				}
+        				fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+        				file = new File(fileDir + fileName);
+        			} else {
+        				return;
+        			}
+        		}
+        	}
+        }
+        else
+        {
+			file.delete();
+			file = new File(fileDir + fileName);
         }
 
         try {

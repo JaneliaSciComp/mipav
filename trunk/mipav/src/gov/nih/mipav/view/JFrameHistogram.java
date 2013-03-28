@@ -96,6 +96,8 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	/** histogram interface panels for imageA and imageB */
 	private JPanelHistogram panelA, panelB;
 	
+	private boolean useSeparateFrame = false;
+	
 	/**
 	 * Creates the JFrameHistogram class. Initializes the images and LUTs, does not create the interface
 	 * until the constructDialog() function is called, which asks the user if the luts should be applied to the VOI region
@@ -173,13 +175,12 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		}
 		else if (command.equals("OK"))
 		{
-			histogramLUT(wholeImage, true);
+			histogramLUT(wholeImage, useSeparateFrame);
 			voiDialog.setVisible(false);
 			voiDialog.dispose();
 		}
 		else if (command.equals("Cancel"))
 		{
-			histogramLUT(wholeImage, true);
 			voiDialog.setVisible(false);
 			voiDialog.dispose();
 		} 
@@ -225,8 +226,10 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	/**
 	 * Creates a dialog to choose if histogram should be over all of image or just VOI regions.
 	 */
-	public void constructDialog()
+	public void constructDialog( boolean separateFrame )
 	{
+		useSeparateFrame = separateFrame;
+		
 		voiDialog = new JDialog(parentFrame, true);
 		voiDialog.setTitle("Histogram LUT / RGB TEST");
 
@@ -281,7 +284,10 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 		{
 			imageB.removeImageDisplayListener( this );
 		}
-		panelA.disposeLocal();
+		if ( panelA != null )
+		{
+			panelA.disposeLocal();
+		}
 		if ( panelB != null )
 		{
 			panelB.disposeLocal();
