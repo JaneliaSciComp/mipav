@@ -55,7 +55,8 @@ public class JDialogOrder extends JDialogBase {
         if(dontAskAgain.isSelected()) {
         	Preferences.setProperty(Preferences.PREF_AFNI_ORDER_LOAD, Boolean.valueOf(dicomOrder.isSelected()).toString());
         }
-    	dispose();
+
+        setVisible(false); //garbage collector will clean up
         super.actionPerformed(event);
     }
 
