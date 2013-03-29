@@ -60,22 +60,22 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
     private ViewJFrameColocalizationRegression colRegFrame = null;
 
 	/** source image A */
-	private ModelImage imageA = null;
+	protected ModelImage imageA = null;
 
 	/** source image B */
-	private ModelImage imageB = null;
+	protected ModelImage imageB = null;
 
 	/** lut a */
-	private ModelStorageBase LUTa;
+	protected ModelStorageBase LUTa;
 
 	/** lut b */
-	private ModelStorageBase LUTb;
+	protected ModelStorageBase LUTb;
 
 	/** false = apply algorithm only to VOI regions. */
-	private ViewJComponentRegistration regComponent = null;
+	protected ViewJComponentRegistration regComponent = null;
 
 	/** true = apply algorithm to the whole image */
-	private boolean wholeImage = true; 
+	protected boolean wholeImage = true; 
 
 	/** Parent frame of this dialog, usually of type ViewJFrameImage. */
 	private Frame parentFrame;
@@ -85,17 +85,23 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 
 	/** frame containing the lut interface (if display in a stand-alone window) */
 	private JFrame containingFrame;
+	
 	/** panel containing the lut interface (used in the stand-alone frame or in an outside frame) */
 	private JPanel containingPanel;
-	/** set to true when the lut interface contains two images (imageA and imageB) */
-	private boolean dualImage;
-	/** menu builder */
-	private ViewMenuBuilder menuObj;
-	/** tabbed pane, each separate tab contains the interface for imageA and imageB */
-	private JTabbedPane tabbedPane = null;
-	/** histogram interface panels for imageA and imageB */
-	private JPanelHistogram panelA, panelB;
 	
+	/** set to true when the lut interface contains two images (imageA and imageB) */
+	protected boolean dualImage;
+	
+	/** menu builder */
+	protected ViewMenuBuilder menuObj;
+	
+	/** tabbed pane, each separate tab contains the interface for imageA and imageB */
+	protected JTabbedPane tabbedPane = null;
+	
+	/** histogram interface panels for imageA and imageB */
+	protected JPanelHistogram panelA, panelB;
+	
+	/** Whether this panel is contained in another frame or forms its own frame */
 	private boolean useSeparateFrame = false;
 	
 	/**
@@ -110,7 +116,7 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	 */
 	public JFrameHistogram(Frame theParentFrame, ModelImage imA, ModelImage imB, ModelStorageBase _LUTa, ModelStorageBase _LUTb) 
 	{
-		this( theParentFrame, null, imA, imB, _LUTa, _LUTb );
+	  	this( theParentFrame, null, imA, imB, _LUTa, _LUTb );
 	}
 
 
@@ -932,7 +938,7 @@ public class JFrameHistogram extends JPanel implements ActionListener, ChangeLis
 	 * one image the panel contains just the interface.
 	 * @return the new display panel.
 	 */
-	private JPanel createPanel()
+	protected JPanel createPanel()
 	{
 		JPanel panel = new JPanel();
 
