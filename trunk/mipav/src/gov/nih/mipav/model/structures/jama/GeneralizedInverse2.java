@@ -7266,7 +7266,7 @@ ib = Math.min(nb, k-i+1);
     *          The increment between successive values of the vector SX.
     *          > 0:  SX(1) = X(1) and SX(1+(i-1)*INCX) = x(i),     1< i<= n
     */
-    private void drscl(int n, double sa, double sx[], int incx) {
+    public void drscl(int n, double sa, double sx[], int incx) {
         boolean done = false;
         double bignum[] = new double[1];
         double cden;
