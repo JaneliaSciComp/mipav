@@ -60,10 +60,10 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	private JCheckBox greenCheckBox;
 	
 	/** red, green and bue histograms: */
-	private ModelHistogram histogram, histogramG, histogramB;
+	protected ModelHistogram histogram, histogramG, histogramB;
 
 	/** histogram panel interface. */
-	private ViewJPanelHistoLUT histoPanel;
+	protected ViewJPanelHistoLUT histoPanel;
 
 	/** displays the selected LUT color */
 	private JTextField indexColorTextF;
@@ -96,37 +96,42 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	private JTextField threshUpperF;
 	
 	/** bottom tool bar */
-	private JToolBar toolBarBottom;
+	protected JToolBar toolBarBottom;
 
 	/** threshold tool bar */
-	private JToolBar toolBarThreshold;
+	protected JToolBar toolBarThreshold;
 
 	/** enables the user to set updating the display in real-time or only on mouse-release */
 	private JCheckBox updateCheckBox;
 	
 	/** volume threshold vaue */
 	private JLabel voxelVolumeLabel;
+	
 	/** input image */
-	private ModelImage image = null;
+	protected ModelImage image = null;
 	
 	/** input LUT, either ModelLUT or ModelRGB */
-	private ModelStorageBase LUT;
+	protected ModelStorageBase LUT;
 	
 	/** containing parent class. */
-	private JFrameHistogram panelParent = null;
+	protected JFrameHistogram panelParent = null;
 	
 	/** true = apply algorithm to the whole image */
-	private boolean wholeImage = true;
+	protected boolean wholeImage = true;
+	
 	/** Active mouse cursor index of the imageA, B and GM image A, B. */
 	private int cursorIndex;
+	
 	/** X range value of the imageA, B and GM imageA, B. */
 	private float rangeX;
+	
 	/** slider for small LUT changes */
 	private JSlider mouseSlider;
 	private JTextField xRangeText, yRangeText;
-	private int scaleRange;
+	protected int scaleRange;
 	private JLabel[] mouseSliderLabels;
 	private Hashtable<Integer, JLabel>labelsTable;
+	
 	/**
 	 * Build the center part of the LUT toolbar.
 	 * @param listener The listener to attach to the created LUT selection combo box.
@@ -190,7 +195,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @return true if the first entry in the color look-up table
 	 * is (1,1,1), false otherwise.
 	 */
-	private static boolean isLUT1Based(ModelStorageBase LUT)
+	protected final static boolean isLUT1Based(ModelStorageBase LUT)
 	{
 		Color color = null;
 		if ( LUT instanceof ModelLUT )
@@ -1169,7 +1174,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @param addAdjustment
 	 * @return
 	 */
-	private JPanel buildControlPanel( ModelImage image, boolean addAdjustment )
+	protected JPanel buildControlPanel( ModelImage image, boolean addAdjustment )
 	{
 		JPanel controlPanel = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -1383,7 +1388,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @param range
 	 * @return
 	 */
-	private JPanel buildMousePanel( double range )
+	protected JPanel buildMousePanel( double range )
 	{
 		JPanel panelMouse = new JPanel();
 		JLabel mouseLabel = new JLabel("    X Scale");
@@ -1491,7 +1496,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @param LUT Model of LUT
 	 * @param entireFlag Flag indicating if histogram should be made of entire image.
 	 */
-	private void buildPanel()
+	protected void buildPanel()
 	{
 		JPanel panel = new JPanel(new BorderLayout());
 
@@ -1526,7 +1531,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @param image
 	 * @return
 	 */
-	private JPanel buildToolBar( ModelImage image )
+	protected JPanel buildToolBar( ModelImage image )
 	{
 		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
 		JPanel fullPanel = new JPanel(new BorderLayout());
@@ -1580,7 +1585,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	 * @param entireFlag if true calculate histogram for the entire image. if false uses areas defined by VOI regions.
 	 * @param progressFlag passed to calculateHistogram algorithm. If false progress bar is not displayed
 	 */
-	private ModelHistogram calcHistogram(ModelImage image, boolean entireFlag, int offset) {
+	protected ModelHistogram calcHistogram(ModelImage image, boolean entireFlag, int offset) {
 
 		int[] dimExtents = new int[1];
 		dimExtents[0] = 256;
