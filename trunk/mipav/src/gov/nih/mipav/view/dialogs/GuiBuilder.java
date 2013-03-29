@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJSlider;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -321,6 +322,22 @@ public class GuiBuilder implements ActionListener {
         genericField.addActionListener(listener);
         listenerList.add(listener);
         return genericField;
+    }
+    
+    public ViewJSlider buildSlider(String labelText, int initValue, String mode) {
+    	initGB();
+    	JPanel panel = new JPanel(gbLayout);
+    	JLabel label = new JLabel(labelText);
+    	label.setFont(MipavUtil.font12);
+    	ViewJSlider slider = new ViewJSlider(mode);
+    	slider.setValue(initValue);
+    	gbc.weightx = .2;
+    	panel.add(label, gbc);
+    	gbc.weightx = .8;
+    	gbc.gridx++;
+    	panel.add(slider, gbc);
+    	
+    	return slider;
     }
     
     public JComboBox buildComboBox(String labelText, Object[] options) {
