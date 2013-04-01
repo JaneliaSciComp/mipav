@@ -425,12 +425,9 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 final SystemArchitecture arch = SystemArchitecture.getArch();
 
                 String execName = "./" + progName;
-                if (os.equals(OperatingSystem.OS_WINDOWS)) {
-                	execName = execName + ".vbs";
-                }
                 
-                // cannot automatically restart on Macs
-                if (!os.equals(OperatingSystem.OS_MAC)) {
+                // cannot automatically restart on Mac or Win
+                if (os.equals(OperatingSystem.OS_UNIX)) {
                     final int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase()
                             + " to apply memory changes?", "Restart needed", JOptionPane.YES_NO_OPTION,
                             JOptionPane.INFORMATION_MESSAGE);
@@ -441,7 +438,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                             Runtime.getRuntime().exec(execName);
                             System.exit(0);
                         } catch (final IOException ioe) {
-                            MipavUtil.displayError("Error restarting the application (./" + progName
+                            MipavUtil.displayError("Error restarting the application (" + execName
                                     + ").  Please exit and start " + progName.toUpperCase()
                                     + " again manually to apply the new settings.");
                             dispose();
