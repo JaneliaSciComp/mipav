@@ -71,7 +71,13 @@ public class ScriptableActionLoader {
             throw new ParserException(packageString + action
                     + " does not allow itself to be scripted.  See ScriptableActionInterface.");
         } catch (final Exception err) {
-
+        	if(action.contains(".")) {
+        		try {
+					return Class.forName(action);
+				} catch (ClassNotFoundException e) {
+					//fall through to ParserException
+				}
+        	}
             // can't load class
             throw new ParserException("Cannot load script action: " + packageString + action);
         }
