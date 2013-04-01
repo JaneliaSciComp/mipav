@@ -33,9 +33,10 @@ public class LinearEquations implements java.io.Serializable {
      * 
      * dchkaa is the main test program for the double precision LAPACK linear equation routines
      */
-    private void dchkaa() {
+    public void dchkaa() {
         // nmax is the maximum allowable value for m and n.
         final int nmax = 132;
+        final int maxrhs = 16;
         // nm is the number of values of m.
         int nm = 7;
         // mval is the values of m (row dimension)
@@ -61,7 +62,7 @@ public class LinearEquations implements java.io.Serializable {
         // thresh if the threshold value of the test ratio
         double thresh = 20.0;
         // tstchk is the flag to test the LAPACK routines
-        boolean tstchk = true;
+        boolean tstchk = false;
         // tstdrv is the flag to test the driver routines
         boolean tstdrv = true;
         String path = new String("DPO");
@@ -79,6 +80,27 @@ public class LinearEquations implements java.io.Serializable {
         int nb;
         double eps;
         int ntypes = 9;
+        boolean dotype[] = new boolean[ntypes];
+        double A[][] = new double[nmax][nmax];
+        double AFAC[][] = new double[nmax][nmax];
+        double AINV[][] = new double[nmax][nmax];
+        double ASAV[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        // nsmax is the largest entry in nsval
+        int nsmax;
+        nsmax = nsval[0];
+        for (i = 1; i < nsval.length; i++) {
+            if (nsval[i] > nsmax) {
+                nsmax = nsval[i];  
+            }
+        }
+        double B[][] = new double[nmax][maxrhs];
+        double BSAV[][] = new double[nmax][maxrhs];
+        double X[][] = new double[nmax][maxrhs];
+        double XACT[][] = new double[nmax][maxrhs];
+        double WORK[][] = new double[nmax][maxrhs];
+        double rwork[] = new double[nmax + 2*maxrhs];
+        int iwork[] = new int[nmax];
         
         lda = nmax;
         fatal = false;
@@ -95,7 +117,10 @@ public class LinearEquations implements java.io.Serializable {
             } // for (j = 0; j < nnb2; j++)
             nbval2[nnb2++] = nb;
         } // for (i = 0; i < nnb; i++)
-        
+
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
         // Calculate and print the machine dependent constants.
         eps = ge.dlamch('U'); // Underflow threshold
         Preferences.debug("Relative machine underflow is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
@@ -104,13 +129,22 @@ public class LinearEquations implements java.io.Serializable {
         eps = ge.dlamch('E'); // Epsilon
         Preferences.debug("Relative machine precision is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
         
-        
+        if (tstchk) {
+            dchkpo(dotype, nn, nval, nnb2, nbval2, nns, nsval, thresh, lda, A, AFAC,
+                   AINV, B, X, XACT, WORK, rwork, iwork);
+        }
+        if (tstdrv) {
+            ddrvpo(dotype, nn, nval, maxrhs, thresh, lda, A, AFAC, ASAV, B,
+                   BSAV, X, XACT, s, WORK, rwork, iwork);
+        }
     } // dchkaa
     
     /*
      * This is a port of LAPACK test routine DDRVPO.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * All 1910 driver tests for ddrvpo passed
      * 
      * ddrvpo tests the driver routines dposv and dposvx.
      * 
@@ -226,6 +260,7 @@ public class LinearEquations implements java.io.Serializable {
          // Set the block size and minimum block size for testing
          nb = 1;
          nbmin = 2;
+         iparms = new int[2];
          xlaenv(1, nb);
          xlaenv(2, nbmin);
          
@@ -322,33 +357,33 @@ public class LinearEquations implements java.io.Serializable {
                          // Set row and column izero of A to 0.
                          if (iuplo == 1) {
                              for (i = 1; i <= izero-1; i++) {
-                                 itot = ioff + i;
+                                 itot = ioff + i - 1;
                                  irow = itot % lda;
                                  icol = itot / lda;
-                                 A[irow-1][icol-1] = 0.0;
+                                 A[irow][icol] = 0.0;
                              }
                              ioff = ioff + izero;
                              for (i = izero; i <= n; i++) {
-                                 irow = ioff % lda;
-                                 icol = ioff / lda;
-                                 A[irow-1][icol-1] = 0.0;
+                                 irow = (ioff-1) % lda;
+                                 icol = (ioff-1) / lda;
+                                 A[irow][icol] = 0.0;
                                  ioff = ioff + lda;
                              }
                          } // if (iuplo == 1)
                          else {
                              ioff = izero;
                              for (i = 1; i <= izero-1; i++) {
-                                 irow = ioff % lda;
-                                 icol = ioff / lda;
-                                 A[irow-1][icol-1] = 0.0;
+                                 irow = (ioff-1) % lda;
+                                 icol = (ioff-1) / lda;
+                                 A[irow][icol] = 0.0;
                                  ioff = ioff + lda;
                              }
                              ioff = ioff - izero;
                              for (i = izero; i <= n; i++) {
-                                 itot = ioff + i;
+                                 itot = ioff + i - 1;
                                  irow = itot % lda;
                                  icol = itot / lda;
-                                 A[irow-1][icol-1] = 0.0;
+                                 A[irow][icol] = 0.0;
                              }
                          }
                      } // if (zerot)
@@ -1133,6 +1168,8 @@ public class LinearEquations implements java.io.Serializable {
      * University of Colorado Denver, and NAG Ltd., November, 2011
      * This routine tests dpotrf, dpotri, dpotrs, dporfs, and dpocon.
      * 
+     * All 1628 tests for dchkpo passed.
+     * 
      * @param input boolean[] dotype of dimension (ntypes)
            The matrix types to be used for testing.  Matrices of type j
            (for 0 <= j <= ntypes-1) are used for testing if dotype[j] = true;
@@ -1159,7 +1196,7 @@ public class LinearEquations implements java.io.Serializable {
        @param output double[][] A of dimension (nmax, nmax) 
        @param output double[][] AFAC of dimension (nmax, nmax)
        @param output double[][] AINV of dimension (nmax, nmax)
-       @param output double[][] B of dimension (nmax, nsmax) where nsmax is the largest entry in nsval.
+       @param output double[][] B of dimension (nmax, nsmax) where nsmax is the largest entry in nsval and nval.
        @param output double[][] X of dimension (nmax, nsmax)
        @param output double[][] XACT of dimension (nmax, nsmax)
        @param output double[][] WORK of dimension (nmax, max(3, nsmax))
@@ -1224,6 +1261,7 @@ public class LinearEquations implements java.io.Serializable {
             iseed[i] = iseedy[i];
         }
         
+        iparms = new int[2];
         xlaenv(2, 2);
         
         // Do for each value of n in nval
@@ -1320,33 +1358,33 @@ public class LinearEquations implements java.io.Serializable {
                         // Set row and column izero of A to 0.
                         if (iuplo == 1) {
                             for (i = 1; i <= izero-1; i++) {
-                                itot = ioff + i;
+                                itot = ioff + i - 1;
                                 irow = itot % lda;
                                 icol = itot / lda;
-                                A[irow-1][icol-1] = 0.0;
+                                A[irow][icol] = 0.0;
                             }
                             ioff = ioff + izero;
                             for (i = izero; i <= n; i++) {
-                                irow = ioff % lda;
-                                icol = ioff / lda;
-                                A[irow-1][icol-1] = 0.0;
+                                irow = (ioff-1) % lda;
+                                icol = (ioff-1) / lda;
+                                A[irow][icol] = 0.0;
                                 ioff = ioff + lda;
                             }
                         } // if (iuplo == 1)
                         else {
                             ioff = izero;
                             for (i = 1; i <= izero-1; i++) {
-                                irow = ioff % lda;
-                                icol = ioff / lda;
-                                A[irow-1][icol-1] = 0.0;
+                                irow = (ioff-1) % lda;
+                                icol = (ioff-1) / lda;
+                                A[irow][icol] = 0.0;
                                 ioff = ioff + lda;
                             }
                             ioff = ioff - izero;
                             for (i = izero; i <= n; i++) {
-                                itot = ioff + i;
+                                itot = ioff + i - 1;
                                 irow = itot % lda;
                                 icol = itot / lda;
-                                A[irow-1][icol-1] = 0.0;
+                                A[irow][icol] = 0.0;
                             }
                         }
                     } // if (zerot)
@@ -3478,9 +3516,9 @@ public class LinearEquations implements java.io.Serializable {
 
             kase[0] = 0;
             while (true) {
-                est[0] = ferr[j-1];
+                est[0] = ferr[j];
                 dlacn2(n, work3, work2, iwork, est, kase, isave);
-                ferr[j-1] = est[0];
+                ferr[j] = est[0];
                 if (kase[0] != 0) {
                     if (kase[0] == 1) {
 
@@ -4253,7 +4291,7 @@ public class LinearEquations implements java.io.Serializable {
             if (converged) {
                 altsgn = 1.0;
                 for (i = 1; i <= n; i++) {
-                    x[i] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
+                    x[i-1] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
                     altsgn = -altsgn;
                 } // for (i = 1; i <= n; i++)
                 kase[0] = 1;
@@ -4303,7 +4341,7 @@ public class LinearEquations implements java.io.Serializable {
             
             altsgn = 1.0;
             for (i = 1; i <= n; i++) {
-                x[i] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
+                x[i-1] = altsgn*(1.0+(double)(i-1) /(double)( n-1 ) );
                 altsgn = -altsgn;
             } // for (i = 1; i <= n; i++)
             kase[0] = 1;
