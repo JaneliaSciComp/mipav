@@ -96,8 +96,13 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      */
     public static final String getDialogActionString(final Class<? extends JDialogScriptableBase> dialogClass) {
         String classPrefix = "JDialog";
+        String standardPackagePrefix = "gov.nih.mipav.view.dialogs";
         final String name = dialogClass.getName();
         int index = name.lastIndexOf(classPrefix);
+        
+        if(!name.contains(standardPackagePrefix)) {  //classes that are not in the standard package prefix need
+        	return name;							//the fully qualified name to be found
+        }
 
         if (index == -1) {
             // since the plugin has a non-standard dialog name, the dialogClass name will have
