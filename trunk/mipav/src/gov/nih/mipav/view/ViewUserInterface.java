@@ -42,6 +42,7 @@ import java.util.regex.Matcher;
 import javax.swing.*;
 import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicMenuItemUI;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -1267,13 +1268,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         interName = "PlugInImageJ";
                     }
 
-                    if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+                    //if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
                         final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
                                 + pluginName, 0, al, null, false);
                         pluginMenuItem.setName(pluginName);
                         pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+                        if((al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+                        	pluginMenuItem.setEnabled(false);
+                        	pluginMenuItem.setToolTipText("Plugin disabled: open an image to enable this plugin.");
+                        	
+                        }
                         currentMenu.add(pluginMenuItem);
-                    }
+                    //}
 
                 } catch (final ClassNotFoundException e) {
 
@@ -1288,7 +1294,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
         }
-
+        
         if (menu.getItemCount() > 0) {
             menu.addSeparator();
         }
