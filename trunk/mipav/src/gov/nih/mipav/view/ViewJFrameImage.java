@@ -1966,7 +1966,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         }
                     } else {
                         try {
-                        	new VolumeTriPlanarInterface(imageA, imageB);
+                        	VolumeTriPlanarInterface triVolume = new VolumeTriPlanarInterface(imageA, imageB);
+                        	if(LUTa != null || LUTb != null) {
+                        		triVolume.updateImages(LUTa, LUTb, true, -1);
+                        	}
                         	// new VolumeTriPlanarDialog(imageA, imageB);
                         } catch (GLException e) {
                         	e.printStackTrace();
@@ -1977,8 +1980,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
                 } else {
                 	try {
-                    	new VolumeTriPlanarInterface(imageA, imageB);
-                    	// new VolumeTriPlanarDialog(imageA, imageB);
+                		VolumeTriPlanarInterface triVolume = new VolumeTriPlanarInterface(imageA, imageB);
+                    	if(LUTa != null || LUTb != null) {
+                    		triVolume.updateImages(LUTa, LUTb, true, -1);
+                    	}
+                		// new VolumeTriPlanarDialog(imageA, imageB);
                     } catch (GLException e) {
                     	e.printStackTrace();
                     	MipavUtil.displayError("Unable to start GPU renderer.\n" +
