@@ -1772,7 +1772,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  kImage.setImageName(JDialogBase.makeImageName(m_kVolumeImageA.GetImage().getImageName(), "_Crop"));
 		  kImage.copyFileTypeInfo(m_kVolumeImageA.GetImage());
 		  kImage.calcMinMax();
-		  kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getType(), true);
+		  kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getFileInfo(0).getFileFormat(), true);
 	  }
 
 	  /**
