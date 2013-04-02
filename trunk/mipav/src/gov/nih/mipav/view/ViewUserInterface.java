@@ -1274,9 +1274,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         pluginMenuItem.setName(pluginName);
                         pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
                         if((al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-                        	pluginMenuItem.setEnabled(false);
+                        	// have to iterate through the menu item, since it is a panel with a label and possible icon image
+                        	Component[] comps = pluginMenuItem.getComponents();
+                        	for (Component c : comps) {
+                        		c.setEnabled(false);
+                        	}
                         	pluginMenuItem.setToolTipText("Plugin disabled: open an image to enable this plugin.");
-                        	
                         }
                         currentMenu.add(pluginMenuItem);
                     //}
@@ -1293,6 +1296,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                 }
             }
+        }
+        
+        if (al instanceof ViewUserInterface) {
+        	Component[] comps = menu.getMenuComponents();
+        	for (Component c : comps) {
+        		if (c.getName().equalsIgnoreCase("Algorithm")) {
+        			Component[] algComps = ((JMenu)c).getMenuComponents();
+        			for (Component alg : algComps) {
+        				alg.setEnabled(false);
+        				alg.setForeground(Color.red);
+        			}
+        		}
+        	}
         }
         
         if (menu.getItemCount() > 0) {
