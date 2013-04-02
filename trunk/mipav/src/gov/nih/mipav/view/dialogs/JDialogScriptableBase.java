@@ -95,44 +95,26 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      * @return The script action string (e.g., 'GaussianBlur' for 'gov.nih.mipav.view.dialogs.JDialogGaussianBlur').
      */
     public static final String getDialogActionString(final Class<? extends JDialogScriptableBase> dialogClass) {
-        String classPrefix = "JDialog";
-        String standardPackagePrefix = "gov.nih.mipav.view.dialogs";
         final String name = dialogClass.getName();
-        int index = name.lastIndexOf(classPrefix);
+        String actionString = null;
         
-        if(!name.contains(standardPackagePrefix)) {  //classes that are not in the standard package prefix need
-        	return name;							//the fully qualified name to be found
+        final Vector<String> scriptLocations = ScriptableActionLoader.getScriptActionLocations();
+        for (String loc : scriptLocations) {
+        	if (name.startsWith(loc)) {
+        		actionString = name.substring(loc.length());
+        		break;
+        	}
         }
 
-        if (index == -1) {
-            // since the plugin has a non-standard dialog name, the dialogClass name will have
-            // to be shortened by looking at the ScriptableActionLoader's possible locations
-            final Vector<String> scriptLoc = ScriptableActionLoader.getScriptActionLocations();
-            int i = 0;
-            while (classPrefix.equals("JDialog") && i < scriptLoc.size()) {
-                if (name.contains(scriptLoc.get(i))) {
-                    classPrefix = scriptLoc.get(i);
-                    index = name.lastIndexOf(classPrefix);
-                }
-                i++;
-            }
-            if ( !classPrefix.equals("JDialog")) {
-                Preferences.debug("dialog base: Extracting script action command.  Returning "
-                        + name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
+        if (actionString == null) {
+        	// Display's the long package name, not a problem unless this script uses MIPAV tools.
+            Preferences.debug("dialog base: No script prefix found.  Returning full class name " + name + "\n",
+                    Preferences.DEBUG_SCRIPTING);
 
-                return name.substring(index + classPrefix.length());
-            } else {
-                // Display's the long package name, not a problem unless this script uses MIPAV tools.
-                Preferences.debug("dialog base: No script " + classPrefix + " prefix found.  Returning " + name + "\n",
-                        Preferences.DEBUG_SCRIPTING);
-
-                return name;
-            }
+            return name;
         } else {
-            Preferences.debug("dialog base: Extracting script action command.  Returning "
-                    + name.substring(index + classPrefix.length()) + "\n", Preferences.DEBUG_SCRIPTING);
-
-            return name.substring(index + classPrefix.length());
+        	Preferences.debug("dialog base: Extracting script action command.  Returning " + actionString + "\n", Preferences.DEBUG_SCRIPTING);
+        	return actionString;
         }
     }
 

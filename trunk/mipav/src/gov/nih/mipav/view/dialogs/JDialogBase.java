@@ -32,7 +32,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
  * @author   Matthew J. McAuliffe, Ph.D.
  */
 public abstract class JDialogBase extends JDialog
-        implements ActionListener, WindowListener, FocusListener, ItemListener {
+        implements ActionListener, WindowListener, FocusListener, ItemListener, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
