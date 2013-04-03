@@ -2561,7 +2561,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     MipavUtil.displayError("Unable to open image file: " + args[0]);
                     printUsageAndExit();
                 }
-            } else {
+            } else if (StaticArgument.getArgument(args[0], true) == null) {
                 MipavUtil
                         .displayError("To open files starting with \"-\", use the \"-i\" option.\nSee the usage message for more information.");
                 printUsageAndExit();
