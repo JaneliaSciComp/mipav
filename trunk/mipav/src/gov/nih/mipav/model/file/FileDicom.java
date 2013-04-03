@@ -1617,6 +1617,7 @@ public class FileDicom extends FileDicomBase {
         fileInfo.setMax(max);
 
         //System.out.println("min = " + min + " max = " + max);
+      
         if ((fileInfo.getPixelPadValue() != null) && ((pixelPad <= min) || (pixelPad >= max))) {
 
             for (int i = 0; i < buffer.length; i++) {
@@ -1637,6 +1638,22 @@ public class FileDicom extends FileDicomBase {
                 for (int i = 0; i < buffer.length; i++) {
                     buffer[i] = (short) MipavMath.round( (buffer[i] * slope) + intercept); // Rescale data
                 }
+            }
+        }
+        
+        if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+            short minVal = 32767;
+            short maxVal = -32768;
+            for (int i = 0; i < buffer.length; i++) {
+                if (buffer[i] < minVal) {
+                    minVal = buffer[i];
+                }
+                if (buffer[i] > maxVal) {
+                    maxVal = buffer[i];
+                }
+            }
+            if (minVal < 0) {
+                fileInfo.setDataType(ModelStorageBase.SHORT);
             }
         }
     }
@@ -2517,6 +2534,7 @@ public class FileDicom extends FileDicomBase {
         getNextElement(endianess); // gets group, element, length
 
         String name = convertGroupElement(groupWord, elementWord);
+        
 
         if ( !name.matches(FileDicom.IMAGE_TAG)) {
 
@@ -2526,6 +2544,22 @@ public class FileDicom extends FileDicomBase {
 
             throw new IOException("Image Data tag not found.  Cannot extract encapsulated image data.");
         }
+        
+        final Vector<byte[]> v = new Vector<byte[]>(); 
+        
+        int bytesPerPixel = FileInfoBase.getNumOfBytesPerPixel(fileInfo.getDataType());
+        int sliceSize = fileInfo.getExtents()[0]*fileInfo.getExtents()[1];
+        if (elementLength >= sliceSize*bytesPerPixel) {
+            // No compression 
+            final int[] imageData = new int[sliceSize];    
+            if (fileInfo.getDataType() == ModelStorageBase.USHORT) {
+                for (int i = 0; i < sliceSize; i++) {
+                    imageData[i] = getUnsignedShort(endianess);
+                }
+            }
+            return imageData;
+        }
+        
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
 
@@ -2543,8 +2577,6 @@ public class FileDicom extends FileDicomBase {
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
 
-        final Vector<byte[]> v = new Vector<byte[]>();
-
         while (name.equals(FileDicom.SEQ_ITEM_BEGIN)) {
 
             final byte[] imageFrag = new byte[elementLength]; // temp buffer
@@ -2557,7 +2589,7 @@ public class FileDicom extends FileDicomBase {
             getNextElement(endianess);
             name = convertGroupElement(groupWord, elementWord);
         }
-
+        
         if ( !name.equals(FileDicom.SEQ_ITEM_END) && !name.equals(FileDicom.SEQ_ITEM_UNDEF_END)) {
 
             if ( !isQuiet()) {
