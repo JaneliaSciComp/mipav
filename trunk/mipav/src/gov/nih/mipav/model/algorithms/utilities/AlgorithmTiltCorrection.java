@@ -71,23 +71,16 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
         String s;
         boolean useDICOM = false;
         float sliceLocation;
-        float xRes;
-        float yRes;
-        float zRes;
+        float xRes = srcImage.getFileInfo()[0].getResolutions()[0];
+        float yRes = srcImage.getFileInfo()[0].getResolutions()[1];
+        float zRes = srcImage.getFileInfo()[0].getResolutions()[2];
         double tiltRadians;
         double tiltTangent;
         TransMatrix xfrm;
         double Tx = 0.0;
         double Ty = 0.0;
-        int i;
-        int newUnit;
-        int oldUnit;
         AlgorithmTransform algoTrans;
         int interp = AlgorithmTransform.BILINEAR;
-        float oXres;
-        float oYres;
-        int oXdim = xDim;
-        int oYdim = yDim;
         int units[] = new int[2];
         boolean doVOI = false;
         boolean doClip = true;
@@ -97,8 +90,16 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
         float fillValue = (float)srcImage.getMin();
         boolean doUpdateOrigin = true;
         ModelImage resultImage;
+        ModelImage finalImage;
         
         fireProgressStateChanged(srcImage.getImageName(), "Tilt correcting image ...");
+        
+        if (destImage != null) {
+            finalImage = destImage;
+        }
+        else {
+            finalImage = srcImage;
+        }
         
         if (srcImage.isColorImage()) {
             factor = 4;
@@ -106,31 +107,8 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
             factor = 2;
         }
         
-        for (i = 0; i <= 2; i++) {
-           if (srcImage.getFileInfo()[0].getUnitsOfMeasure()[i] != Unit.MILLIMETERS.getLegacyNum()) {
-               newUnit = Unit.MILLIMETERS.getLegacyNum();
-               oldUnit = srcImage.getFileInfo()[0].getUnitsOfMeasure()[i];
-               
-               float res = srcImage.getFileInfo()[0].getResolutions()[i];
-               final double conv = ModelImage.getConversionFactor(newUnit, oldUnit);
-               res *= conv;
-               
-               for (z = 0; z < zDim; z++) {
-                   srcImage.getFileInfo()[z].setUnitsOfMeasure(newUnit, i);
-                   srcImage.getFileInfo()[z].setResolutions(res, i);
-                   destImage.getFileInfo()[z].setUnitsOfMeasure(newUnit, i);
-                   destImage.getFileInfo()[z].setResolutions(res, i);
-               }
-           }
-        }
-        
-        xRes = srcImage.getFileInfo()[0].getResolutions()[0];
-        yRes = srcImage.getFileInfo()[0].getResolutions()[1];
-        zRes = srcImage.getFileInfo()[0].getResolutions()[2];
-        oXres = xRes;
-        oYres = yRes;
-        units[0] = Unit.MILLIMETERS.getLegacyNum();
-        units[1] = Unit.MILLIMETERS.getLegacyNum();
+        units[0] = srcImage.getFileInfo()[0].getUnitsOfMeasure()[0];
+        units[1] = srcImage.getFileInfo()[0].getUnitsOfMeasure()[1];
         
         length = factor * sliceSize;
         
@@ -217,8 +195,11 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
                 }
                 
                 Ty = tiltTangent * (sliceLocation - firstLocation);
+                if (tiltAngle > 0.0) {
+                    Ty = -Ty;
+                }
                 xfrm.setTranslate(Tx, Ty);
-                algoTrans = new AlgorithmTransform(sliceImage, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
+                algoTrans = new AlgorithmTransform(sliceImage, xfrm, interp, xRes, yRes, xDim, yDim, units, doVOI, doClip,
                         doPad, doRotateCenter, center);
                 algoTrans.setFillValue(fillValue);
                 algoTrans.setUpdateOriginFlag(doUpdateOrigin);
@@ -245,12 +226,18 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
             } // if (z != 0)
             
             try {
-                destImage.importData(z*length, buffer, false);
+                finalImage.importData(z*length, buffer, false);
             } catch (IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Tilt Correction: Image(s) locked", true);
 
                 return;
+            }
+            
+            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
+                // Set the gantry/detector tilt angle to "0.0"
+                ((FileInfoDicom) (finalImage.getFileInfo(z))).getTagTable().setValue("0018,1120",
+                    new String("0.0"), 3);
             }
             
         } // for (z = 0; z < zDim; z++)
@@ -260,7 +247,7 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
             sliceImage = null;
         }
         
-        destImage.calcMinMax();
+        finalImage.calcMinMax();
         setCompleted(true);
         return;
         
