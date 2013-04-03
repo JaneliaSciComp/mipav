@@ -1083,6 +1083,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		final int keyCode = e.getKeyCode();
 		switch (keyCode) {
 		case KeyEvent.VK_DELETE:
+		case KeyEvent.VK_BACK_SPACE:
 			if (e.isShiftDown()) 
 			{
 				m_kParent.doVOI("deleteVOIActivePt");
