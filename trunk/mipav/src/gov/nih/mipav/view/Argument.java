@@ -67,8 +67,13 @@ public interface Argument {
         
         public static StaticArgument getArgument(String str, boolean quiet) {
             str = str.toLowerCase();
+            // handle - arguments
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
+            }
+            // handle -- arguments
+            if (str.length() > 0 && str.charAt(0) == '-') {
+            	str = str.substring(1);
             }
             for(StaticArgument c : StaticArgument.values()) {
                 if(str.equals(c.command)) {
@@ -168,8 +173,13 @@ public interface Argument {
         
         public static InstanceArgument getArgument(String str, boolean quiet) {
             str = str.toLowerCase();
+            // handle - arguments
             if(str.length() > 0 && str.charAt(0) == '-') {
                 str = str.substring(1);
+            }
+            // handle -- arguments
+            if (str.length() > 0 && str.charAt(0) == '-') {
+            	str = str.substring(1);
             }
             for(InstanceArgument c : InstanceArgument.values()) {
                 if(str.equals(c.command)) {
