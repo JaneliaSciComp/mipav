@@ -1280,7 +1280,12 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      * Determines whether the given row should be shown. Show indicates whether private tags are being displayed.
      */
     private static boolean addRow(final Object[] rowData, final boolean show) {
-    	String key = rowData[1].toString().substring(rowData[1].toString().indexOf("(") + 1, rowData[1].toString().lastIndexOf(")"));
+    	int tagIndex = 1; // default to position in regular header dialog, with checkboxes
+    	// handle calls from 'no checkbox' context (i.e., from dicomdir browser)
+    	if (rowData.length == 3) {
+    		tagIndex = 0;
+    	}
+    	String key = rowData[tagIndex].toString().substring(rowData[tagIndex].toString().indexOf("(") + 1, rowData[tagIndex].toString().lastIndexOf(")"));
     	
         if (!DicomDictionary.containsTag(new FileDicomKey(key))) {
             if (show) {
