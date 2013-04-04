@@ -33,6 +33,10 @@ import java.util.*;
  * Chapter 10: Multislice CT
  * Chapter 10.3 Nonhelical mode of reconstruction, pp. 394-395.
  * Chapter 10.5.5 Tilt artifacts in multislice helical CT, pp. 416-418.
+ * 
+ * In "Tomographic Reconstruction for Tilted Helical Multislice CT" by Jiang Hsieh the reconstruction algorithms
+ * presented are either performed during the backprojection process or in shifting the projections before the
+ * backprojection process.
  */
     
     
