@@ -18,6 +18,21 @@ import java.util.*;
  * 
  * @author ilb
  *
+ * In nonhelical multislice CT let the CT gantry coordinate system be x', y', z'.  Let phi be the angle between
+ * the image coordinate z and the gantry system z'.  The z and z' axes intersect at the origin.  Then for reconstruction
+ * each slice must be shifted:
+ *           dely = z' * tan(phi)
+ *           
+ * DICOM defines the tag (0018, 1120) Gantry/Detector Tilt for NM, CT, and PET as the nominal angle of tilt of the 
+ * scanning gantry or the detector.  The angle is in degrees of the detector face or the gantry relative to the
+ * patient's major (Head to Feet) axis (or the table supporting the patient).  Positive tilt is towards the
+ * patient's feet
+ * 
+ * Reference: Computed Tomography: Principles, Design, Artifacts, and Recent Advances, Second Edition,
+ * Jiang Hsieh, Publisher SPIE, November 19, 2009.
+ * Chapter 10: Multislice CT
+ * Chapter 10.3 Nonhelical mode of reconstruction, pp. 394-395.
+ * Chapter 10.5.5 Tilt artifacts in multislice helical CT, pp. 416-418.
  */
     
     
