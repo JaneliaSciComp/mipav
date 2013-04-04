@@ -3382,7 +3382,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
      * 
      * @return ModelImage
      */
-    public ModelImage readOrderedARGB(final File[] fileList, final int numChannels, int[] channelMap,
+	public ModelImage readOrderedARGB(final File[] fileList, final int numChannels, int[] channelMap,
             final boolean showOrderedProgressBar, final Dimension subsampleDimension, final boolean forceUBYTE) {
         ModelImage modelImageTemp = null;
         ModelImage modelImageResult = null;
@@ -3464,7 +3464,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 Preferences.debug("File does not exist: " + fileList[n].getName() + "\n", Preferences.DEBUG_FILEIO);
             }
 
-            progressBar.updateValue((int) ( ( (n + 1) / (float) fileList.length) * 100), false);
+            //progressBar.updateValue((int) ( ( (n + 1) / (float) fileList.length) * 100), false);
         }
 
         modelImageResult.calcMinMax();
@@ -3537,7 +3537,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             // import first slice to result image from modelImageTemp
             modelImageResult.importData(0, oneSliceBuffer, false);
 
-            progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
+            //progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
 
             for (int i = 1; i < fileList.length; i++) {
 
@@ -3570,7 +3570,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     Preferences.debug("File does not exist: " + fileList[i].getName() + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
+                //progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
             }
 
             modelImageResult.calcMinMax();
@@ -3625,7 +3625,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         float[] oneSliceBuffer;
         FileDicomTagTable[] childTagTables = null;
         boolean is3DDicom = false;
-        createProgressBar(null, "files", FileIO.FILE_READ);
+        //createProgressBar(null, "files", FileIO.FILE_READ);
         float[] resolutions = null;
         int[] extents = null;
         FileInfoBase firstFileInfo = null;
@@ -3702,7 +3702,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             // import first slice to result image from modelImageTemp
             modelImageResult.importData(0, oneSliceBuffer, false);
 
-            progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
+            //progressBar.updateValue((int) ( (1.0f / fileList.length) * 100), false);
 
             for (int i = 1; i < fileList.length; i++) {
                 System.out.println(i);
@@ -3770,7 +3770,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     Preferences.debug("File does not exist: " + fileList[i].getName() + "\n", Preferences.DEBUG_FILEIO);
                 }
 
-                progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
+                //progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
 
             }
             if (modelImageSubsample != null) {
