@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<data_dictionary xmlns:xsi="http://ndar.nih.gov/services/AccessionService">
+    <data_structure name="Image" short_name="image" desc="" version="1" type="Imaging">
+        <data_element name="image_subject_id" desc="" short_desc="NDAR Subject GUID ID" type="GUID" size="" required="Required" value_range="NDAR*"/>
+        <data_element name="image_file" desc="" short_desc="Image file" type="FILE" size="" required="Required" value_range=""/>
+        <data_element name="image_thumbnail_file" desc="" short_desc="Thumbnail file" type="THUMBNAIL" size="" required="Recommended" value_range=""/>
+        <data_element name="image_description" desc="" short_desc="Description" type="String" size="512" required="Optional" value_range=""/>
+        <data_element name="image_history" desc="" short_desc="History" type="String" size="" required="Optional" value_range=""/>
+        <data_element name="image_num_dimensions" desc="" short_desc="Number of Dimensions" type="Integer" size="" required="Required" value_range="1 to 5"/>
+        <data_element name="image_extent1" desc="" short_desc="Extent 1" type="Integer" size="" required="Required" value_range="1+"/>
+        <data_element name="image_extent2" desc="" short_desc="Extent 2" type="Integer" size="" required="Recommended" value_range="1+"/>
+        <data_element name="image_extent3" desc="" short_desc="Extent 3" type="Integer" size="" required="Recommended" value_range="1+"/>
+        <data_element name="image_extent4" desc="" short_desc="Extent 4" type="Integer" size="" required="Optional" value_range="1+"/>
+        <data_element name="image_extent5" desc="" short_desc="Extent 5" type="Integer" size="" required="Optional" value_range="1+"/>
+        <data_element name="image_unit1" desc="" short_desc="Units of Measure 1" type="String" size="20" required="Recommended" value_range="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit2" desc="" short_desc="Units of Measure 2" type="String" size="20" required="Recommended" value_range="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit3" desc="" short_desc="Units of Measure 3" type="String" size="20" required="Recommended" value_range="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit4" desc="" short_desc="Units of Measure 4" type="String" size="20" required="Recommended" value_range="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_unit5" desc="" short_desc="Units of Measure 5" type="String" size="20" required="Recommended" value_range="Unknown; Inches; Centimeters; Angstroms; Nanometers; Micrometers; Millimeters; Meters; Kilometers; Miles; Nanoseconds; Microseconds; Milliseconds; Seconds; Minutes; Hours; Hertz"/>
+        <data_element name="image_resolution1" desc="" short_desc="Resolution 1" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_resolution2" desc="" short_desc="Resolution 2" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_resolution3" desc="" short_desc="Resolution 3" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_resolution4" desc="" short_desc="Resolution 4" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_resolution5" desc="" short_desc="Resolution 5" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_slice_thickness" desc="" short_desc="Slice Thickness" type="Float" size="" required="Recommended" value_range="0+"/>
+        <data_element name="image_orientation" desc="" short_desc="Image Orienation" type="String" size="20" required="Recommended" value_range="Unknown; Axial; Coronal; Sagittal;"/>
+        <data_element name="image_modality" desc="" short_desc="Image Modality" type="String" size="20" required="Recommended" value_range="Unknown Modality; Biomagnetic Imaging; Color Flow Doppler; Computed Radiography; Computed Tomography; Duplex Doppler; Diaphanography; Digital Radiography; Endoscopy; External Camera Photography; FA; General Microscopy; Hardcopy; ICG; Intraoral Radiography; Laser Surface Scan; Magnetic Resonance; Magnetic Resonance Angiography; Magnetic Resonance Spectroscopy; Mammography; Nuclear Medicine; Other; Panoramic XRay; Positron Emission Tomography; Radio Fluoroscopy; Radiographic Imaging; Radiotherapy Dose; Radiotherapy Image; Radiotherapy Plan; Radiotherapy Record; Radiotherapy Structure Set; Red Free; Single Photon Emission Computed Tomography; Slide Microscopy; Thermography; Ultrasound; XRay Angiography"/>
+    </data_structure>
+</data_dictionary>
