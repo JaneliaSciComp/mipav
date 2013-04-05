@@ -256,7 +256,7 @@ public class LinearEquations2 implements java.io.Serializable {
                 // Compute residual R = B - op(A) * X,
                 // where op(A) = A, A**T, or A**H, depending on trans.
              for (i = 0; i < n; i++) {
-                 work[n+i] = B[i][j-1];
+                 work[n+i] = B[i][j];
              }
              CALL DGEMV( TRANS, N, N, -ONE, A, LDA, X( 1, J ), 1, ONE,
          $               WORK( N+1 ), 1 )
