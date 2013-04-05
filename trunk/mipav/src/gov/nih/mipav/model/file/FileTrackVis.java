@@ -3,6 +3,8 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -11,6 +13,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * Reads a .trk track file as a MIPAV mask image.
@@ -209,8 +213,10 @@ public class FileTrackVis extends FileBase {
 			float yRes = image.getResolutions(0)[1];
 			float zRes = image.getResolutions(0)[2];
 			
+			VOI v = new VOI((short)4, "Tracts");
 			for(int i=0; i<numTracks && raFile.getFilePointer() < raFile.length(); i++) {
 				//System.out.println("Track "+i);
+				VOIContour contour = new VOIContour(false);
 				int numPoints = this.readInt(bigEndian);
 				for(int j=0; j<numPoints; j++) {
 					x = this.readFloat(bigEndian);
@@ -223,39 +229,43 @@ public class FileTrackVis extends FileBase {
 					
 					//System.out.println("Point: "+x+", "+y+", "+z);
 					
-					xInt = (int)x; //TODO: Import as VOIContours to preserve float specification
-					yInt = (int)y;
-					zInt = (int)z;
-					points[0] = xInt;
-					points[1] = yInt;
-					points[2] = zInt;
-					if(points.length > 3) {
-						points[3] = 0;
-					}
+					contour.add(new Vector3f(x, y, z));
 					
-					int[] extents = image.getExtents();
-					int dataPoint = 0, subPoint = 0;
-					for(int n=0; n<points.length; n++) {
-						subPoint = points[n];
-						for(int m=1; m<n+1; m++) {
-							subPoint *= extents[m-1];
-						}
-						dataPoint += subPoint;
-					}
+//					xInt = (int)x; //TODO: Import as VOIContours to preserve float specification
+//					yInt = (int)y;
+//					zInt = (int)z;
+//					points[0] = xInt;
+//					points[1] = yInt;
+//					points[2] = zInt;
+//					if(points.length > 3) {
+//						points[3] = 0;
+//					}
 					
-					image.set(dataPoint, i+1);
-					
-					short s = image.get(points).shortValue();
-					short sTry = image.getShort(xInt, yInt, zInt);
-					//System.out.println("S: "+s);
-					
-					for(int k=3; k<numData; k++) { //in this case must be a 4D dataset
-						points[3] = k-3;
-						data = this.readFloat(bigEndian);
-						//System.out.println("Data at point : "+data);
-						image.set(points, (short)data);
-					}
+//					int[] extents = image.getExtents();
+//					int dataPoint = 0, subPoint = 0;
+//					for(int n=0; n<points.length; n++) {
+//						subPoint = points[n];
+//						for(int m=1; m<n+1; m++) {
+//							subPoint *= extents[m-1];
+//						}
+//						dataPoint += subPoint;
+//					}
+//					
+//					image.set(dataPoint, i+1);
+//					
+//					short s = image.get(points).shortValue();
+//					short sTry = image.getShort(xInt, yInt, zInt);
+//					//System.out.println("S: "+s);
+//					
+//					for(int k=3; k<numData; k++) { //in this case must be a 4D dataset
+//						points[3] = k-3;
+//						data = this.readFloat(bigEndian);
+//						//System.out.println("Data at point : "+data);
+//						image.set(points, (short)data);
+//					}
 				}
+				
+				v.importCurve(contour);
 				
 				float[] trackSpecific  = new float[nProperties];
 				for(int j=0; j<nProperties; j++) {
@@ -265,6 +275,8 @@ public class FileTrackVis extends FileBase {
 				
 				trackCounter++;
 			}	
+			
+			image.registerVOI(v);
 			
 			if(trackCounter != numTracks) {
 				fileInfo.setNumTracks(trackCounter);
