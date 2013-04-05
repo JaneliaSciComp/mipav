@@ -2074,7 +2074,7 @@ public class LinearEquations implements java.io.Serializable {
            The maximum over the NRHS solution vectors of
            ( norm(X-XACT) * rcond) / ( norm(XACT) * eps)
      */
-    private void dget04(int n, int nrhs, double[][] X, int ldx, double[][] XACT, int ldxact,
+    public void dget04(int n, int nrhs, double[][] X, int ldx, double[][] XACT, int ldxact,
                         double rcond, double[] resid) {
         int i;
         int ix;
@@ -4190,7 +4190,7 @@ public class LinearEquations implements java.io.Serializable {
        @param (input/output) int[] isave of dimension (3).
            isave is used to save variables between calls to dlacn2
      */
-    private void dlacn2(int n, double[] v, double[] x, int[] isgn, double[] est, int[] kase, int[] isave) {
+    public void dlacn2(int n, double[] v, double[] x, int[] isgn, double[] est, int[] kase, int[] isave) {
         final int itmax = 5;
         int i;
         int jlast;
@@ -5980,7 +5980,7 @@ public class LinearEquations implements java.io.Serializable {
            > 0: if info[0] = i, A[i-1][i-1] is exactly zero.  The triangular matrix is 
                 singular and its inverse can not be computed.  
      */
-      private void dtrtri(char uplo, char diag, int n, double[][] A, int lda, int info[]) {
+      public void dtrtri(char uplo, char diag, int n, double[][] A, int lda, int info[]) {
           boolean nounit;
           boolean upper;
           int j;
