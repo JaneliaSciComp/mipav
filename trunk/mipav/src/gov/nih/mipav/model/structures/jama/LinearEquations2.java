@@ -28,6 +28,392 @@ public class LinearEquations2 implements java.io.Serializable {
     public LinearEquations2() {}
     
     /*
+     * This is a port of a portion of LAPACK test routine DGET01.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dget01 reconstructs a matrix A from its L*U factorization and
+       computes the residual
+          norm(L*U - A) / ( N * norm(A) * eps ),
+       where eps is the machine epsilon.
+
+       @param input int m
+           The number of rows of the matrix A.  m >= 0.
+       @param input int n
+           The number of columns of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The original m x n matrix A.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,m).
+       @param (input/output) double[][] AFAC of dimension (ldafac, n)
+           The factored form of the matrix A.  AFAC contains the factors
+           L and U from the L*U factorization as computed by dgetrf.
+           Overwritten with the reconstructed matrix, and then with the
+           difference L*U - A.
+       @param input int ldafac
+           The leading dimension of the array AFAC.  ldafac >= max(1,m).
+       @param input int[] ipiv of dimension (n)
+           The pivot indices from dgetrf.
+       @param output double[] rwork of dimension (m)
+       @param output double[] resid of dimension (1)
+           norm(L*U - A) / ( n * norm(A) * eps )
+     */
+    private void dget01(int m, int n, double[][] A, int lda, double[][] AFAC,
+                        int ldafac, int[] ipiv, double[] rwork, double[] resid) {
+        int i;
+        int j;
+        int k;
+        double anorm;
+        double eps;
+        double t;
+        double vec[];
+        double arr[][];
+        double vec2[];
+        
+        // Quick exit if M = 0 or N = 0.
+                
+        if (m <= 0 || n <= 0) {
+            resid[0] = 0.0;
+            return;
+        }
+    
+        // Determine eps and the norm of A.
+    
+        eps = ge.dlamch('E'); // Epsilon
+        anorm = ge.dlange('1', m, n, A, lda, rwork);
+   
+        // Compute the product L*U and overwrite AFAC with the result.
+        // A column at a time of the product is obtained, starting with
+        // column n.
+    
+        for (k = n; k >= 1; k--) {
+            if (k > m) {
+                vec = new double[m];
+                for (i = 0; i < m; i++) {
+                    vec[i] = AFAC[i][k-1];
+                }
+                ge.dtrmv('L', 'N', 'U', m, AFAC, ldafac, vec, 1);
+                for (i = 0; i < m; i++) {
+                    AFAC[i][k-1] = vec[i];
+                }
+            } // if (k > m)
+            else {
+    
+                // Compute elements (K+1:M,K)
+    
+                t = AFAC[k-1][k-1];
+                if (k+1 <= m) {
+                    for (i = 0; i < m-k; i++) {
+                        AFAC[k+i][k-1] = t * AFAC[k+i][k-1];
+                    }
+                    arr = new double[m-k][k-1];
+                    for (i = 0; i < m-k; i++) {
+                        for (j = 0; j < k-1; j++) {
+                            arr[i][j] = AFAC[k+i][j];
+                        }
+                    }
+                    vec = new double[k-1];
+                    for (i = 0; i < k-1; i++) {
+                        vec[i] = AFAC[i][k-1];
+                    }
+                    vec2 = new double[m-k];
+                    for (i = 0; i < m-k; i++) {
+                        vec2[i] = AFAC[k+i][k-1];
+                    }
+                    ge.dgemv('N', m-k, k-1, 1.0, arr, ldafac, vec, 1, 1.0, vec2, 1);
+                    for (i = 0; i < m-k; i++) {
+                        AFAC[k+i][k-1] = vec2[i];
+                    }
+                } // if (k+1 <= m)
+    
+                // Compute the (K,K) element
+    
+                AFAC[k-1][k-1] = t;
+                for (i = 0; i < k-1; i++) {
+                    AFAC[k-1][k-1] += AFAC[k-1][i] * AFAC[i][k-1];
+                }
+                
+    
+                // Compute elements (1:K-1,K)
+                vec = new double[k-1];
+                for (i = 0; i < k-1; i++) {
+                    vec[i] = AFAC[i][k-1];
+                }
+                ge.dtrmv('L', 'N', 'U', k-1, AFAC, ldafac, vec, 1);
+                for (i = 0; i < k-1; i++) {
+                    AFAC[i][k-1] = vec[i];
+                }
+            } // else 
+        } // for (k = n; k >= 1; k--)
+        dlaswp(n, AFAC, ldafac, 1, Math.min(m, n), ipiv, -1);
+    
+        // Compute the difference  L*U - A  and store in AFAC.
+    
+        for (j = 0; j < n; j++) {
+            for (i = 0; i < m; i++) {
+                AFAC[i][j] = AFAC[i][j] - A[i][j];
+            }
+        }
+    
+        // Compute norm( L*U - A ) / ( n * norm(A) * eps )
+    
+        resid[0] = ge.dlange('1', m, n, AFAC, ldafac, rwork);
+    
+        if (anorm <= 0.0) {
+            if (resid[0] != 0.0) {
+                resid[0] = 1.0 / eps;
+            }
+        }
+        else {
+            resid[0] = ( ( resid[0] /(double)( n ) ) / anorm ) / eps;
+        }
+    
+        return;
+
+    } // dget01
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DGET03.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dget03 computes the residual for a general matrix times its inverse:
+       norm( I - AINV*A ) / ( n * norm(A) * norm(AINV) * eps ),
+       where eps is the machine epsilon.
+
+       @param input int n
+           The number of rows and columns of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The original n x n matrix A.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input double[][] AINV of dimension (ldainv, n)
+           The inverse of the matrix A.
+       @param input int ldainv
+           The leading dimension of the array AINV.  ldainv >= max(1,n).
+       @param output double[][] WORK of dimension (ldwork, n)
+       @param input int ldwork
+           The leading dimension of the array WORK.  ldwork >= max(1,n).
+       @param output double[] rwork of dimension (n)
+       @param output double[] rcond of dimension (1)
+           The reciprocal of the condition number of A, computed as
+           ( 1/norm(A) ) / norm(AINV).
+       @param output double[] resid of dimension (1)
+           norm(I - AINV*A) / ( n * norm(A) * norm(AINV) * eps )
+     */
+    private void dget03(int n, double[][] A, int lda, double[][] AINV, int ldainv,
+                        double[][] WORK, int ldwork, double[] rwork, double[] rcond,
+                        double[] resid) {
+        int i;
+        double ainvnm;
+        double anorm;
+        double eps;
+        
+        // Quick exit if n = 0.
+                
+        if (n <= 0) {
+            rcond[0] = 1.0;
+            resid[0] = 0.0;
+            return;
+        }
+    
+        // Exit with resid[0] = 1/eps if anorm = 0 or ainvnm = 0.
+    
+        eps = ge.dlamch('E');
+        anorm = ge.dlange('1', n, n, A, lda, rwork);
+        ainvnm = ge.dlange('1', n, n, AINV, ldainv, rwork);
+        if (anorm <= 0.0 || ainvnm <= 0.0) {
+            rcond[0] = 0.0;
+            resid[0] = 1.0 / eps;
+            return;
+        }
+        rcond[0] = ( 1.0 / anorm ) / ainvnm;
+    
+        // Compute I - A * AINV
+    
+        ge.dgemm('N', 'N', n, n, n, -1.0, AINV,
+                 ldainv, A, lda, 0.0, WORK, ldwork);
+        for (i = 0; i < n; i++) {
+            WORK[i][i] = 1.0 + WORK[i][i];
+        }
+    
+        // Compute norm(I - AINV*A) / (n * norm(A) * norm(AINV) * eps)
+    
+        resid[0] = ge.dlange('1', n, n, WORK, ldwork, rwork);
+    
+        resid[0] = ((resid[0]*rcond[0]) / eps ) / (double)( n );
+    
+        return;
+
+    } // dget03
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DGET07.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dget07 tests the error bounds from iterative refinement for the
+       computed solution to a system of equations op(A)*X = B, where A is a
+       general n by n matrix and op(A) = A or A**T, depending on TRANS.
+
+       reslts[0] = test of the error bound
+                 = norm(X - XACT) / ( norm(X) * FERR )
+
+       A large value is returned if this ratio is not less than one.
+
+       reslts[1] = residual from the iterative refinement routine
+                 = the maximum of BERR / ( (n+1)*EPS + (*) ), where
+                   (*) = (n+1)*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+       
+       @param input char trans
+           Specifies the form of the system of equations.
+           = 'N':  A * X = B     (No transpose)
+           = 'T':  A**T * X = B  (Transpose)
+           = 'C':  A**H * X = B  (Conjugate transpose = Transpose)
+       @param input int n
+           The number of rows of the matrices X and XACT.  n >= 0.
+       @param input int nrhs
+           The number of columns of the matrices X and XACT.  nrhs >= 0
+       @param input double[][] A of dimension (lda, n)
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input double[][] B of dimension (ldb, nrhs)
+           The right hand side vectors for the system of linear
+           equations.
+       @param input int ldb
+           The leading dimension of the array B.  ldb >= max(1,n).
+       @param input double[][] X of dimension (ldx, nrhs)
+           The computed solution vectors.  Each vector is stored as a
+           column of the matrix X.
+       @param input int ldx
+           The leading dimension of the array X.  ldx >= max(1,n).
+       @param input double[][] XACT of dimension (ldxact, nrhs)
+           The exact solution vectors.  Each vector is stored as a
+           column of the matrix XACT.
+       @param input int ldxact
+           The leading dimension of the array XACT.  LDXACT >= max(1,n).
+       @param input double[] ferr of dimension (nrhs)
+           The estimated forward error bounds for each solution vector
+           X.  If XTRUE is the true solution, ferr bounds the magnitude
+           of the largest entry in (X - XTRUE) divided by the magnitude
+           of the largest entry in X.
+       @param input boolean chkferr
+           Set to true to check ferr, false not to check ferr.
+           When the test system is ill-conditioned, the "true"
+           solution in XACT may be incorrect.
+       @param input double[] berr of dimension (nrhs)
+           The componentwise relative backward error of each solution
+           vector (i.e., the smallest relative change in any entry of A
+           or B that makes X an exact solution).
+       @param output double[] reslts of dimension (2)
+           The maximum over the NRHS solution vectors of the ratios:
+           reslts[0] = norm(X - XACT) / ( norm(X) * ferr )
+           reslts[1] = berr / ( (n+1)*eps + (*) )
+     */
+    private void dget07(char trans, int n, int nrhs, double[][] A, int lda, double[][] B,
+                        int ldb, double[][] X, int ldx, double[][] XACT, int ldxact, 
+                        double[] ferr, boolean chkferr, double[] berr, double[] reslts) {
+        boolean notran;
+        int i;
+        int imax;
+        int j;
+        int k;
+        double axbi = 0.0;
+        double diff;
+        double eps;
+        double errbnd;
+        double ovfl;
+        double tmp;
+        double unfl;
+        double xnorm;
+        double maxVal;
+        
+        // Quick exit if n = 0 or nrhs = 0.
+                
+        if (n <= 0 || nrhs <= 0) {
+            reslts[0] = 0.0;
+            reslts[1] = 0.0;
+            return;
+        }
+    
+        eps = ge.dlamch('E'); // Epsilon
+        unfl = ge.dlamch('S'); // Safe minimum
+        ovfl = 1.0 / unfl;
+        notran = ((trans == 'N') || (trans == 'n'));
+    
+        // Test 1:  Compute the maximum of
+        //    norm(X - XACT) / ( norm(X) * ferr )
+        // over all the vectors X and XACT using the infinity-norm.
+    
+        errbnd = 0.0;
+        if (chkferr) {
+            for (j = 0; j < nrhs; j++) {
+                imax = 0;
+                maxVal = Math.abs(X[0][j]);
+                for (i = 1; i < n; i++) {
+                    if (Math.abs(X[i][j]) > maxVal) {
+                        maxVal = Math.abs(X[i][j]);
+                        imax = i;
+                    }
+                }
+                xnorm = Math.max(Math.abs(X[imax][j]), unfl);
+                diff = 0.0;
+                for (i = 0; i < n; i++) {
+                    diff = Math.max(diff, Math.abs(X[i][j]-XACT[i][j]));
+                }
+    
+                if ((xnorm <= 1.0) && (diff > ovfl*xnorm)) {
+                    errbnd = 1.0 / eps;
+                    continue;
+                }
+                   
+                if (diff / xnorm <= ferr[j]) {
+                    errbnd = Math.max(errbnd, (diff / xnorm ) / ferr[j] );
+                }
+                else {
+                    errbnd = 1.0 / eps;
+                }
+            } // for (j = 0; j < nrhs; j++)
+        } // if (chkferr)
+        reslts[0] = errbnd;
+    
+        // Test 2:  Compute the maximum of BERR / ( (n+1)*EPS + (*) ), where
+        // (*) = (n+1)*UNFL / (min_i (abs(op(A))*abs(X) +abs(b))_i )
+    
+        for (k = 0; k < nrhs; k++) {
+            for (i = 0; i < n; i++) {
+                tmp = Math.abs(B[i][k]);
+                if (notran) {
+                    for (j = 0; j < n; j++) {
+                        tmp = tmp + Math.abs(A[i][j])*Math.abs(X[j][k]);
+                    }
+                } // if (notran)
+                else {
+                    for (j = 0; j < n; j++) {
+                        tmp = tmp + Math.abs(A[j][i])*Math.abs(X[j][k]);
+                    }
+                } // else 
+                if (i == 0) {
+                    axbi = tmp;
+                }
+                else {
+                    axbi = Math.min(axbi, tmp);
+                }
+            } // for (i = 0; i < n; i++)
+            tmp = berr[k] / ((n+1)*eps+(n+1)*unfl /
+                   Math.max(axbi, (n+1)*unfl));
+            if (k == 0) {
+                reslts[1] = tmp;
+            }
+            else {
+                reslts[1] = Math.max(reslts[1], tmp);
+            }
+        } // for (k = 0; k < nrhs; k++)
+    
+        return;
+
+    } // dget07
+    
+    /*
      * This is a port of a portion of LAPACK driver routine DGESV.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
@@ -108,6 +494,171 @@ public class LinearEquations2 implements java.io.Serializable {
     } // dgesv
     
     /*
+     * This is a port of a portion of LAPACK routine DGECON.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dgecon estimates the reciprocal of the condition number of a general
+       real matrix A, in either the 1-norm or the infinity-norm, using
+       the LU factorization computed by dgetrf.
+*
+*      An estimate is obtained for norm(inv(A)), and the reciprocal of the
+       condition number is computed as
+       rcond[0] = 1 / ( norm(A) * norm(inv(A)) ).
+
+       @param input char norm
+           Specifies whether the 1-norm condition number or the
+           infinity-norm condition number is required:
+           = '1' or 'O':  1-norm;
+           = 'I':         Infinity-norm.
+       @param input int n
+           The order of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The factors L and U from the factorization A = P*L*U
+           as computed by dgetrf.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param input double anorm
+           If norm = '1' or 'O', the 1-norm of the original matrix A.
+           If norm = 'I', the infinity-norm of the original matrix A.
+       @param output double[] rcond of dimension (1)
+           The reciprocal of the condition number of the matrix A,
+           computed as rcond[0] = 1/(norm(A) * norm(inv(A))).
+       @param output double[] work of dimension (n)
+       @param output int[] iwork of dimension (n)
+       @param output int[] info of dimension (1)
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+     */
+    private void dgecon(char norm, int n, double[][] A, int lda, double anorm,
+                        double[] rcond, double[] work, int[] iwork, int[] info) {
+        boolean onenrm;
+        char normin;
+        int ix;
+        int kase[] = new int[1];
+        int kase1;
+        int isave[] = new int[3];
+        double ainvnm[] = new double[1];
+        double scale;
+        double sl[] = new double[1];
+        double smlnum;
+        double su[] = new double[1];
+        double work2[];
+        double work3[];
+        double work4[];
+        int i;
+        double maxVal;
+        
+        // Test the input parameters.
+        
+        info[0] = 0;
+        onenrm = norm == '1' || ((norm == 'O') || (norm == 'o'));
+        if (!onenrm && !((norm == 'I') || (norm == 'i'))) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, n)) {
+            info[0] = -4;
+        }
+        else if (anorm < 0.0) {
+            info[0] = -5;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("dgecon had info[0] = " + info[0]);
+            return;
+        }
+    
+        // Quick return if possible
+    
+        rcond[0] = 0.0;
+        if (n == 0) {
+            rcond[0] = 1.0;
+            return;
+        }
+        else if (anorm == 0.0) {
+            return;
+        }
+    
+        smlnum = ge.dlamch('S'); // Safe minimum
+        work2 = new double[n];
+        work3 = new double[n];
+        work4 = new double[n];
+    
+        // Estimate the norm of inv(A).
+    
+        ainvnm[0] = 0.0;
+        normin = 'N';
+        if (onenrm) {
+            kase1 = 1;
+        }
+        else {
+            kase1 = 2;
+        }
+        kase[0] = 0;
+        while (true) {
+            le.dlacn2(n, work2, work, iwork, ainvnm, kase, isave);
+            if (kase[0] != 0) {
+                if (kase[0] == kase1) {
+    
+                    // Multiply by inv(L).
+    
+                    le.dlatrs('L', 'N', 'U', normin, n, A,
+                              lda, work, sl, work3, info);
+    
+                    // Multiply by inv(U).
+    
+                    le.dlatrs('U', 'N', 'N', normin, n,
+                              A, lda, work, su, work4, info);
+                } // if (kase[0] == kase1)
+                else {
+    
+                    // Multiply by inv(U**T).
+    
+                    le.dlatrs('U', 'T', 'N', normin, n, A,
+                              lda, work, su, work4, info);
+    
+                    // Multiply by inv(L**T).
+    
+                    le.dlatrs('L', 'T', 'U', normin, n, A,
+                              lda, work, sl, work3, info);
+                } // else
+    
+                // Divide X by 1/(sl[0]*su[0]) if doing so will not cause overflow.
+    
+                scale = sl[0]*su[0];
+                normin = 'Y';
+                if (scale != 1.0) {
+                    ix = 0;
+                    maxVal = Math.abs(work[0]);
+                    for (i = 1; i < n; i++) {
+                        if (Math.abs(work[i]) > maxVal) {
+                            ix = i;
+                            maxVal = Math.abs(work[i]);
+                        }
+                    }
+                    if (scale < Math.abs(work[ix])*smlnum || scale == 0.0) {
+                        return;
+                    }
+                    gi.drscl(n, scale, work, 1);
+                } // if (scale != 1.0)
+                continue;
+            } // if (kase[0] != 0)
+            break;
+        } // while (true)
+    
+        // Compute the estimate of the reciprocal condition number.
+    
+        if (ainvnm[0] != 0.0) {
+            rcond[0] = (1.0 / ainvnm[0] ) / anorm;
+        }
+    
+        return;
+
+    } // dgecon
+    
+    /*
      * This is a port of a portion of LAPACK routine DGERFS.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
@@ -160,7 +711,7 @@ public class LinearEquations2 implements java.io.Serializable {
            The componentwise relative backward error of each solution
            vector X(j) (i.e., the smallest relative change in
            any element of A or B that makes X(j) an exact solution).
-       @param output double[] work of dimension (3*n)
+       @param output double[] work of dimension (n)
        @param output int[] iwork of dimension (n)
        @param output int[] info of dimension (1)
            = 0:  successful exit
@@ -177,7 +728,7 @@ public class LinearEquations2 implements java.io.Serializable {
         int i;
         int j;
         int k;
-        int kase;
+        int kase[] = new int[1];
         int nz;
         int isave[] = new int[3];
         double eps;
@@ -187,6 +738,10 @@ public class LinearEquations2 implements java.io.Serializable {
         double safe2;
         double safmin;
         double xk;
+        double work2[];
+        double vec[];
+        double work3[];
+        double arr[][];
         
         // Test the input parameters.
         
@@ -232,7 +787,7 @@ public class LinearEquations2 implements java.io.Serializable {
             transt = 'T';
         }
         else {
-            trans = 'N';
+            transt = 'N';
         }
     
         // nz = maximum number of nonzero elements in each row of A, plus 1
@@ -242,10 +797,13 @@ public class LinearEquations2 implements java.io.Serializable {
         safmin = ge.dlamch('S'); // Safe minimum
         safe1 = nz*safmin;
         safe2 = safe1 / eps;
+        work2 = new double[n];
+        work3 = new double[n];
+        arr = new double[n][1];
     
         // Do for each right hand side
     
-        /*for (j = 0; j < nrhs; j++) {
+        for (j = 0; j < nrhs; j++) {
     
             count = 1;
             lstres = 3.0;
@@ -255,142 +813,162 @@ public class LinearEquations2 implements java.io.Serializable {
     
                 // Compute residual R = B - op(A) * X,
                 // where op(A) = A, A**T, or A**H, depending on trans.
-             for (i = 0; i < n; i++) {
-                 work[n+i] = B[i][j];
-             }
-             CALL DGEMV( TRANS, N, N, -ONE, A, LDA, X( 1, J ), 1, ONE,
-         $               WORK( N+1 ), 1 )
-    *
-    *        Compute componentwise relative backward error from formula
-    *
-    *        max(i) ( abs(R(i)) / ( abs(op(A))*abs(X) + abs(B) )(i) )
-    *
-    *        where abs(Z) is the componentwise absolute value of the matrix
-    *        or vector Z.  If the i-th component of the denominator is less
-    *        than SAFE2, then SAFE1 is added to the i-th components of the
-    *        numerator and denominator before dividing.
-    *
-             DO 30 I = 1, N
-                WORK( I ) = ABS( B( I, J ) )
-       30    CONTINUE
-    *
-    *        Compute abs(op(A))*abs(X) + abs(B).
-    *
-             IF( NOTRAN ) THEN
-                DO 50 K = 1, N
-                   XK = ABS( X( K, J ) )
-                   DO 40 I = 1, N
-                      WORK( I ) = WORK( I ) + ABS( A( I, K ) )*XK
-       40          CONTINUE
-       50       CONTINUE
-             ELSE
-                DO 70 K = 1, N
-                   S = ZERO
-                   DO 60 I = 1, N
-                      S = S + ABS( A( I, K ) )*ABS( X( I, J ) )
-       60          CONTINUE
-                   WORK( K ) = WORK( K ) + S
-       70       CONTINUE
-             END IF
-             S = ZERO
-             DO 80 I = 1, N
-                IF( WORK( I ).GT.SAFE2 ) THEN
-                   S = MAX( S, ABS( WORK( N+I ) ) / WORK( I ) )
-                ELSE
-                   S = MAX( S, ( ABS( WORK( N+I ) )+SAFE1 ) /
-         $             ( WORK( I )+SAFE1 ) )
-                END IF
-       80    CONTINUE
-             BERR( J ) = S
-    *
-    *        Test stopping criterion. Continue iterating if
-    *           1) The residual BERR(J) is larger than machine epsilon, and
-    *           2) BERR(J) decreased by at least a factor of 2 during the
-    *              last iteration, and
-    *           3) At most ITMAX iterations tried.
-    *
-             IF( BERR( J ).GT.EPS .AND. TWO*BERR( J ).LE.LSTRES .AND.
-         $       COUNT.LE.ITMAX ) THEN
-    *
-    *           Update solution and try again.
-    *
-                CALL DGETRS( TRANS, N, 1, AF, LDAF, IPIV, WORK( N+1 ), N,
-         $                   INFO )
-                CALL DAXPY( N, ONE, WORK( N+1 ), 1, X( 1, J ), 1 )
-                LSTRES = BERR( J )
-                COUNT = COUNT + 1
-                continue;
-             END IF
+                for (i = 0; i < n; i++) {
+                    work2[i] = B[i][j];
+                }
+                vec = new double[n];
+                for (i = 0; i < n; i++) {
+                    vec[i] = X[i][j];
+                }
+                ge.dgemv(trans, n, n, -1.0, A, lda, vec, 1, 1.0, work2, 1);
+    
+                // Compute componentwise relative backward error from formula
+    
+                // max(i) ( abs(R(i)) / ( abs(op(A))*abs(X) + abs(B) )(i) )
+    
+                // where abs(Z) is the componentwise absolute value of the matrix
+                // or vector Z.  If the i-th component of the denominator is less
+                // than safe2, then safe1 is added to the i-th components of the
+                // numerator and denominator before dividing.
+    
+                for (i = 0; i < n; i++) {
+                    work[i] = Math.abs(B[i][j]);
+                } 
+    
+                // Compute abs(op(A))*abs(X) + abs(B).
+    
+                if (notran) {
+                    for (k = 0; k < n; k++) {
+                        xk = Math.abs(X[k][j]);
+                        for (i = 0; i < n; i++) {
+                            work[i] = work[i] + Math.abs(A[i][k])*xk;
+                        } // for (i = 0; i < n; i++)
+                    } // for (k = 0; k < n; k++)
+                } // if (notran)
+                else {
+                    for (k = 0; k < n; k++) {
+                        s = 0.0;
+                        for (i = 0; i < n; i++) {
+                            s = s + Math.abs(A[i][k])*Math.abs(X[i][j]);
+                        } // for (i = 0; i < n; i++)
+                        work[k] = work[k] + s;
+                    } // for (k = 0; k < n; k++)
+                } // else
+                s= 0.0;
+                for (i = 0; i < n; i++) {
+                    if (work[i] > safe2) {
+                        s = Math.max(s, Math.abs(work2[i]) / work[i]);
+                    }
+                    else {
+                        s = Math.max(s, (Math.abs(work2[i])+safe1) /(work[i]+safe1));
+                    }
+                } // for (i = 0; i < n; i++)
+                berr[j] = s;
+    
+                // Test stopping criterion. Continue iterating if
+                    // 1) The residual berr[j] is larger than machine epsilon, and
+                    // 2) berr[j] decreased by at least a factor of 2 during the
+                    //    last iteration, and
+                    // 3) At most itmax iterations tried.
+    
+                if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax) {
+    
+                    // Update solution and try again.
+     
+                    for (i = 0; i < n; i++) {
+                        arr[i][0] = work2[i];
+                    }
+                    dgetrs(trans, n, 1, AF, ldaf, ipiv, arr, n, info);
+                    for (i = 0; i < n; i++) {
+                        work2[i] = arr[i][0];
+                        X[i][j] = X[i][j] + work2[i];
+                    }
+                    lstres = berr[j];
+                    count++;
+                    continue;
+                } // if (berr[j] > eps && 2.0*berr[j] <= lstres && count <= itmax)
                 break;
             } // while (true)
-    *
-    *        Bound error from formula
-    *
-    *        norm(X - XTRUE) / norm(X) .le. FERR =
-    *        norm( abs(inv(op(A)))*
-    *           ( abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) ))) / norm(X)
-    *
-    *        where
-    *          norm(Z) is the magnitude of the largest component of Z
-    *          inv(op(A)) is the inverse of op(A)
-    *          abs(Z) is the componentwise absolute value of the matrix or
-    *             vector Z
-    *          NZ is the maximum number of nonzeros in any row of A, plus 1
-    *          EPS is machine epsilon
-    *
-    *        The i-th component of abs(R)+NZ*EPS*(abs(op(A))*abs(X)+abs(B))
-    *        is incremented by SAFE1 if the i-th component of
-    *        abs(op(A))*abs(X) + abs(B) is less than SAFE2.
-    *
-    *        Use DLACN2 to estimate the infinity-norm of the matrix
-    *           inv(op(A)) * diag(W),
-    *        where W = abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) )))
-    *
-             DO 90 I = 1, N
-                IF( WORK( I ).GT.SAFE2 ) THEN
-                   WORK( I ) = ABS( WORK( N+I ) ) + NZ*EPS*WORK( I )
-                ELSE
-                   WORK( I ) = ABS( WORK( N+I ) ) + NZ*EPS*WORK( I ) + SAFE1
-                END IF
-       90    CONTINUE
-    *
-             KASE = 0
-      100    CONTINUE
-             CALL DLACN2( N, WORK( 2*N+1 ), WORK( N+1 ), IWORK, FERR( J ),
-         $                KASE, ISAVE )
-             IF( KASE.NE.0 ) THEN
-                IF( KASE.EQ.1 ) THEN
-    *
-    *              Multiply by diag(W)*inv(op(A)**T).
-    *
-                   CALL DGETRS( TRANST, N, 1, AF, LDAF, IPIV, WORK( N+1 ),
-         $                      N, INFO )
-                   DO 110 I = 1, N
-                      WORK( N+I ) = WORK( I )*WORK( N+I )
-      110          CONTINUE
-                ELSE
-    *
-    *              Multiply by inv(op(A))*diag(W).
-    *
-                   DO 120 I = 1, N
-                      WORK( N+I ) = WORK( I )*WORK( N+I )
-      120          CONTINUE
-                   CALL DGETRS( TRANS, N, 1, AF, LDAF, IPIV, WORK( N+1 ), N,
-         $                      INFO )
-                END IF
-                GO TO 100
-             END IF
-    *
-    *        Normalize error.
-    *
-             LSTRES = ZERO
-             DO 130 I = 1, N
-                LSTRES = MAX( LSTRES, ABS( X( I, J ) ) )
-      130    CONTINUE
-             IF( LSTRES.NE.ZERO )
-         $      FERR( J ) = FERR( J ) / LSTRES
-    *
-        } // for (j = 0; j < nrhs; j++)*/
+    
+            // Bound error from formula
+    
+            // norm(X - XTRUE) / norm(X) .le. ferr =
+            // norm( abs(inv(op(A)))*
+            //    ( abs(R) + NZ*EPS*( abs(op(A))*abs(X)+abs(B) ))) / norm(X)
+    
+            // where
+            //   norm(Z) is the magnitude of the largest component of Z
+            //   inv(op(A)) is the inverse of op(A)
+            //   abs(Z) is the componentwise absolute value of the matrix or vector Z
+            //   nz is the maximum number of nonzeros in any row of A, plus 1
+            //   eps is machine epsilon
+    
+            // The i-th component of abs(R)+nz*eps*(abs(op(A))*abs(X)+abs(B))
+            // is incremented by safe1 if the i-th component of
+            // abs(op(A))*abs(X) + abs(B) is less than safe2.
+    
+            // Use dlacn2 to estimate the infinity-norm of the matrix
+            //    inv(op(A)) * diag(W),
+            // where W = abs(R) + nz*eps*( abs(op(A))*abs(X)+abs(B) )))
+    
+            for (i = 0; i < n; i++) {
+                if (work[i] > safe2) {
+                    work[i] = Math.abs(work2[i]) + nz*eps*work[i];
+                }
+                else {
+                    work[i] = Math.abs(work2[i]) + nz*eps*work[i] + safe1;
+                }
+            } // for (i = 0; i < n; i++)
+    
+            kase[0] = 0;
+            while (true) {
+                vec = new double[1];
+                vec[0] = ferr[j];
+                le.dlacn2(n, work3, work2, iwork, vec, kase, isave);
+                ferr[j] = vec[0];
+                if (kase[0] != 0) {
+                    if (kase[0] == 1) {
+    
+                        // Multiply by diag(W)*inv(op(A)**T).
+    
+                        for (i = 0; i < n; i++) {
+                            arr[i][0] = work2[i];
+                        }
+                        dgetrs(transt, n, 1, AF, ldaf, ipiv, arr, n, info);
+                        for (i = 0; i < n; i++) {
+                            work2[i] = arr[i][0];
+                            work2[i] = work[i]*work2[i];
+                        }
+                    } // if (kase[0] == 1)
+                    else {
+    
+                        // Multiply by inv(op(A))*diag(W).
+    
+                        for (i = 0; i < n; i++) {
+                            work2[i] = work[i]*work2[i];
+                            arr[i][0] = work2[i];
+                        }
+                        dgetrs(trans, n, 1, AF, ldaf, ipiv, arr, n, info);
+                        for (i = 0; i < n; i++) {
+                            work2[i] = arr[i][0];
+                        }
+                    } // else
+                    continue;
+                } // if (kase[0] != 0)
+                break;
+            } // while (true)
+    
+            // Normalize error.
+    
+            lstres = 0.0;
+            for (i = 0; i < n; i++) {
+                lstres = Math.max(lstres, Math.abs(X[i][j]));
+            }
+            if (lstres != 0.0) {
+                ferr[j] = ferr[j] / lstres;
+            }
+    
+        } // for (j = 0; j < nrhs; j++)
     
         return;
 
