@@ -4508,7 +4508,7 @@ public class LinearEquations implements java.io.Serializable {
            = 0:  successful exit
            < 0:  if INFO = -k, the k-th argument had an illegal value
      */
-    private void dlatrs(char uplo, char trans, char diag, char normin, int n, double[][] A, int lda, double[] x,
+    public void dlatrs(char uplo, char trans, char diag, char normin, int n, double[][] A, int lda, double[] x,
                         double[] scale, double[] cnorm, int[] info) {
         boolean notran;
         boolean nounit;
