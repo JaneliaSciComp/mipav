@@ -560,7 +560,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         
         if (info == null && tag != null) {
             info = tag.getInfo();
-        } 
+        }
             
         if(info != null) {
             info.setKey(key);
@@ -574,10 +574,18 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             }
         }
         
+        // respect explicit vr if already set to override dictionary
+        VR explicitVR = null;
+        if (tag != null && getVr_type() == VRtype.EXPLICIT && tag.getValueRepresentation() != info.getValueRepresentation()) {
+        	explicitVR = tag.getValueRepresentation();
+        }
 
         tag = new FileDicomTag(info, value);  //automatically computes proper length for tag
         if(length != -1) {
             tag.setLength(length); //stores the input file determined tag length
+        }
+        if (explicitVR != null) {
+        	tag.setValueRepresentation(explicitVR);
         }
         
         put(tag);

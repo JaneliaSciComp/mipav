@@ -1156,5 +1156,8 @@ public class FileInfoDicom extends FileInfoBase {
 
     public void setVr_type(VRtype vr_type) {
         this.vr_type = vr_type;
+        if (tagTable != null) {
+        	tagTable.setVr_type(vr_type);
+        }
     }
 }
