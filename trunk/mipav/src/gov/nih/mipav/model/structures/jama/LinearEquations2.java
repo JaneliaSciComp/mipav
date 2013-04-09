@@ -28,6 +28,788 @@ public class LinearEquations2 implements java.io.Serializable {
     public LinearEquations2() {}
     
     /*
+     * This is a port of a portion of LAPACK test routine DCHKGE.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dchkge tests dgetrf, dgetri, dgetrs, dgerfs, and dgecon.
+     * 
+     * @param input boolean[] of dimension (ntypes)
+     *     The matrix types to be used for testing.  Matrices of type j
+           (for 1 <= j <= ntypes) are used for testing if dotype[j] =
+           true; if dotype[j] = false, then type j is not used.
+       @param input int nm
+           The number of values of m contained in the vector mval.
+       @param input int[] mval of dimension (nm)
+           The values of the matrix row dimension m.
+       @param input int nn
+           The number of values of n contained in the vector nval.
+       @param input int[] nval of dimension (nn)
+           The values of the matrix column dimension n.
+       @param input int nnb
+           The number of values of nb contained in the vector nbval.
+       @param input int[] nbval of dimension (nnb)
+           The values of the blocksize nb.
+       @param input int nns
+           The number of values of nrhs contained in the vector nsval.
+       @param input double thresh
+           The threshold value for the test ratios.  A result is
+           included in the output file if result >= thresh.  To have
+           every test ratio printed, use thresh = 0.
+       @param input int nmax
+           The maximum value permitted for m or n, used in dimensioning
+           the work arrays.
+       @param output double[][] A of dimension (nmax, nmax)
+       @param output double[][] AFAC of dimension (nmax, nmax)
+       @param output double[][] AINV of dimension (nmax, nmax)
+       @param output double[][] B of dimension (nmax, nsmax)
+           where nsmax is the largest entry in nsval.
+       @param output double[][] X of dimension (nmax, nsmax)
+       @param output double[][] XACT of dimension (nmax, nsmax)
+       @param output double[][] WORK of dimension (nmax, max(3, nsmax))
+       @param output double[] rwork of dimension (max(2*nmax, 2*nsmax+nwork))
+       @param output int[] iwork of dimension (2*nmax)
+     */
+    private void dchkge(boolean[] dotype, int nm, int[] mval, int nn, int[] nval, int nnb,
+                        int[] nbval, int nns, int[] nsval, double thresh, int nmax, double[][] A,
+                        double[][] AFAC, double[][] AINV, double[][] B, double[][] X,
+                        double[][] XACT, double[][] WORK, double[] rwork, int[] iwork) {
+        final int ntypes = 11;
+        final int ntests = 8;
+        final int ntran = 3;
+        boolean trfcon;
+        boolean zerot;
+        boolean lerr;
+        boolean ok;
+        char dist[] = new char[1];
+        char norm;
+        char trans;
+        char type[] = new char[1];
+        char xtype;
+        char transs[] = new char[]{'N', 'T', 'C'};
+        String path;
+        int i;
+        int j;
+        int im;
+        int imat;
+        int in;
+        int inb;
+        int info[] = new int[1];
+        int ioff;
+        int irhs;
+        int itran;
+        int izero;
+        int k;
+        int kL[] = new int[1];
+        int ku[] = new int[1];
+        int lda;
+        int lwork;
+        int m;
+        int mode[] = new int[1];
+        int n;
+        int nb;
+        int nerrs;
+        int nfail;
+        int nimat;
+        int nrhs;
+        int nrun;
+        int nt;
+        int iseed[] = new int[4];
+        int iseedy[] = new int[]{1988, 1989, 1990, 1991};
+        int infot;
+        int nunit;
+        int itot;
+        int irow;
+        int icol;
+        int iwork2[];
+        double ainvnm;
+        double anorm[] = new double[1];
+        double anormi;
+        double anormo;
+        double cndnum[] = new double[1];
+        double dummy;
+        double rcond[] = new double[1];
+        double rcondc;
+        double rcondi;
+        double rcondo[] = new double[1];
+        double result[] = new double[ntests];
+        double arr[][];
+        double workspace[];
+        double res[] = new double[1];
+        double rwork2[];
+        double vec[];
+        String srnamt;
+        boolean do60 = true;
+        
+        // Initialize constants and the random number seed.
+        
+        path = new String("DGE");
+        nrun = 0;
+        nfail = 0;
+        nerrs = 0;
+        for (i = 0; i < 4; i++) {
+            iseed[i] = iseedy[i];
+        }
+        
+        iparms = new int[2];
+        xlaenv(1, 1);
+        infot = 0;
+        xlaenv(2, 2);
+    
+        // Do for each value of m in mval
+    
+        for (im = 1; im <= nm; im++) {
+            m = mval[im-1];
+            lda = Math.max( 1, m);
+    
+            // Do for each value of n in nval
+    
+            for (in = 1; in <= nn; in++) {
+                n = nval[in-1];
+                
+                xtype = 'N';
+                nimat = ntypes;
+                if (m <= 0 || n <= 0) {
+                    nimat = 1;
+                }
+    
+                for (imat = 1; imat <= nimat; imat++) {
+    
+                    // Do the tests only if DOTYPE( IMAT ) is true.
+    
+                    if (!dotype[imat-1]) {
+                        continue;
+                    }
+    
+                   // Skip types 5, 6, or 7 if the matrix size is too small.
+    
+                   zerot = imat >= 5 && imat <= 7;
+                   if (zerot && n < imat-4) {
+                       continue;
+                   }
+       
+                   // Set up parameters with dlatb4 and generate a test matrix
+                   // with dlatms.
+    
+                   ge.dlatb4(path, imat, m, n, type, kL, ku, anorm, mode,
+                             cndnum, dist);
+    
+                   srnamt = new String("DLATMS");
+                   workspace = new double[3*Math.max(m, n)];
+                   ge.dlatms(m, n, dist[0], iseed, type[0], rwork, mode[0],
+                             cndnum[0], anorm[0], kL[0], ku[0], 'N', A, lda,
+                             workspace, info);
+    
+                   // Check error code from dlatms.
+    
+                   if (info[0] != 0) {
+                       // Print the header if this is the first error message.
+                       if (nfail == 0 && nerrs == 0) {
+                           printHeader();
+                       } // if (nfail == 0 && nerrs == 0)
+                       nerrs++;
+                       Preferences.debug("Error from dlatms info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                       Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                       Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                       Preferences.debug("kL[0] = " + kL[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                       Preferences.debug("ku[0] = " + ku[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                       Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                       continue;
+                   } // if (info[0] != 0)
+    
+                   // For types 5-7, zero one or more columns of the matrix to
+                   // test that info[0] is returned correctly.
+    
+                   if (zerot) {
+                       if (imat == 5) {
+                           izero = 1;
+                       }
+                       else if (imat == 6) {
+                           izero = Math.min(m, n);
+                       }
+                       else {
+                           izero = Math.min(m, n) / 2 + 1;
+                       }
+                       ioff = (izero-1)*lda;
+                       if (imat < 7) {
+                           for (i = 1; i <= m; i++) {
+                               itot = ioff + i - 1;
+                               irow = itot % lda;
+                               icol = itot / lda;
+                               A[irow][icol] = 0.0;
+                           } // for (i = 1; i <= m; i++0
+                       } // if (imat < 7)
+                       else {
+                           irow = ioff % lda;
+                           icol = ioff / lda;
+                           arr = new double[m][n-izero+1];
+                           for (i = 0; i < m; i++) {
+                               for (j = 0; j < n-izero+1; j++) {
+                                   arr[i][j] = A[irow+i][icol+j];
+                               }
+                           }
+                           ge.dlaset('F', m, n-izero+1, 0.0, 0.0, arr, lda);
+                         for (i = 0; i < m; i++) {
+                             for (j = 0; j < n-izero+1; j++) {
+                                 A[irow+i][icol+j] = arr[i][j];
+                             }
+                         }
+                       } // else
+                   } // if (zerot)
+                   else {
+                       izero = 0;
+                   }
+    
+                   // These lines, if used in place of the calls in the DO 60
+                   // loop, cause the code to bomb on a Sun SPARCstation.
+    
+                    // ANORMO = DLANGE( 'O', M, N, A, LDA, RWORK )
+                    // ANORMI = DLANGE( 'I', M, N, A, LDA, RWORK )
+     
+                    // Do for each blocksize in nbval
+    
+                    for (inb = 1; inb <= nnb; inb++) {
+                        nb = nbval[inb-1];
+                        xlaenv(1, nb);
+    
+                        // Compute the LU factorization of the matrix.
+    
+                        ge.dlacpy('F', m, n, A, lda, AFAC, lda);
+                        srnamt = new String("DGETRF");
+                        dgetrf(m, n, AFAC, lda, iwork, info);
+    
+                        // Check error code from dgetrf.
+    
+                        if (info[0] != izero) {
+                         // Print the header if this is the first error message.
+                            if (nfail == 0 && nerrs == 0) {
+                                printHeader();
+                            } // if (nfail == 0 && nerrs == 0)
+                            nerrs++;
+                            if (izero != 0) {
+                                Preferences.debug("dgetrf returned with info[0] = " + info[0] + "instad of " +
+                                izero + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);    
+                            }
+                            else {
+                                Preferences.debug("dgetrf returned with info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);        
+                            }
+                            if (info[0] != 0) {
+                                Preferences.debug("Doing only the condition estimate for this case\n", Preferences.DEBUG_ALGORITHM);
+                            }
+                        } // if (info[0] != izero)
+                        trfcon = false;
+    
+                        // TEST 1
+                        // Reconstruct matrix from factors and compute residual.
+    
+                        ge.dlacpy('F', m, n, AFAC, lda, AINV, lda);
+                        dget01(m, n, A, lda, AINV, lda, iwork, rwork, result);
+                        nt = 1;
+    
+                        // TEST 2
+                        // Form the inverse if the factorization was successful
+                        // and compute the residual.
+    
+                        if (m == n && info[0] == 0) {
+                            ge.dlacpy('F', n, n, AFAC, lda, AINV, lda);
+                            srnamt = new String("DGETRI");
+                            nrhs = nsval[0];
+                            lwork = nmax*Math.max(3, nrhs);
+                            workspace = new double[lwork];
+                            dgetri(n, AINV, lda, iwork, workspace, lwork, info);
+    
+                            // Check error code from dgetri.
+    
+                            if (info[0] != 0) {
+                                // Print the header if this is the first error message.
+                                if (nfail == 0 && nerrs == 0) {
+                                    printHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                nerrs++;
+                                Preferences.debug("Error from dgetri info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != 0)
+    
+                            // Compute the residual for the matrix times its
+                            // inverse.  Also compute the 1-norm condition number
+                            // of A.
+    
+                            dget03(n, A, lda, AINV, lda, WORK, lda,
+                                   rwork, rcondo, res);
+                            result[1] = res[0];
+                            anormo = ge.dlange('O', m, n, A, lda, rwork);
+    
+                            // Compute the infinity-norm condition number of A.
+    
+                           anormi = ge.dlange('I', m, n, A, lda, rwork);
+                           ainvnm = ge.dlange('I', n, n, AINV, lda, rwork);
+                           if (anormi <= 0.0 || ainvnm <= 0.0) {
+                               rcondi = 1.0;
+                           }
+                           else {
+                               rcondi = ( 1.0 / anormi ) / ainvnm;
+                           }
+                           nt = 2;
+                        } // if (m == n && info[0] == 0)
+                        else {
+    
+                            // Do only the condition estimate if info[0] > 0.
+    
+                            trfcon = true;
+                            anormo = ge.dlange('O', m, n, A, lda, rwork);
+                            anormi = ge.dlange('I', m, n, A, lda, rwork);
+                            rcondo[0] = 0.0;
+                            rcondi = 0.0;
+                        } // else
+    
+                        // Print information about the tests so far that did not
+                        // pass the threshold.
+     
+                        for (k = 0; k < nt; k++) {
+                            if (result[k] >= thresh) {
+                                if (nfail == 0 && nerrs == 0) {
+                                    printHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                Preferences.debug("m = " + m + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nb = " + nb + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                nfail++;
+                            } // if (result[k] >= thresh)
+                        } // for (k = 0; k < nt; k++)
+                        nrun = nrun + nt;
+    
+                        // Skip the remaining tests if this is not the first
+                        // block size or if m .ne. n.  Skip the solve tests if
+                        // the matrix is singular.
+    
+                        if (inb > 1 || m != n) {
+                            continue;
+                        }
+                        do60 = true;
+                        if (trfcon) {
+                            do60 = false;
+                        }
+    
+                        if (do60) {
+                            for (irhs = 1; irhs <= nns; irhs++) {
+                                nrhs = nsval[irhs-1];
+                                xtype = 'N';
+    
+                                for (itran = 1; itran <= ntran; itran++) {
+                                    trans = transs[itran-1];
+                                    if (itran == 1) {
+                                        rcondc = rcondo[0];
+                                    }
+                                    else {
+                                        rcondc = rcondi;
+                                    }
+    
+                                    // TEST 3
+                                    // Solve and compute residual for A * X = B.
+    
+                                    srnamt = new String("DLARHS");
+                                    // Initialize XACT to nrhs random vectors
+                                    vec = new double[n];
+                                    for (j = 0; j < nrhs; j++) {
+                                        ge.dlarnv(2, iseed, n, vec);
+                                        for (i = 0; i < n; i++) {
+                                            XACT[i][j] = vec[i];
+                                        }
+                                    }
+                                    // Multiply XACT by op( A ) using an appropriate
+                                    // matrix multiply routine.
+                                    
+                                    ge.dgemm(trans, 'N', n, nrhs, n, 1.0, A, lda, XACT, lda, 0.0, B, lda);
+                                    xtype = 'C';
+    
+                                    ge.dlacpy('F', n, nrhs, B, lda, X, lda);
+                                    srnamt = new String("DGETRS");
+                                    dgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
+    
+                                    // Check error code from dgetrs.
+    
+                                    if (info[0] != 0) {
+                                        // Print the header if this is the first error message.
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printHeader();
+                                        } // if (nfail == 0 && nerrs == 0)
+                                        nerrs++;
+                                        Preferences.debug("Error from dgetrs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (info[0] != 0)
+    
+                                    ge.dlacpy('F', n, nrhs, B, lda, WORK, lda);
+                                    ge.dget02(trans, n, n, nrhs, A, lda, X, lda,
+                                              WORK, lda, rwork, res);
+                                    result[2] = res[0];
+    
+                                    // TEST 4
+                                    // Check solution from generated exact solution.
+    
+                                    le.dget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    result[3] = res[0];
+    
+                                    // TESTS 5, 6, and 7
+                                    // Use iterative refinement to improve the solution.
+    
+                                    srnamt = new String("DGERFS");
+                                    rwork2 = new double[nrhs];
+                                    workspace = new double[n];
+                                    iwork2 = new int[n];
+                                    dgerfs(trans, n, nrhs, A, lda, AFAC, lda,
+                                           iwork, B, lda, X, lda, rwork,
+                                           rwork2, workspace, iwork2, info);
+    
+                                    // Check error code from dgerfs.
+    
+                                    if (info[0] != 0) {
+                                        // Print the header if this is the first error message.
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printHeader();
+                                        } // if (nfail == 0 && nerrs == 0)
+                                        nerrs++;
+                                        Preferences.debug("Error from dgerfs info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (info[0] != 0)
+    
+                                    le.dget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    result[4] = res[0];
+                                    dget07(trans, n, nrhs, A, lda, B, lda, X,
+                                           lda, XACT, lda, rwork, true,
+                                           rwork2, res);
+                                    result[5] = res[0];
+    
+                                    // Print information about the tests that did not
+                                    // pass the threshold.
+                                    
+                                    for (k = 2; k < 7; k++) {
+                                        if (result[k] >= thresh) {
+                                            if (nfail == 0 && nerrs == 0) {
+                                                printHeader();
+                                            } // if (nfail == 0 && nerrs == 0)
+                                            Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                            nfail++;
+                                        } // if (result[k] >= thresh)
+                                    } // for (k = 2; k < 7; k++)
+                                    nrun = nrun + 5;
+                                } // for (itran = 1; itran <= ntran; itran++)
+                            } // for (irhs = 1; irhs <= nns; irhs++)
+                        } // if (do60)
+    
+                        // TEST 8
+                        // Get an estimate of rcond = 1/cndnum[0].
+    
+    
+                        for (itran = 1; itran <= 2; itran++) {
+                            if (itran == 1) {
+                                anorm[0] = anormo;
+                                rcondc = rcondo[0];
+                                norm = 'O';
+                            }
+                            else {
+                                anorm[0] = anormi;
+                                rcondc = rcondi;
+                                norm = 'I';
+                            }
+                            srnamt = new String("dgecon");
+                            workspace = new double[n];
+                            iwork2 = new int[n];
+                            dgecon(norm, n, AFAC, lda, anorm[0], rcond,
+                                   workspace, iwork2, info);
+    
+                            // Check error code from dgecon.
+    
+                            if (info[0] != 0) {
+                                // Print the header if this is the first error message.
+                                if (nfail == 0 && nerrs == 0) {
+                                    printHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                nerrs++;
+                                Preferences.debug("Error from dgecon info[0] = " + info[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("norm = " + norm + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != 0)
+    
+                            // This line is needed on a Sun SPARCstation.
+    
+                            dummy = rcond[0];
+    
+                            result[7] = le.dget06(rcond[0], rcondc);
+    
+    /*                    Print information about the tests that did not pass
+    *                    the threshold.
+    *
+                         IF( RESULT( 8 ).GE.THRESH ) THEN
+                            IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
+         $                     CALL ALAHD( NOUT, PATH )
+                            WRITE( NOUT, FMT = 9997 )NORM, N, IMAT, 8,
+         $                     RESULT( 8 )
+                            NFAIL = NFAIL + 1
+                         END IF
+                         NRUN = NRUN + 1*/
+                        } // for (itran = 1; itran <= 2; itran++)
+                    } // for (inb = 1; inb <= nnb; inb++)
+                } // for (imat = 1; imat <= nimat; imat++)
+            } // for (in = 1; in <= nn; in++)
+        } // for (im = 1; im <= nm; im++)
+    /**
+    *     Print a summary of the results.
+    *
+          CALL ALASUM( PATH, NOUT, NFAIL, NRUN, NERRS )
+    *
+     9999 FORMAT( ' M = ', I5, ', N =', I5, ', NB =', I4, ', type ', I2,
+         $      ', test(', I2, ') =', G12.5 )
+     9998 FORMAT( ' TRANS=''', A1, ''', N =', I5, ', NRHS=', I3, ', type ',
+         $      I2, ', test(', I2, ') =', G12.5 )
+     9997 FORMAT( ' NORM =''', A1, ''', N =', I5, ',', 10X, ' type ', I2,
+         $      ', test(', I2, ') =', G12.5 )
+          RETURN*/
+
+    } // dchkge
+    
+    private void printHeader() {
+        Preferences.debug("DGE General dense matrices\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Matrix types:\n", Preferences.DEBUG_ALGORITHM);
+        // GE matrix types
+        Preferences.debug("1. Diagonal\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("2. Upper triangular\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("3. Lower triangular\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("4. Random, cndnum[0] = 2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("5. First column zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("6. Last column zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("7. Last n/2 columns zero\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("8. Random, cndnum[0] = sqrt(0.1/eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("9. Random, cndnum[0] = 0.1/eps\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("10. Scaled near underflow\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("11. Scaled near overflow\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Test ratios:\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("1. norm(L * U - A) / ( n * norm(A) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("2. norm(I - A*AINV) / (n * norm(A) * norm(AINV) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("3. norm(B - A * X) / (norm(A) * norm(X) * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("4. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("5. norm(X - XACT) / (norm(XACT) * cndnum[0] * eps), refined\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("6. norm(X - XACT) / (norm(XACT) * (error bound))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("7. (backward error) / eps\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("8. rcond * condum[0] - 1.0\n", Preferences.DEBUG_ALGORITHM);
+    } // printHeader
+    
+    /*
+     * This is a port of a portion of LAPACK test routine DERRGE.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * This code tests the error exits of dgetrf, dgetf2, dgetri, dgetrs, dgerfs, and dgecon
+     * derrge correctly found 23 of 23 error exits.
+     */
+    public void derrge() {
+        int i;
+        int j;
+        int nmax = 4;
+        int lw = 3 * nmax;
+        double anrm = 0.0;
+        double rcond[] = new double[1];
+        double A[][] = new double[nmax][nmax];
+        double AF[][] = new double[nmax][nmax];
+        double B[][] = new double[nmax][nmax];
+        double r1[] = new double[nmax];
+        double r2[] = new double[nmax];
+        double w[] = new double[lw];
+        double X[][] = new double[nmax][nmax];
+        int info[] = new int[1];
+        int ip[] = new int[nmax];
+        int iw[] = new int[nmax];
+        int npass = 23;
+        final int ntotal = 23; 
+        
+        for (j = 1; j <= nmax; j++) {
+            for (i = 1; i <= nmax; i++) {
+                A[i-1][j-1] = 1.0/(double)(i+j);
+                AF[i-1][j-1] = 1.0/(double)(i+j);
+            }
+            ip[j-1] = j;
+            iw[j-1] = j;
+        }
+        
+        // dgetrf
+        dgetrf(-1, 0, A, 1, ip, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgetrf(-1, 0, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        dgetrf(0, -1, A, 1, ip, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgetrf(0, -1, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        dgetrf(2, 1, A, 1, ip, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgetrf(2, 1, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        // dgetf2
+        dgetf2(-1, 0, A, 1, ip, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgetf2(-1, 0, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        dgetf2(0, -1, A, 1, ip, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgetf2(0, -1, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        dgetf2(2, 1, A, 1, ip, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgetf2(2, 1, A, 1, ip, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);
+             npass--;
+        }
+        
+        // dgetri
+        dgetri(-1, A, 1, ip, w, lw, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgetri(-1, A, 1, ip, w, lw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgetri(2, A, 1, ip, w, lw, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgetri(2, A, 1, ip, w, lw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = 3\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        // dgetrs
+        dgetrs('/', 0, 0, A, 1, ip, B, 1, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgetrs('/', 0, 0, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgetrs('N', -1, 0, A, 1, ip, B, 1, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgetrs('N', -1, 0, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgetrs('N', 0, -1, A, 1, ip, B, 1, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgetrs('N', 0, -1, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgetrs('N', 2, 1, A, 1, ip, B, 2, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgetrs('N', 2, 1, A, 1, ip, B, 2, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgetrs('N', 2, 1, A, 2, ip, B, 1, info);
+        if (info[0] != -8) {
+            Preferences.debug("dgetrs('N', 2, 1, A, 2, ip, B, 1, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -8\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        // dgerfs
+        dgerfs('/', 0, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgerfs('/', 0, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', -1, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgerfs('N', -1, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', 0, -1, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
+        if (info[0] != -3) {
+            Preferences.debug("dgerfs('N', 0, -1, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', 2, 1, A, 1, AF, 2, ip, B, 2, X, 2, r1, r2, w, iw, info);
+        if (info[0] != -5) {
+            Preferences.debug("dgerfs('N', 2, 1, A, 1, AF, 2, ip, B, 2, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', 2, 1, A, 2, AF, 1, ip, B, 2, X, 2, r1, r2, w, iw, info);
+        if (info[0] != -7) {
+            Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 1, ip, B, 2, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -7\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 1, X, 2, r1, r2, w, iw, info);
+        if (info[0] != -10) {
+            Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 1, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -10\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 2, X, 1, r1, r2, w, iw, info);
+        if (info[0] != -12) {
+            Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 2, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -12\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        // dgecon
+        dgecon('/', 0, A, 1, anrm, rcond, w, iw, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgecon('/', 0, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgecon('1', -1, A, 1, anrm, rcond, w, iw, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgecon('1', -1, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        dgecon('1', 2, A, 1, anrm, rcond, w, iw, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgecon('1', 2, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);    
+        }
+        
+        Preferences.debug("derrge correctly found " + npass + " of " + ntotal + " error exits\n", Preferences.DEBUG_ALGORITHM);
+        UI.setDataText("derrge correctly found " + npass + " of " + ntotal + " error exits\n");
+        return;
+    } // derrge
+    
+    /*
      * This is a port of a portion of LAPACK test routine DGET01.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
@@ -1815,4 +2597,38 @@ public class LinearEquations2 implements java.io.Serializable {
         return;
 
     } // dlaswp
+    
+    /**
+     * This is a port of version 3.1 LAPACK auxiliary routine XLAENV. Univ. of Tennessee, Univ. of California Berkeley
+     * and NAG Ltd.. November 2006
+     * 
+     * .. Scalar Arguments .. INTEGER ISPEC, NVALUE ..
+     * 
+     * Purpose =======
+     * 
+     * XLAENV sets certain machine- and problem-dependent quantities which will later be retrieved by ILAENV.
+     * 
+     * Arguments =========
+     * 
+     * ISPEC (input) INTEGER Specifies the parameter to be set in the COMMON array IPARMS. = 1: the optimal blocksize;
+     * if this value is 1, an unblocked algorithm will give the best performance. = 2: the minimum block size for which
+     * the block routine should be used; if the usable block size is less than this value, an unblocked routine should
+     * be used. = 3: the crossover point (in a block routine, for N less than this value, an unblocked routine should be
+     * used) = 4: the number of shifts, used in the nonsymmetric eigenvalue routines = 5: the minimum column dimension
+     * for blocking to be used; rectangular blocks must have dimension at least k by m, where k is given by
+     * ILAENV(2,...) and m by ILAENV(5,...) = 6: the crossover point for the SVD (when reducing an m by n matrix to
+     * bidiagonal form, if max(m,n)/min(m,n) exceeds this value, a QR factorization is used first to reduce the matrix
+     * to a triangular form) = 7: the number of processors = 8: another crossover point, for the multishift QR and QZ
+     * methods for nonsymmetric eigenvalue problems. = 9: maximum size of the subproblems at the bottom of the
+     * computation tree in the divide-and-conquer algorithm (used by xGELSD and xGESDD) =10: ieee NaN arithmetic can be
+     * trusted not to trap =11: infinity arithmetic can be trusted not to trap
+     * 
+     * NVALUE (input) INTEGER The value of the parameter specified by ISPEC.
+     */
+    public void xlaenv(final int ispec, final int nvalue) {
+        if ( (ispec >= 1) && (ispec <= 9)) {
+            iparms[ispec - 1] = nvalue;
+        }
+        return;
+    } // xlaenv
 }
