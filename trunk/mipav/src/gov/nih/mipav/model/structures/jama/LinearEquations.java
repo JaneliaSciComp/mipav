@@ -2149,7 +2149,7 @@ public class LinearEquations implements java.io.Serializable {
            The reciprocal of the condition number of A, computed as
            ( 1/norm(A) ) / norm(inv(A)).
      */
-    private double dget06(double rcond, double rcondc) {
+    public double dget06(double rcond, double rcondc) {
         double eps;
         double rat;
         
