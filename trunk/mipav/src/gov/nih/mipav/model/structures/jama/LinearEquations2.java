@@ -558,9 +558,9 @@ public class LinearEquations2 implements java.io.Serializable {
     
                             dummy = rcond[0];
     
-                            result[7] = le.dget06(rcond[0], rcondc);
+                            /*result[7] = le.dget06(rcond[0], rcondc);
     
-    /*                    Print information about the tests that did not pass
+                        Print information about the tests that did not pass
     *                    the threshold.
     *
                          IF( RESULT( 8 ).GE.THRESH ) THEN
