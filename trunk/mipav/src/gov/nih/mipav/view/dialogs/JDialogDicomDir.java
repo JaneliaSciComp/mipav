@@ -230,7 +230,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        System.out.println("working8");
+        //System.out.println("working8");
 
         if (source == cancelButton) {
             dispose();
@@ -245,7 +245,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     
    
     private void openImage() {
-        System.out.println("working9");
+        //System.out.println("working9");
 
     	// if button is pressed without selection
     	if (tree.isSelectionEmpty())
