@@ -28,11 +28,126 @@ public class LinearEquations2 implements java.io.Serializable {
     public LinearEquations2() {}
     
     /*
+     * This is a port of a portion of LAPACK test routine DCHKAA.f version 3.4.1 and data file dtest.in.
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., April, 2012
+     * 
+     * dchkaa is the main test program for the double precision LAPACK linear equation routines
+     */
+    public void dchkaa() {
+        // nmax is the maximum allowable value for m and n.
+        final int nmax = 132;
+        final int maxrhs = 16;
+        // nm is the number of values of m.
+        int nm = 7;
+        // mval is the values of m (row dimension)
+        int mval[] = new int[]{0, 1, 2, 3, 5, 10, 16};
+        // nn is the number of values of n
+        int nn = 7;
+        // nval is the values of n (column dimension)
+        int nval[] = new int[]{0, 1, 2, 3, 5, 10, 16};
+        //  nns is the number of values of nrhs
+        int nns = 3;
+        // nsval is the values of nrhs (number of right hand sides)
+        int nsval[] = new int[]{1, 2, 15};
+        // nnb is the number of values of nb
+        int nnb = 5;
+        // nbval is the values of nb (the blocksize)
+        int nbval[] = new int[]{1, 3, 3, 3, 20};
+        // nxval is the values of nx (crossover points)
+        int nxval[] = new int[]{1, 0, 5, 9 , 1};
+        // nrank is the number of values of rank
+        int nrank = 3;
+        // rankval is the values of rank (as a % of n)
+        int rankval[] = new int[]{30, 50, 90};
+        // thresh if the threshold value of the test ratio
+        double thresh = 20.0;
+        // tstchk is the flag to test the LAPACK routines
+        boolean tstchk = true;
+        // tstdrv is the flag to test the driver routines
+        boolean tstdrv = false;
+        String path = new String("DGE");
+        int nmats = 11;
+        
+        // Number of unique values of nb
+        int nnb2;
+        // nbval2 is the set of unique values of nb
+        int nbval2[] = new int[nbval.length];
+
+        int lda;
+        boolean fatal;
+        int i;
+        int j;
+        int nb;
+        double eps;
+        int ntypes = 11;
+        boolean dotype[] = new boolean[ntypes];
+        double A[][] = new double[nmax][nmax];
+        double AFAC[][] = new double[nmax][nmax];
+        double AINV[][] = new double[nmax][nmax];
+        double ASAV[][] = new double[nmax][nmax];
+        double s[] = new double[nmax];
+        // nsmax is the largest entry in nsval
+        int nsmax;
+        nsmax = nsval[0];
+        for (i = 1; i < nsval.length; i++) {
+            if (nsval[i] > nsmax) {
+                nsmax = nsval[i];  
+            }
+        }
+        double B[][] = new double[nmax][maxrhs];
+        double BSAV[][] = new double[nmax][maxrhs];
+        double X[][] = new double[nmax][maxrhs];
+        double XACT[][] = new double[nmax][maxrhs];
+        double WORK[][] = new double[nmax][maxrhs];
+        double rwork[] = new double[nmax + 2*maxrhs];
+        int iwork[] = new int[nmax];
+        
+        lda = nmax;
+        fatal = false;
+        
+        // Set nbval2 to be the set of unique values of nb
+        nnb2 = 0;
+        loop:
+        for (i = 0; i < nnb; i++) {
+            nb = nbval[i];
+            for (j = 0; j < nnb2; j++) {
+                if (nb == nbval2[j]) {
+                    continue loop;
+                }
+            } // for (j = 0; j < nnb2; j++)
+            nbval2[nnb2++] = nb;
+        } // for (i = 0; i < nnb; i++)
+
+        for (i = 0; i < ntypes; i++) {
+            dotype[i] = true;
+        }
+        // Calculate and print the machine dependent constants.
+        eps = ge.dlamch('U'); // Underflow threshold
+        Preferences.debug("Relative machine underflow is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        eps = ge.dlamch('O'); // Overflow threshold
+        Preferences.debug("Relative machine overflow is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        eps = ge.dlamch('E'); // Epsilon
+        Preferences.debug("Relative machine precision is taken to be " + eps + "\n", Preferences.DEBUG_ALGORITHM);
+        
+        if (tstchk) {
+            dchkge(dotype, nm, mval, nn, nval, nnb, nbval, nns,
+                   nsval, thresh, nmax, A, AFAC, AINV, B,
+                   X, XACT, WORK, rwork, iwork);
+        }
+        if (tstdrv) {
+       
+        }
+    } // dchkaa
+    
+    /*
      * This is a port of a portion of LAPACK test routine DCHKGE.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
      * 
      * dchkge tests dgetrf, dgetri, dgetrs, dgerfs, and dgecon.
+     * 
+     * All 4533 tests for dchkge passed.
      * 
      * @param input boolean[] of dimension (ntypes)
      *     The matrix types to be used for testing.  Matrices of type j
@@ -79,13 +194,10 @@ public class LinearEquations2 implements java.io.Serializable {
         final int ntran = 3;
         boolean trfcon;
         boolean zerot;
-        boolean lerr;
-        boolean ok;
         char dist[] = new char[1];
         char norm;
         char trans;
         char type[] = new char[1];
-        char xtype;
         char transs[] = new char[]{'N', 'T', 'C'};
         String path;
         int i;
@@ -116,8 +228,6 @@ public class LinearEquations2 implements java.io.Serializable {
         int nt;
         int iseed[] = new int[4];
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
-        int infot;
-        int nunit;
         int itot;
         int irow;
         int icol;
@@ -127,7 +237,6 @@ public class LinearEquations2 implements java.io.Serializable {
         double anormi;
         double anormo;
         double cndnum[] = new double[1];
-        double dummy;
         double rcond[] = new double[1];
         double rcondc;
         double rcondi;
@@ -135,10 +244,10 @@ public class LinearEquations2 implements java.io.Serializable {
         double result[] = new double[ntests];
         double arr[][];
         double workspace[];
-        double res[] = new double[1];
+        double res[] = new double[2];
         double rwork2[];
         double vec[];
-        String srnamt;
+        //String srnamt;
         boolean do60 = true;
         
         // Initialize constants and the random number seed.
@@ -153,7 +262,6 @@ public class LinearEquations2 implements java.io.Serializable {
         
         iparms = new int[2];
         xlaenv(1, 1);
-        infot = 0;
         xlaenv(2, 2);
     
         // Do for each value of m in mval
@@ -166,8 +274,7 @@ public class LinearEquations2 implements java.io.Serializable {
     
             for (in = 1; in <= nn; in++) {
                 n = nval[in-1];
-                
-                xtype = 'N';
+               
                 nimat = ntypes;
                 if (m <= 0 || n <= 0) {
                     nimat = 1;
@@ -194,7 +301,6 @@ public class LinearEquations2 implements java.io.Serializable {
                    ge.dlatb4(path, imat, m, n, type, kL, ku, anorm, mode,
                              cndnum, dist);
     
-                   srnamt = new String("DLATMS");
                    workspace = new double[3*Math.max(m, n)];
                    ge.dlatms(m, n, dist[0], iseed, type[0], rwork, mode[0],
                              cndnum[0], anorm[0], kL[0], ku[0], 'N', A, lda,
@@ -275,7 +381,6 @@ public class LinearEquations2 implements java.io.Serializable {
                         // Compute the LU factorization of the matrix.
     
                         ge.dlacpy('F', m, n, A, lda, AFAC, lda);
-                        srnamt = new String("DGETRF");
                         dgetrf(m, n, AFAC, lda, iwork, info);
     
                         // Check error code from dgetrf.
@@ -320,7 +425,6 @@ public class LinearEquations2 implements java.io.Serializable {
     
                         if (m == n && info[0] == 0) {
                             ge.dlacpy('F', n, n, AFAC, lda, AINV, lda);
-                            srnamt = new String("DGETRI");
                             nrhs = nsval[0];
                             lwork = nmax*Math.max(3, nrhs);
                             workspace = new double[lwork];
@@ -406,7 +510,6 @@ public class LinearEquations2 implements java.io.Serializable {
                         if (do60) {
                             for (irhs = 1; irhs <= nns; irhs++) {
                                 nrhs = nsval[irhs-1];
-                                xtype = 'N';
     
                                 for (itran = 1; itran <= ntran; itran++) {
                                     trans = transs[itran-1];
@@ -420,7 +523,6 @@ public class LinearEquations2 implements java.io.Serializable {
                                     // TEST 3
                                     // Solve and compute residual for A * X = B.
     
-                                    srnamt = new String("DLARHS");
                                     // Initialize XACT to nrhs random vectors
                                     vec = new double[n];
                                     for (j = 0; j < nrhs; j++) {
@@ -433,10 +535,8 @@ public class LinearEquations2 implements java.io.Serializable {
                                     // matrix multiply routine.
                                     
                                     ge.dgemm(trans, 'N', n, nrhs, n, 1.0, A, lda, XACT, lda, 0.0, B, lda);
-                                    xtype = 'C';
     
                                     ge.dlacpy('F', n, nrhs, B, lda, X, lda);
-                                    srnamt = new String("DGETRS");
                                     dgetrs(trans, n, nrhs, AFAC, lda, iwork, X, lda, info);
     
                                     // Check error code from dgetrs.
@@ -468,7 +568,6 @@ public class LinearEquations2 implements java.io.Serializable {
                                     // TESTS 5, 6, and 7
                                     // Use iterative refinement to improve the solution.
     
-                                    srnamt = new String("DGERFS");
                                     rwork2 = new double[nrhs];
                                     workspace = new double[n];
                                     iwork2 = new int[n];
@@ -497,6 +596,7 @@ public class LinearEquations2 implements java.io.Serializable {
                                            lda, XACT, lda, rwork, true,
                                            rwork2, res);
                                     result[5] = res[0];
+                                    result[6] = res[1];
     
                                     // Print information about the tests that did not
                                     // pass the threshold.
@@ -534,7 +634,6 @@ public class LinearEquations2 implements java.io.Serializable {
                                 rcondc = rcondi;
                                 norm = 'I';
                             }
-                            srnamt = new String("dgecon");
                             workspace = new double[n];
                             iwork2 = new int[n];
                             dgecon(norm, n, AFAC, lda, anorm[0], rcond,
@@ -554,41 +653,43 @@ public class LinearEquations2 implements java.io.Serializable {
                                 Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
                             } // if (info[0] != 0)
     
-                            // This line is needed on a Sun SPARCstation.
+                            result[7] = le.dget06(rcond[0], rcondc);
     
-                            dummy = rcond[0];
+                            // Print information about the tests that did not pass
+                            // the threshold.
     
-                            /*result[7] = le.dget06(rcond[0], rcondc);
-    
-                        Print information about the tests that did not pass
-    *                    the threshold.
-    *
-                         IF( RESULT( 8 ).GE.THRESH ) THEN
-                            IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                     CALL ALAHD( NOUT, PATH )
-                            WRITE( NOUT, FMT = 9997 )NORM, N, IMAT, 8,
-         $                     RESULT( 8 )
-                            NFAIL = NFAIL + 1
-                         END IF
-                         NRUN = NRUN + 1*/
+                            if (result[7] >= thresh) {
+                                if (nfail == 0 && nerrs == 0) {
+                                    printHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                Preferences.debug("norm = " + norm + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("test(8) = " + result[7] + "\n", Preferences.DEBUG_ALGORITHM);
+                                nfail++;
+                            } // if (result[7] >= thresh)
+                            nrun++;
                         } // for (itran = 1; itran <= 2; itran++)
                     } // for (inb = 1; inb <= nnb; inb++)
                 } // for (imat = 1; imat <= nimat; imat++)
             } // for (in = 1; in <= nn; in++)
         } // for (im = 1; im <= nm; im++)
-    /**
-    *     Print a summary of the results.
-    *
-          CALL ALASUM( PATH, NOUT, NFAIL, NRUN, NERRS )
-    *
-     9999 FORMAT( ' M = ', I5, ', N =', I5, ', NB =', I4, ', type ', I2,
-         $      ', test(', I2, ') =', G12.5 )
-     9998 FORMAT( ' TRANS=''', A1, ''', N =', I5, ', NRHS=', I3, ', type ',
-         $      I2, ', test(', I2, ') =', G12.5 )
-     9997 FORMAT( ' NORM =''', A1, ''', N =', I5, ',', 10X, ' type ', I2,
-         $      ', test(', I2, ') =', G12.5 )
-          RETURN*/
-
+        
+        // Print a summary of results
+        if (nfail > 0) {
+            Preferences.debug("dchkge: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("dchkge: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n");
+        }
+        else {
+            Preferences.debug("All " + nrun + " tests for dchkge passed\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("All " + nrun + " tests for dchkge passed\n");
+        }
+        if (nerrs > 0) {
+            Preferences.debug("dchkge: " + nerrs + " error messages recorded\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("dchkge: " + nerrs + " error messages recorded\n");
+        }
+        
+        return;
     } // dchkge
     
     private void printHeader() {
@@ -2391,15 +2492,15 @@ public class LinearEquations2 implements java.io.Serializable {
     
         sfmin = ge.dlamch('S');  
     
-        for (j= 1; j <= Math.min(m, n); j++) {
+        for (j = 1; j <= Math.min(m, n); j++) {
     
             // Find pivot and test for singularity.
-             index = j;
+             index = 1;
              maxVal = Math.abs(A[j-1][j-1]);
-             for (index = j; index <= m; index++) {
-                 if (Math.abs(A[index-1][j-1]) > maxVal) {
-                     maxVal = Math.abs(A[index-1][j-1]);
-                     index = j;
+             for (k = j+1; k <= m; k++) {
+                 if (Math.abs(A[k-1][j-1]) > maxVal) {
+                     maxVal = Math.abs(A[k-1][j-1]);
+                     index = k-(j-1);
                  }
              }
              jp = j - 1 + index;
@@ -2460,7 +2561,7 @@ public class LinearEquations2 implements java.io.Serializable {
                      }
                  }
              } // if (j < Math.min(m, n))
-        } // for (j= 1; j <= Math.min(m, n); j++)
+        } // for (j = 1; j <= Math.min(m, n); j++)
         return;
 
     } // dgetf2
