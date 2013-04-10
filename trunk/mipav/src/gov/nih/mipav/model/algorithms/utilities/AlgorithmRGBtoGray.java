@@ -458,7 +458,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
      */
     private void calcStoreInPlace() {
 
-        int i, n;
+        int i;
         int id;
         int z, t, f;
         int p;
@@ -477,7 +477,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         int bwType;
         int[] extents;
         int sliceSize;
-        FileInfoBase[] fInfoBase = null;
 
         float averageR = 0.0f;
         float averageG = 0.0f;
