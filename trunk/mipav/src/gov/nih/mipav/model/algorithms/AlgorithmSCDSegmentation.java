@@ -1,6 +1,10 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.jama.GeneralizedInverse2;
+import gov.nih.mipav.model.structures.jama.LinearEquations;
+import gov.nih.mipav.model.structures.jama.LinearEquations2;
+import gov.nih.mipav.model.structures.jama.SVD;
 
 
 import gov.nih.mipav.view.MipavUtil;
@@ -182,6 +186,13 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         int b2;
         double SCDMax;
         double SCDMin;
+        
+        boolean testme = true;
+        if (testme) {
+            LinearEquations2 le = new LinearEquations2();
+            le.dchkaa();
+            return;
+        }
         
         try {
             srcImage.exportRGBData(1, 0, sliceSize, redBuffer);
