@@ -790,8 +790,8 @@ public class LinearEquations implements java.io.Serializable {
          
       // Print a summary of results
          if (nfail > 0) {
-             Preferences.debug("ddrvpo: " + nfail + "out of " + nrun + " driver tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
-             UI.setDataText("ddrvpo: " + nfail + "out of " + nrun + " driver tests failed with values >= threshold\n");
+             Preferences.debug("ddrvpo: " + nfail + " out of " + nrun + " driver tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
+             UI.setDataText("ddrvpo: " + nfail + " out of " + nrun + " driver tests failed with values >= threshold\n");
          }
          else {
              Preferences.debug("All " + nrun + " driver tests for ddrvpo passed\n", Preferences.DEBUG_ALGORITHM);
@@ -1800,8 +1800,8 @@ public class LinearEquations implements java.io.Serializable {
         
         // Print a summary of results
         if (nfail > 0) {
-            Preferences.debug("dchkpo: " + nfail + "out of " + nrun + " tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
-            UI.setDataText("dchkpo: " + nfail + "out of " + nrun + " tests failed with values >= threshold\n");
+            Preferences.debug("dchkpo: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText("dchkpo: " + nfail + " out of " + nrun + " tests failed with values >= threshold\n");
         }
         else {
             Preferences.debug("All " + nrun + " tests for dchkpo passed\n", Preferences.DEBUG_ALGORITHM);
