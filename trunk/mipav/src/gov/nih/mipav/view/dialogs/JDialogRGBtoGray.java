@@ -97,6 +97,22 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private JRadioButton userButton;
+    
+    private JRadioButton equalRangeButton;
+    
+    private JRadioButton unequalRangeButton;
+    
+    private JLabel labelMinR, labelMinG, labelMinB;
+    
+    private JLabel labelMaxR, labelMaxG, labelMaxB;
+    
+    private JTextField textMinR, textMinG, textMinB;
+    
+    private JTextField textMaxR, textMaxG, textMaxB;
+    
+    private boolean equalRange;
+    
+    private float minR, maxR, minG, maxG, minB, maxB;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -141,7 +157,15 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 labelB.setEnabled(false);
                 textB.setText("0.3333");
                 textB.setEnabled(false);
-                thresholdCheckBox.setEnabled(true);
+                if (equalRangeButton.isSelected()) {
+                    thresholdCheckBox.setEnabled(true);
+                    textThreshold.setEnabled(true);
+                }
+                else {
+                    thresholdCheckBox.setEnabled(false);
+                    thresholdCheckBox.setSelected(false);
+                    textThreshold.setEnabled(false);    
+                }
             } else if (graphicsButton.isSelected()) {
                 labelR.setEnabled(false);
                 textR.setText("0.299");
@@ -168,6 +192,41 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 thresholdCheckBox.setEnabled(false);
                 thresholdCheckBox.setSelected(false);
                 textThreshold.setEnabled(false);
+            }
+        } else if ((source == equalRangeButton) || (source == unequalRangeButton)) {
+            if (equalRangeButton.isSelected()) {
+                labelMinR.setEnabled(false);
+                textMinR.setEnabled(false);
+                labelMaxR.setEnabled(false);
+                textMaxR.setEnabled(false);
+                labelMinG.setEnabled(false);
+                textMinG.setEnabled(false);
+                labelMaxG.setEnabled(false);
+                textMaxG.setEnabled(false);
+                labelMinB.setEnabled(false);
+                textMinB.setEnabled(false);
+                labelMaxB.setEnabled(false);
+                textMaxB.setEnabled(false);
+                if (equalButton.isSelected()) {
+                    thresholdCheckBox.setEnabled(true);
+                    textThreshold.setEnabled(true);
+                }
+            } else {
+                labelMinR.setEnabled(true);
+                textMinR.setEnabled(true);
+                labelMaxR.setEnabled(true);
+                textMaxR.setEnabled(true);
+                labelMinG.setEnabled(true);
+                textMinG.setEnabled(true);
+                labelMaxG.setEnabled(true);
+                textMaxG.setEnabled(true);
+                labelMinB.setEnabled(true);
+                textMinB.setEnabled(true);
+                labelMaxB.setEnabled(true);
+                textMaxB.setEnabled(true); 
+                thresholdCheckBox.setEnabled(false);
+                thresholdCheckBox.setSelected(false);
+                textThreshold.setEnabled(false);    
             }
         } else if (source == thresholdCheckBox) {
 
@@ -339,6 +398,34 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
             this.intensityAverage = false;
         }
     }
+    
+    public void setEqualRange(boolean equalRange) {
+        this.equalRange = equalRange;
+    }
+    
+    public void setMinR(float minR) {
+        this.minR = minR;
+    }
+    
+    public void setMaxR(float maxR) {
+        this.maxR = maxR;
+    }
+    
+    public void setMinG(float minG) {
+        this.minG = minG;
+    }
+    
+    public void setMaxG(float maxG) {
+        this.maxG = maxG;
+    }
+    
+    public void setMinB(float minB) {
+        this.minB = minB;
+    }
+    
+    public void setMaxB(float maxB) {
+        this.maxB = maxB;
+    }
 
     /**
      * Calls the algorithm.
@@ -382,7 +469,8 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
 
                 // Make algorithm
                 RGBAlgo = new AlgorithmRGBtoGray(resultImage, imageA, redValue, greenValue, blueValue, thresholdAverage,
-                                                 threshold, intensityAverage);
+                                                 threshold, intensityAverage, equalRange, minR, maxR, minG, maxG,
+                                                 minB, maxB);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -424,7 +512,8 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 // Make the algorithm class
                 // Make algorithm
                 RGBAlgo = new AlgorithmRGBtoGray(imageA, redValue, greenValue, blueValue, thresholdAverage, threshold,
-                                                 intensityAverage);
+                                                 intensityAverage, equalRange, minR, maxR, minG, maxG,
+                                                 minB, maxB);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -492,6 +581,13 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         setThresholdAverage(scriptParameters.getParams().getBoolean("do_threshold_average"));
         setThreshold(scriptParameters.getParams().getFloat("threshold"));
         setIntensityAverage(scriptParameters.getParams().getBoolean("do_intensity_average"));
+        setEqualRange(scriptParameters.getParams().getBoolean("equal_range"));
+        setMinR(scriptParameters.getParams().getFloat("min_r"));
+        setMaxR(scriptParameters.getParams().getFloat("max_r"));
+        setMinG(scriptParameters.getParams().getFloat("min_g"));
+        setMaxG(scriptParameters.getParams().getFloat("max_g"));
+        setMinB(scriptParameters.getParams().getFloat("min_b"));
+        setMaxB(scriptParameters.getParams().getFloat("max_b"));
     }
 
     /**
@@ -506,6 +602,13 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold_average", thresholdAverage));
         scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_intensity_average", intensityAverage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("equal_range", equalRange));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_r", minR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_r", maxR));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_g", minG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_g", maxG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_b", minB));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_B", maxB));
     }
 
     /**
@@ -610,9 +713,124 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         textThreshold.setFont(serif12);
         textThreshold.setEnabled(false);
         RGBPanel.add(textThreshold);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 2;
+
+        JPanel rangePanel = new JPanel(new GridBagLayout());
+        rangePanel.setForeground(Color.black);
+        rangePanel.setBorder(buildTitledBorder("Color ranges"));
+        mainPanel.add(rangePanel, gbc);
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.weightx = 1;
+        gbc2.insets = new Insets(3, 3, 3, 3);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        
+        ButtonGroup rangeGroup = new ButtonGroup();
+        equalRangeButton = new JRadioButton("Equal ranges", true); // default
+        equalRangeButton.setFont(serif12);
+        equalRangeButton.addActionListener(this);
+        rangeGroup.add(equalRangeButton);
+        rangePanel.add(equalRangeButton, gbc2);
+
+        unequalRangeButton = new JRadioButton("Unequal ranges", false);
+        unequalRangeButton.setFont(serif12);
+        unequalRangeButton.addActionListener(this);
+        rangeGroup.add(unequalRangeButton);
+        gbc2.gridy = 1;
+        rangePanel.add(unequalRangeButton, gbc2);
+        
+        labelMinR = new JLabel("Red minimum");
+        labelMinR.setForeground(Color.black);
+        labelMinR.setFont(serif12);
+        labelMinR.setEnabled(false);
+        gbc2.gridy = 2;
+        rangePanel.add(labelMinR, gbc2);
+        textMinR = new JTextField();
+        textMinR.setText(String.valueOf(imageA.getMinR()));
+        textMinR.setFont(serif12);
+        textMinR.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMinR, gbc2);
+        
+        labelMaxR = new JLabel("Red maximum");
+        labelMaxR.setForeground(Color.black);
+        labelMaxR.setFont(serif12);
+        labelMaxR.setEnabled(false);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        rangePanel.add(labelMaxR, gbc2);
+        textMaxR = new JTextField();
+        textMaxR.setText(String.valueOf(imageA.getMaxR()));
+        textMaxR.setFont(serif12);
+        textMaxR.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMaxR, gbc2);
+        
+        labelMinG = new JLabel("Green minimum");
+        labelMinG.setForeground(Color.black);
+        labelMinG.setFont(serif12);
+        labelMinG.setEnabled(false);
+        gbc2.gridx = 0;
+        gbc2.gridy = 4;
+        rangePanel.add(labelMinG, gbc2);
+        textMinG = new JTextField();
+        textMinG.setText(String.valueOf(imageA.getMinG()));
+        textMinG.setFont(serif12);
+        textMinG.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMinG, gbc2);
+        
+        labelMaxG = new JLabel("Green maximum");
+        labelMaxG.setForeground(Color.black);
+        labelMaxG.setFont(serif12);
+        labelMaxG.setEnabled(false);
+        gbc2.gridx = 0;
+        gbc2.gridy = 5;
+        rangePanel.add(labelMaxG, gbc2);
+        textMaxG = new JTextField();
+        textMaxG.setText(String.valueOf(imageA.getMaxG()));
+        textMaxG.setFont(serif12);
+        textMaxG.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMaxG, gbc2);
+
+        labelMinB = new JLabel("Blue minimum");
+        labelMinB.setForeground(Color.black);
+        labelMinB.setFont(serif12);
+        labelMinB.setEnabled(false);
+        gbc2.gridx = 0;
+        gbc2.gridy = 6;
+        rangePanel.add(labelMinB, gbc2);
+        textMinB = new JTextField();
+        textMinB.setText(String.valueOf(imageA.getMinB()));
+        textMinB.setFont(serif12);
+        textMinB.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMinB, gbc2);
+        
+        labelMaxB = new JLabel("Blue maximum");
+        labelMaxB.setForeground(Color.black);
+        labelMaxB.setFont(serif12);
+        labelMaxB.setEnabled(false);
+        gbc2.gridx = 0;
+        gbc2.gridy = 7;
+        rangePanel.add(labelMaxB, gbc2);
+        textMaxB = new JTextField();
+        textMaxB.setText(String.valueOf(imageA.getMaxB()));
+        textMaxB.setFont(serif12);
+        textMaxB.setEnabled(false);
+        gbc2.gridx = 1;
+        rangePanel.add(textMaxB, gbc2);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         destinationPanel = new JPanel(new BorderLayout());
         destinationPanel.setForeground(Color.black);
         destinationPanel.setBorder(buildTitledBorder("Destination"));
@@ -668,6 +886,76 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
+        
+        equalRange = equalRangeButton.isSelected();
+        
+        if (!equalRange) {
+            tmpStr = textMinR.getText();
+
+            if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
+                minR = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMinR.requestFocus();
+                textMinR.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textMaxR.getText();
+
+            if (testParameter(tmpStr, minR, Float.MAX_VALUE)) {
+                maxR = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMaxR.requestFocus();
+                textMaxR.selectAll();
+
+                return false;
+            }
+
+            tmpStr = textMinG.getText();
+
+            if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
+                minG = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMinG.requestFocus();
+                textMinG.selectAll();
+
+                return false;
+            }
+            
+            tmpStr = textMaxG.getText();
+
+            if (testParameter(tmpStr, minG, Float.MAX_VALUE)) {
+                maxG = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMaxG.requestFocus();
+                textMaxG.selectAll();
+
+                return false;
+            }
+
+            tmpStr = textMinB.getText();
+
+            if (testParameter(tmpStr, -Float.MAX_VALUE, Float.MAX_VALUE)) {
+                minB = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMinB.requestFocus();
+                textMinB.selectAll();
+
+                return false;
+            } 
+            
+            tmpStr = textMaxB.getText();
+
+            if (testParameter(tmpStr, minB, Float.MAX_VALUE)) {
+                maxB = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textMaxB.requestFocus();
+                textMaxB.selectAll();
+
+                return false;
+            }    
+        } // if (!equalRange)
 
         if (equalButton.isSelected()) {
             redValue = greenValue = blueValue = 1.0f / 3.0f;
