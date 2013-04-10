@@ -275,15 +275,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                 }
             } else if ((RGBAlgo.isCompleted() == true) && (resultImage == null)) {
 
-                imageA = RGBAlgo.getSrcImage();
-
-                try {
-                    new ViewJFrameImage(imageA, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
