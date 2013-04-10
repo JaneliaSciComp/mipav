@@ -42,6 +42,15 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
     /** If true only average values above threshold. */
     private boolean thresholdAverage = false;
+    
+    private boolean equalRange = true;
+    
+    private float minR;
+    private float maxR;
+    private float minG;
+    private float maxG;
+    private float minB;
+    private float maxB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -76,7 +85,9 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
      * @param  intensityAverage  DOCUMENT ME!
      */
     public AlgorithmRGBtoGray(ModelImage srcImg, float redValue, float greenValue, float blueValue,
-                              boolean thresholdAverage, float threshold, boolean intensityAverage) {
+                              boolean thresholdAverage, float threshold, boolean intensityAverage,
+                              boolean equalRange, float minR, float maxR, float minG, float maxG, 
+                              float minB, float maxB) {
         super(null, srcImg);
         this.redValue = redValue;
         this.greenValue = greenValue;
@@ -84,6 +95,13 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         this.thresholdAverage = thresholdAverage;
         this.threshold = threshold;
         this.intensityAverage = intensityAverage;
+        this.equalRange = equalRange;
+        this.minR = minR;
+        this.maxR = maxR;
+        this.minG = minG;
+        this.maxG = maxG;
+        this.minB = minB;
+        this.maxB = maxB;
     }
 
 
@@ -100,7 +118,9 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
      * @param  intensityAverage  DOCUMENT ME!
      */
     public AlgorithmRGBtoGray(ModelImage destImg, ModelImage srcImg, float redValue, float greenValue, float blueValue,
-                              boolean thresholdAverage, float threshold, boolean intensityAverage) {
+                              boolean thresholdAverage, float threshold, boolean intensityAverage,
+                              boolean equalRange, float minR, float maxR, float minG, float maxG, 
+                              float minB, float maxB) {
         super(destImg, srcImg);
         this.redValue = redValue;
         this.greenValue = greenValue;
@@ -108,6 +128,13 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         this.thresholdAverage = thresholdAverage;
         this.threshold = threshold;
         this.intensityAverage = intensityAverage;
+        this.equalRange = equalRange;
+        this.minR = minR;
+        this.maxR = maxR;
+        this.minG = minG;
+        this.maxG = maxG;
+        this.minB = minB;
+        this.maxB = maxB;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -182,6 +209,9 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         float averageR = 0.0f;
         float averageG = 0.0f;
         float averageB = 0.0f;
+        float scaleR = (float)srcImage.getMax() * redValue/(maxR - minR);
+        float scaleG = (float)srcImage.getMax() * greenValue/(maxG - minG);
+        float scaleB = (float)srcImage.getMax() * blueValue/(maxB - minB);
 
         if (srcImage.getType() == ModelImage.ARGB_FLOAT) {
             doFloat = true;
@@ -313,7 +343,14 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                             fireProgressStateChanged(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100));
                         }
 
-                        if (thresholdAverage) {
+                        if (!equalRange) {
+                            bufferDest[id] = (float)(scaleR*(buffer[i + 1] - minR) + scaleG*(buffer[i + 2] - minG) +
+                                    scaleB*(buffer[i + 3] - minB));
+                            if (!doFloat) {
+                                bufferDest[id] = Math.round(bufferDest[id]);
+                            }
+                        } // if (!equalRange)
+                        else if (thresholdAverage) {
                             p = 0;
                             sum = 0.0f;
 
@@ -342,7 +379,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                                 bufferDest[id] = thirdValue * sum;
                             }
 
-                            if (doFloat) {
+                            if (!doFloat) {
                                 bufferDest[id] = Math.round(bufferDest[id]);
                             }
                         } // if (thresholdAverage)
@@ -375,7 +412,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                                 bufferDest[id] = thirdValue * sum;
                             }
 
-                            if (doFloat) {
+                            if (!doFloat) {
                                 bufferDest[id] = Math.round(bufferDest[id]);
                             }
                         } // if (averageIntensity)
@@ -455,8 +492,10 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         float averageR = 0.0f;
         float averageG = 0.0f;
         float averageB = 0.0f;
-
         
+        float scaleR = (float)srcImage.getMax() * redValue/(maxR - minR);
+        float scaleG = (float)srcImage.getMax() * greenValue/(maxG - minG);
+        float scaleB = (float)srcImage.getMax() * blueValue/(maxB - minB);  
 
         extents = srcImage.getExtents();
         sliceSize = srcImage.getSliceSize();
@@ -597,7 +636,14 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                 fireProgressStateChanged(Math.round((float) (i) / (totalLength - 1) * 100));
             }
 
-            if (thresholdAverage) {
+            if (!equalRange) {
+                bufferDest[id] = (float)(scaleR*(buffer[i + 1] - minR) + scaleG*(buffer[i + 2] - minG) +
+                        scaleB*(buffer[i + 3] - minB));
+                if (!doFloat) {
+                    bufferDest[id] = Math.round(bufferDest[id]);
+                }
+            } // if (!equalRange)
+            else if (thresholdAverage) {
                 p = 0;
                 sum = 0.0f;
 
@@ -626,7 +672,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                     bufferDest[id] = thirdValue * sum;
                 }
 
-                if (doFloat) {
+                if (!doFloat) {
                     bufferDest[id] = Math.round(bufferDest[id]);
                 }
             } // if (thresholdAverage)
@@ -659,7 +705,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                     bufferDest[id] = thirdValue * sum;
                 }
 
-                if (doFloat) {
+                if (!doFloat) {
                     bufferDest[id] = Math.round(bufferDest[id]);
                 }
             } // if (averageIntensity)
