@@ -187,7 +187,7 @@ public class AlgorithmSCDSegmentation extends AlgorithmBase  {
         double SCDMax;
         double SCDMin;
         
-        boolean testme = true;
+        boolean testme = false;
         if (testme) {
             LinearEquations2 le = new LinearEquations2();
             le.dchkaa();
