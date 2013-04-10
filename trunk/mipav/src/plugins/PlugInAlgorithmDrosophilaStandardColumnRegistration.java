@@ -6500,7 +6500,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         // Make algorithm
         final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(neuronImage_grey, neuronImage, redValue, greenValue,
-                blueValue, thresholdAverage, threshold, intensityAverage);
+                blueValue, thresholdAverage, threshold, intensityAverage, true, 0.0f, 255.0f, 0.0f, 255.0f, 0.0f, 255.0f);
 
         RGBAlgo.run();
 
