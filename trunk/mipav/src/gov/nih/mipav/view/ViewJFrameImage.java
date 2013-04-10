@@ -3865,7 +3865,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @see ViewJComponentEditImage#repaint()
      */
     public void removeControls() {
-        userInterface.getMainFrame().getContentPane().remove(controls);
+        if (controls != null) {
+            userInterface.getMainFrame().getContentPane().remove(controls);
+        }
 
         // if the frame was just closed, componentImage will be null.
         try {
