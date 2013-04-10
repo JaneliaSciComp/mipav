@@ -3023,7 +3023,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         registerFrame(frame); // Put it at the top
-        imageFrameVector.removeElementAt(index + 1); // Remove second copy
+        if (imageFrameVector.elementAt(index + 1) != null) {
+            imageFrameVector.removeElementAt(index + 1); // Remove second copy
+        }
     }
 
     // *****
