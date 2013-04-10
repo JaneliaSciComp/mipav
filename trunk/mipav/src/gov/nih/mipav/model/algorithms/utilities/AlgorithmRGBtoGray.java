@@ -149,15 +149,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public ModelImage getSrcImage() {
-        return srcImage;
-    }
-
-    /**
      * Starts the program.
      */
     public void runAlgorithm() {
@@ -486,7 +477,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         int bwType;
         int[] extents;
         int sliceSize;
-        String imageName;
         FileInfoBase[] fInfoBase = null;
 
         float averageR = 0.0f;
@@ -499,7 +489,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
         extents = srcImage.getExtents();
         sliceSize = srcImage.getSliceSize();
-        imageName = srcImage.getImageName();
 
         if (srcImage.getNDims() == 5) {
             f = extents[4];
@@ -567,20 +556,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         if (srcImage.getMaxB() > max) {
             max = (float) srcImage.getMaxB();
         }
-
-        fInfoBase = new FileInfoBase[f * t * z];
-
-        for (n = 0; n < srcImage.getFileInfo().length; n++) {
-            fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(n).clone());
-            fInfoBase[n].setDataType(bwType);
-        }
-
-        if (srcImage.getParentFrame() != null) {
-            srcImage.getParentFrame().close();
-        }
-
-        srcImage.disposeLocal();
-        srcImage = null;
 
         try {
             lengthOut = f * t * z * sliceSize;
@@ -731,10 +706,15 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
         buffer = null;
 
-        srcImage = new ModelImage(bwType, extents, imageName);
+        try {
+            srcImage.reallocate(bwType, extents);
+        }
+        catch (final IOException error) {
+            displayError("AlgorithmRGBtoGray: IOException on srcImage.reallocate");
 
-        for (n = 0; n < srcImage.getFileInfo().length; n++) {
-            srcImage.setFileInfo(fInfoBase[n], n);
+            setCompleted(false);
+
+            return;
         }
 
         try {
