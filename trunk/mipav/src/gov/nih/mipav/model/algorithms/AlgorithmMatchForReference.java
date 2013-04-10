@@ -201,7 +201,8 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
             // Make algorithm
             AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(tempImage, adjImage, redValue, greenValue, blueValue,
-                                                                true, threshold, true);
+                                                                true, threshold, true, true, 0.0f, 255.0f, 0.0f,
+                                                                255.0f, 0.0f, 255.0f);
             RGBAlgo.setRunningInSeparateThread(runningInSeparateThread);
             RGBAlgo.run();
 
