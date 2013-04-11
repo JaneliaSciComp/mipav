@@ -723,8 +723,8 @@ public class LinearEquations2 implements java.io.Serializable {
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
      * 
-     * This code tests the error exits of dgetrf, dgetf2, dgetri, dgetrs, dgerfs, and dgecon
-     * derrge correctly found 23 of 23 error exits.
+     * This code tests the error exits of dgetrf, dgetf2, dgetri, dgetrs, dgerfs, dgecon, and dgeequ.
+     * derrge correctly found 26 of 26 error exits.
      */
     public void derrge() {
         int i;
@@ -732,6 +732,8 @@ public class LinearEquations2 implements java.io.Serializable {
         int nmax = 4;
         int lw = 3 * nmax;
         double anrm = 0.0;
+        double anorm[] = new double[1];
+        double ccond[] = new double[1];
         double rcond[] = new double[1];
         double A[][] = new double[nmax][nmax];
         double AF[][] = new double[nmax][nmax];
@@ -743,8 +745,8 @@ public class LinearEquations2 implements java.io.Serializable {
         int info[] = new int[1];
         int ip[] = new int[nmax];
         int iw[] = new int[nmax];
-        int npass = 23;
-        final int ntotal = 23; 
+        int npass = 26;
+        final int ntotal = 26; 
         
         for (j = 1; j <= nmax; j++) {
             for (i = 1; i <= nmax; i++) {
@@ -803,106 +805,145 @@ public class LinearEquations2 implements java.io.Serializable {
         dgetri(-1, A, 1, ip, w, lw, info);
         if (info[0] != -1) {
             Preferences.debug("dgetri(-1, A, 1, ip, w, lw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgetri(2, A, 1, ip, w, lw, info);
         if (info[0] != -3) {
             Preferences.debug("dgetri(2, A, 1, ip, w, lw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = 3\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = 3\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
         }
         
         // dgetrs
         dgetrs('/', 0, 0, A, 1, ip, B, 1, info);
         if (info[0] != -1) {
             Preferences.debug("dgetrs('/', 0, 0, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgetrs('N', -1, 0, A, 1, ip, B, 1, info);
         if (info[0] != -2) {
             Preferences.debug("dgetrs('N', -1, 0, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgetrs('N', 0, -1, A, 1, ip, B, 1, info);
         if (info[0] != -3) {
             Preferences.debug("dgetrs('N', 0, -1, A, 1, ip, B, 1, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgetrs('N', 2, 1, A, 1, ip, B, 2, info);
         if (info[0] != -5) {
             Preferences.debug("dgetrs('N', 2, 1, A, 1, ip, B, 2, info) produced info[0] = " + info[0] +
                                " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);    
+            npass--;
         }
         
         dgetrs('N', 2, 1, A, 2, ip, B, 1, info);
         if (info[0] != -8) {
             Preferences.debug("dgetrs('N', 2, 1, A, 2, ip, B, 1, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -8\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -8\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
         }
         
         // dgerfs
         dgerfs('/', 0, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
         if (info[0] != -1) {
             Preferences.debug("dgerfs('/', 0, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgerfs('N', -1, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
         if (info[0] != -2) {
             Preferences.debug("dgerfs('N', -1, 0, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgerfs('N', 0, -1, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info);
         if (info[0] != -3) {
             Preferences.debug("dgerfs('N', 0, -1, A, 1, AF, 1, ip, B, 1, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -3\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgerfs('N', 2, 1, A, 1, AF, 2, ip, B, 2, X, 2, r1, r2, w, iw, info);
         if (info[0] != -5) {
             Preferences.debug("dgerfs('N', 2, 1, A, 1, AF, 2, ip, B, 2, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -5\n", Preferences.DEBUG_ALGORITHM);  
+            npass--;
         }
         
         dgerfs('N', 2, 1, A, 2, AF, 1, ip, B, 2, X, 2, r1, r2, w, iw, info);
         if (info[0] != -7) {
             Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 1, ip, B, 2, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -7\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -7\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
         }
         
         dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 1, X, 2, r1, r2, w, iw, info);
         if (info[0] != -10) {
             Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 1, X, 2, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -10\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -10\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 2, X, 1, r1, r2, w, iw, info);
         if (info[0] != -12) {
             Preferences.debug("dgerfs('N', 2, 1, A, 2, AF, 2, ip, B, 2, X, 1, r1, r2, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -12\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -12\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         // dgecon
         dgecon('/', 0, A, 1, anrm, rcond, w, iw, info);
         if (info[0] != -1) {
             Preferences.debug("dgecon('/', 0, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM); 
+            npass--;
         }
         
         dgecon('1', -1, A, 1, anrm, rcond, w, iw, info);
         if (info[0] != -2) {
             Preferences.debug("dgecon('1', -1, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);
+            npass--;
         }
         
         dgecon('1', 2, A, 1, anrm, rcond, w, iw, info);
         if (info[0] != -4) {
             Preferences.debug("dgecon('1', 2, A, 1, anrm, rcond, w, iw, info) produced info[0] = " + info[0] +
-                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);    
+                               " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);  
+            npass--;
+        }
+        
+        // dgeequ
+        dgeequ(-1, 0, A, 1, r1, r2, rcond, ccond, anorm, info);
+        if (info[0] != -1) {
+            Preferences.debug("dgeequ(-1, 0, A, 1, r1, r2, rcond, ccond, anorm, info) produced info[0] = " + info[0] +
+                    " instead of info[0] = -1\n", Preferences.DEBUG_ALGORITHM);  
+            npass--;
+        }
+          
+        dgeequ(0, -1, A, 1, r1, r2, rcond, ccond, anorm, info);
+        if (info[0] != -2) {
+            Preferences.debug("dgeequ(0, -1, A, 1, r1, r2, rcond, ccond, anorm, info) produced info[0] = " + info[0] +
+                    " instead of info[0] = -2\n", Preferences.DEBUG_ALGORITHM);  
+            npass--;
+        }
+        
+        dgeequ(2, 2, A, 1, r1, r2, rcond, ccond, anorm, info);
+        if (info[0] != -4) {
+            Preferences.debug("dgeequ(2, 2, A, 1, r1, r2, rcond, ccond, anorm, info) produced info[0] = " + info[0] +
+                    " instead of info[0] = -4\n", Preferences.DEBUG_ALGORITHM);  
+            npass--;
         }
         
         Preferences.debug("derrge correctly found " + npass + " of " + ntotal + " error exits\n", Preferences.DEBUG_ALGORITHM);
@@ -1377,6 +1418,170 @@ public class LinearEquations2 implements java.io.Serializable {
     } // dgesv
     
     /*
+     * This is a port of a portion of LAPACK driver routine DGESVX.f version 3.4.1
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., April, 2012
+     * 
+     * dgesvx computes the solution to system of linear equations A * X = B for GE matrices
+     * 
+     * dgesvx uses the LU factorization to compute the solution to a real
+       system of linear equations
+          A * X = B,
+       where A is an n-by-n matrix and X and B are n-by-nrhs matrices.
+
+       Error bounds on the solution and a condition estimate are also provided.
+       
+       The following steps are performed:
+
+       1. If fact = 'E', real scaling factors are computed to equilibrate
+          the system:
+             trans = 'N':  diag(r)*A*diag(c)     *inv(diag(c))*X = diag(r)*B
+             trans = 'T': (diag(r)*A*diag(c))**T *inv(diag(r))*X = diag(c)*B
+             trans = 'C': (diag(r)*A*diag(c))**H *inv(diag(r))*X = diag(c)*B
+          Whether or not the system will be equilibrated depends on the
+          scaling of the matrix A, but if equilibration is used, A is
+          overwritten by diag(r)*A*diag(c) and B by diag(r)*B (if trans='N')
+          or diag(c)*B (if trans = 'T' or 'C').
+
+       2. If fact = 'N' or 'E', the LU decomposition is used to factor the
+          matrix A (after equilibration if fact = 'E') as
+             A = P * L * U,
+          where P is a permutation matrix, L is a unit lower triangular
+          matrix, and U is upper triangular.
+
+       3. If some U[i][i]=0, so that U is exactly singular, then the routine
+          returns with info[0] = i. Otherwise, the factored form of A is used
+          to estimate the condition number of the matrix A.  If the
+          reciprocal of the condition number is less than machine precision,
+          info[0] = n+1 is returned as a warning, but the routine still goes on
+          to solve for X and compute error bounds as described below.
+
+       4. The system of equations is solved for X using the factored form
+          of A.
+
+       5. Iterative refinement is applied to improve the computed solution
+          matrix and calculate error bounds and backward error estimates
+          for it.
+
+       6. If equilibration was used, the matrix X is premultiplied by
+          diag(c) (if trans = 'N') or diag(r) (if trans = 'T' or 'C') so
+          that it solves the original system before equilibration.
+
+       @param input char fact
+           Specifies whether or not the factored form of the matrix A is
+           supplied on entry, and if not, whether the matrix A should be
+           equilibrated before it is factored.
+           = 'F':  On entry, AF and ipiv contain the factored form of A.
+                   If equed[0] is not 'N', the matrix A has been
+                   equilibrated with scaling factors given by r and c.
+                   A, AF, and ipiv are not modified.
+           = 'N':  The matrix A will be copied to AF and factored.
+           = 'E':  The matrix A will be equilibrated if necessary, then
+                   copied to AF and factored.
+       @param input char trans
+           Specifies the form of the system of equations:
+           = 'N':  A * X = B     (No transpose)
+           = 'T':  A**T * X = B  (Transpose)
+           = 'C':  A**H * X = B  (Transpose)
+       @param input int n
+           The number of linear equations, i.e., the order of the
+           matrix A.  n >= 0.
+       @param input int nrhs
+           The number of right hand sides, i.e., the number of columns
+           of the matrices B and X.  nrhs >= 0.
+       @param (input/output) double[][] A of dimension (lda, n)
+           On entry, the n-by-n matrix A.  If fact = 'F' and equed[0] is
+           not 'N', then A must have been equilibrated by the scaling
+           factors in r and/or c.  A is not modified if fact = 'F' or
+           'N', or if fact = 'E' and equed[0] = 'N' on exit.
+
+           On exit, if equed[0] != 'N', A is scaled as follows:
+           equed[0] = 'R':  A := diag(r) * A
+           equed[0] = 'C':  A := A * diag(c)
+           equed[0] = 'B':  A := diag(r) * A * diag(c).
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,n).
+       @param (input/output) double[][] AF of dimension (ldaf, n)
+           If fact = 'F', then AF is an input argument and on entry
+           contains the factors L and U from the factorization
+           A = P*L*U as computed by dgetrf.  If equed[0] != 'N', then
+           AF is the factored form of the equilibrated matrix A.
+
+           If fact = 'N', then AF is an output argument and on exit
+           returns the factors L and U from the factorization A = P*L*U
+           of the original matrix A.
+ 
+           If fact = 'E', then AF is an output argument and on exit
+           returns the factors L and U from the factorization A = P*L*U
+           of the equilibrated matrix A (see the description of A for
+           the form of the equilibrated matrix).
+       @param input int ldaf
+           The leading dimension of the array AF.  ldaf >= max(1,n).
+       @param (input/output) int[] ipiv of dimension (n)
+           If fact = 'F', then ipiv is an input argument and on entry
+           contains the pivot indices from the factorization A = P*L*U
+           as computed by dgetrf; row i of the matrix was interchanged
+           with row ipiv[i].
+
+           If fact = 'N', then ipiv is an output argument and on exit
+           contains the pivot indices from the factorization A = P*L*U
+           of the original matrix A.
+
+           If fact = 'E', then IPIV is an output argument and on exit
+           contains the pivot indices from the factorization A = P*L*U
+           of the equilibrated matrix A.
+       @param (input/output) char[] equed of dimension (1)
+           Specifies the form of equilibration that was done.
+           = 'N':  No equilibration (always true if fact = 'N').
+           = 'R':  Row equilibration, i.e., A has been premultiplied by
+                   diag(r).
+           = 'C':  Column equilibration, i.e., A has been postmultiplied
+                   by diag(c).
+           = 'B':  Both row and column equilibration, i.e., A has been
+                   replaced by diag(r) * A * diag(c).
+           equed[0] is an input argument if fact = 'F'; otherwise, it is an
+           output argument.
+       @param (input/output) double[] r of dimension (n)
+           The row scale factors for A.  If equed[0] = 'R' or 'B', A is
+           multiplied on the left by diag(r); if equed[0] = 'N' or 'C', r
+           is not accessed.  r is an input argument if fact = 'F';
+           otherwise, r is an output argument.  If fact = 'F' and
+           equed[0] = 'R' or 'B', each element of r must be positive.
+       @param (input/output) double[] c of dimension (n)
+           The column scale factors for A.  If equed[0] = 'C' or 'B', A is
+           multiplied on the right by diag(c); if equed[0] = 'N' or 'R', c
+           is not accessed.  c is an input argument if fact = 'F';
+           otherwise, c is an output argument.  If fact = 'F' and
+           equed[0] = 'C' or 'B', each element of c must be positive.
+       @param (input/output) double[][] B of dimension (ldb, nrhs)
+           On entry, the n-by-nrhs right hand side matrix B.
+           On exit,
+           if equed[0] = 'N', B is not modified;
+           if trans = 'N' and equed[0] = 'R' or 'B', B is overwritten by
+           diag(r)*B;
+           if trans = 'T' or 'C' and equed[0] = 'C' or 'B', B is
+           overwritten by diag(c)*B.
+       @param input int ldb
+           The leading dimension of the array B.  ldb >= max(1,n).
+       @param output double[][] X of dimension (ldx, nrhs)
+           If info[0] = 0 or info[0] = n+1, the n-by-nrhs solution matrix X
+           to the original system of equations.  Note that A and B are
+           modified on exit if equed[0] != 'N', and the solution to the
+           equilibrated system is inv(diag(c))*X if trans = 'N' and
+           equed[0] = 'C' or 'B', or inv(diag(r))*X if trans = 'T' or 'C'
+           and equed[0] = 'R' or 'B'.
+       @param input int ldx
+           The leading dimension of the array X.  ldx >= max(1,n).
+       @param output double[] rcond of dimension (1)
+           The estimate of the reciprocal condition number of the matrix
+           A after equilibration (if done).  If rcond[0] is less than the
+           machine precision (in particular, if rcond[0] = 0), the matrix
+           is singular to working precision.  This condition is
+           indicated by a return code of info[0] > 0.
+
+     */
+    
+    /*
      * This is a port of a portion of LAPACK routine DGECON.f version 3.4.0
      * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
      * University of Colorado Denver, and NAG Ltd., November, 2011
@@ -1540,6 +1745,196 @@ public class LinearEquations2 implements java.io.Serializable {
         return;
 
     } // dgecon
+    
+    /*
+     * This is a port of a portion of LAPACK routine DGEEQU.f version 3.4.0
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011
+     * 
+     * dgeequ computes row and column scalings intended to equilibrate an
+       m-by-n matrix A and reduce its condition number.  r returns the row
+       scale factors and c the column scale factors, chosen to try to make
+       the largest element in each row and column of the matrix B with
+       elements B[i][j]=r[i]*A[i][j]*c[j] have absolute value 1.
+
+       r[i] and c[j] are restricted to be between smlnum = smallest safe
+       number and bignum = largest safe number.  Use of these scaling
+       factors is not guaranteed to reduce the condition number of A but
+       works well in practice.
+
+       @param input int m
+           The number of rows of the matrix A.  m >= 0.
+       @param input int n
+           The number of columns of the matrix A.  n >= 0.
+       @param input double[][] A of dimension (lda, n)
+           The m-by-n matrix whose equilibration factors are
+           to be computed.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(1,m).
+       @param output double[] r of dimension (n)
+           If info[0] = 0 or info[0] > m, r contains the row scale factors
+           for A.
+       @param output double[] c of dimension (n)
+           If info[0] = 0,  c contains the column scale factors for A.
+       @param output double[] rowcnd of dimension (1)
+           If info[0] = 0 or info[0] > m, rowcnd[0] contains the ratio of the
+           smallest r[i] to the largest r[i].  If rowcnd[0] >= 0.1 and
+           amax is neither too large nor too small, it is not worth
+           scaling by r.
+       @param output double[] colcnd of dimension (1)
+           If info[0] = 0, colcnd[0] contains the ratio of the smallest
+           c[i] to the largest c[i].  If colcnd[0] >= 0.1, it is not
+           worth scaling by c.
+       @param output double[] amax of dimension (1)
+           Absolute value of largest matrix element.  If AMAX is very
+           close to overflow or very close to underflow, the matrix
+           should be scaled.
+       @param output int[] info of dimension (1)
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+           > 0:  if info[0] = i,  and i is
+                 <= m:  the i-th row of A is exactly zero
+                 >  m:  the (i-m)-th column of A is exactly zero
+     */
+    private void dgeequ(int m, int n, double[][] A, int lda, double r[], double c[], double rowcnd[],
+                        double[] colcnd, double[] amax, int[] info) {
+        int i;
+        int j;
+        double bignum;
+        double rcmax;
+        double rcmin;
+        double smlnum;
+        
+        // Test the input parameters.
+        
+        info[0] = 0;
+        if (m < 0) {
+            info[0] = -1;
+        }
+        else if (n < 0) {
+            info[0] = -2;
+        }
+        else if (lda < Math.max(1, m)) {
+            info[0] = -4;
+        }
+        if (info[0] != 0) {
+            MipavUtil.displayError("dgeqqu had info[0] = " + info[0]);
+            return;
+        }
+    
+        // Quick return if possible
+    
+        if (m == 0 || n == 0) {
+            rowcnd[0] = 1.0;
+            colcnd[0] = 1.0;
+            amax[0] = 0.0;
+            return;
+        } // if (m == 0 || n == 0)
+    
+        // Get machine constants.
+    
+        smlnum = ge.dlamch('S');
+        bignum = 1.0 / smlnum;
+    
+        // Compute row scale factors.
+     
+        for (i = 0; i < m; i++) {
+            r[i] = 0.0;
+        } // for (i = 0; i < m; i++)
+    
+        // Find the maximum element in each row.
+    
+        for (j = 0; j < n; j++) {
+            for (i = 0; i < m; i++) {
+                r[i] = Math.max(r[i], Math.abs(A[i][j]));
+            } // for (i = 0; i < m; i++)
+        } // for (j = 0; j < n; j++)
+    
+        // Find the maximum and minimum scale factors.
+    
+        rcmin = bignum;
+        rcmax = 0.0;
+        for (i = 0; i < m; i++) {
+            rcmax = Math.max(rcmax, r[i]);
+            rcmin = Math.min(rcmin, r[i]);
+        } // for (i = 0; i < m; i++)
+        amax[0] = rcmax;
+    
+        if (rcmin == 0.0) {
+    
+            // Find the first zero scale factor and return an error code.
+    
+            for (i = 1; i <= m; i++) {
+                if (r[i-1] == 0.0) {
+                    info[0] = i;
+                    return;
+                } // if (r[i-1] == 0.0)
+            } // for (i = 1; i <= m; i++)
+        } // if (rcmin == 0.0)
+        else { // rcmin != 0.0
+    
+            // Invert the scale factors.
+    
+            for (i = 0; i < m; i++) {
+                r[i] = 1.0 / Math.min(Math.max(r[i], smlnum), bignum);
+            } // for (i = 0; i < m; i++)
+    
+            // Compute rowcnd[0] = min(r[i]) / max(r[i])
+    
+            rowcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+        } // else rcmin != 0.0
+    
+        // Compute column scale factors
+    
+        for (j = 0; j < n; j++) {
+            c[j] = 0.0;
+        } // for (j = 0; j < n; j++)
+    
+        // Find the maximum element in each column,
+        // assuming the row scaling computed above.
+    
+        for (j = 0; j < n; j++) {
+            for (i = 0; i < m; i++) {
+                c[j] = Math.max(c[j], Math.abs(A[i][j])*r[i]);
+            } // for (i = 0; i < m; i++)
+        } // for (j = 0; j < n; j++)
+    
+        // Find the maximum and minimum scale factors.
+    
+        rcmin = bignum;
+        rcmax = 0.0;
+        for (j = 0; j < n; j++) {
+            rcmin = Math.min(rcmin, c[j]);
+            rcmax = Math.max(rcmax, c[j]);
+        } // for (j = 0; j < n; j++0
+    
+        if (rcmin == 0.0) {
+    
+            // Find the first zero scale factor and return an error code.
+    
+            for (j = 1; j <= n; j++) {
+                if (c[j-1] == 0.0) {
+                    info[0] = m + j;
+                    return;
+                } // if (c[j-1] == 0.0)
+            } // for (j = 1; j <= n; j++)
+        } // if (rcmin == 0.0)
+        else { // rcmin != 0.0
+    
+            // Invert the scale factors.
+    
+            for (j = 0; j < n; j++) {
+                c[j] = 1.0 / Math.min(Math.max(c[j], smlnum), bignum);
+            } // for (j = 0; j < n; j++)
+    
+            // Compute colcnd[0] = min(c[j]) / max(c[j])
+    
+            colcnd[0] = Math.max(rcmin, smlnum) / Math.min(rcmax, bignum);
+        } // else rcmin != 0.0
+    
+        return;
+
+    } // dgeequ
     
     /*
      * This is a port of a portion of LAPACK routine DGERFS.f version 3.4.0
@@ -2565,6 +2960,406 @@ public class LinearEquations2 implements java.io.Serializable {
         return;
 
     } // dgetf2
+    
+    /*
+     * This is a port of LAPACK auxiliary routine DLANTR.f version 3.4.2
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., September, 2012
+     * 
+     * dlantr  returns the value of the one norm,  or the Frobenius norm, or
+       the  infinity norm,  or the  element of  largest absolute value  of a
+       trapezoidal or triangular matrix A.
+       
+       dlantr = ( max(abs(A(i,j))), norm = 'M' or 'm'
+                (
+                ( norm1(A),         norm = '1', 'O' or 'o'
+                (
+                ( normI(A),         norm = 'I' or 'i'
+                (
+                ( normF(A),         norm = 'F', 'f', 'E' or 'e'
+
+       where  norm1  denotes the  one norm of a matrix (maximum column sum),
+       normI  denotes the  infinity norm  of a matrix  (maximum row sum) and
+       normF  denotes the  Frobenius norm of a matrix (square root of sum of
+       squares).  Note that  max(abs(A(i,j)))  is not a consistent matrix norm.
+
+       @param input char norm
+           Specifies the value to be returned in dlantr as described above.
+       @param input char uplo
+           Specifies whether the matrix A is upper or lower trapezoidal.
+           = 'U':  Upper trapezoidal
+           = 'L':  Lower trapezoidal
+           Note that A is triangular instead of trapezoidal if m = n.
+       @param input char diag
+           Specifies whether or not the matrix A has unit diagonal.
+           = 'N':  Non-unit diagonal
+           = 'U':  Unit diagonal
+       @param input int m
+           The number of rows of the matrix A.  m >= 0, and if
+           uplo = 'U', m <= n.  When m = 0, dlantr is set to zero.
+       @param input int n
+           The number of columns of the matrix A.  n >= 0, and if
+           uplo = 'L', n <= m.  When n = 0, dlantr is set to zero.
+       @param input double[][] A of dimension (lda, n)
+           The trapezoidal matrix A (A is triangular if m = n).
+           If uplo = 'U', the leading m by n upper trapezoidal part of
+           the array A contains the upper trapezoidal matrix, and the
+           strictly lower triangular part of A is not referenced.
+           If uplo = 'L', the leading m by n lower trapezoidal part of
+           the array A contains the lower trapezoidal matrix, and the
+           strictly upper triangular part of A is not referenced.  Note
+           that when diag = 'U', the diagonal elements of A are not
+           referenced and are assumed to be one.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(m,1).
+       @param output double[] work of dimension max(1, lwork)
+           where lwork >= m when norm = 'I'; otherwise, work is not
+           referenced.
+     */
+    private double dlantr(char norm, char uplo, char diag, int m, int n,
+                          double[][] A, int lda, double[] work) {
+        boolean udiag;
+        int i;
+        int j;
+        double scale[] = new double[1];
+        double sum[] = new double[1];
+        double value = 0.0;
+        double vec[];
+        
+        if (Math.min(m, n) == 0) {
+            value = 0.0;
+        }
+        else if ((norm == 'M') || (norm == 'm')) {
+
+            // Find max(abs(A[i][j])).
+
+            if ((diag == 'U') || (diag == 'u')) {
+                value = 1.0;
+                if ((uplo == 'U') || (uplo == 'u')) {
+                    for (j = 1; j <= n; j++) {
+                        for (i = 1; i <= Math.min(m, j-1); i++) {
+                            sum[0] = Math.abs(A[i-1][j-1]);
+                            if (value < sum[0] || Double.isNaN(sum[0])) {
+                                value = sum[0];
+                            }
+                        } // for (i = 1; i <= Math.min(m, j-1); i++)
+                    } // for (j = 1; j <= n; j++)
+                } // if ((uplo == 'U') || (uplo == 'u'))
+                else { // ((uplo == 'L') || (uplo == 'l'))
+                    for (j = 1; j <= n; j++) {
+                        for (i = j+1; i <= m; i++) {
+                            sum[0] = Math.abs(A[i-1][j-1]);
+                            if (value < sum[0] || Double.isNaN(sum[0])) {
+                                value = sum[0];
+                            }
+                        } // for (i = j+1; i <= m; i++)
+                    } // for (j = 1; j <= n; j++)
+                } // else ((uplo == 'L') || (uplo == 'l'))
+            } // if ((diag == 'U') || (diag == 'u'))
+            else { // ((diag == 'N) || (diag == 'n))
+                value = 0.0;
+                if ((uplo == 'U') || (uplo == 'u')) {
+                    for (j = 1; j <= n; j++) {
+                        for (i = 1; i <= Math.min(m, j); i++) {
+                            sum[0] = Math.abs(A[i-1][j-1]);
+                            if (value < sum[0] || Double.isNaN(sum[0])) {
+                                value = sum[0];
+                            }
+                        } // for (i = 1; i <= Math.min(m, j); i++) 
+                    } // for (j = 1; j <= n; j++)
+                } // if ((uplo == 'U') || (uplo == 'u'))
+                else { // else ((uplo == 'L') || (uplo == 'l'))
+                    for (j = 1; j <= n; j++) {
+                        for (i = j; i <= m; i++) {
+                            sum[0] = Math.abs(A[i-1][j-1]);
+                            if (value < sum[0] || Double.isNaN(sum[0])) {
+                                value = sum[0];
+                            }
+                        } // for (i = j; i <= m; i++)
+                    } // for (j = 1; j <= n; j++)
+                } // else ((uplo == 'L') || (uplo == 'l'))
+            } // else ((diag == 'N) || (diag == 'n))
+        } // else if ((norm == 'M') || (norm == 'm'))
+        else if ((norm == 'O') || (norm == 'o') || (norm == '1')) {
+
+            // Find norm1(A).
+
+            value = 0.0;
+            udiag = ((diag == 'U') || (diag == 'u'));
+            if ((uplo == 'U') || (uplo == 'u')) {
+                for (j = 1; j <= n; j++) {
+                    if ((udiag) && (j <= m)) {
+                        sum[0] = 1.0;
+                        for (i = 1; i <= j-1; i++) {
+                            sum[0] = sum[0] + Math.abs(A[i-1][j-1]);
+                        } // for (i = 1; i <= j-1; i++)
+                    } // if ((udiag) && (j <= m))
+                    else {
+                        sum[0] = 0.0;
+                        for (i = 1; i <= Math.min(m, j); i++) {
+                            sum[0] = sum[0] + Math.abs(A[i-1][j-1]);
+                        } // for (i = 1; i <= Math.min(m, j); i++)
+                    } // else
+                    if (value < sum[0] || Double.isNaN(sum[0])) {
+                        value = sum[0];
+                    }
+                } // for (j = 1; j <= n; j++)
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+                for (j = 1; j <= n; j++) {
+                    if (udiag) {
+                        sum[0] = 1.0;
+                        for (i = j+1; i <= m; i++) {
+                            sum[0] = sum[0] + Math.abs(A[i-1][j-1]);
+                        } // for (i = j+1; i <= m; i++)
+                    } // if (udiag)
+                    else { // !udiag
+                        sum[0] = 0.0;
+                        for (i = j; i <= m; i++) {
+                            sum[0] = sum[0] + Math.abs(A[i-1][j-1]);
+                        } // for (i = j; i <= m; i++)
+                    } // else !udiag
+                    if (value < sum[0] || Double.isNaN(sum[0])) {
+                        value = sum[0];
+                    }
+                } // for (j = 1; j <= n; j++)
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        } // else if ((norm == 'O') || (norm == 'o') || (norm == '1'))
+        else if ((norm == 'I') || (norm == 'i')) {
+
+            // Find normI(A).
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+                if ((diag == 'U') || (diag == 'u')) {
+                    for ( i = 0; i < m; i++) {
+                        work[i] = 1.0;
+                    } // for (i = 0; i < m; i++)
+                    for (j = 1; j <= n; j++) {
+                        for (i = 1; i <= Math.min(m, j-1); i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][j-1]);
+                        } // for (i = 1; i <= Math.min(m, j-1); i++)
+                    } // for (j = 1; j <= n; j++)
+                } // if ((diag == 'U') || (diag == 'u'))
+                else { // ((diag == 'N') || (diag == 'n'))
+                    for (i = 0; i < m; i++) {
+                        work[i] = 0.0;
+                    } // for (i = 0; i < m; i++)
+                    for (j = 1; j <= n; j++) {
+                        for (i = 1; i <= Math.min(m, j); i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][j-1]);
+                        } // for (i = 1; i <= Math.min(m, j); i++)
+                    } // for (j = 1; j <= n; j++)
+                } // else ((diag == 'N') || (diag == 'n'))
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+                if ((diag == 'U') || (diag == 'u')) {
+                    for (i = 0; i < n; i++) {
+                        work[i] = 1.0;
+                    } // for (i = 0; i < n; i++)
+                    for (i = n; i < m; i++) {
+                        work[i] = 0.0;
+                    } // for (i = n; i < m; i++)
+                    for (j = 1; j <= n; j++) {
+                        for (i = j + 1; i <= m; i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][j-1]);
+                        } // for (i = j + 1; i <= m; i++)
+                    } // for (j = 1; j <= n; j++)
+                } // if ((diag == 'U') || (diag == 'u'))
+                else { // ((diag == 'N') || (diag == 'n))
+                    for (i = 0; i < m; i++) {
+                        work[i] = 0.0;
+                    } // for (i = 0; i < m; i++0
+                    for (j = 1; j <= n; j++) {
+                        for (i = j; i <= m; i++) {
+                            work[i-1] = work[i-1] + Math.abs(A[i-1][j-1]);
+                        } // for (i = j; i <= m; i++)
+                    } // for (j = 1; j <= n; j++)
+                } // else ((diag == 'N) || (diag == 'n))
+            } // else ((uplo == 'L') || (uplo == 'l'))
+            value = 0.0;
+            for (i = 0; i < m; i++) {
+                sum[0] = work[i];
+                if (value < sum[0] || Double.isNaN(sum[0])) {
+                    value = sum[0];
+                }
+            } // for (i = 0; i < m; i++)
+        } // else if ((norm == 'I') || (norm == 'i'))
+        else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e')) {
+
+            // Find normF(A).
+
+            if ((uplo == 'U') || (uplo == 'u')) {
+                if ((diag == 'U') || (diag == 'u')) {
+                    scale[0] = 1.0;
+                    sum[0] = Math.min(m, n);
+                    for (j = 2; j <= n; j++) {
+                        vec = new double[Math.min(m,  j-1)];
+                        for (i = 0; i < Math.min(m, j-1); i++) {
+                            vec[i] = A[i][j-1];
+                        }
+                        ge.dlassq(Math.min(m, j-1), vec, 1, scale, sum);
+                    } // for (j = 2; j <= n; j++)
+                } // if ((diag == 'U') || (diag == 'u'))
+                else { // ((diag == 'N) || (diag == 'n'))
+                    scale[0] = 0.0;
+                    sum[0] = 1.0;
+                    for (j = 1; j <= n; j++) {
+                        vec = new double[Math.min(m, j)];
+                        for (i = 0; i < Math.min(m, j); i++) {
+                            vec[i] = A[i][j-1];
+                        }
+                        ge.dlassq(Math.min(m, j), vec, 1, scale, sum);
+                    } // for (j = 1; j <= n; j++)
+                } // else ((diag == 'N) || (diag == 'n'))
+            } // if ((uplo == 'U') || (uplo == 'u'))
+            else { // ((uplo == 'L') || (uplo == 'l'))
+                if ((diag == 'U') || (diag == 'u')) {
+                    scale[0] = 1.0;
+                    sum[0] = Math.min(m, n);
+                    for (j = 1; j <= n; j++) {
+                        vec = new double[m-j];
+                        for (i = 0; i < m-j; i++) {
+                            vec[i] = A[Math.min(m-1, j)+i][j-1];
+                        }
+                        ge.dlassq(m-j, vec, 1, scale, sum);
+                    } // for (j = 1; j <= n; j++)
+                } // if ((diag == 'U') || (diag == 'u'))
+                else { // ((diag == 'N') || (diag == 'n'))
+                    scale[0] = 0.0;
+                    sum[0] = 1.0;
+                    for (j = 1; j <= n; j++) {
+                        vec = new double[m-j+1];
+                        for (i = 0; i < m-j+1; i++) {
+                            vec[i] = A[j-1+i][j-1];
+                        }
+                        ge.dlassq(m-j+1, vec, 1, scale, sum);
+                    } // for (j = 1; j <= n; j++0
+                } // else ((diag == 'N') || (diag == 'n'))
+            } // else ((uplo == 'L') || (uplo == 'l'))
+        value = scale[0]*Math.sqrt(sum[0]);
+        } // else if ((norm == 'F') || (norm == 'f') || (norm == 'E') || (norm == 'e'))
+
+        return value;
+    } // dlantr
+    
+    /*
+     * This is a port of LAPACK auxiliary routine DLAQGE.f version 3.4.2
+     * LAPACK is a software package provided by University of Tennessee, University of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., September, 2012
+     * 
+     * dlaqge scales a general rectangular matrix, using row and column scaling factors computed by dgeequ.
+     * 
+     * dlaqge equilibrates a general m by n matrix A using the row and
+       column scaling factors in the vectors r and c.
+
+       @param input int m
+           The number of rows of the matrix A.  m >= 0.
+       @param input int n
+           The number of columns of the matrix A.  n >= 0.
+       @param (input/output) double[][] of dimension (lda, n)
+           On entry, the m by n matrix A.
+           On exit, the equilibrated matrix.  See equed for the form of
+           the equilibrated matrix.
+       @param input int lda
+           The leading dimension of the array A.  lda >= max(m,1).
+       @param input double[] r of dimension (m)
+           The row scale factors for A.
+       @param input double[] c of dimension (n)
+           The column scale factors for A.
+       @param input double rowcnd
+           Ratio of the smallest r[i] to the largest r[i].
+       @param input double colcnd
+           Ratio of the smallest c[i] to the largest c[i].
+       @param input double amax
+           Absolute value of the largest matrix entry.
+       @param output char[] equed of dimension (1)
+           Specifies the form of equilibration that was done.
+           = 'N':  No equilibration
+           = 'R':  Row equilibration, i.e., A has been premultiplied by
+                   diag(r).
+           = 'C':  Column equilibration, i.e., A has been postmultiplied
+                   by diag(c).
+           = 'B':  Both row and column equilibration, i.e., A has been
+                   replaced by diag(r) * A * diag(c).
+     */
+    private void dlaqge(int m, int n, double[][] A, int lda, double[] r, double[] c,
+                        double rowcnd, double colcnd, double amax, char[] equed) {
+        // thresh is a threshold value used to decide if row or column scaling
+        // should be done based on the ratio of the row or column scaling
+        // factors.  If rowcnd < thresh, row scaling is done, and if
+        // colcnd < thresh, column scaling is done.
+        final double thresh = 0.1;
+        int i;
+        int j;
+        double cj;
+        // large and small are threshold values used to decide if row scaling
+        // should be done based on the absolute size of the largest matrix
+        // element.  If amax > large or amax < small, row scaling is done.
+        double large;
+        double small;
+        
+        // Quick return if possible
+                
+        if (m <= 0 || n <= 0) {
+            equed[0] = 'N';
+            return;
+        }
+    
+        // Initialize large and small.
+    
+        small = ge.dlamch('S') / ge.dlamch('P');
+        large = 1.0 / small;
+    
+        if (rowcnd >= thresh && amax >= small && amax <= large) {
+    
+            // No row scaling
+    
+            if (colcnd >= thresh) {
+    
+                // No column scaling
+    
+                equed[0] = 'N';
+            } // if (colcnd >= thresh)
+            else { // colcnd < thresh
+    
+                // Column scaling
+    
+                for (j = 0; j < n; j++) {
+                    cj = c[j];
+                    for (i = 0; i < m; i++) {
+                        A[i][j] = cj*A[i][j];
+                    } // for (i = 0; i < m; i++)
+                } // for (j = 0; j < n; j++)
+                equed[0] = 'C';
+            } // else colcnd < thresh
+        } // if (rowcnd >= thresh && amax >= small && amax <= large)
+        else if (colcnd >= thresh) {
+    
+            // Row scaling, no column scaling
+    
+            for (j = 0; j < n; j++) {
+                for (i = 0; i < m; i++) {
+                    A[i][j] = r[i]*A[i][j];
+                } // for (i = 0; i < m; i++)
+            } // for (j = 0; j < n; j++)
+            equed[0] = 'R';
+        } // else if (colcnd >= thresh)
+        else {
+    
+            // Row and column scaling
+    
+            for (j = 0; j < n; j++) {
+                cj = c[j];
+                for (i = 0; i < m; i++) {
+                    A[i][j] = cj*r[i]*A[i][j];
+                } // for (i = 0; i < m; i++)
+            } // for (j = 0; j < n; j++)
+            equed[0] = 'B';
+        } // else
+    
+        return;
+
+    } // dlaqge
     
     /*
      * This is a port of a portion of LAPACK auxiliary routine DLASWP.f version 3.4.2
