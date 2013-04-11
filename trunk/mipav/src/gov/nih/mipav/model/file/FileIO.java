@@ -12506,6 +12506,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 	    	
 	    	try {
 	    		imageFile = new FileTrackVis(fileName, fileDir);
+	    		createProgressBar(imageFile, fileName, FileIO.FILE_READ);
 	    		if(!imageFile.readHeader() && !quiet) {
 	    			MipavUtil.displayError("FileIO: unable to read image header");
 	    			
@@ -12518,9 +12519,15 @@ nList:      for (int i = 0; i < nListImages; i++) {
 	    			MipavUtil.displayError("Error reading trackvis file.");
 	    		}
 	    		e.printStackTrace();
+	    	
+	    		progressBar.setVisible(false);
+		    	progressBar = null;
 	    		
 	    		return null;
 	    	}
+	    	
+	    	progressBar.setVisible(false);
+	    	progressBar = null;
 	    	
 	    	return image;
 	    }
