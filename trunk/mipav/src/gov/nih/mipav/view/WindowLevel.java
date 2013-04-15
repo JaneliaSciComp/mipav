@@ -18,14 +18,14 @@ public class WindowLevel
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /**
-     * Member variables used to adjust the winow and level (contrast and
-     * bringtness) by dragging with the right-mouse button:.
+     * Member variables used to adjust the window and level (contrast and
+     * brightness) by dragging with the right-mouse button:.
      */
     private float[] m_afXWin = new float[4];
 
     /**
-     * Member variables used to adjust the winow and level (contrast and
-     * bringtness) by dragging with the right-mouse button:.
+     * Member variables used to adjust the window and level (contrast and
+     * brightness) by dragging with the right-mouse button:.
      */
     private float[] m_afYWin = new float[4];
 
@@ -88,7 +88,7 @@ public class WindowLevel
                                    ModelImage kImage )
     {
         /* If this is the first time the kLookupTable is updated for
-         * window-level contrl, setup the member variables to change the
+         * window-level control, setup the member variables to change the
          * HistoLUT. */
         if (bFirstUpdate)
         {
