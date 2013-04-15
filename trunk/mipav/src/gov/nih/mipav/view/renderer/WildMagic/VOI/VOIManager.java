@@ -572,8 +572,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 		}
 
-		m_akImages[0] = null;
-		m_akImages[1] = null;
+		if(m_akImages != null) {
+			m_akImages[0] = null;
+			m_akImages[1] = null;
+		}
 		m_akImages = null;
 
 		m_kImageActive = null;
