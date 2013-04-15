@@ -55,19 +55,17 @@ public class LinearEquations2 implements java.io.Serializable {
         // nbval is the values of nb (the blocksize)
         int nbval[] = new int[]{1, 3, 3, 3, 20};
         // nxval is the values of nx (crossover points)
-        int nxval[] = new int[]{1, 0, 5, 9 , 1};
+        // int nxval[] = new int[]{1, 0, 5, 9 , 1};
         // nrank is the number of values of rank
-        int nrank = 3;
+        // int nrank = 3;
         // rankval is the values of rank (as a % of n)
-        int rankval[] = new int[]{30, 50, 90};
+        // int rankval[] = new int[]{30, 50, 90};
         // thresh if the threshold value of the test ratio
         double thresh = 20.0;
         // tstchk is the flag to test the LAPACK routines
-        boolean tstchk = true;
+        boolean tstchk = false;
         // tstdrv is the flag to test the driver routines
-        boolean tstdrv = false;
-        String path = new String("DGE");
-        int nmats = 11;
+        boolean tstdrv = true;
         
         // Number of unique values of nb
         int nnb2;
@@ -75,9 +73,9 @@ public class LinearEquations2 implements java.io.Serializable {
         int nbval2[] = new int[nbval.length];
 
         int lda;
-        boolean fatal;
         int i;
         int j;
+        int nrhs;
         int nb;
         double eps;
         int ntypes = 11;
@@ -104,7 +102,6 @@ public class LinearEquations2 implements java.io.Serializable {
         int iwork[] = new int[nmax];
         
         lda = nmax;
-        fatal = false;
         
         // Set nbval2 to be the set of unique values of nb
         nnb2 = 0;
@@ -136,7 +133,11 @@ public class LinearEquations2 implements java.io.Serializable {
                    X, XACT, WORK, rwork, iwork);
         }
         if (tstdrv) {
-       
+            for (i = 0; i < nns; i++) {
+                nrhs = nsval[i];
+                ddrvge(dotype, nn, nval, nrhs, thresh, lda, A, AFAC, ASAV, B , BSAV, X, XACT, s,
+                       WORK, rwork, iwork);
+            }
         }
     } // dchkaa
     
@@ -190,8 +191,6 @@ public class LinearEquations2 implements java.io.Serializable {
         boolean prefac;
         boolean trfcon;
         boolean zerot;
-        boolean lerr;
-        boolean ok;
         char dist[] = new char[1];
         char equed[] = new char[1];
         char fact;
@@ -202,7 +201,6 @@ public class LinearEquations2 implements java.io.Serializable {
         char type[] = new char[1];
         char xtype;
         String path;
-        String srnamt;
         int i;
         int j;
         int iequed;
@@ -231,11 +229,10 @@ public class LinearEquations2 implements java.io.Serializable {
         int nt;
         int iseed[] = new int[4];
         int iseedy[] = new int[]{1988, 1989, 1990, 1991};
-        int infot;
-        int nunit;
         int itot;
         int irow;
         int icol;
+        int iwork2[];
         double ainvnm;
         double amax[] = new double[1];
         double anorm[] = new double[1];
@@ -243,20 +240,23 @@ public class LinearEquations2 implements java.io.Serializable {
         double anormo;
         double cndnum[] = new double[1];
         double colcnd[] = new double[1];
-        double rcond;
+        double rcond[] = new double[1];
         double rcondc;
         double rcondi = 0.0;
         double rcondo = 0.0;
         double roldc;
-        double roldi;
-        double roldo;
+        double roldi = 0.0;
+        double roldo = 0.0;
         double rowcnd[] = new double[1];
         double rpvgrw;
-        double results[] = new double[ntests];
+        double result[] = new double[ntests];
         double arr[][];
         double workspace[];
         double[] s2;
         double[] vec;
+        double res[] = new double[2];
+        double rwork2[] = new double[nrhs];
+        double rwork3[] = new double[nrhs];
         
         // Initialize constants and the random number seed.
         
@@ -267,8 +267,6 @@ public class LinearEquations2 implements java.io.Serializable {
         for (i = 0; i < 4; i++) {
             iseed[i] = iseedy[i];
         }
-          
-        infot = 0;
     
         // Set the block size and minimum block size for testing.
     
@@ -283,6 +281,7 @@ public class LinearEquations2 implements java.io.Serializable {
         for (in = 1; in <= nn; in++) {
             n = nval[in-1];
             s2 = new double[n];
+            iwork2 = new int[n];
             lda = Math.max(n, 1);
             xtype = 'N';
             nimat = ntypes;
@@ -312,7 +311,6 @@ public class LinearEquations2 implements java.io.Serializable {
                         cndnum, dist);
                 rcondc = 1.0/cndnum[0];
 
-                srnamt = new String("DLATMS");
                 workspace = new double[3*n];
                 ge.dlatms(n, n, dist[0], iseed, type[0], rwork, mode[0],
                           cndnum[0], anorm[0], kL[0], ku[0], 'N', A, lda,
@@ -454,14 +452,12 @@ public class LinearEquations2 implements java.io.Serializable {
     
                             // Factor the matrix A.
     
-                            srnamt = new String("DGETRF");
                             dgetrf(n, n, AFAC, lda, iwork, info);
     
                             // Form the inverse of A.
     
                             ge.dlacpy('F', n, n, AFAC, lda, A, lda);
                             lwork = nmax*Math.max(3, nrhs);
-                            srnamt = new String("DGETRI");
                             workspace = new double[lwork];
                             dgetri(n, A, lda, iwork, workspace, lwork, info);
     
@@ -486,7 +482,7 @@ public class LinearEquations2 implements java.io.Serializable {
                             }
                         } // else if (!nofact)
     
-                        /*for (itran = 1; itran <= ntran; itran++) {
+                        for (itran = 1; itran <= ntran; itran++) {
     
                             // Do for each value of trans.
     
@@ -504,7 +500,6 @@ public class LinearEquations2 implements java.io.Serializable {
     
                             // Form an exact solution and set the right hand side.
     
-                            srnmat = new String("DLARHS");
                             if (!(xtype == 'C')) {
                                 // Initialize XACT to nrhs random vectors
                                 vec = new double[n];
@@ -534,7 +529,6 @@ public class LinearEquations2 implements java.io.Serializable {
                                 ge.dlacpy('F', n, n, A, lda, AFAC, lda);
                                 ge.dlacpy('F', n, nrhs, B, lda, X, lda);
     
-                                srnamt = new String("DGESV");
                                 dgesv(n, nrhs, AFAC, lda, iwork, X, lda, info);
     
                                 // Check error code from dgesv .
@@ -559,222 +553,266 @@ public class LinearEquations2 implements java.io.Serializable {
                                         Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);    
                                     }                
                                 } // if (info[0] != izero)
-    *
-    *                       Reconstruct matrix from factors and compute
-    *                       residual.
-    *
-                            CALL DGET01( N, N, A, LDA, AFAC, LDA, IWORK,
-         $                               RWORK, RESULT( 1 ) )
-                            NT = 1
-                            IF( IZERO.EQ.0 ) THEN
-    *
-    *                          Compute residual of the computed solution.
-    *
-                               CALL DLACPY( 'Full', N, NRHS, B, LDA, WORK,
-         $                                  LDA )
-                               CALL DGET02( 'No transpose', N, N, NRHS, A,
-         $                                  LDA, X, LDA, WORK, LDA, RWORK,
-         $                                  RESULT( 2 ) )
-    *
-    *                          Check solution from generated exact solution.
-    *
-                               CALL DGET04( N, NRHS, X, LDA, XACT, LDA,
-         $                                  RCONDC, RESULT( 3 ) )
-                               NT = 3
-                            END IF
-    *
-    *                       Print information about the tests that did not
-    *                       pass the threshold.
-    *
-                            DO 30 K = 1, NT
-                               IF( RESULT( K ).GE.THRESH ) THEN
-                                  IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                           CALL ALADHD( NOUT, PATH )
-                                  WRITE( NOUT, FMT = 9999 )'DGESV ', N,
-         $                           IMAT, K, RESULT( K )
-                                  NFAIL = NFAIL + 1
-                               END IF
-       30                   CONTINUE
-                            NRUN = NRUN + NT
-                            } // if (nofact && itran == 1)
-    *
-    *                    --- Test DGESVX ---
-    *
-                         IF( .NOT.PREFAC )
-         $                  CALL DLASET( 'Full', N, N, ZERO, ZERO, AFAC,
-         $                               LDA )
-                         CALL DLASET( 'Full', N, NRHS, ZERO, ZERO, X, LDA )
-                         IF( IEQUED.GT.1 .AND. N.GT.0 ) THEN
-    *
-    *                       Equilibrate the matrix if FACT = 'F' and
-    *                       EQUED = 'R', 'C', or 'B'.
-    *
-                            CALL DLAQGE( N, N, A, LDA, S, S( N+1 ), ROWCND,
-         $                               COLCND, AMAX, EQUED )
-                         END IF
-    *
-    *                    Solve the system and compute the condition number
-    *                    and error bounds using DGESVX.
-    *
-                         SRNAMT = 'DGESVX'
-                         CALL DGESVX( FACT, TRANS, N, NRHS, A, LDA, AFAC,
-         $                            LDA, IWORK, EQUED, S, S( N+1 ), B,
-         $                            LDA, X, LDA, RCOND, RWORK,
-         $                            RWORK( NRHS+1 ), WORK, IWORK( N+1 ),
-         $                            INFO )
-    *
-    *                    Check the error code from DGESVX.
-    *
-                         IF( INFO.NE.IZERO )
-         $                  CALL ALAERH( PATH, 'DGESVX', INFO, IZERO,
-         $                               FACT // TRANS, N, N, -1, -1, NRHS,
-         $                               IMAT, NFAIL, NERRS, NOUT )
-    *
-    *                    Compare WORK(1) from DGESVX with the computed
-    *                    reciprocal pivot growth factor RPVGRW
-    *
-                         IF( INFO.NE.0 .AND. INFO.LE.N) THEN
-                            RPVGRW = DLANTR( 'M', 'U', 'N', INFO, INFO,
-         $                           AFAC, LDA, WORK )
-                            IF( RPVGRW.EQ.ZERO ) THEN
-                               RPVGRW = ONE
-                            ELSE
-                               RPVGRW = DLANGE( 'M', N, INFO, A, LDA,
-         $                              WORK ) / RPVGRW
-                            END IF
-                         ELSE
-                            RPVGRW = DLANTR( 'M', 'U', 'N', N, N, AFAC, LDA,
-         $                           WORK )
-                            IF( RPVGRW.EQ.ZERO ) THEN
-                               RPVGRW = ONE
-                            ELSE
-                               RPVGRW = DLANGE( 'M', N, N, A, LDA, WORK ) /
-         $                              RPVGRW
-                            END IF
-                         END IF
-                         RESULT( 7 ) = ABS( RPVGRW-WORK( 1 ) ) /
-         $                             MAX( WORK( 1 ), RPVGRW ) /
-         $                             DLAMCH( 'E' )
-    *
-                         IF( .NOT.PREFAC ) THEN
-    *
-    *                       Reconstruct matrix from factors and compute
-    *                       residual.
-    *
-                            CALL DGET01( N, N, A, LDA, AFAC, LDA, IWORK,
-         $                               RWORK( 2*NRHS+1 ), RESULT( 1 ) )
-                            K1 = 1
-                         ELSE
-                            K1 = 2
-                         END IF
-    *
-                         IF( INFO.EQ.0 ) THEN
-                            TRFCON = .FALSE.
-    *
-    *                       Compute residual of the computed solution.
-    *
-                            CALL DLACPY( 'Full', N, NRHS, BSAV, LDA, WORK,
-         $                               LDA )
-                            CALL DGET02( TRANS, N, N, NRHS, ASAV, LDA, X,
-         $                               LDA, WORK, LDA, RWORK( 2*NRHS+1 ),
-         $                               RESULT( 2 ) )
-    *
-    *                       Check solution from generated exact solution.
-    *
-                            IF( NOFACT .OR. ( PREFAC .AND. LSAME( EQUED,
-         $                      'N' ) ) ) THEN
-                               CALL DGET04( N, NRHS, X, LDA, XACT, LDA,
-         $                                  RCONDC, RESULT( 3 ) )
-                            ELSE
-                               IF( ITRAN.EQ.1 ) THEN
-                                  ROLDC = ROLDO
-                               ELSE
-                                  ROLDC = ROLDI
-                               END IF
-                               CALL DGET04( N, NRHS, X, LDA, XACT, LDA,
-         $                                  ROLDC, RESULT( 3 ) )
-                            END IF
-    *
-    *                       Check the error bounds from iterative
-    *                       refinement.
-    *
-                            CALL DGET07( TRANS, N, NRHS, ASAV, LDA, B, LDA,
-         $                               X, LDA, XACT, LDA, RWORK, .TRUE.,
-         $                               RWORK( NRHS+1 ), RESULT( 4 ) )
-                         ELSE
-                            TRFCON = .TRUE.
-                         END IF
-    *
-    *                    Compare RCOND from DGESVX with the computed value
-    *                    in RCONDC.
-    *
-                         RESULT( 6 ) = DGET06( RCOND, RCONDC )
-    *
-    *                    Print information about the tests that did not pass
-    *                    the threshold.
-    *
-                         IF( .NOT.TRFCON ) THEN
-                            DO 40 K = K1, NTESTS
-                               IF( RESULT( K ).GE.THRESH ) THEN
-                                  IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                           CALL ALADHD( NOUT, PATH )
-                                  IF( PREFAC ) THEN
-                                     WRITE( NOUT, FMT = 9997 )'DGESVX',
-         $                              FACT, TRANS, N, EQUED, IMAT, K,
-         $                              RESULT( K )
-                                  ELSE
-                                     WRITE( NOUT, FMT = 9998 )'DGESVX',
-         $                              FACT, TRANS, N, IMAT, K, RESULT( K )
-                                  END IF
-                                  NFAIL = NFAIL + 1
-                               END IF
-       40                   CONTINUE
-                            NRUN = NRUN + 7 - K1
-                         ELSE
-                            IF( RESULT( 1 ).GE.THRESH .AND. .NOT.PREFAC )
-         $                       THEN
-                               IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                        CALL ALADHD( NOUT, PATH )
-                               IF( PREFAC ) THEN
-                                  WRITE( NOUT, FMT = 9997 )'DGESVX', FACT,
-         $                           TRANS, N, EQUED, IMAT, 1, RESULT( 1 )
-                               ELSE
-                                  WRITE( NOUT, FMT = 9998 )'DGESVX', FACT,
-         $                           TRANS, N, IMAT, 1, RESULT( 1 )
-                               END IF
-                               NFAIL = NFAIL + 1
-                               NRUN = NRUN + 1
-                            END IF
-                            IF( RESULT( 6 ).GE.THRESH ) THEN
-                               IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                        CALL ALADHD( NOUT, PATH )
-                               IF( PREFAC ) THEN
-                                  WRITE( NOUT, FMT = 9997 )'DGESVX', FACT,
-         $                           TRANS, N, EQUED, IMAT, 6, RESULT( 6 )
-                               ELSE
-                                  WRITE( NOUT, FMT = 9998 )'DGESVX', FACT,
-         $                           TRANS, N, IMAT, 6, RESULT( 6 )
-                               END IF
-                               NFAIL = NFAIL + 1
-                               NRUN = NRUN + 1
-                            END IF
-                            IF( RESULT( 7 ).GE.THRESH ) THEN
-                               IF( NFAIL.EQ.0 .AND. NERRS.EQ.0 )
-         $                        CALL ALADHD( NOUT, PATH )
-                               IF( PREFAC ) THEN
-                                  WRITE( NOUT, FMT = 9997 )'DGESVX', FACT,
-         $                           TRANS, N, EQUED, IMAT, 7, RESULT( 7 )
-                               ELSE
-                                  WRITE( NOUT, FMT = 9998 )'DGESVX', FACT,
-         $                           TRANS, N, IMAT, 7, RESULT( 7 )
-                               END IF
-                               NFAIL = NFAIL + 1
-                               NRUN = NRUN + 1
-                            END IF
-    *
-                         END IF
     
-                        } // for (itran = 1; itran <= ntran; itran++)*/
+                                // Reconstruct matrix from factors and compute residual.
+    
+                                dget01(n, n, A, lda, AFAC, lda, iwork, rwork, result);
+                                nt = 1;
+                                if (izero == 0) {
+    
+                                    // Compute residual of the computed solution.
+     
+                                    ge.dlacpy('F', n, nrhs, B, lda, WORK, lda);
+                                    ge.dget02('N', n, n, nrhs, A, lda, X, lda, 
+                                              WORK, lda, rwork, res);
+                                    result[1] = res[0];
+    
+                                    // Check solution from generated exact solution.
+    
+                                    le.dget04(n, nrhs, X, lda, XACT, lda,
+                                              rcondc, res);
+                                    result[2] = res[0];
+                                    nt = 3;
+                                } // if (izero == 0)
+    
+                                // Print information about the tests that did not
+                                // pass the threshold.
+     
+                                for (k = 0; k < nt; k++) {
+                                    if (result[k] >= thresh) {
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printsvHeader();
+                                        }
+                                        Preferences.debug("dgesv n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(" + (k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        nfail++;
+                                    } // if (result[k] >= thresh)
+                                } // for (k = 0; k < nt; k++)
+                                nrun = nrun + nt;
+                            } // if (nofact && itran == 1)
+    
+                            // --- Test DGESVX ---
+    
+                            if (!prefac) {
+                                ge.dlaset('F', n, n, 0.0, 0.0, AFAC, lda);
+                            } // if (!prefac)
+                            ge.dlaset('F', n, nrhs, 0.0, 0.0, X, lda);
+                            if (iequed > 1 && n > 0) {
+    
+                                // Equilibrate the matrix if fact = 'F' and
+                                // equed[0] = 'R', 'C', or 'B'.
+    
+                                dlaqge(n, n, A, lda, s, s2, rowcnd[0],
+                                       colcnd[0], amax[0], equed);
+                            } // if (iequed > 1 && n > 0)
+    
+                            // Solve the system and compute the condition number
+                            // and error bounds using dgesvx.
+    
+                            workspace = new double[Math.max(4*n,1)];
+                            dgesvx(fact, trans, n, nrhs, A, lda, AFAC,
+                                   lda, iwork, equed, s, s2, B,
+                                   lda, X, lda, rcond, rwork,
+                                   rwork2, workspace, iwork2, info);
+    
+                            // Check the error code from dgesvx.
+    
+                            if (info[0] != izero) {
+                                // Print the header if this is the first error message.
+                                if (nfail == 0 && nerrs == 0) {
+                                    printsvHeader();
+                                } // if (nfail == 0 && nerrs == 0)
+                                nerrs++;
+                                if (izero != 0) {
+                                    Preferences.debug("dgesvx returned with info[0] = " + info[0] + 
+                                            " instead of " + izero + '\n', Preferences.DEBUG_ALGORITHM);
+                                }
+                                else {
+                                    Preferences.debug("dgesvx returned with info[0] = " + info[0] + '\n', 
+                                            Preferences.DEBUG_ALGORITHM);  
+                                }
+                                Preferences.debug("fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nrhs = " + nrhs + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                            } // if (info[0] != izero)
+    
+                            // Compare work[0] from dgesvx with the computed
+                            // reciprocal pivot growth factor rpvgrw
+    
+                            if (info[0] != 0 && info[0] <= n) {
+                                rpvgrw = dlantr('M', 'U', 'N', info[0], info[0],
+                                                AFAC, lda, workspace);
+                                if (rpvgrw == 0.0) {
+                                    rpvgrw = 1.0;
+                                }
+                                else {
+                                    rpvgrw = ge.dlange('M', n, info[0], A, lda, workspace) / rpvgrw;
+                                } // else
+                            } // if (info[0] != 0 && info[0] <= n)
+                            else {
+                                rpvgrw = dlantr('M', 'U', 'N', n, n, AFAC, lda, workspace);
+                                if (rpvgrw == 0.0) {
+                                    rpvgrw = 1.0;
+                                }
+                                else {
+                                   rpvgrw = ge.dlange('M', n, n, A, lda, workspace) / rpvgrw;
+                                } // else
+                            } // else
+                            result[6] = Math.abs(rpvgrw-workspace[0] ) / Math.max(workspace[0], rpvgrw) /
+                                        ge.dlamch('E');
+    
+                            if (!prefac) {
+    
+                                // Reconstruct matrix from factors and compute residual.
+    
+                                dget01(n, n, A, lda, AFAC, lda, iwork,
+                                       rwork3, result);
+                                k1 = 1;
+                            } // if (!prefac)
+                            else {
+                                k1 = 2;
+                            }
+    
+                            if (info[0] == 0) {
+                                trfcon = false;
+    
+                                // Compute residual of the computed solution.
+     
+                                ge.dlacpy('F', n, nrhs, BSAV, lda, WORK, lda);
+                                ge.dget02(trans, n, n, nrhs, ASAV, lda, X,
+                                          lda, WORK, lda, rwork3, res);
+                                result[1] = res[0];
+     
+                                // Check solution from generated exact solution.
+     
+                                if (nofact || (prefac && (equed[0] == 'N'))) {
+                                    le.dget04(n, nrhs, X, lda, XACT, lda, rcondc, res);
+                                    result[2] = res[0];
+                                }
+                                else {
+                                    if (itran == 1) {
+                                        roldc = roldo;
+                                    }
+                                    else {
+                                        roldc = roldi;
+                                    }
+                                    le.dget04(n, nrhs, X, lda, XACT, lda, roldc, res);
+                                    result[2] = res[0];
+                                } // else 
+    
+                                // Check the error bounds from iterative refinement.
+    
+                                dget07(trans, n, nrhs, ASAV, lda, B, lda,
+                                       X, lda, XACT, lda, rwork, true,
+                                       rwork2, res);
+                                result[3] = res[0];
+                                result[4] = res[1];
+                            } // if (info[0] == 0)
+                            else {
+                                trfcon = true;
+                            }
+    
+                            // Compare rcond[0] from dgesvx with the computed value in rcondc.
+     
+                            result[5] = le.dget06(rcond[0], rcondc);
+    
+                            // Print information about the tests that did not pass
+                            // the threshold.
+    
+                            if (!trfcon) {
+                                for (k = k1-1; k < ntests; k++) {
+                                    if (result[k] >= thresh) {
+                                        // Print the header if this is the first error message.
+                                        if (nfail == 0 && nerrs == 0) {
+                                            printsvHeader();
+                                        } // if (nfail == 0 && nerrs == 0)
+                                        if (prefac) {
+                                            Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        } // if (prefac)
+                                        else { // !prefac
+                                            Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                            Preferences.debug("test("+(k+1) + ") = " + result[k] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        } // else !prefac
+                                        nfail++;
+                                    } // if (result[k] >= thresh)
+                                } // for (k = k1-1; k < ntests; k++)
+                                nrun = nrun + 7 - k1;
+                            } // if (!trfcon)
+                            else { // trfcon
+                                if (result[0] >= thresh && !prefac) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("test(1) = " + result[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[0] >= thresh && !prefac)
+                                if (result[5] >= thresh) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    if (prefac) {
+                                        Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(6) = " + result[5] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (prefac)
+                                    else { // !prefac
+                                        Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(6) = " + result[5] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // else !prefac
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[5] >= thresh)
+                                if (result[6] >= thresh) {
+                                    // Print the header if this is the first error message.
+                                    if (nfail == 0 && nerrs == 0) {
+                                        printsvHeader();
+                                    } // if (nfail == 0 && nerrs == 0)
+                                    if (prefac) {
+                                        Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("equed[0] = " + equed[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(7) = " + result[6] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // if (prefac)
+                                    else { // !prefac
+                                        Preferences.debug("dgesvx fact = " + fact + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("trans = " + trans + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("imat = " + imat + "\n", Preferences.DEBUG_ALGORITHM);
+                                        Preferences.debug("test(7) = " + result[6] + "\n", Preferences.DEBUG_ALGORITHM);
+                                    } // else !prefac
+                                    nfail++;
+                                    nrun++;
+                                } // if (result[6] >= thresh)
+                            
+                            } // else trfcon
+    
+                        } // for (itran = 1; itran <= ntran; itran++)
                     } // for (ifact = 1; ifact <= nfact; ifact++)
                 } // for (iequed = 1; iequed <= 4; iequed++)
             } // for (imat = 1; imat <= nimat; imat++)
@@ -2260,6 +2298,11 @@ public class LinearEquations2 implements java.io.Serializable {
      * 
      * dgesvx computes the solution to system of linear equations A * X = B for GE matrices
      * 
+     * dchkaa yields:
+     * All 4866 tests for ddrvge passed
+       All 4866 tests for ddrvge passed
+       All 4866 tests for ddrvge passed
+     * 
      * dgesvx uses the LU factorization to compute the solution to a real
        system of linear equations
           A * X = B,
@@ -2427,7 +2470,7 @@ public class LinearEquations2 implements java.io.Serializable {
            The componentwise relative backward error of each solution
            vector X(j) (i.e., the smallest relative change in
            any element of A or B that makes X(j) an exact solution).
-       @param output double[] work of dimension (4*n)
+       @param output double[] work of dimension max((4*n),1)
            On exit, work[0] contains the reciprocal pivot growth
            factor norm(A)/norm(U). The "max absolute element" norm is
            used. If work[0] is much less than 1, then the stability
