@@ -147,6 +147,12 @@ public class LinearEquations2 implements java.io.Serializable {
      * University of Colorado Denver, and NAG Ltd., November, 2011
      * 
      * ddrvge tests the driver routines dgesv and dgesvx
+     *
+     * With nrhs = 1, 2, 15 received:
+     * All 4866 tests for ddrvge passed
+       All 4866 tests for ddrvge passed
+       All 4866 tests for ddrvge passed
+
      * 
      * @param input boolean dotype of dimension (ntypes)
      *     The matrix types to be used for testing.  Matrices of type j
