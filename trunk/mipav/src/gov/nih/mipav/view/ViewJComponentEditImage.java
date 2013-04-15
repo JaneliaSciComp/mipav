@@ -5595,7 +5595,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                     // Dragging the mouse with the right mouse button pressed
                     // increases the window when going from left to right.
                     // Dragging the mouse with the right mouse button pressed
-                    // increases the level when going from down to up.
+                    // increases the level when going from up to down.
                     m_kWinLevel.setAlpha(alphaBlend);
 
                     final float fX = xS / (float) xDim;
