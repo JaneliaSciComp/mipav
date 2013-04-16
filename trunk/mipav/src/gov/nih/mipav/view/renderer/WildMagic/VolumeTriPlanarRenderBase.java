@@ -2,7 +2,9 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import static java.lang.System.nanoTime;
 import static java.lang.System.out;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeCrop;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeNormals;
+import gov.nih.mipav.model.file.FileTypeTable;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
@@ -16,6 +18,7 @@ import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
@@ -23,6 +26,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClip;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeClipEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
@@ -1766,13 +1770,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  /**
 	   * Copies the volume data from the texture representation into the ModelImage and writes it to disk.
 	   */
-	  public void saveImageFromTexture()
+	  public void saveCroppedImage()
 	  {
-		  ModelImage kImage = VolumeImage.CreateImageFromTexture(m_kVolumeImageA.GetVolumeTarget().GetImage(), true);
-		  kImage.setImageName(JDialogBase.makeImageName(m_kVolumeImageA.GetImage().getImageName(), "_Crop"));
-		  kImage.copyFileTypeInfo(m_kVolumeImageA.GetImage());
-		  kImage.calcMinMax();
-		  kImage.saveImage(m_kVolumeImageA.GetImage().getImageDirectory(), kImage.getImageName(), kImage.getFileInfo(0).getFileFormat(), true);
+		  ModelImage kImage = m_kVolumeImageA.GetImage();
+		  VolumeClipEffect clipE = m_kVolumeRayCast.GetClipEffect();
+		  Vector3f clip = clipE.getClip();
+		  Vector3f clipI = clipE.getClipInv();
+		  boolean doClip = clipE.isClip();
+		  OpenCLAlgorithmVolumeCrop oclCrop = new OpenCLAlgorithmVolumeCrop( kImage );
+		  oclCrop.setClip( clip, clipI, doClip );
+		  Matrix3f rot = GetSceneRotation();
+		  Matrix4f rot4 = new Matrix4f( rot.M00, rot.M01, rot.M02, 0,
+				  rot.M10, rot.M11, rot.M12, 0,
+				  rot.M20, rot.M21, rot.M22, 0,
+				  0, 0, 0, 1
+				  );
+		  float[] rotMatrix = new float[16];
+		  rot4.getData(rotMatrix);
+		  oclCrop.setClipEyeArb( clipE.getClipEye(), clipE.getClipEyeInv(), clipE.getClipArb(), rotMatrix );
+		  oclCrop.run();
+		  ModelImage result = oclCrop.getDestImage();
+		  result.calcMinMax();
+		  //new ViewJFrameImage(result);
+		  
+		  result.setImageName( m_kVolumeImageA.GetImage().getImageName() + "_Crop" );
+		  JDialogBase.updateFileInfo( m_kVolumeImageA.GetImage(), result );
+		  result.calcMinMax();
+		  int fileType = m_kVolumeImageA.GetImage().getFileInfo(0).getFileFormat();
+		  String suffix = FileTypeTable.getFileTypeInfo(fileType).getDefaultExtension();
+		  ModelImage.saveImage( result, result.getImageName() + suffix, result.getImageDirectory() );
+		  
+		  //System.err.println( result.getImageName() + suffix + "   " + result.getImageDirectory() );
+
 	  }
 
 	  /**

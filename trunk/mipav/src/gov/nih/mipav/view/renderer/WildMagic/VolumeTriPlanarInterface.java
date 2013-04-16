@@ -501,7 +501,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             clipMaskUndoButton.setEnabled(false);
             clipSaveButton.setEnabled(false);
         } else if (command.equals("SaveCropVolume")) {
-            raycastRenderWM.saveImageFromTexture();
+            raycastRenderWM.saveCroppedImage();
         } else if (command.equals("Slices")) {
             insertTab("Slices", sliceGUI.getMainPanel());
             raycastRenderWM.displayVolumeRaycast(false);

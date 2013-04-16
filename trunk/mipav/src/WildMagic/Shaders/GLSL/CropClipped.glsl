@@ -10,7 +10,7 @@ uniform float clipZInv;
 uniform vec4 clipArb;
 uniform vec4 clipEye;
 uniform vec4 clipEyeInv;
-uniform mat4 WVPMatrix;
+uniform mat4 volumeMatrix;
 
 in vec3 varTexCoord;
 out vec4 fragColor;
@@ -58,10 +58,10 @@ void main()
             // eye clipping and arbitrary clipping:
             vec4 aPosition = vec4(0.0);
             aPosition.xyz = position.xyz - (0.5,0.5,0.5);
-            aPosition = WVPMatrix*aPosition;
+            aPosition = volumeMatrix*aPosition;
             aPosition.xyz = aPosition.xyz + (0.5,0.5,0.5);
-            float fDot = dot( aPosition.xyz, clipEye.xyz );
-            float fDotInv = dot( aPosition.xyz, clipEyeInv.xyz );
+            float fDot = aPosition.z;
+            float fDotInv = aPosition.z;
             float fDotArb = dot( position.xyz, clipArb.xyz );
             if ( (fDot < clipEye.w) || (fDotInv > clipEyeInv.w) || (fDotArb > clipArb.w) )
             {

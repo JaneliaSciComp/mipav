@@ -280,7 +280,7 @@ implements StreamInterface
     				}
     				if ( rgbB.getBOn() )
     				{
-    					text += "BBlend * kOutputColor.b + (1.0 - ABBlend) * texture(kColorMapB, color.b, 0.0).b;" + "\n";
+    					text += "ABBlend * kOutputColor.b + (1.0 - ABBlend) * texture(kColorMapB, color.b, 0.0).b;" + "\n";
     				}
     				else
     				{
