@@ -394,6 +394,9 @@ public class Preferences {
     /** Constant that indicates if right mouse click inside image should cause window/level changes*/
     public static final String PREF_SHOW_WINLEV_ON_RIGHT_CLICK = "winLevOnRightClick";
     
+    /** Constant that indicates if window/level changes should be relative to the current transfer function values*/
+    public static final String PREF_RELATIVE_WINDOW_LEVEL = "relativeWindowLevel";
+    
     /** Constant that indicates if images are to be open im tiled format*/
     public static final String PREF_OPEN_IMAGES_IN_TILED_FORMAT = "openImagesInTiledFormat";
     
@@ -798,6 +801,7 @@ public class Preferences {
         
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, "true");
+        Preferences.defaultProps.setProperty(Preferences.PREF_RELATIVE_WINDOW_LEVEL, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SAVE_DEFAULTS, "true");
 
         // performance information properties
