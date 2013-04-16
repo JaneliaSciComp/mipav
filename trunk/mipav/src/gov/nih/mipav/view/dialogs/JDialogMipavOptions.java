@@ -236,6 +236,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** Check boxes for whether right and left mouse clicks produce default actions. */
 	private JCheckBox doIntensityOnLeftBox, doWinLevOnRightBox;
 	
+	private ButtonGroup WindowLevelGroup;
+	
+	private JRadioButton relativeWindowLevelButton;
+	
+	private JRadioButton absoluteWindowLevelButton;
+	
 	/** opens images in tiled format **/
 	private JCheckBox openImagesInTiledFormatBox;
 
@@ -313,6 +319,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayUserInterfacePanel.setBorder(buildTitledBorder("User interface"));
         makeSplashOptions(gbc, gbl);
         makeMouseClickOptions(gbc, gbl);
+        makeWindowLevelOptions(gbc, gbl);
         makeLFOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
         
@@ -506,6 +513,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .valueOf(multiThreadingEnabledCheckBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, String.valueOf(doIntensityOnLeftBox.isSelected()));
             Preferences.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, String.valueOf(doWinLevOnRightBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_RELATIVE_WINDOW_LEVEL, String.valueOf(relativeWindowLevelButton.isSelected()));
             Preferences.setProperty(Preferences.PREF_GPU_COMP_ENABLED, String.valueOf(gpuCompEnabledCheckBox
                     .isSelected()));
             Preferences.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, String.valueOf(dicomReceiverOnStart
@@ -1609,6 +1617,33 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         
         
         
+    }
+    
+    protected void makeWindowLevelOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
+        WindowLevelGroup = new ButtonGroup();
+        relativeWindowLevelButton = new JRadioButton("Window/level adjusted relative to current transfer function values", 
+                Preferences.is(Preferences.PREF_RELATIVE_WINDOW_LEVEL));
+        relativeWindowLevelButton.setFont(MipavUtil.font12);
+        relativeWindowLevelButton.setForeground(Color.black);
+        relativeWindowLevelButton.addActionListener(this);
+        relativeWindowLevelButton.setToolTipText("If selected, window/level will be adjusted relative to the current transfer function.");
+        WindowLevelGroup.add(relativeWindowLevelButton);
+        
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(relativeWindowLevelButton, gbc);
+        displayUserInterfacePanel.add(relativeWindowLevelButton);
+        
+        absoluteWindowLevelButton = new JRadioButton("Window/level adusted to absolute image position values", 
+                !Preferences.is(Preferences.PREF_RELATIVE_WINDOW_LEVEL));
+        absoluteWindowLevelButton.setFont(MipavUtil.font12);
+        absoluteWindowLevelButton.setForeground(Color.black);
+        absoluteWindowLevelButton.addActionListener(this);
+        absoluteWindowLevelButton.setToolTipText("If selected, window/level will be adjusted to absolute image position.");
+        WindowLevelGroup.add(absoluteWindowLevelButton);
+        gbl.setConstraints(absoluteWindowLevelButton, gbc);
+        displayUserInterfacePanel.add(absoluteWindowLevelButton);
     }
 
     /**
