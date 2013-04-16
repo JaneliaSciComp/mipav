@@ -42,6 +42,15 @@ public class WindowLevel
 
     /** Default alpha blending value: */
     private float m_fAlpha = 0.5f;
+    
+    /** If true, window/level adjusted relative to the current transfer function values
+     *  If false, window/level adjusted to the absolute image position values
+     */
+    private boolean doRelative = true;
+    
+    private float old_fWindow;
+    
+    private float old_fLevel;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -92,14 +101,30 @@ public class WindowLevel
          * HistoLUT. */
         if (bFirstUpdate)
         {
-            if ( kImage.isColorImage() )
-            {
-                initWinLevelRGB( (ModelRGB)kLookupTable, kImage );
+            if (Preferences.getProperty(Preferences.PREF_RELATIVE_WINDOW_LEVEL) != null) {
+                doRelative = Preferences.is(Preferences.PREF_RELATIVE_WINDOW_LEVEL);
             }
-            else
-            {
-                initWinLevelGray( (ModelLUT)kLookupTable, kImage );
-            }
+            
+            if (doRelative) {
+                if ( kImage.isColorImage() )
+                {
+                    winLevelRGB( (ModelRGB)kLookupTable, kImage );
+                }
+                else
+                {
+                    winLevelGray( (ModelLUT)kLookupTable, kImage );
+                }    
+            } // if (doRelative)
+            else { // absolute
+                if ( kImage.isColorImage() )
+                {
+                    initWinLevelRGB( (ModelRGB)kLookupTable, kImage );
+                }
+                else
+                {
+                    initWinLevelGray( (ModelLUT)kLookupTable, kImage );
+                }
+            } // else absolute
             
             /* Keep track if the mouse position changed: */
             m_fOldX = fX;
@@ -114,18 +139,30 @@ public class WindowLevel
              * ModelImage: */
             float fMinImageWin = m_fMin;
             float fMaxImageWin = m_fMax;
+            float fWindow;
+            float fLevel;
 
+            if (doRelative) {
+                fWindow = old_fWindow + 2.0f * (fX - m_fOldX) * (fMaxImageWin - fMinImageWin);    
+            }
+            else {
             /* The new window value is based on the fX parameter: */
-            float fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin);
+                fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin);
+            }
 
             if (fWindow > (2.0f * (fMaxImageWin - fMinImageWin))) {
                 fWindow = 2.0f * (fMaxImageWin - fMinImageWin);
             } else if (fWindow < 0) {
                 fWindow = 0;
             }
-
-            /* The new level value is based on the fY parameter: */
-            float fLevel = fY * (fMaxImageWin - fMinImageWin);
+            
+            if (doRelative) {
+                fLevel = old_fLevel + (fY - m_fOldY) * (fMaxImageWin - fMinImageWin);
+            }
+            else {
+                /* The new level value is based on the fY parameter: */
+                fLevel = fY * (fMaxImageWin - fMinImageWin);
+            }
 
             if ( fLevel > fMaxImageWin) {
                 fLevel = fMaxImageWin;
@@ -174,6 +211,8 @@ public class WindowLevel
             /* Store old change in fX,fY positions: */
             m_fOldX = fX;
             m_fOldY = fY;
+            old_fWindow = fWindow;
+            old_fLevel = fLevel;
             
             return true;
         }
@@ -222,6 +261,48 @@ public class WindowLevel
 
         updateWinLevelRGB( kRGBT, kImage, m_afXWin, m_afYWin );
     }
+    
+    /**
+     * winLevelRGB finds old_fWindow and old_fLevel.
+     * @param kRGBT the ModelRGB 
+     * @param kImage the ModelImage
+     */
+    private void winLevelRGB( ModelRGB kRGBT,
+            ModelImage kImage )
+    {
+        m_fMin = (float)Math.min( kImage.getMinR(), kImage.getMinG() );
+        m_fMin = (float)Math.min( m_fMin, kImage.getMinB() );
+        m_fMax = (float)Math.max( kImage.getMaxR(), kImage.getMaxG() );
+        m_fMax = (float)Math.max( m_fMax, kImage.getMaxB() );
+        
+        if (kRGBT != null) {
+            if ( kRGBT.getROn() )
+            {
+                kRGBT.getRedFunction().exportArrays( m_afXWin, m_afYWin);
+            }
+            if ( kRGBT.getGOn() )
+            {
+                kRGBT.getGreenFunction().exportArrays(m_afXWin, m_afYWin);
+            }
+            if ( kRGBT.getBOn() )
+            {
+                kRGBT.getBlueFunction().exportArrays(m_afXWin, m_afYWin);
+            }
+            
+            old_fWindow = m_afXWin[2] - m_afXWin[1];
+            if (old_fWindow > (2.0f * (m_fMax - m_fMin))) {
+                old_fWindow = 2.0f * (m_fMax - m_fMin);
+            } else if (old_fWindow < 0) {
+                old_fWindow = 0;
+            }
+            old_fLevel = (m_afXWin[1] + m_afXWin[2])/2.0f;
+            if ( old_fLevel > m_fMax) {
+                old_fLevel = m_fMax;
+            } else if ( old_fLevel < m_fMin) {
+                old_fLevel = m_fMin;
+            }
+        } // if (kRGBT != null)
+    }
 
     /** 
      * initWinLevelGray, initializes the ModelLUT for gray-scale images before
@@ -257,6 +338,46 @@ public class WindowLevel
             
             updateWinLevelGray( kLUT, kImage, m_afXWin, m_afYWin);
         }
+    }
+    
+    /** 
+     * winLevelGray finds old_fWindow and old_fLevel
+     * @param kLUT the ModelLUT
+     * @param kImage the ModelImage attached to kLUT
+     */
+    private void winLevelGray( ModelLUT kLUT,
+            ModelImage kImage )
+    {
+        m_fMin = (float) kImage.getMin();
+        m_fMax = (float) kImage.getMax();
+        
+        if ( kImage.getType() == ModelStorageBase.UBYTE ) {
+            m_fMin = 0;
+            m_fMax = 255;
+        } else if ( kImage.getType() == ModelStorageBase.BYTE ) {
+           m_fMin = -128;
+           m_fMax = 127;
+        }
+        
+        if (kLUT != null) {
+           
+            kLUT.getTransferFunction().exportArrays(m_afXWin, m_afYWin);
+        
+            old_fWindow = m_afXWin[2] - m_afXWin[1];
+            if (old_fWindow > (2.0f * (m_fMax - m_fMin))) {
+                old_fWindow = 2.0f * (m_fMax - m_fMin);
+            } else if (old_fWindow < 0) {
+                old_fWindow = 0;
+            }
+            old_fLevel = (m_afXWin[1] + m_afXWin[2])/2.0f;
+            if ( old_fLevel > m_fMax) {
+                old_fLevel = m_fMax;
+            } else if ( old_fLevel < m_fMin) {
+                old_fLevel = m_fMin;
+            } 
+         
+        }
+        
     }
 
     /**
