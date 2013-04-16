@@ -22,6 +22,8 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 
@@ -103,10 +105,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		 {
 			 m_bCrop = false;
 			 m_kParent.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-			 VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect());
+			 Matrix3f rot = GetSceneRotation();
+			 Matrix4f rot4 = new Matrix4f( rot.M00, rot.M01, rot.M02, 0,
+					 rot.M10, rot.M11, rot.M12, 0,
+					 rot.M20, rot.M21, rot.M22, 0,
+					 0, 0, 0, 1
+					 );
+			 float[] rotMatrix = new float[16];
+			 rot4.getData(rotMatrix);
+			 VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
 			 if ( m_kVolumeImageB.GetImage() != null )
 			 {
-				 VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect());
+				 VolumeImageCrop.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageB, m_kVolumeRayCast.GetClipEffect(), rotMatrix);
 			 }
 			 m_kParent.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 		 }

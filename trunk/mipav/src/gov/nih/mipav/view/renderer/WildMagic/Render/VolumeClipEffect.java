@@ -1,6 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Shaders.Program;
 
@@ -39,12 +42,13 @@ public abstract class VolumeClipEffect extends ShaderEffect
                                                           { 1, 1, 0, 0 },
                                                           { 0, 0, 0, 0 },
                                                           { 1, 1, 0, 0 },
-                                                          { 0, 0, 0, 0 },
-                                                          { 0, 0, 0, 0 },
+                                                          { 0, 0, 1, 0 },
+                                                          { 0, 0, 1, 1 },
                                                           { 0, 0, 0, 0 }
                                                           };
 
 
+    protected float[] m_afVolumeMatrix = { 1f, 0f, 0f, 0f,  0f, 1f, 0f, 0f,  0f, 0f, 1f, 0f,  0f, 0f, 0f, 1f };
 
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
@@ -85,6 +89,10 @@ public abstract class VolumeClipEffect extends ShaderEffect
         if ( pkCProgram.GetUC("clipEyeInv") != null ) 
         {
             pkCProgram.GetUC("clipEyeInv").SetDataSource(m_aafClipData[CLIP_EYE_INV]);
+        }
+        if ( pkCProgram.GetUC("volumeMatrix") != null ) 
+        {
+            pkCProgram.GetUC("volumeMatrix").SetDataSource(m_afVolumeMatrix);
         }
         super.OnLoadPrograms( iPass, pkVProgram, pkPProgram, pkCProgram );
     }
@@ -165,6 +173,13 @@ public abstract class VolumeClipEffect extends ShaderEffect
         }
         EnableClip();
     }
+    
+    public void setVolumeMatrix( float[] volumeMatrix )
+    {
+    	m_afVolumeMatrix = volumeMatrix;
+    }
+    
+    
     /**
      * Enable clipping.
      */
@@ -182,4 +197,40 @@ public abstract class VolumeClipEffect extends ShaderEffect
     {
     	return (m_afClipAll[8] | m_afClipAll[7] | m_afClipAll[6]);
     }    
+    
+    public Vector3f getClip()
+    {
+    	return new Vector3f( m_aafClipData[CLIP_X][0], m_aafClipData[CLIP_Y][0], m_aafClipData[CLIP_Z][0] );
+    }
+    
+    public Vector4f getClipEye()
+    {
+    	return new Vector4f( m_aafClipData[CLIP_EYE][0], m_aafClipData[CLIP_EYE][1], m_aafClipData[CLIP_EYE][2], m_aafClipData[CLIP_EYE][3] );
+    }
+    
+    public Vector4f getClipEyeInv()
+    {
+    	return new Vector4f( m_aafClipData[CLIP_EYE_INV][0], m_aafClipData[CLIP_EYE_INV][1], m_aafClipData[CLIP_EYE_INV][2], m_aafClipData[CLIP_EYE_INV][3] );
+    }
+    
+    public Vector4f getClipArb()
+    {
+    	return new Vector4f( m_aafClipData[CLIP_A][0], m_aafClipData[CLIP_A][1], m_aafClipData[CLIP_A][2], m_aafClipData[CLIP_A][3] );
+    }
+    
+    public Vector3f getClipInv()
+    {
+    	return new Vector3f( m_aafClipData[CLIP_X_INV][0], 
+    			m_aafClipData[CLIP_Y_INV][0], m_aafClipData[CLIP_Z_INV][0] );
+    }
+    
+    public boolean isClip()
+    {
+        boolean bEnable = false;
+        for ( int i = 0; i < 6; i++ )
+        {
+            bEnable |= m_afClipAll[i];
+        }
+        return bEnable;
+    }
 }

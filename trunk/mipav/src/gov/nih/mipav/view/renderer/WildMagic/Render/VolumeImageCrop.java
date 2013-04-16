@@ -9,6 +9,9 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
+
 import com.jogamp.opengl.util.Animator;
 
 public class VolumeImageCrop extends VolumeImageViewer
@@ -19,9 +22,9 @@ public class VolumeImageCrop extends VolumeImageViewer
     /**
      * @param args
      */
-    public static void main( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    public static void main( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, float[]  volumeViewMatrix )
     {
-        VolumeImageCrop kWorld = new VolumeImageCrop(kCanvas, kParentFrame, kVolumeImage, kClip);
+        VolumeImageCrop kWorld = new VolumeImageCrop(kCanvas, kParentFrame, kVolumeImage, kClip, volumeViewMatrix);
         Frame frame = new Frame(kWorld.GetWindowTitle());
         frame.add( kWorld.GetCanvas() );
          final Animator animator = new Animator( kWorld.GetCanvas() );
@@ -38,11 +41,17 @@ public class VolumeImageCrop extends VolumeImageViewer
          animator.start();
     }
     
+    private float[] m_kVolumeViewMatrix = null;
     private VolumeClipEffect m_kClipEffect = null;
-    public VolumeImageCrop( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip )
+    public VolumeImageCrop( GLCanvas kCanvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, VolumeClipEffect kClip, float[] volumeViewMatrix )
     {
         super( kCanvas, kParentFrame, kVolumeImage );
 
+        m_kVolumeViewMatrix = new float[volumeViewMatrix.length];
+        for ( int i = 0; i < volumeViewMatrix.length; i++ )
+        {
+        	m_kVolumeViewMatrix[i] = volumeViewMatrix[i];
+        }
         m_kClipEffect = kClip;
     }
 
@@ -90,8 +99,8 @@ public class VolumeImageCrop extends VolumeImageViewer
 	protected void CreateScene ()
     {
         CreatePlaneNode();
-
         m_spkEffect = new VolumeCalcEffect( m_kVolumeImage, m_kClipEffect );
+        ((VolumeCalcEffect)m_spkEffect).setVolumeMatrix(m_kVolumeViewMatrix);
         m_pkPlane.AttachEffect(m_spkEffect);
         m_pkRenderer.LoadResources(m_pkPlane);
         m_pkPlane.DetachAllEffects();            

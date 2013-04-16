@@ -16,6 +16,7 @@ import java.util.List;
 
 import javax.media.nativewindow.NativeSurface;
 import javax.media.opengl.GL;
+import javax.media.opengl.GL3;
 import javax.media.opengl.GL3bc;
 import javax.media.opengl.GLContext;
 
@@ -53,7 +54,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	protected int[] colorMask = new int[]{0,0,0,0};
 
 	protected long m_iDeviceType = CL.CL_DEVICE_TYPE_GPU;
-	protected GL3bc m_kGL = null;
+	protected GL3 m_kGL = null;
 
 	/**
 	 * Flag, if true, indicates that the whole image should be processed. 
@@ -80,7 +81,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	}
 
 
-	protected void initCL( long iType, GL3bc gl )
+	protected void initCL( long iType, GL3 gl )
 	{
 		cl_platform_id platform = null;
 
