@@ -522,7 +522,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void setPerspectiveProjection()
     {
         m_spkCamera.Perspective = true;
-        m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+        m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
     
