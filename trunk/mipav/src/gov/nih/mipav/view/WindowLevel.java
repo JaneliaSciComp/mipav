@@ -289,6 +289,15 @@ public class WindowLevel
                 kRGBT.getBlueFunction().exportArrays(m_afXWin, m_afYWin);
             }
             
+            if (m_afYWin[2] != m_afYWin[3]) {
+                m_afXWin[2] = m_afXWin[3] - 1;
+                m_afYWin[2] = m_afYWin[3];
+            }
+            if (m_afYWin[1] != m_afYWin[0]) {
+                m_afXWin[1] = m_afXWin[0] + 1;
+                m_afYWin[1] = m_afYWin[0];
+            }
+            
             old_fWindow = m_afXWin[2] - m_afXWin[1];
             if (old_fWindow > (2.0f * (m_fMax - m_fMin))) {
                 old_fWindow = 2.0f * (m_fMax - m_fMin);
@@ -362,6 +371,15 @@ public class WindowLevel
         if (kLUT != null) {
            
             kLUT.getTransferFunction().exportArrays(m_afXWin, m_afYWin);
+            
+            if (m_afYWin[2] != m_afYWin[3]) {
+                m_afXWin[2] = m_afXWin[3] - 1;
+                m_afYWin[2] = m_afYWin[3];
+            }
+            if (m_afYWin[1] != m_afYWin[0]) {
+                m_afXWin[1] = m_afXWin[0] + 1;
+                m_afYWin[1] = m_afYWin[0];
+            }
         
             old_fWindow = m_afXWin[2] - m_afXWin[1];
             if (old_fWindow > (2.0f * (m_fMax - m_fMin))) {
