@@ -2987,7 +2987,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
     protected void buildImageDependentComponents() {
 
-        m_kVolOpacityPanel = new JPanelVolumeOpacity(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage());
+        m_kVolOpacityPanel = new JPanelVolumeOpacity(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(),
+        		m_kVolumeImageA.GetGradientMagnitudeImage(), m_kVolumeImageB.GetGradientMagnitudeImage());
         m_kVolOpacityPanel.addPropertyChangeListener(this);
         
         TransferFunction kTransfer = m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
@@ -3450,8 +3451,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 	        } 
 	        if ( (m_kVolumeImageB.GetImage() != null) && (gmChanged || (kSelectedComp == m_kVolOpacityPanel.getCompB_GM())) )
 	        {
-	        	final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
-	        	m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
+	        	if ( m_kVolOpacityPanel.getCompB_GM() != null )
+	        	{
+	        		final TransferFunction kTransfer = m_kVolOpacityPanel.getCompB_GM().getOpacityTransferFunction();
+	        		m_kVolumeImageB.UpdateImages(kTransfer, 2, m_kVolOpacityPanel.getGradMagB());
+	        	}
 	        }
 	        updateABBlend( );
 		}

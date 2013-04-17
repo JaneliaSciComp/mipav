@@ -284,7 +284,7 @@ implements StreamInterface
     				}
     				else
     				{
-    					text += "kOutputColor.b = ABBlend * kOutputColor.bg;" + "\n";
+    					text += "kOutputColor.b = ABBlend * kOutputColor.b;" + "\n";
     				}
     			}
     		}

@@ -191,8 +191,22 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	 */
 	public JPanelVolumeOpacity(ModelImage _imgA, ModelImage _imgB)
 	{
+		this(_imgA, _imgB, null, null );
+	}
+
+	/**
+	 * Creates new dialog for converting type of image.
+	 *
+	 * @param  _imgA           Source imageA.
+	 * @param  _imgB           Source imageB.
+	 */
+	public JPanelVolumeOpacity(ModelImage _imgA, ModelImage _imgB, ModelImage _imageAGM, ModelImage _imageBGM)
+	{
 		imageA = _imgA;
 		imageB = _imgB;
+		gradMagRescale_A = _imageAGM;
+		gradMagRescale_B = _imageBGM;
+		
 		initialize();
 	}
 
@@ -1084,6 +1098,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityA.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityA.setBackground(new Color(190, 208, 230));
 			componentOpacityA.setMode(ViewJComponentVolOpacityBase.ALL);
+			componentOpacityA.linearMode();
 		}
 		else
 		{
@@ -1145,6 +1160,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityB.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityB.setBackground(new Color(190, 208, 230));
 			componentOpacityB.setMode(ViewJComponentVolOpacityBase.ALL);
+			componentOpacityB.linearMode();
 		}
 		else
 		{
@@ -1201,6 +1217,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	        componentOpacityGM_A.setBackground(new Color(190, 208, 230));
 	        componentOpacityGM_A.horizonMode();
 	        componentOpacityGM_A.setMode(ViewJComponentVolOpacityBase.ALL);
+	        componentOpacityGM_A.linearMode();
 		}
 		else
 		{
@@ -1257,6 +1274,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityGM_B.setBackground(new Color(190, 208, 230));
 			componentOpacityGM_B.horizonMode();
 			componentOpacityGM_B.setMode(ViewJComponentVolOpacityBase.ALL);
+			componentOpacityGM_B.linearMode();
 		}
 		else
 		{
@@ -1268,6 +1286,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 			componentOpacityGM_B.setLocation(borderSize, borderSize);
 			componentOpacityGM_B.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 			componentOpacityGM_B.setBackground(new Color(190, 208, 230));
+			componentOpacityGM_B.linearMode();
 		}
 
 		
@@ -1431,38 +1450,44 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	 */
 	private void loadGM()
 	{
-		String kImageName = ModelImage.makeImageName(imageA.getFileInfo(0).getFileName(), "");
-		String dir = imageA.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-		ModelImage gradMag_A = VolumeImage.getGradientMagnitude( imageA, 0, dir );
-
-		/** Scale the intensity range to 1024. */
-		gradMagRescale_A = new ModelImage(imageA.getType(), imageA.getExtents(),
-				imageA.getImageName() + "_gm_rescale");
-		AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
-				gradMag_A.getMin(), gradMag_A.getMax(),
-				0, 1023, false);
-
-		changeTypeAlgo_A.setRunningInSeparateThread(false);
-		changeTypeAlgo_A.run();
-		gradMagRescale_A.calcMinMax();
-		
-		
-		ModelImage gradMag_B;
-		if ( imageB != null )
+		if ( gradMagRescale_A == null )
 		{
-			kImageName = ModelImage.makeImageName(imageB.getFileInfo(0).getFileName(), "");
-			dir = imageB.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-			gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0, dir );
+			String kImageName = ModelImage.makeImageName(imageA.getFileInfo(0).getFileName(), "");
+			String dir = imageA.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+			ModelImage gradMag_A = VolumeImage.getGradientMagnitude( imageA, 0, dir );
+
 			/** Scale the intensity range to 1024. */
-			gradMagRescale_B = new ModelImage(imageB.getType(), imageB.getExtents(),
-					imageB.getImageName() + "_gm_rescale");
-			AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
-					gradMag_B.getMin(), gradMag_B.getMax(),
+			gradMagRescale_A = new ModelImage(imageA.getType(), imageA.getExtents(),
+					imageA.getImageName() + "_gm_rescale");
+			AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
+					gradMag_A.getMin(), gradMag_A.getMax(),
 					0, 1023, false);
 
-			changeTypeAlgo_B.setRunningInSeparateThread(false);
-			changeTypeAlgo_B.run();
-			gradMagRescale_B.calcMinMax();
+			changeTypeAlgo_A.setRunningInSeparateThread(false);
+			changeTypeAlgo_A.run();
+			gradMagRescale_A.calcMinMax();
+
+
+			ModelImage gradMag_B;
+			if ( imageB != null )
+			{
+				if ( gradMagRescale_B == null )
+				{
+					kImageName = ModelImage.makeImageName(imageB.getFileInfo(0).getFileName(), "");
+					dir = imageB.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+					gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0, dir );
+					/** Scale the intensity range to 1024. */
+					gradMagRescale_B = new ModelImage(imageB.getType(), imageB.getExtents(),
+							imageB.getImageName() + "_gm_rescale");
+					AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
+							gradMag_B.getMin(), gradMag_B.getMax(),
+							0, 1023, false);
+
+					changeTypeAlgo_B.setRunningInSeparateThread(false);
+					changeTypeAlgo_B.run();
+					gradMagRescale_B.calcMinMax();
+				}
+			}
 		}
 	}
 }

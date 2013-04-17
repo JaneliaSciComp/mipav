@@ -48,8 +48,6 @@ public class ViewJComponentVolOpacityRGB extends ViewJComponentVolOpacityBase {
         setupMinMax();
 
         setDoubleBuffered(false);
-
-        linearMode();
     }
     /**
      * Creates a Histogram RGB component.
