@@ -2773,6 +2773,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public void mouseReleased(final MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
+        
+      //updates winlevel if right mouse button was pressed and user's preferences indicate this should occur
+        if ( ((mouseEvent.getModifiers() & InputEvent.BUTTON3_MASK) != 0) && 
+                Preferences.is(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK)) {
+            if (winLevelSet) {
+                winLevelSet = false;
+            }
+            
+        }
 
         if (wasDragging) {
             wasDragging = false;
