@@ -129,6 +129,7 @@ public class VolumeImage implements Serializable {
 
 	/** 3D sub-images (4D data) */
 	private ModelImage[] m_akImages;
+	private ModelImage[] m_akImagesGM;
 
 	private Vector2f[] m_akGradientMagMinMax;
 
@@ -896,6 +897,15 @@ public class VolumeImage implements Serializable {
 	public Vector2f[] GetHistoTCoords() {
 		return m_akHistoTCoord;
 	}
+	
+	public ModelImage GetGradientMagnitudeImage()
+	{
+		if ( m_akImagesGM != null )
+		{
+			return m_akImagesGM[m_iTimeSlice];
+		}
+		return null;
+	}
 
 	public Vector2f GetGradientMagnitudeMinMax()
 	{
@@ -1088,28 +1098,29 @@ public class VolumeImage implements Serializable {
 	{
 		if ( !m_bGMInit )
 		{
+			m_akImagesGM = new ModelImage[m_iTimeSteps];
 			for (int i = 0; i < m_iTimeSteps; i++) {
 				ModelImage kImageLaplace = null;
-				ModelImage kImageGM = getGradientMagnitude( m_akImages[i], i, m_kDir );
+				m_akImagesGM[i] = getGradientMagnitude( m_akImages[i], i, m_kDir );
 				if ( !m_akImages[i].isColorImage() )
 				{
 					kImageLaplace = getLaplace( m_akImages[i], i );			
-					m_kVolumeGM[i] = createGM_Laplace(kImageGM, kImageLaplace, m_kVolumeGM[i], i, true);
+					m_kVolumeGM[i] = createGM_Laplace(m_akImagesGM[i], kImageLaplace, m_kVolumeGM[i], i, true);
 				}
 				else
 				{
-					m_kVolumeGM[i] = createGM_Laplace(kImageGM, null, m_kVolumeGM[i], i, true);				
+					m_kVolumeGM[i] = createGM_Laplace(m_akImagesGM[i], null, m_kVolumeGM[i], i, true);				
 				}
 
 
-				kImageGM.calcMinMax();
-				m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );	
+				m_akImagesGM[i].calcMinMax();
+				m_akGradientMagMinMax[i] = new Vector2f( (float)m_akImagesGM[i].getMin(), (float)m_akImagesGM[i].getMax() );	
 
-				ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+				ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_akImagesGM[i]);
 				if (kImageFrame != null) {
 					kImageFrame.close();
 				}
-				kImageGM.disposeLocal();
+				//m_akImagesGM[i].disposeLocal();
 				if ( kImageLaplace != null )
 				{
 					kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
@@ -1718,6 +1729,8 @@ public class VolumeImage implements Serializable {
 			initImagesColor();
 		}
 
+		SetGradientMagnitude(null, true, m_kPostfix); 
+		
 		if (kProgress != null) {
 			kProgress.updateValueImmed(kProgress.getValue() + iProgress);
 		}

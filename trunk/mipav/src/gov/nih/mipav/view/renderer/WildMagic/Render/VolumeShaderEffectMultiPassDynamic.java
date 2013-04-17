@@ -954,6 +954,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		if ( !text.equals( m_kPShaderCMP.GetProgram().GetProgramText() ))
     		{
     			m_kPShaderCMP.GetProgram().SetProgramText( text );
+    			//System.err.println( text );
     			if ( GetCProgram(0) != null )
     			{
     				GetCProgram(0).Reload(true);
