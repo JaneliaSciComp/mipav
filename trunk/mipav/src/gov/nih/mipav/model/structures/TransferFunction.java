@@ -20,7 +20,7 @@ public class TransferFunction extends ModelSerialCloneable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The total capacity of the 2D point array. Intial capapcity = 10 */
+    /** The total capacity of the 2D point array. Initial capacity = 10 */
     private int capacity = 10;
 
     /** Points to the next available storage location for the point. */
