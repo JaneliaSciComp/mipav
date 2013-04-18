@@ -48,6 +48,15 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	private static boolean isOCL_CPU_Available = false;
 	private static boolean isOCL_GPU_Available = false;
 	private static boolean wasOCLChecked = false;
+	
+    // The platform, device type and device number that will be used
+    private static final int platformIndex = 0;
+    private static final long deviceType = CL_DEVICE_TYPE_ALL;
+    private static final int deviceIndex = 0;
+    
+    private static int m_iMajorVersion;
+	private static int m_iMinorVersion;
+    
 	protected int width, height, depth, time, color;
 
     /** Color flags. */
@@ -273,6 +282,42 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		//System.out.println("Number of platforms: "+numPlatforms[0]);
 		cl_platform_id platforms[] = new cl_platform_id[numPlatforms[0]];
 		clGetPlatformIDs(platforms.length, platforms, null);
+        cl_platform_id platform = platforms[platformIndex];
+		
+
+
+        // Check if the platform supports OpenCL 1.2
+        long sizeArray[] = { 0 };
+        clGetPlatformInfo(platform, CL_PLATFORM_VERSION, 0, null, sizeArray);
+        byte buffer[] = new byte[(int)sizeArray[0]];
+        clGetPlatformInfo(platform, CL_PLATFORM_VERSION,
+            buffer.length, Pointer.to(buffer), null);
+        String versionString = new String(buffer, 0, buffer.length-1);
+        //System.out.println("Platform version: "+versionString);
+        String versionNumberString = versionString.substring(7, 10);
+        try
+        {
+            String majorString = versionNumberString.substring(0, 1);
+            String minorString = versionNumberString.substring(2, 3);
+            int major = Integer.parseInt(majorString);
+            int minor = Integer.parseInt(minorString);
+            m_iMajorVersion = major;
+            m_iMinorVersion = minor;
+            if (major == 1 && minor < 2)
+            {
+               // System.err.println(
+               //     "Platform only supports OpenCL "+versionNumberString);
+               //System.exit(1);
+            }
+        }
+        catch (NumberFormatException e)
+        {
+            System.err.println(
+                "Invalid version number: "+versionNumberString);
+            System.exit(1);
+        }
+		
+		
 
 		// Collect all devices of all platforms
 		List<cl_device_id> devices = new ArrayList<cl_device_id>();
