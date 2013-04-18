@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
@@ -68,6 +69,8 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
 
     @Override
 	public void display(GLAutoDrawable arg0) {
+        setStartTime();
+        
         if ( m_kAnimator == null )
         {
             return;
@@ -156,6 +159,8 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
                 m_iSlice = 0;
             }
         }
+        double timeinSec = computeElapsedTime();
+        System.err.println( "Elapsed time: " + timeinSec );
         dispose(arg0);
     }
 
