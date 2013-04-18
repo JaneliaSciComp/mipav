@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitude;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
@@ -495,7 +496,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      * @param useOCL Whether to try to use OpenCL processing.
      */
     public void setUseOCL(boolean useOCL) {
-        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
         if (useOCLCheckbox != null) {
         	useOCLCheckbox.setSelected( this.useOCL );
         }

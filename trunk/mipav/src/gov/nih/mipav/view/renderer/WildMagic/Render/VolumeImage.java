@@ -1116,14 +1116,14 @@ public class VolumeImage implements Serializable {
 				m_akImagesGM[i].calcMinMax();
 				m_akGradientMagMinMax[i] = new Vector2f( (float)m_akImagesGM[i].getMin(), (float)m_akImagesGM[i].getMax() );	
 
-				ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_akImagesGM[i]);
-				if (kImageFrame != null) {
-					kImageFrame.close();
-				}
+				//ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_akImagesGM[i]);
+				//if (kImageFrame != null) {
+				//	kImageFrame.close();
+				//}
 				//m_akImagesGM[i].disposeLocal();
 				if ( kImageLaplace != null )
 				{
-					kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
+					ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
 					if (kImageFrame != null) {
 						kImageFrame.close();
 					}
