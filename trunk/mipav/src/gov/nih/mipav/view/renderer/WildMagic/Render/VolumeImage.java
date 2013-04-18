@@ -3,7 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import static java.lang.System.nanoTime;
 import static java.lang.System.out;
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeNormals;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -17,13 +16,11 @@ import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.Buffer;
 
-import javax.media.opengl.GLContext;
 
 import org.jocl.CL;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibGraphics.Rendering.*;
-import WildMagic.LibRenderers.OpenGLRenderer.TextureID;
 
 /** *
  *  The VolumeImage class provides an interface between the MIPAV ModelImage and the 2D and 3D Textures used to render

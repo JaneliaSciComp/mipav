@@ -2138,5 +2138,316 @@ public class VolumeSurface extends VolumeObject
     	return false;
     }
     
-    
+
+	/**
+	 * Computes a volume mask of the triangle mesh surface. The BitSet mask volume has the same volume dimensions as the current image.
+	 * The mask is used to show the surface-plane intersections in the slice views.
+	 * @param mesh triangle mesh to convert to a volume mask representation.
+	 * @return BitSet mask, which is set to true wherever the triangle mesh intersects the volume voxel.
+	 */
+	public BitSet computeSurfaceMask( )
+	{
+
+		BoxBV kBoundingBox = new BoxBV();
+		kBoundingBox.ComputeFromData( m_kMesh.VBuffer );
+    	
+    	Vector3f[] kBoxCorners = new Vector3f[8];
+    	kBoundingBox.GetBox().ComputeVertices( kBoxCorners );
+    	Vector3f kMaxBB = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+    	Vector3f kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+    	for ( int i = 0; i < kBoxCorners.length; i++ )
+    	{
+    		kMaxBB.max( kBoxCorners[i] );
+    		kMinBB.min( kBoxCorners[i] );
+    	}		
+		
+    	ModelImage srcImage = m_kVolumeImageA.GetImage();
+		int dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
+		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;		
+		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;		
+				
+		BitSet mask = new BitSet( dimX * dimY * dimZ );
+		Vector3f min = new Vector3f();
+		Vector3f max = new Vector3f();
+
+		int iTQuantity = m_kMesh.GetTriangleQuantity();
+
+		int iV0, iV1, iV2;
+		int[] aiTris = new int[3];
+		Vector3f kV0 = new Vector3f();
+		Vector3f kV1 = new Vector3f();
+		Vector3f kV2 = new Vector3f();
+
+		for (int i = 0; i < iTQuantity; i++)
+		{
+			if (!m_kMesh.GetTriangle(i,aiTris) )
+			{
+				continue;
+			}
+
+			iV0 = aiTris[0];
+			iV1 = aiTris[1];
+			iV2 = aiTris[2];
+
+			m_kMesh.VBuffer.GetPosition3(iV0, kV0);
+			m_kMesh.VBuffer.GetPosition3(iV1, kV1);
+			m_kMesh.VBuffer.GetPosition3(iV2, kV2);
+
+			// compute the axis-aligned bounding box of the triangle
+			min.copy( kV0 );
+			min.min( kV1 );
+			min.min( kV2 );
+			
+			max.copy( kV0 );
+			max.max( kV1 );
+			max.max( kV2 );
+			// Rasterize the triangle.  The rasterization is repeated in all
+			// three coordinate directions to make sure that floating point
+			// round-off errors do not cause any holes in the rasterized
+			// surface.
+			float iXMin = min.X, iXMax = max.X;
+			float iYMin = min.Y, iYMax = max.Y;
+			float iZMin = min.Z, iZMax = max.Z;
+			int ptr;
+			int end = mask.size();
+
+			for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+
+				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+					float iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
+
+					if (iX != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							mask.set(ptr);
+						}
+					}
+				}
+			}
+
+			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+				for (float iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+					float iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
+
+					if (iY != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							mask.set(ptr);
+						}
+					}
+				}
+			}
+
+			for (float iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+
+				for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+					float iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
+
+					if (iZ != -1) {
+						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
+						if ( (ptr >= 0) && (ptr < end)) {
+							mask.set(ptr);
+						}
+					}
+				}
+            }
+        }		
+		return mask;
+	}
+	
+	/**
+     * Compute the point of intersection between a line (0,iY,iZ)+t(1,0,0) and
+     * the triangle defined by the three input points. All calculations are in
+     * voxel coordinates and the x-value of the intersection point is
+     * truncated to an integer.
+     *
+     * @param   kV0  a 3D vertex of the triangle
+     * @param   kV1  a 3D vertex of the triangle
+     * @param   kV2  a 3D vertex of the triangle
+     * @param   iY   the y-value of the origin of the line
+     * @param   iZ   the z-value of the origin of the line
+     *
+     * @return  the x-value of the intersection
+     */
+    private float getIntersectX(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+                                  float iY, float iZ) {
+
+        // Compute the intersection, if any, by calculating barycentric
+        // coordinates of the intersection of the line with the plane of
+        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
+        float fPu = iY - kV0.Y, fPv = iZ - kV0.Z;
+        float fE1u = kV1.Y - kV0.Y, fE1v = kV1.Z - kV0.Z;
+        float fE2u = kV2.Y - kV0.Y, fE2v = kV2.Z - kV0.Z;
+        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        float fDet = Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+
+        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+
+        if ((fC1 < 0.0f) || (fC1 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
+
+        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC0 = fDet - fC1 - fC2;
+
+        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        if (fDet == 0) {
+            return -1;
+        }
+
+        return ((fC0 * kV0.X) + (fC1 * kV1.X) + (fC2 * kV2.X)) / fDet;
+    }
+	
+
+
+    /**
+     * Compute the point of intersection between a line (iX,0,iZ)+t(0,1,0) and
+     * the triangle defined by the three input points. All calculations are in
+     * voxel coordinates and the y-value of the intersection point is
+     * truncated to an integer.
+     *
+     * @param   kV0  a 3D vertex of the triangle
+     * @param   kV1  a 3D vertex of the triangle
+     * @param   kV2  a 3D vertex of the triangle
+     * @param   iX   the x-value of the origin of the line
+     * @param   iZ   the z-value of the origin of the line
+     *
+     * @return  the y-value of the intersection
+     */
+    private float getIntersectY(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+                                  float iX, float iZ) {
+
+        // Compute the intersection, if any, by calculating barycentric
+        // coordinates of the intersection of the line with the plane of
+        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
+        float fPu = iX - kV0.X, fPv = iZ - kV0.Z;
+        float fE1u = kV1.X - kV0.X, fE1v = kV1.Z - kV0.Z;
+        float fE2u = kV2.X - kV0.X, fE2v = kV2.Z - kV0.Z;
+        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        float fDet = Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+
+        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+
+        if ((fC1 < 0.0f) || (fC1 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
+
+        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC0 = fDet - fC1 - fC2;
+
+        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        if (fDet == 0) {
+            return -1;
+        }
+
+        return ((fC0 * kV0.Y) + (fC1 * kV1.Y) + (fC2 * kV2.Y)) / fDet;
+    }
+
+    /**
+     * Compute the point of intersection between a line (iX,iY,0)+t(0,0,1) and
+     * the triangle defined by the three input points. All calculations are in
+     * voxel coordinates and the z-value of the intersection point is
+     * truncated to an integer.
+     *
+     * @param   kV0  a 3D vertex of the triangle
+     * @param   kV1  a 3D vertex of the triangle
+     * @param   kV2  a 3D vertex of the triangle
+     * @param   iX   the x-value of the origin of the line
+     * @param   iY   the y-value of the origin of the line
+     *
+     * @return  the z-value of the intersection
+     */
+    private float getIntersectZ(Vector3f kV0, Vector3f kV1, Vector3f kV2,
+                                  float iX, float iY) {
+
+        // Compute the intersection, if any, by calculating barycentric
+        // coordinates of the intersection of the line with the plane of
+        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
+        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
+        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
+        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
+        float fPu = iX - kV0.X, fPv = iY - kV0.Y;
+        float fE1u = kV1.X - kV0.X, fE1v = kV1.Y - kV0.Y;
+        float fE2u = kV2.X - kV0.X, fE2v = kV2.Y - kV0.Y;
+        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
+        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
+        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
+        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
+        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
+        float fDet = Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
+
+        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
+
+        if ((fC1 < 0.0f) || (fC1 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
+
+        if ((fC2 < 0.0f) || (fC2 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        float fC0 = fDet - fC1 - fC2;
+
+        if ((fC0 < 0.0f) || (fC0 > fDet)) {
+
+            // ray does not intersect triangle
+            return -1;
+        }
+
+        if (fDet == 0) {
+            return -1;
+        }
+
+        return ((fC0 * kV0.Z) + (fC1 * kV1.Z) + (fC2 * kV2.Z)) / fDet;
+    }
+
 }

@@ -37,6 +37,7 @@ public class VolumeImageViewer extends JavaApplication3D
     /**  */
     private static final long serialVersionUID = -2042201391319899982L;
     protected static int m_iScreenCaptureCounter = 0;
+	
     /**
      * @param args
      */
@@ -87,6 +88,10 @@ public class VolumeImageViewer extends JavaApplication3D
     
     protected boolean m_bInit = false;
     protected boolean m_bDispose = false;
+    
+	protected long startTime = System.currentTimeMillis();
+    /** Elapsed time (in milliseconds) -- time it took for algorithm to run. */
+    private double elapsedTime = 0;
     
     public VolumeImageViewer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
@@ -363,5 +368,35 @@ public class VolumeImageViewer extends JavaApplication3D
         m_pkPlane.VBuffer.SetTCoord3(0, 3, 1,1, fZ);    
         m_pkPlane.Reload(true);
         m_bDisplay = true;
+    }
+    
+
+
+    /**
+     * Sets the start time to the current time. This should be called at the beginning of the run() method.
+     */
+    public void setStartTime() {
+        startTime = System.currentTimeMillis();
+    }
+
+    
+    /**
+     * Computes the elapased time as the difference between the start time and the current time (both of which are in
+     * milliseconds).
+     *
+     * @return  the elapsed time in seconds -- this is a double value
+     */
+    public double computeElapsedTime() {
+
+        long now = System.currentTimeMillis();
+
+        elapsedTime = (double) (now - startTime);
+
+        // if elasedTime is invalid, then set it to 0
+        if (elapsedTime <= 0) {
+            elapsedTime = (double) 0.0;
+        }
+
+        return (double) (elapsedTime / 1000.0); // return in seconds!!
     }
 }

@@ -121,14 +121,6 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 						m_kT2Image = null;
 						return;
 					}
-					if ( m_kT2Image.isColorImage() != m_kDTIColorImage.isColorImage() )
-					{
-						MipavUtil.displayError( m_kT2Image.getImageName() + " must match " + m_kDTIColorImage.getImageName() + " color type" );
-						new ViewJFrameImage( m_kT2Image );
-						textT2image.setText("");
-						m_kT2Image = null;
-						return;
-					}
 				}
 			}
 			if ( m_kEigenVectorImage == null )
@@ -797,16 +789,6 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 				if ( !VolumeImage.checkImage( m_kT2Image, m_kDTIColorImage ) )
 				{
 					MipavUtil.displayError( "T2 image must match extents, resolutions, and units as " + m_kDTIColorImage.getImageName() );
-					m_kT2Image.disposeLocal(false);
-					m_kT2Image = null;
-					return;
-				}
-				System.err.println( m_kT2Image.isColorImage() );
-				System.err.println( m_kDTIColorImage.isColorImage() );
-				System.err.println(  m_kT2Image.isColorImage() != m_kDTIColorImage.isColorImage() );
-				if ( m_kT2Image.isColorImage() != m_kDTIColorImage.isColorImage() )
-				{
-					MipavUtil.displayError( "Images must match color types" );
 					m_kT2Image.disposeLocal(false);
 					m_kT2Image = null;
 					return;
