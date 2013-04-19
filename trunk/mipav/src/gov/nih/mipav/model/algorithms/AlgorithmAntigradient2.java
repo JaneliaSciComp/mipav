@@ -70,9 +70,9 @@ function f = antigradient2(g, mask, mu, n)
 % difference whether the sides are odd or even, although sides which
 % are of the form 2^k+1 give somewhat faster convergence.
 %
-% Author: Gunnar Farnebäck
+% Author: Gunnar Farneback
 %         Medical Informatics
-%         Linköping University, Sweden
+%         Linkoping University, Sweden
 %         gunnar@imt.liu.se
 
  *
