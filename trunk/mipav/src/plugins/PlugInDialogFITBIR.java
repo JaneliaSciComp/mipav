@@ -32,7 +32,9 @@ import com.sun.jimi.core.*;
 
 public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements ActionListener, ChangeListener,
         ItemListener, TreeSelectionListener, MouseListener, PreviewImageContainer {
-    private WidgetFactory.ScrollTextArea logOutputArea;
+	private static final long serialVersionUID = -5516621806537554154L;
+
+	private WidgetFactory.ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
 
@@ -132,11 +134,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** Prod portal auth server. */
     private static final String authProdServer = "https://fitbir.nih.gov/";
     
+    /** Path to server configuration file path. */
+    private static final String configFilePath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "fitbir_config.properties";
+    
+    /** Property for reading the dd server url from the fitbir config file. */
+    private static final String ddServerURLProp = "ddServerURL";
+    
+    /** Property for reading the auth server url from the fitbir config file. */
+    private static final String authServerURLProp = "authServerURL";
+    
     /** Full data dictionary server url */
-    private static final String ddServerURL = ddStageServer;
+    private static String ddServerURL = ddProdServer;
     
     /** Full authentication server url */
-    private static final String authServerURL = authStageServer;
+    private static String authServerURL = authProdServer;
 
     private DictionaryProvider dictionaryProvider;
 
@@ -565,54 +576,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         listPane.setBorder(buildTitledBorder(0 + " Form Structure(s) "));
 
         return listPane;
-    }
-
-    /**
-     * Checks to see if the given string is a valid FITBIR GUID
-     * 
-     * @param checkString the string to check
-     * @return whether this is a valid guid
-     */
-    private boolean isValidGUID(final String checkString) {
-        if (checkString.length() != PlugInDialogFITBIR.GUID_LENGTH) {
-            return false;
-        }
-
-        if (isValidChar(checkString.charAt(4)) && isValidChar(checkString.charAt(5))
-                && isNumChar(checkString.charAt(6)) && isNumChar(checkString.charAt(7))
-                && isNumChar(checkString.charAt(8)) && isValidChar(checkString.charAt(9))
-                && isValidChar(checkString.charAt(10))
-                && (isNumChar(checkString.charAt(11)) || isValidChar(checkString.charAt(11)))) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Is the char a valid number character
-     * 
-     * @param checkChar char to check
-     * @return whether is a number
-     */
-    private boolean isNumChar(final char checkChar) {
-        return (checkChar >= '0' && checkChar <= '9');
-    }
-
-    /**
-     * Check if this is a valid FITBIR character ( no I, O, Q, or S)
-     * 
-     * @param checkChar char to check
-     * @return is the char valid
-     */
-    private boolean isValidChar(final char checkChar) {
-        if ( (checkChar >= 'a' && checkChar <= 'z') || (checkChar >= 'A' && checkChar <= 'Z')) {
-            if (checkChar != 'i' && checkChar != 'I' && checkChar != 'o' && checkChar != 'O' && checkChar != 'q'
-                    && checkChar != 'Q' && checkChar != 's' && checkChar != 'S') {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private ModelImage createThumbnailImage(final ModelImage origImage) {
@@ -1210,6 +1173,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 String value = "";
                 String v;
                 if (imageFile != null) {
+                	// TODO: hardcoded elements
                     if (name.equalsIgnoreCase("image_file")) {
                         value = outputFileNameBase + ".zip";
                     } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
@@ -1500,7 +1464,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
                     new InfoDialog(this, dsName, true, true, null);
                 }
-
             }
         }
     }
@@ -1687,6 +1650,91 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     }
+    
+    /**
+     * Tries to read server configuration from fitbir config file on local disk. 
+     */
+    private void readFitbirConfig() {
+    	File configFile = new File(configFilePath);
+    	if (configFile.exists() && configFile.canRead()) {
+    		Properties prop = new Properties();
+    		try {
+    			prop.load(new FileInputStream(configFile));
+    		} catch (IOException e) {
+    			Preferences.debug("Unable to load FITBIR preferences file: " + configFilePath + "\n", Preferences.DEBUG_MINOR);
+    			e.printStackTrace();
+    		}
+    		// use pre-set, hardcoded values as defaults if properties are not found
+    		authServerURL = prop.getProperty(authServerURLProp, authServerURL);
+    		System.out.println("authServer:\t" + authServerURL);
+    		ddServerURL = prop.getProperty(ddServerURLProp, ddServerURL);
+    		System.out.println("ddServer:\t" + ddServerURL);
+    	}
+    }
+    
+    /**
+     * Multi-line tooltip creation helper method.
+     *
+     * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
+     * Changed the name/method names.  Also altered main method to no add html tags.
+     */
+    public static class WrapText {
+        private static int DIALOG_TOOLTIP_MAX_SIZE = 75;
+        private static final int SPACE_BUFFER = 10;
+
+        /**
+         * Returns the given string, with &lt;br/&gt; tags inserted to wrap the text.  Does NOT add html block tags to the beginning and end of the text.
+         * @param tip The string to wrap.
+         * @return The wrapped text.
+         */
+        public static String wrap(String tip) {
+            return wrap(tip,DIALOG_TOOLTIP_MAX_SIZE);
+        }
+        
+        /**
+         * Returns the given string, with &lt;br/&gt; tags inserted to wrap the text.  Does NOT add html block tags to the beginning and end of the text.
+         * @param tip The string to wrap.
+         * @param length The length to wrap to.
+         * @return The wrapped text.
+         */
+        public static String wrap(String tip,int length) {
+            if(tip.length()<=length + SPACE_BUFFER ) {
+                return tip;
+            }
+
+            List<String>  parts = new ArrayList<String>();
+
+            int maxLength = 0;
+            String overLong = tip.substring(0, length + SPACE_BUFFER);
+            int lastSpace = overLong.lastIndexOf(' ');
+            if(lastSpace >= length) {
+                parts.add(tip.substring(0,lastSpace));
+                maxLength = lastSpace;
+            } else {
+                parts.add(tip.substring(0,length));
+                maxLength = length;
+            }
+
+            while(maxLength < tip.length()) {
+                if(maxLength + length < tip.length()) {
+                    parts.add(tip.substring(maxLength, maxLength + length));
+                    maxLength+=maxLength+length;
+                } else {
+                    parts.add(tip.substring(maxLength));
+                    break;
+                }
+            }
+
+            //StringBuilder  sb = new StringBuilder("<html>");
+            StringBuilder  sb = new StringBuilder("");
+            for(int i=0;i<parts.size() - 1;i++) {
+                sb.append(parts.get(i)+"<br/>");
+            }
+            sb.append(parts.get(parts.size() - 1));
+            //sb.append(("</html>"));
+            return sb.toString();
+        }
+    }
 
     /**
      * 
@@ -1697,7 +1745,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private class MyRightCellRenderer extends DefaultTableCellRenderer {
 
-        public Component getTableCellRendererComponent(final JTable table, final Object value,
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -7905716122046419275L;
+
+		public Component getTableCellRendererComponent(final JTable table, final Object value,
                 final boolean isSelected, final boolean hasFocus, final int row, final int column) {
             final Component comp = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             setHorizontalAlignment(SwingConstants.CENTER);
@@ -1714,7 +1767,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
 
     private class ChooseDataStructDialog extends JDialog implements ActionListener {
-        private final PlugInDialogFITBIR owner;
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4199199899439094828L;
+
+		private final PlugInDialogFITBIR owner;
 
         // private final File file;
         private ViewTableModel structsModel;
@@ -1773,7 +1831,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final String[] columnNames = {"Name", "Description", "Version", "Status"};
             structsModel = new ViewTableModel();
             structsTable = new JTable(structsModel) {
-                public String getToolTipText(final MouseEvent e) {
+                /**
+				 * 
+				 */
+				private static final long serialVersionUID = 3053232611901005303L;
+
+				public String getToolTipText(final MouseEvent e) {
                     String tip = "";
 
                     final java.awt.Point p = e.getPoint();
@@ -1949,7 +2012,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * 
      */
     private class InfoDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
-        private final PlugInDialogFITBIR owner;
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 859201819000159789L;
+
+		private final PlugInDialogFITBIR owner;
 
         private final JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -1961,8 +2029,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private String guid = "";
 
-        private int gridYCounter = 0;
-
         private boolean launchedFromInProcessState = false;
 
         private JLabel requiredLabel, conditionalLabel;
@@ -1970,6 +2036,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private String dataStructureName;
 
         private TreeMap<JLabel, JComponent> labelsAndComps;
+        
+        private Set<RepeatableGroup> groups;
 
         private final ArrayList<File> allOtherFiles = new ArrayList<File>();
 
@@ -1980,6 +2048,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private boolean setInitialVisible;
 
         private String[] csvParams;
+        
+        private static final String MAIN_GROUP_NAME = "Main";
+        
+        private static final String FILE_ELEMENT_TYPE = "File";
 
         /**
          * constructor
@@ -2019,7 +2091,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final JPanel panel = new JPanel(new GridBagLayout());
             tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            tabScrollPane.setPreferredSize(new Dimension(600, 200));
+            tabScrollPane.setPreferredSize(new Dimension(600, 500));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
             for (BasicDataStructure ds : dataStructureList) {
@@ -2031,7 +2103,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             init();
-
         }
 
         /**
@@ -2051,32 +2122,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
             }
 
-            /*
-             * documentElement = documentElements.get(dataStructureName); final Iterator<OMElement> iter2 =
-             * documentElement.getChildElements(); // should only be 1 top level Data_Structure tag dataStructElement =
-             * iter2.next(); namespace = dataStructElement.getNamespace().getNamespaceURI();
-             */
-
             try {
-                /*
-                 * OMAttribute attr; QName qname;
-                 * 
-                 * qname = new QName(namespace, "name"); attr = dataStructElement.getAttribute(qname); final String n =
-                 * attr.getAttributeValue();
-                 * 
-                 * qname = new QName(namespace, "short_name"); attr = dataStructElement.getAttribute(qname); final
-                 * String s = attr.getAttributeValue();
-                 * 
-                 * qname = new QName(namespace, "desc"); attr = dataStructElement.getAttribute(qname); final String d =
-                 * attr.getAttributeValue();
-                 * 
-                 * qname = new QName(namespace, "version"); attr = dataStructElement.getAttribute(qname); final String v =
-                 * attr.getAttributeValue();
-                 * 
-                 * qname = new QName(namespace, "type"); attr = dataStructElement.getAttribute(qname); final String t =
-                 * attr.getAttributeValue();
-                 */
-
                 String n = dataStructure.getShortName();
                 String s = dataStructure.getShortName();
                 String d = dataStructure.getDescription();
@@ -2098,9 +2144,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 if (launchedFromInProcessState) {
                     final int selectedRow = sourceTable.getSelectedRow();
                     final LinkedHashMap<String, String> infoMap = infoList.get(selectedRow);
-                    /*
-                     * if(infoMap == null) { System.out.println("info map is null"); }
-                     */
+
                     labelsAndComps = labelsAndCompsList.get(selectedRow);
 
                     // parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
@@ -2150,7 +2194,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             OKPanel.add(OKButton);
             OKPanel.add(cancelButton);
 
-            requiredLabel = new JLabel("<html>Mouse over data element name for a description.  * Required data elements are in <font color=\"red\">red</font></html>");
+            requiredLabel = new JLabel("<html>Mouse over data element name for a description.<br/>Mouse over the data element fields for more information on filling them in.<br/>* Required data elements are in <font color=\"red\">red</font></html>");
             // conditionalLabel = new JLabel("<html>* Conditional data elements are in <font
             // color=\"blue\">blue</font></html>");
 
@@ -2183,13 +2227,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
-
             FileInputStream fis = null;
             ZipInputStream zin;
+            // TODO: hardcoded structure handling
             if (dataStructureName.startsWith("image")) {
                 // first check to see if image_file was supplied in the csv
                 int imageFileIndex = -1;
                 for (int i = 0; i < csvFieldNames.length; i++) {
+                	// TODO: hardcoded elements
                     if (csvFieldNames[i].trim().equalsIgnoreCase("image_file")) {
                         imageFileIndex = i;
                         break;
@@ -2277,6 +2322,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
+                            // TODO: hardcoded elements
                             if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
                                 final String n = file.getName();
@@ -2338,6 +2384,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
+                                // TODO: hardcoded elements
                                 if ( !key.equals("image_file")) {
                                     final Set<JLabel> keySet2 = labelsAndComps.keySet();
                                     final Iterator<JLabel> iter2 = keySet2.iterator();
@@ -2353,10 +2400,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                                 t.setText(value);
 
                                             } else if (comp instanceof JComboBox) {
-                                                final JComboBox c = (JComboBox) comp;
+                                                @SuppressWarnings("unchecked")
+												final JComboBox<String> c = (JComboBox<String>) comp;
 
                                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = (String) c.getItemAt(k);
+                                                    final String item = c.getItemAt(k);
                                                     if (value.equalsIgnoreCase(item)) {
                                                         c.setSelectedIndex(k);
                                                     }
@@ -2391,10 +2439,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                                 t.setText(value);
 
                                             } else if (comp instanceof JComboBox) {
-                                                final JComboBox c = (JComboBox) comp;
+                                            	@SuppressWarnings("unchecked")
+                                                final JComboBox<String> c = (JComboBox<String>) comp;
 
                                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = (String) c.getItemAt(k);
+                                                    final String item = c.getItemAt(k);
                                                     if (value.equalsIgnoreCase(item)) {
                                                         c.setSelectedIndex(k);
                                                     }
@@ -2440,10 +2489,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 t.setText(value);
 
                             } else if (comp instanceof JComboBox) {
-                                final JComboBox c = (JComboBox) comp;
+                                @SuppressWarnings("unchecked")
+								final JComboBox<String> c = (JComboBox<String>) comp;
 
                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = (String) c.getItemAt(k);
+                                    final String item = c.getItemAt(k);
                                     if (value.equalsIgnoreCase(item)) {
                                         c.setSelectedIndex(k);
                                     }
@@ -2452,9 +2502,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             break;
                         }
                     }
-
                 }
-
             }
 
             // need to validate and then close window
@@ -2477,69 +2525,83 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             dispose();
         }
 
-        /**
-         * displays the labels and components
-         * 
-         * @param ds2
-         */
         private void parseForInitLabelsAndComponents(final DataStruct ds2,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
-            JPanel panel;
+            JPanel mainPanel = null ;
             JScrollPane sp;
+            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                final String title = tabbedPane.getTitleAt(i);
+                if (title.toLowerCase().startsWith(ds2.getShortname().toLowerCase())) {
+                	sp = (JScrollPane) (tabbedPane.getComponentAt(i));
+                	mainPanel = (JPanel) (sp.getViewport().getComponent(0));
+                }
+            }
+
+            TreeMap<String, JPanel> groupPanels = new TreeMap<String, JPanel>();
+            for (RepeatableGroup g : groups) {
+            	JPanel p = new JPanel(new GridBagLayout());
+            	p.setBorder(buildTitledBorder(g.getName()));
+            	groupPanels.put(g.getName(), p);
+            }
+            
             final Set<JLabel> keySet = labelsAndComps.keySet();
             final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel l = (JLabel) iter.next();
                 final JComponent t = labelsAndComps.get(l);
-                boolean isFile = false;
                 final String labelName = l.getName();
-                if (t instanceof JTextField) {
-                    if ( ((JTextField) t).getToolTipText().contains("File")) {
-                        isFile = true;
 
-                    }
-                }
                 for (int k = 0; k < ds2.size(); k++) {
                     final Object o1 = ds2.get(k);
                     if (o1 instanceof DataElement) {
-                        final String parentDataStructShortname = ((DataElement) o1).getParentDataStructShortname();
+                    	DataElement de = (DataElement)o1;
+                        JPanel curPanel = groupPanels.get(de.getGroup());
+                            
+                        if (l.getName().equalsIgnoreCase(de.getName())) {
+                        	gbc.gridy = de.getPosition() - 1;
+                        	
+                        	gbc.insets = new Insets(2, 5, 2, 5);
+                            gbc.fill = GridBagConstraints.HORIZONTAL;
+                            gbc.anchor = GridBagConstraints.EAST;
+                            gbc.weightx = 0;
+                            curPanel.add(l, gbc);
+                            gbc.weightx = 1;
+                            gbc.gridx = 1;
+                            gbc.anchor = GridBagConstraints.WEST;
+                            if (de.getType().equalsIgnoreCase(FILE_ELEMENT_TYPE)) {
+                            	curPanel.add(t, gbc);
+                                gbc.gridx = 2;
+                                final JButton browseButton = new JButton("Browse");
+                                browseButton.addActionListener(this);
+                                browseButton.setActionCommand("browse_" + labelName);
+                                curPanel.add(browseButton, gbc);
 
-                        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-                            final String title = tabbedPane.getTitleAt(i);
-                            if (title.toLowerCase().startsWith(parentDataStructShortname.toLowerCase())) {
-                                sp = (JScrollPane) (tabbedPane.getComponentAt(i));
-                                panel = (JPanel) (sp.getViewport().getComponent(0));
-                                if (l.getName().equalsIgnoreCase( ((DataElement) o1).getName())) {
-                                    gbc.fill = GridBagConstraints.HORIZONTAL;
-                                    gbc.anchor = GridBagConstraints.EAST;
-                                    gbc.weightx = 0;
-                                    panel.add(l, gbc);
-                                    gbc.weightx = 1;
-                                    gbc.gridx = 1;
-                                    gbc.anchor = GridBagConstraints.WEST;
-                                    if (isFile) {
-                                        panel.add(t, gbc);
-                                        gbc.gridx = 2;
-                                        final JButton browseButton = new JButton("Browse");
-                                        browseButton.addActionListener(this);
-                                        browseButton.setActionCommand("browse_" + labelName);
-                                        panel.add(browseButton, gbc);
-
-                                    } else {
-                                        gbc.gridwidth = 2;
-                                        panel.add(t, gbc);
-                                    }
-
-                                    gridYCounter = gridYCounter + 1;
-                                    gbc.gridy = gridYCounter;
-                                    gbc.gridx = 0;
-                                    gbc.gridwidth = 1;
-                                    break;
-                                }
+                            } else {
+                                gbc.gridwidth = 2;
+                                curPanel.add(t, gbc);
                             }
+
+                            //gridYCounter = gridYCounter + 1;
+                            //gbc.gridy = gridYCounter;
+                            gbc.gridx = 0;
+                            gbc.gridwidth = 1;
+                            break;
                         }
                     }
                 }
+            } 
+            
+            GridBagConstraints gbc2 = new GridBagConstraints();
+            gbc2.fill = GridBagConstraints.HORIZONTAL;
+            gbc2.gridx = 0;
+            gbc2.gridy = 0;
+            mainPanel.add(groupPanels.get(MAIN_GROUP_NAME), gbc2);
+            gbc2.gridy++;
+            for (String g : groupPanels.navigableKeySet()) {
+            	if (!g.equals(MAIN_GROUP_NAME)) {
+            		mainPanel.add(groupPanels.get(g), gbc2);
+            		gbc2.gridy++;
+            	}
             }
         }
 
@@ -2550,8 +2612,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          */
         private void parse_new(final BasicDataStructure dataStructure, final DataStruct ds2, final String shortname,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
-            // final Iterator iter = omElement.getChildElements();
-
             List<BasicDataStructure> bdsToGet = new Vector<BasicDataStructure>();
             bdsToGet.add(dataStructure);
 
@@ -2559,6 +2619,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             Set<MapElement> dataElements = null;
             for (DataStructure ds : dsList) {
                 dataElements = ds.getDataElements();
+                groups = ds.getRepeatableGroups();
             }
             Iterator<MapElement> iter = dataElements.iterator();
 
@@ -2566,13 +2627,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 MapElement dataElement = iter.next();
 
                 final String n = dataElement.getName();
+                
+                final String title = dataElement.getTitle();
 
                 final String d = dataElement.getDescription();
 
                 final String sh = dataElement.getShortDescription();
+                
+                final String notes = dataElement.getNotes();
 
                 final String t = dataElement.getType().getValue();
-
+                
                 String s = "";
                 if (dataElement.getSize() != null) {
                     s = dataElement.getSize().toString();
@@ -2587,20 +2652,23 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 for (ValueRange valueRange : valueRangeSet) {
                     if (valueRange != null) {
                         if (v.equals("")) {
-                            v += valueRange.toString();
+                            v += valueRange.getValueRange();
                         } else {
-                            v += "; " + valueRange.toString();
+                            v += "; " + valueRange.getValueRange();
                         }
                     }
                 }
 
                 // final String c = dataElement.getRequiredCondition();
                 final String c = "";
+                
+                final String guide = dataElement.getGuidelines();
+                final String g = dataElement.getRepeatableGroup().getName();
+                final int p = dataElement.getPosition().intValue();
 
                 final String parentDataStruct = ds2.getName();
                 final String parentDataStructShortName = ds2.getShortname();
-                final DataElement de = new DataElement(n, d, sh, t, s, r, v, c, parentDataStruct,
-                        parentDataStructShortName);
+                final DataElement de = new DataElement(n, title, d, sh, notes, t, s, r, v, c, guide, g, p, parentDataStruct, parentDataStructShortName);
                 ds2.add(de);
 
                 JLabel l;
@@ -2614,9 +2682,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 //    l = new JLabel(n);
                 //}
 
-                l = new JLabel(n);
+                l = new JLabel(title);
+                l.setFont(MipavUtil.font12);
                 l.setName(n);
-                l.setToolTipText(d);
+                
+                String tooltip = "<html><p><b>Name:</b> " + dataElement.getName() + "<br/>";
+                tooltip += "<b>Description:</b><br/>" + WrapText.wrap(d);
+                tooltip += "</p></html>";
+                l.setToolTipText(tooltip);
+                
                 /*
                  * System.out.println("^^^ " + n); System.out.println("^^^-- " + sh); System.out.println("^^^--" + t);
                  * System.out.println("^^^--" + s); System.out.println("^^^--" + v); System.out.println();
@@ -2627,8 +2701,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // System.out.println();
                 // if valuerange is enumeration, create a combo box...otherwise create a textfield
                 if (v != null && v.contains(";") && t != null && !t.equalsIgnoreCase("DATE")) {
-                    final JComboBox cb = new JComboBox();
+                    final JComboBox<String> cb = new JComboBox<String>();
                     cb.setName(n);
+                    cb.setFont(MipavUtil.font12);
                     final String[] items = v.split(";");
                     cb.addItem("");
                     for (final String element : items) {
@@ -2641,21 +2716,44 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }/*
                          * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
                          */
+                    //if (cb.getPreferredSize().width > tabScrollPane.getPreferredSize().width - 100) {
+                    //	cb.setPreferredSize(new Dimension(tabScrollPane.getPreferredSize().width - 100, cb.getPreferredSize().height));
+                    //}
+                    
+                    tooltip = "<html>";
+                    if (guide != null) {
+                    	tooltip += "<p><b>Guidelines & Instructions:</b> " + WrapText.wrap(guide) + "</p>";
+                    }
+                    if (notes != null) {
+                    	tooltip += "<p><b>Notes:</b><br/>" + WrapText.wrap(notes) + "</p>";
+                    }
+                    tooltip += "</html>";
+                    l.setToolTipText(tooltip);
 
                     labelsAndComps.put(l, cb);
                 } else {
                     final JTextField tf = new JTextField(20);
                     tf.setName(n);
+                    tf.setFont(MipavUtil.font12);
 
-                    String tooltip = "Type: " + t;
+                    tooltip = "<html><b>Type:</b> " + t;
                     if (t.equalsIgnoreCase("String")) {
                         tooltip += " (" + s + ")";
                     }
                     if (v != null && !v.trim().equalsIgnoreCase("")) {
                         tooltip += ".  Value range: " + v;
                     }
+                    if (guide != null) {
+                    	tooltip += "<p><b>Guidelines & Instructions:</b><br/>" + WrapText.wrap(guide) + "</p>";
+                    }
+                    if (notes != null) {
+                    	tooltip += "<p><b>Notes:</b><br/>" + WrapText.wrap(notes) + "</p>";
+                    }
+                    tooltip += "</html>";
                     tf.setToolTipText(tooltip);
                     tf.addFocusListener(this);
+                    
+                    // TODO: hardcoded element handling
                     if (n.equalsIgnoreCase("image_num_dimensions")) {
                         tf.setEnabled(false);
                     } else if (n.equalsIgnoreCase("image_extent1")) {
@@ -2673,72 +2771,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     } else if (n.equalsIgnoreCase("image_file")) {
                         tf.setEnabled(false);
                     }
+                    
                     if (r.equalsIgnoreCase("Required")) {
                         l.setForeground(Color.red);
-                    }/*
-                         * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
-                         */
+                    }
+                    
+                    /*
+                     * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
+                     */
+                    
                     labelsAndComps.put(l, tf);
                 }
                 // }
-
             }
         }
-
-        /**
-         * parses the OMElement
-         * 
-         * @param ds
-         */
-        /*
-         * private void parse(final OMElement omElement, final DataStruct ds2, final String shortname, final TreeMap<JLabel,
-         * JComponent> labelsAndComps) { final Iterator iter = omElement.getChildElements(); OMElement childElement;
-         * OMAttribute attr; QName qname; String childElementName; while (iter.hasNext()) { childElement = (OMElement)
-         * iter.next(); childElementName = childElement.getLocalName(); if
-         * (childElementName.equalsIgnoreCase("data_element")) { qname = new QName(namespace, "name"); attr =
-         * childElement.getAttribute(qname); final String n = attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "desc"); attr = childElement.getAttribute(qname); final String d =
-         * attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "short_desc"); attr = childElement.getAttribute(qname); final String sh =
-         * attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "type"); attr = childElement.getAttribute(qname); final String t =
-         * attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "size"); attr = childElement.getAttribute(qname); final String s =
-         * attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "required"); attr = childElement.getAttribute(qname); final String r =
-         * attr.getAttributeValue();
-         * 
-         * qname = new QName(namespace, "value_range"); attr = childElement.getAttribute(qname); final String v =
-         * attr.getAttributeValue();
-         * 
-         * final String parentDataStruct = ds2.getName(); final String parentDataStructShortName = ds2.getShortname();
-         * final DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct, parentDataStructShortName);
-         * ds2.add(de);
-         * 
-         * JLabel l; if (sh == null || sh.equalsIgnoreCase("")) { l = new JLabel(n); } else { l = new JLabel(sh); }
-         * 
-         * l.setName(n); // if valuerange is enumeration, create a combo box...otherwise create a textfield if
-         * (v.contains(";") && !t.equalsIgnoreCase("DATE")) { final JComboBox cb = new JComboBox(); cb.setName(n); final
-         * String[] items = v.split(";"); for (final String element : items) { final String item = element.trim();
-         * cb.addItem(item); } if (r.equalsIgnoreCase("Required")) { l.setForeground(Color.red); } labelsAndComps.put(l,
-         * cb); } else { final JTextField tf = new JTextField(20); tf.setName(n);
-         * 
-         * String tooltip = "Type: " + t; if (t.equalsIgnoreCase("String")) { tooltip += " (" + s + ")"; } if (
-         * !v.trim().equalsIgnoreCase("")) { tooltip += ". Value range: " + v; } tf.setToolTipText(tooltip);
-         * 
-         * if (n.equalsIgnoreCase("image_num_dimensions")) { tf.setEnabled(false); } else if
-         * (n.equalsIgnoreCase("image_extent1")) { tf.setEnabled(false); } else if (n.equalsIgnoreCase("image_extent2")) {
-         * tf.setEnabled(false); } else if (n.equalsIgnoreCase("image_extent3")) { tf.setEnabled(false); } else if
-         * (n.equalsIgnoreCase("image_extent4")) { tf.setEnabled(false); } else if (n.equalsIgnoreCase("image_extent5")) {
-         * tf.setEnabled(false); } else if (n.equalsIgnoreCase("image_thumbnail_file")) { tf.setEnabled(false); } else
-         * if (n.equalsIgnoreCase("image_file")) { tf.setEnabled(false); } if (r.equalsIgnoreCase("Required")) {
-         * l.setForeground(Color.red); } labelsAndComps.put(l, tf); } // } } } }
-         */
 
         /**
          * populates dialog from completed state
@@ -2770,10 +2816,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 t.setText(value);
 
                             } else if (comp instanceof JComboBox) {
-                                final JComboBox c = (JComboBox) comp;
+                                @SuppressWarnings("unchecked")
+								final JComboBox<String> c = (JComboBox<String>) comp;
 
                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = (String) c.getItemAt(k);
+                                    final String item = c.getItemAt(k);
                                     if (value.equalsIgnoreCase(item)) {
                                         c.setSelectedIndex(k);
                                     }
@@ -2786,6 +2833,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
         }
 
+        // TODO: hardcoded element handling
         public int determineImageHeaderDescrepencies(ModelImage img) {
             final float[] res = img.getResolutions(0);
             final int[] units = img.getUnitsOfMeasure();
@@ -2977,6 +3025,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * prepopulates some of the fields with info from image header
          */
         public void populateFields(final TreeMap<JLabel, JComponent> labelsAndComps, final ModelImage img) {
+        	// TODO: hardcoded element handling
             final float[] res = img.getResolutions(0);
             final int[] units = img.getUnitsOfMeasure();
             final int exts[] = img.getExtents();
@@ -3025,18 +3074,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("image_extent5")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("image_unit1")) {
-                    final JComboBox jc = (JComboBox) comp;
+                    @SuppressWarnings("unchecked")
+					final JComboBox<String> jc = (JComboBox<String>) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
+                        final String item = jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit2")) {
-                    final JComboBox jc = (JComboBox) comp;
+                	@SuppressWarnings("unchecked")
+					final JComboBox<String> jc = (JComboBox<String>) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
+                        final String item = jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3044,9 +3095,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit3")) {
                     if (img.getNDims() > 2) {
-                        final JComboBox jc = (JComboBox) comp;
+                    	@SuppressWarnings("unchecked")
+    					final JComboBox<String> jc = (JComboBox<String>) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
+                            final String item = jc.getItemAt(k);
                             if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
@@ -3055,9 +3107,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 } else if (l.equalsIgnoreCase("image_unit4")) {
                     if (img.getNDims() > 3) {
-                        final JComboBox jc = (JComboBox) comp;
+                    	@SuppressWarnings("unchecked")
+    					final JComboBox<String> jc = (JComboBox<String>) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
+                            final String item = jc.getItemAt(k);
                             if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
@@ -3085,18 +3138,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("image_resolution5")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("image_modality")) {
-                    final JComboBox jc = (JComboBox) comp;
+                	@SuppressWarnings("unchecked")
+					final JComboBox<String> jc = (JComboBox<String>) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
+                        final String item = jc.getItemAt(k);
                         if (modalityString.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_file_format")) {
-                    final JComboBox jc = (JComboBox) comp;
+                	@SuppressWarnings("unchecked")
+					final JComboBox<String> jc = (JComboBox<String>) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
+                        final String item = jc.getItemAt(k);
                         if (fileFormatString.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3110,9 +3165,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_orientation")) {
-                    final JComboBox jc = (JComboBox) comp;
+                	@SuppressWarnings("unchecked")
+					final JComboBox<String> jc = (JComboBox<String>) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
+                        final String item = jc.getItemAt(k);
                         if (orientation.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3227,6 +3283,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 dispose();
             } else if (command.startsWith("browse_")) {
                 boolean isMultiFile = false;
+                // TODO: hardcoded structure handling
                 if (dataStructureName.startsWith("image")) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
                     fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
@@ -3287,10 +3344,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             final Iterator<JLabel> iter = keySet.iterator();
                             while (iter.hasNext()) {
                                 final JLabel l = (JLabel) iter.next();
+                                // TODO: hardcoded element handling
                                 if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
                                     final String n = file.getName();
-                                    tf.setText("Automatically generated JPEG");
+                                    tf.setText("Automatically generated JPEG - " + n);
                                 } else if (l.getName().equalsIgnoreCase(labelName)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
                                     tf.setText(file.getName());
@@ -3391,7 +3449,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         public boolean isNumber(String exp) {
-
             try {
                 Double.parseDouble(exp);
             } catch (NumberFormatException e) {
@@ -3403,7 +3460,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         public double getNumber(String exp) {
             return Double.parseDouble(exp);
-
         }
 
         public boolean evaluateStringExpression(String op1, String oper, String op2) {
@@ -3482,7 +3538,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             return false;
         }
 
-        public boolean testCondition(String[] tokens) {
+        @SuppressWarnings("unchecked")
+		public boolean testCondition(String[] tokens) {
             String value = "";
             String key;
             for (int i = 0; i < tokens.length; i++) {
@@ -3501,7 +3558,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         if (comp instanceof JTextField) {
                             value = ((JTextField) comp).getText().trim();
                         } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
+                            value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
                         }
                         if (key.equalsIgnoreCase(name)) {
                             tokens[i] = value;
@@ -3563,7 +3620,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * @param imageFile
          * @param errs
          */
-        public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
+        @SuppressWarnings("unchecked")
+		public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
 
             String value = "";
@@ -3594,7 +3652,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         if (comp instanceof JTextField) {
                             value = ((JTextField) comp).getText().trim();
                         } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox) comp).getSelectedItem());
+                            value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
                         }
                         if (key.equalsIgnoreCase(name)) {
                             found = true;
@@ -3614,6 +3672,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             if (value.trim().equalsIgnoreCase("")) {
                                 errs.add(labelText + " is a required field");
                             } else {
+                            	// TODO: hardcoded element handling
                                 if (key.equalsIgnoreCase("subjectkey")) {
                                     if ( !value.trim().startsWith("TBI")) {
                                         errs.add(labelText + " must begin with TBI");
@@ -3745,7 +3804,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         /**
          * called after validation is done
          */
-        public void complete(final TreeMap<JLabel, JComponent> labelsAndComps, final String dataStructShortname,
+        @SuppressWarnings("unchecked")
+		public void complete(final TreeMap<JLabel, JComponent> labelsAndComps, final String dataStructShortname,
                 final boolean isComplete) {
             // System.out.println("in complete");
             final LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
@@ -3755,6 +3815,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
+                // TODO: hardcoded element handling
                 if (label.getName().equalsIgnoreCase("subjectkey")) {
                     guid = ((JTextField) comp).getText().trim();
                 }
@@ -3769,7 +3830,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
 
                 } else if (comp instanceof JComboBox) {
-                    value = (String) ( ((JComboBox) comp).getSelectedItem());
+                    value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
                 }
                 /*
                  * if(!value.equals("")) { System.out.println("the key is " + key); System.out.println("the value is " +
@@ -3778,10 +3839,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 infoMap.put(key, value);
             }
 
-            boolean guidKnown = true;
-            if (guid != null && !guid.trim().equalsIgnoreCase("")) {
-                guidKnown = false;
-            }
+//            boolean guidKnown = true;
+//            if (guid != null && !guid.trim().equalsIgnoreCase("")) {
+//                guidKnown = false;
+//            }
 
             String name = "";
 
@@ -3826,7 +3887,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 allOtherFilesAL.set(allOtherFilesAL.size() - 1, allOtherFiles);
             }
-
         }
 
         public void windowActivated(final WindowEvent e) {}
@@ -3872,12 +3932,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     }
 
-    // inner class
     /**
      * represents the DataStructure of the xml
      */
     public class DataStruct extends Vector<DataElement> {
-        private final String name;
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2562266763497985432L;
+
+		private final String name;
 
         private String shortname;
 
@@ -3934,10 +3998,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     public class DataElement {
         private final String name;
+        
+        private final String title;
 
         private final String desc;
 
         private final String shortDesc;
+        
+        private final String notes;
 
         private final String type;
 
@@ -3948,28 +4016,44 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private final String valuerange;
 
         private final String condition;
+        
+        private final String guidelines;
+        
+        private final String group;
+        
+        private final int position;
 
         private final String parentDataStruct;
 
         private final String parentDataStructShortname;
 
-        public DataElement(final String name, final String desc, final String shortDesc, final String type,
-                final String size, final String required, final String valuerange, final String condition,
+        public DataElement(final String name, final String title, final String desc, final String shortDesc,
+        		final String notes, final String type, final String size, final String required, final String valuerange,
+        		final String condition, final String guidelines, final String group, final int position,
                 final String parentDataStruct, final String parentDataStructShortname) {
             this.name = name;
+            this.title = title;
             this.desc = desc;
             this.shortDesc = shortDesc;
+            this.notes = notes;
             this.type = type;
             this.size = size;
             this.required = required;
             this.valuerange = valuerange;
             this.condition = condition;
+            this.guidelines = guidelines;
+            this.group = group;
+            this.position = position;
             this.parentDataStruct = parentDataStruct;
             this.parentDataStructShortname = parentDataStructShortname;
         }
 
         public String getName() {
             return name;
+        }
+        
+        public String getTitle() {
+        	return title;
         }
 
         public String getType() {
@@ -3999,6 +4083,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public String getShortDesc() {
             return shortDesc;
         }
+        
+        public String getGuidelines() {
+            return guidelines;
+        }
+        
+        public String getNotes() {
+            return notes;
+        }
+        
+        public String getGroup() {
+        	return group;
+        }
+        
+        public int getPosition() {
+        	return position;
+        }
 
         public String getParentDataStruct() {
             return parentDataStruct;
@@ -4007,7 +4107,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public String getParentDataStructShortname() {
             return parentDataStructShortname;
         }
-
     }
 
     /**
@@ -4032,6 +4131,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
+                
+                // try to read the server config from disk, if it is there.  otherwise the value set above at initialization is used.
+                readFitbirConfig();
 
                 dictionaryProvider = new DictionaryProvider(ddServerURL, authServerURL);
 
