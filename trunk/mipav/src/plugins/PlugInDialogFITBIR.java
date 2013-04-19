@@ -168,6 +168,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private int resolveConflictsUsing = 0;
 
     private static final String pluginVersion = "0.3";
+    
+    private static final String MAIN_GROUP_NAME = "Main";
+    
+    private static final String FILE_ELEMENT_TYPE = "File";
+    
+    private static final String IMG_FILE_ELEMENT_NAME = "ImgFileName";
+    
+    private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFileName";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
      public static final String FITBIR_PRIVACY_NOTICE = "FITBIR is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -1174,9 +1182,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 String v;
                 if (imageFile != null) {
                 	// TODO: hardcoded elements
-                    if (name.equalsIgnoreCase("image_file")) {
+                    if (name.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                         value = outputFileNameBase + ".zip";
-                    } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
+                    } else if (name.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                         value = outputFileNameBase + ".jpg";
                     } else {
                         // need to get appropriate value
@@ -2012,9 +2020,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * 
      */
     private class InfoDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
-        /**
-		 * 
-		 */
 		private static final long serialVersionUID = 859201819000159789L;
 
 		private final PlugInDialogFITBIR owner;
@@ -2049,9 +2054,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private String[] csvParams;
         
-        private static final String MAIN_GROUP_NAME = "Main";
-        
-        private static final String FILE_ELEMENT_TYPE = "File";
+        private final String[] unchangableElements = new String[] {
+        	"ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
+        };
 
         /**
          * constructor
@@ -2227,15 +2232,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
-            FileInputStream fis = null;
-            ZipInputStream zin;
             // TODO: hardcoded structure handling
             if (dataStructureName.startsWith("image")) {
                 // first check to see if image_file was supplied in the csv
                 int imageFileIndex = -1;
                 for (int i = 0; i < csvFieldNames.length; i++) {
                 	// TODO: hardcoded elements
-                    if (csvFieldNames[i].trim().equalsIgnoreCase("image_file")) {
+                    if (csvFieldNames[i].trim().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                         imageFileIndex = i;
                         break;
                     }
@@ -2247,72 +2250,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                     String imageFile = csvparams[imageFileIndex];
                     ModelImage srcImage = null;
-                    FileIO fileIO = new FileIO();
-                    fileIO.setQuiet(true);
-                    File file;
-                    boolean isMultifile = false;
-                    if (imageFile.endsWith(".zip")) {
-
-                        String destName = imageFile.replace("/", File.separator);
-                        destName = destName.replace("\\", File.separator);
-                        destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName
-                                .lastIndexOf("."));
-                        // String destDirName =
-                        String tempDir = csvFile.getParentFile().getAbsolutePath() + File.separator + destName
-                                + "_temp_" + System.currentTimeMillis();
-                        tempDirs.add(tempDir);
-                        File imageZipFile = new File(csvFile.getParentFile().getAbsolutePath() + File.separator
-                                + imageFile);
-                        String fileName = "";
-                        try {
-                            fis = new FileInputStream(imageZipFile);
-                            zin = new ZipInputStream(new BufferedInputStream(fis));
-                            FileOutputStream fout;
-                            ZipEntry entry;
-                            BufferedOutputStream dest = null;
-                            int BUFFER = 2048;
-                            int count;
-                            byte[] data = new byte[BUFFER];
-                            File f;
-                            // while we are at it, find the first file that does not have a .raw extension, so we can
-                            // open it
-
-                            while ( (entry = zin.getNextEntry()) != null) {
-                                f = new File(tempDir);
-                                if ( !f.exists()) {
-                                    f.mkdir();
-                                }
-                                if (fileName.equals("")) {
-                                    if ( !entry.getName().endsWith(".raw")) {
-                                        fileName = entry.getName();
-                                    }
-                                }
-                                fout = new FileOutputStream(tempDir + File.separator + entry.getName());
-                                dest = new BufferedOutputStream(fout, BUFFER);
-                                while ( (count = zin.read(data, 0, BUFFER)) != -1) {
-                                    dest.write(data, 0, count);
-                                }
-                            }
-                            dest.flush();
-                            dest.close();
-                            zin.close();
-
-                        } catch (final Exception e) {
-                            e.printStackTrace();
-                        }
-
-                        // now that everything has been unzipped, open the image from the tempDir
-                        file = new File(tempDir + File.separator + fileName);
-                        isMultifile = true;
-                        srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile,
-                                null);
-
-                    } else {
-                        file = new File(csvFile.getParentFile().getAbsolutePath() + File.separator + imageFile);
-                        isMultifile = false;
-                        srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile,
-                                null);
-                    }
+                    
+                    srcImage = readImgFromCSV(imageFile);
 
                     if (srcImage != null) {
 
@@ -2323,51 +2262,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
                             // TODO: hardcoded elements
-                            if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
+                            if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                final String n = file.getName();
                                 tf.setText("Automatically generated JPEG");
-                            } else if (l.getName().equalsIgnoreCase("image_file")) {
+                            } else if (l.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                tf.setText(file.getName());
+                                tf.setText(imageFile);
                                 tf.setEnabled(false);
                             }
-
                         }
-
-                        final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
-
-                        previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
-                        int slice = 0;
-                        if ( !srcImage.is2DImage()) {
-                            slice = (srcImage.getExtents()[2] / 2);
-                        }
-                        previewImg.createImg(slice);
-
-                        previewPanel.removeAll();
-                        previewPanel.repaint();
-
-                        previewPanel.add(previewImg);
-
-                        addedPreviewImage = true;
-
-                        if (launchedFromInProcessState) {
-                            final int selectedRow = sourceTable.getSelectedRow();
-                            previewImages.set(selectedRow, previewImg);
-                            previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
-                            imageFiles.set(selectedRow, file);
-                            multifiles.set(selectedRow, new Boolean(isMultifile));
-
-                        } else {
-                            final int size = previewImages.size();
-                            previewImages.set(size - 1, previewImg);
-                            previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
-                            imageFiles.set(size - 1, file);
-                            multifiles.set(size - 1, new Boolean(isMultifile));
-                        }
-
-                        previewPanel.validate();
-                        previewPanel.repaint();
 
                         // need to determine if there are any entries in cvs that has things like image extents or
                         // resolutions
@@ -2385,7 +2288,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
                                 // TODO: hardcoded elements
-                                if ( !key.equals("image_file")) {
+                                if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
                                     final Set<JLabel> keySet2 = labelsAndComps.keySet();
                                     final Iterator<JLabel> iter2 = keySet2.iterator();
                                     // System.out.println();
@@ -2400,11 +2303,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                                 t.setText(value);
 
                                             } else if (comp instanceof JComboBox) {
-                                                @SuppressWarnings("unchecked")
-												final JComboBox<String> c = (JComboBox<String>) comp;
+												final JComboBox c = (JComboBox) comp;
 
                                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = c.getItemAt(k);
+                                                    final String item = (String) c.getItemAt(k);
                                                     if (value.equalsIgnoreCase(item)) {
                                                         c.setSelectedIndex(k);
                                                     }
@@ -2415,16 +2317,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     }
                                 }
                             }
-
                         } else {
-
                             String key;
                             String value;
                             for (int i = 0; i < csvFieldNames.length; i++) {
 
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
-                                if ( !key.equals("image_file")) {
+                                if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
                                     final Set<JLabel> keySet2 = labelsAndComps.keySet();
                                     final Iterator<JLabel> iter2 = keySet2.iterator();
                                     // System.out.println();
@@ -2439,11 +2339,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                                 t.setText(value);
 
                                             } else if (comp instanceof JComboBox) {
-                                            	@SuppressWarnings("unchecked")
-                                                final JComboBox<String> c = (JComboBox<String>) comp;
+                                                final JComboBox c = (JComboBox) comp;
 
                                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                                    final String item = c.getItemAt(k);
+                                                    final String item = (String) c.getItemAt(k);
                                                     if (value.equalsIgnoreCase(item)) {
                                                         c.setSelectedIndex(k);
                                                     }
@@ -2454,16 +2353,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     }
                                 }
                             }
-
                             populateFields(labelsAndComps, srcImage);
 
                         }
 
                         srcImage.disposeLocal();
                         srcImage = null;
-
                     }
-
                 }
             } else {
                 // this means its not an imaging data structure
@@ -2489,11 +2385,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 t.setText(value);
 
                             } else if (comp instanceof JComboBox) {
-                                @SuppressWarnings("unchecked")
-								final JComboBox<String> c = (JComboBox<String>) comp;
+								final JComboBox c = (JComboBox) comp;
 
                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = c.getItemAt(k);
+                                    final String item = (String) c.getItemAt(k);
                                     if (value.equalsIgnoreCase(item)) {
                                         c.setSelectedIndex(k);
                                     }
@@ -2523,6 +2418,109 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             enableDisableFinishButton();
             dispose();
+        }
+        
+        private ModelImage readImgFromCSV(String imageFile) {
+        	String filePath;
+        	boolean isMultifile;
+        	FileIO fileIO = new FileIO();
+            fileIO.setQuiet(true);
+        	
+        	if (imageFile.endsWith(".zip")) {
+
+                String destName = imageFile.replace("/", File.separator);
+                destName = destName.replace("\\", File.separator);
+                destName = destName.substring(destName.lastIndexOf(File.separator) + 1, destName
+                        .lastIndexOf("."));
+                // String destDirName =
+                String tempDir = csvFile.getParentFile().getAbsolutePath() + File.separator + destName
+                        + "_temp_" + System.currentTimeMillis();
+                tempDirs.add(tempDir);
+                File imageZipFile = new File(csvFile.getParentFile().getAbsolutePath() + File.separator
+                        + imageFile);
+                String fileName = "";
+                try {
+                    FileInputStream fis = new FileInputStream(imageZipFile);
+                    ZipInputStream zin = new ZipInputStream(new BufferedInputStream(fis));
+                    FileOutputStream fout;
+                    ZipEntry entry;
+                    BufferedOutputStream dest = null;
+                    int BUFFER = 2048;
+                    int count;
+                    byte[] data = new byte[BUFFER];
+                    File f;
+                    // while we are at it, find the first file that does not have a .raw extension, so we can
+                    // open it
+
+                    while ( (entry = zin.getNextEntry()) != null) {
+                        f = new File(tempDir);
+                        if ( !f.exists()) {
+                            f.mkdir();
+                        }
+                        if (fileName.equals("")) {
+                            if ( !entry.getName().endsWith(".raw")) {
+                                fileName = entry.getName();
+                            }
+                        }
+                        fout = new FileOutputStream(tempDir + File.separator + entry.getName());
+                        dest = new BufferedOutputStream(fout, BUFFER);
+                        while ( (count = zin.read(data, 0, BUFFER)) != -1) {
+                            dest.write(data, 0, count);
+                        }
+                    }
+                    dest.flush();
+                    dest.close();
+                    zin.close();
+                } catch (final Exception e) {
+                    e.printStackTrace();
+                }
+
+                // now that everything has been unzipped, open the image from the tempDir
+                filePath = tempDir + File.separator + fileName;
+                isMultifile = true;
+            } else {
+            	// try to only open as a single file, since it wasn't zipped
+            	filePath = csvFile.getParentFile().getAbsolutePath() + File.separator + imageFile;
+            	isMultifile = false;
+            }
+        	
+            File file = new File(filePath);
+            ModelImage srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+            
+            final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+
+            previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
+            int slice = 0;
+            if ( !srcImage.is2DImage()) {
+                slice = (srcImage.getExtents()[2] / 2);
+            }
+            previewImg.createImg(slice);
+
+            previewPanel.removeAll();
+            previewPanel.repaint();
+
+            previewPanel.add(previewImg);
+
+            addedPreviewImage = true;
+
+            if (launchedFromInProcessState) {
+                final int selectedRow = sourceTable.getSelectedRow();
+                previewImages.set(selectedRow, previewImg);
+                previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
+                imageFiles.set(selectedRow, file);
+                multifiles.set(selectedRow, new Boolean(isMultifile));
+            } else {
+                final int size = previewImages.size();
+                previewImages.set(size - 1, previewImg);
+                previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
+                imageFiles.set(size - 1, file);
+                multifiles.set(size - 1, new Boolean(isMultifile));
+            }
+
+            previewPanel.validate();
+            previewPanel.repaint();
+            
+            return srcImage;
         }
 
         private void parseForInitLabelsAndComponents(final DataStruct ds2,
@@ -2701,7 +2699,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // System.out.println();
                 // if valuerange is enumeration, create a combo box...otherwise create a textfield
                 if (v != null && v.contains(";") && t != null && !t.equalsIgnoreCase("DATE")) {
-                    final JComboBox<String> cb = new JComboBox<String>();
+                    final JComboBox cb = new JComboBox();
                     cb.setName(n);
                     cb.setFont(MipavUtil.font12);
                     final String[] items = v.split(";");
@@ -2753,24 +2751,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     tf.setToolTipText(tooltip);
                     tf.addFocusListener(this);
                     
-                    // TODO: hardcoded element handling
-                    if (n.equalsIgnoreCase("image_num_dimensions")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_extent1")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_extent2")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_extent3")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_extent4")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_extent5")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_thumbnail_file")) {
-                        tf.setEnabled(false);
-                    } else if (n.equalsIgnoreCase("image_file")) {
-                        tf.setEnabled(false);
-                    }
+                    disableUnchangableFields(n, tf);
                     
                     if (r.equalsIgnoreCase("Required")) {
                         l.setForeground(Color.red);
@@ -2784,6 +2765,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
                 // }
             }
+        }
+        
+        private void disableUnchangableFields(String elementName, Component c) {
+        	for (String e : unchangableElements) {
+        		if (elementName.equalsIgnoreCase(e)) {
+        			c.setEnabled(false);
+        		}
+        	}
         }
 
         /**
@@ -2816,11 +2805,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 t.setText(value);
 
                             } else if (comp instanceof JComboBox) {
-                                @SuppressWarnings("unchecked")
-								final JComboBox<String> c = (JComboBox<String>) comp;
+								final JComboBox c = (JComboBox) comp;
 
                                 for (int k = 0; k < c.getItemCount(); k++) {
-                                    final String item = c.getItemAt(k);
+                                    final String item = (String) c.getItemAt(k);
                                     if (value.equalsIgnoreCase(item)) {
                                         c.setSelectedIndex(k);
                                     }
@@ -3074,20 +3062,18 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("image_extent5")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("image_unit1")) {
-                    @SuppressWarnings("unchecked")
-					final JComboBox<String> jc = (JComboBox<String>) comp;
+					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = jc.getItemAt(k);
+                        final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit2")) {
-                	@SuppressWarnings("unchecked")
-					final JComboBox<String> jc = (JComboBox<String>) comp;
+					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = jc.getItemAt(k);
+                        final String item = (String) jc.getItemAt(k);
                         if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3095,10 +3081,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit3")) {
                     if (img.getNDims() > 2) {
-                    	@SuppressWarnings("unchecked")
-    					final JComboBox<String> jc = (JComboBox<String>) comp;
+    					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = jc.getItemAt(k);
+                            final String item = (String) jc.getItemAt(k);
                             if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
@@ -3107,10 +3092,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 } else if (l.equalsIgnoreCase("image_unit4")) {
                     if (img.getNDims() > 3) {
-                    	@SuppressWarnings("unchecked")
-    					final JComboBox<String> jc = (JComboBox<String>) comp;
+    					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = jc.getItemAt(k);
+                            final String item = (String) jc.getItemAt(k);
                             if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
                                 jc.setSelectedIndex(k);
                             }
@@ -3138,20 +3122,18 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("image_resolution5")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("image_modality")) {
-                	@SuppressWarnings("unchecked")
-					final JComboBox<String> jc = (JComboBox<String>) comp;
+					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = jc.getItemAt(k);
+                        final String item = (String) jc.getItemAt(k);
                         if (modalityString.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_file_format")) {
-                	@SuppressWarnings("unchecked")
-					final JComboBox<String> jc = (JComboBox<String>) comp;
+					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = jc.getItemAt(k);
+                        final String item = (String) jc.getItemAt(k);
                         if (fileFormatString.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3165,10 +3147,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_orientation")) {
-                	@SuppressWarnings("unchecked")
-					final JComboBox<String> jc = (JComboBox<String>) comp;
+					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = jc.getItemAt(k);
+                        final String item = (String) jc.getItemAt(k);
                         if (orientation.equalsIgnoreCase(item)) {
                             jc.setSelectedIndex(k);
                         }
@@ -3538,7 +3519,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             return false;
         }
 
-        @SuppressWarnings("unchecked")
 		public boolean testCondition(String[] tokens) {
             String value = "";
             String key;
@@ -3558,7 +3538,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         if (comp instanceof JTextField) {
                             value = ((JTextField) comp).getText().trim();
                         } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
+                            value = (String) ( ((JComboBox) comp).getSelectedItem());
                         }
                         if (key.equalsIgnoreCase(name)) {
                             tokens[i] = value;
@@ -3620,7 +3600,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * @param imageFile
          * @param errs
          */
-        @SuppressWarnings("unchecked")
 		public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
 
@@ -3652,7 +3631,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         if (comp instanceof JTextField) {
                             value = ((JTextField) comp).getText().trim();
                         } else if (comp instanceof JComboBox) {
-                            value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
+                            value = (String) ( ((JComboBox) comp).getSelectedItem());
                         }
                         if (key.equalsIgnoreCase(name)) {
                             found = true;
@@ -3804,7 +3783,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         /**
          * called after validation is done
          */
-        @SuppressWarnings("unchecked")
 		public void complete(final TreeMap<JLabel, JComponent> labelsAndComps, final String dataStructShortname,
                 final boolean isComplete) {
             // System.out.println("in complete");
@@ -3830,7 +3808,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
 
                 } else if (comp instanceof JComboBox) {
-                    value = (String) ( ((JComboBox<String>) comp).getSelectedItem());
+                    value = (String) ( ((JComboBox) comp).getSelectedItem());
                 }
                 /*
                  * if(!value.equals("")) { System.out.println("the key is " + key); System.out.println("the value is " +
