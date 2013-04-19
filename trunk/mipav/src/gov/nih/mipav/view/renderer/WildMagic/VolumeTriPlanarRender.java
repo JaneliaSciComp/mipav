@@ -7,6 +7,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageCrop;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageExtract;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageSurfaceMask;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 
 import java.awt.Cursor;
@@ -99,7 +100,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		 if ( m_bSurfaceMaskUpdate )
 		 {
 			 m_bSurfaceMaskUpdate = false;
-			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
+//			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
+//
+//			 long startTime = System.currentTimeMillis();
+//			 for ( int i = 1; i < m_kDisplayList.size(); i++ )
+//			 {
+//				 if ( m_kDisplayList.elementAt(i) instanceof VolumeSurface )
+//				 {
+//					 ((VolumeSurface)m_kDisplayList.elementAt(i)).computeSurfaceMask();
+//				 }
+//			 }
+//			 long now = System.currentTimeMillis();
+//			 double elapsedTime = (double) (now - startTime);
+//
+//			 // if elasedTime is invalid, then set it to 0
+//			 if (elapsedTime <= 0) {
+//				 elapsedTime = (double) 0.0;
+//			 }
+//
+//			 System.err.println ("CPU SurfaceMask " + elapsedTime / 1000.0); // return in seconds!!
 		 }
 		 if ( m_bCrop )
 		 {

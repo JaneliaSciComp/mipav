@@ -1704,7 +1704,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 					  if ( kObj instanceof VolumeSurface )
 					  {
 						  m_bSurfaceUpdate = true;    
-						  m_bSurfaceMaskUpdate = true;                    
+						  m_bSurfaceMaskUpdate = true;   
+						  m_kVolumeImageA.removeSurfaceMask(kSurfaceName);
 					  }
 					  m_kDeleteList.add(kObj);
 				  }
@@ -2039,6 +2040,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				  {
 					  m_kDisplayList.get(i).SetColor( kColor, bUpdate );
+					  m_kVolumeImageA.setSurfaceMaskColor(kSurfaceName, kColor);
 					  m_bSurfaceMaskUpdate = true;
 				  }
 			  }
@@ -2329,6 +2331,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
 				  {
 					  ((VolumeSurface)(m_kDisplayList.get(i))).SetMaterial(kMaterial, bUpdate);
+					  m_kVolumeImageA.setSurfaceMaskColor(kSurfaceName, kMaterial.Diffuse);
 					  m_bSurfaceMaskUpdate = true;
 				  }
 			  }
