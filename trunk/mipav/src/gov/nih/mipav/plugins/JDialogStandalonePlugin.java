@@ -25,6 +25,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      */
     public JDialogStandalonePlugin() {
         super();
+        setVisibleMenuBar(false);
 
         setWindowSettings();
     }
@@ -38,6 +39,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      */
     public JDialogStandalonePlugin(final boolean modal) {
         super(modal);
+        setVisibleMenuBar(false);
 
         setWindowSettings();
     }
@@ -52,6 +54,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      */
     public JDialogStandalonePlugin(final Frame parent, final boolean modal) {
         super(parent, modal);
+        setVisibleMenuBar(false);
 
         setWindowSettings();
     }
@@ -66,6 +69,7 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
      */
     public JDialogStandalonePlugin(final Dialog parent, final boolean modal) {
         super(parent, modal);
+        setVisibleMenuBar(false);
 
         setWindowSettings();
     }
