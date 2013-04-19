@@ -182,6 +182,10 @@ public class VolumeSurface extends VolumeObject
     	{
     		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
     	}
+    	
+
+        
+        m_kVolumeImageA.setSurfaceMask(m_kMesh.GetName(), m_kMaterial.Diffuse, computeSurfaceMask() );
     }
 
     public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
@@ -282,6 +286,9 @@ public class VolumeSurface extends VolumeObject
     	{
     		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
     	}
+    	
+
+        m_kVolumeImageA.setSurfaceMask(m_kMesh.GetName(), m_kMaterial.Diffuse, computeSurfaceMask() );
     }
     
     private String[] m_akUnitsLabel;
@@ -1341,7 +1348,7 @@ public class VolumeSurface extends VolumeObject
      * This function is not accurate if the mesh is not closed, however it will still return a mask.
      * @return
      */
-    private BitSet createMask( )
+    private BitSet createVolumeMask( )
     {
     	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
@@ -1411,7 +1418,7 @@ public class VolumeSurface extends VolumeObject
                 System.err.println( startX + " " + endX + "      " + startY + " " + endY + "      " + startZ + "  " + endZ );
                 final Runnable task = new Runnable() {
                     public void run() {
-                        calcMask( mask, null, directions, startX, endX, startY, endY, startZ, endZ,
+                    	calcVolumeMask( mask, null, directions, startX, endX, startY, endY, startZ, endZ,
                         		iDimX, iDimY );
                         doneSignal.countDown();
                     }
@@ -1427,7 +1434,7 @@ public class VolumeSurface extends VolumeObject
         }
         else
         {
-            calcMask( mask, null, directions, xMin, xMax, yMin, yMax, zMin, zMax,
+        	calcVolumeMask( mask, null, directions, xMin, xMax, yMin, yMax, zMin, zMax,
             		iDimX, iDimY );
         }
     	
@@ -1450,7 +1457,7 @@ public class VolumeSurface extends VolumeObject
     }
 
 
-    private void calcMask( final BitSet mask, final ModelImage kOutputImage, final Vector3f[] directions, 
+    private void calcVolumeMask( final BitSet mask, final ModelImage kOutputImage, final Vector3f[] directions, 
     		final int xMin, final int xMax,
     		final int yMin, final int yMax, 
     		final int zMin, final int zMax,
@@ -1619,16 +1626,16 @@ public class VolumeSurface extends VolumeObject
 		return false;
     }
     
-    private BitSet m_kMask = null;
+    private BitSet m_kVolumeMask = null;
     private boolean testIntersectionMask( Vector3f kPos )
     {
-    	if ( m_kMask == null )
+    	if ( m_kVolumeMask == null )
     	{
-    		m_kMask = createMask();
+    		m_kVolumeMask = createVolumeMask();
     	}
     	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
-		return m_kMask.get( (int) (kPos.Z * iDimX * iDimY + kPos.Y * iDimX + kPos.X) );
+		return m_kVolumeMask.get( (int) (kPos.Z * iDimX * iDimY + kPos.Y * iDimX + kPos.X) );
     }
     
     
@@ -2139,6 +2146,7 @@ public class VolumeSurface extends VolumeObject
     }
     
 
+    private BitSet m_kSurfaceMask = null;
 	/**
 	 * Computes a volume mask of the triangle mesh surface. The BitSet mask volume has the same volume dimensions as the current image.
 	 * The mask is used to show the surface-plane intersections in the slice views.
@@ -2147,6 +2155,10 @@ public class VolumeSurface extends VolumeObject
 	 */
 	public BitSet computeSurfaceMask( )
 	{
+		if ( m_kSurfaceMask != null )
+		{
+			return m_kSurfaceMask;
+		}
 
 		BoxBV kBoundingBox = new BoxBV();
 		kBoundingBox.ComputeFromData( m_kMesh.VBuffer );
@@ -2166,7 +2178,7 @@ public class VolumeSurface extends VolumeObject
 		int dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;		
 		int dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;		
 				
-		BitSet mask = new BitSet( dimX * dimY * dimZ );
+		m_kSurfaceMask = new BitSet( dimX * dimY * dimZ );
 		Vector3f min = new Vector3f();
 		Vector3f max = new Vector3f();
 
@@ -2193,6 +2205,10 @@ public class VolumeSurface extends VolumeObject
 			m_kMesh.VBuffer.GetPosition3(iV1, kV1);
 			m_kMesh.VBuffer.GetPosition3(iV2, kV2);
 
+			meshToVolumeCoords(kV0);
+			meshToVolumeCoords(kV1);
+			meshToVolumeCoords(kV2);
+
 			// compute the axis-aligned bounding box of the triangle
 			min.copy( kV0 );
 			min.min( kV1 );
@@ -2209,7 +2225,7 @@ public class VolumeSurface extends VolumeObject
 			float iYMin = min.Y, iYMax = max.Y;
 			float iZMin = min.Z, iZMax = max.Z;
 			int ptr;
-			int end = mask.size();
+			int end = m_kSurfaceMask.size();
 
 			for (float iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
 
@@ -2219,7 +2235,7 @@ public class VolumeSurface extends VolumeObject
 					if (iX != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							mask.set(ptr);
+							m_kSurfaceMask.set(ptr);
 						}
 					}
 				}
@@ -2233,7 +2249,7 @@ public class VolumeSurface extends VolumeObject
 					if (iY != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							mask.set(ptr);
+							m_kSurfaceMask.set(ptr);
 						}
 					}
 				}
@@ -2247,13 +2263,13 @@ public class VolumeSurface extends VolumeObject
 					if (iZ != -1) {
 						ptr = Math.round(iX) + (dimX * (Math.round(iY) + (dimY * Math.round(iZ))));
 						if ( (ptr >= 0) && (ptr < end)) {
-							mask.set(ptr);
+							m_kSurfaceMask.set(ptr);
 						}
 					}
 				}
             }
         }		
-		return mask;
+		return m_kSurfaceMask;
 	}
 	
 	/**

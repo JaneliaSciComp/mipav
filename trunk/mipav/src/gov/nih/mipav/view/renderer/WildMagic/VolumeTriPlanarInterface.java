@@ -1441,6 +1441,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void removeSurface(final String kSurfaceName) {
         raycastRenderWM.removeSurface(kSurfaceName);
+        setModified();
     }
 
     /**

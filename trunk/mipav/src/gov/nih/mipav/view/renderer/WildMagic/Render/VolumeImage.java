@@ -15,10 +15,14 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.nio.Buffer;
+import java.util.BitSet;
+import java.util.Vector;
 
 
 import org.jocl.CL;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibGraphics.Rendering.*;
 
@@ -1018,6 +1022,115 @@ public class VolumeImage implements Serializable {
 	public Texture GetSurfaceTarget() {
 		return m_kSurfaceTarget;
 	}
+	
+	
+
+    /** A vector of BitSet masks, one for each surface loaded into the viewer. */
+    protected Vector<BitSet> surfaceMask;
+    /** A vector of the mask names, so they can be accessed by name: */
+    protected Vector<String> surfaceNames;
+    /** A vector of BitSet masks, one for each surface loaded into the viewer. */
+    protected Vector<ColorRGB> surfaceColor;
+	/**
+	 * Add a new surface mask.
+	 * @param name surface name.
+	 * @param mask surface mask volume.
+	 */
+	public void setSurfaceMask(String name, ColorRGB color, BitSet mask) 
+	{
+		if ( surfaceMask == null )
+		{
+			surfaceMask = new Vector<BitSet>();
+			surfaceNames = new Vector<String>();
+			surfaceColor = new Vector<ColorRGB>();
+		}
+		surfaceMask.add(mask);
+		surfaceNames.add(name);
+		surfaceColor.add(color);
+		updateMask();
+	}
+	
+	private void updateMask()
+	{
+		boolean bUpdate = false;
+		final int iXBound = m_kImage.getExtents()[0];
+		final int iYBound = m_kImage.getExtents()[1];
+		final int iZBound = m_kImage.getExtents()[2];
+		int length = iXBound * iYBound * iZBound;
+		for ( int i = 0; i < length; i++ )
+		{
+			boolean color = false;
+			for ( int surface = 0; surface < surfaceMask.size(); surface++ )
+			{
+				if ( surfaceMask.elementAt(surface).get(i) )
+				{
+					m_kSurfaceImage.GetData()[i * 4 + 0] = (byte) (surfaceColor.elementAt(surface).R * 255);
+					m_kSurfaceImage.GetData()[i * 4 + 1] = (byte) (surfaceColor.elementAt(surface).G * 255);
+					m_kSurfaceImage.GetData()[i * 4 + 2] = (byte) (surfaceColor.elementAt(surface).B * 255);
+					m_kSurfaceImage.GetData()[i * 4 + 3] = (byte) (255);
+					bUpdate = true;
+					color = true;
+				}
+			}
+			if ( !color )
+			{
+				m_kSurfaceImage.GetData()[i * 4 + 0] = (byte) (0);
+				m_kSurfaceImage.GetData()[i * 4 + 1] = (byte) (0);
+				m_kSurfaceImage.GetData()[i * 4 + 2] = (byte) (0);
+				m_kSurfaceImage.GetData()[i * 4 + 3] = (byte) (0);
+			}
+		}
+		if ( bUpdate )
+		{
+			m_kSurfaceTarget.Reload(true);
+		}
+	}
+
+	/**
+	 * Delete the surface mask, using the name of the mask as reference.
+	 * @param name the surface name.
+	 */
+	public void removeSurfaceMask(String name)
+	{
+		boolean bUpdate = false;
+		if ( surfaceMask != null && surfaceNames != null)
+		{
+			if ( surfaceNames.contains(name) )
+			{
+				surfaceMask.remove( surfaceNames.indexOf(name) );
+				surfaceColor.remove( surfaceNames.indexOf(name) );
+				surfaceNames.remove(name);
+				bUpdate = true;
+			}
+		}
+		if ( bUpdate )
+		{
+			updateMask();
+			m_kSurfaceTarget.Reload(true);
+		}
+	}
+	
+	/**
+	 * Delete the surface mask, using the name of the mask as reference.
+	 * @param name the surface name.
+	 */
+	public void setSurfaceMaskColor(String name, ColorRGB color)
+	{
+		boolean bUpdate = false;
+		if ( surfaceMask != null && surfaceNames != null)
+		{
+			if ( surfaceNames.contains(name) )
+			{
+				surfaceColor.elementAt( surfaceNames.indexOf(name) ).Copy(color);
+				bUpdate = true;
+			}
+		}
+		if ( bUpdate )
+		{
+			updateMask();
+		}
+	}
+	
 
 	/**
 	 * Returns the current rendered time-slice for 4D images. Otherwise returns 0.
@@ -1840,8 +1953,8 @@ public class VolumeImage implements Serializable {
 		m_kOpacityMapTarget_GM.SetShared(true);
 
 		// Initialize the Surface Mask Texture and set its GraphicsImage:
-		m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, new byte[4* iXBound
-		                                                                                                              * iYBound * iZBound], "SurfaceImage");
+		m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound,
+				new byte[4* iXBound * iYBound * iZBound], "SurfaceImage");
 		m_kSurfaceTarget = new Texture();
 		m_kSurfaceTarget.SetImage(m_kSurfaceImage);
 		m_kSurfaceTarget.SetShared(true);
@@ -1972,8 +2085,8 @@ public class VolumeImage implements Serializable {
 		m_kOpacityMapTarget_GM.SetShared(true);
 
 		// Initialize the Surface Mask Texture and set its GraphicsImage:
-		m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, new byte[4* iXBound
-		                                                                                                              * iYBound * iZBound], "SurfaceImage");
+		m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, 
+				new byte[4* iXBound * iYBound * iZBound], "SurfaceImage");
 		m_kSurfaceTarget = new Texture();
 		m_kSurfaceTarget.SetImage(m_kSurfaceImage);
 		m_kSurfaceTarget.SetShared(true);
