@@ -1214,7 +1214,7 @@ public class VolumeImage implements Serializable {
 				m_akImagesGM[i] = getGradientMagnitude( m_akImages[i], i, m_kDir );
 				if ( !m_akImages[i].isColorImage() )
 				{
-					kImageLaplace = getLaplace( m_akImages[i], i );			
+					//kImageLaplace = getLaplace( m_akImages[i], i );			
 					m_kVolumeGM[i] = createGM_Laplace(m_akImagesGM[i], kImageLaplace, m_kVolumeGM[i], i, true);
 				}
 				else
@@ -1231,14 +1231,14 @@ public class VolumeImage implements Serializable {
 				//	kImageFrame.close();
 				//}
 				//m_akImagesGM[i].disposeLocal();
-				if ( kImageLaplace != null )
-				{
-					ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
-					if (kImageFrame != null) {
-						kImageFrame.close();
-					}
-					kImageLaplace.disposeLocal();
-				}
+//				if ( kImageLaplace != null )
+//				{
+//					ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
+//					if (kImageFrame != null) {
+//						kImageFrame.close();
+//					}
+//					kImageLaplace.disposeLocal();
+//				}
 			}
 			m_kVolumeGMTarget.SetImage(m_kVolumeGM[m_iTimeSlice]);
 			m_kVolumeGMTarget.Reload(true);
