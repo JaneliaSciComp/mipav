@@ -639,7 +639,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase
 
         tmpStr = textMax.getText();
 
-        if (testParameter(tmpStr, 1, 1000000)) {
+        if (testParameter(tmpStr, 1, Integer.MAX_VALUE)) {
             max = Integer.valueOf(tmpStr).intValue();
         } else {
             textMax.requestFocus();
@@ -650,7 +650,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase
 
         tmpStr = textMin.getText();
 
-        if (testParameter(tmpStr, 1, 1000000)) {
+        if (testParameter(tmpStr, 1, Integer.MAX_VALUE)) {
             min = Integer.valueOf(tmpStr).intValue();
         } else {
             textMin.requestFocus();
