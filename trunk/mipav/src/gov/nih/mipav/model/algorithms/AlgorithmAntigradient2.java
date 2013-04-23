@@ -1,11 +1,16 @@
 package gov.nih.mipav.model.algorithms;
 
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.jama.LinearEquations2;
 
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -113,16 +118,249 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
     private int zDim;
     private double g[];
     private dataStruct data;
+    private ModelImage testImage;
+    boolean testMode = false;
     
     public AlgorithmAntigradient2(ModelImage destImage, ModelImage srcImg, boolean entireImage, 
                                   double fMean, int number_of_iterations) {
+        this(destImage, srcImg, entireImage, fMean, number_of_iterations, false);
+    }
+    
+    public AlgorithmAntigradient2(ModelImage destImage, ModelImage srcImg, boolean entireImage, 
+                                  double fMean, int number_of_iterations, boolean testMode) {
         super(destImage, srcImg);
         this.entireImage = entireImage;
         this.fMean = fMean;
         this.number_of_iterations = number_of_iterations;
         if (!entireImage) {
-            mask = srcImage.generateVOIMask();
+           mask = srcImage.generateVOIMask();
         }
+        this.testMode = testMode;
+    }
+    
+    // Constructor used for creating gradient images for self test
+    public AlgorithmAntigradient2() {
+    }
+    
+    public void run2DSelfTest() {
+        testMode = true;
+        FileIO fileIO;
+        boolean multiFile = false;
+        String directory = new String("C:" + File.separatorChar + "images" + File.separatorChar);
+        String fileName = new String("cap17black.fits");
+        try {
+            fileIO = new FileIO();
+
+            testImage =  fileIO.readImage(fileName, directory, multiFile, null);
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory!");
+
+            return;
+        }
+        number_of_iterations = 15;
+        int origXDim = testImage.getExtents()[0];
+        int origYDim = testImage.getExtents()[1];
+        xDim = origXDim - 2;
+        yDim = origYDim - 2;
+        int origSliceSize = origXDim * origYDim;
+        double buffer[] = new double[origSliceSize];
+        int x;
+        int y;
+        double sum;
+        int sliceSize = xDim * yDim;
+        double gx[] = new double[sliceSize];
+        double gy[] = new double[sliceSize];
+        int srcExtents[] = new int[3];
+        int destExtents[] = new int[2];
+        AlgorithmAntigradient2 algTest;
+        try {
+            testImage.exportData(0, origSliceSize, buffer);
+        }
+        catch (IOException e) {
+                displayError("AlgorithmAntigradient2: IOException on testImage.exportData(0, origSliceSize, buffer)");
+
+                setCompleted(false);
+
+                return;
+        }
+        sum = 0.0;
+        for (y = 1; y < origYDim - 1; y++) {
+            for (x = 1; x < origXDim - 1; x++) {
+                sum += buffer[x + y*origXDim];
+                gx[x - 1 + (y - 1)*xDim] = buffer[x+1 + (y-1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
+                                              + 2.0 * buffer[x+1 + y*origXDim] - 2.0*buffer[x-1 + y*origXDim]
+                                              + buffer[x+1 + (y+1)*origXDim] - buffer[x-1 + (y+1)*origXDim];
+                gy[x - 1 + (y - 1)*xDim] = buffer[x-1 + (y+1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
+                                              + 2.0*buffer[x + (y+1)*origXDim] - 2.0*buffer[x + (y-1)*origXDim]
+                                              + buffer[x+1 + (y+1)*origXDim] - buffer[x+1 + (y-1)*origXDim];
+            }
+        }
+        fMean = sum/sliceSize;
+        srcExtents[0] = xDim;
+        srcExtents[1] = yDim;
+        srcExtents[2] = 2;
+        ModelImage srcImage = new ModelImage(ModelStorageBase.DOUBLE, srcExtents, "test_source");
+        try {
+            srcImage.importData(0, gx, false);
+        }
+        catch(IOException e) {
+            displayError("AlgorithmAntigradient2: IOException on srcImage.importData(0, gx, false)");
+
+            setCompleted(false);
+
+            return;  
+        }
+        
+        try {
+            srcImage.importData(sliceSize, gy, true);
+        }
+        catch(IOException e) {
+            displayError("AlgorithmAntigradient2: IOException on srcImage.importData(sliceSize, gy, true)");
+
+            setCompleted(false);
+
+            return;  
+        }
+        destExtents[0] = xDim;
+        destExtents[1] = yDim;
+        ModelImage destImage = new ModelImage(ModelStorageBase.DOUBLE, destExtents, "test_destination");
+        algTest = new AlgorithmAntigradient2(destImage, srcImage, true, fMean, number_of_iterations, testMode);
+        algTest.run();
+        return;
+    }
+    
+    public void run3DSelfTest() {
+        testMode = true;
+        FileIO fileIO;
+        boolean multiFile = false;
+        String directory = new String("C:" + File.separatorChar + "images" + File.separatorChar);
+        String fileName = new String("genormcor.fits");
+        try {
+            fileIO = new FileIO();
+
+            testImage =  fileIO.readImage(fileName, directory, multiFile, null);
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory!");
+
+            return;
+        }
+        number_of_iterations = 15;
+        int origXDim = testImage.getExtents()[0];
+        int origYDim = testImage.getExtents()[1];
+        int origZDim = testImage.getExtents()[2];
+        xDim = origXDim - 2;
+        yDim = origYDim - 2;
+        zDim = origZDim - 2;
+        int origSliceSize = origXDim * origYDim;
+        int origVolume = origSliceSize * origZDim;
+        double buffer[] = new double[origVolume];
+        int x;
+        int y;
+        int z;
+        double sum;
+        int sliceSize = xDim * yDim;
+        int volume = sliceSize * zDim;
+        double gx[] = new double[volume];
+        double gy[] = new double[volume];
+        double gz[] = new double[volume];
+        int srcExtents[] = new int[4];
+        int destExtents[] = new int[3];
+        AlgorithmAntigradient2 algTest;
+        try {
+            testImage.exportData(0, origVolume, buffer);
+        }
+        catch (IOException e) {
+                displayError("AlgorithmAntigradient2: IOException on testImage.exportData(0, origVolume, buffer)");
+
+                setCompleted(false);
+
+                return;
+        }
+        sum = 0.0;
+        for (z = 1; z < origZDim - 1; z++) {
+            for (y = 1; y < origYDim - 1; y++) {
+                for (x = 1; x < origXDim - 1; x++) {
+                    sum += buffer[x + y*origXDim + z*origSliceSize];
+                    gx[x - 1 + (y - 1)*xDim + (z-1)*sliceSize] = 
+                      buffer[x+1 + (y-1)*origXDim + (z-1)*origSliceSize] - buffer[x-1 + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x+1 + (y-1)*origXDim + z*origSliceSize] - 2.0*buffer[x-1 + (y-1)*origXDim + z*origSliceSize]
+                    + buffer[x+1 + (y-1)*origXDim + (z+1)*origSliceSize] - buffer[x-1 + (y-1)*origXDim + (z+1)*origSliceSize]
+                    + 2.0 * buffer[x+1 + y*origXDim + (z-1)*origSliceSize] - 2.0 * buffer[x-1 + y*origXDim + (z-1)*origSliceSize] 
+                    + 4.0 * buffer[x+1 + y*origXDim + z*origSliceSize] - 4.0 * buffer[x-1 + y*origXDim + z*origSliceSize] 
+                    + 2.0 * buffer[x+1 + y*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x-1 + y*origXDim + (z+1)*origSliceSize] 
+                    + buffer[x+1 + (y+1)*origXDim + (z-1)*origSliceSize] - buffer[x-1 + (y+1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x+1 + (y+1)*origXDim + z*origSliceSize] - 2.0*buffer[x-1 + (y+1)*origXDim + z*origSliceSize]
+                    + buffer[x+1 + (y+1)*origXDim + (z+1)*origSliceSize] - buffer[x-1 + (y+1)*origXDim + (z+1)*origSliceSize];
+                    
+                    gy[x - 1 + (y - 1)*xDim + (z-1)*sliceSize] = 
+                      buffer[x-1 + (y+1)*origXDim + (z-1)*origSliceSize] - buffer[x-1 + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x-1 + (y+1)*origXDim + z*origSliceSize] - 2.0 * buffer[x-1 + (y-1)*origXDim + z*origSliceSize] 
+                    + buffer[x-1 + (y+1)*origXDim + (z+1)*origSliceSize] - buffer[x-1 + (y-1)*origXDim + (z+1)*origSliceSize]
+                    + 2.0 * buffer[x + (y+1)*origXDim + (z-1)*origSliceSize] - 2.0 * buffer[x + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 4.0 * buffer[x + (y+1)*origXDim + z*origSliceSize] - 4.0 * buffer[x + (y-1)*origXDim + z*origSliceSize] 
+                    + 2.0 * buffer[x + (y+1)*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x + (y-1)*origXDim + (z+1)*origSliceSize]
+                    + buffer[x+1 + (y+1)*origXDim + (z-1)*origSliceSize] - buffer[x+1 + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x+1 + (y+1)*origXDim + z*origSliceSize] - 2.0 * buffer[x+1 + (y-1)*origXDim + z*origSliceSize] 
+                    + buffer[x+1 + (y+1)*origXDim + (z+1)*origSliceSize] - buffer[x+1 + (y-1)*origXDim + (z+1)*origSliceSize];
+                    
+                    gz[x - 1 + (y - 1)*xDim + (z-1)*sliceSize] = 
+                      buffer[x-1 + (y-1)*origXDim + (z+1)*origSliceSize] - buffer[x-1 + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x-1 + y*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x-1 + y*origXDim + (z-1)*origSliceSize]
+                    + buffer[x-1 + (y+1)*origXDim + (z+1)*origSliceSize] - buffer[x-1 + (y+1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x + (y-1)*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 4.0 * buffer[x + y*origXDim + (z+1)*origSliceSize] - 4.0 * buffer[x + y*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x + (y+1)*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x + (y+1)*origXDim + (z-1)*origSliceSize]
+                    + buffer[x+1 + (y-1)*origXDim + (z+1)*origSliceSize] - buffer[x+1 + (y-1)*origXDim + (z-1)*origSliceSize]
+                    + 2.0 * buffer[x+1 + y*origXDim + (z+1)*origSliceSize] - 2.0 * buffer[x+1 + y*origXDim + (z-1)*origSliceSize]
+                    + buffer[x+1 + (y+1)*origXDim + (z+1)*origSliceSize] - buffer[x+1 + (y+1)*origXDim + (z-1)*origSliceSize];
+                }
+            }
+        }
+        fMean = sum/sliceSize;
+        srcExtents[0] = xDim;
+        srcExtents[1] = yDim;
+        srcExtents[2] = zDim;
+        srcExtents[3] = 3;
+        ModelImage srcImage = new ModelImage(ModelStorageBase.DOUBLE, srcExtents, "test_source");
+        try {
+            srcImage.importData(0, gx, false);
+        }
+        catch(IOException e) {
+            displayError("AlgorithmAntigradient2: IOException on srcImage.importData(0, gx, false)");
+
+            setCompleted(false);
+
+            return;  
+        }
+        
+        try {
+            srcImage.importData(volume, gy, false);
+        }
+        catch(IOException e) {
+            displayError("AlgorithmAntigradient2: IOException on srcImage.importData(volume, gy, false)");
+
+            setCompleted(false);
+
+            return;  
+        }
+        
+        try {
+            srcImage.importData(2*volume, gz, true);
+        }
+        catch(IOException e) {
+            displayError("AlgorithmAntigradient2: IOException on srcImage.importData(2*volume, gz, true)");
+
+            setCompleted(false);
+
+            return;  
+        }
+        destExtents[0] = xDim;
+        destExtents[1] = yDim;
+        destExtents[2] = zDim;
+        ModelImage destImage = new ModelImage(ModelStorageBase.DOUBLE, destExtents, "test_destination");
+        algTest = new AlgorithmAntigradient2(destImage, srcImage, true, fMean, number_of_iterations, testMode);
+        algTest.run();
+        return;
     }
     
     public void runAlgorithm() {
@@ -187,6 +425,7 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
          */
         rhs = new double[area];
         lhs = new double[9 * area];
+        data = new dataStruct();
         data.lhs[0] = lhs;
         weight = new double[area];
         for (y = 0; y < yDim; y++)
@@ -299,11 +538,15 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
             destImage.importData(0, f_out, true);
         }
         catch(IOException e) {
-            displayError("AlgorithmAntigradient2: IOException on destImage.importData(0, f_out, true)");
+            displayError("AlgorithmAntigradient2: IOException " + e + " on destImage.importData(0, f_out, true)");
 
             setCompleted(false);
 
             return;  
+        }
+        
+        if (testMode) {
+            new ViewJFrameImage(destImage);
         }
 
         rhs = null;
@@ -1554,6 +1797,10 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
             setCompleted(false);
 
             return;  
+        }
+        
+        if (testMode) {
+            new ViewJFrameImage(destImage);
         }
         
         rhs = null;
