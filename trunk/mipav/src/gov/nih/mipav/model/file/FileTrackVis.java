@@ -235,13 +235,46 @@ public class FileTrackVis extends FileBase {
 					z = z / zRes;
 					
 					contour.add(new Vector3f(x, y, z));
+					
+					xInt = (int)x; //TODO: Import as VOIContours to preserve float specification
+					yInt = (int)y;
+					zInt = (int)z;
+					points[0] = xInt;
+					points[1] = yInt;
+					points[2] = zInt;
+					if(points.length > 3) {
+						points[3] = 0;
+					}
+					
+					int[] extents = image.getExtents();
+					int dataPoint = 0, subPoint = 0;
+					for(int n=0; n<points.length; n++) {
+						subPoint = points[n];
+						for(int m=1; m<n+1; m++) {
+							subPoint *= extents[m-1];
+						}
+						dataPoint += subPoint;
+					}
+					
+					image.set(dataPoint, i+1);
+					
+					short s = image.get(points).shortValue();
+					short sTry = image.getShort(xInt, yInt, zInt);
+					//System.out.println("S: "+s);
+					
+					for(int k=3; k<numData; k++) { //in this case must be a 4D dataset
+						points[3] = k-3;
+						data = this.readFloat(bigEndian);
+						//System.out.println("Data at point : "+data);
+						image.set(points, (short)data);
+					}
 				}
 				
-				//long time = System.currentTimeMillis();
+				long time = System.currentTimeMillis();
 				
 				v.importCurve(contour);
 				
-				//System.out.println("Time: "+(System.currentTimeMillis() - time));
+				System.out.println("Time: "+(System.currentTimeMillis() - time));
 				
 				float[] trackSpecific  = new float[nProperties];
 				for(int j=0; j<nProperties; j++) {
