@@ -87,7 +87,9 @@ In Antigradient2.c I note the 2 differences in poisson_multigrid2D and poisson_m
 
 2.) poisson_multigrid2D has if (1) at the end but poisson_multigrid3D has if (0) at the end.
 
-
+Reference:
+"Efficient Computation of the Inverse Gradient on Irregular Domains" by Gunnar Farneback,
+Joakim Rydell, Tino Ebbers, Mats Andersson, and Hans Knutsson.
  *
  */
 
