@@ -221,6 +221,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
+                menuBuilder.buildMenuItem("Inverse gradient", "antigradient2", 0, null, false),
                 menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
@@ -1146,6 +1147,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Reorientation / Resampling", false);
             menuBuilder.setMenuItemEnabled("Histogram slice matching", false);
             menuBuilder.setMenuItemEnabled("Tilt correction", false);
+            menuBuilder.setMenuItemEnabled("Inverse gradient", false);
         }
 
         if (ModelImage.isColorImage(type)) {
@@ -1190,6 +1192,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
+            menuBuilder.setMenuItemEnabled("Inverse gradient", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
