@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
@@ -547,6 +549,17 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
         
         if (testMode) {
             new ViewJFrameImage(destImage);
+            FileWriteOptions opts = new FileWriteOptions(true);
+            opts.setFileType(FileUtility.XML);
+            opts.setFileDirectory("C:" + File.separatorChar + "images" + File.separatorChar);
+            opts.setFileName("cap17black_inverseGradient.xml");
+            opts.setBeginSlice(0);
+            opts.setEndSlice(1);
+            opts.setTimeSlice(0);
+            opts.setEndTime(0);
+            opts.setOptionsSet(true);
+            FileIO fileIO = new FileIO();
+            fileIO.writeImage(srcImage, opts);
         }
 
         rhs = null;
@@ -1801,6 +1814,17 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
         
         if (testMode) {
             new ViewJFrameImage(destImage);
+            FileWriteOptions opts = new FileWriteOptions(true);
+            opts.setFileType(FileUtility.XML);
+            opts.setFileDirectory("C:" + File.separatorChar + "images" + File.separatorChar);
+            opts.setFileName("genormcor_inverseGradient.xml");
+            opts.setBeginSlice(0);
+            opts.setEndSlice(zDim-1);
+            opts.setTimeSlice(0);
+            opts.setEndTime(2);
+            opts.setOptionsSet(true);
+            FileIO fileIO = new FileIO();
+            fileIO.writeImage(srcImage, opts);
         }
         
         rhs = null;
