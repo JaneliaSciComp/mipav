@@ -366,6 +366,7 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
     }
     
     public void runAlgorithm() {
+        fireProgressStateChanged(0, srcImage.getImageName(), "Inverse gradient on image ...");
         int nDims;
         nDims = srcImage.getNDims();
         if (nDims == 4) {
@@ -552,7 +553,7 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
             FileWriteOptions opts = new FileWriteOptions(true);
             opts.setFileType(FileUtility.XML);
             opts.setFileDirectory("C:" + File.separatorChar + "images" + File.separatorChar);
-            opts.setFileName("cap17black_inverseGradient.xml");
+            opts.setFileName("cap17black_gradient.xml");
             opts.setBeginSlice(0);
             opts.setEndSlice(1);
             opts.setTimeSlice(0);
@@ -1817,7 +1818,7 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
             FileWriteOptions opts = new FileWriteOptions(true);
             opts.setFileType(FileUtility.XML);
             opts.setFileDirectory("C:" + File.separatorChar + "images" + File.separatorChar);
-            opts.setFileName("genormcor_inverseGradient.xml");
+            opts.setFileName("genormcor_gradient.xml");
             opts.setBeginSlice(0);
             opts.setEndSlice(zDim-1);
             opts.setTimeSlice(0);
