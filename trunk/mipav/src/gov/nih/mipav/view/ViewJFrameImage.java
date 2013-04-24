@@ -1071,6 +1071,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogExtractSurfaceCubes(this, getActiveImage());
             // } else if (command.equals("adaptiveSkeletonClimbing")) { // Superceded by Extract surface cubes new
             // JDialogClimb3D(this, getActiveImage()); }
+        } else if (command.equals("antigradient2")) {
+            new JDialogAntigradient2(this, getActiveImage());
         } else if (command.equals("entropyMin")) {
             new JDialogEntropyMinimization(this, getActiveImage());
         } else if (command.equals("MRICorrection")) {
