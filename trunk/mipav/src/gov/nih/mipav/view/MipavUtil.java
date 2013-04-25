@@ -18,6 +18,8 @@ import javax.help.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import libnative.MipavJarLoader;
+
 
 /**
  * A collection of static methods and frequently used and useful constants are in this utility class.
@@ -844,6 +846,60 @@ public class MipavUtil extends JComponent {
             return false; //no range for pixel to be in
             
         }
+    }
+    
+    /**
+     * Loads a dynamic library of the given name and path and places it in
+     * the Java temp directory.
+     */
+    public static void loadDynamicLib(String path, String name) {
+    	String is64 = System.getProperty("sun.arch.data.model");
+    	String osName = System.getProperty("os.name").toLowerCase();
+    	name = new String(name);
+    	if(is64.equals("64") && osName.startsWith("windows")) {
+    		name = name + "_64.dll";
+    	} else if(osName.startsWith("windows")) {
+    		name = name+".dll";
+    	} else if(osName.contains("mac")) {
+    		name = name+"-osx.jnilib";
+    	} else if(is64.equals("64")) { //"must" be linux
+    		name = name+"-linux64.so";
+    	} else {
+    		name = name+"-linux.so";
+    	}
+    	
+    	InputStream source = null;
+		FileOutputStream destination = null;
+    
+		try {
+	    	try {
+	    		
+	    		byte[] buffer = new byte[102400];
+	    		URL url = MipavJarLoader.class.getResource(path+name);
+				source = MipavJarLoader.class.getResourceAsStream(path+name);
+				File fileOut = new File(Preferences.getPreferencesDir()+File.separator+"plugins"+ File.separator+path + name);
+				System.out.println("Writing file to: "+fileOut);
+				destination = new FileOutputStream(fileOut);
+				int len = 0;
+				while((len = source.read(buffer)) != -1) {
+					destination.write(buffer, 0, len);
+				}
+				destination.flush();
+				System.load(fileOut.toString());
+	
+	    	} catch (Exception e) {
+	    		Preferences.debug("Failed to load library.", Preferences.DEBUG_MINOR);
+	    	} finally {
+				if(source != null) {
+					source.close();
+				}
+				if(destination != null) {
+					destination.close();
+				}
+			}
+		} catch (Exception e) {
+    		Preferences.debug("Failed to load library.", Preferences.DEBUG_MINOR);
+    	}
     }
 
     /**
