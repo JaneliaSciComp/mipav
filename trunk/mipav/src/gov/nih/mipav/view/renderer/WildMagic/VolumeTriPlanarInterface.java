@@ -23,6 +23,7 @@ import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
+import gov.nih.mipav.view.input.spacenav.*;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
@@ -76,6 +77,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -125,8 +127,9 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import com.jogamp.opengl.util.Animator;
 
 
-public class VolumeTriPlanarInterface extends JFrame
-implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentListener, ChangeListener, VOIManagerInterfaceListener, PropertyChangeListener
+public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateInterface, ActionListener, WindowListener, 
+																ComponentListener, ChangeListener, VOIManagerInterfaceListener, 
+																PropertyChangeListener, SpaceNavigatorListener
 {
     public class IntVector extends Vector<Integer> {
         /**  */
@@ -382,6 +385,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
         this.configureFrame();
         MipavInitGPU.InitGPU();
+        if(SpaceNavigatorController.hasSpaceNavigator()) {
+        	SpaceNavigatorPoller.registerListener(this);
+        }
     }
 
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
@@ -435,6 +441,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         raycastRenderWM.setVisible(true);
         m_kAnimator.setRunAsFastAsPossible(true);
     	m_kAnimator.start();
+    	if(SpaceNavigatorController.hasSpaceNavigator()) {
+        	SpaceNavigatorPoller.registerListener(this);
+        }
     }
 
     /*
@@ -2369,7 +2378,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     private void disposeImageIndependentComponents() {
-        if (displayGUI != null) {
+        if(SpaceNavigatorController.hasSpaceNavigator()) {
+        	SpaceNavigatorPoller.deRegisterListener(this);
+        }
+    	
+    	if (displayGUI != null) {
             displayGUI.disposeLocal();
             displayGUI = null;
         }
@@ -3461,5 +3474,20 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 	        updateABBlend( );
 		}
 
+	}
+
+	@Override
+	public void processSpaceNavEvent() {
+		DecimalFormat dec = new DecimalFormat("0.00000");
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
+		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
+		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
+		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
+		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
+		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
+		
+		System.out.println(builder.toString());
 	}        
 }
