@@ -268,6 +268,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if ( !GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initializeGui();
+            loadMouseDrivers();
         }
 
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
@@ -278,7 +279,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
-    /**
+	/**
      * This method should only be called once, and it should only be called by MipavMain to during the initialization of
      * MIPAV.
      * 
@@ -1358,6 +1359,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
     }
+    
+    private void loadMouseDrivers() {
+    	try {
+    		System.loadLibrary("jinput");
+    	} catch (UnsatisfiedLinkError e) {
+        	String path = File.separator;
+        	String osName = System.getProperty("os.name").toLowerCase();
+        	if(osName.startsWith("windows")) {
+        		MipavUtil.loadDynamicLib(path, "jinput-raw");
+        		MipavUtil.loadDynamicLib(path, "jinput-wintab");
+        		MipavUtil.loadDynamicLib(path, "jinput-dx8");
+        	} else {
+        		MipavUtil.loadDynamicLib(path, "libjinput");
+        	} 
+    	}
+	}
 
     /**
      * Builds the image tree dialog and displays it.
