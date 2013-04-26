@@ -113,11 +113,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     protected VToolSimpleAccessionClient client;
     
-    private static final String stageServer = "ndar-stage-apps.cit.nih.gov";
-    private static final String demoServer = "ndardemo.nih.gov";
-    private static final String prodServer = "ndarportal.nih.gov";
+    private static final String stageServer = "ndar-stage-jboss.cit.nih.gov";
+    private static final String demoServer = "ndar-demo-jboss.cit.nih.gov";
+    private static final String prodServer = "ndar-jboss.cit.nih.gov";
     
-    private String data_dictionary_server_url = "http://" + prodServer + "/NewDataDictionary/dataDictionary?wsdl";
+    private String data_dictionary_server_url = "http://" + prodServer + "/DataDictionary/dataDictionary?wsdl";
+    
+    /** Server configuration file. */
+    private static final String configFileName = "ndar_config.properties";
+    
+    /** Property for reading the dd server url from the fitbir config file. */
+    private static final String ddServerURLProp = "ddServerURL";
 
     private List<XmlDataType> dataTypes;
 
@@ -139,7 +145,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "2.4";
+    private static final String pluginVersion = "2.5";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -1668,7 +1674,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel);
         brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+    }
+    
+    /**
+     * Tries to read server configuration from ndar config file on local disk. 
+     */
+    private void readConfig() {
+    	InputStream in = getClass().getResourceAsStream(configFileName);
+    	if (in != null) {
+    		Properties prop = new Properties();
+    		try {
+    			prop.load(in);
+    		} catch (IOException e) {
+    			Preferences.debug("Unable to load NDAR preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+    			e.printStackTrace();
+    		}
+    		// use pre-set, hardcoded values as defaults if properties are not found
+    		data_dictionary_server_url = prop.getProperty(ddServerURLProp, data_dictionary_server_url);
+    		System.out.println("ddServer:\t" + data_dictionary_server_url);
+    	}
     }
 
     /**
@@ -3971,6 +3995,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
+                
+                // try to read the server config from disk, if it is there.  otherwise the value set above at initialization is used.
+                readConfig();
 
                 dataDictionaryProvider = new DataDictionaryProvider(data_dictionary_server_url);
 
@@ -4019,5 +4046,4 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
         }
     }
-
 }
