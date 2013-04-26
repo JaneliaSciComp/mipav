@@ -134,8 +134,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** Prod portal auth server. */
     private static final String authProdServer = "https://fitbir.nih.gov/";
     
-    /** Path to server configuration file path. */
-    private static final String configFilePath = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "fitbir_config.properties";
+    /** File name of server configuration. */
+    private static final String configFileName = "fitbir_config.properties";
     
     /** Property for reading the dd server url from the fitbir config file. */
     private static final String ddServerURLProp = "ddServerURL";
@@ -1662,14 +1662,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /**
      * Tries to read server configuration from fitbir config file on local disk. 
      */
-    private void readFitbirConfig() {
-    	File configFile = new File(configFilePath);
-    	if (configFile.exists() && configFile.canRead()) {
+    private void readConfig() {
+    	InputStream in = getClass().getResourceAsStream(configFileName);
+    	if (in != null) {
     		Properties prop = new Properties();
     		try {
-    			prop.load(new FileInputStream(configFile));
+    			prop.load(in);
     		} catch (IOException e) {
-    			Preferences.debug("Unable to load FITBIR preferences file: " + configFilePath + "\n", Preferences.DEBUG_MINOR);
+    			Preferences.debug("Unable to load FITBIR preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
     			e.printStackTrace();
     		}
     		// use pre-set, hardcoded values as defaults if properties are not found
@@ -3215,7 +3215,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         ((JTextField) comp).setText(scannerType);
                         label.setForeground(Color.red);
                     }
-
                 }
 
                 // String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
@@ -4111,7 +4110,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 progressBar.updateValue(20);
                 
                 // try to read the server config from disk, if it is there.  otherwise the value set above at initialization is used.
-                readFitbirConfig();
+                readConfig();
 
                 dictionaryProvider = new DictionaryProvider(ddServerURL, authServerURL);
 
