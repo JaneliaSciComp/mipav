@@ -1203,6 +1203,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogAutoCovariance(this, getActiveImage());
         } else if (command.equals("nmsuppression")) {
             new JDialogNMSuppression(this, getActiveImage());
+        } else if (command.equals("sobel")) {
+            new JDialogSobel(this, getActiveImage());
         } else if (command.equals("zxsuppression")) {
             new JDialogEdgeNMSuppression(this, getActiveImage());
         } else if (command.equals("sliceAveraging")) {
