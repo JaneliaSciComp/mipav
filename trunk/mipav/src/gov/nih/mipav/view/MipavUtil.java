@@ -875,7 +875,6 @@ public class MipavUtil extends JComponent {
 	    	try {
 	    		
 	    		byte[] buffer = new byte[102400];
-	    		URL url = MipavJarLoader.class.getResource(path+name);
 				source = MipavJarLoader.class.getResourceAsStream(path+name);
 				File fileOut = new File(Preferences.getPreferencesDir()+File.separator+"plugins"+ File.separator+path + name);
 				System.out.println("Writing file to: "+fileOut);
@@ -885,10 +884,12 @@ public class MipavUtil extends JComponent {
 					destination.write(buffer, 0, len);
 				}
 				destination.flush();
+				destination.close();
+				
 				System.load(fileOut.toString());
-	
 	    	} catch (Exception e) {
-	    		Preferences.debug("Failed to load library.", Preferences.DEBUG_MINOR);
+	    		e.printStackTrace();
+	    		Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
 	    	} finally {
 				if(source != null) {
 					source.close();
@@ -898,7 +899,7 @@ public class MipavUtil extends JComponent {
 				}
 			}
 		} catch (Exception e) {
-    		Preferences.debug("Failed to load library.", Preferences.DEBUG_MINOR);
+			Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
     	}
     }
 

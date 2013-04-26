@@ -1364,7 +1364,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     	try {
     		System.loadLibrary("jinput");
     	} catch (UnsatisfiedLinkError e) {
-        	String path = File.separator;
+        	String path = "/";
         	String osName = System.getProperty("os.name").toLowerCase();
         	if(osName.startsWith("windows")) {
         		MipavUtil.loadDynamicLib(path, "jinput-raw");
