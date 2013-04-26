@@ -194,6 +194,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
                         menuBuilder.buildMenuItem("Regularized isotropic diffusion", "RegIsoDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
+                        menuBuilder.buildMenuItem("Sobel gradient components", "sobel", 0, null, false),
                         menuBuilder.buildMenuItem("Tamura texture", "Tamura", 0, null, false),
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
@@ -1058,6 +1059,7 @@ public class ViewMenuBar {
                 menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             }
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
+            menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1193,6 +1195,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Two MRI images", false);
             menuBuilder.setMenuItemEnabled("Hough transform", false);
             menuBuilder.setMenuItemEnabled("Inverse gradient", false);
+            menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
