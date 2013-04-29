@@ -4,7 +4,7 @@
     ==========
         MIPAV group software build file
         http://mipav.cit.nih.gov
-        contact: parsonsd@dcb.cit.nih.gov
+        contact: mipav@mipav.cit.nih.gov
     ==========
 -->
 <project basedir="." default="compile" name="mipav">
@@ -36,6 +36,7 @@
     <property name="dir.dest" value="classes"/>
     <property name="dir.doc" value="javadoc"/>
     <property name="dir.lib" value="${dir.source}/lib"/>
+    <property name="dir.libnative" value="${dir.source}/libnative"/>
 
     <!--
         =========
@@ -67,8 +68,8 @@
             Javadoc options
         =========
     -->
-    <property name="doc.access" value="protected"/>
-    <property name="doc.link" value="http://java.sun.com/javase/6/docs/api/"/>
+    <property name="doc.access" value="private"/>
+    <property name="doc.link" value="http://docs.oracle.com/javase/6/docs/api/"/>
     <property name="doc.linksource" value="no"/>
     <property name="doc.breakiterator" value="yes"/>
     <property name="doc.failonerror" value="yes"/>
@@ -106,6 +107,10 @@
             <!-- include all jar files under the lib directory -->
             <fileset dir="${dir.lib}">
                 <filename description="JARs of required libraries" name="**/*.jar"/>
+            </fileset>
+            <!-- include all jar files under the native lib directory -->
+            <fileset dir="${dir.libnative}">
+                <filename description="JARs of required native libraries" name="**/*.jar"/>
             </fileset>
         </path>
         <property name="build.cp" refid="build.classpath" />
@@ -254,6 +259,7 @@
             <fileset file="${dir.source}/private_dictionary.txt"/>
             <fileset file="${dir.source}/tDist.csv"/>
             <fileset file="${dir.source}/DICOMhelp.txt"/>
+            <fileset dir="${dir.source}/plugins" includes="*.properties"/>
         </copy>
 
         <!-- MIPAV license files/information -->
@@ -271,7 +277,10 @@
         </copy>-->
 
         <copy todir="${dir.dest}/lib">
-            <fileset dir="${dir.source}/lib" excludes=".svn"/>
+            <fileset dir="${dir.lib}" excludes=".svn"/>
+        </copy>
+        <copy todir="${dir.dest}/libnative">
+            <fileset dir="${dir.libnative}" excludes=".svn,.java"/>
         </copy>
     </target>
 
@@ -320,14 +329,14 @@
         <mkdir dir="${dir.doc}"/>
         <javadoc destdir="${dir.doc}"
                 packagenames="gov.nih.*"
-                maxmemory="500M"
+                maxmemory="1000M"
                 access="${doc.access}"
                 author="true"
                 windowtitle="${project.name.upper} API Documentation"
                 linksource="${doc.linksource}"
                 link="${doc.link}"
                 breakiterator="${doc.breakiterator}"
-                source="1.5"
+                source="${version.source}"
                 classpathref="build.classpath">
             <sourcepath>
                 <pathelement location="${dir.source}"/>
