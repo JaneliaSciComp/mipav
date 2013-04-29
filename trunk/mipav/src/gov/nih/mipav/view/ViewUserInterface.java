@@ -268,7 +268,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if ( !GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initializeGui();
-            loadMouseDrivers();
+            //loadMouseDrivers();
         }
 
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
