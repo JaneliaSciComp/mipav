@@ -86,13 +86,25 @@ function f = antigradient2(g, mask, mu, n)
 %         Linkoping University, Sweden
 %         gunnar@imt.liu.se
 
-In Antigradient2.c I note the 2 differences in poisson_multigrid2D and poisson_multigrid3D: 
+On 04/23/2013 12:08 AM, Gandler, William (NIH/CIT) [E] wrote:
+> Dear Gunnar:
+>
+>    In Antigradient2.c I note the 2 differences in poisson_multigrid2D and poisson_multigrid3D:
+>
+> 1.) poisson_multigrid2D has:
+> // Initialize solution. 
+>    memcpy(f_out, f, M * N * sizeof(*f_out)); but no corresponding line 
+> is found in poisson_multigrid3D.
 
-1.) poisson_multigrid2D has:
-// Initialize solution.
-  memcpy(f_out, f, M * N * sizeof(*f_out)); but no corresponding line is found in poisson_multigrid3D.
+Looks like an artefact from some earlier development phase of the code or a not completely removed experiment. 
+In all cases when poisson_multigrid2D is called, f_out and f point to the same memory, so the memcpy call doesn't do anything.
 
-2.) poisson_multigrid2D has if (1) at the end but poisson_multigrid3D has if (0) at the end.
+> 2.) poisson_multigrid2D has if (1) at the end but poisson_multigrid3D has if (0) at the end.
+
+That's definitely leftovers from frustrated attempts to work around a bug that long plagued the code. 
+I never checked if it still had any effect after finally tracking the bug down. It's not supposed to make a difference.
+
+/Gunnar
 
 Reference:
 "Efficient Computation of the Inverse Gradient on Irregular Domains" by Gunnar Farneback,
@@ -644,11 +656,6 @@ public class AlgorithmAntigradient2 extends AlgorithmBase {
     return;
   }
   directly_solved[0] = 0;
-  
-  /* Initialize solution. */
-  for (k = 0; k < M * N; k++) {
-      f_out[k] = f[k];
-  }
   
   /* Pre-smoothing. */
   for (k = 0; k < n1; k++)
