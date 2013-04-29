@@ -122,7 +122,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
-    /** Use serialVersionUID for interoperability. */
+    protected static final String IMAGE_ALIGN_TOOLBAR = "ImageAlignToolbar";
+
+	protected static final String VOI_TOOLBAR = "VOIToolbar";
+
+	protected static final String PAINT_TOOLBAR = "PaintToolbar";
+
+	/** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7588617549055746009L;
 
     /** Dimensions used for Talairach view clipping box - lateral. */
@@ -1226,15 +1232,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             final Vector3f kCenter = triImage[0].getCenter();
             setPositionLabels((int) kCenter.X, (int) kCenter.Y, (int) kCenter.Z);
             updateImages(true);
-        }
-
-        else if (command.equals("VOIToolbar")) {
+        } else if (command.equals(VOI_TOOLBAR)) {
             voiManager.getToolBar().setVisible(menuObj.isMenuItemSelected("VOI toolbar"));
             updateLayout();
-        } else if (command.equals("PaintToolbar")) {
+        } else if (command.equals(PAINT_TOOLBAR)) {
             paintToolBar.setVisible(menuObj.isMenuItemSelected("Paint toolbar"));
             updateLayout();
-        } else if (command.equals("ImageAlignToolbar")) {
+        } else if (command.equals(IMAGE_ALIGN_TOOLBAR)) {
             imageAlignToolBar.setVisible(menuObj.isMenuItemSelected("Image Align toolbar"));
             updateLayout();
         } else if (command.equals("absoluteGoTo")) {
@@ -3307,12 +3311,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             showVOIToolbar = true;
         }
 
-        menuBar.add(menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
-                menuObj.buildCheckBoxMenuItem("Paint toolbar", "PaintToolbar", showPaintToolbar),
-                menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", true),
-                menuObj.buildCheckBoxMenuItem("Image Align toolbar", "ImageAlignToolbar", false)}));
+        menuBar.add(buildToolbarMenu(showPaintToolbar));
 
         return menuBar;
+    }
+    
+    protected JMenu buildToolbarMenu(boolean showPaintToolbar) {
+    	return menuObj.makeMenu("Toolbars", 'T', false, new JMenuItem[] {
+                menuObj.buildCheckBoxMenuItem("Paint toolbar", PAINT_TOOLBAR, showPaintToolbar),
+                menuObj.buildCheckBoxMenuItem("VOI toolbar", VOI_TOOLBAR, true),
+                menuObj.buildCheckBoxMenuItem("Image Align toolbar", IMAGE_ALIGN_TOOLBAR, false)});
     }
 
     /**
