@@ -873,8 +873,12 @@ public class MipavUtil extends JComponent {
     
 		try {
 	    	try {
-	    		
 	    		byte[] buffer = new byte[102400];
+	    		URL url = MipavJarLoader.class.getResource(path+name);
+	    		if(url == null && is64.equals("64") && osName.startsWith("windows")) {
+	    			name = name.substring(0, name.indexOf("_64"))+".dll";
+	    			url = MipavJarLoader.class.getResource(path+name);
+	    		}
 				source = MipavJarLoader.class.getResourceAsStream(path+name);
 				File fileOut = new File(Preferences.getPreferencesDir()+File.separator+"plugins"+ File.separator+path + name);
 				System.out.println("Writing file to: "+fileOut);
@@ -884,7 +888,6 @@ public class MipavUtil extends JComponent {
 					destination.write(buffer, 0, len);
 				}
 				destination.flush();
-				destination.close();
 				
 				System.load(fileOut.toString());
 	    	} catch (Exception e) {
