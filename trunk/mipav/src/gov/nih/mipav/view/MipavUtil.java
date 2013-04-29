@@ -888,6 +888,7 @@ public class MipavUtil extends JComponent {
 					destination.write(buffer, 0, len);
 				}
 				destination.flush();
+				destination.close(); //for file locks
 				
 				System.load(fileOut.toString());
 	    	} catch (Exception e) {
