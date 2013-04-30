@@ -20,11 +20,11 @@ public abstract class AlgorithmConcatMult extends AlgorithmBase {
     /** Whether to copy all file information */
     protected boolean copyAllInfo = false;
     
-    protected void copyBaseInfo(FileInfoBase[] fileInfo, FileInfoBase srcFileInfo, float[] resols, int i) {
+    protected void copyBaseInfo(FileInfoBase[] fileInfo, FileInfoBase srcFileInfo, float[] resols, int[] units, int i) {
         fileInfo[i].setModality(srcFileInfo.getModality());
         fileInfo[i].setFileDirectory(srcFileInfo.getFileDirectory());
         fileInfo[i].setEndianess(srcFileInfo.getEndianess());
-        fileInfo[i].setUnitsOfMeasure(srcFileInfo.getUnitsOfMeasure()); 
+        fileInfo[i].setUnitsOfMeasure(units); 
         fileInfo[i].setResolutions(resols);
         fileInfo[i].setExtents(destImage.getExtents());
         fileInfo[i].setMax(destImage.getMax());
