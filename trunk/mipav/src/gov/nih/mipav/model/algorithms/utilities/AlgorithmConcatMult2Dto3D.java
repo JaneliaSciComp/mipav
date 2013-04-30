@@ -4,6 +4,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 
 
@@ -72,6 +73,7 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
 	        
 	        float[] resols = new float[3];
 	        float[] origins = new float[3];
+	        int[] units = new int[4];
 	        
 	       
 	        
@@ -81,6 +83,9 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
 	        origins[0] = images[0].getFileInfo()[0].getOrigin(0);
 	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
 	        origins[2] = 0;
+	        units[0] = images[0].getFileInfo()[0].getUnitsOfMeasure()[0];
+            units[1] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
+            units[2] = Unit.UNKNOWN_MEASURE.getLegacyNum();
 	        
 	         FileInfoBase destFileInfo[] = null;
 	         int numInfos = destImage.getExtents()[2];
@@ -98,7 +103,7 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
                            
                        } else {
                            destFileInfo[sliceCounter] = (FileInfoBase) images[z].getFileInfo(0).clone();
-                           copyBaseInfo(destFileInfo, images[z].getFileInfo(0), resols, sliceCounter); //used for copying resolution inof
+                           copyBaseInfo(destFileInfo, images[z].getFileInfo(0), resols, units, sliceCounter); //used for copying resolution inof
                        }
                        sliceCounter++; 
                    }
@@ -109,7 +114,7 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
 
 	             for (int i = 0; i < destImage.getExtents()[2]; i++) {
 	                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[2]));
-	                 copyBaseInfo(destFileInfo, images[i].getFileInfo()[0], resols, i);
+	                 copyBaseInfo(destFileInfo, images[i].getFileInfo()[0], resols, units, i);
 	             }
 
 	             int counter = 0;
