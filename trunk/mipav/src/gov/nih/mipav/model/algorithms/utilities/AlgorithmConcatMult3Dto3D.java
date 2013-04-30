@@ -96,7 +96,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
                             copyDicomInfo(fileInfo, images[i].getFileInfo(0), resols, k, i, counter); 
                         } else {
                             fileInfo[counter] = (FileInfoBase) images[i].getFileInfo(k).clone();
-                            copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, units, counter); //used for copying resolution inof
+                            copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, origins, units, counter); //used for copying resolution inof
                         }
                         counter++; 
                     }
@@ -109,7 +109,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
 
 	             for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
 	                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
-	                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, units, i);
+	                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, origins, units, i);
 	             }
 
 	            counter = 0;
