@@ -67,6 +67,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
 
 	        float[] resols = new float[3];
 	        float[] origins = new float[3];
+	        int[] units = new int[3];
 	        
 
 	        resols[0] = images[0].getFileInfo()[0].getResolutions()[0];
@@ -76,6 +77,10 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
 	        origins[0] = images[0].getFileInfo()[0].getOrigin(0);
 	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
 	        origins[2] = images[0].getFileInfo()[0].getOrigin(2);
+	        
+	        units[0] = images[0].getFileInfo()[0].getUnitsOfMeasure()[0];
+            units[1] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
+            units[2] = images[0].getFileInfo()[0].getUnitsOfMeasure()[2];
 
 	        FileInfoBase[] fileInfo = new FileInfoBase[destImage.getExtents()[2]];
 	        
@@ -91,7 +96,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
                             copyDicomInfo(fileInfo, images[i].getFileInfo(0), resols, k, i, counter); 
                         } else {
                             fileInfo[counter] = (FileInfoBase) images[i].getFileInfo(k).clone();
-                            copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, counter); //used for copying resolution inof
+                            copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, units, counter); //used for copying resolution inof
                         }
                         counter++; 
                     }
@@ -104,7 +109,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
 
 	             for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
 	                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
-	                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, i);
+	                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, units, i);
 	             }
 
 	            counter = 0;
