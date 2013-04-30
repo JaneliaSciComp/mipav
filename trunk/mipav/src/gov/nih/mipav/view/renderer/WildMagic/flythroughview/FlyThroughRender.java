@@ -136,6 +136,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                              VolumeImage kVolumeImageB, Vector3f kTranslate  )
     {
         super();
+        
+        
         m_kTranslate.copy(kTranslate);
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -169,6 +171,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         SurfaceLightingEffect kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );
         m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false );
         m_kSurface.AttachEffect(kLightShader);
+        m_kSurface.UpdateGS();
         m_kSurface.UpdateRS();
         m_kSurface.UpdateMS();
         m_bSurfaceUpdate = true;
@@ -215,7 +218,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         if ( m_bSurfaceUpdate )
         {
             m_bSurfaceUpdate = false;
-            //((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
+          //  ((SurfaceLightingEffect)m_kSurface.GetEffect(0)).SetPerPixelLighting(m_pkRenderer, true);
             updateLighting( m_akLights );
             GetCanvas().display();
         }
@@ -227,7 +230,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      */
     public void doPseudoColor( boolean bOn )
     {
-        if ( bOn )
+    	if ( bOn )
         {
             if ( m_kCortical == null )
             {
@@ -479,6 +482,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_kRotation);
 
+       
         m_kAnimator.add( GetCanvas() );      
         m_bInit = true;
     }
@@ -645,6 +649,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         // looking around.
         m_kFlyPathBehavior = new FlyPathBehavior_WM(m_kFlyPathGraphCurve, m_kAnnotateList, this);
         m_kFlyPathBehavior.setupCallback(this);
+        
+        updateLighting( m_akLights );
     }
 
     /**
