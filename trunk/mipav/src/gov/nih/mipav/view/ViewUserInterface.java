@@ -268,7 +268,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if ( !GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initializeGui();
-            //loadMouseDrivers();
+            loadMouseDrivers();
         }
 
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
@@ -1368,7 +1368,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         	String osName = System.getProperty("os.name").toLowerCase();
         	if(osName.startsWith("windows")) {
         		MipavUtil.loadDynamicLib(path, "jinput-raw");
-        		MipavUtil.loadDynamicLib(path, "jinput-wintab");
         		MipavUtil.loadDynamicLib(path, "jinput-dx8");
         	} else {
         		MipavUtil.loadDynamicLib(path, "libjinput");
