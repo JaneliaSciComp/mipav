@@ -887,14 +887,18 @@ public class MipavUtil extends JComponent {
 						throw new Exception("Unable to create plugins directory");
 					}
 				}
-				System.out.println("Writing file to: "+fileOut);
-				destination = new FileOutputStream(fileOut);
-				int len = 0;
-				while((len = source.read(buffer)) != -1) {
-					destination.write(buffer, 0, len);
+				// running a second time causes the libs to be written out from themselves to themselves (which results in a 0 byte file)
+				// so only write out the lib if it's not already there
+				if (!fileOut.exists()) {
+					System.out.println("Writing file to: "+fileOut);
+					destination = new FileOutputStream(fileOut);
+					int len = 0;
+					while((len = source.read(buffer)) != -1) {
+						destination.write(buffer, 0, len);
+					}
+					destination.flush();
+					destination.close(); //for file locks
 				}
-				destination.flush();
-				destination.close(); //for file locks
 				
 				System.load(fileOut.toString());
 	    	} catch (Exception e) {
