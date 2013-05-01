@@ -881,6 +881,12 @@ public class MipavUtil extends JComponent {
 	    		}
 				source = MipavJarLoader.class.getResourceAsStream(path+name);
 				File fileOut = new File(Preferences.getPreferencesDir()+File.separator+"plugins"+ File.separator+path + name);
+				if(!fileOut.getParentFile().exists()) {
+					boolean success = fileOut.getParentFile().mkdirs();
+					if(!success) {
+						throw new Exception("Unable to create plugins directory");
+					}
+				}
 				System.out.println("Writing file to: "+fileOut);
 				destination = new FileOutputStream(fileOut);
 				int len = 0;
@@ -904,6 +910,8 @@ public class MipavUtil extends JComponent {
 			}
 		} catch (Exception e) {
 			Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
+    	} catch (Error e) {
+    		Preferences.debug("Failed to load library: " + name, Preferences.DEBUG_MINOR);
     	}
     }
 
