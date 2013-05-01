@@ -44,6 +44,8 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
 	 */
 	public void runAlgorithm() {
 		try{
+		    int t;
+		    int z;
 			float[] buffer;
 			int cFactor = 1;
 			
@@ -83,9 +85,6 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
 	        resols[1] = images[0].getFileInfo()[0].getResolutions()[1];
 	        resols[2] = images[0].getFileInfo()[0].getResolutions()[2];
 	        resols[3] = 1;
-	        origins[0] = images[0].getFileInfo()[0].getOrigin(0);
-	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
-	        origins[2] = images[0].getFileInfo()[0].getOrigin(2);
 	        origins[3] = 0;
             units[0] = images[0].getFileInfo()[0].getUnitsOfMeasure()[0];
             units[1] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
@@ -94,21 +93,23 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
       
          FileInfoBase destFileInfo[] = null;
          int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
-         int j;
 
          destFileInfo = new FileInfoBase[numInfos];
 
          if(copyAllInfo) {  
                int sliceCounter = 0; //Keeps track of every slice to populate tag
-               for (int t = 0; t < destImage.getExtents()[3]; t++) {
-                   for (int z = 0; z <destImage.getExtents()[2] ; z++) {
-                       fireProgressStateChanged((100 * sliceCounter)/(destImage.getExtents()[3]));
+               for (t = 0; t < destImage.getExtents()[3]; t++) {
+                   for (z = 0; z <destImage.getExtents()[2] ; z++) {
+                       fireProgressStateChanged((100 * sliceCounter)/(numInfos));
                        
                        if(images[t].isDicomImage()) {
                            copyDicomInfo(destFileInfo, images[t].getFileInfo(0), resols, z, t, sliceCounter); 
                            
                        } else {
                            destFileInfo[sliceCounter] = (FileInfoBase) images[t].getFileInfo(z).clone();
+                           origins[0] = images[0].getFileInfo()[z].getOrigin(0);
+                           origins[1] = images[0].getFileInfo()[z].getOrigin(1);
+                           origins[2] = images[0].getFileInfo()[z].getOrigin(2);
                            copyBaseInfo(destFileInfo, images[t].getFileInfo(z), resols, origins, units, sliceCounter); //used for copying resolution inof
                        }
                        sliceCounter++; 
@@ -119,8 +120,12 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
          } else {
              destFileInfo = destImage.getFileInfo();
 
-             for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
-                 fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
+             for (int i = 0; (i < numInfos); i++) {
+                 z = i % destImage.getExtents()[2];
+                 fireProgressStateChanged((100 * i)/(numInfos));
+                 origins[0] = images[0].getFileInfo()[z].getOrigin(0);
+                 origins[1] = images[0].getFileInfo()[z].getOrigin(1);
+                 origins[2] = images[0].getFileInfo()[z].getOrigin(2);
                  copyBaseInfo(destFileInfo, images[0].getFileInfo()[0], resols, origins, units, i);
              }
 
