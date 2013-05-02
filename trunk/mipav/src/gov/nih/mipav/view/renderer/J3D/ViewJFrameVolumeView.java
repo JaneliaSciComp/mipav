@@ -2125,7 +2125,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public void mouseClicked(MouseEvent e) {
         Object source = e.getSource();
 
-        if (e.getClickCount() == 2) {
+        if (e.getClickCount() == 2  && SwingUtilities.isLeftMouseButton(e)) {
 
             if ((surRender != null) && (source == surRender.getCanvas())) {
                 switchTabList("SurRender");
@@ -2769,7 +2769,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public void switchTabList(String command) {
         int i;
         int index = storeTabbedPaneIndex;
-
+     
         storeTabbedPaneIndex = tabbedPane.getSelectedIndex();
 
         // remember what tabs were in use when switching to dual panel renderer

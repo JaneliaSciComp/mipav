@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.MouseEventVector;
 import gov.nih.mipav.view.renderer.flythroughview.*;
 import gov.nih.mipav.view.renderer.J3D.*;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.*;
@@ -41,7 +42,8 @@ import javax.vecmath.*;
  * mouse and keyboard for maneuvering the view of the colon while moving through it.
  */
 public class FlythruRender extends SurfaceRender
-        implements FlyThroughRenderInterface, FlyPathBehavior.Callback, MouseBehaviorCallback, MouseListener {
+        implements FlyThroughRenderInterface, FlyPathBehavior.Callback, MouseBehaviorCallback, 
+        MouseListener, MouseMotionListener, MouseWheelListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -200,6 +202,23 @@ public class FlythruRender extends SurfaceRender
     /** DOCUMENT ME! */
     private int saveCounter = 0;
 
+
+    /** Current mouse press event time stamp. */
+    long currEventTime;
+    /** Previous mouse press event time stamp. */
+    long prevEventTime;
+    /** If any of the mouse move button pressed. */
+    private boolean pressed;
+    /** Time to wait for the next mouse event. */
+    private long time = 10;
+  
+    /* camera viewing direction from the right mouse drag control. */
+    public static int lookup = 0;
+    public static int lookdown = 1;
+    public static int lookright = 2;
+    public static int lookleft = 3;
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -529,6 +548,7 @@ public class FlythruRender extends SurfaceRender
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#makeMove(java.lang.String)
      */
     public void makeMove(String cmd) {
+    	
         m_kFlyPathBehavior.move(cmd);
     }
 
@@ -598,22 +618,348 @@ public class FlythruRender extends SurfaceRender
     public void mouseExited(MouseEvent kMouseEvent) { // implementation required -- do nothing
     }
 
+    
+  
     /**
      * Implement MouseInterface abstract method.
      *
      * @param  kMouseEvent  MouseEvent Contains information about the particular mouse event.
      */
-    public void mousePressed(MouseEvent kMouseEvent) { // implementation required -- do nothing
-    }
+	public void mousePressed(MouseEvent event) {
 
+		if (SwingUtilities.isRightMouseButton(event) && !event.isControlDown()) {
+			currEventTime = event.getWhen();
+
+			if ((currEventTime - prevEventTime) < 10) {
+				pressed = false;
+				return;
+			}
+
+			pressed = true;
+			RightMouse mouse = new RightMouse(event);
+			prevEventTime = event.getWhen();
+			mouse.start();
+		}
+
+	}
+    
+   
+    
+    /**
+     * The mouseDragged event is used when the right mouse button press down and dragged to adjust the camera viewing direction. 
+     * @param event MouseEvent right mouse button press down and drag
+     */
+	public void mouseDragged(MouseEvent event) {
+		    float currX, currY;
+		    float centerX, centerY;
+		    currX = event.getX();
+		    currY = event.getY();
+		   
+		    centerX = getCanvas().getWidth() / 2f;
+		    centerY = getCanvas().getHeight() / 2f;
+		    
+		    int viewDirection = 0;
+		    float verticalDistance, horizontalDistance;
+		    
+		    if ( SwingUtilities.isRightMouseButton(event) && event.isControlDown() ) {
+	    		
+		    	   currEventTime = event.getWhen();
+				  
+			         if ((currEventTime - prevEventTime) < 100) {
+			             pressed = false;
+			             return;
+			         }
+			      
+			         verticalDistance = Math.abs(currY - centerY);
+			         horizontalDistance = Math.abs(currX - centerX);
+			         
+			         if ( currY < centerY && verticalDistance > horizontalDistance ) {
+			        	 viewDirection = lookdown;
+			         } else if ( currY > centerY && verticalDistance > horizontalDistance ) {
+			        	 viewDirection = lookup;
+			         } else if ( currX < centerX && verticalDistance < horizontalDistance ) {
+			        	 viewDirection = lookright;
+			         } else if ( currX > centerX && verticalDistance < horizontalDistance ) {
+			        	 viewDirection = lookleft;
+			         }
+			         
+			         
+			         pressed = true;
+			         RightMouseDragged mouse = new RightMouseDragged(event, viewDirection);
+			         prevEventTime = event.getWhen();
+			         mouse.start();
+	    	}
+		
+	}
+
+    public void mouseMoved(MouseEvent kMouseEvent) {
+    	
+    }
+    
     /**
      * Implement MouseInterface abstract method.
      *
      * @param  kMouseEvent  MouseEvent Contains information about the particular mouse event.
      */
-    public void mouseReleased(MouseEvent kMouseEvent) { // implementation required -- do nothing
+    public void mouseReleased(MouseEvent event) {
+    	pressed = false;
+    	prevEventTime = event.getWhen();
     }
 
+    /**
+     * Mouse wheel event invoked from the middle mouse button roller.  Rolling forward to track the fly-thru path in forward direction.
+     * Rolling backward to track the fly-thru path in backward direction.  
+     * @param event mouse middle mouse roller event.    
+     */
+    public void mouseWheelMoved(MouseWheelEvent event) {
+    	
+    	  currEventTime = event.getWhen();
+
+    	  if ((currEventTime - prevEventTime) < 1000) {
+              pressed = false;
+              return;
+          }
+         
+          pressed = true;
+          MouseWheel mouse = new MouseWheel(event);
+          prevEventTime = event.getWhen();
+          mouse.start();
+    	
+    	
+    }
+    
+    /**
+     * Right mouse button press down and drag event handler.   When user press down the right mouse button and dragged, the 
+     * RightMouseDragged handler control the camera viewing direction.    Running on thread to solve mouse drag continued interaction. 
+     * @author ruida
+     *
+     */
+    class RightMouseDragged extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        
+        /** camera viewding direction. */
+        int viewDirection;
+        
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public RightMouseDragged(MouseEvent event, int _viewDirection) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            viewDirection = _viewDirection;
+            evt = event;
+         
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            	if ( viewDirection == lookup ) {
+            		makeMove("lookup");	
+            	} else if ( viewDirection == lookdown ) {
+            		makeMove("lookdown");
+            	} else if ( viewDirection == lookleft ) {
+            		makeMove("lookleft");
+            	} else if ( viewDirection == lookright) {
+            		makeMove("lookright");
+            	}
+            	
+                when += time;
+                
+                try {
+                	wait(time);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
+    }
+
+    
+    /** 
+     * RightMouse press event handler.   When the right mouse press down, rotate the camera view in clockwise direction. 
+     * If the alt key is down and the right mouse press down event rotate the camera view in counter clockwise dirction. 
+     * Running on thread to ensure the continuous  mouse press down interaction.  
+     * @author ruida
+     *
+     */
+    class RightMouse extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        
+        /** flag indicate if the rotation is clockwise or counter clockwise. */
+        boolean isClockRotation;
+        
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public RightMouse(MouseEvent event) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            evt = event;
+         
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            	if ( evt.getButton() == MouseEvent.BUTTON3 && !evt.isAltDown()) {
+            	        isClockRotation = true;
+            	} else if ( evt.getButton() == MouseEvent.BUTTON3 && evt.isAltDown() ) {
+            		    isClockRotation = false;
+            	}
+            	
+            	if ( isClockRotation ) {
+            		makeMove("clockwise");	
+            	} else {
+            		makeMove("counterclockwise");
+            	}
+            	
+                when += time;
+                
+                try {
+                	wait(time);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
+    }
+
+    
+    
+    /**
+     * Mouse middle button wheel roller event handler.   Rolling forward to track the fly-thru path in forward direction. 
+     * Rolling backward to track the fly-thru path in the backward direction. 
+     * @author ruida
+     *
+     */
+    class MouseWheel extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        int moveForward;
+    
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public MouseWheel(MouseWheelEvent event) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            moveForward = event.getWheelRotation(); 
+            evt = new MouseEvent(getCanvas(), MouseEvent.MOUSE_PRESSED, when, mod, Math.round(x),
+                                 Math.round(y), 1, false);
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            
+            	if ( moveForward < 0 ) {
+            		makeMove("forward");
+            	} else {
+            		makeMove("backward");
+            	}
+        	
+                when += 50;
+                
+                try {
+                	wait(50);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
+    }
+
+    
     /**
      * DOCUMENT ME!
      *
@@ -912,6 +1258,8 @@ public class FlythruRender extends SurfaceRender
 
         // getContentPane().add("Center", kCanvas);
         kCanvas.addMouseListener(this);
+        kCanvas.addMouseWheelListener(this);
+        kCanvas.addMouseMotionListener(this);
 
         // Create the universe for the scene and setup for 3 transforms:
         m_kUniverse = new SimpleUniverse(kCanvas, 3);
@@ -1034,12 +1382,12 @@ public class FlythruRender extends SurfaceRender
         // looking around.
         m_kFlyPathBehavior = new FlyPathBehavior(m_kFlyPathGraphCurve, m_kAnnotateList, kTransformPosition,
                                                  kTransformDirection, kTransformOrientation, this);
-        m_kFlyPathBehavior.setEnable(true);
-        m_kFlyPathBehavior.setupCallback(this);
+        // m_kFlyPathBehavior.setEnable(true);
+        // m_kFlyPathBehavior.setupCallback(this);
 
         rendererProgressBar.setValue(56);
         rendererProgressBar.update(rendererProgressBar.getGraphics());
-
+        
         // Setup the scene graph.
         m_kSceneRoot = new BranchGroup();
         m_kSceneRoot.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -1726,11 +2074,13 @@ public class FlythruRender extends SurfaceRender
          *
          * @param  kMouseEvent  DOCUMENT ME!
          */
-        public void processMouseEvent(MouseEvent kMouseEvent) {
-
-            if (!kMouseEvent.isShiftDown()) {
+        public synchronized void processMouseEvent(MouseEvent kMouseEvent) {
+        	
+            if (!kMouseEvent.isShiftDown() && kMouseEvent.getButton() != MouseEvent.BUTTON1 ) {
+                // System.err.println("super process event");            	
                 super.processMouseEvent(kMouseEvent);
             }
+           
         }
     }
 
