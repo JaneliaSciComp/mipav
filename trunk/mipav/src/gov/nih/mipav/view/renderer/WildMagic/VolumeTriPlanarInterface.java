@@ -385,9 +385,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
         this.configureFrame();
         MipavInitGPU.InitGPU();
-        if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.registerListener(this);
-        }
+       
     }
 
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
@@ -441,9 +439,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setVisible(true);
         m_kAnimator.setRunAsFastAsPossible(true);
     	m_kAnimator.start();
-    	if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.registerListener(this);
-        }
+    	
     }
 
     /*
@@ -2378,9 +2374,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
     private void disposeImageIndependentComponents() {
-        if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.deRegisterListener(this);
-        }
+       
     	
     	if (displayGUI != null) {
             displayGUI.disposeLocal();
@@ -3118,7 +3112,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
         menuObj.setMenuItemEnabled("RFA toolbar", false);
         menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", false);
-        menuObj.setMenuItemEnabled("Open Fly Through view", false);
+        menuObj.setMenuItemEnabled("Open Fly Through view", true);
 
         return menuBar;
     }
@@ -3478,16 +3472,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
 	@Override
 	public void processSpaceNavEvent() {
-		DecimalFormat dec = new DecimalFormat("0.00000");
 		
-		StringBuilder builder = new StringBuilder();
-		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
-		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
-		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
-		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
-		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
-		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
-		
-		System.out.println(builder.toString());
 	}        
 }
