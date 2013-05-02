@@ -21,9 +21,11 @@ import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 import java.awt.Canvas;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.swing.SwingUtilities;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -46,7 +48,10 @@ import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
 
-public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderInterface, FlyPathBehavior_WM.Callback, GLEventListener {
+import java.awt.event.*;
+
+public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderInterface, FlyPathBehavior_WM.Callback, GLEventListener, 
+ MouseWheelListener {
 
     public static class SetupOptions {
 
@@ -123,7 +128,21 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /** Original surface color for undoing the pseudo-color curvature map. */
     private ColorRGB[] m_akColorBackup;
 
-
+    /** Current mouse press event time stamp. */
+    long currEventTime;
+    /** Previous mouse press event time stamp. */
+    long prevEventTime;
+    /** If any of the mouse move button pressed. */
+    private boolean pressed;
+    /** Time to wait for the next mouse event. */
+    private long time = 10;
+  
+    /* camera viewing direction from the right mouse drag control. */
+    public static int lookup = 0;
+    public static int lookdown = 1;
+    public static int lookright = 2;
+    public static int lookleft = 3;
+    
 
     /**
      * Construct the FlyThroughRenderer.
@@ -145,7 +164,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                                            m_iWidth, m_iHeight );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );  
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );   
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
@@ -513,10 +533,50 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
      */
     @Override
-	public void mouseDragged(MouseEvent e)
+	public void mouseDragged(MouseEvent event)
     {
-        super.mouseDragged(e);
-        updateCamera();
+        // super.mouseDragged(event);
+        // updateCamera();
+    	 float currX, currY;
+		    float centerX, centerY;
+		    currX = event.getX();
+		    currY = event.getY();
+		   
+		    centerX = getCanvas().getWidth() / 2f;
+		    centerY = getCanvas().getHeight() / 2f;
+		    
+		    int viewDirection = 0;
+		    float verticalDistance, horizontalDistance;
+		    
+		    if ( SwingUtilities.isRightMouseButton(event) && event.isControlDown() ) {
+	    		
+		    	   currEventTime = event.getWhen();
+				  
+			         if ((currEventTime - prevEventTime) < 100) {
+			             pressed = false;
+			             return;
+			         }
+			      
+			         verticalDistance = Math.abs(currY - centerY);
+			         horizontalDistance = Math.abs(currX - centerX);
+			         
+			         if ( currY < centerY && verticalDistance > horizontalDistance ) {
+			        	 viewDirection = lookdown;
+			         } else if ( currY > centerY && verticalDistance > horizontalDistance ) {
+			        	 viewDirection = lookup;
+			         } else if ( currX < centerX && verticalDistance < horizontalDistance ) {
+			        	 viewDirection = lookright;
+			         } else if ( currX > centerX && verticalDistance < horizontalDistance ) {
+			        	 viewDirection = lookleft;
+			         }
+			         
+			         
+			         pressed = true;
+			         RightMouseDragged mouse = new RightMouseDragged(event, viewDirection);
+			         prevEventTime = event.getWhen();
+			         mouse.start();
+	    	}
+		
     }
 
     /* (non-Javadoc)
@@ -542,10 +602,46 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
                 GetCanvas().display();
             }
         }
+        
+        if (SwingUtilities.isRightMouseButton(e) && !e.isControlDown()) {
+			currEventTime = e.getWhen();
+
+			if ((currEventTime - prevEventTime) < 10) {
+				pressed = false;
+				return;
+			}
+
+			pressed = true;
+			RightMouse mouse = new RightMouse(e);
+			prevEventTime = e.getWhen();
+			mouse.start();
+		}
 
     } 
 
 
+    /**
+     * Mouse wheel event invoked from the middle mouse button roller.  Rolling forward to track the fly-thru path in forward direction.
+     * Rolling backward to track the fly-thru path in backward direction.  
+     * @param event mouse middle mouse roller event.    
+     */
+    public void mouseWheelMoved(MouseWheelEvent event) {
+    	
+    	  currEventTime = event.getWhen();
+
+    	  if ((currEventTime - prevEventTime) < 200) {
+              pressed = false;
+              return;
+          }
+         
+          pressed = true;
+          MouseWheel mouse = new MouseWheel(event);
+          prevEventTime = event.getWhen();
+          mouse.start();
+    	
+    	
+    }
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#setCurrentState(java.lang.Object)
      */
@@ -593,7 +689,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         // Default geometry/appearance properties.
         // Set the radius based on the maximum distance of "inside"
         // volume samples to the surface.
-        float fRadius = 0.003f * m_kSkeleton.getMaxBoundaryDistance();
+        float fRadius = 0.001f * m_kSkeleton.getMaxBoundaryDistance();
 
         // Create the node to render the branch paths and their connections.
         int iNumBranches = m_kFlyPathGraphCurve.getNumBranches();
@@ -1218,6 +1314,235 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_aiBranchIndexUnvisitedMax[iBranch] = iUnvisitedMax;
 
         kLine.Reload(true);
+    }
+    
+    /** 
+     * RightMouse press event handler.   When the right mouse press down, rotate the camera view in clockwise direction. 
+     * If the alt key is down and the right mouse press down event rotate the camera view in counter clockwise dirction. 
+     * Running on thread to ensure the continuous  mouse press down interaction.  
+     * @author ruida
+     *
+     */
+    class RightMouse extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        
+        /** flag indicate if the rotation is clockwise or counter clockwise. */
+        boolean isClockRotation;
+        
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public RightMouse(MouseEvent event) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            evt = event;
+         
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            	if ( evt.getButton() == MouseEvent.BUTTON3 && !evt.isAltDown()) {
+            	        isClockRotation = true;
+            	} else if ( evt.getButton() == MouseEvent.BUTTON3 && evt.isAltDown() ) {
+            		    isClockRotation = false;
+            	}
+            	
+            	if ( isClockRotation ) {
+            		makeMove("clockwise");	
+            	} else {
+            		makeMove("counterclockwise");
+            	}
+            	
+                when += time;
+                
+                try {
+                	wait(time);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
+    }
+
+    
+    /**
+     * Mouse middle button wheel roller event handler.   Rolling forward to track the fly-thru path in forward direction. 
+     * Rolling backward to track the fly-thru path in the backward direction. 
+     * @author ruida
+     *
+     */
+    class MouseWheel extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        int moveForward;
+    
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public MouseWheel(MouseWheelEvent event) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            moveForward = event.getWheelRotation(); 
+            evt = new MouseEvent(getCanvas(), MouseEvent.MOUSE_PRESSED, when, mod, Math.round(x),
+                                 Math.round(y), 1, false);
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            
+            	if ( moveForward < 0 ) {
+            		makeMove("forward");
+            	} else {
+            		makeMove("backward");
+            	}
+        	
+                when += 50;
+                
+                try {
+                	wait(50);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
+    }
+    
+    /**
+     * Right mouse button press down and drag event handler.   When user press down the right mouse button and dragged, the 
+     * RightMouseDragged handler control the camera viewing direction.    Running on thread to solve mouse drag continued interaction. 
+     * @author ruida
+     *
+     */
+    class RightMouseDragged extends Thread {
+
+        /** DOCUMENT ME! */
+        MouseEvent currentEvent;
+
+        /** int centerX, centerY;. */
+        MouseEvent evt;
+
+        /** DOCUMENT ME! */
+        Object source;
+
+        /** DOCUMENT ME! */
+        long when;
+
+        /** DOCUMENT ME! */
+        int x, y, mod, id;
+        
+        /** camera viewding direction. */
+        int viewDirection;
+        
+        /**
+         * Creates new thread and sets up mouse event variables appropriately.
+         *
+         * @param  event  Original mouse event, from button.
+         */
+        public RightMouseDragged(MouseEvent event, int _viewDirection) {
+            when = event.getWhen();
+            currentEvent = event;
+            id = MouseEvent.MOUSE_DRAGGED;
+            source = event.getSource();
+            viewDirection = _viewDirection;
+            evt = event;
+         
+        }
+
+        /**
+         * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
+         * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
+         * stop.
+         */
+        public synchronized void run() {
+
+            while (pressed) {
+
+            	getCanvas().dispatchEvent(evt);
+
+            	if ( viewDirection == lookup ) {
+            		makeMove("lookup");	
+            	} else if ( viewDirection == lookdown ) {
+            		makeMove("lookdown");
+            	} else if ( viewDirection == lookleft ) {
+            		makeMove("lookleft");
+            	} else if ( viewDirection == lookright) {
+            		makeMove("lookright");
+            	}
+            	
+                when += time;
+                
+                try {
+                	wait(time);
+                } catch ( InterruptedException e ) {
+                    e.printStackTrace();
+                }
+
+                evt = new MouseEvent(getCanvas(), id, when, mod, Math.round(x), Math.round(y), 0, false);
+
+            }
+
+        }
     }
 
 }
