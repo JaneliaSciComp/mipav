@@ -90,13 +90,13 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
     protected int zSlice;
 
     /** Mouse rotate behavior. */
-    private MouseRotate behavior;
+    private MouseRotate mouseBehaviorRotate;
 
     /** Mouse translate behavior. */
-    private MouseTranslate behaviorTranslate;
+    private MouseTranslate mouseBehaviorTranslate;
 
     /** Mouse zoom behavior. */
-    private MouseZoom behaviorZoom;
+    private MouseZoom mouseBehaviorZoom;
 
     /** The frame around the x slice. */
     private ViewJComponentBoxSlice boxSliceX;
@@ -777,9 +777,9 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
      * @param  bEnable  boolean bEnable to turn mouseListening on or off.
      */
     public void setEnableMouseBehaviors(boolean bEnable) {
-        behavior.setEnable(bEnable);
-        behaviorZoom.setEnable(bEnable);
-        behaviorTranslate.setEnable(bEnable);
+        mouseBehaviorRotate.setEnable(bEnable);
+        mouseBehaviorZoom.setEnable(bEnable);
+        mouseBehaviorTranslate.setEnable(bEnable);
         m_bMouseListen = bEnable;
     }
 
@@ -1428,28 +1428,28 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
         objBehaviorBG.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
 
         // Create the rotate behavior node
-        behavior = new MouseRotate(canvas, sceneRootTG);
-        behavior.setupCallback(this);
-        behavior.setSchedulingBounds(bounds);
-        behavior.setFactor(0.005);
-        behavior.setEnable(true);
-        objBehaviorBG.addChild(behavior);
+        mouseBehaviorRotate = new MouseRotate(canvas, sceneRootTG);
+        mouseBehaviorRotate.setupCallback(this);
+        mouseBehaviorRotate.setSchedulingBounds(bounds);
+        mouseBehaviorRotate.setFactor(0.005);
+        mouseBehaviorRotate.setEnable(true);
+        objBehaviorBG.addChild(mouseBehaviorRotate);
 
         sceneRootTG.addChild(objBehaviorBG);
 
-        behaviorZoom = new MouseZoom(canvas, objTransXY);
+        mouseBehaviorZoom = new MouseZoom(canvas, objTransXY);
 
-        behaviorZoom.setupCallback(this);
-        behaviorZoom.setSchedulingBounds(bounds);
-        behaviorZoom.setFactor(0.005);
-        objTransXY.addChild(behaviorZoom);
+        mouseBehaviorZoom.setupCallback(this);
+        mouseBehaviorZoom.setSchedulingBounds(bounds);
+        mouseBehaviorZoom.setFactor(0.005);
+        objTransXY.addChild(mouseBehaviorZoom);
 
-        behaviorTranslate = new MouseTranslate(canvas, objTransXY);
+        mouseBehaviorTranslate = new MouseTranslate(canvas, objTransXY);
 
-        behaviorTranslate.setupCallback(this);
-        behaviorTranslate.setSchedulingBounds(bounds);
-        behaviorTranslate.setFactor(0.005);
-        objTransXY.addChild(behaviorTranslate);
+        mouseBehaviorTranslate.setupCallback(this);
+        mouseBehaviorTranslate.setSchedulingBounds(bounds);
+        mouseBehaviorTranslate.setFactor(0.005);
+        objTransXY.addChild(mouseBehaviorTranslate);
     }
 
     /**
