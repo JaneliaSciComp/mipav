@@ -5,6 +5,8 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.PanelManager;
+import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.BorderLayout;
@@ -17,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,20 +34,20 @@ public class PlugInDialogWormStraightening extends JDialogBase
 	private ModelImage wormImage;
 	
 	private JTextField wormImageTextField, pointsFileTextField;
-	
-	//private String currDir;
-	private String currDir = "C:\\images\\hari\\";	
+	private JTextField tailDiameterTextField, headDiameterTextField, stepSizeTextField, pixelSizeTextField;
 	
 	public PlugInDialogWormStraightening() {}
 	
 	public PlugInDialogWormStraightening(boolean modal)
 	{
 		init();
+        setVisible(true);
 	}
 	
 	public void actionPerformed(ActionEvent e)
 	{
 		String command = e.getActionCommand();
+		Object source = e.getSource();
 		
 		if (command.equalsIgnoreCase("wormImageBrowse")) {
             JFileChooser chooser = new JFileChooser();   
@@ -54,41 +57,32 @@ public class PlugInDialogWormStraightening extends JDialogBase
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
             chooser.setDialogTitle("Choose image");
-            if (currDir != null) {
-				chooser.setCurrentDirectory(new File(currDir));
-            }
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
-                currDir = chooser.getSelectedFile().getAbsolutePath();
                 FileIO fileIO = new FileIO();
                 if(wormImage != null) {
                 	wormImage.disposeLocal();
                 	wormImage = null;
                 }
-                wormImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, false, null);
-                //new ViewJFrameImage(wormImage);
-                
-                wormImageTextField.setText(currDir);
-                //updateRes();
-                
-//                wormImage.getParentFrame().initResolutions();
-//                wormImage.getParentFrame().updateImageExtents();
-//                wormImage.getParentFrame().componentResized(null);
+                wormImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, false, null);              
+                wormImageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+                ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
             }
         }else if(command.equals("pointsFileBrowse")) {
         	JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Choose points file");
-            if (!currDir.equals("")) {
-				chooser.setCurrentDirectory(new File(currDir));
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
+            chooser.setDialogTitle("Choose points file");
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".xml", ".voi" }));
             int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 String fileName = chooser.getSelectedFile().getName();
                 String directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                currDir = chooser.getSelectedFile().getAbsolutePath();
                 try {
                 	FileVOI fileVOI = new FileVOI(fileName, directory, wormImage);
                 	
@@ -100,18 +94,19 @@ public class PlugInDialogWormStraightening extends JDialogBase
 
                 	wormImage.notifyImageDisplayListeners();
                 	
-                	pointsFileTextField.setText(currDir);
-                	
+                	pointsFileTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+
+                    ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
                 	
                 }catch(IOException ex) {
                 	return;
                 }
             }
-        } else if(command.equals("ok")) {
+        } else if (source == OKButton) {
         	setVisible(false);
         	callAlgorithm();
         	disposeLocal();
-        } else if(command.equals("cancel")) {
+        } else if (source == cancelButton) {
         	setVisible(false);
         	disposeLocal();        	
         } else {
@@ -128,100 +123,90 @@ public class PlugInDialogWormStraightening extends JDialogBase
 	
 	public void init()
 	{
-		setTitle("Worm Straightening");
+		setTitle("Worm Straightening");	
+        getContentPane().setLayout(new BorderLayout());
 
-		GridBagConstraints gbc = new GridBagConstraints();
-		
-		
-		JPanel mainPanel = new JPanel(new GridBagLayout());
-		
-		
-		JLabel wormImageLabel = new JLabel("Worm Image:");
-		
+        final PanelManager paramPanelManager = new PanelManager();
+        paramPanelManager.add( new JLabel("Worm Image:") );
 		wormImageTextField = new JTextField(55);
 		wormImageTextField.setEditable(false);
 		wormImageTextField.setBackground(Color.white);
 		wormImageTextField.setBorder(new LineBorder(Color.black));
-		
+        paramPanelManager.add( wormImageTextField );
 		JButton wormImageBrowseButton = new JButton("Browse");
 		wormImageBrowseButton.addActionListener(this);
-		wormImageBrowseButton.setActionCommand("wormImageBrowse");
-		
-		JLabel pointsFileLabel = new JLabel("Points File:");
-		
+		wormImageBrowseButton.setActionCommand("wormImageBrowse");	
+        paramPanelManager.add( wormImageBrowseButton );
+        
+        paramPanelManager.addOnNextLine(new JLabel("Points File:"));
 		pointsFileTextField = new JTextField(55);
 		pointsFileTextField.setEditable(false);
 		pointsFileTextField.setBackground(Color.white);
 		pointsFileTextField.setBorder(new LineBorder(Color.black));
-		
+        paramPanelManager.add( pointsFileTextField );
 		JButton pointsFileBrowseButton = new JButton("Browse");
 		pointsFileBrowseButton.addActionListener(this);
-		pointsFileBrowseButton.setActionCommand("pointsFileBrowse");		
-		
-		gbc.anchor = GridBagConstraints.WEST;
-		
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(wormImageLabel, gbc);
-		
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(wormImageTextField, gbc);
-		
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(wormImageBrowseButton, gbc);
-		
-		
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(pointsFileLabel, gbc);
-		
-		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(pointsFileTextField, gbc);
-		
-		gbc.gridx = 2;
-		gbc.gridy = 1;
-		gbc.insets = new Insets(15,5,15,0);
-		mainPanel.add(pointsFileBrowseButton, gbc);
-				
-		JPanel OKCancelPanel = new JPanel();
-        buildOKButton();
-        OKButton.setActionCommand("ok");
-        OKCancelPanel.add(OKButton);
-        buildCancelButton();
-        cancelButton.setActionCommand("cancel");
-        OKCancelPanel.add(cancelButton);
-		
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
-              
+		pointsFileBrowseButton.setActionCommand("pointsFileBrowse");
+        paramPanelManager.add( pointsFileBrowseButton );
         
+        paramPanelManager.addOnNextLine(new JLabel("Path step-size:"));
+		stepSizeTextField = new JTextField( "1.0", 10 );
+		stepSizeTextField.setBackground(Color.white);
+		stepSizeTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( stepSizeTextField );
+        
+        paramPanelManager.addOnNextLine(new JLabel("Estimate head diameter:"));
+		headDiameterTextField = new JTextField( "12", 10 );
+		headDiameterTextField.setBackground(Color.white);
+		headDiameterTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( headDiameterTextField );
+        
+        paramPanelManager.addOnNextLine(new JLabel("Estimate tail diameter:"));
+		tailDiameterTextField = new JTextField( "21", 10 );
+		tailDiameterTextField.setBackground(Color.white);
+		tailDiameterTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( tailDiameterTextField );
+        
+        paramPanelManager.addOnNextLine(new JLabel("Pixel resolution:"));
+        pixelSizeTextField = new JTextField( "0.1625", 10 );
+        pixelSizeTextField.setBackground(Color.white);
+        pixelSizeTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( pixelSizeTextField );
+        paramPanelManager.add( new JLabel("um") );
+
+        getContentPane().add(paramPanelManager.getPanel(), BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setResizable(false);
-        setVisible(true);		
+
+        System.gc();
 	}
 		
 	
 	protected void callAlgorithm()
 	{
-		PlugInAlgorithmWormStraightening alg = new PlugInAlgorithmWormStraighteningAutomatic(wormImage);
+		try {
+			float stepSize = Float.parseFloat(stepSizeTextField.getText().trim());
+			float headSize = Float.parseFloat(headDiameterTextField.getText().trim());
+			float tailSize = Float.parseFloat(tailDiameterTextField.getText().trim());
+			float pixelSize = Float.parseFloat(pixelSizeTextField.getText().trim());
+			PlugInAlgorithmWormStraighteningAutomatic alg = new PlugInAlgorithmWormStraighteningAutomatic(wormImage, stepSize);
+			alg.setDiameter(headSize/pixelSize, tailSize/pixelSize);
 
-		if (isRunInSeparateThread()) {
+			if (isRunInSeparateThread()) {
 
-			// Start the thread as a low priority because we wish to still
-			// have user interface work fast.
-			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
+				// Start the thread as a low priority because we wish to still
+				// have user interface work fast.
+				if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+					MipavUtil.displayError("A thread is already running on this object");
+				}
+			} else {
+				alg.run();
 			}
-		} else {
-			alg.run();
+		}
+		catch (NumberFormatException e)
+		{
+			MipavUtil.displayError("Please enter a valid step-size" );
 		}
 	}
 
