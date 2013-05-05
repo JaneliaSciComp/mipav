@@ -386,13 +386,13 @@ public class VolumeVOI extends VolumeObject
 		{
 			m_kVOILine.VBuffer.SetColor3(0, i, m_kColor );
 		}
-		if ( m_kVOILine.VBuffer.GetVertexQuantity() == 4 )
-		{
-			m_kVOILine.VBuffer.SetColor3(0, 0, new ColorRGB(1,0,0) );
-			m_kVOILine.VBuffer.SetColor3(0, 1, new ColorRGB(0,1,0) );
-			m_kVOILine.VBuffer.SetColor3(0, 2, new ColorRGB(0,0,1) );
-			m_kVOILine.VBuffer.SetColor3(0, 3, new ColorRGB(1,1,1) );
-		}
+//		if ( m_kVOILine.VBuffer.GetVertexQuantity() == 4 )
+//		{
+//			m_kVOILine.VBuffer.SetColor3(0, 0, new ColorRGB(1,0,0) );
+//			m_kVOILine.VBuffer.SetColor3(0, 1, new ColorRGB(0,1,0) );
+//			m_kVOILine.VBuffer.SetColor3(0, 2, new ColorRGB(0,0,1) );
+//			m_kVOILine.VBuffer.SetColor3(0, 3, new ColorRGB(1,1,1) );
+//		}
 		m_kVOILine.Reload(true);
 		if ( m_kVOITicMarks != null )
 		{
