@@ -989,7 +989,7 @@ public class JDialogSaveDicom extends JDialogBase {
     /**
      * Autofill the dicom required tags to loosely fullfill the dicom standard.
      */
-    private void autofillRequiredFields() {
+    public void autofillRequiredFields() {
         final String studyPostfix = "0";
         final String seriesPostfix = "1";
 
