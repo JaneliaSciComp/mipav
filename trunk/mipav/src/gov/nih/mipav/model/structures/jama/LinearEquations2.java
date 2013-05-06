@@ -3650,7 +3650,7 @@ public class LinearEquations2 implements java.io.Serializable {
            > 0:  if info[0] = i, U[i-1][i-1] is exactly zero; the matrix is
                  singular and its inverse could not be computed.
      */
-    private void dgetri(int n, double[][] A, int lda, int[] ipiv, double[] work,
+    public void dgetri(int n, double[][] A, int lda, int[] ipiv, double[] work,
                         int lwork, int[] info) {
         boolean lquery;
         int i;
