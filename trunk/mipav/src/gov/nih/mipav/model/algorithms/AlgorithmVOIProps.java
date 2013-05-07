@@ -88,9 +88,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         private class ContourStats
         {
             public double area;
+            public double hullArea;
             public double volume;
             public double perimeter;
             public double circularity;
+            public double solidity;
             public double largestContourDistance;
             @SuppressWarnings("unused")
             public double[] xMass, yMass, zMass;
@@ -913,12 +915,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             stats.values = contour.calcIntensity( srcImage, kMinMax, ignoreMin, ignoreMax, rangeFlag );
             
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
-            // circularityDescription
+            // circularityDescription, solidityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] || 
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {               
                 
                 stats.nVox = stats.values.size();
@@ -940,6 +943,26 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
+            }
+            
+            if ( statsList[indexOf(solidityDescription)]) {
+                VOIBase convexContour = contour.clone();
+                ((VOIContour)convexContour).convexHull();
+                convexContour.update();
+                ContourStats convexStats = new ContourStats();
+
+                convexContour.getGroup().setAllActive(false);
+                convexContour.setActive(true);
+                
+                Vector3f kMinMaxConvex = new Vector3f();
+                
+               
+                convexStats.values = convexContour.calcIntensity( srcImage, kMinMaxConvex, ignoreMin, ignoreMax, rangeFlag );
+                convexStats.nVox = convexStats.values.size();
+
+                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                stats.solidity = stats.area/stats.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1108,12 +1131,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
            
             
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
-            // circularityDescription
+            // circularityDescription, solidityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] ||
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {               
                 
                 stats.nVox = stats.valuesRGB.size();
@@ -1135,6 +1159,30 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
+            }
+            
+            if ( statsList[indexOf(solidityDescription)]) {
+                VOIBase convexContour = contour.clone();
+                ((VOIContour)convexContour).convexHull();
+                convexContour.update();
+                ContourStats convexStats = new ContourStats();
+
+                convexContour.getGroup().setAllActive(false);
+                convexContour.setActive(true);
+                
+                //Initialize contour intensity counts
+                ColorRGB kMinConvex = new ColorRGB();
+                ColorRGB kMaxConvex = new ColorRGB();
+                ColorRGB kSumConvex = new ColorRGB();
+                
+                convexStats.valuesRGB = contour.calcRGBIntensity( srcImage, kMinConvex, kMaxConvex, kSumConvex,
+                        ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG, ignoreMinB, ignoreMaxB, rangeFlag );
+                
+                convexStats.nVox = convexStats.valuesRGB.size();
+
+                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                stats.solidity = stats.area/stats.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1322,12 +1370,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         {
             ContourStats stats = new ContourStats();
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
-            // circularityDescription
+            // circularityDescription, solidityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] || 
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {    
                 stats.nVox = 0;
                 stats.area = 0;
@@ -1357,6 +1406,35 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
+            }
+            
+            if ( statsList[indexOf(solidityDescription)]) {
+                VOI convexKVOI = (VOI)kVOI.clone();
+                for ( int i = 0; i < convexKVOI.getCurves().size(); i++) {
+                    ((VOIContour)convexKVOI.getCurves().elementAt(i)).convexHull();
+                }
+                
+                ContourStats convexStats = new ContourStats();
+                
+                BitSet convexMask = new BitSet( xDim * yDim * zDim );
+                convexKVOI.createBinaryMask3D(convexMask, xDim, yDim, false, false);
+                
+                if(rangeFlag != RangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
+                
+                    float fVal = 0.0f;   
+                    for (int i = convexMask.nextSetBit(0); i >= 0; i = convexMask.nextSetBit(i+1)) {
+                        fVal = srcImage.getFloat(i);
+                        if (MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
+                           convexMask.set(i, false); 
+                        }
+                    }
+                }
+                
+                convexStats.nVox = convexMask.cardinality();
+
+                convexStats.area = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                stats.solidity = stats.area/convexStats.area;
+                statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
             
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
@@ -1654,12 +1732,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             
             
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
-            // circularityDescription
+            // circularityDescription, solidityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] ||
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {    
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1682,6 +1761,35 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
+            }
+            
+            if ( statsList[indexOf(solidityDescription)]) {
+                VOI convexKVOI = (VOI)kVOI.clone();
+                for ( int i = 0; i < convexKVOI.getCurves().size(); i++) {
+                    ((VOIContour)convexKVOI.getCurves().elementAt(i)).convexHull();
+                }
+                
+                ContourStats convexStats = new ContourStats();
+                
+                BitSet convexMask = new BitSet( xDim * yDim * zDim );
+                convexKVOI.createBinaryMask3D(convexMask, xDim, yDim, false, false);
+                
+                if(rangeFlag != RangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
+                
+                    float fVal = 0.0f;   
+                    for (int i = convexMask.nextSetBit(0); i >= 0; i = convexMask.nextSetBit(i+1)) {
+                        fVal = srcImage.getFloat(i);
+                        if (MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
+                           convexMask.set(i, false); 
+                        }
+                    }
+                }
+                
+                convexStats.nVox = convexMask.cardinality();
+
+                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                stats.solidity = stats.area/stats.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1893,12 +2001,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             
             
             // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
-            // circularityDescription
+            // circularityDescription, solidityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] ||
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {    
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1921,6 +2030,41 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
+            }
+            
+            if ( statsList[indexOf(solidityDescription)]) {
+                VOI convexKVOI = (VOI)kVOI.clone();
+                for ( int i = 0; i < convexKVOI.getCurves().size(); i++) {
+                    ((VOIContour)convexKVOI.getCurves().elementAt(i)).convexHull();
+                }
+                
+                ContourStats convexStats = new ContourStats();
+                
+                BitSet convexMask = new BitSet( xDim * yDim * zDim );
+                convexKVOI.createBinaryMask3D(convexMask, xDim, yDim, false, false);
+                
+                if(rangeFlag != RangeType.NO_RANGE && rangeFlag != null) { //some intensity values need to be ignored in relevant calculations
+                    
+                    float fValR = 0.0f; 
+                    float fValG = 0.0f;
+                    float fValB = 0.0f;
+                    for (int i = convexMask.nextSetBit(0); i >= 0; i = convexMask.nextSetBit(i+1)) {
+                        fValR = srcImage.getFloat(4*i+1);
+                        fValG = srcImage.getFloat(4*i+2);
+                        fValB = srcImage.getFloat(4*i+3);
+                        if ((MipavUtil.inRange(ignoreMinR, ignoreMaxR, fValR, rangeFlag)) ||
+                            (MipavUtil.inRange(ignoreMinG, ignoreMaxG, fValG, rangeFlag)) ||
+                            (MipavUtil.inRange(ignoreMinB, ignoreMaxB, fValB, rangeFlag))) {
+                           convexMask.set(i, false); 
+                        }
+                    }
+                }
+                
+                convexStats.nVox = convexMask.cardinality();
+
+                stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
+                stats.solidity = stats.area/stats.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -2161,7 +2305,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] ||
-                    statsList[ indexOf( circularityDescription)])
+                    statsList[ indexOf( circularityDescription)] ||
+                    statsList[ indexOf( solidityDescription)])
             {               
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.nVox += stats[q].nVox;
@@ -2183,6 +2328,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[indexOf(circularityDescription)]) {
                 statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
+            }
+            
+            if (statsList[ indexOf( solidityDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.hullArea += stats[q].hullArea;
+                }
+                statsTotal.solidity = statsTotal.area/statsTotal.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
             }
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
@@ -2322,7 +2475,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] ||
-                    statsList[ indexOf (circularityDescription)])
+                    statsList[ indexOf (circularityDescription)] ||
+                    statsList[ indexOf (solidityDescription)])
             {               
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.nVox += stats[q].nVox;
@@ -2345,6 +2499,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
             }
+            
+            if (statsList[ indexOf( solidityDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.hullArea += stats[q].hullArea;
+                }
+                statsTotal.solidity = statsTotal.area/statsTotal.hullArea;
+                statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
+            }
+            
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
                     statsList[ indexOf( avgIntensity ) ] ||
@@ -3117,6 +3280,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getCircularity() {
         return propertyList.firstElement().getProperty(VOIStatisticList.circularityDescription);
     } // {return circularity;}
+    
+    /**
+     * Gets the solidity of the VOI.
+     *
+     * @return  String solidity string
+     */
+    public String getSolidity() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.solidityDescription);
+    } // {return solidity;}
 
 
     /**
