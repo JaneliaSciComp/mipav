@@ -3120,7 +3120,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
         menuObj.setMenuItemEnabled("RFA toolbar", false);
         menuObj.setMenuItemEnabled("Open BrainSurface Flattener view", false);
-        menuObj.setMenuItemEnabled("Open Fly Through view", true);
+        menuObj.setMenuItemEnabled("Open Fly Through view", false);
 
         return menuBar;
     }
