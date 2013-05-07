@@ -39,6 +39,33 @@ import java.util.BitSet;
 Yes, go ahead.
 
 /Gunnar
+ * 
+ * On 04/29/2013 11:32 PM, Gandler, William (NIH/CIT) [E] wrote:
+> Gunnar,
+>
+>    I have ported Antigradient2.c to MIPAV and found its performance to be very impressive.  
+     Would there be any reason to port Antigradient.c as well?  Does Antigradient.c have any capability
+     not possessed by Antigradient2.c?
+>
+>                                                                                                
+> Sincerely,
+>
+>                                                                                          
+> William Gandler
+
+The difference between antigradient.c and antigradient2.c is that the former doesn't allow
+a mask and therefore only can handle rectangular domains. Not having a mask is a big limitation
+but it does simplify the algorithm drastically, making the code simpler and faster. On the other hand,
+for rectangular domains it's entirely possible that there are even faster transform-based methods.
+
+I mostly implemented antigradient.c to learn the multigrid approach. 
+Computing inverse gradients on irregular domains was central to my research at the time.
+
+I'm happy to hear that it performs well.
+
+/Gunnar
+
+
 
 function f = antigradient2(g, mask, mu, n)
     
