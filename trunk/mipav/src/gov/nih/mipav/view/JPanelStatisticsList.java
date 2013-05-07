@@ -128,6 +128,7 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
         if(openContour) { //the following statistics are invalid for non-closed contours
             setEnabledList(perimeterDescription, false);
             setEnabledList(circularityDescription, false);
+            setEnabledList(solidityDescription, false);
             setEnabledList(skewnessDescription, false);
             setEnabledList(kurtosisDescription, false);
             setEnabledList(axisDescription, false);
