@@ -90,6 +90,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double area;
             public double volume;
             public double perimeter;
+            public double circularity;
             public double largestContourDistance;
             @SuppressWarnings("unused")
             public double[] xMass, yMass, zMass;
@@ -911,11 +912,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
            
             stats.values = contour.calcIntensity( srcImage, kMinMax, ignoreMin, ignoreMax, rangeFlag );
             
-            // The following depend on each other: quantityDescription, volumeDescription, areaDescription
+            // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
+            // circularityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] || 
+                    statsList[ indexOf( circularityDescription)])
             {               
                 
                 stats.nVox = stats.values.size();
@@ -927,11 +930,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.areaDescription + end, nf.format(stats.area));
                 statProperty.setProperty(VOIStatisticList.volumeDescription + end, nf.format(stats.volume));
             }
-            // If user selects perimeterDescription:
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            // If user selects perimeterDescription or circularityDescription:
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {               
                 stats.perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1099,11 +1107,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG, ignoreMinB, ignoreMaxB, rangeFlag );
            
             
-            // The following depend on each other: quantityDescription, volumeDescription, areaDescription
+            // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
+            // circularityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] ||
+                    statsList[ indexOf( circularityDescription)])
             {               
                 
                 stats.nVox = stats.valuesRGB.size();
@@ -1115,11 +1125,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.areaDescription + end, nf.format(stats.area));
                 statProperty.setProperty(VOIStatisticList.volumeDescription + end, nf.format(stats.volume));
             }
-            // If user selects perimeterDescription:
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            // If user selects perimeterDescription or circularityDescription:
+            if ( statsList[ indexOf( perimeterDescription ) ] || (statsList[ indexOf( circularityDescription)]) )
             {               
                 stats.perimeter = contour.getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());   
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(stats.perimeter));       
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1306,11 +1321,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 String unit2DStr, String unit3DStr, float ignoreMin, float ignoreMax, double largestDistance )
         {
             ContourStats stats = new ContourStats();
-            // The following depend on each other: quantityDescription, volumeDescription, areaDescription
+            // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
+            // circularityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] || 
+                    statsList[ indexOf( circularityDescription)])
             {    
                 stats.nVox = 0;
                 stats.area = 0;
@@ -1326,8 +1343,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(stats.nVox));        
             }
-            // If user selects perimeterDescription:
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            // If user selects perimeterDescription or circularityDescription:
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList [ indexOf (circularityDescription) ])
             {           
                 stats.perimeter = 0;
                 for ( int i = 0; i < contours.size(); i++ )
@@ -1336,6 +1353,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
             }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
+            }
+            
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
             // deviationDescription, skewnessDescription, kurtosisDescription, massCenterDescription
@@ -1630,11 +1653,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             //System.err.println( "calcStatsTotal " );
             
             
-            // The following depend on each other: quantityDescription, volumeDescription, areaDescription
+            // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
+            // circularityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] ||
+                    statsList[ indexOf( circularityDescription)])
             {    
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1643,8 +1668,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(stats.nVox));        
             }
-            // If user selects perimeterDescription:
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            // If user selects perimeterDescription or circularityDescription:
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf(circularityDescription)])
             {           
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
@@ -1652,6 +1677,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -1862,11 +1892,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             //System.err.println( "calcStatsTotal " );
             
             
-            // The following depend on each other: quantityDescription, volumeDescription, areaDescription
+            // The following depend on each other: quantityDescription, volumeDescription, areaDescription,
+            // circularityDescription
             // If one is selected, all are calculated.
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] ||
+                    statsList[ indexOf( circularityDescription)])
             {    
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1] * fileInfo.getResolutions()[2]);
@@ -1875,8 +1907,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(stats.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(stats.nVox));        
             }
-            // If user selects perimeterDescription:
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            // If user selects perimeterDescription or circularityDescription:
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {           
                 stats.perimeter = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
@@ -1884,6 +1916,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.perimeter += kVOI.getCurves().elementAt(i).getLengthPtToPt(srcImage.getFileInfo(0).getResolutions());
                 }
                 statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(stats.perimeter));  
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
             }
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -2123,7 +2160,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] ||
+                    statsList[ indexOf( circularityDescription)])
             {               
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.nVox += stats[q].nVox;
@@ -2134,12 +2172,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription + end, nf.format(statsTotal.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(statsTotal.nVox));
             }
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {            
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.perimeter += stats[q].perimeter;
                 }                      
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(statsTotal.perimeter));
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
             }
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
@@ -2278,7 +2321,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             if ( statsList[ indexOf( quantityDescription ) ] || 
                     statsList[ indexOf( volumeDescription ) ] ||
-                    statsList[ indexOf( areaDescription ) ] )
+                    statsList[ indexOf( areaDescription ) ] ||
+                    statsList[ indexOf (circularityDescription)])
             {               
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.nVox += stats[q].nVox;
@@ -2289,12 +2333,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.volumeDescription + end, nf.format(statsTotal.volume));
                 statProperty.setProperty(VOIStatisticList.quantityDescription + end, nf.format(statsTotal.nVox));
             }
-            if ( statsList[ indexOf( perimeterDescription ) ] )
+            if ( statsList[ indexOf( perimeterDescription ) ] || statsList[ indexOf( circularityDescription)])
             {            
                 for (int q = 0; q < stats.length; q++) {
                     statsTotal.perimeter += stats[q].perimeter;
                 }                      
                 statProperty.setProperty(VOIStatisticList.perimeterDescription + end, nf.format(statsTotal.perimeter));
+            }
+            
+            if ( statsList[indexOf(circularityDescription)]) {
+                statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
+                statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
             }
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
@@ -3059,6 +3108,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getPerimeter() {
         return propertyList.firstElement().getProperty(VOIStatisticList.perimeterDescription);
     } // {return perimeter;}
+    
+    /**
+     * Gets the circularity of the VOI.
+     *
+     * @return  String circularity string
+     */
+    public String getCircularity() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.circularityDescription);
+    } // {return circularity;}
 
 
     /**
