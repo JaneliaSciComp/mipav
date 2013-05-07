@@ -118,6 +118,8 @@ public interface VOIStatisticList {
     
     String circularityDescription = "Circularity";
     
+    String solidityDescription = "Solidity";
+    
     /**
      * string to test for when checking on statics to calculate.
      *
@@ -150,11 +152,11 @@ public interface VOIStatisticList {
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
     String[] statisticDescription = {
-        quantityDescription, volumeDescription, areaDescription, perimeterDescription, circularityDescription, 
-        minIntensity, maxIntensity, avgIntensity, deviationDescription, sumIntensities, geometricCenterDescription,
-        massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription, minorAxisDescription, 
-        skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, largestDistanceDescription, median,
-        mode, modeCount
+        quantityDescription, volumeDescription, areaDescription, perimeterDescription, circularityDescription,
+        solidityDescription, minIntensity, maxIntensity, avgIntensity, deviationDescription, sumIntensities, 
+        geometricCenterDescription, massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription,
+        minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
+        largestDistanceDescription, median, mode, modeCount
     };
 
     /** number of statistics in the list. */
