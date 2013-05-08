@@ -2,8 +2,13 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.util.MipavMath;
 
+
+
 import java.awt.Polygon;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Vector;
 
 import Jama.Matrix;
@@ -143,101 +148,242 @@ public class VOIContour extends VOIBase {
 	public VOIBase clone() {
 		return new VOIContour(this);
 	}
-
-
-	/**
-	 * Forms the convexHull based on the set of points that defines this
-	 * contour. The contour can be either be clockwise or counter-clockwise.
+	
+	/* Code ported from http://cm.bell-labs.com/who/clarkson/2dch.c to
+	 * Java in public void convexHull() and its supporting routines by William Gandler
+	 * Original notices follow.
 	 */
+	
+	/*
+	 * Ken Clarkson wrote this.  Copyright (c) 1996 by AT&T..
+	 * Permission to use, copy, modify, and distribute this software for any
+	 * purpose without fee is hereby granted, provided that this entire notice
+	 * is included in all copies of any software which is or includes a copy
+	 * or modification of this software and in all copies of the supporting
+	 * documentation for such software.
+	 * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+	 * WARRANTY.  IN PARTICULAR, NEITHER THE AUTHORS NOR AT&T MAKE ANY
+	 * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+	 * OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+	 */
+
+
+	/*
+	 * two-dimensional convex hull
+	 * read points from stdin,
+	 *      one point per line, as two numbers separated by whitespace
+	 * on stdout, points on convex hull in order around hull, given
+	 *      by their numbers in input order
+	 * the results should be "robust", and not return a wildly wrong hull,
+	 *  despite using floating point
+	 * works in O(n log n); I think a bit faster than Graham scan;
+	 *  somewhat like Procedure 8.2 in Edelsbrunner's "Algorithms in Combinatorial
+	 *  Geometry", and very close to:
+	 *      A.M. Andrew, "Another Efficient Algorithm for Convex Hulls in Two Dimensions",
+	 *      Info. Proc. Letters 9, 216-219 (1979)
+	 *  (See also http://geometryalgorithms.com/Archive/algorithm_0110/algorithm_0110.htm)
+	 */
+
 	public void convexHull() {
-		int i, j, k;
-		int length, start;
-		//float vAx, vAy, vBx, vBy, crossProd;
-		boolean flag;
-		Vector3f tmpPt;
-		boolean repeat = true;
-		boolean ccw = isCounterClockwise(); // ?
-		length = size();
-
-		if (length == 3) {
-			return;
-		} // Contour is a triangle. All triangles are convex.
-
-		start = length / 4;
-
-		if (start < 3) {
-			start = 3;
-		}
-
-		if ((start % 2) == 0) {
-			start++; // make start odd
-		}
-
-
-		Vector3f vec1, vec2;
-		Vector3f cross = new Vector3f();
-		float crossProd;
-		for (k = start; k >= 3; k -= 2) {
-			flag = true;
-
-			while ((flag == true) && (size() > k)) {
-				flag = false;
-
-				for (i = 0; i < (length - (k - 1)); i++) {
-
-					// Form two vectors
-					vec1 = elementAt(i + (k / 2));
-					vec2 = elementAt(i + (k - 1));
-					cross = Vector3f.cross(vec1,vec2);
-					crossProd = cross.length();
-
-					/*				    
-					vAx = ((Vector3f) (elementAt(i + (k / 2)))).X
-							- ((Vector3f) (elementAt(i))).X;
-					vAy = ((Vector3f) (elementAt(i + (k / 2)))).Y
-							- ((Vector3f) (elementAt(i))).Y;
-					vBx = ((Vector3f) (elementAt(i + (k - 1)))).X
-							- ((Vector3f) (elementAt(i))).X;
-					vBy = ((Vector3f) (elementAt(i + (k - 1)))).Y
-							- ((Vector3f) (elementAt(i))).Y;
-
-					// calc cross product
-					crossProd = (vAx * vBy) - (vAy * vBx);
-					 */
-
-					if (ccw == false) {
-
-						if (crossProd <= 0) {
-							removeElementAt(i + (k / 2));
-							flag = true;
-							length = size();
-						}
-					} else {
-
-						if (crossProd >= 0) {
-							removeElementAt(i + (k / 2));
-							flag = true;
-							length = size();
-						}
-					}
-				}
-			}
-
-			// Rotate points so that all concavities are removed.
-			for (j = 0; j < (length / 2); j++) {
-				tmpPt = elementAt(size() - 1);
-				removeElementAt(size() - 1);
-				insertElementAt(tmpPt, 0);
-			}
-
-			// Repeat to remove all local concavities
-			if ((repeat == true) && (k == 3)) {
-				k = 5;
-				repeat = false;
-			}
-		}
+	    int n;
+	    double points[][];
+	    double P[][];
+	    int i;
+	    int u;
+	    int u2;
+	    Vector3f pt;
+	    
+	    n = size();
+	    
+	    if (n == 3) {
+	        // Contour is a triangle.  All triangles are convex.
+	        return;
+	    }
+	    
+	    points = new double[n][2];
+	    P = new double[n+1][];
+	    for (i = 0; i < n; i++) {
+	        points[i][0] = elementAt(i).X;
+	        points[i][1] = elementAt(i).Y;
+	        P[i] = points[i];
+	    } // for (i = 0; i < n; i++)
+	    
+	    // Make lower hull
+        u = make_chain(P, 0, n, true);
+        P[n] = P[0];
+        // Make upper hull
+        u2 = make_chain(P, u, n-u+1, false);
+        removeAllElements();
+        for (i = 0; i < u + u2; i++) {
+            pt = new Vector3f((float)P[i][0], (float)P[i][1], 0.0f);
+            insertElementAt(pt, i);
+        }
 	}
+	
+	private int make_chain(double[][] V, int offset, int n, boolean lower) {
+	    int i;
+	    int j;
+	    int s = offset + 1;
+	    double t[];
+	    ArrayList<positionItem> VList;
+	    VList = new ArrayList<positionItem>();
+	    
+	    for (i = offset; i < offset+n; i++) {
+	        VList.add(new positionItem(V[i][0], V[i][1]));
+	    }
+	    
+	    if (lower) {
+	        Collections.sort(VList, new positionLowerComparator());
+	    }
+	    else {
+	        Collections.sort(VList, new positionUpperComparator());    
+	    }
+	    
+	    for (i = offset; i < offset+n; i++) {
+	        V[i][0] = VList.get(i-offset).getPositionX();
+	        V[i][1] = VList.get(i-offset).getPositionY();
+	    }
+	    
+	    for (i = offset + 2; i < offset+n; i++) {
+	        for (j = s; j >= offset + 1 && ccw(V, i, j, j-1); j--){}
+	        s = j+1;
+	        t = V[s];
+	        V[s] = V[i];
+	        V[i] = t;
+	    } // for (i = offset + 2; i < n; i++)
+	    
+	    return (s-offset);
+	}
+	
+	private boolean ccw(double P[][], int i, int j, int k) {
+	    double a;
+	    double b;
+	    double c;
+	    double d;
+	    
+	    a = P[i][0] - P[j][0];
+	    b = P[i][1] - P[j][1];
+	    c = P[k][0] - P[j][0];
+	    d = P[k][1] - P[j][1];
+	    // true if points i, j, k counterclockwise
+	    return ((a*d - b*c) <= 0.0);
+	}
+	
+	private class positionLowerComparator implements Comparator<positionItem> {
 
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final positionItem o1, final positionItem o2) {
+            final double ax = o1.getPositionX();
+            final double bx = o2.getPositionX();
+            final double ay = o1.getPositionY();
+            final double by = o2.getPositionY();
+            double v;
+
+            v = ax - bx;
+            if (v > 0) {
+                return 1;
+            }
+            if (v < 0) {
+                return -1;
+            }
+            
+            v = by - ay;
+            if (v > 0) {
+                return 1;
+            }
+            if (v < 0) {
+                return -1;
+            }
+            return 0;
+        }
+
+    }
+	
+	private class positionUpperComparator implements Comparator<positionItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final positionItem o1, final positionItem o2) {
+            final double ax = o1.getPositionX();
+            final double bx = o2.getPositionX();
+            final double ay = o1.getPositionY();
+            final double by = o2.getPositionY();
+            double v;
+
+            v = bx - ax;
+            if (v > 0) {
+                return 1;
+            }
+            if (v < 0) {
+                return -1;
+            }
+            
+            v = ay - by;
+            if (v > 0) {
+                return 1;
+            }
+            if (v < 0) {
+                return -1;
+            }
+            return 0;
+        }
+
+    }
+	
+	private class positionItem {
+
+        /** DOCUMENT ME! */
+        private final double positionX;
+
+        /** DOCUMENT ME! */
+        private final double positionY;
+
+        /**
+         * Creates a new positionItem object.
+         * 
+         * @param positionX
+         * @param positionY
+         */
+        public positionItem(final double positionX, final double positionY) {
+            this.positionX = positionX;
+            this.positionY = positionY;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getPositionX() {
+            return positionX;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getPositionY() {
+            return positionY;
+        }
+
+    }
+
+
+	
 
 	/**
 	 * Return the VOI crop region's origin of rectangle.
