@@ -946,7 +946,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(solidityDescription)]) {
-                VOIBase convexContour = contour.clone();
+                VOIBase convexContour = new VOIContour((VOIContour)contour);
+                
                 ((VOIContour)convexContour).convexHull();
                 convexContour.update();
                 ContourStats convexStats = new ContourStats();
@@ -1162,7 +1163,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(solidityDescription)]) {
-                VOIBase convexContour = contour.clone();
+                VOIBase convexContour = new VOIContour((VOIContour)contour);
                 ((VOIContour)convexContour).convexHull();
                 convexContour.update();
                 ContourStats convexStats = new ContourStats();
@@ -1764,7 +1765,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(solidityDescription)]) {
-                VOI convexKVOI = (VOI)kVOI.clone();
+                VOI convexKVOI = new VOI(kVOI);
                 for ( int i = 0; i < convexKVOI.getCurves().size(); i++) {
                     ((VOIContour)convexKVOI.getCurves().elementAt(i)).convexHull();
                 }
@@ -1781,6 +1782,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         fVal = srcImage.getFloat(i);
                         if (MipavUtil.inRange(ignoreMin, ignoreMax, fVal, rangeFlag)) {
                            convexMask.set(i, false); 
+                           System.out.println("Setting false");
                         }
                     }
                 }
@@ -2033,7 +2035,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(solidityDescription)]) {
-                VOI convexKVOI = (VOI)kVOI.clone();
+                VOI convexKVOI = new VOI(kVOI);
                 for ( int i = 0; i < convexKVOI.getCurves().size(); i++) {
                     ((VOIContour)convexKVOI.getCurves().elementAt(i)).convexHull();
                 }
