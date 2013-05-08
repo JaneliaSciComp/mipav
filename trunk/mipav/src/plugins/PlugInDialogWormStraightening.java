@@ -1,3 +1,4 @@
+import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -15,6 +16,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 
@@ -27,7 +29,7 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 
-public class PlugInDialogWormStraightening extends JDialogBase
+public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 {
 	private static final long serialVersionUID = 2020338731116362598L;
 
@@ -107,8 +109,10 @@ public class PlugInDialogWormStraightening extends JDialogBase
         	callAlgorithm();
         	disposeLocal();
         } else if (source == cancelButton) {
-        	setVisible(false);
-        	disposeLocal();        	
+        	this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            
+        	//setVisible(false);
+        	//disposeLocal();        	
         } else {
             super.actionPerformed(e);
         }
