@@ -193,6 +193,7 @@ public class ModelLUT extends ModelStorageBase {
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
+    
     /**
      * Build LUT consisting of a student t-distribution at the specified level os significance for the given
      * degrees of freedom.
@@ -207,17 +208,21 @@ public class ModelLUT extends ModelStorageBase {
     	
     	double studentT = StatisticsTable.getOneTailInvTStatsitic(dof, sig);
     	
+    	float max = (float) image.getMax();
+    	
     	ModelLUT lut = new ModelLUT(ModelLUT.GRAY, 256, new int[]{4, 256});
 		lut.makeCustomizedLUT("Rainbow2");
 		TransferFunction t = new TransferFunction();
 		t.addPoint((float) image.getMin(),  255);
 		t.addPoint((float) studentT, 255);
-		t.addPoint(14, 0);
-		t.addPoint((float) image.getMax(), 0);
+		if(max > 14) {
+			t.addPoint(14, 0);
+		} else {
+			t.addPoint(max-1, 0);
+		}
+		t.addPoint(max, 0);
 		lut.setTransferFunction(t);
-		//lut.makeBoneTransferFunctions();
-		
-		
+
 		return lut;
 	}
     
