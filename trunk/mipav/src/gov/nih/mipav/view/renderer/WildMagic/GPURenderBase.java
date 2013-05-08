@@ -82,8 +82,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
     /** For testing the frame rate: */
     protected boolean m_bTestFrameRate = false;
-    /** Rotation during frame rate tests: */
-    protected Matrix3f m_kRotate = new Matrix3f();
+    /** Basic rotations for fixed input use: */
+    protected Matrix3f m_kZRotate = new Matrix3f(), m_kYRotate = new Matrix3f(), m_kXRotate = new Matrix3f();
     /** List of objects displayed in the scene. */
     protected Vector<VolumeObject> m_kDisplayList = new Vector<VolumeObject>();
     /** Set to true when the surface has been added or modified. */
@@ -145,10 +145,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
-        
-        
-        //TODO: Try rotations here
-        m_kRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+
+        m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/64.0f);
+        m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/64.0f);
     }
     
     /**
@@ -225,7 +225,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList = null;
         }
         
-        m_kRotate = null;
+        m_kZRotate = null;
 
         super.dispose();
     }
@@ -308,6 +308,48 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     @Override
 	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
+        
+        
+        if(e.isAltDown()) {
+	        
+        	boolean rotateProcessed = false;
+	        Matrix3f rotateMatrix = null;
+	        switch(e.getKeyCode()) {
+	        case KeyEvent.VK_UP:
+	        	rotateProcessed = true;
+	        	rotateMatrix = m_kYRotate;
+	        	break;
+	        	
+	        case KeyEvent.VK_DOWN:
+	        	rotateProcessed = true;
+	        	rotateMatrix = Matrix3f.inverse(m_kYRotate);
+	        	break;
+	        	
+	        case KeyEvent.VK_RIGHT:
+	        	rotateProcessed = true;
+	        	rotateMatrix = m_kZRotate;
+	        	break;
+	        	
+	        case KeyEvent.VK_LEFT:
+	        	rotateProcessed = true;
+	        	rotateMatrix = Matrix3f.inverse(m_kZRotate);
+	        	break;
+	        }
+	        if(rotateProcessed) {	
+		        Matrix3f kRotate = m_spkScene.Local.GetRotate();
+		        kRotate.mult(rotateMatrix);
+		        m_spkScene.Local.SetRotate(kRotate);
+		        m_spkScene.UpdateGS();
+		        m_kCuller.ComputeVisibleSet(m_spkScene);
+		        
+		        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
+		            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+		        }
+		        return;
+	        }
+        }
+        
+        
         super.keyPressed(e);
         switch (ucKey)
         {
@@ -738,7 +780,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         if ( m_bTestFrameRate )
         {
             Matrix3f kRotate = m_spkScene.Local.GetRotate();
-            kRotate.mult(m_kRotate);
+            kRotate.mult(m_kZRotate);
             m_spkScene.Local.SetRotate(kRotate);
             m_spkScene.UpdateGS();
             m_kCuller.ComputeVisibleSet(m_spkScene);
