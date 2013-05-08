@@ -579,7 +579,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 		
     }
 
-    /* (non-Javadoc)
+    /* (non-Javadoc)  handle right mouse press event. 
      * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
      */
     @Override
@@ -606,11 +606,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         if (SwingUtilities.isRightMouseButton(e) && !e.isControlDown()) {
 			currEventTime = e.getWhen();
 
-			if ((currEventTime - prevEventTime) < 10) {
-				pressed = false;
-				return;
-			}
-
 			pressed = true;
 			RightMouse mouse = new RightMouse(e);
 			prevEventTime = e.getWhen();
@@ -619,7 +614,14 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
     } 
 
-
+    /*
+     * (non-Javadoc)  handle right mouse release event, set the press flag to false
+     * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
+     */
+    public void mouseReleased(MouseEvent e) {
+    	pressed = false;
+    }
+    
     /**
      * Mouse wheel event invoked from the middle mouse button roller.  Rolling forward to track the fly-thru path in forward direction.
      * Rolling backward to track the fly-thru path in backward direction.  
