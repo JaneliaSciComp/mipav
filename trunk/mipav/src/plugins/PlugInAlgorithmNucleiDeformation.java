@@ -369,15 +369,12 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
                     } 
-                }
-
-                numObjects--;
-                
-                for (i = 0; i < length; i++) {
-                    if (IDArray[i] > id) {
+                    else if (IDArray[i] > id) {
                         IDArray[i]--;
                     }
                 }
+
+                numObjects--;
             } // if (removeID[id-1])
         } // for (id = numObjects; id >= 1; id--) 
         
