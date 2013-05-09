@@ -77,8 +77,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Radio button of the MIP mode option. */
     protected JRadioButton radioMIP;
 
-    /** Radio button of the Custum blend mode option. */
-    protected JRadioButton radioCustum;
+    /** Radio button of the Custom blend mode option. */
+    protected JRadioButton radioCustom;
 
     /** Radio button of the SURFACE mode option. */
     protected JRadioButton radioSURFACE;
@@ -122,6 +122,15 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Opacity slider. */
     private JSlider m_kIPDSlider;
 
+    /** Navigation (fly-thru) checkbox */
+    private JCheckBox navigationCheckBox;
+
+    /** Mouse translation speed slider. */
+    private JSlider mouseTranslationSpeedSlider;
+    
+    /** Mouse rotation speed slider. */
+    private JSlider mouseRotationSpeedSlider;
+    
     /**
      * Constructor.
      * @param kVolumeViewer parent frame.
@@ -187,7 +196,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         if ( radioCOMPOSITE.isSelected() ) { return 2; } 
         if ( radioSURFACEFAST.isSelected() ) { return 3; }
         if ( radioSURFACE.isSelected() ) { return 4; }
-        if ( radioCustum.isSelected() ) { return 5; }
+        if ( radioCustom.isSelected() ) { return 5; }
         return 2;
     }
     
@@ -220,6 +229,14 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     	return m_kDisplayVolumeCheck;
     }
     
+    /**
+     * Get the navigation checkbox, fly-thru checkbox
+     * @return true or false
+     */
+    public JCheckBox getNaviCheckBox() {
+    	return navigationCheckBox;
+    }
+    
     /* (non-Javadoc)
      * @see java.awt.event.ItemListener#itemStateChanged(java.awt.event.ItemEvent)
      */
@@ -232,8 +249,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	rayBasedRenderWM.DRRMode();
         } else if (radioCOMPOSITE.isSelected() && (source == radioCOMPOSITE)) {
         	rayBasedRenderWM.CMPMode();
-        } else if (radioCustum.isSelected() && (source == radioCustum)) {
-            m_kVolumeViewer.CustumBlendMode();
+        } else if (radioCustom.isSelected() && (source == radioCustom)) {
+            m_kVolumeViewer.CustomBlendMode();
         } else if (radioSURFACE.isSelected() && (source == radioSURFACE)) {
         	m_kVolumeViewer.SURMode( false );
         } else if (radioSURFACEFAST.isSelected() && (source == radioSURFACEFAST)) {
@@ -321,7 +338,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         radioCOMPOSITE.setSelected(false);
         radioSURFACEFAST.setSelected(false);
         radioSURFACE.setSelected(false);
-        radioCustum.setSelected(false);
+        radioCustom.setSelected(false);
 
         if ( which == 0 ) 
         { 
@@ -350,8 +367,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         else if ( which == 5 ) 
         { 
-            radioCustum.setSelected(true); 
-            m_kVolumeViewer.CustumBlendMode();
+            radioCustom.setSelected(true); 
+            m_kVolumeViewer.CustomBlendMode();
         }
         else
         { 
@@ -391,6 +408,21 @@ public class JPanelRenderMode_WM extends JInterfaceBase
             mkCurrent.setText("Stereo IPD " + String.valueOf(m_fIPD));
             rayBasedRenderWM.setIPD( m_fIPD );
         }
+        if ( source == mouseTranslationSpeedSlider) {
+        	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	// System.err.println("translationSpeed = " + translationSpeed);
+        	// System.err.println("rotationSpeed = " + rotationSpeed);
+        	rayBasedRenderWM.setMouseTranslationSpeed(translationSpeed, rotationSpeed);
+        }
+        
+        if ( source == mouseRotationSpeedSlider) {
+        	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	// System.err.println("translationSpeed = " + translationSpeed);
+        	// System.err.println("rotationSpeed = " + rotationSpeed);
+        	rayBasedRenderWM.setMouseRotationSpeed(translationSpeed, rotationSpeed);
+        }
     }
     
     /**
@@ -422,14 +454,16 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kDisplayVolumeCheck.setActionCommand( "VolumeRayCast");
          m_kDisplayVolumeCheck.addActionListener(this);
          componentsPanel.add(m_kDisplayVolumeCheck);
+         gbc.gridx = 0;
+         gbc.gridy = 0;
          componentsPanel.add(m_kDisplayVolumeCheck, gbc);
          
-
          m_kDisplaySlicesCheck = new JCheckBox( "Display Slices" );
          m_kDisplaySlicesCheck.setSelected(true);
          m_kDisplaySlicesCheck.setActionCommand( "VolumeSlices");
          m_kDisplaySlicesCheck.addActionListener(this);
-         gbc.gridy = 1;
+         gbc.gridx = 1;
+         gbc.gridy = 0;
          componentsPanel.add(m_kDisplaySlicesCheck, gbc);
          
          m_kDisplaySurfaceCheck = new JCheckBox( "Display Surface" );
@@ -437,7 +471,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kDisplaySurfaceCheck.setEnabled(false);
          m_kDisplaySurfaceCheck.setActionCommand( "Surface");
          m_kDisplaySurfaceCheck.addActionListener(this);
-         gbc.gridy = 2;
+         gbc.gridx = 0;
+         gbc.gridy = 1;
          componentsPanel.add(m_kDisplaySurfaceCheck, gbc);
 
          gbc.gridx = 0;
@@ -452,7 +487,6 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kStereoModeCB.setBackground(Color.white);
          gbc.gridy = 3;
          componentsPanel.add(m_kStereoModeCB, gbc);
-         
          
 
          m_kIPDSlider = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 10);
@@ -499,9 +533,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          radioSURFACE = new JRadioButton("Composite Surface", false);
          radioSURFACE.setFont(serif12);
          group1.add(radioSURFACE);
-         radioCustum = new JRadioButton("Custum Blend", false);
-         radioCustum.setFont(serif12);
-         group1.add(radioCustum);
+         radioCustom = new JRadioButton("Custom Blend", false);
+         radioCustom.setFont(serif12);
+         group1.add(radioCustom);
 
 
          radioMULTIHISTO = new JCheckBox("MultiHistogram", false);
@@ -513,20 +547,27 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          radioSURFACE.addItemListener(this);
          radioSURFACEFAST.addItemListener(this);
          radioMULTIHISTO.addItemListener(this);
-         radioCustum.addItemListener(this);
+         radioCustom.addItemListener(this);
+         gbc.gridx = 0;
          gbc.gridy = 0;
          renderModePanel.add(radioMIP, gbc);
-         gbc.gridy = 1;
+         gbc.gridx = 1;
+         gbc.gridy = 0;
          renderModePanel.add(radioXRAY, gbc);
-         gbc.gridy = 2;
+         gbc.gridx = 2;
+         gbc.gridy = 0;
          renderModePanel.add(radioCOMPOSITE, gbc);
-         gbc.gridy = 3;
+         gbc.gridx = 0;
+         gbc.gridy = 1;
          renderModePanel.add(radioSURFACEFAST, gbc);
-         gbc.gridy = 4;
+         gbc.gridx = 1;
+         gbc.gridy = 1;
          renderModePanel.add(radioSURFACE, gbc);
-         gbc.gridy = 5;
-         renderModePanel.add(radioCustum, gbc);
-         gbc.gridy = 6;
+         gbc.gridx = 2;
+         gbc.gridy = 1;
+         renderModePanel.add(radioCustom, gbc);
+         gbc.gridx = 0;
+         gbc.gridy = 2;
          renderModePanel.add(radioMULTIHISTO, gbc);
          
          JPanel blendPanel = new JPanel(new GridBagLayout());
@@ -578,6 +619,29 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          m_kIntensityTF.setFont(serif12);
          m_kIntensityTF.addActionListener(this);
          
+         // add mouse rotateion and translation speed control slider
+         JPanel mouseSpeedPanel = new JPanel(new GridBagLayout());
+         mouseSpeedPanel.setBorder(buildTitledBorder("Mouse Sensitivity"));
+         
+         JLabel mouseTranslationSpeedLabel = new JLabel("Mouse Translation Speed");
+         gbc.gridx = 0;
+         gbc.gridy = 0;
+         mouseSpeedPanel.add(mouseTranslationSpeedLabel, gbc);
+         mouseTranslationSpeedSlider = new JSlider( 0, 40, 10 );
+         mouseTranslationSpeedSlider.addChangeListener(this);
+         gbc.gridx = 1;
+         mouseSpeedPanel.add(mouseTranslationSpeedSlider, gbc);         
+         
+         JLabel mouseRotationSpeedLabel = new JLabel("Mouse Rotation Speed");
+         gbc.gridx = 0;
+         gbc.gridy = 1;
+         mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc);
+         mouseRotationSpeedSlider = new JSlider(0, 100, 1);
+         mouseRotationSpeedSlider.addChangeListener(this);
+         gbc.gridx = 1;
+         mouseSpeedPanel.add(mouseRotationSpeedSlider, gbc);
+         
+         // surface extraction panel
          JPanel extractPanel = new JPanel(new GridBagLayout());
          extractPanel.setBorder(buildTitledBorder("Surface Extraction"));
          gbc.gridx = 0;
@@ -588,14 +652,30 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 2;
          extractPanel.add(m_kIntensityTF, gbc);
          
+         // add navigation panel
+         navigationCheckBox = new JCheckBox( "Enable Navigation" );
+         navigationCheckBox.setSelected(false);
+         navigationCheckBox.setActionCommand( "Navigation");
+         navigationCheckBox.addActionListener(this);
+         
+         gbc.gridx = 0;
+         gbc.gridy = 0;
+         
+         JPanel naviPanel = new JPanel(new GridBagLayout());
+         naviPanel.setBorder(buildTitledBorder("Navigation"));
+         naviPanel.add(navigationCheckBox, gbc);
+ 
+ 
+         // the main panel
          Box contentBox = new Box(BoxLayout.Y_AXIS);
 
          contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
          contentBox.add(componentsPanel);
          contentBox.add(renderModePanel);
          contentBox.add(blendPanel);
+         contentBox.add(mouseSpeedPanel);
          contentBox.add(extractPanel);
-         //contentBox.add(buttonPanel);
+         // contentBox.add(naviPanel);
   
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
          

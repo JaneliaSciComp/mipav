@@ -729,9 +729,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         checkPixelProgram();
     }
 
-    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {
-    	super.SetCustumBlend(iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+    	super.SetCustomBlend(iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     	checkPixelProgram();
     }
     

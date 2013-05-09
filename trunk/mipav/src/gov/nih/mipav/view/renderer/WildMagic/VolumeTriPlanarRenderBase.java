@@ -2063,9 +2063,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  }
 	  }
 
-	  public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+	  public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
 	  {
-		  m_kVolumeRayCast.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+		  m_kVolumeRayCast.SetCustomBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
 	  }    
 
 
@@ -2511,6 +2511,26 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  return -1;
 	  }    
 
+	  /**
+	   * Set the mouse rotation and translation speed from the rotation and translation control sliders
+	   * @param translationSpeed   mouse translation speed
+	   * @param rotationSpeed      mouse rotation speed
+	   */
+	  public void setMouseTranslationSpeed(float translationSpeed, float rotationSpeed) {
+		  InitializeCameraMotion(translationSpeed,rotationSpeed);
+		  return;
+	  }
+	  
+	  /**
+	   * Set the mouse rotation and translation speed from the rotation and translation control sliders
+	   * @param translationSpeed   mouse translation speed
+	   * @param rotationSpeed      mouse rotation speed
+	   */
+	  public void setMouseRotationSpeed(float translationSpeed, float rotationSpeed) {
+		  InitializeCameraMotion(translationSpeed, rotationSpeed);
+		  return;
+	  }
+	  
 	  /** Turns on/off displaying the bounding box for the given plane.
 	   * @param i the plane index (0-3) in file coordinates.
 	   * @param bShow when true, the bounding box is displayed.

@@ -362,9 +362,9 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
     }
     
-    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {
-        m_kVolumeShaderEffect.SetCustumBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
+        m_kVolumeShaderEffect.SetCustomBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     }
     
     public boolean GetGradientMagnitude()

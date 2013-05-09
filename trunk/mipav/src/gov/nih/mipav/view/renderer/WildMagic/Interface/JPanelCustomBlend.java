@@ -28,7 +28,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 
 
-public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener {
+public class JPanelCustomBlend extends JInterfaceBase implements ChangeListener {
     /**  */
     private static final long serialVersionUID = -6719268114423090548L;
     protected JButton colorButton;
@@ -48,17 +48,17 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
     private JComboBox m_kSrcBlend;
     private JComboBox m_kDstBlend;
     private boolean m_bUpdate = true;
-    
+
     /**
      * Constructor.
      * @param kVolumeViewer parent frame.
      */
-    public JPanelCustumBlend( VolumeTriPlanarInterface kVolumeViewer )
+    public JPanelCustomBlend( VolumeTriPlanarInterface kVolumeViewer )
     {
         super(kVolumeViewer);
         init();
     }
-    
+
     public void actionPerformed(ActionEvent event)
     {
         Object source = event.getSource();
@@ -94,58 +94,58 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
     {
         m_kBlendEquationColor.setSelectedIndex(i);
     }
-    
+
     public int getSource()
     {
         return m_kSrcBlend.getSelectedIndex();
     }
-    
+
     public void setSource(int i)
     {
         m_kSrcBlend.setSelectedIndex(i);
     }
-    
+
     public int getDestination()
     {
         return m_kDstBlend.getSelectedIndex();
     }
-    
+
     public void setDestination(int i)
     {
         m_kDstBlend.setSelectedIndex(i);
     }
-    
+
     public Color getColor()
     {
         return colorButton.getBackground();
     }
-    
+
     public void setColor( Color c )
     {
         setButtonColor( colorButton, c );
     }
-    
+
     public int getAlpha()
     {
         return alphaSlider.getValue();
     }
-    
+
     public void setAlpha( int value )
     {
         alphaSlider.setValue(value);
     }
-    
+
     public void setUpdate( boolean value )
     {
         m_bUpdate = value;
     }
-    
+
     public void setButtonColor(JButton _button, Color _color)
     {
         super.setButtonColor( _button, _color );
         updateVolumeRenderer();
     }
-    
+
 
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -158,7 +158,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
     /**
      * Initializes the GUI components.
      */
-    private void init() 
+    private void init()
     {
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
@@ -239,7 +239,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         colorButton.setToolTipText("Change constant blend color");
         colorButton.addActionListener(this);
         colorButton.setBackground(Color.white);
-        colorButton.setEnabled(true);   
+        colorButton.setEnabled(true);
 
 
         GridBagConstraints kGBC = new GridBagConstraints();
@@ -267,7 +267,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
         contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         contentBox.add(cbPanel);
         contentBox.add(buttonPanel);
- 
+
         mainScrollPanel.add(contentBox, BorderLayout.NORTH);
 
         mainPanel.add(scroller, BorderLayout.CENTER);
@@ -283,11 +283,11 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
                                                 fAlpha );
         if ( m_bUpdate )
         {
-            m_kVolumeViewer.SetCustumBlend( m_kBlendEquationColor.getSelectedIndex(),
+            m_kVolumeViewer.SetCustomBlend( m_kBlendEquationColor.getSelectedIndex(),
                     m_kLogicOp.getSelectedIndex(),
                     m_kSrcBlend.getSelectedIndex(),
                     m_kDstBlend.getSelectedIndex(), kColorAlpha  );
         }
     }
-    
+
 }
