@@ -594,6 +594,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
                     } 
+                    else if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
                 }
 
                 numObjects--;
@@ -2206,6 +2209,9 @@ public class PlugInAlgorithmCenterDistance2 extends AlgorithmBase {
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
                     } 
+                    else if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
                 }
 
                 numObjects--;
