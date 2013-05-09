@@ -1393,6 +1393,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  }
 
 	  /**
+	   * Roll back the image back to center, reset the camera view close to original view. 
+	   */
+	  public void rollbackToCenter() {
+		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+		  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
+		  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
+		  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
+		  Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
+		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
+		  m_kCuller.SetCamera(m_spkCamera);
+	  }
+	  
+	  /**
 	   * Part of the KeyListener interface. Pressing 'b' toggles displaying the
 	   * proxy-geometry versus the ray-traced volume.
 	   * @param e the key event.
@@ -1401,13 +1414,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  
 		  int ikey = e.getKeyCode();
 		  if ( ikey == KeyEvent.VK_HOME ) {
-			  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
-			  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
-			  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-			  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
-			  Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
-			  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-			  m_kCuller.SetCamera(m_spkCamera);
+			  rollbackToCenter();
 			  return;
 		  }
 		  

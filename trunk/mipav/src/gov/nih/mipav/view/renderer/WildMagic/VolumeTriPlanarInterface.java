@@ -583,6 +583,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         } else if (command.equals("Renderer")) {
             insertTab("Renderer", rendererGUI.getMainPanel());
             resizePanel();
+        } else if ( command.equals("Home")) { 
+            rollbackToImageCenter();
         } else if (command.equals("ResetX")) {
             resetAxisY();
         } else if (command.equals("ResetY")) {
@@ -1467,6 +1469,15 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.replaceGeodesic(kOld, kNew);
     }
 
+    /**
+     * When the mouse tranlation moves the object out of the Viewing bounding box, click the
+     * home button to bring the image back to center. 
+     */
+    public void rollbackToImageCenter() {
+    	raycastRenderWM.rollbackToCenter();
+    }
+    
+    
     /**
      * Reset image volume orientation along X axis.
      */
@@ -3137,6 +3148,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         viewToolBar.setLayout(new GridBagLayout());
         viewToolBar.setFloatable(false);
 
+        
+        viewToolBar.add(toolbarBuilder.buildButton("Home", "Rollback to center", "homeicon"));
+        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
         viewToolBar.add(toolbarBuilder.buildButton("ResetX", "Reset X Axis", "xalign"));
         viewToolBar.add(toolbarBuilder.buildButton("ResetY", "Reset Y Axis", "yalign"));
         viewToolBar.add(toolbarBuilder.buildButton("ResetZ", "Reset Z Axis", "zalign"));
