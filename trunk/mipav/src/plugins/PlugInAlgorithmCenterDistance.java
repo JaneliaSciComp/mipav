@@ -700,6 +700,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 }
 
                 numObjects--;
+                
+                for (i = 0; i < length; i++) {
+                    if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
+                }
             } // if (removeID[id-1])
         } // for (id = numObjects; id >= 1; id--)      
         
@@ -2594,6 +2600,12 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
                 }
 
                 numObjects--;
+                
+                for (i = 0; i < totLength; i++) {
+                    if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
+                }
             } // if (removeID[id-1])
         } // for (id = numObjects; id >= 1; id--)      
         
