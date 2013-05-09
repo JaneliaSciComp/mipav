@@ -736,9 +736,14 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
                     } 
+                    else if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
                 }
 
                 numObjects--;
+                
+                
             } // if (removeID)
         } // for (id = numObjects; id >= 1; id--)
 
@@ -2948,7 +2953,10 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     if (IDArray[i] == id) {
                         IDArray[i] = 0;
-                    } 
+                    }
+                    else if (IDArray[i] > id) {
+                        IDArray[i]--;
+                    }
                 }
 
                 numObjects--;
