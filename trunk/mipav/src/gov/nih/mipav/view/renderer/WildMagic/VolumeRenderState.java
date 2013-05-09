@@ -75,12 +75,12 @@ public class VolumeRenderState implements Serializable
     public int ReleasedSamples;
     public int RotationSamples;
     public int ExtractionIntensityLevel = 50;
-    // Custum Blend Panel Info:
+    // Custom Blend Panel Info:
     public int Equation = 0;
     public int SourceBlend = 0;
     public int DestinationBlend = 0;
     public Color BlendColor;
-    public int CustumAlpha = 50;
+    public int CustomAlpha = 50;
     // MultiHistogram Panel Info:
     public Vector<ClassificationWidget> MultiHistoWidgets;
     public int WidgetSelected = -1;

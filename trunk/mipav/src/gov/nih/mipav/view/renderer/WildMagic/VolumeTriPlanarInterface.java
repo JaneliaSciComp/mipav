@@ -26,7 +26,7 @@ import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.input.spacenav.*;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustumBlend;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustomBlend;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelGeodesic_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
@@ -245,7 +245,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     protected JPanelMultiDimensionalTransfer multiHistogramGUI;
 
     /** Multihistogram panel: */
-    protected JPanelCustumBlend custumBlendGUI;
+    protected JPanelCustomBlend customBlendGUI;
 
     /** Button to invoke all the six clipping planes. */
     protected JButton clipButton;
@@ -723,9 +723,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         maxPanelWidth = Math.max(clipGUI.getPreferredSize().width, maxPanelWidth);
     }
 
-    public void buildCustumBlendPanel() {
-        custumBlendGUI = new JPanelCustumBlend(this);
-        maxPanelWidth = Math.max(custumBlendGUI.getPreferredSize().width, maxPanelWidth);
+    public void buildCustomBlendPanel() {
+        customBlendGUI = new JPanelCustomBlend(this);
+        maxPanelWidth = Math.max(customBlendGUI.getPreferredSize().width, maxPanelWidth);
     }
 
     /**
@@ -938,10 +938,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         kImage = null;
     }
 
-    public void CustumBlendMode() {
-        insertTab("CustumBlend", custumBlendGUI.getMainPanel());
-        custumBlendGUI.getMainPanel().setVisible(true);
-        custumBlendGUI.actionPerformed(new ActionEvent(this, 0, ""));
+    public void CustomBlendMode() {
+        insertTab("CustomBlend", customBlendGUI.getMainPanel());
+        customBlendGUI.getMainPanel().setVisible(true);
+        customBlendGUI.actionPerformed(new ActionEvent(this, 0, ""));
     }
 
     /**
@@ -1600,9 +1600,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     public void setControls() {}
     
-    public void SetCustumBlend(final int iBlendEquation, final int iLogicOp, final int iSrcBlend, final int iDstBlend,
+    public void SetCustomBlend(final int iBlendEquation, final int iLogicOp, final int iSrcBlend, final int iDstBlend,
             final ColorRGBA kColor) {
-        raycastRenderWM.SetCustumBlend(iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor);
+        raycastRenderWM.SetCustomBlend(iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor);
     }
 
     public void setDefaultCursor( )
@@ -2314,7 +2314,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     private void buildImageIndependentComponents() {
         buildDisplayPanel();
         buildGeodesic();
-        buildCustumBlendPanel();
+        buildCustomBlendPanel();
     }
 
 
@@ -2396,9 +2396,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             geodesicGUI.disposeLocal();
             geodesicGUI = null;
         }
-        if (custumBlendGUI != null) {
-            custumBlendGUI.disposeLocal();
-            custumBlendGUI = null;
+        if (customBlendGUI != null) {
+            customBlendGUI.disposeLocal();
+            customBlendGUI = null;
         }
     }
 
@@ -2667,16 +2667,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         rendererGUI.setReleasedSliderValue(kState.ReleasedSamples);
         rendererGUI.setMovingSliderValue(kState.RotationSamples);
         rendererGUI.setIntensityLevel(kState.ExtractionIntensityLevel);
-        // Custum Blend Panel:
-        custumBlendGUI.setUpdate(kState.RenderMode == 5);
-        custumBlendGUI.setEquation(kState.Equation);
-        custumBlendGUI.setSource(kState.SourceBlend);
-        custumBlendGUI.setDestination(kState.DestinationBlend);
-        custumBlendGUI.setColor(kState.BlendColor);
-        custumBlendGUI.setAlpha(kState.CustumAlpha);
-        custumBlendGUI.setUpdate(true);
+        // Custom Blend Panel:
+        customBlendGUI.setUpdate(kState.RenderMode == 5);
+        customBlendGUI.setEquation(kState.Equation);
+        customBlendGUI.setSource(kState.SourceBlend);
+        customBlendGUI.setDestination(kState.DestinationBlend);
+        customBlendGUI.setColor(kState.BlendColor);
+        customBlendGUI.setAlpha(kState.CustomAlpha);
+        customBlendGUI.setUpdate(true);
         if (kState.RenderMode == 5) {
-            custumBlendGUI.updateVolumeRenderer();
+            customBlendGUI.updateVolumeRenderer();
         }
         // MultiHisto Panel:
         multiHistogramGUI.getHistogram().setWidgets(kState.MultiHistoWidgets);
@@ -2811,8 +2811,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 insertTab("FlyThrough", flythruControl.getMainPanel());
             } else if (name.equals("4D")) {
                 insertTab("4D", m_kVolume4DGUI.getMainPanel());
-            } else if (name.equals("CustumBlend")) {
-                insertTab("CustumBlend", custumBlendGUI.getMainPanel());
+            } else if (name.equals("CustomBlend")) {
+                insertTab("CustomBlend", customBlendGUI.getMainPanel());
             } else if (name.equals("MultiHistogram")) {
                 insertTab("MultiHistogram", multiHistogramGUI.getMainPanel());
             }
@@ -2926,12 +2926,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         kState.ReleasedSamples = rendererGUI.getReleasedSliderValue();
         kState.RotationSamples = rendererGUI.getMovingSliderValue();
         kState.ExtractionIntensityLevel = rendererGUI.getIntensityLevel();
-        // Custum Blend Panel:
-        kState.Equation = custumBlendGUI.getEquation();
-        kState.SourceBlend = custumBlendGUI.getSource();
-        kState.DestinationBlend = custumBlendGUI.getDestination();
-        kState.BlendColor = custumBlendGUI.getColor();
-        kState.CustumAlpha = custumBlendGUI.getAlpha();
+        // Custom Blend Panel:
+        kState.Equation = customBlendGUI.getEquation();
+        kState.SourceBlend = customBlendGUI.getSource();
+        kState.DestinationBlend = customBlendGUI.getDestination();
+        kState.BlendColor = customBlendGUI.getColor();
+        kState.CustomAlpha = customBlendGUI.getAlpha();
         // MultiHisto Panel:
         kState.MultiHistoWidgets = multiHistogramGUI.getHistogram().getWidgets();
         kState.WidgetSelected = multiHistogramGUI.getHistogram().getPicked();

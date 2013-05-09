@@ -43,7 +43,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     protected final static int SUR = 3;
     /** View Mode Composite-Surface Constant: */
     protected final static int CMP_SUR = 4;
-    protected final static int CUSTUM = 5;
+    protected final static int CUSTOM = 5;
 
     protected static int ms_MaxLights = 8;
     
@@ -433,9 +433,9 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
     }
     
-    public void SetCustumBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
+    public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {        
-        m_iWhichShader = CUSTUM;
+        m_iWhichShader = CUSTOM;
         m_iBlend = iBlendEquation;
         m_iSrcBlend = iSrcBlend;
         m_iDstBlend = iDstBlend;
@@ -848,10 +848,10 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_iWhichShader = -1;
             SURMode();
         }
-        else if ( m_iWhichShader == CUSTUM )
+        else if ( m_iWhichShader == CUSTOM )
         {
             m_iWhichShader = -1;
-            SetCustumBlend( m_iBlend, 0, m_iSrcBlend, m_iDstBlend, m_kBlendColor );
+            SetCustomBlend( m_iBlend, 0, m_iSrcBlend, m_iDstBlend, m_kBlendColor );
         }
         MULTIHISTOMode(m_bMultiHisto);
     }
