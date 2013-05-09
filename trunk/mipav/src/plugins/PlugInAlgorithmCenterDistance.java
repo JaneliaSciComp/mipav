@@ -2583,23 +2583,19 @@ public class PlugInAlgorithmCenterDistance extends AlgorithmBase {
             Preferences.debug("Removing " + numRemoved + " blue objects of " + numObjects + " for touching edges\n");    
         }
         
-
-        for (id = 1; id <= numObjects; id++) {    
+        for (id = numObjects; id >= 1; id--) {    
             if (removeID[id-1]) {
     
                 for (i = 0; i < totLength; i++) {
 
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
-                    } else if (IDArray[i] > id) {
-                        IDArray[i]--;
-                    }
+                    } 
                 }
 
                 numObjects--;
-                id--;
             } // if (removeID[id-1])
-        } // for (id = 1; id <= numObjects; id++)
+        } // for (id = numObjects; id >= 1; id--)      
         
         IDArray2 = new byte[totLength];
         if (blueExpand) {
