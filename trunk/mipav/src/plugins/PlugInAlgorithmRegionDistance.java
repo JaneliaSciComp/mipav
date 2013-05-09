@@ -706,7 +706,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             initiallyOneObject = false;
         }
         
-        for (id = 1; id <= numObjects; id++) {
+        for (id = numObjects; id >= 1; id--) {
             removeID = false;
 
             for (j = 0, y = 0; y < yDim; y++, j += xDim) {
@@ -735,15 +735,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     if (IDArray[i] == (byte) id) {
                         IDArray[i] = (byte) 0;
-                    } else if (IDArray[i] > id) {
-                        IDArray[i]--;
-                    }
+                    } 
                 }
 
                 numObjects--;
-                id--;
             } // if (removeID)
-        } // for (id = 1; id <= numObjects; id++)
+        } // for (id = numObjects; id >= 1; id--)
 
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
@@ -2919,7 +2916,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             initiallyOneObject = false;
         }
         
-        for (id = 1; id <= numObjects; id++) {
+        for (id = numObjects; id >= 1; id--) {
             removeID = false;
 
             for (k = 0, z = 0; z < zDim; z++, k += sliceLength) {
@@ -2951,16 +2948,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     if (IDArray[i] == id) {
                         IDArray[i] = 0;
-                    } else if (IDArray[i] > id) {
-                        IDArray[i]--;
-                    }
+                    } 
                 }
 
                 numObjects--;
-                id--;
             } // if (removeID)
 
-        } // for (id = 1; id <= numObjects; id++)
+        } // for (id = numObjects; id >= 1; id--)
 
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
