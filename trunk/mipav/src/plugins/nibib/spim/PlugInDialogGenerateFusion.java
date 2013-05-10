@@ -55,7 +55,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
 
-import nibib.spim.PlugInAlgorithmGenerateFusion610.SampleMode;
+import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 
 
 /**
@@ -68,7 +68,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion610.SampleMode;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGenerateFusion extends JDialogScriptableBase implements AlgorithmInterface {
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGenerateFusion610 generateFusionAlgo = null;
+    private PlugInAlgorithmGenerateFusion generateFusionAlgo = null;
 
     private JTextField mtxFileLocText, transformFileLocText, baseFileLocText;
 
@@ -195,13 +195,36 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
     private JComboBox saveTypeText;
 	/** File format for saving result images */
 	private String saveType;
-    
+
+	/** Whether to perform deconvolution. */
+	private boolean doDeconv;
+	/** Checkbox to control whether to perform the deconvolution step. */
+	private JCheckBox deconvPerformCheckbox;
+	/** Panel containing deconvolution parameters. */
+	private JPanel deconvParamPanel;
+	/** The number of iterations to perform during deconvolution. */
+	private int deconvIterations;
+	/** Text field for the number of deconvolution iterations. */
+	private JTextField deconvIterationsText;
+	/** The sigmas to use for ImageA during deconvolution. */
+	private float[] deconvSigmaA;
+	/** Text fields for the Image A deconvolution sigmas in each dimension. */
+	private JTextField deconvSigmaAXText, deconvSigmaAYText, deconvSigmaAZText;
+	/** The sigmas to use for ImageB during deconvolution. */
+	private float[] deconvSigmaB;
+	/** Text fields for the Image B deconvolution sigmas in each dimension. */
+	private JTextField deconvSigmaBXText, deconvSigmaBYText, deconvSigmaBZText;
+	/** Whether to use the deconvolution sigma conversion factor. */
+	private boolean useDeconvSigmaConversionFactor;
+	/** Checkbox indicating whether to apply a deconvolution sigma conversion factor. */
+	private JCheckBox deconvUseSigmaConversionFactor;
+	
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGenerateFusion610() { }
+    public PlugInDialogGenerateFusion() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -209,7 +232,7 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGenerateFusion610(boolean modal) {
+    public PlugInDialogGenerateFusion(boolean modal) {
         super(modal);
         
         init();
@@ -250,7 +273,7 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGenerateFusion610) {
+        if (algorithm instanceof PlugInAlgorithmGenerateFusion) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generateFusionAlgo.isCompleted() == true)) {
@@ -282,7 +305,7 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion610(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
@@ -290,7 +313,8 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
                                                                                 saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
-                                                                                maxAlgo, saveType);
+                                                                                maxAlgo, saveType, doDeconv, deconvIterations, deconvSigmaA,
+                                                                                deconvSigmaB, useDeconvSigmaConversionFactor);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -600,6 +624,8 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
 
         JPanel maxProjPanel = buildMaxProjPanel(gui, folderSave);
         
+        JPanel deconvPanel = buildDeconvolutionPanel(gui, folderSave);
+        
         gbc.gridy = 0;
         //gbc.gridwidth = 1;
         outputPanel.add(prefusionPanel, gbc);
@@ -609,6 +635,8 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
         outputPanel.add(geometricPanel, gbc);
         gbc.gridy++;
         outputPanel.add(maxProjPanel, gbc);
+        gbc.gridy++;
+        outputPanel.add(deconvPanel, gbc);
         gbc.gridy++;
         
         interImagesBox = gui.buildCheckBox("Show intermediate images", false);
@@ -833,6 +861,74 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
         geometricMeanSaveBox.addActionListener(folderSave);
         
         return geometricPanel;
+    }
+    
+    private JPanel buildDeconvolutionPanel(GuiBuilder gui, ActionListener folderSave) {
+    	GridBagConstraints gbc2 = createGBC();
+    	JPanel deconvPanel = new JPanel(new GridBagLayout());
+        deconvPanel.setForeground(Color.black);
+        deconvPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
+        
+        deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", false);
+        deconvPerformCheckbox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            	deconvParamPanel.setVisible(deconvPerformCheckbox.isSelected());
+            }
+        });
+        deconvPanel.add(deconvPerformCheckbox.getParent(), gbc2);
+        gbc2.gridy++;
+        
+        if ( !OpenCLAlgorithmBase.isOCLAvailable() ) {
+        	//MipavUtil.displayError( "OpenCL is not available on any platform" );
+        	deconvPerformCheckbox.setEnabled(false);
+        }
+        
+        GridBagConstraints gbc = createGBC();
+        deconvParamPanel = new JPanel(new GridBagLayout());
+        deconvParamPanel.setForeground(Color.black);
+        deconvParamPanel.setVisible(false);
+        //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
+        
+        deconvIterationsText = gui.buildIntegerField("Iterations (1 - 50)", 10);
+        deconvParamPanel.add(deconvIterationsText.getParent(), gbc);
+        gbc.gridx++;
+        
+        deconvUseSigmaConversionFactor = gui.buildCheckBox("Use sigma conversion factor", true);
+        deconvUseSigmaConversionFactor.setVisible(false);
+        deconvParamPanel.add(deconvUseSigmaConversionFactor.getParent(), gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        
+        JPanel deconvSigmasAPanel = new JPanel(new GridLayout(0,1));
+        deconvSigmasAPanel.setForeground(Color.black);
+        deconvSigmasAPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas Image A"));
+        
+        deconvSigmaAXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
+        deconvSigmasAPanel.add(deconvSigmaAXText.getParent());
+        deconvSigmaAYText = gui.buildDecimalField("Y dimension (>= 0.0)", 1.0);
+        deconvSigmasAPanel.add(deconvSigmaAYText.getParent());
+        deconvSigmaAZText = gui.buildDecimalField("Z dimension (>= 0.0)", 1.0);
+        deconvSigmasAPanel.add(deconvSigmaAZText.getParent());
+        
+        deconvParamPanel.add(deconvSigmasAPanel, gbc);
+        gbc.gridx++;
+        
+        JPanel deconvSigmasBPanel = new JPanel(new GridLayout(0,1));
+        deconvSigmasBPanel.setForeground(Color.black);
+        deconvSigmasBPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas Image B"));
+        
+        deconvSigmaBXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
+        deconvSigmasBPanel.add(deconvSigmaBXText.getParent());
+        deconvSigmaBYText = gui.buildDecimalField("Y dimension (>= 0.0)", 1.0);
+        deconvSigmasBPanel.add(deconvSigmaBYText.getParent());
+        deconvSigmaBZText = gui.buildDecimalField("Z dimension (>= 0.0)", 1.0);
+        deconvSigmasBPanel.add(deconvSigmaBZText.getParent());
+        
+        deconvParamPanel.add(deconvSigmasBPanel, gbc);
+        
+        deconvPanel.add(deconvParamPanel, gbc2);
+        
+        return deconvPanel;
     }
 
 
@@ -1171,6 +1267,21 @@ public class PlugInDialogGenerateFusion610 extends JDialogScriptableBase impleme
 	    
 	    if(showMaxProj || saveMaxProj) {
 	        setMaxProjVariables();
+	    }
+	    
+	    // deconvolution parameters
+	    doDeconv = deconvPerformCheckbox.isSelected();
+	    if (doDeconv) {
+	    	deconvIterations = Integer.valueOf(deconvIterationsText.getText());
+	    	deconvSigmaA = new float[3];
+	    	deconvSigmaA[0] = Float.valueOf(deconvSigmaAXText.getText());
+	    	deconvSigmaA[1] = Float.valueOf(deconvSigmaAYText.getText());
+	    	deconvSigmaA[2] = Float.valueOf(deconvSigmaAZText.getText());
+	    	deconvSigmaB = new float[3];
+	    	deconvSigmaB[0] = Float.valueOf(deconvSigmaBXText.getText());
+	    	deconvSigmaB[1] = Float.valueOf(deconvSigmaBYText.getText());
+	    	deconvSigmaB[2] = Float.valueOf(deconvSigmaBZText.getText());
+	    	useDeconvSigmaConversionFactor = deconvUseSigmaConversionFactor.isSelected();
 	    }
 	    
 		return true;
