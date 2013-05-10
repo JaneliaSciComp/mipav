@@ -871,6 +871,8 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Bounding VOIs", "BoundingVOIs", 0, null, true),
                                 ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Convex hull 2D", "ConvexHull2D", 0, null, true),
+                                ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Prostate VOI", true,
                                         new JMenuItem[] {
                                                 menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,
