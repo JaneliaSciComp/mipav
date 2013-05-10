@@ -63,6 +63,7 @@ import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogBoundingVOIs;
+import gov.nih.mipav.view.dialogs.JDialogConvexHull2D;
 import gov.nih.mipav.view.dialogs.JDialogEditCircleDiameter;
 import gov.nih.mipav.view.dialogs.JDialogEditSquareLength;
 import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
@@ -923,7 +924,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             saveVOIs(command);
             new JDialogBSmooth(m_kParent.getFrame(), this, getActiveImage(), getSlice());
-        } // Paint
+        } else if (command.equals("ConvexHull2D")) {
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+            saveVOIs(command);
+            new JDialogConvexHull2D(m_kParent.getFrame(), this, getActiveImage());
+        }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
