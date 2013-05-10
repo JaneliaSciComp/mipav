@@ -44,6 +44,7 @@ import javax.imageio.stream.FileImageOutputStream;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmDeconvolution;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
@@ -61,6 +62,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogImageMath;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
@@ -72,8 +74,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-
-public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -129,6 +130,11 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
     /** File format for saving result images */
 	private String saveType;
+	
+	private boolean doDeconv;
+	private int deconvIterations;
+	private float[] deconvSigmaA, deconvSigmaB;
+	private boolean useDeconvSigmaConversionFactor;
 
     /**
      * Constructor.
@@ -166,14 +172,20 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
      * @param baseGeoWeight 
      * @param maxAlgo can be null if no MIP is supposed to take place
      * @param saveType 
+     * @param doDeconv
+     * @param deconvIterations
+     * @param deconvSigmaA
+     * @param deconvSigmaB
+     * @param useDeconvSigmaConversionFactor
      */
-    public PlugInAlgorithmGenerateFusion610(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
+    public PlugInAlgorithmGenerateFusion(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
-                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType) {
+                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType,
+                                                    boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -228,6 +240,12 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
         this.transformGeoWeight = transformGeoWeight;
         
         this.maxAlgo = maxAlgo;
+        
+        this.doDeconv = doDeconv;
+        this.deconvIterations = deconvIterations;
+        this.deconvSigmaA = deconvSigmaA;
+        this.deconvSigmaB = deconvSigmaB;
+        this.useDeconvSigmaConversionFactor = useDeconvSigmaConversionFactor;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -726,7 +744,12 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
                 if(doInterImages) {
                     new ViewJFrameImage(prefusionTransformImage);
                     new ViewJFrameImage(prefusionBaseImage);
-                } 
+                }
+                
+                // TODO: take prefusion images and run through deconvolver?
+                if (doDeconv) {
+                	deconvolve(prefusionBaseImage, prefusionTransformImage);
+                }
                 
                 if(!doShowPrefusion && !doInterImages) {
                     ViewUserInterface.getReference().unRegisterImage(prefusionBaseImage);
@@ -797,7 +820,7 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
         
         private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
             if(showMaxProj || saveMaxProj) {
-                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion610.generateMaxProjAlg(maxAlgo);
+                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion.generateMaxProjAlg(maxAlgo);
                 
                 for(int i=0; i<maxAlgoClone.length; i++) {
                     maxAlgoClone[i].setSrcImage(image);
@@ -837,15 +860,15 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
                     
                     switch(maxAlgoClone[i].getProjectionDirection()) {
                     case AlgorithmMaximumIntensityProjection.X_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion610.XPROJ;
+                        projFolder = PlugInDialogGenerateFusion.XPROJ;
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Y_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion610.YPROJ;
+                        projFolder = PlugInDialogGenerateFusion.YPROJ;
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Z_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion610.ZPROJ;
+                        projFolder = PlugInDialogGenerateFusion.ZPROJ;
                         break;
                     }
                     
@@ -1114,6 +1137,25 @@ public class PlugInAlgorithmGenerateFusion610 extends AlgorithmBase {
             if(doInterImages) {
                 new ViewJFrameImage(subAriImage);
             }
+        }
+        
+        /**
+         * Performs deconvolution to combine two provided images.  Adds the deconvolved image to the result image list.
+         * @param imageA The base image.
+         * @param imageB The transform image.
+         */
+        private void deconvolve(ModelImage imageA, ModelImage imageB) {
+        	final String name = JDialogBase.makeImageName(imageA.getImageName(), "_deconvolution");
+        	ModelImage resultImage = new ModelImage( imageA.getType(), imageA.getExtents(), name );
+        	JDialogBase.updateFileInfo( imageA, resultImage );
+        	
+        	OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA, imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
+        	deconvAlgo.setRed(true);
+        	deconvAlgo.setGreen(true);
+        	deconvAlgo.setBlue(true);
+        	deconvAlgo.run();
+        	
+        	resultImageList.add(deconvAlgo.getDestImage());
         }
 
         /**
