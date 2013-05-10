@@ -225,6 +225,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = new VolumeImage();
 		 m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
+	     m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/18.0f);
 		 createContainer( GetCanvas() );
 		 m_kAnimator.setRunAsFastAsPossible(true);
 		 m_kAnimator.start();
@@ -263,6 +265,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = kVolumeImageB;
 		 m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
+	     m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/18.0f);
 	 }
 
 	 /**
@@ -298,6 +302,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = kVolumeImageB;
 		 m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+		 m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
+	     m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/18.0f);
 		 enableSculpt(false);
 	 }
 

@@ -147,8 +147,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kVolumeImageB = kVolumeImageB;
 
         m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
-        m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/64.0f);
-        m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/64.0f);
+        m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
+        m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/18.0f);
     }
     
     /**
@@ -312,17 +312,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         
         if(e.isAltDown()) {
 	        
+        	
         	boolean rotateProcessed = false;
 	        Matrix3f rotateMatrix = null;
 	        switch(e.getKeyCode()) {
 	        case KeyEvent.VK_UP:
 	        	rotateProcessed = true;
-	        	rotateMatrix = m_kYRotate;
+	        	rotateMatrix = Matrix3f.inverse(m_kXRotate);
 	        	break;
 	        	
 	        case KeyEvent.VK_DOWN:
 	        	rotateProcessed = true;
-	        	rotateMatrix = Matrix3f.inverse(m_kYRotate);
+	        	rotateMatrix = m_kXRotate;
 	        	break;
 	        	
 	        case KeyEvent.VK_RIGHT:
