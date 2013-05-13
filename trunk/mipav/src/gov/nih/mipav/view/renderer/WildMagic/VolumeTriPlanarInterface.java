@@ -443,9 +443,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         m_kAnimator.setRunAsFastAsPossible(true);
     	m_kAnimator.start();
     	
-    	if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.registerListener(this);
-        }
+    	try {
+    		if(SpaceNavigatorController.hasSpaceNavigator()) {
+    			SpaceNavigatorPoller.registerListener(this);
+    		}
+    	} catch (Error e) {
+    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+    		e.printStackTrace();
+    	}
     }
 
     /*
