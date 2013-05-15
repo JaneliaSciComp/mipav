@@ -135,6 +135,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	private int deconvIterations;
 	private float[] deconvSigmaA, deconvSigmaB;
 	private boolean useDeconvSigmaConversionFactor;
+	private File deconvDir;
 
     /**
      * Constructor.
@@ -177,6 +178,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param deconvSigmaA
      * @param deconvSigmaB
      * @param useDeconvSigmaConversionFactor
+     * @param deconvDir
      */
     public PlugInAlgorithmGenerateFusion(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
@@ -185,7 +187,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType,
-                                                    boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor) {
+                                                    boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor, File deconvDir) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -246,6 +248,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.deconvSigmaA = deconvSigmaA;
         this.deconvSigmaB = deconvSigmaB;
         this.useDeconvSigmaConversionFactor = useDeconvSigmaConversionFactor;
+        this.deconvDir = deconvDir;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -746,9 +749,16 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     new ViewJFrameImage(prefusionBaseImage);
                 }
                 
-                // TODO: take prefusion images and run through deconvolver?
                 if (doDeconv) {
-                	deconvolve(prefusionBaseImage, prefusionTransformImage);
+                	ModelImage deconvImg = deconvolve(prefusionBaseImage, prefusionTransformImage);
+                	
+                	options.setFileDirectory(deconvDir.getAbsolutePath()+File.separator);
+                    options.setFileName(deconvImg.getImageFileName());
+                    options.setBeginSlice(0);
+                    options.setEndSlice(deconvImg.getExtents()[2]-1);
+                    io.writeImage(deconvImg, options, false);
+                    
+                    doMaxProj(deconvImg, false, true, deconvDir, options, io);
                 }
                 
                 if(!doShowPrefusion && !doInterImages) {
@@ -1143,8 +1153,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
          * Performs deconvolution to combine two provided images.  Adds the deconvolved image to the result image list.
          * @param imageA The base image.
          * @param imageB The transform image.
+         * @return The deconvolved image.
          */
-        private void deconvolve(ModelImage imageA, ModelImage imageB) {
+        private ModelImage deconvolve(ModelImage imageA, ModelImage imageB) {
         	final String name = JDialogBase.makeImageName(imageA.getImageName(), "_deconvolution");
         	ModelImage resultImage = new ModelImage( imageA.getType(), imageA.getExtents(), name );
         	JDialogBase.updateFileInfo( imageA, resultImage );
@@ -1156,6 +1167,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         	deconvAlgo.run();
         	
         	resultImageList.add(deconvAlgo.getDestImage());
+        	
+        	return deconvAlgo.getDestImage();
         }
 
         /**
