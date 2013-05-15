@@ -123,6 +123,7 @@ import javax.swing.event.EventListenerList;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -984,6 +985,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN.getActionCommand())) {
             new ViewJFrameGraph("Graph", true);
         } 
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_CURVATURE.getActionCommand())) {
+            graphVOICurvature();
+        }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY.getActionCommand())) {
             graphVOI();
         }
@@ -2580,6 +2584,81 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     /**
      * Called from the VOIManager.
+     * Displays the Curvature Graph for the input VOIBase.
+     * @param kVOI VOIBase to graph.
+     * @param m_iPlane the plane on which to show intensity info
+     */
+    public void showCurvatureInfo( VOIBase kVOI, int m_iPlane, boolean showGraph) {
+        ViewJFrameGraph curvatureGraph;
+
+        ModelImage kImage = getActiveImage();
+        int[] unitsOfMeasure = kImage.getUnitsOfMeasure();
+        float[] resolutions = kImage.getResolutions(0);
+
+        double length = kVOI.getLengthPtToPt(resolutions);
+        DecimalFormat dec = new DecimalFormat("0.##");
+        
+        
+        String contourName = kVOI.getName();
+        int sliceNum = kVOI.slice(m_iPlane);
+        int curveNum = kVOI.getContourID();
+        
+        Vector<Vector3f> positions = new Vector<Vector3f>();
+        Vector<Float> curvature = new Vector<Float>();
+
+        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature);
+
+        
+        float[] pos = new float[pts];
+        float[] curv = new float[pts];
+        int[][] xyCoords = new int[pts][2];
+
+        float min = Float.MAX_VALUE;
+        float max = Float.MIN_VALUE;
+        float totalCurv = 0;
+        float meanCurv = 0;
+        for (int m = 0; m < pts; m++) {
+            xyCoords[m][0] = (int)positions.get(m).X;
+            xyCoords[m][1] = (int)positions.get(m).Y;
+            pos[m] = positions.get(m).Z;
+            curv[m] = curvature.get(m);
+
+            totalCurv += curv[m];
+            meanCurv += curv[m];
+            min = Math.min( curv[m], min );
+            max = Math.max( curv[m], max );
+        }
+        meanCurv /= pts;
+        float stdDevCurv = 0;
+        for (int m = 0; m < pts; m++) {
+            float diff = curv[m] - meanCurv;
+            stdDevCurv += diff * diff;
+        }
+        stdDevCurv = (float)Math.sqrt(stdDevCurv/pts);
+
+        if(showGraph) {
+            if (kVOI.getGroup().getContourGraph() == null) {
+                curvatureGraph = new ViewJFrameGraph(pos, curv, "VOI Curvature Graph", kVOI.getGroup(),
+                        Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
+                curvatureGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
+                curvatureGraph.setVisible(true);
+                kVOI.getGroup().setContourGraph(curvatureGraph);
+                curvatureGraph.setVOI(kVOI.getGroup());
+            } else {
+                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
+                kVOI.getGroup().getContourGraph().replaceFunction(pos, curv, xyCoords, kVOI.getGroup(), 0);
+            }
+        }
+
+        ViewUserInterface.getReference().setDataText(
+                "Contour\tname\tslice\tnumber\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
+        ViewUserInterface.getReference().setDataText(
+                "\t" + contourName + "\t" + sliceNum + "\t" + curveNum + "\t" + min + "\t" + max + "\t" + totalCurv + "\t" + 
+                 meanCurv + "\t" + stdDevCurv + "\t" + dec.format(length) +"\n");
+    }
+    
+    /**
+     * Called from the VOIManager.
      * Displays the Intensity Graph for the input VOIBase.
      * @param kVOI VOIBase to graph.
      * @param m_iPlane the plane on which to show intensity info
@@ -2614,8 +2693,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             float rgbMeanIntenB = 0;
 
             for (int m = 0; m < pts; m++) {
-                rgbPos[0][m] = positions.get(m).Z;
-                rgbPos[1][m] = positions.get(m).Z;
+                rgbPos[0][m] = positions.get(m).X;
+                rgbPos[1][m] = positions.get(m).Y;
                 rgbPos[2][m] = positions.get(m).Z;
 
                 rgbColors[0][m] = colors.get(m).R;
@@ -3510,6 +3589,23 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if ( kCurrentVOI.isActive() )
                 {
                     showIntensityInfo( kCurrentVOI, kCurrentVOI.getPlane(), true );
+                }
+            }
+        }
+    }
+    
+    private void graphVOICurvature()
+    {
+        VOIVector kVOIs = getActiveImage().getVOIs();
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kCurrentGroup = kVOIs.get(i);
+            for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
+            {
+                VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
+                if ( kCurrentVOI.isActive() )
+                {
+                    showCurvatureInfo( kCurrentVOI, kCurrentVOI.getPlane(), true );
                 }
             }
         }
