@@ -74,7 +74,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /**declare UID */
+	private static final long serialVersionUID = 7916311305902468003L;
     
     public static final String XPROJ = "XProj";
     public static final String YPROJ = "YProj";
@@ -84,6 +84,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "GeoMean" + File.separator;
     final String initTransformPrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionTransform" + File.separator;
     final String initBasePrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionBase" + File.separator;
+    final String initDeconvLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "Deconvolution" + File.separator;
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -220,6 +221,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean useDeconvSigmaConversionFactor;
 	/** Checkbox indicating whether to apply a deconvolution sigma conversion factor. */
 	private JCheckBox deconvUseSigmaConversionFactor;
+	/** The directory to save deconvolved files to. */
+	private File deconvDir;
+	/** The text field for setting the directory to save deconvolved files to. */
+	private JTextField saveDeconvFolderText;
 	
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -317,7 +322,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
                                                                                 maxAlgo, saveType, doDeconv, deconvIterations, deconvSigmaA,
-                                                                                deconvSigmaB, useDeconvSigmaConversionFactor);
+                                                                                deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -464,7 +469,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         mtxPanel.add(rangeFusionText.getParent(), gbc);
         gbc.gridy++;
         
-        saveTypeText = gui.buildComboBox("Save result images as type: ", new String[]{"Raw", "Tiff"}, 0);
+        saveTypeText = gui.buildComboBox("Save result images as type: ", new String[]{"Tiff", "Raw"}, 0);
         mtxPanel.add(saveTypeText.getParent(), gbc);
         gbc.gridy++;
         
@@ -892,19 +897,24 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvParamPanel.setVisible(false);
         //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
+        saveDeconvFolderText = gui.buildFileField("Deconvolution output location:", initDeconvLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        gbc.gridwidth = 2;
+        deconvParamPanel.add(saveDeconvFolderText.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        
         deconvIterationsText = gui.buildIntegerField("Iterations (1 - 50)", 10);
         deconvParamPanel.add(deconvIterationsText.getParent(), gbc);
         gbc.gridx++;
         
         deconvUseSigmaConversionFactor = gui.buildCheckBox("Use sigma conversion factor", true);
-        deconvUseSigmaConversionFactor.setVisible(false);
         deconvParamPanel.add(deconvUseSigmaConversionFactor.getParent(), gbc);
         gbc.gridx = 0;
         gbc.gridy++;
         
         JPanel deconvSigmasAPanel = new JPanel(new GridLayout(0,1));
         deconvSigmasAPanel.setForeground(Color.black);
-        deconvSigmasAPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas Image A"));
+        deconvSigmasAPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas A (Pre-fusion base)"));
         
         deconvSigmaAXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
         deconvSigmasAPanel.add(deconvSigmaAXText.getParent());
@@ -918,7 +928,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         JPanel deconvSigmasBPanel = new JPanel(new GridLayout(0,1));
         deconvSigmasBPanel.setForeground(Color.black);
-        deconvSigmasBPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas Image B"));
+        deconvSigmasBPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas B (Pre-fusion transform)"));
         
         deconvSigmaBXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
         deconvSigmasBPanel.add(deconvSigmaBXText.getParent());
@@ -967,28 +977,34 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 
                 String rootFolderPath = rootFolderLoc.getAbsolutePath();
                 
-                
                 try {
-                    geometricMeanFolderText.setText(rootFolderPath + File.separator + "GeoMean" + File.separator);
-                    arithmeticMeanFolderText.setText(rootFolderPath + File.separator + "AriMean" + File.separator);
-                    savePrefusionBaseFolderText.setText(rootFolderPath + File.separator + "PrefusionBase" + File.separator);
-                    savePrefusionTransformFolderText.setText(rootFolderPath + File.separator + "PrefusionTransform" + File.separator);
+                	// only change the folders if they are the same as the initial path (no user change)
+                	if (geometricMeanFolderText.getText().equals(initGeoLoc)) {
+                		geometricMeanFolderText.setText(rootFolderPath + File.separator + "GeoMean" + File.separator);
+                	}
+                	if (arithmeticMeanFolderText.getText().equals(initAriLoc)) {
+                		arithmeticMeanFolderText.setText(rootFolderPath + File.separator + "AriMean" + File.separator);
+                	}
+                    if (savePrefusionBaseFolderText.getText().equals(initBasePrefusionLoc)) {
+                    	savePrefusionBaseFolderText.setText(rootFolderPath + File.separator + "PrefusionBase" + File.separator);
+                    }
+                    if (savePrefusionTransformFolderText.getText().equals(initTransformPrefusionLoc)) {
+                    	savePrefusionTransformFolderText.setText(rootFolderPath + File.separator + "PrefusionTransform" + File.separator);
+                    }
+                    if (saveDeconvFolderText.getText().equals(initDeconvLoc)) {
+                    	saveDeconvFolderText.setText(rootFolderPath + File.separator + "Deconvolution" + File.separator);
+                    }
                     
 //                    if(saveMaxProjFolderText.isVisible()) {
 //                        if(saveMaxProjFolderText.getText().equals(initMaxProjLoc)) {
 //                            saveMaxProjFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "MaxProj" + File.separator);
 //                        }
 //                    }
-                    
                 } catch(Exception e1) {
                     e1.printStackTrace();
                 }
             }
-            
-            
-            
         }
-        
     }
     
     private File createDirectory(String location) {
@@ -1079,6 +1095,15 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 maxProjCreate = createMaxProjFolders(savePrefusionBaseFolderText.getText());
                 maxProjCreate = createMaxProjFolders(savePrefusionTransformFolderText.getText());
             }
+        }
+        
+        if (doDeconv) {
+        	if((deconvDir = createDirectory(saveDeconvFolderText.getText())) == null) {
+                return false;
+            }
+        	if (saveMaxProj) {
+        		maxProjCreate = createMaxProjFolders(saveDeconvFolderText.getText());
+        	}
         }
         
         if(!maxProjCreate) {
