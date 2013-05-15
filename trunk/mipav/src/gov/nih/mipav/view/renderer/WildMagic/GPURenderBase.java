@@ -177,10 +177,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
 	public void dispose(GLAutoDrawable kDrawable)
     {
-		// System.err.println( "dispose(GLAutoDrawable) called" );
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
         if ( m_kAnimator != null ) {
+        	m_kAnimator.remove(kDrawable);
+            m_kAnimator.stop();
         	m_kAnimator = null;
         }
         if ( m_spkScene != null )
@@ -578,6 +579,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_bVisible = bVisible;
     }
+	 
+	 public void startAnimator(boolean bRunFast)
+	 {
+		 if ( m_kAnimator != null )
+		 {
+			 m_kAnimator.setRunAsFastAsPossible(bRunFast);
+			 m_kAnimator.start();
+		 }
+	 }
     
     /**
      * Build a image with the current rotational transformation matrix. Step.1

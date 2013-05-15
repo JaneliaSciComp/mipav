@@ -186,7 +186,6 @@ public class VolumeImageViewer extends JavaApplication3D
         if ( m_kFrame != null )
         {
             m_kFrame.setVisible(false);
-            //m_kFrame.dispose();
             m_kFrame = null;
         }
         m_kParent = null;

@@ -91,11 +91,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * Creates new dialog for turning bounding box frame on and off.
 	 * @param  parent  parent frame.
 	 */
-	public JPanelMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface parent,
-			Animator kAnimator, VolumeImage kVolumeImage) {
+	public JPanelMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface parent, VolumeImage kVolumeImage) {
 		m_kVolumeViewer = parent;
 		m_kMultiHistogram = VolumeImageMultiDimensionalTransfer.main( canvas, parent, kVolumeImage, false);
-		//m_kMultiHistogram.SetAnimator(kAnimator);
 		m_kMultiHistogram.SetInterface(this);
 
 		init(!kVolumeImage.GetImage().isColorImage());

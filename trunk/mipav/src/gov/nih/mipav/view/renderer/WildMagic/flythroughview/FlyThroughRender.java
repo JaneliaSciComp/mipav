@@ -151,7 +151,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * @param kVolumeImageA volume data and textures for ModelImage A.
      * @param kVolumeImageB volume data and textures for ModelImage B.
      */
-    public FlyThroughRender( VolumeTriPlanarInterface kParent, Animator kAnimator, VolumeImage kVolumeImageA, 
+    public FlyThroughRender( VolumeTriPlanarInterface kParent, VolumeImage kVolumeImageA, 
                              VolumeImage kVolumeImageB, Vector3f kTranslate  )
     {
         super();
@@ -169,7 +169,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
-        m_kAnimator = kAnimator;
+        m_kAnimator = new Animator(GetCanvas());
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
@@ -501,9 +501,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         InitializeCameraMotion(.05f,0.001f);
         InitializeObjectMotion(m_kRotation);
-
-       
-        m_kAnimator.add( GetCanvas() );      
         m_bInit = true;
     }
 

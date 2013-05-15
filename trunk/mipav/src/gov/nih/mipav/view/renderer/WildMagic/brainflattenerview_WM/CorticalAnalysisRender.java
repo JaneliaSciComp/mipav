@@ -132,7 +132,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 	 * @param kVolumeImageA volume data and textures for ModelImage A.
 	 * @param kVolumeImageB volume data and textures for ModelImage B.
 	 */
-	public CorticalAnalysisRender( VolumeTriPlanarInterface kParent, Animator kAnimator, 
+	public CorticalAnalysisRender( VolumeTriPlanarInterface kParent, 
 			VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  ) {
 		super();
 		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -144,7 +144,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
-		m_kAnimator = kAnimator;
+        m_kAnimator = new Animator(GetCanvas());
 		m_kVolumeImageA = kVolumeImageA;
 		m_kVolumeImageB = kVolumeImageB;
 		m_kParent = kParent;
@@ -153,7 +153,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, kParent);
 	}
 	
-	public CorticalAnalysisRender( GLCanvas kCanvas, VolumeTriPlanarInterface kParent, Animator kAnimator, 
+	public CorticalAnalysisRender( GLCanvas kCanvas, VolumeTriPlanarInterface kParent, 
 			VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  ) {
 		super();
 		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
@@ -165,7 +165,7 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());     
 
-		m_kAnimator = kAnimator;
+        m_kAnimator = new Animator(GetCanvas());
 		m_kVolumeImageA = kVolumeImageA;
 		m_kVolumeImageB = kVolumeImageB;
 		m_kParent = kParent;
@@ -497,7 +497,6 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		InitializeCameraMotion(.05f,0.001f);
 		InitializeObjectMotion(m_spkScene);
 
-		m_kAnimator.add( GetCanvas() );      
 		m_bInit = true;
 	}
 
