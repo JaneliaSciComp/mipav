@@ -124,8 +124,6 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
-import com.jogamp.opengl.util.Animator;
-
 
 public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateInterface, ActionListener, WindowListener, 
 																ComponentListener, ChangeListener, VOIManagerInterfaceListener, 
@@ -292,9 +290,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     /** VolumeImage contains data and textures for ModelImage B. */
     protected VolumeImage m_kVolumeImageB;
 
-    /** Animator for GPU-based rendering with JOGL. */
-    protected Animator m_kAnimator;
-
     /** Volume/Slice/Surface renderer. */
     protected VolumeTriPlanarRender raycastRenderWM;
 
@@ -440,17 +435,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         
 
         raycastRenderWM.setVisible(true);
-        m_kAnimator.setRunAsFastAsPossible(true);
-    	m_kAnimator.start();
+        raycastRenderWM.startAnimator(true);
     	
-    	try {
-    		if(SpaceNavigatorController.hasSpaceNavigator()) {
-    			SpaceNavigatorPoller.registerListener(this);
-    		}
-    	} catch (Error e) {
-    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-    		e.printStackTrace();
-    	}
+//    	try {
+//    		if(SpaceNavigatorController.hasSpaceNavigator()) {
+//    			SpaceNavigatorPoller.registerListener(this);
+//    		}
+//    	} catch (Error e) {
+//    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+//    		e.printStackTrace();
+//    	}
     }
 
     /*
@@ -551,7 +545,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         } else if (command.equals("BrainSurface")) {
             if (brainsurfaceFlattenerRender == null) {
                 brainsurfaceFlattenerRender = new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(
-                		new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
+                		new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA, m_kVolumeImageB);
                 final TriMesh kSurface = raycastRenderWM.getSurface(surfaceGUI.getSelectedSurface());
                 final Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface,
                         raycastRenderWM.getSurfaceCenter(surfaceGUI.getSelectedSurface()));
@@ -572,7 +566,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             resizePanel();
         } else if (command.equals("FlyThru")) {
             if (m_kFlyThroughRender == null) {
-                m_kFlyThroughRender = new FlyThroughRender(this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
+                m_kFlyThroughRender = new FlyThroughRender(this, m_kVolumeImageA, m_kVolumeImageB,
                         raycastRenderWM.getTranslate());
                 final TriMesh kSurface = raycastRenderWM.getSurface(surfaceGUI.getSelectedSurface());
                 m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter(surfaceGUI
@@ -581,6 +575,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 dualPane.setDividerLocation(0.5f);
                 m_kLightsPanel.enableLight(0, true);
                 buildFlythroughPanel();
+                m_kFlyThroughRender.startAnimator(false);
             }
             insertTab("FlyThroughMove", flythruMoveControl.getMainPanel());
             insertTab("FlyThrough", flythruControl.getMainPanel());
@@ -675,11 +670,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     	{
 			if ( (m_akPlaneRender[0] == null) )
 			{
-				m_akPlaneRender[0] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+				m_akPlaneRender[0] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
 						m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL, kSlices, false);
-		        m_akPlaneRender[1] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+		        m_akPlaneRender[1] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
 		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.SAGITTAL, kSlices, false);
-		        m_akPlaneRender[2] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, 
+		        m_akPlaneRender[2] = PlaneRender_WM.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
 		        		m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.CORONAL, kSlices, false);
 		        
 		        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
@@ -788,11 +783,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void buildLightPanel() {
         m_kLightsPanel = new JPanelLights_WM(this);
         maxPanelWidth = Math.max(m_kLightsPanel.getMainPanel().getPreferredSize().width, maxPanelWidth);
-    }
-
-    public void buildMultiHistogramPanel() {
-        multiHistogramGUI = new JPanelMultiDimensionalTransfer(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA);
-        maxPanelWidth = Math.max(multiHistogramGUI.getPreferredSize().width, maxPanelWidth);
     }
 
     /**
@@ -2246,6 +2236,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             }
     	}
         if (flag) {
+        	if (multiHistogramGUI == null )
+        	{
+        		multiHistogramGUI = new JPanelMultiDimensionalTransfer(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA);
+        		maxPanelWidth = Math.max(multiHistogramGUI.getPreferredSize().width, maxPanelWidth);
+        	}
+        	
             insertTab("MultiHistogram", multiHistogramGUI.getMainPanel());
             multiHistogramGUI.setMinMax( (float)m_kVolumeImageA.GetImage().getMin(), (float)m_kVolumeImageA.GetImage().getMax(), 
             		m_kVolumeImageA.GetGradientMagnitudeMin(), m_kVolumeImageA.GetGradientMagnitudeMax() );
@@ -2291,14 +2287,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void windowClosing(final WindowEvent event) {
         close();
         disposeLocal(true);
-		// Run this on another thread than the AWT event queue to
-		// avoid deadlocks on shutdown on some platforms
-		new Thread(new Runnable() {
-			public void run() {
-				m_kAnimator.stop();
-		        dispose();
-			}
-		}).start();
+        dispose();
     }
 
     /**
@@ -2396,9 +2385,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
     private void disposeImageIndependentComponents() {
-    	if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.deRegisterListener(this);
-        }
+//    	if(SpaceNavigatorController.hasSpaceNavigator()) {
+//        	SpaceNavigatorPoller.deRegisterListener(this);
+//        }
     	
     	if (displayGUI != null) {
             displayGUI.disposeLocal();
@@ -2789,7 +2778,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         
 
         raycastRenderWM.setVisible(true);
-    	m_kAnimator.start();
+        raycastRenderWM.startAnimator(true);
     }
 
     private void RestoreTabs(final VolumeRenderState kState) {
@@ -3059,16 +3048,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         menuObj.setMenuItemEnabled("4D toolbar", m_kVolumeImageA.GetImage().is4DImage());
         setTitle(m_kVolumeImageA.GetImage().getImageName());
 
-//        panelAxial.add(m_akPlaneRender[0].GetCanvas(), BorderLayout.CENTER);
-//        panelSagittal.add(m_akPlaneRender[1].GetCanvas(), BorderLayout.CENTER);
-//        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
         gpuPanel.add(raycastRenderWM.GetCanvas(), BorderLayout.CENTER);
         gpuPanel.setVisible(true);
 
         buildSurfacePanel();
         buildLightPanel();
         buildSculpt();
-        buildMultiHistogramPanel();
         buildSurfaceTexturePanel();
         buildLabelPanel();
         buildClipPanel();
@@ -3083,18 +3068,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
 
         m_bDependentInterfaceInit = true;
-
-        // After the whole WM rendering framework built, force updating the color LUT table in order to
-        // update both the volume viewer and tri-planar viewer. Otherwise, the render volume turns to be black.
-        /*
-        if (panelHistoLUT != null) {
-            panelHistoLUT.updateComponentLUT();
-        }
-        if (panelHistoRGB != null) {
-            panelHistoRGB.updateHistoRGB(m_kVolumeImageA.GetImage(), null, false);
-            panelHistoRGB.updateFrames(false);
-        }
-*/
         
         if (m_kVolumeImageA.GetImage().isColorImage()) {
             setRGBTA(m_kVolumeImageA.GetRGB());
@@ -3346,15 +3319,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         if (progressBar != null) {
             progressBar.setMessage("Creating Slice Views...");
         }
-        m_kAnimator = new Animator();
         
         m_akPlaneRender = new PlaneRender_WM[3];
-        
-//        m_akPlaneRender[0] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB, FileInfoBase.AXIAL);
-//        m_akPlaneRender[1] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
-//                FileInfoBase.SAGITTAL);
-//        m_akPlaneRender[2] = new PlaneRender_WM(new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB,
-//                FileInfoBase.CORONAL);
 
         if (progressBar != null) {
             progressBar.updateValueImmed(progressBar.getValue() + iStep);
@@ -3363,7 +3329,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             progressBar.setMessage("Creating Volume & Surface Renderer...");
         }
 
-        raycastRenderWM = new VolumeTriPlanarRender( sharedRenderer, new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
+        raycastRenderWM = new VolumeTriPlanarRender( sharedRenderer, new GLCanvas(caps, sharedDrawable.getContext()), this, m_kVolumeImageA, m_kVolumeImageB);
         
         if (progressBar != null) {
             progressBar.updateValueImmed(progressBar.getValue() + iStep);
@@ -3410,6 +3376,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     protected void releaseShared() {
         sharedDrawable.destroy();
+        sharedDrawable = null;
     }
         
     int prevHeight;

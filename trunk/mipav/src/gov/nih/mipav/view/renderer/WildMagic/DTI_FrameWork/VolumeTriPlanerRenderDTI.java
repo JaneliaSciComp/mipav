@@ -33,14 +33,13 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
     /**
      * Construct the Volume/Surface/Tri-Planar renderer.
      * @param kParent parent user-interface and frame.
-     * @param kAnimator animator used to display the canvas.
      * @param kVolumeImageA volume data and textures for ModelImage A.
      * @param kVolumeImageB volume data and textures for ModelImage B.
      */
-    public VolumeTriPlanerRenderDTI( VolumeTriPlanarRender kShared, GLCanvas kCanvas, VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
+    public VolumeTriPlanerRenderDTI( VolumeTriPlanarRender kShared, GLCanvas kCanvas, VolumeTriPlanarInterfaceDTI kParent, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
-        super(kShared, kCanvas, kParent, kAnimator, kVolumeImageA, kVolumeImageB );
+        super(kShared, kCanvas, kParent, kVolumeImageA, kVolumeImageB );
     }
 
     /**

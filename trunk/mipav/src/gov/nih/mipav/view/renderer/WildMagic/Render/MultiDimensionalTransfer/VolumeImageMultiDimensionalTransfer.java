@@ -101,12 +101,18 @@ implements GLEventListener, KeyListener
 	 * @param kParentFrame parent frame.
 	 * @param kVolumeImage the VolumeImage with the associated 2D Histogram.
 	 */
-	public VolumeImageMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
+	public VolumeImageMultiDimensionalTransfer( Animator animator, GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
 	{
 		super( canvas, kParentFrame, kVolumeImage );
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );
 		createContainer(GetCanvas());
+		m_kAnimator = animator;
+		if ( m_kAnimator == null )
+		{
+			m_kAnimator = new Animator();
+		}
+		m_kAnimator.add(GetCanvas());
 		m_bDisplay = true;
 	}
     
@@ -119,10 +125,10 @@ implements GLEventListener, KeyListener
 	public static VolumeImageMultiDimensionalTransfer main(GLCanvas kCanvas, VolumeTriPlanarInterface kParent, 
             VolumeImage kVolumeImageA, boolean displayInSeparateFrame )
 	{
-		VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(kCanvas, kParent, kVolumeImageA);
-		
 		/* Animator serves the purpose of the idle function, calls display: */
-    	final Animator animator = new Animator( kWorld.GetCanvas() );
+    	final Animator animator = new Animator();
+		VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(animator,kCanvas, kParent, kVolumeImageA);
+		
         animator.setRunAsFastAsPossible(true);
         animator.start();
 		if ( displayInSeparateFrame )

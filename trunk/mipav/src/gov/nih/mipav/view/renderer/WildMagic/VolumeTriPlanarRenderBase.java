@@ -276,7 +276,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  * @param kVolumeImageA volume data and textures for ModelImage A.
 	  * @param kVolumeImageB volume data and textures for ModelImage B.
 	  */
-	 public VolumeTriPlanarRenderBase( VolumeTriPlanarRenderBase kShared, GLCanvas kCanvas, Animator kAnimator, 
+	 public VolumeTriPlanarRenderBase( VolumeTriPlanarRenderBase kShared, GLCanvas kCanvas, 
 			 VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
 	 {
 		 super();
@@ -294,11 +294,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 m_kShared = kShared;
 		 m_bShared = true;
 
-		 m_kAnimator = kAnimator;
-		 if ( m_kAnimator != null )
-		 {
-			 m_kAnimator.add( GetCanvas() );
-		 }
+		 m_kAnimator = new Animator(GetCanvas());
+			 
 		 m_kVolumeImageA = kVolumeImageA;
 		 m_kVolumeImageB = kVolumeImageB;
 		 m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
@@ -524,6 +521,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 }
 		 if ( m_bDispose )
 		 {
+			 System.err.println( "Calling dispose " + this );
 			 dispose(arg0);
 			 return;
 		 }

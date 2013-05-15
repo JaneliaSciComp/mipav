@@ -401,6 +401,10 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());
 
         m_kAnimator = kAnimator;
+		if ( m_kAnimator != null )
+		{
+			m_kAnimator.add( GetCanvas() );
+		}
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
@@ -833,7 +837,6 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
         InitializeCameraMotion(.05f, 0.001f);
         InitializeObjectMotion(m_spkScene);
 
-        m_kAnimator.add(GetCanvas());
         m_kParent.setSliceFromPlane(new Vector3f( (m_kVolumeImageA.GetImage().getExtents()[0] - 1) / 2.0f,
                 (m_kVolumeImageA.GetImage().getExtents()[1] - 1) / 2.0f,
                 (m_kVolumeImageA.GetImage().getExtents()[2] - 1) / 2.0f));
