@@ -131,6 +131,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPZ, this, true));
 
         graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, false);
+        graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_CURVATURE, this, false));
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY, this, false));
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_INTENSITY_HISTOGRAM, this, false));
 
