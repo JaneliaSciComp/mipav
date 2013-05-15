@@ -36,7 +36,8 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 	private ModelImage wormImage;
 	
 	private JTextField wormImageTextField, pointsFileTextField;
-	private JTextField tailDiameterTextField, headDiameterTextField, stepSizeTextField, pixelSizeTextField;
+	private JTextField tailDiameterTextField, headDiameterTextField, maxDiameterTextField, stepSizeTextField, pixelSizeTextField;
+	private JCheckBox fillInMissingData, displayOriginalImage, displayMaskImage;
 	
 	public PlugInDialogWormStraightening() {}
 	
@@ -111,8 +112,8 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
         } else if (source == cancelButton) {
         	this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
             
-        	//setVisible(false);
-        	//disposeLocal();        	
+        	setVisible(false);
+        	disposeLocal();        	
         } else {
             super.actionPerformed(e);
         }
@@ -154,7 +155,7 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
         paramPanelManager.add( pointsFileBrowseButton );
         
         paramPanelManager.addOnNextLine(new JLabel("Path step-size:"));
-		stepSizeTextField = new JTextField( "1.0", 10 );
+		stepSizeTextField = new JTextField( "2.5", 10 );
 		stepSizeTextField.setBackground(Color.white);
 		stepSizeTextField.setBorder(new LineBorder(Color.black));
         paramPanelManager.add( stepSizeTextField );
@@ -166,10 +167,16 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
         paramPanelManager.add( headDiameterTextField );
         
         paramPanelManager.addOnNextLine(new JLabel("Estimate tail diameter:"));
-		tailDiameterTextField = new JTextField( "21", 10 );
+		tailDiameterTextField = new JTextField( "20", 10 );
 		tailDiameterTextField.setBackground(Color.white);
 		tailDiameterTextField.setBorder(new LineBorder(Color.black));
         paramPanelManager.add( tailDiameterTextField );
+        
+        paramPanelManager.addOnNextLine(new JLabel("Estimate maximum diameter:"));
+		maxDiameterTextField = new JTextField( "30", 10 );
+		maxDiameterTextField.setBackground(Color.white);
+		maxDiameterTextField.setBorder(new LineBorder(Color.black));
+        paramPanelManager.add( maxDiameterTextField );
         
         paramPanelManager.addOnNextLine(new JLabel("Pixel resolution:"));
         pixelSizeTextField = new JTextField( "0.1625", 10 );
@@ -177,6 +184,16 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
         pixelSizeTextField.setBorder(new LineBorder(Color.black));
         paramPanelManager.add( pixelSizeTextField );
         paramPanelManager.add( new JLabel("um") );
+        
+        fillInMissingData = new JCheckBox("fill in missing data", true );
+        paramPanelManager.addOnNextLine(fillInMissingData);
+        
+        displayOriginalImage = new JCheckBox("Display Original Image", false );
+        paramPanelManager.addOnNextLine(displayOriginalImage);
+        
+        displayMaskImage = new JCheckBox("Display Mask Image", false );
+        paramPanelManager.addOnNextLine(displayMaskImage);
+        
 
         getContentPane().add(paramPanelManager.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -189,13 +206,20 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 	
 	protected void callAlgorithm()
 	{
+		if ( wormImage == null )
+		{
+			MipavUtil.displayError( "Must specify initial image" );
+		}
 		try {
 			float stepSize = Float.parseFloat(stepSizeTextField.getText().trim());
 			float headSize = Float.parseFloat(headDiameterTextField.getText().trim());
 			float tailSize = Float.parseFloat(tailDiameterTextField.getText().trim());
+			float maxSize = Float.parseFloat(maxDiameterTextField.getText().trim());
 			float pixelSize = Float.parseFloat(pixelSizeTextField.getText().trim());
 			PlugInAlgorithmWormStraighteningAutomatic alg = new PlugInAlgorithmWormStraighteningAutomatic(wormImage, stepSize);
-			alg.setDiameter(headSize/pixelSize, tailSize/pixelSize);
+			alg.setDiameter(headSize/pixelSize, tailSize/pixelSize, maxSize/pixelSize);
+			alg.setFill(fillInMissingData.isSelected());
+			alg.setOutput(displayOriginalImage.isSelected(), displayMaskImage.isSelected());
 
 			if (isRunInSeparateThread()) {
 
