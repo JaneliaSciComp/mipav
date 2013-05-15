@@ -81,6 +81,11 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 	private float headDiameter = -1;
 	private float tailDiameter = -1;
+	private float maxDiameter = -1;
+
+	private boolean fillData = false;
+	private boolean displayOriginal = false;
+	private boolean displayMask = false;
 
 
 	public PlugInAlgorithmWormStraighteningAutomatic(ModelImage wormImage)
@@ -120,10 +125,22 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		setCompleted(true);
 	}
 
-	public void setDiameter( float headSize, float tailSize )
+	public void setDiameter( float headSize, float tailSize, float maxSize )
 	{
 		this.headDiameter = headSize;
 		this.tailDiameter = tailSize;
+		this.maxDiameter = maxSize;
+	}
+	
+	public void setFill( boolean fillData )
+	{
+		this.fillData = fillData;
+	}
+	
+	public void setOutput( boolean displayOriginal, boolean displayMask )
+	{
+		this.displayOriginal = displayOriginal;
+		this.displayMask = displayMask;
 	}
 
 	private void createTestImage()
@@ -272,12 +289,33 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		BitSet duplicateMask = new BitSet( wormImage.getExtents()[0] * wormImage.getExtents()[1] * wormImage.getExtents()[2] );
 
 		Vector3f lpsOrigin = new Vector3f();
+		float size = boundingBoxes.size()-1;
+		float size1 = size / 3;
+		float size2 = size1 + size1;
+		float size3 = size - size2;
+		float diameterInterp = tailDiameter;
 		for( int i = 0; i < boundingBoxes.size(); i++ )
 		{
 			Box box = boundingBoxes.elementAt(i);
-
+			if ( i < size1 )
+			{
+				diameterInterp = ((size1 - i)/size1) * tailDiameter + (i/size1)*maxDiameter;
+			}
+			else if ( i > size2 )
+			{
+				diameterInterp = ((size3 - (i-size2))/size3) * maxDiameter + ((i-size2)/size3)*headDiameter;
+			}
+			else
+			{
+				diameterInterp = maxDiameter;
+			}
+//			System.err.println( i + "    " + diameterInterp );
+			if ( fillData && (i > 0) )
+			{
+				System.arraycopy(values[i-1], 0, values[i], 0, values[i].length);
+			}
 			try {
-				wormImage.exportDiagonal( duplicateMask, 0, i, resultExtents, box.corners, values[i], true);
+				wormImage.exportDiagonal( duplicateMask, 0, i, resultExtents, box.corners, diameterInterp/2f, !fillData, values[i], true);
 
 				if ( i == 0 )
 				{
@@ -290,14 +328,16 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			}
 		}
 
-		ModelImage duplicateMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, wormImage.getExtents(), wormImage.getImageName() + "_mask" );
-		try {
-			duplicateMaskImage.importData( 0, duplicateMask, true );
-			new ViewJFrameImage(duplicateMaskImage);
-		} catch (IOException e) {
-			e.printStackTrace();
+		if ( displayMask )
+		{
+			ModelImage duplicateMaskImage = new ModelImage( ModelStorageBase.BOOLEAN, wormImage.getExtents(), wormImage.getImageName() + "_mask" );
+			try {
+				duplicateMaskImage.importData( 0, duplicateMask, true );
+				new ViewJFrameImage(duplicateMaskImage);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-
 
 		resultImage.calcMinMax();
 		resultImage.setImageName( wormImage.getImageName() + "_straightened_isotropic" );
@@ -416,26 +456,32 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				bPadR = true;
 			}
 		}
-		ModelImage wormPad = null;
+//		ModelImage wormPad = null;
 		ModelImage resultPad = null;
-		if ( bPadW )
-		{
-			wormPad = (ModelImage)wormImage.clone();
-			wormPad.setImageName( wormImage.getImageName() + "_pad" );
-
-			AlgorithmAddMargins kPad = new AlgorithmAddMargins(wormPad, padW[0], padW[1], padW[2] );
-			kPad.run();
-			wormPad = kPad.getDestImage();
-			wormPad.calcMinMax();
-			new ViewJFrameImage(wormPad);		
-			//            System.err.println( wormPad.getExtents()[0] + " " + wormPad.getExtents()[1] + " " + wormPad.getExtents()[2] );
-		}
+//		if ( bPadW )
+//		{
+//			wormPad = (ModelImage)wormImage.clone();
+//			wormPad.setImageName( wormImage.getImageName() + "_pad" );
+//
+//			AlgorithmAddMargins kPad = new AlgorithmAddMargins(wormPad, padW[0], padW[1], padW[2] );
+//			kPad.run();
+//			wormPad = kPad.getDestImage();
+//			wormPad.calcMinMax();
+//			new ViewJFrameImage(wormPad);		
+//			//            System.err.println( wormPad.getExtents()[0] + " " + wormPad.getExtents()[1] + " " + wormPad.getExtents()[2] );
+//		}
 		//        else
+		if ( displayOriginal )
 		{
 			wormImage.resetVOIs();		
 //			wormImage.registerVOI( samplingPlanes );
 			wormImage.calcMinMax();
 			new ViewJFrameImage(wormImage);
+		}
+		else
+		{
+			wormImage.disposeLocal();
+			wormImage = null;
 		}
 		if ( bPadR )
 		{
@@ -487,17 +533,23 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			resultUnits[2] = units[2];
 
 		}
-		diameter /= 2f;
+		//diameter /= 2f;
 		//		System.err.println( "Diameter " + diameter );
 		if ( tailDiameter != -1 )
 		{
-			diameter = (int) Math.ceil( tailDiameter ); 
+		//	diameter = (int) Math.ceil( tailDiameter ); 
 			//			System.err.println( "Diameter " + diameter );
+		}
+		if ( tailDiameter == -1 )
+		{
+			tailDiameter = diameter;
+			headDiameter = diameter;
+			maxDiameter = diameter;
 		}
 
 		resultResolutions[0] = 1;
 		resultResolutions[1] = 1;
-		resultResolutions[2] = 1;
+		resultResolutions[2] = stepSize;
 		resultExtents[0] = diameter;
 		resultExtents[1] = diameter;
 		resultExtents[2] = curvePositions.size();

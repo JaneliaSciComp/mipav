@@ -2223,7 +2223,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
     public final synchronized void exportDiagonal( BitSet duplicateMask, final int tSlice, final int slice, final int[] extents,
-            final Vector3f[] verts, final float[] values, final boolean bInterpolate) throws IOException {
+            final Vector3f[] verts, final float diameter, boolean bSetZero, final float[] values, final boolean bInterpolate) throws IOException {
 
         try {
             setLock(ModelStorageBase.W_LOCKED);
@@ -2250,6 +2250,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 || (bufferType == DataType.ARGB_FLOAT)) {
             buffFactor = 4;
         }
+        
+        Vector3f center = new Vector3f();
+        for ( int i = 0; i < verts.length; i++ )
+        {
+        	center.add(verts[i]);
+        }
+        center.scale( 1f/(float)verts.length );
         
         /* Calculate the slopes for traversing the data in x,y,z: */
         float xSlopeX = verts[1].X - verts[0].X;
@@ -2279,6 +2286,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
         float x = x0;
         float y = y0;
         float z = z0;
+        
+        Vector3f currentPoint = new Vector3f();
 
         Vector<Integer> maskBits = new Vector<Integer>();
         for (int j = 0; j < jBound; j++) {
@@ -2296,35 +2305,42 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 /* calculate the ModelImage space index: */
                 final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
 
+                currentPoint.set(x, y, z);
+                float distance = center.distance(currentPoint);
+                
                 /* Bounds checking, if out of bounds, set to zero: */
-                if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
-                        || ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+                if ( (distance > diameter ) ||
+                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
 
-                    if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
-                            || (bufferType == DataType.ARGB_FLOAT)) {
-                        values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-                        values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-                        values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-                        values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
-                    }
-                    /* not color: */
-                    else {
-                        values[ (j * iBound) + i] = (float) this.min;
-                    }
+                	if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                			|| (bufferType == DataType.ARGB_FLOAT)) {
+                		values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                		values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                	}
+                	/* not color: */
+                	else {
+                		values[ (j * iBound) + i] = (float) this.min;
+                	}
                 } else {
                 	if ( duplicateMask.get(index) )
                 	{
-                		// set output to zero or min:
-                		if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
-                				|| (bufferType == DataType.ARGB_FLOAT)) {
-                			values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
-                			values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
-                			values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
-                			values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
-                		}
-                		/* not color: */
-                		else {
-                			values[ (j * iBound) + i] = (float) this.min;
+                		if ( bSetZero )
+                		{
+                			// set output to zero or min:
+                			if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                					|| (bufferType == DataType.ARGB_FLOAT)) {
+                				values[ ( ( (j * iBound) + i) * 4) + 0] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 1] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 2] = 0;
+                				values[ ( ( (j * iBound) + i) * 4) + 3] = 0;
+                			}
+                			/* not color: */
+                			else {
+                				values[ (j * iBound) + i] = (float) this.min;
+                			}
                 		}
                 	}                	
                 	else
