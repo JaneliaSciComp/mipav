@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.structures;
 
+import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
@@ -1032,6 +1033,123 @@ public abstract class VOIBase extends Vector<Vector3f> {
             fill_Y(aafCrossingPoints, aiNumCrossings, iXMin, iXMax, (int)elementAt(0).Y, kVolume, kMask, bIntersection, iValue);           
         }
 
+    }
+    
+    /**
+     * Finds the position/curvature along a VOI.
+     * To fill in missing samples requires cubic smoothing spline interpolation with
+     * regularization parameter set to gamma = 0.005.
+     *
+     * @param   positions     Vector that is filled with the distance along the VOI in millimeters for example
+     * @param   curvatures    the corresponding curvature along the contour
+     *
+     * @return  the number of points in the position and intensity array that have valid data.
+     */
+    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures )
+    {
+        
+        AlgorithmTPSpline tpSplineAlgo;
+        tpSplineAlgo = new AlgorithmTPSpline();
+        float x[] = new float[size()];
+        float y[] = new float[size()];
+        float f[] = new float[size()];
+        float smooth = 0.005f;
+        int xDim = kImage.getExtents()[0];
+        int yDim = kImage.getExtents()[1];
+        int xPos;
+        int yPos;
+        float imgBuffer[] = new float[xDim * yDim];
+        for (int i = 0; i < size(); i++) {
+            x[i] = elementAt(i).X;
+            y[i] = elementAt(i).Y;
+            f[i] = 1.0f;
+            xPos = Math.round(x[i]);
+            yPos = Math.round(y[i]);
+            imgBuffer[xPos + xDim * yPos] = 1.0f;
+        }
+        tpSplineAlgo.setupTPSpline2D(x, y, f, smooth);
+        BitSet mask = kImage.getMask();
+        boolean XOR = false;
+        int polarity = VOI.ADDITIVE;
+        setMask(mask, xDim, yDim, XOR, polarity);
+        int z = Math.round(elementAt(0).Z);
+        for ( int i = 0; i < size()-1; i++ )
+        {
+            Vector3f kStart = elementAt(i);
+            Vector3f kEnd = elementAt(i+1);
+
+            findPositionAndCurvature( kStart, kEnd, kImage, positions, curvatures );
+
+            if( (i < size() - 2) && (positions.size() > 0) )
+            {
+                positions.remove(positions.size()-1);
+                curvatures.remove(curvatures.size()-1);
+            }
+        }
+        if ( closed )
+        {
+            positions.remove(positions.size()-1);
+            curvatures.remove(curvatures.size()-1);
+
+            Vector3f kStart = lastElement();
+            Vector3f kEnd = firstElement();
+            findPositionAndCurvature( kStart, kEnd, kImage, positions, curvatures );       
+
+            if ( positions.size() > 0 )
+            {
+                positions.remove(positions.size()-1);
+                curvatures.remove(curvatures.size()-1);
+            }
+        }
+
+        return positions.size();
+    }
+
+    /**
+     * Finds the positions and curvatures along a line-segment of the VOI.
+     * @param kStart start position on the VOI.
+     * @param kEnd end position on the VOI
+     * @param kImage input image to read intensity values from
+     * @param positions output list of positions
+     * @param curvatures output list of curvatures.
+     */
+    public void findPositionAndCurvature(Vector3f kStart, Vector3f kEnd,
+            ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures)
+    {              
+        Vector3f kDiff = Vector3f.sub( kEnd, kStart );
+
+        double xDist = Math.abs(kDiff.X);
+        double yDist = Math.abs(kDiff.Y);
+        double zDist = Math.abs(kDiff.Z);
+
+        double max = Math.max(xDist, Math.max(yDist,zDist));
+        double xInc = ((kDiff.X) / (1.0 * max));
+        double yInc = ((kDiff.Y) / (1.0 * max));
+        double zInc = ((kDiff.Z) / (1.0 * max));
+
+        int xD = kImage.getExtents()[0];
+        int yD = kImage.getExtents()[1];
+
+        Vector3f kStep = new Vector3f(kStart);
+
+        double totalDistance = positions.size() == 0 ? 0 : positions.lastElement().Z;
+        for (int i = 0; i < max; i++ )
+        {            
+            if ( i == max -1 )
+            {
+                kStep.copy(kEnd);
+            }
+            kDiff.copy( kStep ).sub( kStart );
+            double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(0) );          
+
+            int indexY = Math.min(Math.round(kStep.Y), yD - 1);
+            int indexX = Math.min(Math.round(kStep.X), xD - 1);
+
+            positions.add( new Vector3f( indexX, indexY, (float)(totalDistance + subDistance))) ;
+            kStep.X += xInc;
+            kStep.Y += yInc;
+            kStep.Z += zInc;
+        }
     }
 
     /**
