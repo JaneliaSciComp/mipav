@@ -128,7 +128,7 @@ public class PlugInDialogWormStraightening extends JDialogStandalonePlugin
 	
 	public void init()
 	{
-		setTitle("Worm Straightening");	
+		setTitle("Worm Straightening version 1.0");	
         getContentPane().setLayout(new BorderLayout());
 
         final PanelManager paramPanelManager = new PanelManager();
