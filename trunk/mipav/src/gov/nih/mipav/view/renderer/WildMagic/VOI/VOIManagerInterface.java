@@ -986,7 +986,23 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             new ViewJFrameGraph("Graph", true);
         } 
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_CURVATURE.getActionCommand())) {
-            graphVOICurvature();
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+            saveVOIs(command);
+            int reply = JOptionPane.showConfirmDialog(ViewUserInterface.getReference().getMainFrame(),
+                    "Do you want graph a smoothed copy of the VOI?",
+                    "Graph Smoothed VOI", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            boolean smooth;
+            if (reply == JOptionPane.YES_OPTION) {
+                smooth = true;
+            }
+            else {
+                smooth = false;
+            }
+            graphVOICurvature(smooth);
         }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY.getActionCommand())) {
             graphVOI();
@@ -2587,8 +2603,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Displays the Curvature Graph for the input VOIBase.
      * @param kVOI VOIBase to graph.
      * @param m_iPlane the plane on which to show intensity info
+     * @param showGraph
+     * @param smooth
      */
-    public void showCurvatureInfo( VOIBase kVOI, int m_iPlane, boolean showGraph) {
+    public void showCurvatureInfo( VOIBase kVOI, int m_iPlane, boolean showGraph, boolean smooth) {
         ViewJFrameGraph curvatureGraph;
 
         ModelImage kImage = getActiveImage();
@@ -2606,7 +2624,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<Float> curvature = new Vector<Float>();
 
-        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature);
+        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth);
 
         
         float[] pos = new float[pts];
@@ -2640,6 +2658,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if (kVOI.getGroup().getContourGraph() == null) {
                 curvatureGraph = new ViewJFrameGraph(pos, curv, "VOI Curvature Graph", kVOI.getGroup(),
                         Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
+                curvatureGraph.setLabelY("Curvature");
                 curvatureGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
                 curvatureGraph.setVisible(true);
                 kVOI.getGroup().setContourGraph(curvatureGraph);
@@ -3594,7 +3613,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
     
-    private void graphVOICurvature()
+    private void graphVOICurvature(boolean smooth)
     {
         VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
@@ -3605,7 +3624,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    showCurvatureInfo( kCurrentVOI, kCurrentVOI.getPlane(), true );
+                    showCurvatureInfo( kCurrentVOI, kCurrentVOI.getPlane(), true, smooth );
                 }
             }
         }
