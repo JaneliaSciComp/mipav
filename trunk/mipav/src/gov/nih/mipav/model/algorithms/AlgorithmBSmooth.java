@@ -40,6 +40,10 @@ public class AlgorithmBSmooth extends AlgorithmBase {
     private AlgorithmBSpline bSpline;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    public AlgorithmBSmooth() {
+        
+    }
 
     /**
      * Creates a new AlgorithmBSmooth object.
@@ -329,7 +333,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * @param  yPoints    y coordinates that describe the contour
      * @param  resultGon  resultant polygon
      */
-    private void runSmooth(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase resultContour) {
+    public void runSmooth(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase resultContour) {
         float pct;
         float index;
 
@@ -364,7 +368,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      * @param  yPoints  storage location array of y coord. points
      * @param  gon      initial polygon
      */
-    private void setPoints(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase contour) {
+    public void setPoints(float[] xPoints, float[] yPoints, float[] zPoints, VOIBase contour) {
 
         /** Note that 0 is used twice - once in the 0 to 1 segment and once
          * in the n-1 to zero segment. */
