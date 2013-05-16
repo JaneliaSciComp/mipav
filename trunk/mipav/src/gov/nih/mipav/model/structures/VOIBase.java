@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.structures;
 
+import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
+import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
@@ -1035,122 +1038,149 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
     }
     
+    
+    
     /**
      * Finds the position/curvature along a VOI.
-     * To fill in missing samples requires cubic smoothing spline interpolation with
-     * regularization parameter set to gamma = 0.005.
+     * To fill in missing samples requires smoothing spline interpolation.
      *
      * @param   positions     Vector that is filled with the distance along the VOI in millimeters for example
      * @param   curvatures    the corresponding curvature along the contour
      *
      * @return  the number of points in the position and intensity array that have valid data.
      */
-    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures )
+    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth )
     {
+        // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
+        // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
+        // So need positions going from -2 to graphPoints+1 or a length of graphPoints+4.
+        // AlgorithmArcLength needs 2 points on the left side of each position range and 3 points
+        // of the right side of each position range, so need to pass graphPoints + 9 to AlgorithmArcLength.
+        int nPoints;
+        float xPoints[];
+        float yPoints[];
+        float zPoints[];
+        int i;
+        AlgorithmBSmooth bSmoothAlgo;
+        VOIContour smoothContour;
+        //double constraint = 0.1;
+        //boolean trimCollinearPoints = true;
+        int graphPoints;
+        AlgorithmArcLength arcLength;
+        float length[];
+        double xderiv[];
+        double yderiv[];
+        double x2deriv[];
+        double y2deriv[];
+        double num;
+        double denom;
+        float curv;
+        float distance;
+        int defaultPts;
+        VOIContour graphContour;
+        if (smooth) {
+            nPoints = size();
+            xPoints = new float[nPoints + 5];
+            yPoints = new float[nPoints + 5];
+            zPoints = new float[nPoints + 5];
+            bSmoothAlgo = new AlgorithmBSmooth();
+            bSmoothAlgo.setPoints(xPoints, yPoints, zPoints, this);
+            arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
+            defaultPts = Math.round(arcLength.getTotalArcLength() / 3);
+            bSmoothAlgo.setNPts(defaultPts);
+            smoothContour = new VOIContour(false, this.isClosed());
+            bSmoothAlgo.runSmooth(xPoints, yPoints, zPoints, smoothContour);
+            //smoothContour.trimPoints(constraint, trimCollinearPoints);
+            graphContour = smoothContour;
+        }
+        else {
+            graphContour = (VOIContour)this;
+        }
+        graphPoints = graphContour.size();
+        xPoints = new float[graphPoints + 9];
+        yPoints = new float[graphPoints + 9];
+        zPoints = new float[graphPoints + 9];
         
-        AlgorithmTPSpline tpSplineAlgo;
-        tpSplineAlgo = new AlgorithmTPSpline();
-        float x[] = new float[size()];
-        float y[] = new float[size()];
-        float f[] = new float[size()];
-        float smooth = 0.005f;
-        int xDim = kImage.getExtents()[0];
-        int yDim = kImage.getExtents()[1];
-        int xPos;
-        int yPos;
-        float imgBuffer[] = new float[xDim * yDim];
-        for (int i = 0; i < size(); i++) {
-            x[i] = elementAt(i).X;
-            y[i] = elementAt(i).Y;
-            f[i] = 1.0f;
-            xPos = Math.round(x[i]);
-            yPos = Math.round(y[i]);
-            imgBuffer[xPos + xDim * yPos] = 1.0f;
+        xPoints[0] = graphContour.elementAt(graphPoints - 4).X;
+        yPoints[0] = graphContour.elementAt(graphPoints - 4).Y;
+        zPoints[0] = graphContour.elementAt(graphPoints - 4).Z;
+        
+        xPoints[1] = graphContour.elementAt(graphPoints - 3).X;
+        yPoints[1] = graphContour.elementAt(graphPoints - 3).Y;
+        zPoints[1] = graphContour.elementAt(graphPoints - 3).Z;
+        
+        xPoints[2] = graphContour.elementAt(graphPoints - 2).X;
+        yPoints[2] = graphContour.elementAt(graphPoints - 2).Y;
+        zPoints[2] = graphContour.elementAt(graphPoints - 2).Z;
+        
+        xPoints[3] = graphContour.elementAt(graphPoints - 1).X;
+        yPoints[3] = graphContour.elementAt(graphPoints - 1).Y;
+        zPoints[3] = graphContour.elementAt(graphPoints - 1).Z;
+
+
+        for (i = 0; i < graphPoints; i++) {
+            xPoints[i + 4] = graphContour.elementAt(i).X;
+            yPoints[i + 4] = graphContour.elementAt(i).Y;
+            zPoints[i + 4] = graphContour.elementAt(i).Z;
         }
-        tpSplineAlgo.setupTPSpline2D(x, y, f, smooth);
-        BitSet mask = kImage.getMask();
-        boolean XOR = false;
-        int polarity = VOI.ADDITIVE;
-        setMask(mask, xDim, yDim, XOR, polarity);
-        int z = Math.round(elementAt(0).Z);
-        for ( int i = 0; i < size()-1; i++ )
-        {
-            Vector3f kStart = elementAt(i);
-            Vector3f kEnd = elementAt(i+1);
-
-            findPositionAndCurvature( kStart, kEnd, kImage, positions, curvatures );
-
-            if( (i < size() - 2) && (positions.size() > 0) )
-            {
-                positions.remove(positions.size()-1);
-                curvatures.remove(curvatures.size()-1);
-            }
+        
+        xPoints[graphPoints + 4] = graphContour.elementAt(0).X;
+        yPoints[graphPoints + 4] = graphContour.elementAt(0).Y;
+        zPoints[graphPoints + 4] = graphContour.elementAt(0).Z;
+        
+        xPoints[graphPoints + 5] = graphContour.elementAt(1).X;
+        yPoints[graphPoints + 5] = graphContour.elementAt(1).Y;
+        zPoints[graphPoints + 5] = graphContour.elementAt(1).Z;
+        
+        xPoints[graphPoints + 6] = graphContour.elementAt(2).X;
+        yPoints[graphPoints + 6] = graphContour.elementAt(2).Y;
+        zPoints[graphPoints + 6] = graphContour.elementAt(2).Z;
+        
+        xPoints[graphPoints + 6] = graphContour.elementAt(3).X;
+        yPoints[graphPoints + 6] = graphContour.elementAt(3).Y;
+        zPoints[graphPoints + 6] = graphContour.elementAt(3).Z;
+        
+        xPoints[graphPoints + 7] = graphContour.elementAt(4).X;
+        yPoints[graphPoints + 7] = graphContour.elementAt(4).Y;
+        zPoints[graphPoints + 7] = graphContour.elementAt(4).Z;
+        arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
+        // Find arc lengths between points i-1 and i+1
+        length = new float[graphPoints+2];
+        for (i = 0; i < graphPoints+2; i++) {
+            length[i] = arcLength.length(i+2, i+4);    
         }
-        if ( closed )
-        {
-            positions.remove(positions.size()-1);
-            curvatures.remove(curvatures.size()-1);
-
-            Vector3f kStart = lastElement();
-            Vector3f kEnd = firstElement();
-            findPositionAndCurvature( kStart, kEnd, kImage, positions, curvatures );       
-
-            if ( positions.size() > 0 )
-            {
-                positions.remove(positions.size()-1);
-                curvatures.remove(curvatures.size()-1);
+        
+        xderiv = new double[graphPoints+2];
+        yderiv = new double[graphPoints+2];
+        for (i = 0; i < graphPoints+2; i++) {
+            xderiv[i] = (xPoints[i+4] - xPoints[i+2])/(2.0 * length[i]);
+            yderiv[i] = (yPoints[i+4] - yPoints[i+2])/(2.0 * length[i]);
+        }
+        // Second derivatives go from 0 to graphPoints-1
+        x2deriv = new double[graphPoints];
+        y2deriv = new double[graphPoints];
+        for (i = 0; i < graphPoints; i++) {
+            x2deriv[i] = (xderiv[i+2] - xderiv[i])/(2.0 * length[i+1]);
+            y2deriv[i] = (yderiv[i+2] - yderiv[i])/(2.0 * length[i+1]);
+        }
+        for (i = 0; i < graphPoints; i++) {
+            num = xderiv[i+1]*y2deriv[i] - x2deriv[i]*yderiv[i+1];
+            denom = Math.pow((xderiv[i+1]*xderiv[i+1] + yderiv[i+1]*yderiv[i+1]), 1.5);
+            curv = (float)(num/denom);
+            curvatures.add(curv);
+            if (i == 0) {
+                distance = 0.0f;
             }
+            else {
+                distance = arcLength.length(4, i+4);
+            }
+            positions.add( new Vector3f(graphContour.elementAt(i).X, graphContour.elementAt(i).Y, distance));
         }
 
         return positions.size();
     }
 
-    /**
-     * Finds the positions and curvatures along a line-segment of the VOI.
-     * @param kStart start position on the VOI.
-     * @param kEnd end position on the VOI
-     * @param kImage input image to read intensity values from
-     * @param positions output list of positions
-     * @param curvatures output list of curvatures.
-     */
-    public void findPositionAndCurvature(Vector3f kStart, Vector3f kEnd,
-            ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures)
-    {              
-        Vector3f kDiff = Vector3f.sub( kEnd, kStart );
-
-        double xDist = Math.abs(kDiff.X);
-        double yDist = Math.abs(kDiff.Y);
-        double zDist = Math.abs(kDiff.Z);
-
-        double max = Math.max(xDist, Math.max(yDist,zDist));
-        double xInc = ((kDiff.X) / (1.0 * max));
-        double yInc = ((kDiff.Y) / (1.0 * max));
-        double zInc = ((kDiff.Z) / (1.0 * max));
-
-        int xD = kImage.getExtents()[0];
-        int yD = kImage.getExtents()[1];
-
-        Vector3f kStep = new Vector3f(kStart);
-
-        double totalDistance = positions.size() == 0 ? 0 : positions.lastElement().Z;
-        for (int i = 0; i < max; i++ )
-        {            
-            if ( i == max -1 )
-            {
-                kStep.copy(kEnd);
-            }
-            kDiff.copy( kStep ).sub( kStart );
-            double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(0) );          
-
-            int indexY = Math.min(Math.round(kStep.Y), yD - 1);
-            int indexX = Math.min(Math.round(kStep.X), xD - 1);
-
-            positions.add( new Vector3f( indexX, indexY, (float)(totalDistance + subDistance))) ;
-            kStep.X += xInc;
-            kStep.Y += yInc;
-            kStep.Z += zInc;
-        }
-    }
+    
 
     /**
      * Finds the position/intensity along a VOI.
