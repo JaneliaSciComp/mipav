@@ -153,9 +153,9 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
         zPoints[1] = activeContour.elementAt(nPoints - 1).Z;
 
         for (i = 0; i < nPoints; i++) {
-            xPoints[1 + 2] = activeContour.elementAt(i).X;
-            yPoints[1 + 2] = activeContour.elementAt(i).Y;
-            zPoints[1 + 2] = activeContour.elementAt(i).Z;
+            xPoints[i + 2] = activeContour.elementAt(i).X;
+            yPoints[i + 2] = activeContour.elementAt(i).Y;
+            zPoints[i + 2] = activeContour.elementAt(i).Z;
         }
 
         xPoints[nPoints + 2] = activeContour.elementAt(0).X;
