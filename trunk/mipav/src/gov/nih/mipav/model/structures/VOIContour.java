@@ -213,9 +213,10 @@ public class VOIContour extends VOIBase {
         P[n] = P[0];
         // Make upper hull
         u2 = make_chain(P, u, n-u+1, false);
+        float z = elementAt(0).Z;
         removeAllElements();
         for (i = 0; i < u + u2; i++) {
-            pt = new Vector3f((float)P[i][0], (float)P[i][1], 0.0f);
+            pt = new Vector3f((float)P[i][0], (float)P[i][1], z);
             insertElementAt(pt, i);
         }
 	}
