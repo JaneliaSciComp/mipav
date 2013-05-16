@@ -42,7 +42,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
     //~ Constructors ---------------------------------------------------------------------------------------------------
     
     public AlgorithmBSmooth() {
-        
+       
     }
 
     /**
@@ -78,6 +78,10 @@ public class AlgorithmBSmooth extends AlgorithmBase {
      */
     public VOI getResultVOI() {
         return resultVOI;
+    }
+    
+    public void setNPts(int nPts) {
+        this.nPts = nPts;
     }
 
 
