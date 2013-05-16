@@ -2899,6 +2899,10 @@ public class ViewJFrameGraph extends JFrame
     public void setLabels(String labelX, String labelY) {
         graph.setLabels(labelX, labelY);
     }
+    
+    public void setLabelY(String labelY) {
+        graph.setLabelY(labelY);
+    }
 
     /**
      * Accessor that enables or disables the reset item.
