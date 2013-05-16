@@ -1660,6 +1660,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
         xLabel = xStr;
         yLabel = yStr;
     }
+    
+    /**
+     * Sets the y axis label to yStr
+     * @param yStr
+     */
+    public void setLabelY(String yStr) {
+        yLabel = yStr;
+    }
 
     /**
      * Accessor that tells whether to show the legend.
