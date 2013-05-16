@@ -395,6 +395,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         javaClassPath = System.getProperties().getProperty("java.class.path");
         javaClassPath = javaClassPath.replace(';', '\n');
+        
+        String javaLibraryPath = System.getProperties().getProperty("java.library.path");
+        javaLibraryPath = javaLibraryPath.replace(';', '\n');
 
         aboutJavaDialog = new JDialogText(mainFrame, "About System"); // Title
 
@@ -403,8 +406,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("Java vendor:        " + System.getProperties().getProperty("java.vendor") + "\n");
         aboutJavaDialog.append("Java vendor.url:    " + System.getProperties().getProperty("java.vendor.url") + "\n");
         aboutJavaDialog.append("Java home:          " + System.getProperties().getProperty("java.home") + "\n");
-        aboutJavaDialog
-                .append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
+        aboutJavaDialog.append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
         aboutJavaDialog.append("Java class path:    " + "\n" + javaClassPath + "\n");
         aboutJavaDialog.append("OS name:            " + System.getProperties().getProperty("os.name") + "\n");
         aboutJavaDialog.append("OS arch:            " + System.getProperties().getProperty("os.arch") + "\n");
@@ -412,6 +414,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("User name:          " + System.getProperties().getProperty("user.name") + "\n");
         aboutJavaDialog.append("User home:          " + System.getProperties().getProperty("user.home") + "\n");
         aboutJavaDialog.append("User directory:     " + System.getProperties().getProperty("user.dir") + "\n");
+        aboutJavaDialog.append("Java library path:  " + "\n" + javaLibraryPath + "\n");
 
         if (aboutJavaDialog != null) {
             aboutJavaDialog.setLocation(100, 50);
