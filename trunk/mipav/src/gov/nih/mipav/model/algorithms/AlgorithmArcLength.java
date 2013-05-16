@@ -225,7 +225,7 @@ public class AlgorithmArcLength extends AlgorithmBase {
      *
      * @return  length returns arc-length of the segment
      */
-    private float length(float a, float b) {
+    public float length(float a, float b) {
         int i, j, k;
         int ipower, kpower;
         float sum;
