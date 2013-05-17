@@ -2626,7 +2626,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         double meanCurvature[] = new double[1];
         double stdDevCurvature[] = new double[1];
-        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+        double meanNegativeCurvature[] = new double[1];
+        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                 meanNegativeCurvature);
 
         
         float[] pos = new float[pts];
