@@ -1136,13 +1136,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
         yPoints[graphPoints + 6] = graphContour.elementAt(2).Y;
         zPoints[graphPoints + 6] = graphContour.elementAt(2).Z;
         
-        xPoints[graphPoints + 6] = graphContour.elementAt(3).X;
-        yPoints[graphPoints + 6] = graphContour.elementAt(3).Y;
-        zPoints[graphPoints + 6] = graphContour.elementAt(3).Z;
+        xPoints[graphPoints + 7] = graphContour.elementAt(3).X;
+        yPoints[graphPoints + 7] = graphContour.elementAt(3).Y;
+        zPoints[graphPoints + 7] = graphContour.elementAt(3).Z;
         
-        xPoints[graphPoints + 7] = graphContour.elementAt(4).X;
-        yPoints[graphPoints + 7] = graphContour.elementAt(4).Y;
-        zPoints[graphPoints + 7] = graphContour.elementAt(4).Z;
+        xPoints[graphPoints + 8] = graphContour.elementAt(4).X;
+        yPoints[graphPoints + 8] = graphContour.elementAt(4).Y;
+        zPoints[graphPoints + 8] = graphContour.elementAt(4).Z;
         arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
         // Find arc lengths between points i-1 and i+1
         length = new float[graphPoints+2];
