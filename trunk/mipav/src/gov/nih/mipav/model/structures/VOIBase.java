@@ -1050,7 +1050,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @return  the number of points in the position and intensity array that have valid data.
      */
     public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
-                                        double meanCurvature[], double stdDevCurvature[])
+                                        double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[])
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
         // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
@@ -1086,6 +1086,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
         double totalLength;
         double sumSquared;
         double diff;
+        double totalNegCurvLength;
+        double totalNegLength;
         if (smooth) {
             nPoints = size();
             xPoints = new float[nPoints + 5];
@@ -1172,7 +1174,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             y2deriv[i] = (yderiv[i+2] - yderiv[i])/length[i+1];
         }
         totalCurvLength = 0.0;
-        totalLength = arcLength.length(4, graphPoints + 3);
+        totalLength = 0.0;
+        totalNegCurvLength = 0.0;
+        totalNegLength = 0.0;
         curv = new double[graphPoints];
         for (i = 0; i < graphPoints; i++) {
             num = xderiv[i+1]*y2deriv[i] - x2deriv[i]*yderiv[i+1];
@@ -1187,8 +1191,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
             positions.add( new Vector3f(graphContour.elementAt(i).X, graphContour.elementAt(i).Y, distance));
             totalCurvLength += curv[i] * length[i+1]/2.0;
+            totalLength += length[i+1]/2.0;
+            if (curv[i] < 0.0) {
+                totalNegCurvLength += curv[i] * length[i+1]/2.0;
+                totalNegLength += length[i+1]/2.0;
+            }
         }
         meanCurvature[0] = totalCurvLength/totalLength;
+        meanNegativeCurvature[0] = Math.abs(totalNegCurvLength/totalNegLength);
         sumSquared = 0.0;
         for (i = 0; i < graphPoints; i++) {
             diff = curv[i] - meanCurvature[0];
