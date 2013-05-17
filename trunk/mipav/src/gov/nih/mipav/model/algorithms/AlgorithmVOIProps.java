@@ -95,6 +95,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double solidity;
             public double meanCurvature;
             public double stdDevCurvature;
+            public double meanNegativeCurvature;
             public double largestContourDistance;
             @SuppressWarnings("unused")
             public double[] xMass, yMass, zMass;
@@ -969,15 +970,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
-                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                    statsList[indexOf(stdDevCurvatureDescription)] ||
+                    statsList[indexOf(meanNegativeCurvatureDescription)]) {
                 Vector<Vector3f> positions = new Vector<Vector3f>();
                 Vector<Float> curvature = new Vector<Float>();
 
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
-                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                        meanNegativeCurvature);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -985,6 +989,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 if (statsList[indexOf(stdDevCurvatureDescription)]) {
                     stats.stdDevCurvature = stdDevCurvature[0];
                     statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
+                }
+                if (statsList[indexOf(meanNegativeCurvatureDescription)]) {
+                    stats.meanNegativeCurvature = meanNegativeCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanNegativeCurvatureDescription + end,
+                                             nf.format(stats.meanNegativeCurvature));    
                 }
             }
             
@@ -1210,15 +1219,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
-                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                    statsList[indexOf(stdDevCurvatureDescription)] ||
+                    statsList[indexOf(meanNegativeCurvatureDescription)]) {
                 Vector<Vector3f> positions = new Vector<Vector3f>();
                 Vector<Float> curvature = new Vector<Float>();
 
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
-                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                        meanNegativeCurvature);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1226,6 +1238,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 if (statsList[indexOf(stdDevCurvatureDescription)]) {
                     stats.stdDevCurvature = stdDevCurvature[0];
                     statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
+                }
+                if (statsList[indexOf(meanNegativeCurvatureDescription)]) {
+                    stats.meanNegativeCurvature = meanNegativeCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanNegativeCurvatureDescription + end,
+                                             nf.format(stats.meanNegativeCurvature));    
                 }
             }
             
@@ -1483,15 +1500,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
-                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                    statsList[indexOf(stdDevCurvatureDescription)] ||
+                    statsList[indexOf(meanNegativeCurvatureDescription)]) {
                 Vector<Vector3f> positions = new Vector<Vector3f>();
                 Vector<Float> curvature = new Vector<Float>();
 
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
-                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                        meanNegativeCurvature);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1500,7 +1520,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.stdDevCurvature = stdDevCurvature[0];
                     statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
                 }
+                if (statsList[indexOf(meanNegativeCurvatureDescription)]) {
+                    stats.meanNegativeCurvature = meanNegativeCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanNegativeCurvatureDescription + end,
+                                             nf.format(stats.meanNegativeCurvature));    
+                }
             }
+
             
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
@@ -3370,6 +3396,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      */
     public String getStdDevCurvature() {
         return propertyList.firstElement().getProperty(VOIStatisticList.stdDevCurvatureDescription);    
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public String getMeanNegativeCurvature() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.meanNegativeCurvatureDescription);    
     }
 
     /**
