@@ -1049,7 +1049,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
      *
      * @return  the number of points in the position and intensity array that have valid data.
      */
-    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth )
+    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
+                                        double meanCurvature[], double stdDevCurvature[])
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
         // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
@@ -1077,10 +1078,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
         double y2deriv[];
         double num;
         double denom;
-        float curv;
+        double curv[];
         float distance;
         int defaultPts;
         VOIContour graphContour;
+        double totalCurvLength;
+        double totalLength;
+        double sumSquared;
+        double diff;
         if (smooth) {
             nPoints = size();
             xPoints = new float[nPoints + 5];
@@ -1166,11 +1171,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
             x2deriv[i] = (xderiv[i+2] - xderiv[i])/length[i+1];
             y2deriv[i] = (yderiv[i+2] - yderiv[i])/length[i+1];
         }
+        totalCurvLength = 0.0;
+        totalLength = arcLength.length(4, graphPoints + 3);
+        curv = new double[graphPoints];
         for (i = 0; i < graphPoints; i++) {
             num = xderiv[i+1]*y2deriv[i] - x2deriv[i]*yderiv[i+1];
             denom = Math.pow((xderiv[i+1]*xderiv[i+1] + yderiv[i+1]*yderiv[i+1]), 1.5);
-            curv = (float)(num/denom);
-            curvatures.add(curv);
+            curv[i] = (num/denom);
+            curvatures.add((float)curv[i]);
             if (i == 0) {
                 distance = 0.0f;
             }
@@ -1178,7 +1186,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 distance = arcLength.length(4, i+4);
             }
             positions.add( new Vector3f(graphContour.elementAt(i).X, graphContour.elementAt(i).Y, distance));
+            totalCurvLength += curv[i] * length[i+1]/2.0;
         }
+        meanCurvature[0] = totalCurvLength/totalLength;
+        sumSquared = 0.0;
+        for (i = 0; i < graphPoints; i++) {
+            diff = curv[i] - meanCurvature[0];
+            sumSquared += diff * diff * length[i+1]/2.0;
+        }
+        stdDevCurvature[0] = Math.sqrt(sumSquared/totalCurvLength);
 
         return positions.size();
     }
