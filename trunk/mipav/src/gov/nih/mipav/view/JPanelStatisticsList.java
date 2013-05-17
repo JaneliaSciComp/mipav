@@ -138,6 +138,8 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(largestSliceDistanceDescription, false);
             setEnabledList(largestDistanceDescription, false);
             setEnabledList(geometricCenterDescription, false); //TODO: this parameter cannot be calculated without a valid mask
+            setEnabledList(meanCurvatureDescription, false);
+            setEnabledList(stdDevCurvatureDescription, false);
         }
     }
 
