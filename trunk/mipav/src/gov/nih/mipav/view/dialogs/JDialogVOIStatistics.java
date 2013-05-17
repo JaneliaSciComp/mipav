@@ -760,7 +760,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
         checkBoxPanel.isOpenContour(!allClosed); //if all the contours are not closed, then some statistics need to be disabled
         
-        
         outputOptionsPanel = new JPanelStatisticsOptions();
 
         if (image.getNDims() == 2) {
@@ -1823,6 +1822,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
             showTotals = new JCheckBox("Show all totals");
             showTotals.setFont(MipavUtil.font12);
+            showTotals.addActionListener(statOptionsListener);
 
             byTotalVOI = new JRadioButton("By total VOI");
             byTotalVOI.setFont(MipavUtil.font12);
@@ -2068,8 +2068,16 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 				} else {
 					showTotals.setEnabled(true);
 				}
+				
 
 		        checkBoxPanel.setSliceCount(num);
+		        
+		        if ((byContour.isSelected() || byContourSlice.isSelected()) && (!showTotals.isSelected())) {
+                    checkBoxPanel.setByContour(true);
+                }
+		        else {
+		            checkBoxPanel.setByContour(false);
+		        }
 			}
         }        
     }
