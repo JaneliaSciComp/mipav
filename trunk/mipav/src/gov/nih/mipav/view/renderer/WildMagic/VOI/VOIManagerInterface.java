@@ -2624,7 +2624,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<Float> curvature = new Vector<Float>();
 
-        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth);
+        double meanCurvature[] = new double[1];
+        double stdDevCurvature[] = new double[1];
+        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
 
         
         float[] pos = new float[pts];
@@ -2634,7 +2636,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         float min = Float.MAX_VALUE;
         float max = Float.MIN_VALUE;
         float totalCurv = 0;
-        float meanCurv = 0;
         for (int m = 0; m < pts; m++) {
             xyCoords[m][0] = (int)positions.get(m).X;
             xyCoords[m][1] = (int)positions.get(m).Y;
@@ -2642,17 +2643,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             curv[m] = curvature.get(m);
 
             totalCurv += curv[m];
-            meanCurv += curv[m];
             min = Math.min( curv[m], min );
             max = Math.max( curv[m], max );
         }
-        meanCurv /= pts;
-        float stdDevCurv = 0;
-        for (int m = 0; m < pts; m++) {
-            float diff = curv[m] - meanCurv;
-            stdDevCurv += diff * diff;
-        }
-        stdDevCurv = (float)Math.sqrt(stdDevCurv/pts);
 
         if(showGraph) {
             if (kVOI.getGroup().getContourGraph() == null) {
@@ -2673,7 +2666,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 "Contour\tname\tslice\tnumber\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
         ViewUserInterface.getReference().setDataText(
                 "\t" + contourName + "\t" + sliceNum + "\t" + curveNum + "\t" + min + "\t" + max + "\t" + totalCurv + "\t" + 
-                 meanCurv + "\t" + stdDevCurv + "\t" + dec.format(length) +"\n");
+                 meanCurvature[0] + "\t" + stdDevCurvature[0] + "\t" + dec.format(length) +"\n");
     }
     
     /**
