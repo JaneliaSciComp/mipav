@@ -149,6 +149,8 @@ public interface VOIStatisticList {
     String meanCurvatureDescription = "Mean Curvature";
     
     String stdDevCurvatureDescription = "Std Dev of Curvature";
+    
+    String meanNegativeCurvatureDescription = "Mean Negative Curvature";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -160,7 +162,8 @@ public interface VOIStatisticList {
         solidityDescription, minIntensity, maxIntensity, avgIntensity, deviationDescription, sumIntensities, 
         geometricCenterDescription, massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription,
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
-        largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription
+        largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
+        meanNegativeCurvatureDescription
     };
 
     /** number of statistics in the list. */
