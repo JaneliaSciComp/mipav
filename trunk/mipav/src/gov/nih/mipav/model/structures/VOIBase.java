@@ -1056,6 +1056,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
         // So need positions going from -2 to graphPoints+1 or a length of graphPoints+4.
         // AlgorithmArcLength needs 2 points on the left side of each position range and 3 points
         // of the right side of each position range, so need to pass graphPoints + 9 to AlgorithmArcLength.
+        // For derivative at -1 needs length from -2 to 0, for derivative at graphPoints needs length
+        // from graphPoints - 1 to graphPoints + 1.  Therefore, length[] must contain a graphPoints -1 -(-2) + 1 =
+        // graphPoints + 2 distances.
         int nPoints;
         float xPoints[];
         float yPoints[];
@@ -1153,15 +1156,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
         xderiv = new double[graphPoints+2];
         yderiv = new double[graphPoints+2];
         for (i = 0; i < graphPoints+2; i++) {
-            xderiv[i] = (xPoints[i+4] - xPoints[i+2])/(2.0 * length[i]);
-            yderiv[i] = (yPoints[i+4] - yPoints[i+2])/(2.0 * length[i]);
+            xderiv[i] = (xPoints[i+4] - xPoints[i+2])/length[i];
+            yderiv[i] = (yPoints[i+4] - yPoints[i+2])/length[i];
         }
         // Second derivatives go from 0 to graphPoints-1
         x2deriv = new double[graphPoints];
         y2deriv = new double[graphPoints];
         for (i = 0; i < graphPoints; i++) {
-            x2deriv[i] = (xderiv[i+2] - xderiv[i])/(2.0 * length[i+1]);
-            y2deriv[i] = (yderiv[i+2] - yderiv[i])/(2.0 * length[i+1]);
+            x2deriv[i] = (xderiv[i+2] - xderiv[i])/length[i+1];
+            y2deriv[i] = (yderiv[i+2] - yderiv[i])/length[i+1];
         }
         for (i = 0; i < graphPoints; i++) {
             num = xderiv[i+1]*y2deriv[i] - x2deriv[i]*yderiv[i+1];
