@@ -23,6 +23,9 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
     
     /** Whether this list is dealing with open contours. */
     private boolean openContour = false;
+    
+    /** true if by contour or by slice and contour and show Totals is not selected */
+    private boolean byContour = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -102,6 +105,11 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
         this.openContour = openContour;
         setCheckBoxesEnabled();
     }
+    
+    public void setByContour(boolean byContour) {
+        this.byContour = byContour;
+        setCheckBoxesEnabled();
+    }
 
     /**
      * DOCUMENT ME!
@@ -140,6 +148,11 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(geometricCenterDescription, false); //TODO: this parameter cannot be calculated without a valid mask
             setEnabledList(meanCurvatureDescription, false);
             setEnabledList(stdDevCurvatureDescription, false);
+        }
+        
+        if (!byContour) {
+            setEnabledList(meanCurvatureDescription, false);
+            setEnabledList(stdDevCurvatureDescription, false);    
         }
     }
 
