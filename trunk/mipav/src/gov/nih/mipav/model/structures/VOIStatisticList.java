@@ -145,6 +145,10 @@ public interface VOIStatisticList {
     
     /** Mode Count */
     String modeCount = "Mode Count";
+    
+    String meanCurvature = "Mean Curvature";
+    
+    String stdDevCurvature = "Std Dev of Curvature";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -156,7 +160,7 @@ public interface VOIStatisticList {
         solidityDescription, minIntensity, maxIntensity, avgIntensity, deviationDescription, sumIntensities, 
         geometricCenterDescription, massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription,
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
-        largestDistanceDescription, median, mode, modeCount
+        largestDistanceDescription, median, mode, modeCount, meanCurvature, stdDevCurvature
     };
 
     /** number of statistics in the list. */
