@@ -93,6 +93,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double perimeter;
             public double circularity;
             public double solidity;
+            public double meanCurvature;
+            public double stdDevCurvature;
             public double largestContourDistance;
             @SuppressWarnings("unused")
             public double[] xMass, yMass, zMass;
@@ -965,6 +967,27 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
+            
+            if (statsList[indexOf(meanCurvatureDescription)] ||
+                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                boolean smooth = true;
+                VOIBase convexContour = new VOIContour((VOIContour)contour);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                if (statsList[indexOf(meanCurvatureDescription)]) {
+                    stats.meanCurvature = meanCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
+                }
+                if (statsList[indexOf(stdDevCurvatureDescription)]) {
+                    stats.stdDevCurvature = stdDevCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
+                }
+            }
+            
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
             // deviationDescription, skewnessDescription, kurtosisDescription, massCenterDescription
@@ -1185,6 +1208,27 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
+            
+            if (statsList[indexOf(meanCurvatureDescription)] ||
+                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                boolean smooth = true;
+                VOIBase convexContour = new VOIContour((VOIContour)contour);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                if (statsList[indexOf(meanCurvatureDescription)]) {
+                    stats.meanCurvature = meanCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
+                }
+                if (statsList[indexOf(stdDevCurvatureDescription)]) {
+                    stats.stdDevCurvature = stdDevCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
+                }
+            }
+            
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
             // deviationDescription, skewnessDescription, kurtosisDescription, massCenterDescription
@@ -1436,6 +1480,26 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 convexStats.area = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.solidity = stats.area/convexStats.area;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
+            }
+            
+            if (statsList[indexOf(meanCurvatureDescription)] ||
+                    statsList[indexOf(stdDevCurvatureDescription)]) {
+                Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                boolean smooth = true;
+                VOIBase convexContour = new VOIContour((VOIContour)contour);
+                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature);
+                if (statsList[indexOf(meanCurvatureDescription)]) {
+                    stats.meanCurvature = meanCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
+                }
+                if (statsList[indexOf(stdDevCurvatureDescription)]) {
+                    stats.stdDevCurvature = stdDevCurvature[0];
+                    statProperty.setProperty(VOIStatisticList.stdDevCurvatureDescription + end, nf.format(stats.stdDevCurvature));    
+                }
             }
             
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
@@ -3291,7 +3355,22 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getSolidity() {
         return propertyList.firstElement().getProperty(VOIStatisticList.solidityDescription);
     } // {return solidity;}
-
+    
+    /**
+     * 
+     * @return
+     */
+    public String getMeanCurvature() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.meanCurvatureDescription);    
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public String getStdDevCurvature() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.stdDevCurvatureDescription);    
+    }
 
     /**
      * Gets the principle axis of VOI (only valid for 2D object); return pricipal axis angle of the VOI.
