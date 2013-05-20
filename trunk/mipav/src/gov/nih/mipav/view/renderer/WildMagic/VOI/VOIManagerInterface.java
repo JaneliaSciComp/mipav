@@ -3644,7 +3644,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    findVOIIndentations2D( kCurrentVOI, kCurrentVOI.getPlane(), curves, displayIndentations);
+                    int sliceNum = kCurrentVOI.slice(kCurrentVOI.getPlane());
+                    findVOIIndentations2D( kCurrentVOI, sliceNum, curves, displayIndentations);
                     kCurrentGroup.removeCurve(kCurrentVOI);
                     for (int k = 0; k < curves.size(); k++) {
                         kCurrentGroup.importCurve(curves.get(k));
@@ -3657,7 +3658,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
     
     
-    public int findVOIIndentations2D( VOIBase kVOI, int m_iPlane, Vector<VOIBase>curves, boolean displayIndentations) {
+    public int findVOIIndentations2D( VOIBase kVOI, int sliceNum, Vector<VOIBase>curves, boolean displayIndentations) {
         int numberIndentations = 0;
         BitSet originalMask;
         BitSet hullMask;
@@ -3682,7 +3683,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         boolean wholeImage = true;
         AlgorithmVOIExtraction VOIExtAlgo;
         Vector<VOIBase> maskCurves;
-        int sliceNum = kVOI.slice(m_iPlane);
         VOIContour hullContour = new VOIContour((VOIContour)kVOI);
         hullContour.convexHull();
         originalMask = kVOI.getGroup().createBinaryMask(xDim, yDim, sliceNum, kVOI);
