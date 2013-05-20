@@ -3645,7 +3645,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if ( kCurrentVOI.isActive() )
                 {
                     int sliceNum = kCurrentVOI.slice(kCurrentVOI.getPlane());
-                    findVOIIndentations2D( kCurrentVOI, sliceNum, curves, displayIndentations);
+                    kCurrentVOI.findVOIIndentations2D( getActiveImage(), sliceNum, curves, displayIndentations);
                     kCurrentGroup.removeCurve(kCurrentVOI);
                     for (int k = 0; k < curves.size(); k++) {
                         kCurrentGroup.importCurve(curves.get(k));
@@ -3658,78 +3658,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     }
     
     
-    public int findVOIIndentations2D( VOIBase kVOI, int sliceNum, Vector<VOIBase>curves, boolean displayIndentations) {
-        int numberIndentations = 0;
-        BitSet originalMask;
-        BitSet hullMask;
-        BitSet indentationMask;
-        ModelImage kImage = getActiveImage();
-        int xDim = kImage.getExtents()[0];
-        int yDim = kImage.getExtents()[1];
-        int slice = xDim * yDim;
-        int i;
-        ModelImage maskImage;
-        int extents[] = new int[2];
-        extents[0] = xDim;
-        extents[1] = yDim;
-        AlgorithmMorphology2D openAlgo;
-        int kernel;
-        float circleDiameter;
-        int method;
-        int itersDilation;
-        int itersErosion;
-        int numPruningPixels;
-        int edgingType;
-        boolean wholeImage = true;
-        AlgorithmVOIExtraction VOIExtAlgo;
-        Vector<VOIBase> maskCurves;
-        VOIContour hullContour = new VOIContour((VOIContour)kVOI);
-        hullContour.convexHull();
-        originalMask = kVOI.getGroup().createBinaryMask(xDim, yDim, sliceNum, kVOI);
-        hullMask = ((VOIBase)hullContour).getGroup().createBinaryMask(xDim, yDim, sliceNum, (VOIBase)hullContour);
-        indentationMask = new BitSet(slice);
-        for (i = 0; i < slice; i++) {
-            if (hullMask.get(i) && (!originalMask.get(i))) {
-                indentationMask.set(i);
-            }
-        }
-        maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extents, "maskImage");
-        try {
-            maskImage.importData(0, indentationMask, true);
-        }
-        catch(IOException e) {
-            MipavUtil.displayError("IOException " + e + " on maskImage.importData");
-            return -1;
-        }
-        
-        kernel = AlgorithmMorphology2D.CONNECTED8;
-        circleDiameter = 1.0f;
-        method = AlgorithmMorphology2D.OPEN;
-        itersDilation = 2;
-        itersErosion = 1;
-        numPruningPixels = 0;
-        edgingType = 0;
-        openAlgo = new AlgorithmMorphology2D(maskImage, kernel, circleDiameter, method, itersDilation, itersErosion,
-                                             numPruningPixels, edgingType, wholeImage);
-        openAlgo.run();
-        openAlgo.finalize();
-        openAlgo = null;
-        
-        VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
-        VOIExtAlgo.run();
-        maskCurves = maskImage.getVOIs().get(0).getCurves();
-        numberIndentations = maskCurves.size();
-        for (i = 0; i < numberIndentations; i++) {
-            Preferences.debug("maskCurves.get(" + i + ").size() = " + maskCurves.get(i).size() + "\n", Preferences.DEBUG_ALGORITHM);
-            if (displayIndentations) {
-                curves.add(maskCurves.get(i).clone());
-            }
-        }
-        
-        maskImage.disposeLocal();
-        maskImage = null;
-        return numberIndentations;
-    }
+    
     
 
 
