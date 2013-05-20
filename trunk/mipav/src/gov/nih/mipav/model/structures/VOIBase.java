@@ -1046,10 +1046,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
      *
      * @param   positions     Vector that is filled with the distance along the VOI in millimeters for example
      * @param   curvatures    the corresponding curvature along the contour
+     * @param   smooth        if true smooth before finding curvature
+     * @param   meanCurvature
+     * @param   stdDevCurvature
+     * @param   meanNegativeCurvature
      *
-     * @return  the number of points in the position and intensity array that have valid data.
+     * @return  the number of points in the position and curvature array that have valid data.
      */
-    public int findPositionAndCurvature(ModelImage kImage, Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
+    public int findPositionAndCurvature(Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
                                         double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[])
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
