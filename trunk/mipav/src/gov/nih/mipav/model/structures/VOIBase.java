@@ -2,7 +2,9 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmTPSpline;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.util.MipavMath;
 import gov.nih.mipav.view.MipavUtil;
@@ -12,6 +14,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -1039,6 +1042,78 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
     
     
+    
+    public int findVOIIndentations2D(ModelImage kImage, int sliceNum, Vector<VOIBase>curves, boolean displayIndentations) {
+        int numberIndentations = 0;
+        BitSet originalMask;
+        BitSet hullMask;
+        BitSet indentationMask;
+        int xDim = kImage.getExtents()[0];
+        int yDim = kImage.getExtents()[1];
+        int slice = xDim * yDim;
+        int i;
+        ModelImage maskImage;
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        AlgorithmMorphology2D openAlgo;
+        int kernel;
+        float circleDiameter;
+        int method;
+        int itersDilation;
+        int itersErosion;
+        int numPruningPixels;
+        int edgingType;
+        boolean wholeImage = true;
+        AlgorithmVOIExtraction VOIExtAlgo;
+        Vector<VOIBase> maskCurves;
+        VOIContour hullContour = new VOIContour((VOIContour)this);
+        hullContour.convexHull();
+        originalMask = getGroup().createBinaryMask(xDim, yDim, sliceNum, this);
+        hullMask = ((VOIBase)hullContour).getGroup().createBinaryMask(xDim, yDim, sliceNum, (VOIBase)hullContour);
+        indentationMask = new BitSet(slice);
+        for (i = 0; i < slice; i++) {
+            if (hullMask.get(i) && (!originalMask.get(i))) {
+                indentationMask.set(i);
+            }
+        }
+        maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extents, "maskImage");
+        try {
+            maskImage.importData(0, indentationMask, true);
+        }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException " + e + " on maskImage.importData");
+            return -1;
+        }
+        
+        kernel = AlgorithmMorphology2D.CONNECTED8;
+        circleDiameter = 1.0f;
+        method = AlgorithmMorphology2D.OPEN;
+        itersDilation = 2;
+        itersErosion = 1;
+        numPruningPixels = 0;
+        edgingType = 0;
+        openAlgo = new AlgorithmMorphology2D(maskImage, kernel, circleDiameter, method, itersDilation, itersErosion,
+                                             numPruningPixels, edgingType, wholeImage);
+        openAlgo.run();
+        openAlgo.finalize();
+        openAlgo = null;
+        
+        VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
+        VOIExtAlgo.run();
+        maskCurves = maskImage.getVOIs().get(0).getCurves();
+        numberIndentations = maskCurves.size();
+        for (i = 0; i < numberIndentations; i++) {
+            Preferences.debug("maskCurves.get(" + i + ").size() = " + maskCurves.get(i).size() + "\n", Preferences.DEBUG_ALGORITHM);
+            if (displayIndentations) {
+                curves.add(maskCurves.get(i).clone());
+            }
+        }
+        
+        maskImage.disposeLocal();
+        maskImage = null;
+        return numberIndentations;
+    }
     
     /**
      * Finds the position/curvature along a VOI.
