@@ -932,8 +932,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             saveVOIs(command);
             new JDialogConvexHull2D(m_kParent.getFrame(), this, getActiveImage());
-        }
-        else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
+        } else if (command.equals("IndentationVOIs2D")) {
+            if ( !checkForActiveVOIs()) {
+                MipavUtil.displayWarning("Please select a VOI!");
+                return;
+            }
+            saveVOIs(command);
+            boolean displayIndentationVOIs = true;
+            indentationVOIs2D(displayIndentationVOIs);
+        } else if (command.equals(CustomUIBuilder.PARAM_VOI_FLIPY.getActionCommand())) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
                 return;
@@ -2627,7 +2634,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         double meanCurvature[] = new double[1];
         double stdDevCurvature[] = new double[1];
         double meanNegativeCurvature[] = new double[1];
-        int pts = kVOI.findPositionAndCurvature( kImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+        int pts = kVOI.findPositionAndCurvature( positions, curvature, smooth, meanCurvature, stdDevCurvature,
                                                  meanNegativeCurvature);
 
         
@@ -3623,6 +3630,30 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 }
             }
         }
+    }
+    
+    private void indentationVOIs2D(boolean displayIndentationVOIs) {
+        VOIVector kVOIs = getActiveImage().getVOIs();
+        for ( int i = 0; i < kVOIs.size(); i++ )
+        {
+            VOI kCurrentGroup = kVOIs.get(i);
+            for ( int j = 0; j < kCurrentGroup.getCurves().size(); j++ )
+            {
+                VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
+                if ( kCurrentVOI.isActive() )
+                {
+                    findVOIIndentations2D( kCurrentVOI, kCurrentVOI.getPlane(), displayIndentationVOIs);
+                }
+            }
+        }    
+    }
+    
+    
+    public int findVOIIndentations2D( VOIBase kVOI, int m_iPlane, boolean displayIndentationVOIs) {
+        int numberIndentations = 0;
+        VOIContour hullContour = new VOIContour((VOIContour)kVOI);
+        hullContour.convexHull();
+        return numberIndentations;
     }
     
 
