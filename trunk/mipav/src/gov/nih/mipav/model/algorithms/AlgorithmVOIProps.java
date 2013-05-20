@@ -93,6 +93,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double perimeter;
             public double circularity;
             public double solidity;
+            public int numberOfIndentations;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -969,6 +970,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
             
+            if (statsList[indexOf(numberOfIndentationsDescription)]) {
+                int sliceNum = Math.round(contour.elementAt(0).Z);
+                stats.numberOfIndentations = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(stats.numberOfIndentations));
+            }
+            
             if (statsList[indexOf(meanCurvatureDescription)] ||
                     statsList[indexOf(stdDevCurvatureDescription)] ||
                     statsList[indexOf(meanNegativeCurvatureDescription)]) {
@@ -1216,6 +1223,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.hullArea = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
+            }
+            
+            if (statsList[indexOf(numberOfIndentationsDescription)]) {
+                int sliceNum = Math.round(contour.elementAt(0).Z);
+                stats.numberOfIndentations = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(stats.numberOfIndentations));
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
@@ -1497,6 +1510,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 convexStats.area = convexStats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.solidity = stats.area/convexStats.area;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
+            }
+            
+            if (statsList[indexOf(numberOfIndentationsDescription)]) {
+                stats.numberOfIndentations = contour.findVOIIndentations2D(srcImage, iSlice, null, false); 
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(stats.numberOfIndentations));
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
@@ -1883,6 +1901,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
+            
+            if ( statsList[ indexOf( numberOfIndentationsDescription ) ] )
+            {           
+                stats.numberOfIndentations = 0;
+                for ( int i = 0; i < kVOI.getCurves().size(); i++ )
+                {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
+                    stats.numberOfIndentations += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
+                }
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription, nf.format(stats.numberOfIndentations));  
+            }
+            
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
             // deviationDescription, skewnessDescription, kurtosisDescription, massCenterDescription
@@ -2158,6 +2187,17 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.solidity = stats.area/stats.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
+            
+            if ( statsList[ indexOf( numberOfIndentationsDescription ) ] )
+            {           
+                stats.numberOfIndentations = 0;
+                for ( int i = 0; i < kVOI.getCurves().size(); i++ )
+                {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
+                    stats.numberOfIndentations += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
+                }
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription, nf.format(stats.numberOfIndentations));  
+            }
+            
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
             // median, mode, modeCount 
             // deviationDescription, skewnessDescription, kurtosisDescription, massCenterDescription
@@ -2429,6 +2469,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statsTotal.solidity = statsTotal.area/statsTotal.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
             }
+            
+            if (statsList[ indexOf( numberOfIndentationsDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.numberOfIndentations += stats[q].numberOfIndentations;
+                }
+             
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(statsTotal.numberOfIndentations));
+            }
+            
             if ( statsList[ indexOf( minIntensity ) ] ||
                     statsList[ indexOf( maxIntensity ) ] ||
                     statsList[ indexOf( avgIntensity ) ] ||
@@ -2598,6 +2647,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 statsTotal.solidity = statsTotal.area/statsTotal.hullArea;
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
+            }
+            
+            if (statsList[ indexOf( numberOfIndentationsDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.numberOfIndentations += stats[q].numberOfIndentations;
+                }
+             
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(statsTotal.numberOfIndentations));
             }
             
             if ( statsList[ indexOf( minIntensity ) ] ||
@@ -3381,6 +3438,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public String getSolidity() {
         return propertyList.firstElement().getProperty(VOIStatisticList.solidityDescription);
     } // {return solidity;}
+    
+    public String getNumberOfIndentations() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.numberOfIndentationsDescription);
+    }
     
     /**
      * 
