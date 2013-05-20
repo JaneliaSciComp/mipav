@@ -219,62 +219,7 @@ public class JDialogConvexHull2D extends JDialogBase implements AlgorithmInterfa
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        VOI resultVOI;
-        int element;
-        Vector<VOIBase> contours;
-        int nContours;
-
-        // ViewJFrameImage imageFrame = null;
-        if (algorithm instanceof AlgorithmBSmooth) {
-
-            if (smoothAlgo.isCompleted() == true) {
-
-                // The algorithm has completed and produced a
-                resultVOI = smoothAlgo.getResultVOI();
-
-                if (removeOriginal) {
-                    resultVOI.setColor(voiColor);
-                    resultVOI.setAllActive(true);
-                    contours = VOIs.VOIAt(groupNum).getCurves();
-
-                    int resultIndex = 0;
-                    nContours = contours.size();
-                    for (element = nContours - 1; element >= 0; element--) {
-
-                        if (((VOIContour) (contours.elementAt(element))).isActive()) {
-                            VOIs.VOIAt(groupNum).removeCurve(contours.elementAt(element));
-
-                            VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(resultIndex++));
-                        }
-                    }
-
-                } else {
-                    image.registerVOI(resultVOI);
-                    // System.err.println("would have registered the new one here");
-                }
-            }
-
-            // These next lines set the titles in all frames where the source image is displayed to
-            // image name so as to indicate that the image is now unlocked!
-            // The image frames are enabled and then registed to the userinterface.
-            Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
-
-            for (int i = 0; i < imageFrames.size(); i++) {
-            	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
-            	{
-            		((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
-            		((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
-            		((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
-            	}
-            }
-        }
-
-        // Update frame
-        if ( voiManager != null )
-        {
-        	voiManager.updateDisplay();
-        }
-        dispose();
+        
     }
 
     /**
