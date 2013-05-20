@@ -1101,6 +1101,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
         
         VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
         VOIExtAlgo.run();
+        if (maskImage.getVOIs().size() == 0) {
+            return 0;
+        }
         maskCurves = maskImage.getVOIs().get(0).getCurves();
         numberIndentations = maskCurves.size();
         for (i = 0; i < numberIndentations; i++) {
