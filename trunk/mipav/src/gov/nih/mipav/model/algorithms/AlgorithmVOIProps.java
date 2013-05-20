@@ -980,7 +980,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanNegativeCurvature[] = new double[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
-                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                convexContour.findPositionAndCurvature(positions, curvature, smooth, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
@@ -1229,7 +1229,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanNegativeCurvature[] = new double[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
-                convexContour.findPositionAndCurvature( srcImage, positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                convexContour.findPositionAndCurvature( positions, curvature, smooth, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
