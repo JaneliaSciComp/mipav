@@ -34,7 +34,6 @@ import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -48,14 +47,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.JTextComponent;
 
 import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 
@@ -300,11 +297,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 generateFusionAlgo = null;
             }
 
-            dispose();
+            //dispose();
+            if (super.isExitRequired()) {
+                ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            }
         }
-
     } // end algorithmPerformed()
-
     
     /**
      * Once all the necessary variables are set, call the kidney segmentation algorithm
@@ -1097,6 +1095,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             }
         }
         
+        doDeconv = deconvPerformCheckbox.isSelected();
         if (doDeconv) {
         	if((deconvDir = createDirectory(saveDeconvFolderText.getText())) == null) {
                 return false;
@@ -1298,7 +1297,6 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    }
 	    
 	    // deconvolution parameters
-	    doDeconv = deconvPerformCheckbox.isSelected();
 	    if (doDeconv) {
 	    	deconvIterations = Integer.valueOf(deconvIterationsText.getText());
 	    	deconvSigmaA = new float[3];
