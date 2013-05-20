@@ -175,14 +175,13 @@ public class JDialogConvexHull2D extends JDialogBase implements AlgorithmInterfa
                 resultVOI.setAllActive(true);
                 contours = VOIs.VOIAt(groupNum).getCurves();
 
-                int resultIndex = 0;
                 nContours = contours.size();
                 for (element = nContours - 1; element >= 0; element--) {
 
                     if (((VOIContour) (contours.elementAt(element))).isActive()) {
                         VOIs.VOIAt(groupNum).removeCurve(contours.elementAt(element));
 
-                        VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(resultIndex++));
+                        VOIs.VOIAt(groupNum).importCurve((VOIContour) resultVOI.getCurves().elementAt(element));
                     }
                 }
 
