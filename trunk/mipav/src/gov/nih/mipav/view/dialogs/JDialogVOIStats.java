@@ -254,7 +254,10 @@ public class JDialogVOIStats extends JDialogBase
         
 
         if (source == colorButton) {
-            showColorChooser();
+        	if (voi == null)
+        		MipavUtil.displayError("You must select a VOI");
+        	else
+        		showColorChooser();
         } else if (source == followVOISelectionBox) {
             frameFollowsSelection = followVOISelectionBox.isSelected();
         } else if (source == helpButton) {
@@ -455,7 +458,7 @@ public class JDialogVOIStats extends JDialogBase
             }
             
             callVOIAlgo(processList[0], AlgorithmVOIProps.PROCESS_PER_VOI, isRunInSeparateThread());
-        } else if (source == cancelButton) {
+        } else if (source == closeButton) {
             cancelFlag = true;
             setVisible(false);
         } else {
@@ -875,7 +878,7 @@ public class JDialogVOIStats extends JDialogBase
      * DOCUMENT ME!
      */
     public void showColorChooser() {
-        colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(),
+        colorChooser = new ViewJColorChooser(null, "Pick VOI color", new OkColorListener(),
                                              new CancelListener());
     }
 
@@ -1139,7 +1142,7 @@ public class JDialogVOIStats extends JDialogBase
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change VOI color");
-        colorButton.addItemListener(this);
+        colorButton.addActionListener(this);
 
         VOIName = new JTextField(15);
         VOIName.setFont(serif12);
@@ -1389,8 +1392,8 @@ public class JDialogVOIStats extends JDialogBase
         applyButton.setFont(serif12B);
         applyButton.addActionListener(this);
 
-        cancelButton = buildCancelButton();
-        cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        closeButton = buildCloseButton();
+        closeButton.setPreferredSize(MipavUtil.defaultButtonSize);
         
         helpButton = buildHelpButton();
         helpButton.setPreferredSize(MipavUtil.defaultButtonSize);
@@ -1437,7 +1440,7 @@ public class JDialogVOIStats extends JDialogBase
 
         JPanel leftButton = new JPanel();
         leftButton.add(applyButton);
-        leftButton.add(cancelButton);
+        leftButton.add(closeButton);
         leftButton.add(helpButton);
 
         JPanel leftWholePanel = new JPanel(new BorderLayout());
@@ -1706,6 +1709,7 @@ public class JDialogVOIStats extends JDialogBase
             Color color = colorChooser.getColor();
             colorButton.setBackground(color);
             colorVOI = color;
+            voi.setColor(colorVOI);
         }
     }
 
