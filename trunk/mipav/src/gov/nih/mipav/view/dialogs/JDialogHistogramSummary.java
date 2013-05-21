@@ -36,6 +36,12 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
 
     /** Blue channel. */
     private static final int BLUE_OFFSET = 3;
+    
+    private static final int WHOLE_IMAGE = 1;
+    
+    private static final int TOTAL_VOIS = 2;
+    
+    private static final int SEPARATE_VOIS = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -73,7 +79,9 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private JRadioButton radVOIs;
+    private JRadioButton radTotalVOIs;
+    
+    private JRadioButton radSeparateVOIs;
 
     /** DOCUMENT ME! */
     private JRadioButton radWholeImage;
@@ -101,6 +109,8 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
     private JLabel userMaxLabel;
     
     private float userMax = 0.0f;
+    
+    private int processMode = WHOLE_IMAGE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -225,6 +235,10 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
         this.RGBOffset = RGBoffset;
     }
     
+    public void setProcessMode(int processMode) {
+        this.processMode = processMode;
+    }
+    
     /**
      * If true, use userMin to userMax instead of image.getMin() to image.getMax() as histogram limits
      * @param userLimits
@@ -275,10 +289,10 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
 
             // Make algorithm
             if (image.isColorImage()) {
-                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, radWholeImage.isSelected(), displayGraph,
+                histAlgo = new AlgorithmHistogram(image, bins, RGBOffset, processMode, displayGraph,
                                                   userLimits, userMin, userMax);
             } else {
-                histAlgo = new AlgorithmHistogram(image, bins, radWholeImage.isSelected(), displayGraph,
+                histAlgo = new AlgorithmHistogram(image, bins, processMode, displayGraph,
                                                   userLimits, userMin, userMax);
             }
 
@@ -327,8 +341,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
                                          "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
         }
 
-        radWholeImage = new JRadioButton("Whole image");
-        radWholeImage.setSelected(scriptParameters.doProcessWholeImage());
+        processMode = scriptParameters.getParams().getInt("process_mode");
         userLimits = scriptParameters.getParams().getBoolean("user_limits");
         userMin = scriptParameters.getParams().getFloat("user_min");
         userMax = scriptParameters.getParams().getFloat("user_max");
@@ -346,7 +359,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
             scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", RGBOffset));
         }
 
-        scriptParameters.storeProcessWholeImage(radWholeImage.isSelected());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("process_mode", processMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("user_limits", userLimits));
         scriptParameters.getParams().put(ParameterFactory.newParameter("user_min", userMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("user_max", userMax));
@@ -419,7 +432,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
         }
 
 
-        JPanel binPanel = new JPanel(new GridLayout(6, 2));
+        JPanel binPanel = new JPanel(new GridLayout(7, 2));
         binPanel.setForeground(Color.black);
         binPanel.setBorder(buildTitledBorder("Bins"));
 
@@ -443,10 +456,17 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
 
         binPanel.add(new JLabel(" "));
 
-        radVOIs = new JRadioButton("VOI region(s)");
-        binPanel.add(radVOIs);
-        radVOIs.setFont(serif12);
-        buttonGroup.add(radVOIs);
+        radTotalVOIs = new JRadioButton("Total VOI region(s)");
+        binPanel.add(radTotalVOIs);
+        radTotalVOIs.setFont(serif12);
+        buttonGroup.add(radTotalVOIs);
+        
+        binPanel.add(new JLabel(" "));
+        
+        radSeparateVOIs = new JRadioButton("Separate VOI region(s)");
+        binPanel.add(radSeparateVOIs);
+        radSeparateVOIs.setFont(serif12);
+        buttonGroup.add(radSeparateVOIs);
         
         binPanel.add(new JLabel(" "));
         
@@ -560,6 +580,16 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
                 return false;
             }    
         }
+        
+        if (radWholeImage.isSelected()) {
+            processMode = WHOLE_IMAGE;
+        }
+        else if (radTotalVOIs.isSelected()) {
+            processMode = TOTAL_VOIS;
+        }
+        else {
+            processMode = SEPARATE_VOIS;
+        }
 
         return true;
     }
@@ -621,7 +651,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
             //Blue offset == 3
             table.put(new ParameterInt("RGB_offset", 1));
             table.put(new ParameterInt("number_of_bins",256));
-            table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
+            table.put(new ParameterInt("process_mode", WHOLE_IMAGE));
             table.put(new ParameterBoolean("user_limits", false));
             table.put(new ParameterFloat("user_min", 0.0f));
             table.put(new ParameterFloat("user_max", 0.0f));
