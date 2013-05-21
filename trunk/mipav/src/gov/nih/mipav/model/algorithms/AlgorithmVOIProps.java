@@ -945,7 +945,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                stats.circularity = (4.0 * Math.PI * stats.area)/(stats.perimeter * stats.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
             }
             
@@ -1197,7 +1197,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                stats.circularity = (4.0 * Math.PI * stats.area)/(stats.perimeter * stats.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
             }
             
@@ -1479,7 +1479,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                stats.circularity = (4.0 * Math.PI * stats.area)/(stats.perimeter * stats.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(stats.circularity));
             }
             
@@ -1868,7 +1868,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                stats.circularity = (4.0 * Math.PI * stats.area)/(stats.perimeter * stats.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
             }
             
@@ -2149,7 +2149,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                stats.circularity = stats.perimeter/(2.0 * Math.sqrt(Math.PI * stats.area));
+                stats.circularity = (4.0 * Math.PI * stats.area)/(stats.perimeter * stats.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription, nf.format(stats.circularity));
             }
             
@@ -2458,7 +2458,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
+                statsTotal.circularity = (4.0 * Math.PI * statsTotal.area)/(statsTotal.perimeter * statsTotal.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
             }
             
@@ -2637,7 +2637,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if ( statsList[indexOf(circularityDescription)]) {
-                statsTotal.circularity = statsTotal.perimeter/(2.0 * Math.sqrt(Math.PI * statsTotal.area));
+                statsTotal.circularity = (4.0 * Math.PI * statsTotal.area)/(statsTotal.perimeter * statsTotal.perimeter);
                 statProperty.setProperty(VOIStatisticList.circularityDescription + end, nf.format(statsTotal.circularity));
             }
             
