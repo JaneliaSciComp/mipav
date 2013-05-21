@@ -254,8 +254,7 @@ public class JDialogVOIStats extends JDialogBase
         
 
         if (source == colorButton) {
-            colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(),
-                                                 new CancelListener());
+            showColorChooser();
         } else if (source == followVOISelectionBox) {
             frameFollowsSelection = followVOISelectionBox.isSelected();
         } else if (source == helpButton) {
@@ -1404,6 +1403,7 @@ public class JDialogVOIStats extends JDialogBase
 
         JPanel mainTreePanel = new JPanel(new GridBagLayout());
         mainTreePanel.setBorder(buildTitledBorder("VOI Browser"));
+        mainTreePanel.setPreferredSize(new Dimension(250,300));
 
         gb.anchor = GridBagConstraints.CENTER;
         gb.gridx = 0;

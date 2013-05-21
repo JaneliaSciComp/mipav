@@ -95,9 +95,10 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
 
         // make the list scroll if there are enough checkboxes
         scrollPane = new JScrollPane(makeCheckContainer(), // checkboxPanel,
-                                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setForeground(Color.white);
+        scrollPane.setPreferredSize(new Dimension(175,400));
         add(scrollPane, BorderLayout.CENTER);
         add(chkUnchkPanel = makeCheckUncheckPanel(), BorderLayout.SOUTH);
     }
