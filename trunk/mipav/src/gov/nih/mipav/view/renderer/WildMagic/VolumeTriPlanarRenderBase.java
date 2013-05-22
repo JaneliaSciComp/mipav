@@ -1381,7 +1381,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  m_kCuller.SetCamera(m_spkCamera);
 		  m_kCuller.ComputeVisibleSet(m_spkScene);
 
-		  InitializeCameraMotion(.01f,0.001f);
+		  InitializeCameraMotion(.05f, 0.1f);
 		  InitializeObjectMotion(m_spkScene);
 	  }
 

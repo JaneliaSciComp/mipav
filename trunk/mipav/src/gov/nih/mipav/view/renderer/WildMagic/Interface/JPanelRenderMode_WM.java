@@ -410,7 +410,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         if ( source == mouseTranslationSpeedSlider) {
         	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
-        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/10.0f;
         	// System.err.println("translationSpeed = " + translationSpeed);
         	// System.err.println("rotationSpeed = " + rotationSpeed);
         	rayBasedRenderWM.setMouseTranslationSpeed(translationSpeed, rotationSpeed);
@@ -418,7 +418,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         
         if ( source == mouseRotationSpeedSlider) {
         	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
-        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/10.0f;
         	// System.err.println("translationSpeed = " + translationSpeed);
         	// System.err.println("rotationSpeed = " + rotationSpeed);
         	rayBasedRenderWM.setMouseRotationSpeed(translationSpeed, rotationSpeed);
@@ -623,16 +623,16 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          JPanel mouseSpeedPanel = new JPanel(new GridBagLayout());
          mouseSpeedPanel.setBorder(buildTitledBorder("Mouse Sensitivity"));
          
-         JLabel mouseTranslationSpeedLabel = new JLabel("Mouse Translation Speed");
+         JLabel mouseTranslationSpeedLabel = new JLabel("Translation/Zoom Speed");
          gbc.gridx = 0;
          gbc.gridy = 0;
          mouseSpeedPanel.add(mouseTranslationSpeedLabel, gbc);
-         mouseTranslationSpeedSlider = new JSlider( 0, 40, 10 );
+         mouseTranslationSpeedSlider = new JSlider( 0, 40, 20 );
          mouseTranslationSpeedSlider.addChangeListener(this);
          gbc.gridx = 1;
          mouseSpeedPanel.add(mouseTranslationSpeedSlider, gbc);         
          
-         JLabel mouseRotationSpeedLabel = new JLabel("Mouse Rotation Speed");
+         JLabel mouseRotationSpeedLabel = new JLabel("Rotation Speed");
          gbc.gridx = 0;
          gbc.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc);
