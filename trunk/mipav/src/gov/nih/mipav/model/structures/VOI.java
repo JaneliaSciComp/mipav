@@ -547,12 +547,14 @@ public class VOI extends ModelSerialCloneable {
 		this.thickness = kVOI.thickness;
 		this.contourGraph = kVOI.contourGraph;
 		this.curves = new VOIBaseVector(this);
-		for ( int j = 0; j < kVOI.curves.size(); j++ )
-		{
-			//VOIBase kContour = kVOI.curves.get(j).clone();
-		    VOIBase kContour = new VOIContour((VOIContour)kVOI.curves.get(j));
-			// With clone this.curves.add( kContour) was seen to occur before the clone operation was complete
-			this.curves.add( kContour );
+		if (kVOI.curveType == CONTOUR) {
+    		for ( int j = 0; j < kVOI.curves.size(); j++ )
+    		{
+    			//VOIBase kContour = kVOI.curves.get(j).clone();
+    		    VOIBase kContour = new VOIContour((VOIContour)kVOI.curves.get(j));
+    			// With clone this.curves.add( kContour) was seen to occur before the clone operation was complete
+    			this.curves.add( kContour );
+    		}
 		}
 
 		this.curveType = kVOI.curveType;
