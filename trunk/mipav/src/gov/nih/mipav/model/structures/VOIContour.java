@@ -14,6 +14,7 @@ import java.util.Vector;
 import Jama.Matrix;
 import WildMagic.LibFoundation.Approximation.ApprEllipsoidFit3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
@@ -1464,6 +1465,236 @@ public class VOIContour extends VOIBase {
 		majorAxis[0] = (float)ma;
 		eccentricity[0] = (float) Math.sqrt(1.0 - ((mi * mi) / (ma * ma)));
 	}
+	
+	/**
+	 * This is a port of the MATLAB file Reisduals_ellipse written by Hui Ma on May 24, 2010.  This code is covered by a
+	 * BSD license.  On the MATLAB exchange it was listed under distance from points to an ellipse.  file ID #27708.
+	 * The text at the front of the file is as follows:
+	 * %   Projecting a given set of points onto an ellipse
+%   and computing the distances from the points to the ellipse
+%
+%   This is a modified version of an iterative algorithm published by D. Eberly
+%     Internet publication: "Distance from a point to an ellipse in 2D" (2004)
+%                           Geometric Tools, LLC, www.geometrictools.com
+%     Book publication: "3D Game Engine Design", 2nd edition.
+%                       Morgan Kaufmann Publishers, San Francisco, CA, 2007.
+%                              (see Section 14.13.1)
+%
+%   Input:  XY(n,2) is the array of coordinates of n points x(i)=XY(i,1), y(i)=XY(i,2)
+%           ParG is a vector 5x1 of the ellipse parameters
+%           ParG =  [Center(1:2), Axes(1:2), Angle]'
+%                Center - the coordinates of the ellipse's center
+%                Axes   - the axes (major, minor)
+%                Angle  - the angle of tilt of the ellipse
+%
+%   Output:  RSS is the Residual Sum of Squares (the sum of squares of the distances)
+%            XYproj is the array of coordinates of projections
+%
+%   The algorithm is proven to converge and reaches an accuracy of 7-8 significant digit
+%   It takes 4-5 iterations per point, on average.
+
+    input angle is in radians
+*/
+	private void residuals_ellipse(double residualSumOfSquares[], double[][]xyproj, Vector<Vector3f> xy, 
+	                               float centerX, float centerY, float majorAxis, float minorAxis, float angle) {
+	    int n;
+	    double tolerance;
+	    double phiall[] = null;
+	    int i;
+	    double diffx;
+	    double diffy;
+	    double a;
+	    double b;
+	    double aa;
+	    double bb;
+	    double tol_a;
+	    double tol_b;
+	    double tol_aa;
+	    double s;
+	    double c;
+	    //double Q[][];
+	    //Matrix matQ;
+	    double xy0[][];
+	    double xya[][];
+	    double tini[];
+	    double u;
+	    double v;
+	    double ua;
+	    double vb;
+	    int z1;
+	    int z2;
+	    double xproj;
+	    double t;
+	    int iter;
+	    double taa = 0.0;
+	    double tbb;
+	    double pp1;
+	    double pp2;
+	    double f;
+	    double fder;
+	    double ratio;
+	    double temp;
+	
+	    residualSumOfSquares[0] = 0.0;
+	    n = xy.size();
+	    xyproj = new double[n][2];
+	    tolerance = 1.0e-9;
+	    
+	    // First handling the circle case
+	    if (Math.abs((majorAxis - minorAxis)/majorAxis) < tolerance) {
+	        phiall = new double[n];
+	        for (i = 0; i < n; i++) {
+	            phiall[i] = Math.atan2((xy.get(i).Y - centerY),(xy.get(i).X - centerX));
+	            xyproj[i][0] = majorAxis*Math.cos(phiall[i]) + centerX;
+	            xyproj[i][1] = minorAxis*Math.sin(phiall[i]) + centerY;
+	            diffx = xy.get(i).X - xyproj[i][0];
+	            diffy = xy.get(i).Y - xyproj[i][1];
+	            residualSumOfSquares[0] += (diffx*diffx + diffy*diffy);
+	        } // for (i = 0; i < n; i++)
+	        return;
+	    } // if (Math.abs((majorAxis - minorAxis)/majorAxis) < tolerance)
+	    
+	    // Now dealing with proper ellipses
+	    a = majorAxis;
+	    b = minorAxis;
+	    aa = a * a;
+	    bb = b * b;
+	    tol_a = tolerance * a;
+	    tol_b = tolerance * b;
+	    tol_aa = tolerance * aa;
+	    
+	    // Matrix Q for rotating the points and the ellipse to the canonical system
+	    s = Math.sin(angle);
+	    c = Math.cos(angle);
+	    //Q = new double[2][2];
+	    //Q[0][0] = c;
+	    //Q[0][1] = -s;
+	    //Q[1][0] = s;
+	    //Q[1][1] = c;
+	    //matQ = new Matrix(Q);
+	    
+	    // Data points in canonical coordinates
+	    xy0 = new double[n][2];
+	    xya = new double[n][2];
+	    tini = new double[n];
+	    for (i = 0; i < n; i++) {
+	        xy0[i][0] = (xy.get(i).X - centerX)*c + (xy.get(i).Y - centerY)*s;
+	        xy0[i][1] = (xy.get(i).X - centerX)*(-s) + (xy.get(i).Y - centerY)*c;
+	        xya[i][0] = Math.abs(xy0[i][0]);
+	        xya[i][1] = Math.abs(xy0[i][1]);
+	        tini[i] = Math.max(a*(xya[i][0] - a), b*(xya[i][1] - b));
+	    }
+	    
+	    // Main loop over the data points
+	    for (i = 0; i < n; i++) {
+	        u = xya[i][0];
+	        v = xya[i][1];
+	        ua = u * a;
+	        vb = v * b;
+	        
+	        if (u == 0) {
+	            z1 = 1;
+	        }
+	        else if (xy0[i][0] > 0) {
+	            z1 = 1;
+	        }
+	        else if (xy0[i][0] == 0.0) {
+	            z1 = 0;
+	        }
+	        else {
+	            z1 = -1;
+	        }
+	        
+	        if (v == 0) {
+	            z2 = 1;
+	        }
+	        else if (xy0[i][1] > 0) {
+	            z2 = 1;
+	        }
+	        else if (xy0[i][1] == 0.0) {
+	            z2 = 0;
+	        }
+	        else {
+	            z2 = -1;
+	        }
+	        
+	        // Does the point lie on the minor axis?
+	        if (u < tol_a) {
+	            if (xy0[i][1] < 0.0) {
+	                xyproj[i][0] = 0.0;
+	                xyproj[i][1] = -b;
+	            }
+	            else {
+	                xyproj[i][0] = 0.0;
+	                xyproj[i][1] = b;
+	            }
+	        } // if (u < tol_a)
+	        
+	        // Does the point lie on the major axis?
+	        if (v < tol_b) {
+	            if (u < a - bb/a) {
+	                xproj = aa * u/(aa - bb);
+	                ratio = xproj/a;
+	                xyproj[i][0] = z1*xproj;
+	                xyproj[i][1] = z2 * b * Math.sqrt(1.0 - ratio*ratio);
+	            }
+	            else {
+	                xyproj[i][0] = z1 * a;
+	                xyproj[i][1] = 0.0;
+	            }
+	        } // if (v < tol_b)
+	        
+	        // Generic case: start the iterative procedure
+	        t = tini[i];
+	        for (iter = 1; iter <= 100; iter++) {
+	            taa = t + aa;
+	            tbb = t + bb;
+	            ratio = ua/taa;
+	            pp1 = ratio * ratio;
+	            ratio = vb/tbb;
+	            pp2 = ratio * ratio;
+	            f = pp1 + pp2 - 1.0;
+	            if (f < 0.0) {
+	                break;
+	            }
+	            fder = 2.0 * (pp1/taa + pp2/tbb);
+	            ratio = f/fder;
+	            if (ratio < tol_aa) {
+	                break;
+	            }
+	            t = t + ratio;
+	        } // for (iter = 1; iter <= 100; iter++)
+	        
+	        // Compute the projection of the point onto the ellipse
+	        xproj = xy0[i][0]*aa/taa;
+	        xyproj[i][0] = xproj;
+	        if (xy0[i][1] > 0.0) {
+	            z1 = 1;
+	        }
+	        else if (xy0[i][1] == 0.0) {
+	            z1 = 0;
+	        }
+	        else {
+	            z1 = -1;
+	        }
+	        ratio = xproj/a;
+	        xyproj[i][1] = z1 * b * Math.sqrt(1.0 - ratio*ratio);
+	    } // for (i = 0; i < n; i++)
+	    
+	    // Rotate back to the original system
+	    for (i = 0; i < n; i++) {
+            temp = xyproj[i][0]*c + xyproj[i][1]*(-s);
+            xyproj[i][1] = xyproj[i][0]*s + xyproj[i][1]*c;
+            xyproj[i][0] = temp;
+            xyproj[i][0] = xyproj[i][0] + centerX;
+            xyproj[i][1] = xyproj[i][1] + centerY;
+            diffx = xy.get(i).X - xyproj[i][0];
+            diffy = xy.get(i).Y - xyproj[i][1];
+            residualSumOfSquares[0] += (diffx*diffx + diffy*diffy);
+        }
+	    return;
+	}
+	
 
 	/**
 	 * Transforms self.
