@@ -401,6 +401,12 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         Preferences.debug("nVOIS = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
 
         srcImage.setVOIs(VOIs);
+        VOIs = srcImage.getVOIs();
+        for (i = 0; i < nVOIs; i++) {
+            VOIs.VOIAt(i).setFixed(true);
+            VOIs.VOIAt(i).setDisplayMode(VOI.CONTOUR);
+            ((VOIContour)(VOIs.VOIAt(i).getCurves().elementAt(0))).setDoGeometricCenterLabel(true);
+        }
         
         if (threadStopped) {
             finalize();
