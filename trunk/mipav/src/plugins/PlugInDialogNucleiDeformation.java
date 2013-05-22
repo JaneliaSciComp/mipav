@@ -1,45 +1,49 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 import javax.swing.*;
 
 
-/**
- * @version  May 9, 2013
- * @see      JDialogBase
- * @see      AlgorithmInterface
- *
- *           <p>$Logfile:
- *           </p>
- */
-public class PlugInDialogNucleiDeformation extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
+	private static final long serialVersionUID = 3516843154999038969L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     private JTextField minSizeText;
     
-    private int minSize = 100;
+    private int minSize = 500;
     
     private JTextField maxSizeText;
     
-    private int maxSize = 1000000;
-    
-    private ModelImage image;
+    private int maxSize = 5500;
 
     private PlugInAlgorithmNucleiDeformation nucleiDeformAlgo = null;
+    
+    private String inputDir;
+    
+    private File[] inputFiles;
+    
+    private JCheckBox onlyProcessTiffCheckbox;
+    
+    private boolean onlyProcessTiff = true;
+    
+    private JTextField dirChooserText;
+    
+    private JButton dirChooserButton;
+    
+    private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] { ".tiff", ".tif" });
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -51,20 +55,11 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
     /**
      * Creates new dialog for distances within a cell from the geometric center using a plugin.
      *
-     * @param  theParentFrame  Parent frame.
-     * @param  im              Source image.
+     * @param  modal	Whether the dialog should be made modal.
      */
-    public PlugInDialogNucleiDeformation(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, false);
+    public PlugInDialogNucleiDeformation(boolean modal) {
+        super(modal);
 
-        if (im.isColorImage()) {
-            MipavUtil.displayError("Source Image must be black and white");
-            dispose();
-
-            return;
-        }
-
-        image = im;
         init();
     }
 
@@ -83,14 +78,27 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-
             if (setVariables()) {
                 callAlgorithm();
             }
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Cancel")) {
-            dispose();
+            //dispose();
+        	this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else if (command.equals("Browse")) {
+        	final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
+        	String initDir = dirChooserText.getText();
+        	final File initDirFile = new File(initDir);
+        	if (!initDirFile.exists() || !initDirFile.isDirectory()) {
+        		initDir = Preferences.getImageDirectory();
+        	}
+        	final String dir = chooser.chooseDirectory(initDir);
+            if (dir != null) {
+            	dirChooserText.setText(dir);
+            } else {
+            	dirChooserText.setText("");
+            }
         } else {
             super.actionPerformed(event);
         }
@@ -109,8 +117,6 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof PlugInAlgorithmNucleiDeformation) {
-            image.clearMask();
-
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
@@ -119,30 +125,17 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
                 algorithm.finalize();
                 algorithm = null;
             }
+            
+            Preferences.setImageDirectory(new File(inputDir));
 
-            dispose();
+            //dispose();
+            if (isExitRequired()) {
+                System.exit(0);
+                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
         }
-
-    } // end AlgorithmPerformed()
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += minSize + delim;
-        str += maxSize + delim;
-
-        return str;
     }
     
     /**
@@ -160,7 +153,25 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
     public void setMaxSize(int maxSize) {
         this.maxSize = maxSize;
     }
-
+    
+    public void setOnlyProcessTiff(boolean b) {
+    	onlyProcessTiff = b;
+    }
+    
+    public void setInputDir(String dir) {
+    	inputDir = dir;
+    	
+    	File dirFile = new File(inputDir);
+        if (!dirFile.exists() || !dirFile.isDirectory()) {
+        	MipavUtil.displayError("Please select a directory of images to process.");
+        } else {
+        	if (onlyProcessTiff) {
+        		inputFiles = dirFile.listFiles(tiffFilter);
+        	} else {
+        		inputFiles = dirFile.listFiles();
+        	}
+        }
+    }
    
     /**
      * Once all the necessary variables are set, call PluginAlgorithmNucleiDeformation
@@ -168,8 +179,7 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
     protected void callAlgorithm() {
 
         try {
-
-            nucleiDeformAlgo = new PlugInAlgorithmNucleiDeformation(image, minSize, maxSize);
+            nucleiDeformAlgo = new PlugInAlgorithmNucleiDeformation(inputFiles, minSize, maxSize);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -178,7 +188,7 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             nucleiDeformAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", nucleiDeformAlgo);
+            createProgressBar(inputFiles[0].getParentFile().getName(), " ...", nucleiDeformAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -197,8 +207,7 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
 
             return;
         }
-
-    } // end callAlgorithm()
+    }
 
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
@@ -209,13 +218,15 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
+        /*image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
 
         if (image.isColorImage()) {
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be black and white");
-        }
-
+        }*/
+    	
+    	setOnlyProcessTiff(scriptParameters.getParams().getBoolean("only_tiff"));
+    	setInputDir(scriptParameters.getParams().getString("input_dir"));
         setMinSize(scriptParameters.getParams().getInt("min_size"));
         setMaxSize(scriptParameters.getParams().getInt("max_size"));
     }
@@ -224,7 +235,9 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
      * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
+        //scriptParameters.storeInputImage(image);
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_size", minSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_size", maxSize));
     }
@@ -236,54 +249,78 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
         JLabel minSizeLabel;
         JLabel maxSizeLabel;
         setForeground(Color.black);
-        setTitle("Nuclei Deformation 05/09/2013");
-        int length = image.getExtents()[0] * image.getExtents()[1];
+        setTitle("Nuclei Deformation 05/20/2013");
+        //int length = image.getExtents()[0] * image.getExtents()[1];
 
         GridBagConstraints gbc = new GridBagConstraints();
-        int yPos = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = yPos++;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         
+        JLabel dirChooserLabel = new JLabel("Choose the directory containing the images to process");
+        dirChooserLabel.setForeground(Color.black);
+        dirChooserLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(dirChooserLabel, gbc);
+        
+        dirChooserText = new JTextField(20);
+        dirChooserText.setFont(serif12);
+        dirChooserText.setText(Preferences.getImageDirectory());
+        gbc.gridx++;
+        mainPanel.add(dirChooserText, gbc);
+        
+        dirChooserButton = new JButton("Browse");
+        dirChooserButton.addActionListener(this);
+        dirChooserButton.setFont(serif12B);
+        gbc.gridx++;
+        mainPanel.add(dirChooserButton, gbc);
+        
+        onlyProcessTiffCheckbox = new JCheckBox("Process only TIFF files", onlyProcessTiff);
+        onlyProcessTiffCheckbox.setForeground(Color.black);
+        onlyProcessTiffCheckbox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        mainPanel.add(onlyProcessTiffCheckbox, gbc);
+        
         minSizeLabel = new JLabel("Minimum nucleus pixel count");
         minSizeLabel.setForeground(Color.black);
         minSizeLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = yPos;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
         mainPanel.add(minSizeLabel, gbc);
 
         minSizeText = new JTextField(8);
         minSizeText.setText(String.valueOf(minSize));
         minSizeText.setFont(serif12);
         gbc.gridx = 1;
-        gbc.gridy = yPos++;
+        gbc.gridwidth = 2;
         mainPanel.add(minSizeText, gbc);
         
         maxSizeLabel = new JLabel("Maximum nucleus pixel count");
         maxSizeLabel.setForeground(Color.black);
         maxSizeLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = yPos;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
         mainPanel.add(maxSizeLabel, gbc);
 
         maxSizeText = new JTextField(8);
-        maxSizeText.setText(String.valueOf(length));
+        maxSizeText.setText(String.valueOf(maxSize));
         maxSizeText.setFont(serif12);
         gbc.gridx = 1;
-        gbc.gridy = yPos++;
+        gbc.gridwidth = 2;
         mainPanel.add(maxSizeText, gbc);
         
-        
-
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
@@ -291,8 +328,7 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
         setVisible(true);
         setResizable(false);
         System.gc();
-
-    } // end init()
+    }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
@@ -302,7 +338,21 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
     private boolean setVariables() {
         String tmpStr;
         
-        int length = image.getExtents()[0] * image.getExtents()[1];
+        int length = Integer.MAX_VALUE;
+        
+        onlyProcessTiff = onlyProcessTiffCheckbox.isSelected();
+        
+        inputDir = dirChooserText.getText();
+        File dirFile = new File(inputDir);
+        if (!dirFile.exists() || !dirFile.isDirectory()) {
+        	MipavUtil.displayError("Please select a directory of images to process.");
+        } else {
+        	if (onlyProcessTiff) {
+        		inputFiles = dirFile.listFiles(tiffFilter);
+        	} else {
+        		inputFiles = dirFile.listFiles();
+        	}
+        }
         
         tmpStr = minSizeText.getText();
         minSize = Integer.parseInt(tmpStr);
@@ -339,6 +389,5 @@ public class PlugInDialogNucleiDeformation extends JDialogScriptableBase impleme
         }
         
         return true;
-    } // end setVariables()
-
+    }
 }
