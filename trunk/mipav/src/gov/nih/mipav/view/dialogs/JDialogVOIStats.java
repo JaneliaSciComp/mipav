@@ -1710,6 +1710,8 @@ public class JDialogVOIStats extends JDialogBase
             colorButton.setBackground(color);
             colorVOI = color;
             voi.setColor(colorVOI);
+            updateVOIPanel(voi, image);
+            updateTree();
         }
     }
 
