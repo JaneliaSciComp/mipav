@@ -90,8 +90,8 @@ public class JDialogVOIStats extends JDialogBase
     /** Displays Stats dialog help */
     protected JButton helpButton;
 
-    /** DOCUMENT ME! */
-    protected JCheckBox checkboxBoundary;
+    /** Whether to display VOI with shading */
+    protected JCheckBox checkboxOpacity;
 
     /** Whether to display bounding box around VOI */
     protected JCheckBox checkboxBoundingBox;
@@ -118,7 +118,7 @@ public class JDialogVOIStats extends JDialogBase
     private JTextArea contourTextArea;
 
     /** Displays current opacity level in slider */
-    protected JLabel current;
+    protected JLabel currentOpacity;
 
     /** DOCUMENT ME! */
     protected JCheckBox followVOISelectionBox = null;
@@ -258,6 +258,40 @@ public class JDialogVOIStats extends JDialogBase
         		MipavUtil.displayError("You must select a VOI");
         	else
         		showColorChooser();
+        } else if (source == VOIName) {
+        	voi.setName(VOIName.getText());
+        	voi.update();
+        	updateVOIPanel(voi, image);
+        } else if (source == VOIThicknessField) {
+        	boolean changedThickness = false;
+            int thickChange = 1;
+
+            try {
+                int thickness = voi.getThickness();
+                thickChange = Integer.parseInt(VOIThicknessField.getText());
+
+                if (((thickChange < 0) || (thickChange > 20))) {
+                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
+                } else if (thickness != thickChange) {
+                    changedThickness = true;
+                }
+            } catch (Exception e) {
+                VOIThicknessField.setText("1");
+            }
+
+            if (changedThickness) {
+                voi.setThickness(thickChange);
+                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+                voi.update();
+            	updateVOIPanel(voi, image);
+            }
+        } else if (source == UIDfield) {
+        	try { 
+                int uid = Integer.valueOf(UIDfield.getText()).intValue();
+                voi.setUID(uid);
+            } catch(NumberFormatException e) {
+                MipavUtil.displayError("UID must be an integer");
+            }
         } else if (source == followVOISelectionBox) {
             frameFollowsSelection = followVOISelectionBox.isSelected();
         } else if (source == helpButton) {
@@ -273,12 +307,12 @@ public class JDialogVOIStats extends JDialogBase
             int j = 0, location = -1;
             String name = "";
 
-            tmpStr = seedValueTF.getText();
-
-            if (testParameter(tmpStr, 0, 32000)) {
-                seedValue = Short.valueOf(tmpStr).shortValue();
-                voi.setWatershedID(seedValue);
-            }
+//            tmpStr = seedValueTF.getText();
+//
+//            if (testParameter(tmpStr, 0, 32000)) {
+//                seedValue = Short.valueOf(tmpStr).shortValue();
+//                voi.setWatershedID(seedValue);
+//            }
 
             try {
                 newVOIVector = new ViewVOIVector();
@@ -303,40 +337,40 @@ public class JDialogVOIStats extends JDialogBase
                 }
             }
 
-            voi.setName(VOIName.getText());
+//            voi.setName(VOIName.getText());
             
-            try { 
-                int uid = Integer.valueOf(UIDfield.getText()).intValue();
-                voi.setUID(uid);
-            } catch(NumberFormatException e) {
-                MipavUtil.displayError("UID must be an integer");
-            }
+//            try { 
+//                int uid = Integer.valueOf(UIDfield.getText()).intValue();
+//                voi.setUID(uid);
+//            } catch(NumberFormatException e) {
+//                MipavUtil.displayError("UID must be an integer");
+//            }
 
-            boolean changedThickness = false;
-            int thickChange = 1;
-
-            try {
-                int thickness = voi.getThickness();
-                thickChange = Integer.parseInt(VOIThicknessField.getText());
-
-                if (((thickChange < 0) || (thickChange > 20))) {
-                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
-                } else if (thickness != thickChange) {
-                    changedThickness = true;
-                }
-            } catch (Exception e) {
-                VOIThicknessField.setText("1");
-            }
-
-            if (changedThickness) {
-                voi.setThickness(thickChange);
-                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
-            }
+//            boolean changedThickness = false;
+//            int thickChange = 1;
+//
+//            try {
+//                int thickness = voi.getThickness();
+//                thickChange = Integer.parseInt(VOIThicknessField.getText());
+//
+//                if (((thickChange < 0) || (thickChange > 20))) {
+//                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
+//                } else if (thickness != thickChange) {
+//                    changedThickness = true;
+//                }
+//            } catch (Exception e) {
+//                VOIThicknessField.setText("1");
+//            }
+//
+//            if (changedThickness) {
+//                voi.setThickness(thickChange);
+//                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+//            }
 
           
             voi.setPolarity(VOI.ADDITIVE);
 
-            voi.setColor(colorVOI);
+//            voi.setColor(colorVOI);
 
                 //voiHandler.setVOIColor(colorVOI);
 
@@ -778,14 +812,50 @@ public class JDialogVOIStats extends JDialogBase
      * @param  event  Event that triggered function.
      */
     public void focusLost(FocusEvent event) {
+    	Object source = event.getSource();
+    	
+    	if (source == seedValueTF) {
+	        String tmpStr = seedValueTF.getText();
+	
+	        if (testParameter(tmpStr, 0, 32000)) {
+	            seedValue = Short.valueOf(tmpStr).shortValue();
+	            voi.setWatershedID(seedValue);
+	        }
+        } else if (source == VOIName) {
+        	voi.setName(VOIName.getText());
+        	voi.update();
+        	updateVOIPanel(voi, image);
+        } else if (source == VOIThicknessField) {
+        	boolean changedThickness = false;
+            int thickChange = 1;
 
-        String tmpStr = seedValueTF.getText();
+            try {
+                int thickness = voi.getThickness();
+                thickChange = Integer.parseInt(VOIThicknessField.getText());
 
-        if (testParameter(tmpStr, 0, 32000)) {
-            seedValue = Short.valueOf(tmpStr).shortValue();
-            voi.setWatershedID(seedValue);
+                if (((thickChange < 0) || (thickChange > 20))) {
+                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
+                } else if (thickness != thickChange) {
+                    changedThickness = true;
+                }
+            } catch (Exception e) {
+                VOIThicknessField.setText("1");
+            }
+
+            if (changedThickness) {
+                voi.setThickness(thickChange);
+                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+                voi.update();
+            	updateVOIPanel(voi, image);
+            }
+        } else if (source == UIDfield) {
+        	try { 
+                int uid = Integer.valueOf(UIDfield.getText()).intValue();
+                voi.setUID(uid);
+            } catch(NumberFormatException e) {
+                MipavUtil.displayError("UID must be an integer");
+            }
         }
-
     }
 
     // *******************************************************************
@@ -800,9 +870,9 @@ public class JDialogVOIStats extends JDialogBase
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
-        if (source.equals(checkboxBoundary)) {
+        if (source.equals(checkboxOpacity)) {
 
-            if (checkboxBoundary.isSelected()) {
+            if (checkboxOpacity.isSelected()) {
                 opacitySlider.setEnabled(true);
                 voi.setDisplayMode(VOI.SOLID);
                 voi.setOpacity(opacitySlider.getValue() / (float) 100);
@@ -895,7 +965,7 @@ public class JDialogVOIStats extends JDialogBase
         Object source = e.getSource();
 
         if (source == opacitySlider) {
-            current.setText(String.valueOf(opacitySlider.getValue() / (float) 100));
+            currentOpacity.setText(String.valueOf(opacitySlider.getValue() / (float) 100));
 
             if (voi != null) {
                 voi.setOpacity(opacitySlider.getValue() / (float) 100);
@@ -935,10 +1005,10 @@ public class JDialogVOIStats extends JDialogBase
             checkboxIncludeForProcessing.setSelected(voi.getProcess());
 
             if (voi.getDisplayMode() == VOI.BOUNDARY) {
-                checkboxBoundary.setSelected(false);
+                checkboxOpacity.setSelected(false);
                 opacitySlider.setEnabled(false);
             } else {
-                checkboxBoundary.setSelected(true);
+                checkboxOpacity.setSelected(true);
                 opacitySlider.setEnabled(true);
             }
 
@@ -1142,18 +1212,24 @@ public class JDialogVOIStats extends JDialogBase
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change VOI color");
+        colorButton.addFocusListener(this);
         colorButton.addActionListener(this);
 
         VOIName = new JTextField(15);
         VOIName.setFont(serif12);
+        VOIName.addFocusListener(this);
+        VOIName.addActionListener(this);
 
         VOIThicknessField = new JTextField(3);
         VOIThicknessField.setFont(serif12);
         MipavUtil.makeNumericsOnly(VOIThicknessField, false);
+        VOIThicknessField.addFocusListener(this);
+        VOIThicknessField.addActionListener(this);
         
         UIDfield = new JTextField(3);
         UIDfield.setFont(serif12);
         MipavUtil.makeNumericsOnly(UIDfield, false);
+        UIDfield.addActionListener(this);
 
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1221,9 +1297,9 @@ public class JDialogVOIStats extends JDialogBase
         checkboxIncludeForProcessing.setFont(serif12);
         checkboxIncludeForProcessing.addItemListener(this);
 
-        checkboxBoundary = new JCheckBox("Display VOI shading");
-        checkboxBoundary.setFont(serif12);
-        checkboxBoundary.addItemListener(this);
+        checkboxOpacity = new JCheckBox("Display VOI shading");
+        checkboxOpacity.setFont(serif12);
+        checkboxOpacity.addItemListener(this);
 
         checkboxVOIName = new JCheckBox("Show VOI name");
         checkboxVOIName.setFont(serif12);
@@ -1236,7 +1312,7 @@ public class JDialogVOIStats extends JDialogBase
         //checkboxPanel.add(checkboxAdditiveOrSubtractive);
         checkboxPanel.add(checkboxIncludeForProcessing);
         checkboxPanel.add(checkboxVOIName);
-        checkboxPanel.add(checkboxBoundary);
+        checkboxPanel.add(checkboxOpacity);
 
         opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
         opacitySlider.addChangeListener(this);
@@ -1251,9 +1327,9 @@ public class JDialogVOIStats extends JDialogBase
         maximum.setForeground(Color.black);
         maximum.setFont(serif12);
 
-        current = new JLabel(String.valueOf(opacitySlider.getValue() / 100.0f));
-        current.setForeground(Color.black);
-        current.setFont(serif12B);
+        currentOpacity = new JLabel(String.valueOf(opacitySlider.getValue() / 100.0f));
+        currentOpacity.setForeground(Color.black);
+        currentOpacity.setFont(serif12B);
 
         JLabel minimum = new JLabel(String.valueOf(0));
         minimum.setForeground(Color.black);
@@ -1283,7 +1359,7 @@ public class JDialogVOIStats extends JDialogBase
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
-        sliderPanel.add(current, gbc);
+        sliderPanel.add(currentOpacity, gbc);
 
         gbc.gridx = 2;
         gbc.anchor = GridBagConstraints.EAST;
@@ -1710,6 +1786,7 @@ public class JDialogVOIStats extends JDialogBase
             colorButton.setBackground(color);
             colorVOI = color;
             voi.setColor(colorVOI);
+            voi.update();
             updateVOIPanel(voi, image);
             updateTree();
         }
