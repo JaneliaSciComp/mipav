@@ -965,10 +965,10 @@ public class VOIContour extends VOIBase {
 			// are proportional to the square of the semiaxes
 			// (m20 - e)*(m02 - e) - m11*m11 = 0;
 			double root = Math.sqrt(((m20 - m02) * (m20 - m02)) + (4 * m11 * m11));
-			majorAxis[0] = (float) Math.sqrt(2.0 * (m20 + m02 + root));
-			minorAxis[0] = (float) Math.sqrt(2.0 * (m20 + m02 - root));
+			double ma = Math.sqrt(2.0 * (m20 + m02 + root));
+			double mi = Math.sqrt(2.0 * (m20 + m02 - root));
 
-			double areaEllipse = (Math.PI / 4.0) * majorAxis[0] * minorAxis[0];
+			double areaEllipse = (Math.PI / 4.0) * ma * mi;
 			double normFactor = Math.sqrt(nPts / areaEllipse);
 
 			if ( (m_iPlane&ZPLANE) == ZPLANE )
@@ -990,10 +990,11 @@ public class VOIContour extends VOIBase {
 				//}				
 			}
 
-			majorAxis[0] = (float) (normFactor * majorAxis[0]);
-			minorAxis[0] = (float) (normFactor * minorAxis[0]);
-			eccentricity[0] = (float) Math
-			.sqrt(1.0 - ((minorAxis[0] * minorAxis[0]) / (majorAxis[0] * majorAxis[0])));
+			ma = normFactor * ma;
+			majorAxis[0] = (float)ma;
+			mi = normFactor * mi;
+			minorAxis[0] = (float)mi;
+			eccentricity[0] = (float) Math.sqrt(1.0 - ((mi * mi) / (ma * ma)));
 
 			pAxis[0] = (float) ((180.0 / Math.PI) * 0.5 * Math.atan2((2.0 * m11),
 					(m20 - m02)));
@@ -1049,10 +1050,10 @@ public class VOIContour extends VOIBase {
         double areaEllipse = (Math.PI / 4.0) * afScale[iMax] * afScale[iMid];
         double normFactor = Math.sqrt(nPts / areaEllipse);
 
-        float majorA = (float) (normFactor * afScale[iMax]);
-        float minorA = (float) (normFactor * afScale[iMid]);
+        majorAxis[0] = (float) (normFactor * afScale[iMax]);
+        minorAxis[0] = (float) (normFactor * afScale[iMid]);
 
-        float e = (float) Math
+        eccentricity[0] = (float) Math
         .sqrt(1.0 - ((afScale[iMid] * afScale[iMid]) / (afScale[iMax] * afScale[iMax])));
 
 
@@ -1062,7 +1063,7 @@ public class VOIContour extends VOIBase {
         Vector3f[] kBasis = new Vector3f[]{ kX, kY, kZ };
         kMat = new Matrix3f( kX, kY, kZ, false );
         Vector3f kRot = kMat.mult( Vector3f.UNIT_Z_NEG );              
-        float p = (float)(Math.acos(kRot.dot(kBasis[iMax])) * 180f/Math.PI);
+        pAxis[0] = (float)(Math.acos(kRot.dot(kBasis[iMax])) * 180f/Math.PI);
         
 		/*
         Transformation kTransform = new Transformation();
@@ -1096,10 +1097,7 @@ public class VOIContour extends VOIBase {
         kImage.registerVOI(kGroup);
 		 */
 
-        pAxis[0] = p;
-        eccentricity[0] = e;
-        majorAxis[0] = majorA;
-        minorAxis[0] = minorA;
+        
 
 	}
 
@@ -1447,12 +1445,14 @@ public class VOIContour extends VOIBase {
 		Ru = Math.sqrt(Math.abs(Ru));
 		Rv = Math.sqrt(Math.abs(Rv));
 
+		double mi;
+		double ma;
 		if (Ru >= Rv) {
-			majorAxis[0] = (float) (2.0 * Ru);
-			minorAxis[0] = (float) (2.0 * Rv);
+			ma = 2.0 * Ru;
+			mi = 2.0 * Rv;
 		} else {
-			majorAxis[0] = (float) (2.0 * Rv);
-			minorAxis[0] = (float) (2.0 * Ru);
+			ma = 2.0 * Rv;
+			mi = 2.0 * Ru;
 
 			if (pAxis[0] <= 0.0f) {
 				pAxis[0] = pAxis[0] + 90.0f;
@@ -1460,6 +1460,9 @@ public class VOIContour extends VOIBase {
 				pAxis[0] = pAxis[0] - 90.0f;
 			}
 		}
+		minorAxis[0] = (float)mi;
+		majorAxis[0] = (float)ma;
+		eccentricity[0] = (float) Math.sqrt(1.0 - ((mi * mi) / (ma * ma)));
 	}
 
 	/**
