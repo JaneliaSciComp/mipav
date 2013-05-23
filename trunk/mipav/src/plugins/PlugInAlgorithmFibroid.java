@@ -97,6 +97,12 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         float[] eccentricity = new float[1];
         float[] majorAxis = new float[1];
         float[] minorAxis = new float[1];
+        double[] angleAxislsq = new double[1];
+        double[] eccentricitylsq = new double[1];
+        double[] majorAxislsq = new double[1];
+        double[] minorAxislsq = new double[1];
+        double[] xCenterlsq = new double[1];
+        double[] yCenterlsq = new double[1];
         FileInfoBase[] fileInfo;
         String patientName;
         String patientID;
@@ -278,8 +284,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
                 for (k = 0; k < nContours; k++) {
                     ((VOIContour) (contours.elementAt(k))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
-                                                                                       pAxis, eccentricity, majorAxis,
-                                                                                       minorAxis);
+                                                                                       angleAxislsq, eccentricitylsq, majorAxislsq,
+                                                                                       minorAxislsq, xCenterlsq, yCenterlsq);
 
                     if (nContours > 1) {
                         UI.setDataText(" Element number = " + k + "\n");
@@ -287,12 +293,12 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                     }
 
                     if (unitsString != null) {
-                        UI.setDataText(" Axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + " " + unitsString +
+                        UI.setDataText(" Axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + " " + unitsString +
                                        "\n");
-                        dataString += " Axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + " " + unitsString + "\n";
+                        dataString += " Axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + " " + unitsString + "\n";
                     } else {
-                        UI.setDataText(" Axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + "\n");
-                        dataString += " Axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + "\n";
+                        UI.setDataText(" Axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + "\n");
+                        dataString += " Axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + "\n";
 
                     }
                 } // for (k = 0; k < nContours; k++)
@@ -346,6 +352,12 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         float[] eccentricity = new float[1];
         float[] majorAxis = new float[1];
         float[] minorAxis = new float[1];
+        double[] angleAxislsq = new double[1];
+        double[] eccentricitylsq = new double[1];
+        double[] majorAxislsq = new double[1];
+        double[] minorAxislsq = new double[1];
+        double[] xCenterlsq = new double[1];
+        double[] yCenterlsq = new double[1];
         FileInfoBase[] fileInfo;
         String patientName;
         String patientID;
@@ -800,8 +812,9 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
 
                     for (k = 0; k < nContours; k++) {
                         ((VOIContour) (contours[z].elementAt(k))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
-                                                                                           pAxis, eccentricity,
-                                                                                           majorAxis, minorAxis);
+                                                                                           angleAxislsq, eccentricitylsq,
+                                                                                           majorAxislsq, minorAxislsq,
+                                                                                           xCenterlsq, yCenterlsq);
 
                         if (nContours > 1) {
                             UI.setDataText(" Element number = " + k + "\n");
@@ -825,13 +838,13 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                         } // if (usedSlices > 1)
 
                         if (unitsString != null) {
-                            UI.setDataText(" 2D axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + " " +
+                            UI.setDataText(" 2D axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + " " +
                                            unitsString + "\n");
-                            dataString += " 2D axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + " " + unitsString +
+                            dataString += " 2D axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + " " + unitsString +
                                           "\n";
                         } else {
-                            UI.setDataText(" 2D axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + "\n");
-                            dataString += " 2D axes    \t= " + majorAxis[0] + ",  " + minorAxis[0] + "\n";
+                            UI.setDataText(" 2D axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + "\n");
+                            dataString += " 2D axes    \t= " + majorAxislsq[0] + ",  " + minorAxislsq[0] + "\n";
                         }
                     } // for (k = 0; k < nContours; k++)
                 } // for (z = 0; z < nSlices; z++)
