@@ -10,6 +10,8 @@ import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import java.io.*;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
 *
@@ -102,6 +104,10 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         int length;
         int xDim;
         int yDim;
+        float xRes;
+        float yRes;
+        int xUnits;
+        int yUnits;
         float buffer[];
         AlgorithmFuzzyCMeans fcmAlgo;
         ModelImage grayImage;
@@ -147,6 +153,16 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         int nVOIs;
         ViewUserInterface UI = ViewUserInterface.getReference();
         AlgorithmMorphology2D fillHolesAlgo2D;
+        double[] angleAxislsq = new double[1];
+        double[] eccentricitylsq = new double[1];
+        double[] majorAxislsq = new double[1];
+        double[] minorAxislsq = new double[1];
+        double[] xCenterlsq = new double[1];
+        double[] yCenterlsq = new double[1];
+        double[][] xyproj = null;
+        double[] residualSumOfSquares = new double[1];
+        Vector<Vector3f> xy = null;
+        double stdDevEllipse;
         
         for (File inFile : inputFiles) {
         	srcImage = openFile(inFile, showResultImages);
@@ -158,6 +174,10 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        
 	        xDim = srcImage.getExtents()[0];
 	        yDim = srcImage.getExtents()[1];
+	        xRes = srcImage.getFileInfo(0).getResolutions()[0];
+	        yRes = srcImage.getFileInfo(0).getResolutions()[1];
+	        xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
+	        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
 	        length = xDim * yDim;
 	        
 	        try {
@@ -433,7 +453,22 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        
 	        VOIs = grayImage.getVOIs();
 	        nVOIs = VOIs.size();
-	        Preferences.debug("nVOIS = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("nVOIS before removal for excessive deviation from ellipse shape = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
+	        
+	        for (i = 0; i < nVOIs; i++) {
+	            xRes = 1.0f;
+	            yRes = 1.0f;
+	            ((VOIContour) (VOIs.VOIAt(i).getCurves().elementAt(0))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
+                        angleAxislsq, eccentricitylsq, majorAxislsq,
+                        minorAxislsq, xCenterlsq, yCenterlsq);
+	            xy = VOIs.VOIAt(i).getCurves().elementAt(0);
+	            xyproj = new double[xy.size()][2];
+	            ((VOIContour) (VOIs.VOIAt(i).getCurves().elementAt(0))).residuals_ellipse(residualSumOfSquares, xyproj,
+	                           xy, xCenterlsq[0], yCenterlsq[0], majorAxislsq[0], minorAxislsq[0], angleAxislsq[0]);
+	            stdDevEllipse = Math.sqrt(residualSumOfSquares[0]/(xy.size() - 1));
+	            Preferences.debug("VOI " + i + " standard deviation from ellipse = " + stdDevEllipse + "\n", 
+	                              Preferences.DEBUG_ALGORITHM);
+	        }
 	
 	        srcImage.setVOIs(VOIs);
 	        
