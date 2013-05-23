@@ -1151,6 +1151,34 @@ public class VOIContour extends VOIBase {
 		int i, j, k;
 		double[] x = new double[nPts];
 		double[] y = new double[nPts];
+		boolean selfTest = false;
+		
+		if (selfTest) {
+            double alpha;
+            double cosalpha;
+            double sinalpha;
+            double centerX = -100.0;
+            double centerY = 123.0;
+            majorAxis[0] = 500.0;
+            double semiMajor = majorAxis[0]/2.0;
+            minorAxis[0] = 300.0;
+            double semiMinor = minorAxis[0]/2.0;
+            angleAxis[0] = 0.0;
+            double c = Math.cos(angleAxis[0]);
+            double s = Math.sin(angleAxis[0]);
+            nPts = 720;
+            xPts = new float[nPts];
+            yPts = new float[nPts];
+            x = new double[nPts];
+            y = new double[nPts];
+            for (i = 0; i < 720; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                xPts[i] = (float)(centerX + semiMajor * cosalpha * c - semiMinor * sinalpha * s);
+                yPts[i] = (float)(centerY + semiMajor * cosalpha * s + semiMinor * sinalpha * c);
+            }  
+        }
 
 		// Normalize data
 		// It's important to scale the image coordinates to be near one before
@@ -1492,6 +1520,7 @@ public class VOIContour extends VOIBase {
 %   The algorithm is proven to converge and reaches an accuracy of 7-8 significant digit
 %   It takes 4-5 iterations per point, on average.
 
+    input axes are diameters
     input angle is in radians
     Calling routine should supply xyproj as a double[][] = new double[xy.size()][2]
 */
