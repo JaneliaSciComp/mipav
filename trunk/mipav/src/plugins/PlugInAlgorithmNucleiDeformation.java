@@ -454,6 +454,9 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        if (!showResultImages) {
 	        	srcImage.disposeLocal();
 	        	srcImage = null;
+	        } else {
+	        	// update to show VOIs
+	        	srcImage.notifyImageDisplayListeners();
 	        }
         }
         

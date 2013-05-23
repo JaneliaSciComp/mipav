@@ -40,9 +40,21 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     
     private boolean onlyProcessTiff = true;
     
+    private JRadioButton dirModeButton;
+    
+    private JLabel dirChooserLabel;
+    
     private JTextField dirChooserText;
     
     private JButton dirChooserButton;
+    
+    private JRadioButton fileModeButton;
+    
+    private JLabel fileChooserLabel;
+    
+    private JTextField fileChooserText;
+    
+    private JButton fileChooserButton;
     
     private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] { ".tiff", ".tif" });
     
@@ -91,7 +103,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         } else if (command.equals("Cancel")) {
             //dispose();
         	this.windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-        } else if (command.equals("Browse")) {
+        } else if (command.equals("BrowseDir")) {
         	final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
         	String initDir = dirChooserText.getText();
         	final File initDirFile = new File(initDir);
@@ -104,6 +116,67 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
             } else {
             	dirChooserText.setText("");
             }
+        } else if (command.equals("BrowseFile")) {
+        	final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
+
+            final JFileChooser chooser = fileChooser.getFileChooser();
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+
+            // default to TECH filter
+            int filter = ViewImageFileFilter.MICROSCOPY;
+
+            // don't respect preference, force to MICROSCOPY
+//            try {
+//                filter = Integer.parseInt(Preferences.getProperty(Preferences.PREF_FILENAME_FILTER));
+//            } catch (final NumberFormatException nfe) {
+//
+//                // an invalid value was set in preferences -- so don't use it!
+//                filter = -1;
+//            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+            if (filter != -1) {
+                // it seems that the set command adds the filter again...
+                // chooser.addChoosableFileFilter(new ViewImageFileFilter(filter));
+
+                // if filter is something we already added, then remove it before
+                // setting it..... (kludgy, kludgy....)
+                final javax.swing.filechooser.FileFilter found = ViewOpenFileUI.findFilter(chooser, filter);
+
+                if (found != null) {
+                    chooser.removeChoosableFileFilter(found);
+                }
+
+                // initially set to the preferences
+                chooser.setFileFilter(new ViewImageFileFilter(filter));
+            }
+
+            final int returnVal = chooser.showOpenDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                final File file = chooser.getSelectedFile();
+                ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
+                
+                fileChooserText.setText(file.getAbsolutePath());
+            } else {
+            	fileChooserText.setText("");
+            }
+        } else if (command.equals("DirMode")) {
+        	if (dirModeButton.isSelected()) {
+            	enableDirChooserComponents(true);
+            	enableFileChooserComponents(false);
+            }
+        } else if (command.equals("FileMode")) {
+        	if (fileModeButton.isSelected()) {
+        		showResultImagesCheckbox.setSelected(true);
+	        	enableDirChooserComponents(false);
+	        	enableFileChooserComponents(true);
+        	}
         } else {
             super.actionPerformed(event);
         }
@@ -131,7 +204,9 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
                 algorithm = null;
             }
             
-            Preferences.setImageDirectory(new File(inputDir));
+            if (dirModeButton.isSelected()) {
+            	Preferences.setImageDirectory(new File(inputDir));
+            }
 
             //dispose();
             if (isExitRequired()) {
@@ -176,6 +251,15 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         		inputFiles = dirFile.listFiles();
         	}
         }
+    }
+    
+    public void setInputFile(String s) {
+    	File file = new File(s);
+    	if (!file.exists() || !file.isFile()) {
+    		MipavUtil.displayError("Please select an image file to process.");
+    	} else {
+    		inputFiles = new File[] {file};
+    	}
     }
     
     public void setShowResults(boolean b) {
@@ -241,7 +325,12 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         }*/
     	
     	setOnlyProcessTiff(scriptParameters.getParams().getBoolean("only_tiff"));
-    	setInputDir(scriptParameters.getParams().getString("input_dir"));
+    	boolean useDirMode = scriptParameters.getParams().getBoolean("use_dir_input_mode");
+    	if (useDirMode) {
+    		setInputDir(scriptParameters.getParams().getString("input_dir"));
+    	} else {
+    		setInputFile(scriptParameters.getParams().getString("input_file"));
+    	}
     	setShowResults(scriptParameters.getParams().getBoolean("show_results"));
         setMinSize(scriptParameters.getParams().getInt("min_size"));
         setMaxSize(scriptParameters.getParams().getInt("max_size"));
@@ -252,7 +341,9 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
      */
     protected void storeParamsFromGUI() throws ParserException {
         //scriptParameters.storeInputImage(image);
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("use_dir_input_mode", dirModeButton.isSelected()));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("input_file", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("show_results", showResultImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_size", minSize));
@@ -281,11 +372,53 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         mainPanel.setForeground(Color.black);
         mainPanel.setBorder(buildTitledBorder("Input parameters"));
         
-        JLabel dirChooserLabel = new JLabel("Choose the directory containing the images to process");
-        dirChooserLabel.setForeground(Color.black);
-        dirChooserLabel.setFont(serif12);
+        fileModeButton = new JRadioButton("Process single image");
+        fileModeButton.setFont(serif12);
+        fileModeButton.setActionCommand("FileMode");
+        fileModeButton.setSelected(true);
+        fileModeButton.addActionListener(this);
+        
+        dirModeButton = new JRadioButton("Process directory of images");
+        dirModeButton.setFont(serif12);
+        dirModeButton.setActionCommand("DirMode");
+        dirModeButton.setSelected(false);
+        dirModeButton.addActionListener(this);
+        
+        ButtonGroup modeGroup = new ButtonGroup();
+        modeGroup.add(fileModeButton);
+        modeGroup.add(dirModeButton);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
+        mainPanel.add(fileModeButton, gbc);
+        
+        fileChooserLabel = new JLabel("Choose an image file to process");
+        fileChooserLabel.setForeground(Color.black);
+        fileChooserLabel.setFont(serif12);
+        gbc.gridy++;
+        mainPanel.add(fileChooserLabel, gbc);
+        
+        fileChooserText = new JTextField(20);
+        fileChooserText.setFont(serif12);
+        fileChooserText.setText("");
+        gbc.gridx++;
+        mainPanel.add(fileChooserText, gbc);
+        
+        fileChooserButton = new JButton("Browse");
+        fileChooserButton.setActionCommand("BrowseFile");
+        fileChooserButton.addActionListener(this);
+        fileChooserButton.setFont(serif12B);
+        gbc.gridx++;
+        mainPanel.add(fileChooserButton, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        mainPanel.add(dirModeButton, gbc);
+        
+        dirChooserLabel = new JLabel("Choose the directory containing the images to process");
+        dirChooserLabel.setForeground(Color.black);
+        dirChooserLabel.setFont(serif12);
+        gbc.gridy++;
         mainPanel.add(dirChooserLabel, gbc);
         
         dirChooserText = new JTextField(20);
@@ -295,6 +428,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         mainPanel.add(dirChooserText, gbc);
         
         dirChooserButton = new JButton("Browse");
+        dirChooserButton.setActionCommand("BrowseDir");
         dirChooserButton.addActionListener(this);
         dirChooserButton.setFont(serif12B);
         gbc.gridx++;
@@ -311,6 +445,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         showResultImagesCheckbox = new JCheckBox("Display images with VOI segmentations", showResultImages);
         showResultImagesCheckbox.setForeground(Color.black);
         showResultImagesCheckbox.setFont(serif12);
+
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 3;
@@ -346,6 +481,16 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         gbc.gridwidth = 2;
         mainPanel.add(maxSizeText, gbc);
         
+        if (fileModeButton.isSelected()) {
+        	enableDirChooserComponents(false);
+        	enableFileChooserComponents(true);
+        	showResultImagesCheckbox.setSelected(true);
+        } else {
+        	enableDirChooserComponents(true);
+        	enableFileChooserComponents(false);
+        	showResultImagesCheckbox.setSelected(false);
+        }
+        
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
@@ -369,15 +514,26 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         
         showResultImages = showResultImagesCheckbox.isSelected();
         
-        inputDir = dirChooserText.getText();
-        File dirFile = new File(inputDir);
-        if (!dirFile.exists() || !dirFile.isDirectory()) {
-        	MipavUtil.displayError("Please select a directory of images to process.");
+        if (dirModeButton.isSelected()) {
+	        inputDir = dirChooserText.getText();
+	        File dirFile = new File(inputDir);
+	        if (!dirFile.exists() || !dirFile.isDirectory()) {
+	        	MipavUtil.displayError("Please select a directory of images to process.");
+	        	return false;
+	        } else {
+	        	if (onlyProcessTiff) {
+	        		inputFiles = dirFile.listFiles(tiffFilter);
+	        	} else {
+	        		inputFiles = dirFile.listFiles();
+	        	}
+	        }
         } else {
-        	if (onlyProcessTiff) {
-        		inputFiles = dirFile.listFiles(tiffFilter);
+        	File file = new File(fileChooserText.getText());
+        	if (!file.exists() || !file.isFile()) {
+        		MipavUtil.displayError("Please select an image file to process.");
+        		return false;
         	} else {
-        		inputFiles = dirFile.listFiles();
+        		inputFiles = new File[] {file};
         	}
         }
         
@@ -416,5 +572,18 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         }
         
         return true;
+    }
+    
+    private void enableDirChooserComponents(boolean enable) {
+    	dirChooserLabel.setEnabled(enable);
+    	dirChooserText.setEnabled(enable);
+    	dirChooserButton.setEnabled(enable);
+    	onlyProcessTiffCheckbox.setEnabled(enable);
+    }
+    
+    private void enableFileChooserComponents(boolean enable) {
+    	fileChooserLabel.setEnabled(enable);
+    	fileChooserText.setEnabled(enable);
+    	fileChooserButton.setEnabled(enable);
     }
 }
