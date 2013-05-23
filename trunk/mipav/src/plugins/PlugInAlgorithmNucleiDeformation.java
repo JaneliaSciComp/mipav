@@ -42,6 +42,12 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
     /** The list of files to try to process with the algorithm. */
     private File[] inputFiles;
     
+    /** Whether to show the images processed in frames, with the VOI segmentations. */
+    private boolean showResultImages;
+    
+    /** List of result images. */
+    private static final Vector<ModelImage> resultImages = new Vector<ModelImage>();
+    
     private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
 		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.minIntensity, VOIStatisticalProperties.maxIntensity,
@@ -71,11 +77,12 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
      * @param minSize
      * @param maxSize
      */
-    public PlugInAlgorithmNucleiDeformation(File[] inputFiles, int minSize, int maxSize) {
+    public PlugInAlgorithmNucleiDeformation(File[] inputFiles, int minSize, int maxSize, boolean showResultImages) {
         super(null, null);
         this.minSize = minSize;
         this.maxSize = maxSize;
         this.inputFiles = inputFiles;
+        this.showResultImages = showResultImages;
     }
     
   //~ Methods --------------------------------------------------------------------------------------------------------
@@ -142,7 +149,7 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         AlgorithmMorphology2D fillHolesAlgo2D;
         
         for (File inFile : inputFiles) {
-        	srcImage = openFile(inFile);
+        	srcImage = openFile(inFile, showResultImages);
 
 	        if (srcImage == null) {
 	            System.err.println("Source Image is null - skipping: " + inFile.getName());
@@ -444,8 +451,10 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        }
 	        
 	        // cleanup current image
-	        srcImage.disposeLocal();
-	        srcImage = null;
+	        if (!showResultImages) {
+	        	srcImage.disposeLocal();
+	        	srcImage = null;
+	        }
         }
         
         if (threadStopped) {
@@ -462,7 +471,7 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
      * @param file The file to try to open.
      * @return The ModelImage of the specified file, or null if there was an error.
      */
-    private static final ModelImage openFile(File file) {
+    private static final ModelImage openFile(File file, boolean showResultImages) {
     	ModelImage img = null;
     	
     	if (file.isDirectory()) {
@@ -478,6 +487,11 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
     	FileIO io = new FileIO();
     	try {
     		img = io.readImage(file.getAbsolutePath());
+    		
+    		if (showResultImages) {
+    			new ViewJFrameImage(img);
+    			resultImages.add(img);
+    		}
     	} catch (Exception e) {
     		System.err.println("Failed to open file:\t" + file.getName());
     		e.printStackTrace();
@@ -794,5 +808,9 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
     	// end = contours[slice].elementAt(num).getLabel()
     	//VOIBaseVector contours = ((VOI) list.getElementAt(i)).getCurves();
         //updateDialogRow((VOI) list.getElementAt(i), new Vector[]{contours}, properties, list, i, rowData, totalData);
+    }
+    
+    public Vector<ModelImage> getResultImages() {
+    	return resultImages;
     }
 }

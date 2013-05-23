@@ -1,10 +1,11 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -23,7 +24,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
 
     private JTextField minSizeText;
     
-    private int minSize = 500;
+    private int minSize = 550;
     
     private JTextField maxSizeText;
     
@@ -44,6 +45,10 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     private JButton dirChooserButton;
     
     private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] { ".tiff", ".tif" });
+    
+    private JCheckBox showResultImagesCheckbox;
+    
+    private boolean showResultImages = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -172,6 +177,10 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         	}
         }
     }
+    
+    public void setShowResults(boolean b) {
+    	showResultImages = b;
+    }
    
     /**
      * Once all the necessary variables are set, call PluginAlgorithmNucleiDeformation
@@ -179,7 +188,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     protected void callAlgorithm() {
 
         try {
-            nucleiDeformAlgo = new PlugInAlgorithmNucleiDeformation(inputFiles, minSize, maxSize);
+            nucleiDeformAlgo = new PlugInAlgorithmNucleiDeformation(inputFiles, minSize, maxSize, showResultImages);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -212,7 +221,13 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    protected void doPostAlgorithmActions() { }
+    protected void doPostAlgorithmActions() {
+    	if (showResultImages) {
+    		for (ModelImage img : nucleiDeformAlgo.getResultImages()) {
+    			AlgorithmParameters.storeImageInRunner(img);
+    		}
+    	}
+    }
 
     /**
      * {@inheritDoc}
@@ -227,6 +242,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     	
     	setOnlyProcessTiff(scriptParameters.getParams().getBoolean("only_tiff"));
     	setInputDir(scriptParameters.getParams().getString("input_dir"));
+    	setShowResults(scriptParameters.getParams().getBoolean("show_results"));
         setMinSize(scriptParameters.getParams().getInt("min_size"));
         setMaxSize(scriptParameters.getParams().getInt("max_size"));
     }
@@ -238,6 +254,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         //scriptParameters.storeInputImage(image);
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("show_results", showResultImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_size", minSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_size", maxSize));
     }
@@ -291,6 +308,14 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         gbc.gridwidth = 3;
         mainPanel.add(onlyProcessTiffCheckbox, gbc);
         
+        showResultImagesCheckbox = new JCheckBox("Display images with VOI segmentations", showResultImages);
+        showResultImagesCheckbox.setForeground(Color.black);
+        showResultImagesCheckbox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        mainPanel.add(showResultImagesCheckbox, gbc);
+        
         minSizeLabel = new JLabel("Minimum nucleus pixel count");
         minSizeLabel.setForeground(Color.black);
         minSizeLabel.setFont(serif12);
@@ -341,6 +366,8 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         int length = Integer.MAX_VALUE;
         
         onlyProcessTiff = onlyProcessTiffCheckbox.isSelected();
+        
+        showResultImages = showResultImagesCheckbox.isSelected();
         
         inputDir = dirChooserText.getText();
         File dirFile = new File(inputDir);
