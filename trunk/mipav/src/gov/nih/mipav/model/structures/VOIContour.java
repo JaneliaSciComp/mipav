@@ -1118,18 +1118,20 @@ public class VOIContour extends VOIBase {
 	 *            DOCUMENT ME!
 	 * @param yUnits
 	 *            DOCUMENT ME!
-	 * @param pAxis
-	 *            angle in degrees with major axis
+	 * @param angleAxis
+	 *            angle in radians with major axis
 	 * @param eccentricity
 	 *            shape (circle = 0; line = 1)
 	 * @param majorAxis
 	 *            diameter of major axis
 	 * @param minorAxis
 	 *            diameter of minor axis
+	 * @param xCenter
+	 * @param yCenter
 	 */
 	public void secondOrderAttributeslsq(float xRes, float yRes, int xUnits,
-			int yUnits, float[] pAxis, float[] eccentricity, float[] majorAxis,
-			float[] minorAxis) {
+			int yUnits, double[] angleAxis, double[] eccentricity, double[] majorAxis,
+			double[] minorAxis, double[] xCenter, double yCenter[]) {
 
 		float[] xPts = new float[size()];
 		float[] yPts = new float[size()];
@@ -1419,11 +1421,10 @@ public class VOIContour extends VOIBase {
 		- (A[4] * sx * sx * sy * my) + (A[5] * sx * sx * sy * sy);
 
 		// Convert to geometric radii, and centers
-		double thetarad = 0.5 * Math.atan2(par[1], (par[0] - par[2]));
-		pAxis[0] = (float) ((180.0 / Math.PI) * thetarad);
+		angleAxis[0] = 0.5 * Math.atan2(par[1], (par[0] - par[2]));
 
-		double cost = Math.cos(thetarad);
-		double sint = Math.sin(thetarad);
+		double cost = Math.cos(angleAxis[0]);
+		double sint = Math.sin(angleAxis[0]);
 		double sin_squared = sint * sint;
 		double cos_squared = cost * cost;
 		double cos_sin = sint * cost;
@@ -1439,31 +1440,27 @@ public class VOIContour extends VOIBase {
 		double wCentre = Ao - (Auu * tuCentre * tuCentre)
 		- (Avv * tvCentre * tvCentre);
 
-		// double uCentre = tuCentre * cost - tvCentre * sint;
-		// double vCentre = tuCentre * sint + tvCentre * cost;
+		xCenter[0] = tuCentre * cost - tvCentre * sint;
+		yCenter[0] = tuCentre * sint + tvCentre * cost;
 		double Ru = -wCentre / Auu;
 		double Rv = -wCentre / Avv;
 		Ru = Math.sqrt(Math.abs(Ru));
 		Rv = Math.sqrt(Math.abs(Rv));
 
-		double mi;
-		double ma;
 		if (Ru >= Rv) {
-			ma = 2.0 * Ru;
-			mi = 2.0 * Rv;
+			majorAxis[0] = 2.0 * Ru;
+			minorAxis[0] = 2.0 * Rv;
 		} else {
-			ma = 2.0 * Rv;
-			mi = 2.0 * Ru;
+			majorAxis[0] = 2.0 * Rv;
+			minorAxis[0] = 2.0 * Ru;
 
-			if (pAxis[0] <= 0.0f) {
-				pAxis[0] = pAxis[0] + 90.0f;
+			if (angleAxis[0] <= 0.0f) {
+				angleAxis[0] = angleAxis[0] + Math.PI/2.0;
 			} else {
-				pAxis[0] = pAxis[0] - 90.0f;
+				angleAxis[0] = angleAxis[0] - Math.PI/2.0;
 			}
 		}
-		minorAxis[0] = (float)mi;
-		majorAxis[0] = (float)ma;
-		eccentricity[0] = (float) Math.sqrt(1.0 - ((mi * mi) / (ma * ma)));
+		eccentricity[0] = Math.sqrt(1.0 - ((minorAxis[0] * minorAxis[0]) / (majorAxis[0] * majorAxis[0])));
 	}
 	
 	/**
@@ -1494,9 +1491,10 @@ public class VOIContour extends VOIBase {
 %   It takes 4-5 iterations per point, on average.
 
     input angle is in radians
+    Calling routine should supply xyproj as a double[][] = new double[xy.size()][2]
 */
 	private void residuals_ellipse(double residualSumOfSquares[], double[][]xyproj, Vector<Vector3f> xy, 
-	                               float centerX, float centerY, float majorAxis, float minorAxis, float angle) {
+	                               double centerX, double centerY, double majorAxis, double minorAxis, double angle) {
 	    int n;
 	    double tolerance;
 	    double phiall[] = null;
@@ -1537,7 +1535,6 @@ public class VOIContour extends VOIBase {
 	
 	    residualSumOfSquares[0] = 0.0;
 	    n = xy.size();
-	    xyproj = new double[n][2];
 	    tolerance = 1.0e-9;
 	    
 	    // First handling the circle case
