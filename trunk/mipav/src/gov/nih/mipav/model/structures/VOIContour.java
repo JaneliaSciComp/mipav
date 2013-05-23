@@ -1534,14 +1534,14 @@ public class VOIContour extends VOIBase {
 	    double fder;
 	    double ratio;
 	    double temp;
+	    double semiMajor;
+        double semiMinor;
 	    boolean selfTest = false;
 	    
 	    if (selfTest) {
 	        double alpha;
 	        double cosalpha;
 	        double sinalpha;
-	        double semiMajor;
-	        double semiMinor;
 	        float x;
 	        float y;
 	        centerX = -100.0;
@@ -1568,24 +1568,29 @@ public class VOIContour extends VOIBase {
 	    residualSumOfSquares[0] = 0.0;
 	    n = xy.size();
 	    tolerance = 1.0e-9;
+	    semiMajor = majorAxis/2.0;
+	    semiMinor = minorAxis/2.0;
 	    
 	    // First handling the circle case
 	    if (Math.abs((majorAxis - minorAxis)/majorAxis) < tolerance) {
 	        phiall = new double[n];
 	        for (i = 0; i < n; i++) {
 	            phiall[i] = Math.atan2((xy.get(i).Y - centerY),(xy.get(i).X - centerX));
-	            xyproj[i][0] = majorAxis*Math.cos(phiall[i]) + centerX;
-	            xyproj[i][1] = minorAxis*Math.sin(phiall[i]) + centerY;
+	            xyproj[i][0] = semiMajor*Math.cos(phiall[i]) + centerX;
+	            xyproj[i][1] = semiMinor*Math.sin(phiall[i]) + centerY;
 	            diffx = xy.get(i).X - xyproj[i][0];
 	            diffy = xy.get(i).Y - xyproj[i][1];
 	            residualSumOfSquares[0] += (diffx*diffx + diffy*diffy);
 	        } // for (i = 0; i < n; i++)
+	        if (selfTest) {
+	            System.out.println("resdiualSumOfSquares = " + residualSumOfSquares[0]);
+	        }
 	        return;
 	    } // if (Math.abs((majorAxis - minorAxis)/majorAxis) < tolerance)
 	    
 	    // Now dealing with proper ellipses
-	    a = majorAxis;
-	    b = minorAxis;
+	    a = semiMajor;
+	    b = semiMinor;
 	    aa = a * a;
 	    bb = b * b;
 	    tol_a = tolerance * a;
