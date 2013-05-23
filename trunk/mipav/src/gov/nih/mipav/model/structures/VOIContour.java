@@ -2,6 +2,8 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.util.MipavMath;
 
+import gov.nih.mipav.view.MipavUtil;
+
 
 
 import java.awt.Polygon;
@@ -1532,6 +1534,36 @@ public class VOIContour extends VOIBase {
 	    double fder;
 	    double ratio;
 	    double temp;
+	    boolean selfTest = false;
+	    
+	    if (selfTest) {
+	        double alpha;
+	        double cosalpha;
+	        double sinalpha;
+	        double semiMajor;
+	        double semiMinor;
+	        float x;
+	        float y;
+	        centerX = -100.0;
+	        centerY = 123.0;
+	        majorAxis = 500.0;
+	        semiMajor = majorAxis/2.0;
+	        minorAxis = 300.0;
+	        semiMinor = minorAxis/2.0;
+	        angle = 0.0;
+	        c = Math.cos(angle);
+	        s = Math.sin(angle);
+	        xy.removeAllElements();
+	        for (i = 0; i < 720; i++) {
+                alpha = i * Math.PI/360.0;
+                cosalpha = Math.cos(alpha);
+                sinalpha = Math.sin(alpha);
+                x = (float)(centerX + semiMajor * cosalpha * c - semiMinor * sinalpha * s);
+                y = (float)(centerY + semiMajor * cosalpha * s + semiMinor * sinalpha * c);
+                xy.add(new Vector3f(x, y, 0.0f));
+            }  
+	        xyproj = new double[xy.size()][2];
+	    }
 	
 	    residualSumOfSquares[0] = 0.0;
 	    n = xy.size();
@@ -1625,6 +1657,7 @@ public class VOIContour extends VOIBase {
 	                xyproj[i][0] = 0.0;
 	                xyproj[i][1] = b;
 	            }
+	            continue;
 	        } // if (u < tol_a)
 	        
 	        // Does the point lie on the major axis?
@@ -1639,6 +1672,7 @@ public class VOIContour extends VOIBase {
 	                xyproj[i][0] = z1 * a;
 	                xyproj[i][1] = 0.0;
 	            }
+	            continue;
 	        } // if (v < tol_b)
 	        
 	        // Generic case: start the iterative procedure
@@ -1689,6 +1723,9 @@ public class VOIContour extends VOIBase {
             diffy = xy.get(i).Y - xyproj[i][1];
             residualSumOfSquares[0] += (diffx*diffx + diffy*diffy);
         }
+	    if (selfTest) {
+	        System.out.println("resdiualSumOfSquares = " + residualSumOfSquares[0]);
+	    }
 	    return;
 	}
 	
