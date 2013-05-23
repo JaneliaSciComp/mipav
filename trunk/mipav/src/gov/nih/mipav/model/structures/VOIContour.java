@@ -1493,7 +1493,7 @@ public class VOIContour extends VOIBase {
     input angle is in radians
     Calling routine should supply xyproj as a double[][] = new double[xy.size()][2]
 */
-	private void residuals_ellipse(double residualSumOfSquares[], double[][]xyproj, Vector<Vector3f> xy, 
+	public void residuals_ellipse(double residualSumOfSquares[], double[][]xyproj, Vector<Vector3f> xy, 
 	                               double centerX, double centerY, double majorAxis, double minorAxis, double angle) {
 	    int n;
 	    double tolerance;
