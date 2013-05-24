@@ -93,7 +93,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double perimeter;
             public double circularity;
             public double solidity;
-            public int numberOfIndentations;
+            public int numberOfIndentationsCurvature;
+            public int numberOfIndentationsHull;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -970,25 +971,30 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
             
-            if (statsList[indexOf(numberOfIndentationsDescription)]) {
+            if (statsList[indexOf(numberOfIndentationsHullDescription)]) {
                 int sliceNum = Math.round(contour.elementAt(0).Z);
-                stats.numberOfIndentations = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(stats.numberOfIndentations));
+                stats.numberOfIndentationsHull = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, nf.format(stats.numberOfIndentationsHull));
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
                     statsList[indexOf(stdDevCurvatureDescription)] ||
-                    statsList[indexOf(meanNegativeCurvatureDescription)]) {
+                    statsList[indexOf(meanNegativeCurvatureDescription)] ||
+                    statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
                 Vector<Vector3f> positions = new Vector<Vector3f>();
                 Vector<Float> curvature = new Vector<Float>();
 
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
+                double negativeHysteresisFraction = 0.15;
+                double positiveHysteresisFraction = 0.15;
+                int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
                 convexContour.findPositionAndCurvature(positions, curvature, smooth, meanCurvature, stdDevCurvature,
-                                                        meanNegativeCurvature);
+                                                        meanNegativeCurvature, negativeHysteresisFraction,
+                                                        positiveHysteresisFraction, numberOfIndentations);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1001,6 +1007,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.meanNegativeCurvature = meanNegativeCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanNegativeCurvatureDescription + end,
                                              nf.format(stats.meanNegativeCurvature));    
+                }
+                if (statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
+                    stats.numberOfIndentationsCurvature = numberOfIndentations[0];
+                    statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription + end,
+                                             nf.format(stats.numberOfIndentationsCurvature));
                 }
             }
             
@@ -1225,25 +1236,30 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(stats.solidity));
             }
             
-            if (statsList[indexOf(numberOfIndentationsDescription)]) {
+            if (statsList[indexOf(numberOfIndentationsHullDescription)]) {
                 int sliceNum = Math.round(contour.elementAt(0).Z);
-                stats.numberOfIndentations = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(stats.numberOfIndentations));
+                stats.numberOfIndentationsHull = contour.findVOIIndentations2D(srcImage, sliceNum, null, false); 
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, nf.format(stats.numberOfIndentationsHull));
             }
             
             if (statsList[indexOf(meanCurvatureDescription)] ||
                     statsList[indexOf(stdDevCurvatureDescription)] ||
-                    statsList[indexOf(meanNegativeCurvatureDescription)]) {
+                    statsList[indexOf(meanNegativeCurvatureDescription)] ||
+                    statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
                 Vector<Vector3f> positions = new Vector<Vector3f>();
                 Vector<Float> curvature = new Vector<Float>();
 
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
+                double negativeHysteresisFraction = 0.15;
+                double positiveHysteresisFraction = 0.15;
+                int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
                 convexContour.findPositionAndCurvature( positions, curvature, smooth, meanCurvature, stdDevCurvature,
-                                                        meanNegativeCurvature);
+                                                        meanNegativeCurvature, negativeHysteresisFraction,
+                                                        positiveHysteresisFraction, numberOfIndentations);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1256,6 +1272,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     stats.meanNegativeCurvature = meanNegativeCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanNegativeCurvatureDescription + end,
                                              nf.format(stats.meanNegativeCurvature));    
+                }
+                if (statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
+                    stats.numberOfIndentationsCurvature = numberOfIndentations[0];
+                    statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription + end,
+                                             nf.format(stats.numberOfIndentationsCurvature));
                 }
             }
             
@@ -1902,14 +1923,35 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
             
-            if ( statsList[ indexOf( numberOfIndentationsDescription ) ] )
+            if (statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
+                Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
+                double negativeHysteresisFraction = 0.15;
+                double positiveHysteresisFraction = 0.15;
+                int numberOfIndentations[] = new int[1];
+                boolean smooth = true;
+                stats.numberOfIndentationsCurvature = 0;
+                for (int i = 0; i < kVOI.getCurves().size(); i++) {
+                    kVOI.getCurves().elementAt(i).findPositionAndCurvature(positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                        meanNegativeCurvature, negativeHysteresisFraction,
+                                                        positiveHysteresisFraction, numberOfIndentations);
+                    stats.numberOfIndentationsCurvature += numberOfIndentations[0];
+                }
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription, nf.format(stats.numberOfIndentationsCurvature)); 
+            }
+            
+            if ( statsList[ indexOf( numberOfIndentationsHullDescription ) ] )
             {           
-                stats.numberOfIndentations = 0;
+                stats.numberOfIndentationsHull = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
                 {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
-                    stats.numberOfIndentations += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
+                    stats.numberOfIndentationsHull += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
                 }
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription, nf.format(stats.numberOfIndentations));  
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription, nf.format(stats.numberOfIndentationsHull));  
             }
             
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
@@ -2188,14 +2230,35 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription, nf.format(stats.solidity));
             }
             
-            if ( statsList[ indexOf( numberOfIndentationsDescription ) ] )
+            if (statsList[indexOf(numberOfIndentationsCurvatureDescription)]) {
+                Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
+                double negativeHysteresisFraction = 0.15;
+                double positiveHysteresisFraction = 0.15;
+                int numberOfIndentations[] = new int[1];
+                boolean smooth = true;
+                stats.numberOfIndentationsCurvature = 0;
+                for (int i = 0; i < kVOI.getCurves().size(); i++) {
+                    kVOI.getCurves().elementAt(i).findPositionAndCurvature(positions, curvature, smooth, meanCurvature, stdDevCurvature,
+                                                        meanNegativeCurvature, negativeHysteresisFraction,
+                                                        positiveHysteresisFraction, numberOfIndentations);
+                    stats.numberOfIndentationsCurvature += numberOfIndentations[0];
+                }
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription, nf.format(stats.numberOfIndentationsCurvature)); 
+            }
+            
+            if ( statsList[ indexOf( numberOfIndentationsHullDescription ) ] )
             {           
-                stats.numberOfIndentations = 0;
+                stats.numberOfIndentationsHull = 0;
                 for ( int i = 0; i < kVOI.getCurves().size(); i++ )
                 {   int sliceNum = Math.round(kVOI.getCurves().elementAt(i).elementAt(0).Z);                
-                    stats.numberOfIndentations += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
+                    stats.numberOfIndentationsHull += kVOI.getCurves().elementAt(i).findVOIIndentations2D(srcImage, sliceNum, null, false);
                 }
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription, nf.format(stats.numberOfIndentations));  
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription, nf.format(stats.numberOfIndentationsHull));  
             }
             
             // The following statistics are derived from the minIntensity, maxIntensity, avgIntensity, and sumIntensity:
@@ -2470,12 +2533,21 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
             }
             
-            if (statsList[ indexOf( numberOfIndentationsDescription)]) {
+            if (statsList[ indexOf( numberOfIndentationsCurvatureDescription)]) {
                 for (int q = 0; q < stats.length; q++) {
-                    statsTotal.numberOfIndentations += stats[q].numberOfIndentations;
+                    statsTotal.numberOfIndentationsCurvature += stats[q].numberOfIndentationsCurvature;
                 }
              
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(statsTotal.numberOfIndentations));
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription + end, 
+                        nf.format(statsTotal.numberOfIndentationsCurvature));
+            }
+            
+            if (statsList[ indexOf( numberOfIndentationsHullDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.numberOfIndentationsHull += stats[q].numberOfIndentationsHull;
+                }
+             
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, nf.format(statsTotal.numberOfIndentationsHull));
             }
             
             if ( statsList[ indexOf( minIntensity ) ] ||
@@ -2649,12 +2721,22 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.solidityDescription + end, nf.format(statsTotal.solidity));
             }
             
-            if (statsList[ indexOf( numberOfIndentationsDescription)]) {
+            if (statsList[ indexOf( numberOfIndentationsCurvatureDescription)]) {
                 for (int q = 0; q < stats.length; q++) {
-                    statsTotal.numberOfIndentations += stats[q].numberOfIndentations;
+                    statsTotal.numberOfIndentationsCurvature += stats[q].numberOfIndentationsCurvature;
                 }
              
-                statProperty.setProperty(VOIStatisticList.numberOfIndentationsDescription + end, nf.format(statsTotal.numberOfIndentations));
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription + end, 
+                        nf.format(statsTotal.numberOfIndentationsCurvature));
+            }
+            
+            if (statsList[ indexOf( numberOfIndentationsHullDescription)]) {
+                for (int q = 0; q < stats.length; q++) {
+                    statsTotal.numberOfIndentationsHull += stats[q].numberOfIndentationsHull;
+                }
+             
+                statProperty.setProperty(VOIStatisticList.numberOfIndentationsHullDescription + end, 
+                        nf.format(statsTotal.numberOfIndentationsHull));
             }
             
             if ( statsList[ indexOf( minIntensity ) ] ||
@@ -3439,8 +3521,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         return propertyList.firstElement().getProperty(VOIStatisticList.solidityDescription);
     } // {return solidity;}
     
-    public String getNumberOfIndentations() {
-        return propertyList.firstElement().getProperty(VOIStatisticList.numberOfIndentationsDescription);
+    public String getNumberOfIndentationsCurvture() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription);  
+    }
+    
+    public String getNumberOfIndentationsHull() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.numberOfIndentationsHullDescription);
     }
     
     /**
