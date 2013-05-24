@@ -1128,11 +1128,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param   meanCurvature
      * @param   stdDevCurvature
      * @param   meanNegativeCurvature
+     * @param   negativeHysteresisFraction
+     * @param   positiveHysteresisFraction
+     * @param   numberOfIndentations
      *
      * @return  the number of points in the position and curvature array that have valid data.
      */
     public int findPositionAndCurvature(Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
-                                        double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[])
+                                        double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[],
+                                        double negativeHysteresisFraction, double positiveHysteresisFraction, int numberOfIndentations[])
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
         // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
@@ -1170,6 +1174,14 @@ public abstract class VOIBase extends Vector<Vector3f> {
         double diff;
         double totalNegCurvLength;
         double totalNegLength;
+        double minCurvature;
+        double maxCurvature;
+        double maxMagCurvature;
+        double positiveHysteresisLevel;
+        double negativeHysteresisLevel;
+        boolean positiveSet;
+        boolean negativeSet;
+        boolean initial;
         if (smooth) {
             nPoints = size();
             xPoints = new float[nPoints + 5];
@@ -1260,10 +1272,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
         totalNegCurvLength = 0.0;
         totalNegLength = 0.0;
         curv = new double[graphPoints];
+        maxCurvature = -Double.MAX_VALUE;
+        minCurvature = Double.MAX_VALUE;
         for (i = 0; i < graphPoints; i++) {
             num = xderiv[i+1]*y2deriv[i] - x2deriv[i]*yderiv[i+1];
             denom = Math.pow((xderiv[i+1]*xderiv[i+1] + yderiv[i+1]*yderiv[i+1]), 1.5);
             curv[i] = (num/denom);
+            if (curv[i] < minCurvature) {
+                minCurvature = curv[i];
+            }
+            if (curv[i] > maxCurvature) {
+                maxCurvature = curv[i];
+            }
             curvatures.add((float)curv[i]);
             if (i == 0) {
                 distance = 0.0f;
@@ -1281,12 +1301,32 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
         meanCurvature[0] = totalCurvLength/totalLength;
         meanNegativeCurvature[0] = Math.abs(totalNegCurvLength/totalNegLength);
+        maxMagCurvature = Math.max(maxCurvature, Math.abs(minCurvature));
         sumSquared = 0.0;
         for (i = 0; i < graphPoints; i++) {
             diff = curv[i] - meanCurvature[0];
             sumSquared += diff * diff * length[i+1]/2.0;
         }
         stdDevCurvature[0] = Math.sqrt(sumSquared/totalCurvLength);
+        positiveHysteresisLevel = positiveHysteresisFraction * maxMagCurvature;
+        negativeHysteresisLevel = -negativeHysteresisFraction * maxMagCurvature;
+        positiveSet = false;
+        negativeSet = false;
+        initial = true;
+        numberOfIndentations[0] = 0;
+        for (i = 0; i < graphPoints; i++) {
+           if ((curv[i] >= positiveHysteresisLevel) && (negativeSet || initial)) {
+               positiveSet = true;
+               negativeSet = false;
+               initial = false;
+           }
+           if ((curv[i] <= negativeHysteresisLevel) && (positiveSet || initial)) {
+               negativeSet = true;
+               positiveSet = false;
+               initial = false;
+               numberOfIndentations[0]++;
+           }
+        }
 
         return positions.size();
     }
