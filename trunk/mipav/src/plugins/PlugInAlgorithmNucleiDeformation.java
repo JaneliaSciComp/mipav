@@ -56,7 +56,7 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 		VOIStatisticalProperties.avgIntensity, VOIStatisticalProperties.deviationDescription,
         VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
         VOIStatisticalProperties.stdDevCurvatureDescription, VOIStatisticalProperties.meanNegativeCurvatureDescription,
-        VOIStatisticalProperties.numberOfIndentationsDescription};
+        VOIStatisticalProperties.numberOfIndentationsCurvatureDescription, VOIStatisticalProperties.numberOfIndentationsHullDescription};
 
     private static final boolean[] checkList = new boolean[VOIStatisticalProperties.numberOfStatistics];
 
