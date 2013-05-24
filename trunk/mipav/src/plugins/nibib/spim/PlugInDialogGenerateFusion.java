@@ -200,6 +200,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private boolean doDeconv;
 	/** Checkbox to control whether to perform the deconvolution step. */
 	private JCheckBox deconvPerformCheckbox;
+	/** Checkbox to control whether to leave the deconvolution output image frames open. */
+	private boolean deconvShowResults;
+	/** Checkbox to control whether to leave the deconvolution output image frames open. */
+	private JCheckBox deconvShowResultsCheckbox;
 	/** Panel containing deconvolution parameters. */
 	private JPanel deconvParamPanel;
 	/** The number of iterations to perform during deconvolution. */
@@ -320,7 +324,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
                                                                                 maxAlgo, saveType, doDeconv, deconvIterations, deconvSigmaA,
-                                                                                deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir);
+                                                                                deconvSigmaB, useDeconvSigmaConversionFactor, deconvDir, deconvShowResults);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -895,8 +899,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvParamPanel.setVisible(false);
         //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
-        saveDeconvFolderText = gui.buildFileField("Deconvolution output location:", initDeconvLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        deconvShowResultsCheckbox = gui.buildCheckBox("Show deconvolution images", false);
         gbc.gridwidth = 2;
+        deconvParamPanel.add(deconvShowResultsCheckbox, gbc);
+        gbc.gridy++;
+        
+        saveDeconvFolderText = gui.buildFileField("Deconvolution output location:", initDeconvLoc, false, JFileChooser.DIRECTORIES_ONLY);
         deconvParamPanel.add(saveDeconvFolderText.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 1;
@@ -914,11 +922,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvSigmasAPanel.setForeground(Color.black);
         deconvSigmasAPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas A (Pre-fusion base)"));
         
-        deconvSigmaAXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
+        deconvSigmaAXText = gui.buildDecimalField("X dimension (>= 0.0)", 3.5);
         deconvSigmasAPanel.add(deconvSigmaAXText.getParent());
-        deconvSigmaAYText = gui.buildDecimalField("Y dimension (>= 0.0)", 1.0);
+        deconvSigmaAYText = gui.buildDecimalField("Y dimension (>= 0.0)", 3.5);
         deconvSigmasAPanel.add(deconvSigmaAYText.getParent());
-        deconvSigmaAZText = gui.buildDecimalField("Z dimension (>= 0.0)", 1.0);
+        deconvSigmaAZText = gui.buildDecimalField("Z dimension (>= 0.0)", 9.6);
         deconvSigmasAPanel.add(deconvSigmaAZText.getParent());
         
         deconvParamPanel.add(deconvSigmasAPanel, gbc);
@@ -928,11 +936,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvSigmasBPanel.setForeground(Color.black);
         deconvSigmasBPanel.setBorder(MipavUtil.buildTitledBorder("Sigmas B (Pre-fusion transform)"));
         
-        deconvSigmaBXText = gui.buildDecimalField("X dimension (>= 0.0)", 1.0);
+        deconvSigmaBXText = gui.buildDecimalField("X dimension (>= 0.0)", 9.6);
         deconvSigmasBPanel.add(deconvSigmaBXText.getParent());
-        deconvSigmaBYText = gui.buildDecimalField("Y dimension (>= 0.0)", 1.0);
+        deconvSigmaBYText = gui.buildDecimalField("Y dimension (>= 0.0)", 3.5);
         deconvSigmasBPanel.add(deconvSigmaBYText.getParent());
-        deconvSigmaBZText = gui.buildDecimalField("Z dimension (>= 0.0)", 1.0);
+        deconvSigmaBZText = gui.buildDecimalField("Z dimension (>= 0.0)", 3.5);
         deconvSigmasBPanel.add(deconvSigmaBZText.getParent());
         
         deconvParamPanel.add(deconvSigmasBPanel, gbc);
@@ -1298,6 +1306,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    
 	    // deconvolution parameters
 	    if (doDeconv) {
+	    	deconvShowResults = deconvShowResultsCheckbox.isSelected();
 	    	deconvIterations = Integer.valueOf(deconvIterationsText.getText());
 	    	deconvSigmaA = new float[3];
 	    	deconvSigmaA[0] = Float.valueOf(deconvSigmaAXText.getText());
