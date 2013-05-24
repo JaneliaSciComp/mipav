@@ -152,7 +152,9 @@ public interface VOIStatisticList {
     
     String meanNegativeCurvatureDescription = "Mean Negative Curvature";
     
-    String numberOfIndentationsDescription = "Number of Indentations";
+    String numberOfIndentationsCurvatureDescription = "Number of Indentations Curvature";
+    
+    String numberOfIndentationsHullDescription = "Number of Indentations Hull";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -165,7 +167,7 @@ public interface VOIStatisticList {
         geometricCenterDescription, massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription,
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
         largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
-        meanNegativeCurvatureDescription, numberOfIndentationsDescription
+        meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription
     };
 
     /** number of statistics in the list. */
