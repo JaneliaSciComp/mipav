@@ -987,8 +987,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
-                double negativeHysteresisFraction = 0.15;
-                double positiveHysteresisFraction = 0.15;
+                double negativeHysteresisFraction = 0.25;
+                double positiveHysteresisFraction = 0.25;
                 int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
@@ -1252,8 +1252,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
-                double negativeHysteresisFraction = 0.15;
-                double positiveHysteresisFraction = 0.15;
+                double negativeHysteresisFraction = 0.25;
+                double positiveHysteresisFraction = 0.25;
                 int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
@@ -1930,8 +1930,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
-                double negativeHysteresisFraction = 0.15;
-                double positiveHysteresisFraction = 0.15;
+                double negativeHysteresisFraction = 0.25;
+                double positiveHysteresisFraction = 0.25;
                 int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 stats.numberOfIndentationsCurvature = 0;
@@ -2237,8 +2237,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double meanCurvature[] = new double[1];
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
-                double negativeHysteresisFraction = 0.15;
-                double positiveHysteresisFraction = 0.15;
+                double negativeHysteresisFraction = 0.25;
+                double positiveHysteresisFraction = 0.25;
                 int numberOfIndentations[] = new int[1];
                 boolean smooth = true;
                 stats.numberOfIndentationsCurvature = 0;
