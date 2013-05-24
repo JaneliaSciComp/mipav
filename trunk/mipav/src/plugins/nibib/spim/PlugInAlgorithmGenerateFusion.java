@@ -132,6 +132,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	private String saveType;
 	
 	private boolean doDeconv;
+	private boolean deconvShowResults;
 	private int deconvIterations;
 	private float[] deconvSigmaA, deconvSigmaB;
 	private boolean useDeconvSigmaConversionFactor;
@@ -179,6 +180,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param deconvSigmaB
      * @param useDeconvSigmaConversionFactor
      * @param deconvDir
+     * @param deconvShowResults
      */
     public PlugInAlgorithmGenerateFusion(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
@@ -187,7 +189,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType,
-                                                    boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor, File deconvDir) {
+                                                    boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor, File deconvDir, boolean deconvShowResults) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -249,6 +251,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.deconvSigmaB = deconvSigmaB;
         this.useDeconvSigmaConversionFactor = useDeconvSigmaConversionFactor;
         this.deconvDir = deconvDir;
+        this.deconvShowResults = deconvShowResults;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -1166,7 +1169,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         	deconvAlgo.setBlue(true);
         	deconvAlgo.run();
         	
-        	resultImageList.add(deconvAlgo.getDestImage());
+        	if (deconvShowResults) {
+        		resultImageList.add(deconvAlgo.getDestImage());
+        	}
         	
         	return deconvAlgo.getDestImage();
         }
