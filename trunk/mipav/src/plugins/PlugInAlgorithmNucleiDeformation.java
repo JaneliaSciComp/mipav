@@ -150,6 +150,7 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         int numRemoved;
         AlgorithmVOIExtraction algoVOIExtraction;
         VOIVector VOIs;
+        VOIVector VOI2s;
         int nVOIs;
         ViewUserInterface UI = ViewUserInterface.getReference();
         AlgorithmMorphology2D fillHolesAlgo2D;
@@ -163,6 +164,7 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         double[] residualSumOfSquares = new double[1];
         Vector<Vector3f> xy = null;
         double stdDevEllipse;
+        int numVOIsDeleted;
         
         for (File inFile : inputFiles) {
         	srcImage = openFile(inFile, showResultImages);
@@ -455,7 +457,16 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        nVOIs = VOIs.size();
 	        Preferences.debug("nVOIS before removal for excessive deviation from ellipse shape = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
 	        
-	        for (i = 0; i < nVOIs; i++) {
+	        // Want to remove VOIs that surround 2 nuclei instead of 1, that have an improper fitting and only
+	        // cover part of the nucleus instead of all of it, and that are folded over.
+	        // Proper nuclei have shapes that are roughly ellipses.  Calculate the residual sum of squares of
+	        // the difference between the VOI contour and the best fitting ellipse.  From the residual sum of
+	        // squares calculate the standard deviation = sqrt(residualSumOfSquares/n-1).
+	        // In the first 16 samples the largest standard deviation observed for a good nucleus was 2.65
+	        // So eliminate all nuclei showing standard deviation >= 3.0.
+	        VOI2s = new VOIVector();
+	        numVOIsDeleted = 0;
+	        for (i = 0, j = 0; i < nVOIs; i++) {
 	            xRes = 1.0f;
 	            yRes = 1.0f;
 	            ((VOIContour) (VOIs.VOIAt(i).getCurves().elementAt(0))).secondOrderAttributeslsq(xRes, yRes, xUnits, yUnits,
@@ -466,11 +477,22 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	            ((VOIContour) (VOIs.VOIAt(i).getCurves().elementAt(0))).residuals_ellipse(residualSumOfSquares, xyproj,
 	                           xy, xCenterlsq[0], yCenterlsq[0], majorAxislsq[0], minorAxislsq[0], angleAxislsq[0]);
 	            stdDevEllipse = Math.sqrt(residualSumOfSquares[0]/(xy.size() - 1));
-	            Preferences.debug("VOI " + i + " standard deviation from ellipse = " + stdDevEllipse + "\n", 
+	            Preferences.debug("VOI " + i + " standard deviation from ellipse = " + stdDevEllipse + "\n",
 	                              Preferences.DEBUG_ALGORITHM);
+	            if (stdDevEllipse < 3.0) {
+	                VOI2s.add(j, VOIs.VOIAt(i));
+	                VOI2s.VOIAt(j).setName(String.valueOf(j));
+	                j++;
+	            }
+	            else{
+	                numVOIsDeleted++;
+	            }
 	        }
+	        nVOIs = nVOIs - numVOIsDeleted;
+	        VOIs.clear();
+	        VOIs = null;
 	
-	        srcImage.setVOIs(VOIs);
+	        srcImage.setVOIs(VOI2s);
 	        
 	        // save all VOIs to disk for this image
 	        saveAllVOIs(srcImage);
