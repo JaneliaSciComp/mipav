@@ -111,6 +111,14 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
         float buffer[];
         AlgorithmFuzzyCMeans fcmAlgo;
         ModelImage grayImage;
+        ModelImage quadrantGrayImage;
+        int quadrantXDim;
+        int quadrantYDim;
+        int quadrantExtents[] = new int[2];
+        int quadrantLength;
+        float quadrantBuffer[];
+        byte quadrantByteBuffer[];
+        FileInfoBase quadrantFileInfo;
         FileInfoBase fileInfo;
         int nClasses;
         int nPyramid;
@@ -200,68 +208,136 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        fireProgressStateChanged("Processing image ...");
 	
 	        fireProgressStateChanged("Creating  image");
-	        grayImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
+	        quadrantXDim = xDim/2;
+	        quadrantYDim = yDim/2;
+	        quadrantExtents[0] = quadrantXDim;
+	        quadrantExtents[1] = quadrantYDim;
+	        quadrantLength = quadrantXDim * quadrantYDim;
+	        quadrantBuffer = new float[quadrantLength];
+	        quadrantByteBuffer = new byte[quadrantLength];
+	        byteBuffer = new byte[length];
+	        quadrantGrayImage = new ModelImage(ModelStorageBase.DOUBLE, quadrantExtents, srcImage.getImageName() + "_gray_quadrant");
+	        quadrantFileInfo = quadrantGrayImage.getFileInfo()[0];
+            quadrantFileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
+            quadrantFileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+            quadrantGrayImage.setFileInfo(quadrantFileInfo, 0);
+            
+            nClasses = 2;
+            nPyramid = 4;
+            oneJacobiIter = 1;
+            twoJacobiIter = 2;
+            q = 2.0f;
+            oneSmooth = 2e4f;
+            twoSmooth = 2e5f;
+            outputGainField = false;
+            segmentation = HARD_ONLY;
+            cropBackground = false;
+            threshold = 0.0f;
+            maxIter = 200;
+            endTolerance = 0.01f;
+            wholeImage = true;
+	        for (i = 0; i < 4; i++) {
+	            if (i == 0) {
+	                for (y = 0; y < yDim/2; y++) {
+	                    for (x = 0; x < xDim/2; x++) {
+	                        quadrantBuffer[x + quadrantXDim * y] = buffer[x + xDim * y];    
+	                    }
+	                }
+	            } // if (i == 0)
+	            else if (i == 1) {
+	                for (y = 0; y < yDim/2; y++) {
+	                    for (x = xDim/2; x < xDim; x++) {
+	                        quadrantBuffer[(x - xDim/2) + quadrantXDim * y] = buffer[x + xDim * y];
+	                    }
+	                }
+	            } // else if (i == 1)
+	            else if (i == 2) {
+	                for (y = yDim/2; y < yDim; y++) {
+	                    for (x = 0; x < xDim/2; x++) {
+	                        quadrantBuffer[x + quadrantXDim * (y - yDim/2)] = buffer[x + xDim * y];
+	                    }
+	                }
+	            } // else if (i == 2)
+	            else {
+	                for (y = yDim/2; y < yDim; y++) {
+	                    for (x = xDim/2; x < xDim; x++) {
+	                        quadrantBuffer[(x - xDim/2) + quadrantXDim * (y - yDim/2)] = buffer[x + xDim * y];
+	                    }
+	                }
+	            }
+	            
+	            try {
+	                quadrantGrayImage.importData(0, quadrantBuffer, true);
+	            } catch (IOException error) {
+	                quadrantBuffer = null;
+	                //errorCleanUp("Error on grayImage.importData", true);
+	                displayError("Error on quadrantGrayImage.importData: " + inFile.getName());
+	                continue;
+	            }
+	            
+	             // Segment into 2 values
+	            fireProgressStateChanged("Performing FuzzyCMeans Segmentation on image " + (i+1));
+	            
+	            fireProgressStateChanged(2+i);
+	            
+	            // quadrantGrayImage enters ModelStorageBase.DOUBLE and returns ModelStorageBase.UBYTE
+	            fcmAlgo = new AlgorithmFuzzyCMeans(quadrantGrayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
+	                                               twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
+	                                               endTolerance, wholeImage);
+	            centroids = new float[2];
+	            min = (float) quadrantGrayImage.getMin();
+	            max = (float) quadrantGrayImage.getMax();
+	            centroids[0] = min + ((max - min) / 3.0f);
+	            centroids[1] = min + (2.0f * (max - min) / 3.0f);
+	            fcmAlgo.setCentroids(centroids);
+	            fcmAlgo.run();
+	            fcmAlgo.finalize();
+	            fcmAlgo = null;
+	            
+	            try {
+	                quadrantGrayImage.exportData(0, quadrantLength, quadrantByteBuffer);
+	            } catch (IOException error) {
+	                quadrantByteBuffer = null;
+	                //errorCleanUp("Error on grayImage.exportData", true);
+	                displayError("Error on quadrantGrayImage.exportData: " + inFile.getName());
+	                continue;
+	            }
+	            quadrantGrayImage.reallocate(ModelStorageBase.DOUBLE);
+	            
+	            if (i == 0) {
+                    for (y = 0; y < yDim/2; y++) {
+                        for (x = 0; x < xDim/2; x++) {
+                            byteBuffer[x + xDim * y] = quadrantByteBuffer[x + quadrantXDim * y];    
+                        }
+                    }
+                } // if (i == 0)
+                else if (i == 1) {
+                    for (y = 0; y < yDim/2; y++) {
+                        for (x = xDim/2; x < xDim; x++) {
+                            byteBuffer[x + xDim * y] = quadrantByteBuffer[(x - xDim/2) + quadrantXDim * y];
+                        }
+                    }
+                } // else if (i == 1)
+                else if (i == 2) {
+                    for (y = yDim/2; y < yDim; y++) {
+                        for (x = 0; x < xDim/2; x++) {
+                            byteBuffer[x + xDim * y] = quadrantByteBuffer[x + quadrantXDim * (y - yDim/2)];
+                        }
+                    }
+                } // else if (i == 2)
+                else {
+                    for (y = yDim/2; y < yDim; y++) {
+                        for (x = xDim/2; x < xDim; x++) {
+                            byteBuffer[x + xDim * y] = quadrantByteBuffer[(x - xDim/2) + quadrantXDim * (y - yDim/2)];
+                        }
+                    }
+                }
+	        } // for (i = 0; i < 4; i++)
+	        grayImage = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
 	        fileInfo = grayImage.getFileInfo()[0];
 	        fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
 	        fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
 	        grayImage.setFileInfo(fileInfo, 0);
-	
-	        try {
-	            grayImage.importData(0, buffer, true);
-	        } catch (IOException error) {
-	            buffer = null;
-	            //errorCleanUp("Error on grayImage.importData", true);
-	            displayError("Error on grayImage.importData: " + inFile.getName());
-	            continue;
-	        }
-	
-	        // Segment into 2 values
-	        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on image");
-	        
-	        fireProgressStateChanged(2);
-	
-	        nClasses = 2;
-	        nPyramid = 4;
-	        oneJacobiIter = 1;
-	        twoJacobiIter = 2;
-	        q = 2.0f;
-	        oneSmooth = 2e4f;
-	        twoSmooth = 2e5f;
-	        outputGainField = false;
-	        segmentation = HARD_ONLY;
-	        cropBackground = false;
-	        threshold = 0.0f;
-	        maxIter = 200;
-	        endTolerance = 0.01f;
-	        wholeImage = true;
-	
-	        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
-	        fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
-	                                           twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
-	                                           endTolerance, wholeImage);
-	        centroids = new float[2];
-	        min = (float) grayImage.getMin();
-	        max = (float) grayImage.getMax();
-	        centroids[0] = min + ((max - min) / 3.0f);
-	        centroids[1] = min + (2.0f * (max - min) / 3.0f);
-	        fcmAlgo.setCentroids(centroids);
-	        fcmAlgo.run();
-	        fcmAlgo.finalize();
-	        fcmAlgo = null;
-	
-	        // Now convert the min = 1 and max = 2 to min = 0 and and max = 1
-	        fireProgressStateChanged("Setting segmented image values to 0 and 1");
-	        fireProgressStateChanged(6);
-	
-	        byteBuffer = new byte[length];
-	        try {
-	            grayImage.exportData(0, length, byteBuffer);
-	        } catch (IOException error) {
-	            byteBuffer = null;
-	            //errorCleanUp("Error on grayImage.exportData", true);
-	            displayError("Error on grayImage.exportData: " + inFile.getName());
-	            continue;
-	        }
 	        
 	        for (i = 0; i < length; i++) {
 	            byteBuffer[i]--;
@@ -458,12 +534,12 @@ public class PlugInAlgorithmNucleiDeformation extends AlgorithmBase {
 	        Preferences.debug("nVOIS before removal for excessive deviation from ellipse shape = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
 	        
 	        // Want to remove VOIs that surround 2 nuclei instead of 1, that have an improper fitting and only
-	        // cover part of the nucleus instead of all of it, and that are folded over.
+	        // cover part of the nucleus instead of all of it, and nuclei that are folded over.
 	        // Proper nuclei have shapes that are roughly ellipses.  Calculate the residual sum of squares of
 	        // the difference between the VOI contour and the best fitting ellipse.  From the residual sum of
-	        // squares calculate the standard deviation = sqrt(residualSumOfSquares/n-1).
+	        // squares calculate the standard deviation = sqrt(residualSumOfSquares/(nPts-1)).
 	        // In the first 16 samples the largest standard deviation observed for a good nucleus was 2.65
-	        // So eliminate all nuclei showing standard deviation >= 3.0.
+	        // So eliminate all VOIs showing standard deviation >= 3.0.
 	        VOI2s = new VOIVector();
 	        numVOIsDeleted = 0;
 	        for (i = 0, j = 0; i < nVOIs; i++) {
