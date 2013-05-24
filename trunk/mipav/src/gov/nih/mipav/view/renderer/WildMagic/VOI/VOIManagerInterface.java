@@ -2633,8 +2633,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         double meanCurvature[] = new double[1];
         double stdDevCurvature[] = new double[1];
         double meanNegativeCurvature[] = new double[1];
-        double negativeHysteresisFraction = 0.15;
-        double positiveHysteresisFraction = 0.15;
+        double negativeHysteresisFraction = 0.25;
+        double positiveHysteresisFraction = 0.25;
         int numberOfIndentations[] = new int[1];
         int pts = kVOI.findPositionAndCurvature( positions, curvature, smooth, meanCurvature, stdDevCurvature,
                                                  meanNegativeCurvature, negativeHysteresisFraction, positiveHysteresisFraction,
