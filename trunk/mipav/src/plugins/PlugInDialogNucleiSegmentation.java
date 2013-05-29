@@ -1,7 +1,10 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.view.*;
@@ -10,11 +13,13 @@ import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
+import java.util.Vector;
 
 import javax.swing.*;
 
 
-public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
+public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -30,7 +35,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     
     private int maxSize = 5500;
 
-    private PlugInAlgorithmNucleiDeformation nucleiDeformAlgo = null;
+    private PlugInAlgorithmNucleiSegmentation nucleiDeformAlgo = null;
     
     private String inputDir;
     
@@ -58,23 +63,23 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     
     private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] { ".tiff", ".tif" });
     
-    private JCheckBox showResultImagesCheckbox;
+    private JCheckBox interactiveVOIReviewCheckbox;
     
-    private boolean showResultImages = false;
+    private boolean doInteractiveVOIReview = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogNucleiDeformation() { }
+    public PlugInDialogNucleiSegmentation() { }
 
     /**
      * Creates new dialog for distances within a cell from the geometric center using a plugin.
      *
      * @param  modal	Whether the dialog should be made modal.
      */
-    public PlugInDialogNucleiDeformation(boolean modal) {
+    public PlugInDialogNucleiSegmentation(boolean modal) {
         super(modal);
 
         init();
@@ -173,7 +178,6 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
             }
         } else if (command.equals("FileMode")) {
         	if (fileModeButton.isSelected()) {
-        		showResultImagesCheckbox.setSelected(true);
 	        	enableDirChooserComponents(false);
 	        	enableFileChooserComponents(true);
         	}
@@ -194,7 +198,32 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof PlugInAlgorithmNucleiDeformation) {
+        if (algorithm instanceof PlugInAlgorithmNucleiSegmentation) {
+	        for (ModelImage img : nucleiDeformAlgo.getResultImages()) {
+	        	if (doInteractiveVOIReview) {
+	        		boolean origVOINameSetting = Preferences.is(Preferences.PREF_SHOW_VOI_NAME);
+	        		ViewUserInterface.getReference().setUseVOIName(true);
+	        		
+	        		// display the image and it's VOIs
+	        		ViewJFrameImage frame = new ViewJFrameImage(img);
+	        		frame.setVisible(true);
+		        	
+	        		InteractiveReviewDialog dialog = new InteractiveReviewDialog(frame, img);
+	        		
+	        		// keep waiting until the user closes the dialog
+	        		while (!dialog.isDoneWithReview()) {
+	        			// do nothing
+	        		}
+	        		
+	        		frame.setVisible(false);
+	        		
+	        		ViewUserInterface.getReference().setUseVOIName(origVOINameSetting);
+	        	}
+	        	
+	        	// save all VOIs to disk for this image
+		        saveAllVOIs(img);
+	        }
+        	
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
@@ -262,17 +291,17 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     	}
     }
     
-    public void setShowResults(boolean b) {
-    	showResultImages = b;
+    public void setDoInteractiveVOIReview(boolean b) {
+    	doInteractiveVOIReview = b;
     }
    
     /**
-     * Once all the necessary variables are set, call PluginAlgorithmNucleiDeformation
+     * Once all the necessary variables are set, call PluginAlgorithmNucleiSegmentation
      */
     protected void callAlgorithm() {
 
         try {
-            nucleiDeformAlgo = new PlugInAlgorithmNucleiDeformation(inputFiles, minSize, maxSize, showResultImages);
+            nucleiDeformAlgo = new PlugInAlgorithmNucleiSegmentation(inputFiles, minSize, maxSize);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -296,7 +325,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
                 nucleiDeformAlgo.run();
             }
         } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("Nuclei Deformation: unable to allocate enough memory");
+            MipavUtil.displayError("Nuclei Segmentation: unable to allocate enough memory");
 
             return;
         }
@@ -306,7 +335,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-    	if (showResultImages) {
+    	if (doInteractiveVOIReview) {
     		for (ModelImage img : nucleiDeformAlgo.getResultImages()) {
     			AlgorithmParameters.storeImageInRunner(img);
     		}
@@ -331,9 +360,10 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     	} else {
     		setInputFile(scriptParameters.getParams().getString("input_file"));
     	}
-    	setShowResults(scriptParameters.getParams().getBoolean("show_results"));
         setMinSize(scriptParameters.getParams().getInt("min_size"));
         setMaxSize(scriptParameters.getParams().getInt("max_size"));
+        // no interactive review while in script
+    	setDoInteractiveVOIReview(false);
     }
 
     /**
@@ -345,7 +375,6 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_file", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
-    	scriptParameters.getParams().put(ParameterFactory.newParameter("show_results", showResultImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_size", minSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_size", maxSize));
     }
@@ -357,7 +386,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         JLabel minSizeLabel;
         JLabel maxSizeLabel;
         setForeground(Color.black);
-        setTitle("Nuclei Deformation 05/20/2013");
+        setTitle("Nuclei Segmentation 05/28/2013");
         //int length = image.getExtents()[0] * image.getExtents()[1];
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -442,14 +471,14 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         gbc.gridwidth = 3;
         mainPanel.add(onlyProcessTiffCheckbox, gbc);
         
-        showResultImagesCheckbox = new JCheckBox("Display images with VOI segmentations", showResultImages);
-        showResultImagesCheckbox.setForeground(Color.black);
-        showResultImagesCheckbox.setFont(serif12);
+        interactiveVOIReviewCheckbox = new JCheckBox("Interactively review/delete nuclei segmentations", doInteractiveVOIReview);
+        interactiveVOIReviewCheckbox.setForeground(Color.black);
+        interactiveVOIReviewCheckbox.setFont(serif12);
 
         gbc.gridx = 0;
         gbc.gridy++;
         gbc.gridwidth = 3;
-        mainPanel.add(showResultImagesCheckbox, gbc);
+        mainPanel.add(interactiveVOIReviewCheckbox, gbc);
         
         minSizeLabel = new JLabel("Minimum nucleus pixel count");
         minSizeLabel.setForeground(Color.black);
@@ -484,11 +513,9 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         if (fileModeButton.isSelected()) {
         	enableDirChooserComponents(false);
         	enableFileChooserComponents(true);
-        	showResultImagesCheckbox.setSelected(true);
         } else {
         	enableDirChooserComponents(true);
         	enableFileChooserComponents(false);
-        	showResultImagesCheckbox.setSelected(false);
         }
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -512,7 +539,7 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
         
         onlyProcessTiff = onlyProcessTiffCheckbox.isSelected();
         
-        showResultImages = showResultImagesCheckbox.isSelected();
+        doInteractiveVOIReview = interactiveVOIReviewCheckbox.isSelected();
         
         if (dirModeButton.isSelected()) {
 	        inputDir = dirChooserText.getText();
@@ -585,5 +612,233 @@ public class PlugInDialogNucleiDeformation extends JDialogStandaloneScriptablePl
     	fileChooserLabel.setEnabled(enable);
     	fileChooserText.setEnabled(enable);
     	fileChooserButton.setEnabled(enable);
+    }
+    
+    /**
+     * This method saves all VOIs for the active image to the default VOI directory for that image.
+     * @param img The image for which to save VOIs to disk.
+     */
+    private static final void saveAllVOIs(ModelImage img) {
+        String fileDir;
+        String tmpImageName;
+        String imageName;
+        String voiDir;
+        fileDir = img.getFileInfo(0).getFileDirectory();
+
+        // if the image is a dicom image, then base the new directory name
+        // on the actual filename, not the image name
+        if (img.isDicomImage()) {
+            tmpImageName = img.getFileInfo(0).getFileName();
+
+            final int index = tmpImageName.lastIndexOf(".");
+
+            if (index > 0) {
+                tmpImageName = tmpImageName.substring(0, index);
+            }
+
+            // now, get rid of any numbers at the end of the name (these
+            // are part of the dicom file name, but we only want the 'base'
+            // part of the name
+            int newIndex = tmpImageName.length();
+
+            for (int i = tmpImageName.length() - 1; i >= 0; i--) {
+                final char myChar = tmpImageName.charAt(i);
+
+                if (Character.isDigit(myChar)) {
+                    newIndex = i;
+                } else {
+                    break;
+                } // as soon as something is NOT a digit, leave loop
+            }
+
+            if (newIndex == 0) {
+
+                // give the base name a generic name
+                tmpImageName = new String("DICOM");
+            } else {
+                tmpImageName = tmpImageName.substring(0, newIndex);
+            }
+        } else {
+            tmpImageName = img.getImageName();
+        }
+
+        // get rid of any '^' and ',' which may exist in dicom images
+        imageName = tmpImageName.replace('^', '_');
+        imageName = imageName.replace(',', '_');
+
+        voiDir = new String(fileDir + File.separator + "defaultVOIs_" + imageName + File.separator);
+
+        try {
+        	ViewVOIVector VOIs = img.getVOIs();
+
+            final File voiFileDir = new File(voiDir);
+
+            if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+            } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+            } else { // voiFileDir does not exist
+                voiFileDir.mkdir();
+            }
+
+            int nVOI = VOIs.size();
+
+            for (int i = 0; i < nVOI; i++) {
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, img);
+                    fileVOI.writeXML(VOIs.VOIAt(i), true, true);
+                } else {
+                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, img);
+                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(), true);
+                }
+            }
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing all VOIs to " + voiDir + ": " + error);
+        }
+    }
+    
+    protected class InteractiveReviewDialog extends JDialog implements ActionListener, ItemListener {
+    	private ModelImage img;
+    	
+    	private boolean doneWithReviewFlag = false;
+    	
+    	private VOIVector origVOIs;
+    	
+    	private Vector<JCheckBox> voiCheckboxList = new Vector<JCheckBox>();
+    	
+    	public InteractiveReviewDialog(Frame parent, ModelImage img) {
+    		super(parent, false);
+    		
+    		this.img = img;
+    		
+    		origVOIs = img.getVOIsCopy();
+    		
+    		init();
+    	}
+    	
+    	private void init() {
+    		setTitle("Review nuclei sementations for image: " + img.getImageName());
+    		setForeground(Color.black);
+    		
+    		GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridwidth = 1;
+            gbc.gridheight = 1;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = 1;
+            gbc.insets = new Insets(3, 3, 3, 3);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+
+            JPanel mainPanel = new JPanel(new GridBagLayout());
+            mainPanel.setForeground(Color.black);
+            
+            JPanel voiPanel = new JPanel(new GridLayout(0,1));
+            voiPanel.setForeground(Color.black);
+            voiPanel.setBackground(Color.darkGray);
+            JScrollPane scrollPane = new JScrollPane(voiPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            for (VOI voi : img.getVOIs()) {
+            	JCheckBox checkbox = new JCheckBox(voi.getName(), true);
+            	checkbox.setForeground(voi.getColor());
+            	checkbox.setBackground(Color.darkGray);
+            	checkbox.addItemListener(this);
+            	voiCheckboxList.add(checkbox);
+            	voiPanel.add(checkbox);
+            }
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            mainPanel.add(new JLabel("Uncheck the box next to any nucleus segmentations that should be removed."), gbc);
+            gbc.gridy++;
+            mainPanel.add(scrollPane, gbc);
+            
+            JPanel buttonPanel = new JPanel(new GridLayout());
+            buttonPanel.setForeground(Color.black);
+            
+            JButton saveButton = new JButton("Save only checked VOIs");
+            saveButton.setFont(serif12B);
+            saveButton.addActionListener(this);
+            buttonPanel.add(saveButton);
+            
+            JButton discardButton = new JButton("Save all VOIs");
+            discardButton.setFont(serif12B);
+            discardButton.addActionListener(this);
+            buttonPanel.add(discardButton);
+            
+            getContentPane().add(mainPanel, BorderLayout.CENTER);
+            getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+            this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            this.addWindowListener(new WindowAdapter() {
+            	public void windowClosing(WindowEvent event) {
+            		// TODO: may need to make sure this isn't called when the other buttons are pressed
+            		int confirm = JOptionPane.showOptionDialog(getParent(),
+                            "Remove unchecked VOIs before saving to disk?",
+                            "Exit Confirmation", JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE, null, null, null);
+                    if (confirm == JOptionPane.YES_OPTION) {
+                    	for (int i = 0; i < voiCheckboxList.size(); i++) {
+            				if (!voiCheckboxList.elementAt(i).isSelected()) {
+            					for (VOI voi : img.getVOIs()) {
+            						if (voi.getID() == origVOIs.elementAt(i).getID()) {
+            							img.unregisterVOI(voi);
+            							break;
+            						}
+            					}
+            				}
+            			}
+            			setDoneWithReview(true);
+            			dispose();
+                    } else if (confirm == JOptionPane.NO_OPTION) {
+                    	img.setVOIs(origVOIs);
+                    	setDoneWithReview(true);
+                    	dispose();
+                    } else {
+                    	// do nothing
+                    }
+            	}
+            });
+            
+            pack();
+            //MipavUtil.centerOnScreen(this);
+            Point loc = this.getParent().getLocationOnScreen();
+            loc.x = loc.x - getSize().width;
+            setLocation(loc);
+            setVisible(true);
+            setResizable(true);
+            System.gc();
+    	}
+    	
+    	public void actionPerformed(final ActionEvent event) {
+    		final String command = event.getActionCommand();
+    		if (command.equals("Save only checked VOIs")) {
+    			for (int i = 0; i < voiCheckboxList.size(); i++) {
+    				if (!voiCheckboxList.elementAt(i).isSelected()) {
+    					for (VOI voi : img.getVOIs()) {
+    						if (voi.getID() == origVOIs.elementAt(i).getID()) {
+    							img.unregisterVOI(voi);
+    							break;
+    						}
+    					}
+    				}
+    			}
+    			setDoneWithReview(true);
+    			dispose();
+    		} else if (command.equals("Save all VOIs")) {
+    			img.setVOIs(origVOIs);
+    			setDoneWithReview(true);
+    			dispose();
+    		}
+    	}
+    	
+    	public void itemStateChanged(final ItemEvent event) {
+    		if (event.getItem() instanceof JCheckBox) {
+    			JCheckBox source = (JCheckBox)event.getItem();
+    			
+    		}
+    	}
+    	
+    	public synchronized void setDoneWithReview(boolean b) {
+    		doneWithReviewFlag = b;
+    	}
+    	
+    	public synchronized boolean isDoneWithReview() {
+    		return doneWithReviewFlag;
+    	}
     }
 }
