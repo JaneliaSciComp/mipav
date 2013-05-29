@@ -572,6 +572,12 @@ public class JDialogIsophoteCurvature extends JDialogScriptableBase implements A
         mainPanel.add(algoPanel.getPanel(), gbc);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
+        // Must be able to have negative and positive curvatures
+        if ((image.getType() == ModelStorageBase.UBYTE) || (image.getType() == ModelStorageBase.USHORT) ||
+            (image.getType() == ModelStorageBase.UINTEGER)) {
+            outputPanel.setOutputNewImage(true);
+            outputPanel.setOutputImageOptionsEnabled(false);
+        }
         gbc.gridy++;
         mainPanel.add(outputPanel, gbc);
 
