@@ -223,6 +223,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
                 menuBuilder.buildMenuItem("Inverse gradient", "antigradient2", 0, null, false),
+                menuBuilder.buildMenuItem("Isophote curvature", "IsophoteCurvature", 0, null, false),
                 menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
@@ -1066,6 +1067,7 @@ public class ViewMenuBar {
             }
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
+            menuBuilder.setMenuItemEnabled("Isophote curvature", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1202,6 +1204,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Hough transform", false);
             menuBuilder.setMenuItemEnabled("Inverse gradient", false);
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
+            menuBuilder.setMenuItemEnabled("Isophote curvature", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
