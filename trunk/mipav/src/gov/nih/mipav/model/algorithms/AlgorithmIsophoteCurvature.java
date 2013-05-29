@@ -125,6 +125,13 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
          double denom;
          double oxSq;
          double oySq;
+         double typeMin;
+         double typeMax;
+         double a;
+         double b;
+         double resultMin;
+         double resultMax;
+         ModelImage resultImage = null;
          
          
          if (srcImage.getNDims() == 2) {
@@ -203,6 +210,8 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
          operationType = yyOp;
          convolver.run();
          
+         resultMin = Double.MAX_VALUE;
+         resultMax = -Double.MAX_VALUE;
          for (i = 0; i < totalLength; i++) {
              if (entireImage || mask.get(i)) {
                  oxSq = oX[i] * oX[i];
@@ -214,7 +223,78 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
              else {
                  curvature[i] = buffer[i];
              }
+             if (curvature[i] < resultMin) {
+                 resultMin = curvature[i];
+             }
+             if (curvature[i] > resultMax) {
+                 resultMax = curvature[i];
+             }
          }
+         
+         if (destImage == null) {
+             resultImage = srcImage;
+         }
+         else {
+             resultImage = destImage;
+         }
+         
+         switch(resultImage.getType()) {
+             case ModelStorageBase.BOOLEAN:
+                 typeMin = 0;
+                 typeMax = 1;
+                 break;
+             case ModelStorageBase.BYTE:
+                 typeMin = -128;
+                 typeMax = 127;
+                 break;
+             case ModelStorageBase.UBYTE:
+                 typeMin = 0;
+                 typeMax = 255;
+                 break;
+             case ModelStorageBase.SHORT:
+                 typeMin = -32768;
+                 typeMax = 32767;
+                 break;
+             case ModelStorageBase.USHORT:
+                 typeMin = 0;
+                 typeMax = 65535;
+                 break;
+             case ModelStorageBase.INTEGER:
+                 typeMin = Integer.MIN_VALUE;
+                 typeMax = Integer.MAX_VALUE;
+                 break;
+             case ModelStorageBase.UINTEGER:
+                 typeMin = 0;
+                 typeMax = 4294967295L;
+                 break;
+             case ModelStorageBase.LONG:
+                 typeMin = Long.MIN_VALUE;
+                 typeMax = Long.MAX_VALUE;
+                 break;
+             case ModelStorageBase.FLOAT:
+                 typeMin = -Float.MAX_VALUE;
+                 typeMax = Float.MAX_VALUE;
+                 break;
+             case ModelStorageBase.DOUBLE:
+                 typeMin = -Double.MAX_VALUE;
+                 typeMax = Double.MAX_VALUE;
+                 break;
+             default:
+                 typeMin = -Double.MAX_VALUE;
+                 typeMax = Double.MAX_VALUE;
+         }
+         
+         if ((resultMin < typeMin) || (resultMax > typeMax)) {
+             // typeMax = a * resultMax + b;
+             // typeMin = a * resultMin + b;
+             a = (typeMax - typeMin)/(resultMax - resultMin);
+             b = typeMax - a * resultMax;
+             Preferences.debug("Rescaling to " + a + " * curvature + " + b + "\n", Preferences.DEBUG_ALGORITHM);
+             for (i = 0; i < totalLength; i++) {
+                 curvature[i] = a * curvature[i] + b;
+             }
+         }
+
          
          if (destImage != null) {
              try {
