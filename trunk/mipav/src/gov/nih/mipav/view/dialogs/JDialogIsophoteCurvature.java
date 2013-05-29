@@ -579,7 +579,7 @@ public class JDialogIsophoteCurvature extends JDialogScriptableBase implements A
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setResizable(true);
-        // setVisible(true);
+        setVisible(true);
 
         System.gc();
     }
