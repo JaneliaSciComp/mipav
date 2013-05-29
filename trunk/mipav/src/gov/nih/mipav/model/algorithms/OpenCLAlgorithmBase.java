@@ -282,8 +282,14 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		//System.out.println("Number of platforms: "+numPlatforms[0]);
 		cl_platform_id platforms[] = new cl_platform_id[numPlatforms[0]];
 		clGetPlatformIDs(platforms.length, platforms, null);
-        cl_platform_id platform = platforms[platformIndex];
-		
+        
+		cl_platform_id platform;
+		try {
+			platform = platforms[platformIndex];
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.err.println("OpenCL processing enabled, but no supported platforms are currently present.  This may occur if running MIPAV via Remote Desktop.");
+			return false;
+		}
 
 
         // Check if the platform supports OpenCL 1.2
