@@ -80,6 +80,9 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
         GxData = null;
         GyData = null;
         GzData = null;
+        GxxData = null;
+        GxyData = null;
+        GyyData = null;
         kExtents = null;
         sigmas = null;
         srcImage = null;
@@ -384,7 +387,7 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
 
         GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
 
-        Gy.calc(true);
+        Gy.calc(false);
         
         derivOrder[0] = 2;
         derivOrder[1] = 0;
@@ -469,7 +472,7 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
 
         GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
 
-        Gy.calc(true);
+        Gy.calc(false);
 
         derivOrder[0] = 0;
         derivOrder[1] = 0;
@@ -478,7 +481,7 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
 
         GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
 
-        Gz.calc(true);
+        Gz.calc(false);
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm){
