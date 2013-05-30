@@ -128,7 +128,6 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
          double typeMin;
          double typeMax;
          double a;
-         double b;
          double resultMin;
          double resultMax;
          ModelImage resultImage = null;
@@ -214,11 +213,16 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
          resultMax = -Double.MAX_VALUE;
          for (i = 0; i < totalLength; i++) {
              if (entireImage || mask.get(i)) {
-                 oxSq = oX[i] * oX[i];
-                 oySq = oY[i] * oY[i];
-                 num = 2.0 * oX[i] * oY[i] * oXY[i] - oxSq * oYY[i] - oySq * oXX[i];
-                 denom = Math.pow((oxSq + oySq), 1.5);
-                 curvature[i] = num/denom;
+                 if ((oX[i] != 0.0) || (oY[i] != 0.0)) {
+                     oxSq = oX[i] * oX[i];
+                     oySq = oY[i] * oY[i];
+                     num = 2.0 * oX[i] * oY[i] * oXY[i] - oxSq * oYY[i] - oySq * oXX[i];
+                     denom = Math.pow((oxSq + oySq), 1.5);
+                     curvature[i] = num/denom;
+                 }
+                 else {
+                     curvature[i] = 0.0;
+                 }
              }
              else {
                  curvature[i] = buffer[i];
@@ -285,13 +289,16 @@ public class AlgorithmIsophoteCurvature extends AlgorithmBase implements Algorit
          }
          
          if ((resultMin < typeMin) || (resultMax > typeMax)) {
-             // typeMax = a * resultMax + b;
-             // typeMin = a * resultMin + b;
-             a = (typeMax - typeMin)/(resultMax - resultMin);
-             b = typeMax - a * resultMax;
-             Preferences.debug("Rescaling to " + a + " * curvature + " + b + "\n", Preferences.DEBUG_ALGORITHM);
+             // Don't shift offset
+             if (resultMin >= 0) {
+                 a = typeMax/resultMax;
+             }
+             else {
+                 a = Math.max(typeMax/resultMax, typeMin/resultMin);
+             }
+             Preferences.debug("Rescaling to " + a + " * curvature + " + "\n", Preferences.DEBUG_ALGORITHM);
              for (i = 0; i < totalLength; i++) {
-                 curvature[i] = a * curvature[i] + b;
+                 curvature[i] = a * curvature[i];
              }
          }
 
