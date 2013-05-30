@@ -79,7 +79,7 @@ public class JDialogIsophoteCurvature extends JDialogScriptableBase implements A
     public JDialogIsophoteCurvature() { }
 
     /**
-     * Creates a new JDialogLaplacian object.
+     * Creates a new JDialogIsophoteCurvature object.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
