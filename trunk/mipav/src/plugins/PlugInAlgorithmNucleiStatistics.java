@@ -20,7 +20,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
   //~ Instance fields ------------------------------------------------------------------------------------------------
     
     /** The list of files to try to process with the algorithm. */
-    private File[] inputFiles;
+    private Vector<File> inputFiles;
     
     /** A count of the number of images processed. */
     private int numProcessedImages = 0;
@@ -54,7 +54,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @param minSize
      * @param maxSize
      */
-    public PlugInAlgorithmNucleiStatistics(File[] inputFiles) {
+    public PlugInAlgorithmNucleiStatistics(Vector<File> inputFiles) {
         super(null, null);
         this.inputFiles = inputFiles;
     }
@@ -73,7 +73,11 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * Starts the algorithm.
      */
     public void runAlgorithm() {
+    	int progressPerImg = 100 / inputFiles.size();
+    	int curProgress = 0;
+    	
         for (File inFile : inputFiles) {
+        	fireProgressStateChanged("Opening image " + inFile.getName() + " ...");
         	srcImage = openFile(inFile);
 
 	        if (srcImage == null) {
@@ -81,11 +85,20 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
 	            continue;
 	        }
 	        
+	        fireProgressStateChanged("Loading nuclei segmentations for " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 3;
+        	fireProgressStateChanged(curProgress);
 	        loadAllVOIs(srcImage, false);
 
 	        // run statistics generator on VOIs in image and output to file on disk
+	        fireProgressStateChanged("Calculating statistics for " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 3;
+        	fireProgressStateChanged(curProgress);
 	        outputStatistics(srcImage);
 	        
+	        curProgress += progressPerImg / 3;
+        	fireProgressStateChanged(curProgress);
+        	
 	        // TODO: calc overall stats
         	
         	// TODO: gen heatmap image for boundary curvature
@@ -114,15 +127,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     private static final ModelImage openFile(File file) {
     	ModelImage img = null;
     	
-    	if (file.isDirectory()) {
-    		System.err.println("Skipping directory:\t" + file.getName());
-    		return null;
-    	} else if (file.getName().startsWith(".")) {
-    		System.err.println("Skipping file that starts with .:\t" + file.getName());
-    		return null;
-    	} else {
-    		System.err.println("Trying to open file:\t" + file.getName());
-    	}
+		System.err.println("Trying to open file:\t" + file.getName());
     	
     	FileIO io = new FileIO();
     	try {
@@ -255,7 +260,6 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     }
     
     private void outputStatistics(ModelImage img) {
-    	// TODO: run statistics generator on VOIs in image and output to file on disk
     	AlgorithmVOIProps calculator = new AlgorithmVOIProps(img, AlgorithmVOIProps.PROCESS_PER_CONTOUR, RangeType.NO_RANGE, img.getVOIs());
     	calculator.setSelectedStatistics(checkList);
     	calculator.setShowTotals(false);

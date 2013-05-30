@@ -8,6 +8,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     
     private String inputDir;
     
-    private File[] inputFiles;
+    private Vector<File> inputFiles = new Vector<File>();
     
     private JCheckBox onlyProcessTiffCheckbox;
     
@@ -193,7 +194,13 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
             	Preferences.setImageDirectory(new File(inputDir));
             }
             
-            String message = "Finished calculating deformation statistics for " + nucleiDeformAlgo.getNumProcessedImages() + " image(s).";
+            String message = "<html>";
+	        message += "Finished calculating deformation statistics for " + nucleiDeformAlgo.getNumProcessedImages() + " image(s).";
+	        message += "<br/>";
+	        message += "The statistics have been saved under:";
+	        message += "<br/>";
+	        message += inputFiles.elementAt(0).getParent() + File.separator + "statistics";
+	        message += "</html>";
             MipavUtil.displayInfo(message);
 
             //dispose();
@@ -214,23 +221,37 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     	inputDir = dir;
     	
     	File dirFile = new File(inputDir);
-        if (!dirFile.exists() || !dirFile.isDirectory()) {
+        if (!dirFile.exists()) {
+        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+        } else if (!dirFile.isDirectory()) {
         	MipavUtil.displayError("Please select a directory of images to process.");
         } else {
+        	File[] dirListing;
         	if (onlyProcessTiff) {
-        		inputFiles = dirFile.listFiles(tiffFilter);
+        		dirListing = dirFile.listFiles(tiffFilter);
         	} else {
-        		inputFiles = dirFile.listFiles();
+        		dirListing = dirFile.listFiles();
+        	}
+        	for (File file : dirListing) {
+        		if (file.isDirectory()) {
+            		System.err.println("Skipping directory:\t" + file.getName());
+            	} else if (file.getName().startsWith(".")) {
+            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+            	} else {
+            		inputFiles.add(file);
+            	}
         	}
         }
     }
     
     public void setInputFile(String s) {
     	File file = new File(s);
-    	if (!file.exists() || !file.isFile()) {
+    	if (!file.exists()) {
+    		MipavUtil.displayError("The file selected does not exist.  Please choose another.");
+    	} else if (!file.isFile()) {
     		MipavUtil.displayError("Please select an image file to process.");
     	} else {
-    		inputFiles = new File[] {file};
+    		inputFiles.add(file);
     	}
     }
    
@@ -249,7 +270,8 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             nucleiDeformAlgo.addListener(this);
-            createProgressBar(inputFiles[0].getParentFile().getName(), " ...", nucleiDeformAlgo);
+            createProgressBar(inputFiles.elementAt(0).getParentFile().getName(), " ...", nucleiDeformAlgo);
+            progressBar.setVisible(true);
 
             setVisible(false); // Hide dialog
 
@@ -311,7 +333,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Nuclei Statistics 05/28/2013");
+        setTitle("Nuclei Statistics 05/30/2013");
         //int length = image.getExtents()[0] * image.getExtents()[1];
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -424,23 +446,39 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
         if (dirModeButton.isSelected()) {
 	        inputDir = dirChooserText.getText();
 	        File dirFile = new File(inputDir);
-	        if (!dirFile.exists() || !dirFile.isDirectory()) {
+	        if (!dirFile.exists()) {
+	        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+	        	return false;
+	        } else if (!dirFile.isDirectory()) {
 	        	MipavUtil.displayError("Please select a directory of images to process.");
 	        	return false;
 	        } else {
+	        	File[] dirListing;
 	        	if (onlyProcessTiff) {
-	        		inputFiles = dirFile.listFiles(tiffFilter);
+	        		dirListing = dirFile.listFiles(tiffFilter);
 	        	} else {
-	        		inputFiles = dirFile.listFiles();
+	        		dirListing = dirFile.listFiles();
+	        	}
+	        	for (File file : dirListing) {
+	        		if (file.isDirectory()) {
+	            		System.err.println("Skipping directory:\t" + file.getName());
+	            	} else if (file.getName().startsWith(".")) {
+	            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+	            	} else {
+	            		inputFiles.add(file);
+	            	}
 	        	}
 	        }
         } else {
         	File file = new File(fileChooserText.getText());
-        	if (!file.exists() || !file.isFile()) {
+        	if (!file.exists()) {
+        		MipavUtil.displayError("The file selected does not exist.  Please choose another.");
+        		return false;
+        	} else if (!file.isFile()) {
         		MipavUtil.displayError("Please select an image file to process.");
         		return false;
         	} else {
-        		inputFiles = new File[] {file};
+        		inputFiles.add(file);
         	}
         }
         

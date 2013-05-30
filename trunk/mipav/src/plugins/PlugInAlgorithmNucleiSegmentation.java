@@ -11,12 +11,11 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
-*
-* @version  May 9, 2013
-* @author   William Gandler
-* @see      AlgorithmBase
-* PlugInAlgorithmNucleiSegmentation is used to identify nuclei and output statistics for each nucleus 
-*/
+ * PlugInAlgorithmNucleiSegmentation is used to identify nuclei.
+ * @version  May 9, 2013
+ * @author   William Gandler
+ * @see      AlgorithmBase
+ */
 public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
   //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -38,7 +37,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
     private int maxSize = 1000000;
     
     /** The list of files to try to process with the algorithm. */
-    private File[] inputFiles;
+    private Vector<File> inputFiles;
     
     /** List of result images. */
     private static final Vector<ModelImage> resultImages = new Vector<ModelImage>();
@@ -49,7 +48,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
      * @param minSize
      * @param maxSize
      */
-    public PlugInAlgorithmNucleiSegmentation(File[] inputFiles, int minSize, int maxSize) {
+    public PlugInAlgorithmNucleiSegmentation(Vector<File> inputFiles, int minSize, int maxSize) {
         super(null, null);
         this.minSize = minSize;
         this.maxSize = maxSize;
@@ -135,7 +134,11 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
         double stdDevEllipse;
         int numVOIsDeleted;
         
+        int progressPerImg = 100 / inputFiles.size();
+    	int curProgress = 0;
+        
         for (File inFile : inputFiles) {
+        	fireProgressStateChanged("Opening image " + inFile.getName() + " ...");
         	srcImage = openFile(inFile);
 
 	        if (srcImage == null) {
@@ -165,10 +168,9 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            displayError("Algorithm NucleiSegmentation reports: out of memory: " + inFile.getName());
 	            continue;
 	        }
-	
-	        fireProgressStateChanged("Processing image ...");
-	
-	        fireProgressStateChanged("Creating  image");
+
+	        //fireProgressStateChanged("Processing image ...");
+	        //fireProgressStateChanged("Creating  image");
 	        grayImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
 	        fileInfo = grayImage.getFileInfo()[0];
 	        fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
@@ -185,9 +187,11 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        }
 	
 	        // Segment into 2 values
-	        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on image");
-	        
-	        fireProgressStateChanged(2);
+	        fireProgressStateChanged("Segmenting image " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 5;
+        	fireProgressStateChanged(curProgress);
+	        //fireProgressStateChanged("Performing FuzzyCMeans Segmentation on image");
+	        //fireProgressStateChanged(2);
 	
 	        nClasses = 2;
 	        nPyramid = 4;
@@ -219,8 +223,8 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        fcmAlgo = null;
 	
 	        // Now convert the min = 1 and max = 2 to min = 0 and and max = 1
-	        fireProgressStateChanged("Setting segmented image values to 0 and 1");
-	        fireProgressStateChanged(6);
+	        //fireProgressStateChanged("Setting segmented image values to 0 and 1");
+	        //fireProgressStateChanged(6);
 	
 	        byteBuffer = new byte[length];
 	        try {
@@ -247,8 +251,12 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        }
 	        
 	        // Remove all inappropriate holes in nuclei
-	        fireProgressStateChanged("Removing holes from nuclei");
-	        fireProgressStateChanged(7);
+	        fireProgressStateChanged("Cleaning up nuclei segmentations for " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 5;
+        	fireProgressStateChanged(curProgress);
+	        
+	        //fireProgressStateChanged("Removing holes from nuclei");
+	        //fireProgressStateChanged(7);
 	
 	        fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
 	                                                    wholeImage);
@@ -302,8 +310,8 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            continue;
 	        }
 	        
-	        fireProgressStateChanged("IDing objects in segmented image");
-	        fireProgressStateChanged(15);
+	        //fireProgressStateChanged("IDing objects in segmented image");
+	        //fireProgressStateChanged(15);
 	        
 	        try {
 	            grayImage.importData(0, byteBuffer, true);
@@ -315,8 +323,8 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            continue;
 	        }
 	
-	        fireProgressStateChanged("IDing objects in segmented image");
-	        fireProgressStateChanged(15);
+	        //fireProgressStateChanged("IDing objects in segmented image");
+	        //fireProgressStateChanged(15);
 	        
 	        numPruningPixels = 0;
 	        edgingType = 0;   
@@ -346,9 +354,13 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            displayError("Error on grayImage.exportData: " + inFile.getName());
 	            continue;
 	        }
-	
-	        fireProgressStateChanged("Removing objects touching edges");
-	        fireProgressStateChanged(22);
+
+	        fireProgressStateChanged("Removing nuclei touching edges from " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 5;
+        	fireProgressStateChanged(curProgress);
+	        
+	        //fireProgressStateChanged("Removing objects touching edges");
+	        //fireProgressStateChanged(22);
 	
 	        removeID = new boolean[numObjects];
 	        for (id = 1; id <= numObjects; id++) {
@@ -412,9 +424,14 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            displayError("Error on grayImage.importData: " + inFile.getName());
 	            continue;
 	        }
-	
-	        fireProgressStateChanged("Extracting VOIs from segmented image");
-	        fireProgressStateChanged(70);
+	        
+	        fireProgressStateChanged("Extracting VOIs from segmentation of " + inFile.getName() + " ...");
+	        curProgress += progressPerImg / 5;
+        	fireProgressStateChanged(curProgress);
+	        
+	        //fireProgressStateChanged("Extracting VOIs from segmented image");
+	        //fireProgressStateChanged(70);
+	        
 	        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
 	        //algoVOIExtraction.setColorTable(colorTable);
 	        //algoVOIExtraction.setNameTable(nameTable);
@@ -458,8 +475,6 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            }
 	        }
 	        
-	        // TODO: allow for the user to delete other nuclei that incorrectly segment nuclei before saving
-	        
 	        nVOIs = nVOIs - numVOIsDeleted;
 	        VOIs.clear();
 	        VOIs = null;
@@ -472,6 +487,9 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	            VOIs.VOIAt(i).setDisplayMode(VOI.CONTOUR);
 	            ((VOIContour)(VOIs.VOIAt(i).getCurves().elementAt(0))).setDoGeometricCenterLabel(true);
 	        }
+	        
+	        curProgress += progressPerImg / 5;
+        	fireProgressStateChanged(curProgress);
         }
         
         if (threadStopped) {
@@ -491,15 +509,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
     private static final ModelImage openFile(File file) {
     	ModelImage img = null;
     	
-    	if (file.isDirectory()) {
-    		System.err.println("Skipping directory:\t" + file.getName());
-    		return null;
-    	} else if (file.getName().startsWith(".")) {
-    		System.err.println("Skipping file that starts with .:\t" + file.getName());
-    		return null;
-    	} else {
-    		System.err.println("Trying to open file:\t" + file.getName());
-    	}
+    	System.err.println("Trying to open file:\t" + file.getName());
     	
     	FileIO io = new FileIO();
     	try {
