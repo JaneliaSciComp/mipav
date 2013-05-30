@@ -178,6 +178,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Boundary attenuation", "BoundaryAttenuation", 0, null, false),
                         menuBuilder.buildMenuItem("Coherence-enhancing diffusion", "CoherDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0, null, false),
+                        menuBuilder.makeMenu("Curvature", false, new JMenuItem[] {
+                                menuBuilder.buildMenuItem("Isophote curvature", "IsophoteCurvature", 0, null, false),}),
                         menuBuilder.buildMenuItem("Deconvolution", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
@@ -223,7 +225,6 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
                 menuBuilder.buildMenuItem("Inverse gradient", "antigradient2", 0, null, false),
-                menuBuilder.buildMenuItem("Isophote curvature", "IsophoteCurvature", 0, null, false),
                 menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
