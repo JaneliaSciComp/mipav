@@ -39,7 +39,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     
     private String inputDir;
     
-    private File[] inputFiles;
+    private Vector<File> inputFiles = new Vector<File>();
     
     private JCheckBox onlyProcessTiffCheckbox;
     
@@ -223,6 +223,16 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 	        	// save all VOIs to disk for this image
 		        saveAllVOIs(img);
 	        }
+	        
+	        String message = "<html>";
+	        message += "Finished segmenting nuclei for " + nucleiDeformAlgo.getResultImages().size() + " image(s).";
+	        message += "<br/>";
+	        message += "Nuclei VOIs have been saved for each image under:";
+	        message += "<br/>";
+	        message += inputFiles.elementAt(0).getParent();
+	        message += "</html>";
+	        		
+            MipavUtil.displayInfo(message);
         	
             if (algorithm.isCompleted()) {
                 insertScriptLine();
@@ -271,23 +281,37 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     	inputDir = dir;
     	
     	File dirFile = new File(inputDir);
-        if (!dirFile.exists() || !dirFile.isDirectory()) {
+        if (!dirFile.exists()) {
+        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+        } else if (!dirFile.isDirectory()) {
         	MipavUtil.displayError("Please select a directory of images to process.");
         } else {
+        	File[] dirListing;
         	if (onlyProcessTiff) {
-        		inputFiles = dirFile.listFiles(tiffFilter);
+        		dirListing = dirFile.listFiles(tiffFilter);
         	} else {
-        		inputFiles = dirFile.listFiles();
+        		dirListing = dirFile.listFiles();
+        	}
+        	for (File file : dirListing) {
+        		if (file.isDirectory()) {
+            		System.err.println("Skipping directory:\t" + file.getName());
+            	} else if (file.getName().startsWith(".")) {
+            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+            	} else {
+            		inputFiles.add(file);
+            	}
         	}
         }
     }
     
     public void setInputFile(String s) {
     	File file = new File(s);
-    	if (!file.exists() || !file.isFile()) {
+    	if (!file.exists()) {
+    		MipavUtil.displayError("The file selected does not exist.  Please choose another.");
+    	} else if (!file.isFile()) {
     		MipavUtil.displayError("Please select an image file to process.");
     	} else {
-    		inputFiles = new File[] {file};
+    		inputFiles.add(file);
     	}
     }
     
@@ -310,7 +334,8 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             nucleiDeformAlgo.addListener(this);
-            createProgressBar(inputFiles[0].getParentFile().getName(), " ...", nucleiDeformAlgo);
+            createProgressBar(inputFiles.elementAt(0).getParentFile().getName(), " ...", nucleiDeformAlgo);
+            progressBar.setVisible(true);
 
             setVisible(false); // Hide dialog
 
@@ -386,7 +411,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         JLabel minSizeLabel;
         JLabel maxSizeLabel;
         setForeground(Color.black);
-        setTitle("Nuclei Segmentation 05/28/2013");
+        setTitle("Nuclei Segmentation 05/30/2013");
         //int length = image.getExtents()[0] * image.getExtents()[1];
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -544,23 +569,39 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         if (dirModeButton.isSelected()) {
 	        inputDir = dirChooserText.getText();
 	        File dirFile = new File(inputDir);
-	        if (!dirFile.exists() || !dirFile.isDirectory()) {
+	        if (!dirFile.exists()) {
+	        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+	        	return false;
+	        } else if (!dirFile.isDirectory()) {
 	        	MipavUtil.displayError("Please select a directory of images to process.");
 	        	return false;
 	        } else {
+	        	File[] dirListing;
 	        	if (onlyProcessTiff) {
-	        		inputFiles = dirFile.listFiles(tiffFilter);
+	        		dirListing = dirFile.listFiles(tiffFilter);
 	        	} else {
-	        		inputFiles = dirFile.listFiles();
+	        		dirListing = dirFile.listFiles();
+	        	}
+	        	for (File file : dirListing) {
+	        		if (file.isDirectory()) {
+	            		System.err.println("Skipping directory:\t" + file.getName());
+	            	} else if (file.getName().startsWith(".")) {
+	            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+	            	} else {
+	            		inputFiles.add(file);
+	            	}
 	        	}
 	        }
         } else {
         	File file = new File(fileChooserText.getText());
-        	if (!file.exists() || !file.isFile()) {
+        	if (!file.exists()) {
+        		MipavUtil.displayError("The file selected does not exist.  Please choose another.");
+        		return false;
+        	} else if (!file.isFile()) {
         		MipavUtil.displayError("Please select an image file to process.");
         		return false;
         	} else {
-        		inputFiles = new File[] {file};
+        		inputFiles.add(file);
         	}
         }
         
@@ -766,7 +807,6 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
             this.addWindowListener(new WindowAdapter() {
             	public void windowClosing(WindowEvent event) {
-            		// TODO: may need to make sure this isn't called when the other buttons are pressed
             		int confirm = JOptionPane.showOptionDialog(getParent(),
                             "Remove unchecked VOIs before saving to disk?",
                             "Exit Confirmation", JOptionPane.YES_NO_CANCEL_OPTION,
