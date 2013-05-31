@@ -1086,10 +1086,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return -1;
         }
         
-        kernel = AlgorithmMorphology2D.CONNECTED8;
+        kernel = AlgorithmMorphology2D.CONNECTED4;
         circleDiameter = 1.0f;
         method = AlgorithmMorphology2D.OPEN;
-        itersDilation = 2;
+        itersDilation = 1;
         itersErosion = 1;
         numPruningPixels = 0;
         edgingType = 0;
