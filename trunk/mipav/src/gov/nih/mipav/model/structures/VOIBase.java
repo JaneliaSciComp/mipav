@@ -1182,6 +1182,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         boolean positiveSet;
         boolean negativeSet;
         boolean initial;
+        int consecutiveNegative;
         if (smooth) {
             nPoints = size();
             xPoints = new float[nPoints + 5];
@@ -1314,6 +1315,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         negativeSet = false;
         initial = true;
         numberOfIndentations[0] = 0;
+        consecutiveNegative = 0;
         for (i = 0; i < graphPoints; i++) {
            if ((curv[i] >= positiveHysteresisLevel) && (negativeSet || initial)) {
                positiveSet = true;
@@ -1324,7 +1326,17 @@ public abstract class VOIBase extends Vector<Vector3f> {
                negativeSet = true;
                positiveSet = false;
                initial = false;
-               numberOfIndentations[0]++;
+               consecutiveNegative = 1;
+           }
+           else if ((curv[i] <= negativeHysteresisLevel) && (consecutiveNegative >= 1)) {
+               consecutiveNegative++;
+               if (consecutiveNegative >= 2) {
+                   numberOfIndentations[0]++;
+                   consecutiveNegative = 0;
+               }
+           }
+           else {
+               consecutiveNegative = 0;
            }
         }
 
