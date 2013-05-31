@@ -200,28 +200,30 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 
         if (algorithm instanceof PlugInAlgorithmNucleiSegmentation) {
 	        for (ModelImage img : nucleiDeformAlgo.getResultImages()) {
-	        	if (doInteractiveVOIReview) {
-	        		boolean origVOINameSetting = Preferences.is(Preferences.PREF_SHOW_VOI_NAME);
-	        		ViewUserInterface.getReference().setUseVOIName(true);
-	        		
-	        		// display the image and it's VOIs
-	        		ViewJFrameImage frame = new ViewJFrameImage(img);
-	        		frame.setVisible(true);
-		        	
-	        		InteractiveReviewDialog dialog = new InteractiveReviewDialog(frame, img);
-	        		
-	        		// keep waiting until the user closes the dialog
-	        		while (!dialog.isDoneWithReview()) {
-	        			// do nothing
-	        		}
-	        		
-	        		frame.setVisible(false);
-	        		
-	        		ViewUserInterface.getReference().setUseVOIName(origVOINameSetting);
-	        	}
-	        	
-	        	// save all VOIs to disk for this image
-		        saveAllVOIs(img);
+	            if (img.getFileInfo() != null) {
+    	        	if (doInteractiveVOIReview) {
+    	        		boolean origVOINameSetting = Preferences.is(Preferences.PREF_SHOW_VOI_NAME);
+    	        		ViewUserInterface.getReference().setUseVOIName(true);
+    	        		
+    	        		// display the image and it's VOIs
+    	        		ViewJFrameImage frame = new ViewJFrameImage(img);
+    	        		frame.setVisible(true);
+    		        	
+    	        		InteractiveReviewDialog dialog = new InteractiveReviewDialog(frame, img);
+    	        		
+    	        		// keep waiting until the user closes the dialog
+    	        		while (!dialog.isDoneWithReview()) {
+    	        			// do nothing
+    	        		}
+    	        		
+    	        		frame.setVisible(false);
+    	        		
+    	        		ViewUserInterface.getReference().setUseVOIName(origVOINameSetting);
+    	        	}
+    	        	
+    	        	// save all VOIs to disk for this image
+    		        saveAllVOIs(img);
+	            } // if (img.getFileInfo() != null)
 	        }
 	        
 	        String message = "<html>";
