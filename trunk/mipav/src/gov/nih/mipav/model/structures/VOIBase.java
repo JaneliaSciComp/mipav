@@ -1410,7 +1410,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 kStep.copy(kEnd);
             }
-            kDiff.copy( kStep ).sub( kStart );
+    
             double subDistance = MipavMath.distance( kStep, kStart, kImage.getResolutions(0) );          
 
             int indexZ = Math.min(Math.round(kStep.Z), zD - 1);
@@ -1419,16 +1419,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
             
             int index = (indexZ * yD * xD) + (indexY * xD) + indexX;
 
-            positions.add( new Vector3f( indexX, indexY, (float)(totalDistance + subDistance))) ;
-            if ( kImage.isColorImage() )
-            {
-                colors.add( new ColorRGB(kImage.getFloat(index * 4 + 1),
-                        kImage.getFloat(index * 4 + 2),
-                        kImage.getFloat(index * 4 + 3) ) );
-            }
-            else
-            {
-                colors.add( new ColorRGB(kImage.getFloat(index), 0, 0 ) );
+            if ((positions.size() == 0) || (subDistance > 0.0)) {
+                positions.add( new Vector3f( indexX, indexY, (float)(totalDistance + subDistance))) ;
+                if ( kImage.isColorImage() )
+                {
+                    colors.add( new ColorRGB(kImage.getFloat(index * 4 + 1),
+                            kImage.getFloat(index * 4 + 2),
+                            kImage.getFloat(index * 4 + 3) ) );
+                }
+                else
+                {
+                    colors.add( new ColorRGB(kImage.getFloat(index), 0, 0 ) );
+                }
             }
             kStep.X += xInc;
             kStep.Y += yInc;
