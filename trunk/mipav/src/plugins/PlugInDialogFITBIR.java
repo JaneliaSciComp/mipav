@@ -15,6 +15,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -24,6 +26,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.DefaultTableCellRenderer;
+
+import org.bouncycastle.util.encoders.Hex;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
@@ -831,6 +835,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             + ioe.getMessage());
                     continue;
                 }
+                
+                // TODO: calculate hash of the zip file and then put it into the image file hash code CDE (if it exists in the struct)
+                try {
+					String hashCode = computeFileHash(zipFilePath);
+				} catch (IOException e) {
+					e.printStackTrace();
+                    MipavUtil.displayError("Unable calculate hash code of ZIP file:\n" + e.getMessage());
+                    continue;
+				}
 
                 DataStruct curStruct = null;
                 for (DataStruct ds : dataStructures) {
@@ -1274,6 +1287,45 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         // Complete the ZIP file
         out.close();
+    }
+    
+    /**
+     * Calculates the SHA-256 hash of a file.
+     * @param filePath The full path of the file to calculate the hash of.
+     * @return The SHA-256 digest of the given file, or an empty string if the SHA-256 algorithm was not found.
+     * @throws IOException If there is a problem reading the file specified.
+     */
+    private String computeFileHash(String filePath) throws IOException {
+    	String hashCode;
+		try {
+			MessageDigest shaDigest = MessageDigest.getInstance("SHA-256");
+			
+			RandomAccessFile file = new RandomAccessFile(filePath, "r");
+			
+			// 64k buffer
+	    	int buffSize = 65536;
+	    	
+	    	byte[] buffer = new byte[buffSize];
+
+	        long read = 0;
+	        long offset = file.length();
+	        int size;
+	        while (read < offset) {
+	                size = (int) (((offset - read) >= buffSize) ? buffSize : (offset - read));
+	                file.read(buffer, 0, size);
+	                shaDigest.update(buffer, 0, size);
+	                read += size;
+	        }
+	        file.close();
+	        
+	        hashCode = new String(Hex.encode(shaDigest.digest()));
+	    	
+	    	return hashCode;
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			MipavUtil.displayError("Unable to generate file hash: SHA-256 algorithm not found.");
+			return new String();
+		}
     }
 
     /**
