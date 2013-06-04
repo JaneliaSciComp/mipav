@@ -506,13 +506,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         // this' logging pane.
         
         if (isRunInSeparateThread()) {
-
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (calculator.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
             calculator.run();
         }
     }
@@ -524,11 +522,15 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         // make sure all voi listeners are removed from the image's list, if that isn't done problems happen when
         // the image is serialized (e.g. if it's cloned)
-        for (int i = 0; i < image.getVOIs().size(); i++) {
-            image.getVOIs().VOIAt(i).removeVOIListener(highlighter);
+        if(image != null) {
+        	if(image.getVOIs() != null) {
+		    	for (int i = 0; i < image.getVOIs().size(); i++) {
+		            image.getVOIs().VOIAt(i).removeVOIListener(highlighter);
+		        }
+		    	
+		    	image.getVOIs().removeVectorListener(this);
+        	}
         }
-
-        image.getVOIs().removeVectorListener(this);
 
         dispose();
     }
@@ -759,6 +761,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
         }
         checkBoxPanel.isOpenContour(!allClosed); //if all the contours are not closed, then some statistics need to be disabled
+        
         
         outputOptionsPanel = new JPanelStatisticsOptions();
 
@@ -2068,7 +2071,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 				} else {
 					showTotals.setEnabled(true);
 				}
-				
 
 		        checkBoxPanel.setSliceCount(num);
 		        
