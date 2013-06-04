@@ -60,7 +60,15 @@ public class JDialogReorient extends JDialogScriptableBase
     private     ModelImage              image;                // source image
     private     ModelImage              template = null;      // template image
     private     ModelImage              resultImage = null;   // result image
-		
+	
+    public static final int AXIAL_INDEX = 0;
+    
+    public static final int CORONAL_INDEX = 1;
+    
+    public static final int SAGITTAL_INDEX = 2;
+    
+    public static final int USER_INDEX = 3;
+    
 	// parameters
 	private     String[]    orientTypes 	= 		{"Axial",
 													 "Coronal",
@@ -245,20 +253,20 @@ public class JDialogReorient extends JDialogScriptableBase
         if ((newOr[0] == FileInfoBase.ORI_R2L_TYPE) && (newOr[1] == FileInfoBase.ORI_A2P_TYPE) &&
                 (newOr[2] == FileInfoBase.ORI_I2S_TYPE)) {
             isDicom = true;
-            newOrientBox.setSelectedIndex(0);
+            newOrientBox.setSelectedIndex(AXIAL_INDEX);
         }
         else if ((newOr[0] == FileInfoBase.ORI_R2L_TYPE) && (newOr[1] == FileInfoBase.ORI_S2I_TYPE) &&
                      (newOr[2] == FileInfoBase.ORI_A2P_TYPE)) {
             isDicom = true;
-            newOrientBox.setSelectedIndex(1);
+            newOrientBox.setSelectedIndex(CORONAL_INDEX);
         }
         else if ((newOr[0] == FileInfoBase.ORI_A2P_TYPE) && (newOr[1] == FileInfoBase.ORI_S2I_TYPE) &&
                  (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
             isDicom = true;
-            newOrientBox.setSelectedIndex(2);
+            newOrientBox.setSelectedIndex(SAGITTAL_INDEX);
         }
         else {
-            newOrientBox.setSelectedIndex(3);
+            newOrientBox.setSelectedIndex(USER_INDEX);
         }
         
         newOrientBox.setBackground(Color.white);
@@ -1283,7 +1291,7 @@ public class JDialogReorient extends JDialogScriptableBase
         }
         else if (e.getSource().equals(newOrientBox)) {
             newOrientIndex = newOrientBox.getSelectedIndex();
-            if (newOrientIndex == 0) {
+            if (newOrientIndex == AXIAL_INDEX) {
                 newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
                 newOrientBoxX.setEnabled(false);
                 newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
@@ -1291,7 +1299,7 @@ public class JDialogReorient extends JDialogScriptableBase
                 newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_I2S_TYPE);
                 newOrientBoxZ.setEnabled(false);
             }
-            else if (newOrientIndex == 1) {
+            else if (newOrientIndex == CORONAL_INDEX) {
                 newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
                 newOrientBoxX.setEnabled(false);
                 newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
@@ -1299,7 +1307,7 @@ public class JDialogReorient extends JDialogScriptableBase
                 newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
                 newOrientBoxZ.setEnabled(false);    
             }
-            else if (newOrientIndex == 2) {
+            else if (newOrientIndex == SAGITTAL_INDEX) {
                 newOrientBoxX.setSelectedIndex(FileInfoBase.ORI_A2P_TYPE);
                 newOrientBoxX.setEnabled(false);
                 newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
@@ -1307,7 +1315,7 @@ public class JDialogReorient extends JDialogScriptableBase
                 newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
                 newOrientBoxZ.setEnabled(false);
             }
-            else {
+            else { //USER_INDEX selected
                 newOrientBoxX.setEnabled(true);
                 newOrientBoxY.setEnabled(true);
                 newOrientBoxZ.setEnabled(true);
@@ -1441,7 +1449,11 @@ public class JDialogReorient extends JDialogScriptableBase
         return null;
     }
 
-    /**
+    public JComboBox getNewOrientBox() {
+		return newOrientBox;
+	}
+
+	/**
      * Returns whether the action has successfully completed its execution.
      * 
      * @return True, if the action is complete. False, if the action failed or is still running.
