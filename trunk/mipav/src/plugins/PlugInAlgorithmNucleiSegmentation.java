@@ -490,6 +490,9 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        
 	        curProgress += progressPerImg / 5;
         	fireProgressStateChanged(curProgress);
+        	
+        	// cleanup the temp image
+        	grayImage.disposeLocal(false);
         }
         
         if (threadStopped) {

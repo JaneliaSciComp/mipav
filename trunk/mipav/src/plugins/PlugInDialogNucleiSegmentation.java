@@ -219,10 +219,12 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
     	        		frame.setVisible(false);
     	        		
     	        		ViewUserInterface.getReference().setUseVOIName(origVOINameSetting);
+    	        		ViewUserInterface.getReference().unregisterFrame(frame);
     	        	}
     	        	
     	        	// save all VOIs to disk for this image
     		        saveAllVOIs(img);
+    		        img.disposeLocal(false);
 	            } // if (img.getFileInfo() != null)
 	        }
 	        
