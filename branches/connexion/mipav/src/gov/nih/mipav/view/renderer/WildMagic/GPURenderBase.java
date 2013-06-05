@@ -5,7 +5,11 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.input.spacenav.SpaceNavigatorController;
+import gov.nih.mipav.view.input.spacenav.SpaceNavigatorListener;
+import gov.nih.mipav.view.input.spacenav.SpaceNavigatorPoller;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
@@ -21,6 +25,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Vector;
 
 import javax.imageio.ImageIO;
@@ -46,7 +51,7 @@ import com.jogamp.opengl.util.Animator;
 
 
 public abstract class GPURenderBase extends JavaApplication3D
-implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
+implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, SpaceNavigatorListener
 {
 	private static final long serialVersionUID = 9069227710441839806L;
     /** VolumeImage for ModelImageA, contains data and textures. */
@@ -120,6 +125,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public GPURenderBase()
     {
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
+        
+        try {
+    		if(SpaceNavigatorController.hasSpaceNavigator() && SpaceNavigatorPoller.getListeners().length == 0) {
+    			SpaceNavigatorPoller.registerListener(this);
+    		}
+    	} catch (Error e) {
+    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+    		e.printStackTrace();
+    	}
     }
     
     /**
@@ -149,6 +163,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
         m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float)Math.PI/18.0f);
         m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float)Math.PI/18.0f);
+        
+        try {
+    		if(SpaceNavigatorController.hasSpaceNavigator() && SpaceNavigatorPoller.getListeners().length == 0) {
+    			SpaceNavigatorPoller.registerListener(this);
+    		}
+    	} catch (Error e) {
+    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+    		e.printStackTrace();
+    	}
     }
     
     /**
@@ -310,6 +333,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         
+        switch(e.getKeyCode()) {
+		case KeyEvent.VK_ENTER:
+	    	System.out.println("Next connexion level.");
+	    	break;
+   
+		case KeyEvent.VK_UP:
+			System.out.println("Heading up.");
+	    	break;
+	    	
+	    case KeyEvent.VK_DOWN:
+	    	System.out.println("Heading down.");
+	    	break;
+	    	
+	    case KeyEvent.VK_RIGHT:
+	    	System.out.println("Heading right.");
+	    	break;
+	    	
+	    case KeyEvent.VK_LEFT:
+	    	System.out.println("Heading left.");
+	    	break;
+	    }
+
         
         if(e.isAltDown()) {
 	        
@@ -317,6 +362,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         	boolean rotateProcessed = false;
 	        Matrix3f rotateMatrix = null;
 	        switch(e.getKeyCode()) {
+	        	        	
 	        case KeyEvent.VK_UP:
 	        	rotateProcessed = true;
 	        	rotateMatrix = Matrix3f.inverse(m_kXRotate);
@@ -840,4 +886,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList.get(i).GetScene().UpdateGS();
         }
     }
+    
+    @Override
+	public void processSpaceNavEvent() {
+		DecimalFormat dec = new DecimalFormat("0.00000");
+		
+		StringBuilder builder = new StringBuilder();
+		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
+		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
+		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
+		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
+		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
+		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
+		
+		System.out.println(builder.toString());
+	}    
 }
