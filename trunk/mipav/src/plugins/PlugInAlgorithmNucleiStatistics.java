@@ -260,7 +260,17 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     }
     
     private void outputStatistics(ModelImage img) {
+        boolean smoothCurvature = true;
+        double negativeHysteresisFraction = 0.25;
+        double positiveHysteresisFraction = 0.25;
+        int consecutiveNegativeNeeded = 2;
+        double negativeCurvatureNeeded = -2.5E-2;
     	AlgorithmVOIProps calculator = new AlgorithmVOIProps(img, AlgorithmVOIProps.PROCESS_PER_CONTOUR, RangeType.NO_RANGE, img.getVOIs());
+    	calculator.setSmoothCurvature(smoothCurvature);
+    	calculator.setNegativeHysteresisFraction(negativeHysteresisFraction);
+    	calculator.setPositiveHysteresisFraction(positiveHysteresisFraction);
+    	calculator.setConsecutiveNegativeNeeded(consecutiveNegativeNeeded);
+    	calculator.setNegativeCurvatureNeeded(negativeCurvatureNeeded);
     	calculator.setSelectedStatistics(checkList);
     	calculator.setShowTotals(false);
     	calculator.run();
