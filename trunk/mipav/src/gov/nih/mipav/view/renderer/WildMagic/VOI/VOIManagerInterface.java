@@ -2612,7 +2612,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param showGraph
      * @param smooth
      */
-    public void showCurvatureInfo( VOIBase kVOI, int m_iPlane, boolean showGraph, boolean smooth) {
+    public void showCurvatureInfo( VOIBase kVOI, int m_iPlane, boolean showGraph, boolean smoothCurvature) {
         ViewJFrameGraph curvatureGraph;
 
         ModelImage kImage = getActiveImage();
@@ -2636,9 +2636,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         double negativeHysteresisFraction = 0.25;
         double positiveHysteresisFraction = 0.25;
         int numberOfIndentations[] = new int[1];
-        int pts = kVOI.findPositionAndCurvature( positions, curvature, smooth, meanCurvature, stdDevCurvature,
+        int consecutiveNegativeNeeded = 2;
+        double negativeCurvatureNeeded = 0.0;
+        int pts = kVOI.findPositionAndCurvature( positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                  meanNegativeCurvature, negativeHysteresisFraction, positiveHysteresisFraction,
-                                                 numberOfIndentations);
+                                                 numberOfIndentations, consecutiveNegativeNeeded, negativeCurvatureNeeded);
 
         
         float[] pos = new float[pts];
