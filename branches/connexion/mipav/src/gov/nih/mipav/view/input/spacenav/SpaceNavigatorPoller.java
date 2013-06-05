@@ -76,4 +76,18 @@ public class SpaceNavigatorPoller {
 			pollTimer.start(); 
 		}
 	}
+	
+	public static SpaceNavigatorListener[] getListeners() {
+		return listeners;
+	}
+	
+	public static boolean isListener(Object obj) {
+		for(int i=0; i<listeners.length; i++) {
+			if(listeners[i] == obj) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
 }
