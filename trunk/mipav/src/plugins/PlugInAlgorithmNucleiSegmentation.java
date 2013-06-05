@@ -567,7 +567,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 
         // Make algorithm
         final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(grayImg, img, 1f, 0f,
-                0f, false, 0f, false, true, 0.0f, 255.0f, 0.0f, 255.0f, 0.0f, 255.0f);
+                0f, false, 0f, false, true, 0f, 0f, 0.0f, 0f, 0.0f, 0f);
 
         RGBAlgo.run();
         
