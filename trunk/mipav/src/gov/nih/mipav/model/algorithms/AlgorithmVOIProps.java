@@ -1250,7 +1250,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ColorRGB kMaxConvex = new ColorRGB();
                 ColorRGB kSumConvex = new ColorRGB();
                 
-                convexStats.valuesRGB = contour.calcRGBIntensity( srcImage, kMinConvex, kMaxConvex, kSumConvex,
+                convexStats.valuesRGB = convexContour.calcRGBIntensity( srcImage, kMinConvex, kMaxConvex, kSumConvex,
                         ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG, ignoreMinB, ignoreMaxB, rangeFlag );
                 
                 convexStats.nVox = convexStats.valuesRGB.size();
