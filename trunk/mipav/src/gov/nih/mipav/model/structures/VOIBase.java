@@ -1133,12 +1133,15 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @param   negativeHysteresisFraction
      * @param   positiveHysteresisFraction
      * @param   numberOfIndentations
+     * @param   consecutiveNegativeNeeded
+     * @param   negativeCurvatureNeeded
      *
      * @return  the number of points in the position and curvature array that have valid data.
      */
-    public int findPositionAndCurvature(Vector<Vector3f> positions, Vector<Float> curvatures, boolean smooth,
+    public int findPositionAndCurvature(Vector<Vector3f> positions, Vector<Float> curvatures, boolean smoothCurvature,
                                         double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[],
-                                        double negativeHysteresisFraction, double positiveHysteresisFraction, int numberOfIndentations[])
+                                        double negativeHysteresisFraction, double positiveHysteresisFraction, int numberOfIndentations[],
+                                        int consecutiveNegativeNeeded, double negativeCurvatureNeeded)
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
         // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
@@ -1185,7 +1188,11 @@ public abstract class VOIBase extends Vector<Vector3f> {
         boolean negativeSet;
         boolean initial;
         int consecutiveNegative;
-        if (smooth) {
+        
+        if (consecutiveNegativeNeeded < 1) {
+            consecutiveNegativeNeeded = 1;    
+        }
+        if (smoothCurvature) {
             nPoints = size();
             xPoints = new float[nPoints + 5];
             yPoints = new float[nPoints + 5];
@@ -1324,15 +1331,19 @@ public abstract class VOIBase extends Vector<Vector3f> {
                negativeSet = false;
                initial = false;
            }
-           if ((curv[i] <= negativeHysteresisLevel) && (positiveSet || initial)) {
+           if ((curv[i] <= negativeHysteresisLevel) && (curv[i] <= negativeCurvatureNeeded) && (positiveSet || initial)) {
                negativeSet = true;
                positiveSet = false;
                initial = false;
                consecutiveNegative = 1;
+               if (consecutiveNegativeNeeded == 1) {
+                   numberOfIndentations[0]++;
+                   consecutiveNegative = 0;
+               }
            }
-           else if ((curv[i] <= negativeHysteresisLevel) && (consecutiveNegative >= 1)) {
+           else if ((curv[i] <= negativeHysteresisLevel) && (curv[i] <= negativeCurvatureNeeded) && (consecutiveNegative >= 1)) {
                consecutiveNegative++;
-               if (consecutiveNegative >= 2) {
+               if (consecutiveNegative >= consecutiveNegativeNeeded) {
                    numberOfIndentations[0]++;
                    consecutiveNegative = 0;
                }
