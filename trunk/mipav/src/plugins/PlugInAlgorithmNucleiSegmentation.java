@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -78,6 +79,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
         int yUnits;
         float buffer[];
         AlgorithmFuzzyCMeans fcmAlgo;
+        ModelImage tempImage;
         ModelImage grayImage;
         FileInfoBase fileInfo;
         int nClasses;
@@ -154,9 +156,18 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
 	        length = xDim * yDim;
 	        
-	        try {
+	        // if not grayscale, pull out red channel
+	        if (srcImage.isColorImage()) {
+	        	// color with lamin a staining of nuclei boundaries
+	        	grayImage = createGrayImage(srcImage);
+	        } else {
+	        	grayImage = srcImage;
+	        }
+	        
+        	// grayscale already
+        	try {
 	            buffer = new float[length];
-	            srcImage.exportData(0, length, buffer); // export blue data
+	            grayImage.exportData(0, length, buffer);
 	        } catch (IOException error) {
 	            buffer = null;
 	            //errorCleanUp("Algorithm NucleiSegmentation reports: source image locked", true);
@@ -171,14 +182,14 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 
 	        //fireProgressStateChanged("Processing image ...");
 	        //fireProgressStateChanged("Creating  image");
-	        grayImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
-	        fileInfo = grayImage.getFileInfo()[0];
+	        tempImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_gray");
+	        fileInfo = tempImage.getFileInfo()[0];
 	        fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
 	        fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
-	        grayImage.setFileInfo(fileInfo, 0);
+	        tempImage.setFileInfo(fileInfo, 0);
 	
 	        try {
-	            grayImage.importData(0, buffer, true);
+	            tempImage.importData(0, buffer, true);
 	        } catch (IOException error) {
 	            buffer = null;
 	            //errorCleanUp("Error on grayImage.importData", true);
@@ -209,12 +220,12 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        wholeImage = true;
 	
 	        // grayImage enters ModelStorageBase.FLOAT and returns ModelStorageBase.UBYTE
-	        fcmAlgo = new AlgorithmFuzzyCMeans(grayImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
+	        fcmAlgo = new AlgorithmFuzzyCMeans(tempImage, nClasses, nPyramid, oneJacobiIter, twoJacobiIter, q, oneSmooth,
 	                                           twoSmooth, outputGainField, segmentation, cropBackground, threshold, maxIter,
 	                                           endTolerance, wholeImage);
 	        centroids = new float[2];
-	        min = (float) grayImage.getMin();
-	        max = (float) grayImage.getMax();
+	        min = (float) tempImage.getMin();
+	        max = (float) tempImage.getMax();
 	        centroids[0] = min + ((max - min) / 3.0f);
 	        centroids[1] = min + (2.0f * (max - min) / 3.0f);
 	        fcmAlgo.setCentroids(centroids);
@@ -228,7 +239,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	
 	        byteBuffer = new byte[length];
 	        try {
-	            grayImage.exportData(0, length, byteBuffer);
+	            tempImage.exportData(0, length, byteBuffer);
 	        } catch (IOException error) {
 	            byteBuffer = null;
 	            //errorCleanUp("Error on grayImage.exportData", true);
@@ -241,7 +252,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        }
 	        
 	        try {
-	            grayImage.importData(0, byteBuffer, true);
+	            tempImage.importData(0, byteBuffer, true);
 	        }
 	        catch (IOException error) {
 	            byteBuffer = null;
@@ -258,7 +269,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        //fireProgressStateChanged("Removing holes from nuclei");
 	        //fireProgressStateChanged(7);
 	
-	        fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
+	        fillHolesAlgo2D = new AlgorithmMorphology2D(tempImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
 	                                                    wholeImage);
 	        fillHolesAlgo2D.run();
 	        fillHolesAlgo2D.finalize();
@@ -273,7 +284,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        }
 	        
 	        try {
-	            grayImage.exportData(0, length, byteBuffer);
+	            tempImage.exportData(0, length, byteBuffer);
 	        } catch (IOException error) {
 	            byteBuffer = null;
 	            //errorCleanUp("Error on grayImage.exportData", true);
@@ -301,7 +312,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        }
 	        
 	        try {
-	            grayImage.importData(0, byteBuffer, true);
+	            tempImage.importData(0, byteBuffer, true);
 	        }
 	        catch (IOException error) {
 	            byteBuffer = null;
@@ -314,7 +325,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        //fireProgressStateChanged(15);
 	        
 	        try {
-	            grayImage.importData(0, byteBuffer, true);
+	            tempImage.importData(0, byteBuffer, true);
 	        }
 	        catch (IOException error) {
 	            byteBuffer = null;
@@ -334,19 +345,19 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        method = AlgorithmMorphology2D.ID_OBJECTS;
 	        itersDilation = 0;
 	        itersErosion = 0;
-	        idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
+	        idObjectsAlgo2D = new AlgorithmMorphology2D(tempImage, kernel, circleDiameter, method, itersDilation,
 	                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
 	        idObjectsAlgo2D.setMinMax(minSize, maxSize);
 	        idObjectsAlgo2D.run();
 	        idObjectsAlgo2D.finalize();
 	        idObjectsAlgo2D = null;
 	
-	        grayImage.calcMinMax();
-	        numObjects = (int) grayImage.getMax();
+	        tempImage.calcMinMax();
+	        numObjects = (int) tempImage.getMax();
 	        Preferences.debug("numObjects = " + numObjects + "\n", Preferences.DEBUG_ALGORITHM);
 	
 	        try {
-	            grayImage.exportData(0, length, IDArray);
+	            tempImage.exportData(0, length, IDArray);
 	        } catch (IOException error) {
 	            byteBuffer = null;
 	            IDArray = null;
@@ -417,7 +428,7 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        } // for (id = numObjects; id >= 1; id--) 
 	        
 	        try {
-	            grayImage.importData(0, IDArray, true);
+	            tempImage.importData(0, IDArray, true);
 	        } catch (IOException error) {
 	            byteBuffer = null;
 	            //errorCleanUp("Error on grayImage.importData", true);
@@ -432,14 +443,14 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
 	        //fireProgressStateChanged("Extracting VOIs from segmented image");
 	        //fireProgressStateChanged(70);
 	        
-	        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+	        algoVOIExtraction = new AlgorithmVOIExtraction(tempImage);
 	        //algoVOIExtraction.setColorTable(colorTable);
 	        //algoVOIExtraction.setNameTable(nameTable);
 	        algoVOIExtraction.run();
 	        algoVOIExtraction.finalize();
 	        algoVOIExtraction = null;
 	        
-	        VOIs = grayImage.getVOIs();
+	        VOIs = tempImage.getVOIs();
 	        nVOIs = VOIs.size();
 	        Preferences.debug("nVOIS before removal for excessive deviation from ellipse shape = " + nVOIs + "\n", Preferences.DEBUG_ALGORITHM);
 	        
@@ -492,7 +503,10 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
         	fireProgressStateChanged(curProgress);
         	
         	// cleanup the temp image
-        	grayImage.disposeLocal(false);
+        	if (grayImage != srcImage) {
+        		grayImage.disposeLocal(false);
+        	}
+        	tempImage.disposeLocal(false);
         }
         
         if (threadStopped) {
@@ -526,6 +540,38 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
     	}
     	
     	return img;
+    }
+    
+    /**
+     * create a gray image from the input color image
+     */
+    private ModelImage createGrayImage(ModelImage img) {
+        ModelImage grayImg;
+    	
+    	if (img.getType() == ModelStorageBase.ARGB) {
+    		grayImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), (img.getImageName() + "Gray"));
+        } else if (img.getType() == ModelStorageBase.ARGB_USHORT) {
+        	grayImg = new ModelImage(ModelStorageBase.USHORT, img.getExtents(), (img.getImageName() + "Gray"));
+        } else if (img.getType() == ModelStorageBase.ARGB_FLOAT) {
+        	grayImg = new ModelImage(ModelStorageBase.FLOAT, img.getExtents(), (img.getImageName() + "Gray"));
+        } else {
+        	// default to standard rgb
+        	grayImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), (img.getImageName() + "Gray"));
+        }
+
+        for (int n = 0; n < img.getFileInfo().length; n++) {
+            FileInfoBase fInfoBase = (FileInfoBase) (img.getFileInfo(n).clone());
+            fInfoBase.setDataType(grayImg.getType());
+            grayImg.setFileInfo(fInfoBase, n);
+        }
+
+        // Make algorithm
+        final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(grayImg, img, 1f, 0f,
+                0f, false, 0f, false, true, 0.0f, 255.0f, 0.0f, 255.0f, 0.0f, 255.0f);
+
+        RGBAlgo.run();
+        
+        return grayImg;
     }
     
     public Vector<ModelImage> getResultImages() {
