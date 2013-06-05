@@ -27,11 +27,9 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     
     private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
-		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.minIntensity, VOIStatisticalProperties.maxIntensity,
-		VOIStatisticalProperties.avgIntensity, VOIStatisticalProperties.deviationDescription,
-        VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
+		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
         VOIStatisticalProperties.stdDevCurvatureDescription, VOIStatisticalProperties.meanNegativeCurvatureDescription,
-        VOIStatisticalProperties.numberOfIndentationsCurvatureDescription, VOIStatisticalProperties.numberOfIndentationsHullDescription};
+        VOIStatisticalProperties.numberOfIndentationsCurvatureDescription/*, VOIStatisticalProperties.numberOfIndentationsHullDescription*/};
 
     private static final boolean[] checkList = new boolean[VOIStatisticalProperties.numberOfStatistics];
 
