@@ -9,6 +9,8 @@ import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 import java.io.*;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * PlugInAlgorithmNucleiStatistics is used to identify nuclei and output statistics for each nucleus
@@ -25,7 +27,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     /** A count of the number of images processed. */
     private int numProcessedImages = 0;
     
-    private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
+    private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription,
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
 		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
         VOIStatisticalProperties.stdDevCurvatureDescription, VOIStatisticalProperties.meanNegativeCurvatureDescription,
@@ -355,7 +357,9 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
                 statFW = new FileWriter(statFile.getAbsolutePath());
             }
         
-            logFileText = writeStatsToString(columnHeaders, statsList, VOIs);
+            Vector<Vector<Float>> gDistance = new Vector<Vector<Float>>();
+            Vector<Vector<Integer>> gCurvature = new Vector<Vector<Integer>>();
+            logFileText = writeStatsToString(columnHeaders, statsList, VOIs,  gDistance, gCurvature);
             statFW.write(logFileText.toString());
             statFW.flush();
             statFW.close();
@@ -383,7 +387,8 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @return
      */
     @SuppressWarnings("unchecked")
-    protected StringBuffer writeStatsToString(Vector<String> columnHeaders, Vector<VOIStatisticalProperties> statsList, VOIVector VOIs) {
+    protected StringBuffer writeStatsToString(Vector<String> columnHeaders, Vector<VOIStatisticalProperties> statsList, VOIVector VOIs,
+                                                             Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature) {
         StringBuffer total = new StringBuffer();
         String newLine = System.getProperty("line.separator");
         //get column names
@@ -393,7 +398,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         total.append(newLine);
         
         //get total data
-        Vector<Vector<String>> column = getStatsData(statsList, VOIs);
+        Vector<Vector<String>> column = getStatsData(statsList, VOIs, gDistance, gCurvature);
         Vector<String> row;
         String cellEntry;
         for(int i=0; i<column.size(); i++) {
@@ -472,12 +477,90 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         return logModelCol;
     }
     
-    private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs) {
+    private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs, 
+                                                Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature) {
+        //                          minCurvature             maxCurvature
+        // HGADFN167_LAC_40X_1      -0.3075                   0.2463
+        // HGADFN167_LAC_40X_2      -0.08464                  0.1443
+        // HGADFN167_LAC_40X_3      -0.4589                   0.4927
+        // HGADFN167_LAC_40X_4      -1.6375                   1.774
+        // HGADFN167_LAC_40X_5      -0.1258                   0.1614
+        // HGADFN167_LAC_40X_6      -1.196                    0.3777
+        // HGADFN167_LAC_40X_7      -0.1428                   0.1725
+        // HGADFN167_LAC_40X_8      -0.5064                   5.987
+        // HGFDFN168_LAC_40X_1      -0.0923                   0.2574
+        // HGFDFN168_LAC_40X_2      -0.2630                   0.1806
+        // HGFDFN168_LAC_40X_3      -0.1153                   0.1691
+        // HGFDFN168_LAC_40X_4      -0.09794                  0.1551
+        // HGFDFN168_LAC_40X_5      -0.1876                   0.2318
+        // HGFDFN168_LAC_40X_6      -0.2035                   0.2853
+        // HGFDFN168_LAC_40X_7      -0.09728                  0.2410
+        // HGFDFN168_LAC_40X_8      -0.5568                   0.3128
     	Vector<Vector<String>> data = new Vector<Vector<String>>();
     	int voiIndex = 0;
     	for (VOIStatisticalProperties prop : statsList) {
     		VOIBaseVector contours = VOIs.get(voiIndex).getCurves();
     		for (VOIBase voi : contours) {
+    		    // The first curvature displayed will be farthest from the geometric center of the nucleus
+    		    Vector3f gCenter = voi.getGeometricCenter();
+    		    Vector<Vector3f> positions = new Vector<Vector3f>();
+                Vector<Float> curvature = new Vector<Float>();
+                double meanCurvature[] = new double[1];
+                double stdDevCurvature[] = new double[1];
+                double meanNegativeCurvature[] = new double[1];
+                int numberOfIndentations[] = new int[1];
+                double totalLength[] = new double[1];
+                boolean smoothCurvature = true;
+                double negativeHysteresisFraction = 0.25;
+                double positiveHysteresisFraction = 0.25;
+                int consecutiveNegativeNeeded = 2;
+                double negativeCurvatureNeeded = -2.5E-2;
+                voi.findPositionAndCurvature(positions, curvature, smoothCurvature, meanCurvature,
+                                             stdDevCurvature, meanNegativeCurvature, negativeHysteresisFraction,
+                                             positiveHysteresisFraction, numberOfIndentations, consecutiveNegativeNeeded,
+                                             negativeCurvatureNeeded, totalLength);
+                double maxDistSquared = -Double.MAX_VALUE;
+                int nPoints = positions.size();
+                int startingIndex = -1;
+                double minCurvature = Double.MAX_VALUE;
+                double maxCurvature = -Double.MAX_VALUE;
+                for (int i = 0; i < nPoints; i++) {
+                    if (curvature.get(i) > maxCurvature) {
+                        maxCurvature = curvature.get(i);
+                    }
+                    if (curvature.get(i) < minCurvature) {
+                        minCurvature = curvature.get(i);
+                    }
+                    double distX = positions.get(i).X - gCenter.X;
+                    double distY = positions.get(i).Y - gCenter.Y;
+                    double distSquared = distX*distX + distY*distY;
+                    if (distSquared > maxDistSquared) {
+                        maxDistSquared = distSquared;
+                        startingIndex = i;
+                    }
+                }
+                Vector<Float> percentDistance = new Vector<Float>();
+                Vector<Integer> scaledCurvature = new Vector<Integer>();
+                float startingDistance = positions.get(startingIndex).Z;
+                float minCurv = -0.5f;
+                float maxCurv = 0.5f;
+                float sCurv;
+                int intCurv;
+                for (int i = startingIndex; i < nPoints; i++) {
+                    percentDistance.add((float)((positions.get(i).Z - startingDistance)/totalLength[0]));
+                    sCurv = (255 * (curvature.get(i) - minCurv))/(maxCurv - minCurv);
+                    intCurv = Math.min(255, Math.max(0, Math.round(sCurv)));
+                    scaledCurvature.add(intCurv);
+                }
+                double previousDistance = (positions.get(nPoints-1).Z - startingDistance)/totalLength[0];
+                for (int i = 0; i < startingIndex; i++) {
+                    percentDistance.add((float)(previousDistance + (positions.get(i).Z/totalLength[0])));
+                    sCurv = (255 * (curvature.get(i) - minCurv))/(maxCurv - minCurv);
+                    intCurv = Math.min(255, Math.max(0, Math.round(sCurv)));
+                    scaledCurvature.add(intCurv);    
+                }
+                gDistance.add(percentDistance);
+                gCurvature.add(scaledCurvature);
 	    		Vector<String> row = new Vector<String>();
 	    		String contourLabel = voi.getLabel();
 	    		row.add(VOIs.get(voiIndex).getName().replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
