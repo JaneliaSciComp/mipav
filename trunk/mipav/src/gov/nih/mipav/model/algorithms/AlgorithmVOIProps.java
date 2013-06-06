@@ -1014,11 +1014,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
                 int numberOfIndentations[] = new int[1];
+                double totalLength[] = new double[1];
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
                 convexContour.findPositionAndCurvature(positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature, negativeHysteresisFraction,
                                                         positiveHysteresisFraction, numberOfIndentations,
-                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded);
+                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded,
+                                                        totalLength);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1277,11 +1279,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
                 int numberOfIndentations[] = new int[1];
+                double totalLength[] = new double[1];
                 VOIBase convexContour = new VOIContour((VOIContour)contour);
                 convexContour.findPositionAndCurvature( positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature, negativeHysteresisFraction,
                                                         positiveHysteresisFraction, numberOfIndentations,
-                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded);
+                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded,
+                                                        totalLength);
                 if (statsList[indexOf(meanCurvatureDescription)]) {
                     stats.meanCurvature = meanCurvature[0];
                     statProperty.setProperty(VOIStatisticList.meanCurvatureDescription + end, nf.format(stats.meanCurvature));    
@@ -1953,12 +1957,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
                 int numberOfIndentations[] = new int[1];
+                double totalLength[] = new double[1];
                 stats.numberOfIndentationsCurvature = 0;
                 for (int i = 0; i < kVOI.getCurves().size(); i++) {
                     kVOI.getCurves().elementAt(i).findPositionAndCurvature(positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature, negativeHysteresisFraction,
                                                         positiveHysteresisFraction, numberOfIndentations,
-                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded);
+                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded,
+                                                        totalLength);
                     stats.numberOfIndentationsCurvature += numberOfIndentations[0];
                 }
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription, nf.format(stats.numberOfIndentationsCurvature)); 
@@ -2258,12 +2264,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 double stdDevCurvature[] = new double[1];
                 double meanNegativeCurvature[] = new double[1];
                 int numberOfIndentations[] = new int[1];
+                double totalLength[] = new double[1];
                 stats.numberOfIndentationsCurvature = 0;
                 for (int i = 0; i < kVOI.getCurves().size(); i++) {
                     kVOI.getCurves().elementAt(i).findPositionAndCurvature(positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                         meanNegativeCurvature, negativeHysteresisFraction,
                                                         positiveHysteresisFraction, numberOfIndentations,
-                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded);
+                                                        consecutiveNegativeNeeded, negativeCurvatureNeeded,
+                                                        totalLength);
                     stats.numberOfIndentationsCurvature += numberOfIndentations[0];
                 }
                 statProperty.setProperty(VOIStatisticList.numberOfIndentationsCurvatureDescription, nf.format(stats.numberOfIndentationsCurvature)); 
