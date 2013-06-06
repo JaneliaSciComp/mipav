@@ -1316,7 +1316,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             diff = curv[i] - meanCurvature[0];
             sumSquared += diff * diff * length[i+1]/2.0;
         }
-        stdDevCurvature[0] = Math.sqrt(sumSquared/totalCurvLength);
+        stdDevCurvature[0] = Math.sqrt(sumSquared/totalLength[0]);
         positiveHysteresisLevel = positiveHysteresisFraction * maxMagCurvature;
         negativeHysteresisLevel = -negativeHysteresisFraction * maxMagCurvature;
         positiveSet = false;
