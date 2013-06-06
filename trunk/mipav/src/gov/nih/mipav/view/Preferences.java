@@ -657,9 +657,9 @@ public class Preferences {
     
     public static final String PREF_NDAR_PLUGIN_CSV_DIR = "NDARCSVDir";
     
-    public static final String PREF_FITBIR_PLUGIN_OUTPUT_DIR = "FITBIROutputDir";
+    public static final String PREF_BRICS_PLUGIN_OUTPUT_DIR = "BRICSOutputDir";
     
-    public static final String PREF_FITBIR_PLUGIN_CSV_DIR = "FITBIRCSVDir";
+    public static final String PREF_BRICS_PLUGIN_CSV_DIR = "BRICSCSVDir";
     
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
     
