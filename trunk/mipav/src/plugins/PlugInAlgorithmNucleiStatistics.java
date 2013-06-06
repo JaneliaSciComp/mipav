@@ -27,7 +27,13 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     /** A count of the number of images processed. */
     private int numProcessedImages = 0;
     
-    private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription,
+    /** The names of the all stats columns, saved from the first image processed. */
+    private Vector<String> allStatsColumnNames = new Vector<String>();
+    
+    /** Vector of the stats for all the images. */
+    private Vector<Vector<String>> allStatsColumns = new Vector<Vector<String>>();
+    
+    private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
 		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
         VOIStatisticalProperties.stdDevCurvatureDescription, VOIStatisticalProperties.meanNegativeCurvatureDescription,
@@ -98,10 +104,6 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
 	        
 	        curProgress += progressPerImg / 3;
         	fireProgressStateChanged(curProgress);
-        	
-	        // TODO: calc overall stats
-        	
-        	// TODO: gen heatmap image for boundary curvature
 	        
 	        numProcessedImages++;
 	        
@@ -109,6 +111,10 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         	srcImage.disposeLocal();
         	srcImage = null;
         }
+        
+        outputAllStatsFile();
+        
+        // TODO: gen heatmap image for boundary curvature
         
         if (threadStopped) {
             finalize();
@@ -287,13 +293,34 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     	
     	String statsOutputFile = statsDir.getAbsolutePath() + File.separator + img.getImageName() + ".table";
     	Vector<String> columnHeaders = getColumnHeaders(img);
-    	writeStatisticFile(statsOutputFile, columnHeaders, statsList, img.getVOIs());
+    	if (allStatsColumnNames.size() == 0) {
+    		allStatsColumnNames.addAll(columnHeaders);
+    	}
+    	
+    	Vector<Vector<Float>> gDistance = new Vector<Vector<Float>>();
+    	Vector<Vector<Integer>> gCurvature = new Vector<Vector<Integer>>();
+    	
+    	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gDistance, gCurvature);
+    	allStatsColumns.addAll(columns);
+    	
+    	writeStatisticFile(statsOutputFile, columnHeaders, columns);
+    }
+    
+    private void outputAllStatsFile() {
+    	File statsDir = new File(inputFiles.elementAt(0).getParent() + File.separator + "statistics" + File.separator);
+    	if (!statsDir.exists()) { 
+    		statsDir.mkdirs();
+    	}
+    	
+    	String statsOutputFile = statsDir.getAbsolutePath() + File.separator + "all_statistics" + ".table";
+    	
+    	writeStatisticFile(statsOutputFile, allStatsColumnNames, allStatsColumns);
     }
     
     /**
      * Writes out the statistics file based on the current logModel
      */
-    private void writeStatisticFile(String tableDestination, Vector<String> columnHeaders, Vector<VOIStatisticalProperties> statsList, VOIVector VOIs) {
+    private void writeStatisticFile(String tableDestination, Vector<String> columnHeaders, Vector<Vector<String>> columns) {
     	final boolean noisyProcess = true;
     	final boolean overwrite = true;
     	final boolean append = false;
@@ -356,10 +383,10 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
             } else { // WRITE
                 statFW = new FileWriter(statFile.getAbsolutePath());
             }
-        
-            Vector<Vector<Float>> gDistance = new Vector<Vector<Float>>();
-            Vector<Vector<Integer>> gCurvature = new Vector<Vector<Integer>>();
-            logFileText = writeStatsToString(columnHeaders, statsList, VOIs,  gDistance, gCurvature);
+            
+            logFileText = writeStatsToString(columnHeaders, columns);
+            addSummaryLines(logFileText, columns.size());
+
             statFW.write(logFileText.toString());
             statFW.flush();
             statFW.close();
@@ -387,8 +414,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @return
      */
     @SuppressWarnings("unchecked")
-    protected StringBuffer writeStatsToString(Vector<String> columnHeaders, Vector<VOIStatisticalProperties> statsList, VOIVector VOIs,
-                                                             Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature) {
+    protected StringBuffer writeStatsToString(Vector<String> columnHeaders, Vector<Vector<String>> column) {
         StringBuffer total = new StringBuffer();
         String newLine = System.getProperty("line.separator");
         //get column names
@@ -398,7 +424,6 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         total.append(newLine);
         
         //get total data
-        Vector<Vector<String>> column = getStatsData(statsList, VOIs, gDistance, gCurvature);
         Vector<String> row;
         String cellEntry;
         for(int i=0; i<column.size(); i++) {
@@ -417,15 +442,30 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         return total;
     }
     
+    private void addSummaryLines(StringBuffer output, int numLines) {
+    	String newLine = System.getProperty("line.separator");
+    	output.append("Summary").append("\t"); // file
+    	output.append(" ").append("\t"); // VOI name
+    	output.append("=AVERAGE(C2:C" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(D2:D" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(E2:E" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(F2:F" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(G2:G" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(H2:H" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(I2:I" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(J2:J" + (numLines + 1) + ")").append("\t");
+    	output.append("=AVERAGE(K2:K" + (numLines + 1) + ")").append("\t");
+    	output.append("=SUM(L2:L" + (numLines + 1) + ")").append("\t");
+    	output.append(newLine);
+    }
+    
     /**
      * Writes the column titles of selected statistics calculations to the logModel.
      */
     private static final Vector<String> getColumnHeaders(ModelImage img) {
         Vector<String> logModelCol = new Vector<String>();
+        logModelCol.add("Image file name");
         logModelCol.add("Name");
-        
-        // assume that always PER_CONTOUR
-        logModelCol.add("Contour");
         
         int totalCount = 0;
         String str;
@@ -477,7 +517,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         return logModelCol;
     }
     
-    private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs, 
+    private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs, ModelImage img,
                                                 Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature) {
         //                          minCurvature             maxCurvature
         // HGADFN167_LAC_40X_1      -0.3075                   0.2463
@@ -496,6 +536,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         // HGFDFN168_LAC_40X_6      -0.2035                   0.2853
         // HGFDFN168_LAC_40X_7      -0.09728                  0.2410
         // HGFDFN168_LAC_40X_8      -0.5568                   0.3128
+
     	Vector<Vector<String>> data = new Vector<Vector<String>>();
     	int voiIndex = 0;
     	for (VOIStatisticalProperties prop : statsList) {
@@ -561,10 +602,12 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
                 }
                 gDistance.add(percentDistance);
                 gCurvature.add(scaledCurvature);
+                
 	    		Vector<String> row = new Vector<String>();
 	    		String contourLabel = voi.getLabel();
+	    		row.add(img.getImageFileName().replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
 	    		row.add(VOIs.get(voiIndex).getName().replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
-	    		row.add(contourLabel.replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
+	    		//row.add(contourLabel.replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
 		    	for (int i = 0; i < checkList.length; i++) {
 		        	if (checkList[i]) {
 		        		row.add(prop.getProperty(VOIStatisticList.statisticDescription[i] + contourLabel).replaceAll("[\\t+]", ", ").replaceAll("[\\n\\r+]", ":"));
