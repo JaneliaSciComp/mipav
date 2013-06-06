@@ -415,7 +415,7 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         JLabel minSizeLabel;
         JLabel maxSizeLabel;
         setForeground(Color.black);
-        setTitle("Nuclei Segmentation 05/30/2013");
+        setTitle("Nuclei Segmentation 06/06/2013");
         //int length = image.getExtents()[0] * image.getExtents()[1];
 
         GridBagConstraints gbc = new GridBagConstraints();
