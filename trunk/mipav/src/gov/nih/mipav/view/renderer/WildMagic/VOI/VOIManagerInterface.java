@@ -2638,9 +2638,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int numberOfIndentations[] = new int[1];
         int consecutiveNegativeNeeded = 2;
         double negativeCurvatureNeeded = 0.0;
+        double totalLength[] = new double[1];
         int pts = kVOI.findPositionAndCurvature( positions, curvature, smoothCurvature, meanCurvature, stdDevCurvature,
                                                  meanNegativeCurvature, negativeHysteresisFraction, positiveHysteresisFraction,
-                                                 numberOfIndentations, consecutiveNegativeNeeded, negativeCurvatureNeeded);
+                                                 numberOfIndentations, consecutiveNegativeNeeded, negativeCurvatureNeeded,
+                                                 totalLength);
 
         
         float[] pos = new float[pts];
