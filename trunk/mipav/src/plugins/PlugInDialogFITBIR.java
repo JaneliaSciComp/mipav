@@ -63,7 +63,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private String csvFileDir;
 
-    /** Length of the FITBIR GUID */
+    /** Length of the GUID */
     private static final int GUID_LENGTH = 12;
 
     /** List of info data that is to be written out in xml...it is linked to same order as the table * */
@@ -171,7 +171,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.3";
+    private static final String pluginVersion = "0.4";
     
     private static final String MAIN_GROUP_NAME = "Main";
     
@@ -181,42 +181,39 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     
     private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFileName";
 
-    /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
-     public static final String FITBIR_PRIVACY_NOTICE = "FITBIR is a collaborative environment with privacy rules that pertain to the collection\n"
-         + "and display of imaging data. Before accessing and using FITBIR, please ensure that you\n"
-         + "familiarize yourself with our privacy rules, available through the FITBIR Rules of Behavior\n"
+    /** Text of the privacy notice displayed to the user before the plugin can be used. */
+     public static final String PRIVACY_NOTICE = "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
+         + "and display of imaging data. Before accessing and using BRICS, please ensure that you\n"
+         + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n"
          + "document and supporting documentation.\n"
          + "\n"
          + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
-         + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n"
-         + "around Tramatic Brain Injury and Tramatic Brain Injury treatment. This information may be\n"
+         + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research. This information may be\n"
          + "disclosed to researchers for research purposes, and to system administrators for evaluation\n"
          + "and data normalization.\n"
          + "\n"
          + "Rules governing submission of this information are based on the data sharing rules defined in\n"
          + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
-         + "data submission is voluntary. Data entered into FITBIR will be used solely for scientific and\n"
-         + "research purposes and is designed to further the understanding of Traumatic Brain Injury.\n"
-         + "Modification of FITBIR information may be addressed by contacting your FITBIR system\n"
-         + "administrator at FITBIR-ops@mail.nih.gov. Significant system update information may be posted on\n"
-         + "the FITBIR site as required.";
+         + "data submission is voluntary. Data entered into BRICS will be used solely for scientific and\n"
+         + "research purposes. Significant system update information may be posted on\n"
+         + "the BRICS site as required.";
     
     public PlugInDialogFITBIR() {
         super(false);
 
-        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.FITBIR_PRIVACY_NOTICE,
-                "FITBIR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
+        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.PRIVACY_NOTICE,
+                "Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
-            outputDirBase = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR);
+            outputDirBase = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR);
             if (outputDirBase == null) {
                 outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                        + "FITBIR_Imaging_Submission" + File.separator;
-                Preferences.setProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR, outputDirBase);
+                        + "BRICS_Imaging_Submission" + File.separator;
+                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
             }
 
-            csvFileDir = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_CSV_DIR);
+            csvFileDir = Preferences.getProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR);
             if (csvFileDir == null) {
                 csvFileDir = ViewUserInterface.getReference().getDefaultDirectory();
             }
@@ -267,7 +264,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 readCSVFile();
 
                 csvFileDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
-                Preferences.setProperty(Preferences.PREF_FITBIR_PLUGIN_CSV_DIR, csvFileDir);
+                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_CSV_DIR, csvFileDir);
             }
         } else if (command.equalsIgnoreCase("RemoveSource")) {
             final int selected = sourceTable.getSelectedRow();
@@ -356,7 +353,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             if ( !areGuidsCompleted) {
-                MipavUtil.displayError("Please complete FITBIR GUID field for all Form Structures");
+                MipavUtil.displayError("Please complete GUID field for all Form Structures");
                 return;
             }
 
@@ -384,7 +381,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
 
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
-                Preferences.setProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR, outputDirBase);
+                Preferences.setProperty(Preferences.PREF_BRICS_PLUGIN_OUTPUT_DIR, outputDirBase);
             }
         }
     }
@@ -470,7 +467,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
 
     private void init() {
-        setTitle("FITBIR Image Submission Package Creation Tool v" + pluginVersion);
+        setTitle("Image Submission Package Creation Tool v" + pluginVersion);
 
         dataStructures = new ArrayList<DataStruct>();
 
@@ -1143,7 +1140,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         printlnToLog("*** Submission pre-processing complete. ***");
         printlnToLog("*** Output files have been generated in directory " + outputDirBase + " ***");
-        printlnToLog("*** To submit to FITBIR, run the FITBIR Validation Tool to package the files for submission. ***");
+        printlnToLog("*** To submit to BRICS, run the BRICS Validation Tool to package the files for submission. ***");
 
         // need to delete all tempDirs that were created
         if (tempDirs.size() > 0) {
@@ -1712,7 +1709,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
-     * Tries to read server configuration from fitbir config file on local disk. 
+     * Tries to read server configuration from brics config file on local disk. 
      */
     private void readConfig() {
     	InputStream in = getClass().getResourceAsStream(configFileName);
@@ -1721,7 +1718,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     		try {
     			prop.load(in);
     		} catch (IOException e) {
-    			Preferences.debug("Unable to load FITBIR preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
+    			Preferences.debug("Unable to load BRICS preferences file: " + configFileName + "\n", Preferences.DEBUG_MINOR);
     			e.printStackTrace();
     		}
     		// use pre-set, hardcoded values as defaults if properties are not found
@@ -4156,7 +4153,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public void run() {
 
             try {
-                progressBar = new ViewJProgressBar("FITBIR", "Connecting to FITBIR data dictionary web service...", 0,
+                progressBar = new ViewJProgressBar("BRICS", "Connecting to BRICS data dictionary web service...", 0,
                         100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
@@ -4173,7 +4170,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 progressBar.updateValue(100);
                 progressBar.setVisible(false);
                 progressBar.dispose();
-                printlnToLog("Successful connection to FITBIR data dictionary web service");
+                printlnToLog("Successful connection to BRICS data dictionary web service");
 
                 addSourceButton.setEnabled(true);
                 loadCSVButton.setEnabled(true);
