@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmKMeans.positionWeightComparator;
+import gov.nih.mipav.model.algorithms.AlgorithmKMeans.positionWeightItem;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
@@ -7,6 +9,9 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JPanelPixelExclusionSelector.RangeType;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -299,11 +304,26 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     	
     	Vector<Vector<Float>> gDistance = new Vector<Vector<Float>>();
     	Vector<Vector<Integer>> gCurvature = new Vector<Vector<Integer>>();
+    	Vector<Double> gMeanNegativeCurvature = new Vector<Double>();
     	
-    	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gDistance, gCurvature);
+    	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gDistance, gCurvature, gMeanNegativeCurvature);
     	allStatsColumns.addAll(columns);
     	
     	writeStatisticFile(statsOutputFile, columnHeaders, columns);
+    	// Sort nuclei in order of increasing mean negative curvature
+    	ArrayList<negativeMeanCurvatureIndexItem> curvIndexList = new ArrayList<negativeMeanCurvatureIndexItem>();
+    	int nCurves = gMeanNegativeCurvature.size();
+    	for (int i = 0; i < nCurves; i++) {
+    	    curvIndexList.add(new negativeMeanCurvatureIndexItem(gMeanNegativeCurvature.get(i), i));
+    	}
+    	Collections.sort(curvIndexList, new negativeMeanCurvatureIndexComparator());
+    	Vector<Vector<Float>> gDistance2 = new Vector<Vector<Float>>();
+        Vector<Vector<Integer>> gCurvature2 = new Vector<Vector<Integer>>();
+        for (int i = 0; i < nCurves; i++) {
+            int j = curvIndexList.get(i).getIndex();
+            gDistance2.add(gDistance.get(j));
+            gCurvature2.add(gCurvature.get(j));
+        }
     }
     
     private void outputAllStatsFile() {
@@ -518,7 +538,8 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     }
     
     private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs, ModelImage img,
-                                                Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature) {
+                                                Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature,
+                                                Vector<Double> gMeanNegativeCurvature) {
         //                          minCurvature             maxCurvature
         // HGADFN167_LAC_40X_1      -0.3075                   0.2463
         // HGADFN167_LAC_40X_2      -0.08464                  0.1443
@@ -602,6 +623,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
                 }
                 gDistance.add(percentDistance);
                 gCurvature.add(scaledCurvature);
+                gMeanNegativeCurvature.add(meanNegativeCurvature[0]);
                 
 	    		Vector<String> row = new Vector<String>();
 	    		String contourLabel = voi.getLabel();
@@ -627,5 +649,69 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     
     public int getNumProcessedImages() {
     	return numProcessedImages;
+    }
+    
+    private class negativeMeanCurvatureIndexComparator implements Comparator<negativeMeanCurvatureIndexItem> {
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @param o1 DOCUMENT ME!
+         * @param o2 DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int compare(final negativeMeanCurvatureIndexItem o1, final negativeMeanCurvatureIndexItem o2) {
+            final double a = o1.getNegativeMeanCurvature();
+            final double b = o2.getNegativeMeanCurvature();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+    
+    private class negativeMeanCurvatureIndexItem {
+
+        /** DOCUMENT ME! */
+        private final double negativeMeanCurvature;
+
+        /** DOCUMENT ME! */
+        private final int index;
+
+        /**
+         * Creates a new negativeMeanCurvatureIndexItem object.
+         * 
+         * @param negativeMeanCurvature
+         * @param index
+         */
+        public negativeMeanCurvatureIndexItem(final double negativeMeanCurvature, final int index) {
+            this.negativeMeanCurvature = negativeMeanCurvature;
+            this.index = index;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public double getNegativeMeanCurvature() {
+            return negativeMeanCurvature;
+        }
+
+        /**
+         * DOCUMENT ME!
+         * 
+         * @return DOCUMENT ME!
+         */
+        public int getIndex() {
+            return index;
+        }
+
     }
 }
