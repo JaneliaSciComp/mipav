@@ -1141,7 +1141,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public int findPositionAndCurvature(Vector<Vector3f> positions, Vector<Float> curvatures, boolean smoothCurvature,
                                         double meanCurvature[], double stdDevCurvature[], double meanNegativeCurvature[],
                                         double negativeHysteresisFraction, double positiveHysteresisFraction, int numberOfIndentations[],
-                                        int consecutiveNegativeNeeded, double negativeCurvatureNeeded)
+                                        int consecutiveNegativeNeeded, double negativeCurvatureNeeded, double totalLength[])
     {
         // Need second derivatives going from 0 to graphPoints-1 or a length of graphPoints.
         // Then need derivatives going from -1 to graphPoints or a length of graphPoints+2.
@@ -1174,7 +1174,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         int defaultPts;
         VOIContour graphContour;
         double totalCurvLength;
-        double totalLength;
         double sumSquared;
         double diff;
         double totalNegCurvLength;
@@ -1278,7 +1277,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
             y2deriv[i] = (yderiv[i+2] - yderiv[i])/length[i+1];
         }
         totalCurvLength = 0.0;
-        totalLength = 0.0;
+        totalLength[0] = 0.0;
         totalNegCurvLength = 0.0;
         totalNegLength = 0.0;
         curv = new double[graphPoints];
@@ -1303,13 +1302,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
             }
             positions.add( new Vector3f(graphContour.elementAt(i).X, graphContour.elementAt(i).Y, distance));
             totalCurvLength += curv[i] * length[i+1]/2.0;
-            totalLength += length[i+1]/2.0;
+            totalLength[0] += length[i+1]/2.0;
             if (curv[i] < 0.0) {
                 totalNegCurvLength += curv[i] * length[i+1]/2.0;
                 totalNegLength += length[i+1]/2.0;
             }
         }
-        meanCurvature[0] = totalCurvLength/totalLength;
+        meanCurvature[0] = totalCurvLength/totalLength[0];
         meanNegativeCurvature[0] = Math.abs(totalNegCurvLength/totalNegLength);
         maxMagCurvature = Math.max(maxCurvature, Math.abs(minCurvature));
         sumSquared = 0.0;
