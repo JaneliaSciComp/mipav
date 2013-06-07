@@ -330,6 +330,43 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
                 buffer[x + xDim * y] = curv[y];
             }
         }
+        int extents[] = new int[2];
+        extents[0] = xDim;
+        extents[1] = yDim;
+        String imageName = img.getImageName() + "_curvature";
+        ModelImage curvatureImage = new ModelImage(ModelStorageBase.UBYTE, extents, imageName);
+        curvatureImage.setImageName(imageName + ".tif");
+        curvatureImage.getFileInfo()[0].setFileDirectory(statsDir.getAbsolutePath() + File.separator);
+        try {
+            curvatureImage.importData(0, buffer, true);
+        } catch (IOException error) {
+            MipavUtil.displayError("IOException " + error + " on curvatureImage.importData(0, buffer, true)");
+            return;
+        }
+        // Indexed color LUT is saved with image
+        curvatureImage.getFileInfo()[0].setPhotometric((short) 3);
+        int[] dimExtentsLUT = new int[2];
+        dimExtentsLUT[0] = 4;
+        dimExtentsLUT[1] = 256;
+        int colorsUsed = 256;
+
+        ModelLUT LUT = new ModelLUT(ModelLUT.SPECTRUM, colorsUsed, dimExtentsLUT);
+        FileTiff imageFile = null;
+        try {
+            imageFile = new FileTiff(imageName + ".tif", statsDir.getAbsolutePath() + File.separator);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on new FileTiff");
+            return;
+        }
+        FileWriteOptions options = new FileWriteOptions(imageName + ".tif", statsDir.getAbsolutePath() + File.separator, true);
+        try {
+            imageFile.writeImage(curvatureImage, LUT, options);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on imageFile.writeImage");
+            return;
+        }
     }
     
     private void outputAllStatsFile() {
