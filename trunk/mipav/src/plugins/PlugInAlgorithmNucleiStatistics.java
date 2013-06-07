@@ -300,11 +300,10 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     		allStatsColumnNames.addAll(columnHeaders);
     	}
     	
-    	Vector<Vector<Float>> gDistance = new Vector<Vector<Float>>();
-    	Vector<Vector<Integer>> gCurvature = new Vector<Vector<Integer>>();
+    	Vector<byte[]> gCurvature = new Vector<byte[]>();
     	Vector<Double> gMeanNegativeCurvature = new Vector<Double>();
     	
-    	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gDistance, gCurvature, gMeanNegativeCurvature);
+    	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gCurvature, gMeanNegativeCurvature);
     	allStatsColumns.addAll(columns);
     	
     	writeStatisticFile(statsOutputFile, columnHeaders, columns);
@@ -315,12 +314,21 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     	    curvIndexList.add(new negativeMeanCurvatureIndexItem(gMeanNegativeCurvature.get(i), i));
     	}
     	Collections.sort(curvIndexList, new negativeMeanCurvatureIndexComparator());
-    	Vector<Vector<Float>> gDistance2 = new Vector<Vector<Float>>();
-        Vector<Vector<Integer>> gCurvature2 = new Vector<Vector<Integer>>();
+        Vector<byte[]> gCurvature2 = new Vector<byte[]>();
         for (int i = 0; i < nCurves; i++) {
             int j = curvIndexList.get(i).getIndex();
-            gDistance2.add(gDistance.get(j));
             gCurvature2.add(gCurvature.get(j));
+        }
+        
+        int xDim = nCurves;
+        int yDim = 801;
+        int sliceSize = xDim * yDim;
+        byte buffer[] = new byte[sliceSize];
+        for (int x = 0; x < xDim; x++) {
+            byte curv[] = gCurvature2.get(x);
+            for (int y = 0; y < yDim; y++) {
+                buffer[x + xDim * y] = curv[y];
+            }
         }
     }
     
@@ -536,8 +544,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     }
     
     private Vector<Vector<String>> getStatsData(Vector<VOIStatisticalProperties> statsList, VOIVector VOIs, ModelImage img,
-                                                Vector<Vector<Float>> gDistance, Vector<Vector<Integer>> gCurvature,
-                                                Vector<Double> gMeanNegativeCurvature) {
+                                                Vector<byte[]> gCurvature, Vector<Double> gMeanNegativeCurvature) {
         //                          minCurvature             maxCurvature
         // HGADFN167_LAC_40X_1      -0.3075                   0.2463
         // HGADFN167_LAC_40X_2      -0.08464                  0.1443
@@ -599,27 +606,51 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
                         startingIndex = i;
                     }
                 }
-                Vector<Float> percentDistance = new Vector<Float>();
-                Vector<Integer> scaledCurvature = new Vector<Integer>();
+                double initDistance[] = new double[nPoints];
+                float initCurvature[] = new float[nPoints];
+                int index = 0;
                 float startingDistance = positions.get(startingIndex).Z;
-                float minCurv = -0.5f;
-                float maxCurv = 0.5f;
-                float sCurv;
-                int intCurv;
                 for (int i = startingIndex; i < nPoints; i++) {
-                    percentDistance.add((float)((positions.get(i).Z - startingDistance)/totalLength[0]));
-                    sCurv = (255 * (curvature.get(i) - minCurv))/(maxCurv - minCurv);
-                    intCurv = Math.min(255, Math.max(0, Math.round(sCurv)));
-                    scaledCurvature.add(intCurv);
+                    initDistance[index] = 800.0*((positions.get(i).Z - startingDistance)/totalLength[0]);
+                    initCurvature[index++] = curvature.get(i);
                 }
-                double previousDistance = (positions.get(nPoints-1).Z - startingDistance)/totalLength[0];
+                double previousDistance = 800.0*(positions.get(nPoints-1).Z - startingDistance)/totalLength[0];
                 for (int i = 0; i < startingIndex; i++) {
-                    percentDistance.add((float)(previousDistance + (positions.get(i).Z/totalLength[0])));
-                    sCurv = (255 * (curvature.get(i) - minCurv))/(maxCurv - minCurv);
-                    intCurv = Math.min(255, Math.max(0, Math.round(sCurv)));
-                    scaledCurvature.add(intCurv);    
+                    initDistance[index] = previousDistance + (800.0*(positions.get(i).Z/totalLength[0]));
+                    initCurvature[index++] = curvature.get(i);    
                 }
-                gDistance.add(percentDistance);
+                double interpCurvature[] = new double[801];
+                double lowerDistance;
+                double upperDistance;
+                // initDistance[0] = 0.0
+                interpCurvature[0] = initCurvature[0];
+                interpCurvature[800] = initCurvature[0];
+                index = 1;
+                for (int i = 1; i <= 799; i++) {
+                   while ((i > initDistance[index]) && (index < nPoints-1)) {
+                       index++;
+                   }
+                   if (i >= initDistance[nPoints-1]) {
+                       lowerDistance = i - initDistance[nPoints-1];
+                       upperDistance = 800.0 - i;
+                       interpCurvature[i] = (upperDistance*initCurvature[nPoints-1] + lowerDistance*initCurvature[0])/
+                                             (lowerDistance + upperDistance);
+                   }
+                   else {
+                       lowerDistance = i - initDistance[index-1];
+                       upperDistance = initDistance[index] - i;
+                       interpCurvature[i] = (upperDistance*initCurvature[index-1] + lowerDistance*initCurvature[index])/
+                                                                 (lowerDistance+upperDistance);
+                   }
+                } // for (int i = 1; i <= 799; i++)
+                byte scaledCurvature[] = new byte[801];
+                double minCurv = -0.5;
+                double maxCurv = 0.5;
+                double sCurv;
+                for (int i = 0; i <= 800; i++) {
+                    sCurv = 255.0*(interpCurvature[i] - minCurv)/(maxCurv - minCurv);
+                    scaledCurvature[i] = (byte)Math.round(Math.min(255.0, Math.max(0.0, sCurv)));
+                }
                 gCurvature.add(scaledCurvature);
                 gMeanNegativeCurvature.add(meanNegativeCurvature[0]);
                 
