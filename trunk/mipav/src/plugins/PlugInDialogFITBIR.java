@@ -139,7 +139,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String authProdServer = "https://fitbir.nih.gov/";
     
     /** File name of server configuration. */
-    private static final String configFileName = "fitbir_config.properties";
+    private static final String configFileName = "brics_config.properties";
     
     /** Property for reading the dd server url from the fitbir config file. */
     private static final String ddServerURLProp = "ddServerURL";
