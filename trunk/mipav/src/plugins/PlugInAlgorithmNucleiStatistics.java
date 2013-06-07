@@ -85,7 +85,9 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     	int progressPerImg = 100 / inputFiles.size();
     	int curProgress = 0;
     	
-        for (File inFile : inputFiles) {
+    	Vector<byte[]> gCurvature = new Vector<byte[]>();
+        Vector<Double> gMeanNegativeCurvature = new Vector<Double>();
+    	for (File inFile : inputFiles) {
         	fireProgressStateChanged("Opening image " + inFile.getName() + " ...");
         	srcImage = openFile(inFile);
 
@@ -103,7 +105,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
 	        fireProgressStateChanged("Calculating statistics for " + inFile.getName() + " ...");
 	        curProgress += progressPerImg / 3;
         	fireProgressStateChanged(curProgress);
-	        outputStatistics(srcImage);
+	        outputStatistics(srcImage, gCurvature, gMeanNegativeCurvature);
 	        
 	        curProgress += progressPerImg / 3;
         	fireProgressStateChanged(curProgress);
@@ -116,6 +118,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         }
         
         outputAllStatsFile();
+        outputCurvatureFile(gCurvature, gMeanNegativeCurvature);
         
         // TODO: gen heatmap image for boundary curvature
         
@@ -268,7 +271,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         }
     }
     
-    private void outputStatistics(ModelImage img) {
+    private void outputStatistics(ModelImage img, Vector<byte[]> gCurvature, Vector<Double> gMeanNegativeCurvature) {
         boolean smoothCurvature = true;
         double negativeHysteresisFraction = 0.25;
         double positiveHysteresisFraction = 0.25;
@@ -300,20 +303,36 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     		allStatsColumnNames.addAll(columnHeaders);
     	}
     	
-    	Vector<byte[]> gCurvature = new Vector<byte[]>();
-    	Vector<Double> gMeanNegativeCurvature = new Vector<Double>();
-    	
     	Vector<Vector<String>> columns = getStatsData(statsList, img.getVOIs(), img, gCurvature, gMeanNegativeCurvature);
     	allStatsColumns.addAll(columns);
     	
     	writeStatisticFile(statsOutputFile, columnHeaders, columns);
-    	// Sort nuclei in order of increasing mean negative curvature
-    	ArrayList<negativeMeanCurvatureIndexItem> curvIndexList = new ArrayList<negativeMeanCurvatureIndexItem>();
-    	int nCurves = gMeanNegativeCurvature.size();
-    	for (int i = 0; i < nCurves; i++) {
-    	    curvIndexList.add(new negativeMeanCurvatureIndexItem(gMeanNegativeCurvature.get(i), i));
+    }
+    
+    private void outputAllStatsFile() {
+    	File statsDir = new File(inputFiles.elementAt(0).getParent() + File.separator + "statistics" + File.separator);
+    	if (!statsDir.exists()) { 
+    		statsDir.mkdirs();
     	}
-    	Collections.sort(curvIndexList, new negativeMeanCurvatureIndexComparator());
+    	
+    	String statsOutputFile = statsDir.getAbsolutePath() + File.separator + "all_statistics" + ".table";
+    	
+    	writeStatisticFile(statsOutputFile, allStatsColumnNames, allStatsColumns);
+    }
+    
+    private void outputCurvatureFile(Vector<byte[]> gCurvature, Vector<Double> gMeanNegativeCurvature) {
+        File statsDir = new File(inputFiles.elementAt(0).getParent() + File.separator + "statistics" + File.separator);
+        if (!statsDir.exists()) { 
+            statsDir.mkdirs();
+        }
+        
+        // Sort nuclei in order of increasing mean negative curvature
+        ArrayList<negativeMeanCurvatureIndexItem> curvIndexList = new ArrayList<negativeMeanCurvatureIndexItem>();
+        int nCurves = gMeanNegativeCurvature.size();
+        for (int i = 0; i < nCurves; i++) {
+            curvIndexList.add(new negativeMeanCurvatureIndexItem(gMeanNegativeCurvature.get(i), i));
+        }
+        Collections.sort(curvIndexList, new negativeMeanCurvatureIndexComparator());
         Vector<byte[]> gCurvature2 = new Vector<byte[]>();
         for (int i = 0; i < nCurves; i++) {
             int j = curvIndexList.get(i).getIndex();
@@ -333,7 +352,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         int extents[] = new int[2];
         extents[0] = xDim;
         extents[1] = yDim;
-        String imageName = img.getImageName() + "_curvature";
+        String imageName = "all_curvatures";
         ModelImage curvatureImage = new ModelImage(ModelStorageBase.UBYTE, extents, imageName);
         curvatureImage.setImageName(imageName + ".tif");
         curvatureImage.getFileInfo()[0].setFileDirectory(statsDir.getAbsolutePath() + File.separator);
@@ -367,17 +386,6 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
             MipavUtil.displayError("IOException " + e + " on imageFile.writeImage");
             return;
         }
-    }
-    
-    private void outputAllStatsFile() {
-    	File statsDir = new File(inputFiles.elementAt(0).getParent() + File.separator + "statistics" + File.separator);
-    	if (!statsDir.exists()) { 
-    		statsDir.mkdirs();
-    	}
-    	
-    	String statsOutputFile = statsDir.getAbsolutePath() + File.separator + "all_statistics" + ".table";
-    	
-    	writeStatisticFile(statsOutputFile, allStatsColumnNames, allStatsColumns);
     }
     
     /**
