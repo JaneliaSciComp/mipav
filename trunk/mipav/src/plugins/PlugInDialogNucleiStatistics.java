@@ -46,6 +46,10 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     private JTextField fileChooserText;
     
     private JButton fileChooserButton;
+
+	private JCheckBox forceResolutionCheckbox;
+	
+	private boolean forceResolution = true;
     
     private static final ViewImageFileFilter tiffFilter = new ViewImageFileFilter(new String[] { ".tiff", ".tif" });
 
@@ -217,6 +221,10 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     	onlyProcessTiff = b;
     }
     
+    public void setForceResolution(boolean b) {
+    	forceResolution = b;
+    }
+    
     public void setInputDir(String dir) {
     	inputDir = dir;
     	
@@ -261,7 +269,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     protected void callAlgorithm() {
 
         try {
-            nucleiDeformAlgo = new PlugInAlgorithmNucleiStatistics(inputFiles);
+            nucleiDeformAlgo = new PlugInAlgorithmNucleiStatistics(inputFiles, forceResolution);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -309,6 +317,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
         }*/
     	
     	setOnlyProcessTiff(scriptParameters.getParams().getBoolean("only_tiff"));
+    	setForceResolution(scriptParameters.getParams().getBoolean("do_force_1um_res"));
     	boolean useDirMode = scriptParameters.getParams().getBoolean("use_dir_input_mode");
     	if (useDirMode) {
     		setInputDir(scriptParameters.getParams().getString("input_dir"));
@@ -326,6 +335,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("input_file", inputDir));
     	scriptParameters.getParams().put(ParameterFactory.newParameter("only_tiff", onlyProcessTiff));
+    	scriptParameters.getParams().put(ParameterFactory.newParameter("do_force_1um_res", forceResolution));
     }
 
     /**
@@ -418,6 +428,14 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
         gbc.gridwidth = 3;
         mainPanel.add(onlyProcessTiffCheckbox, gbc);
         
+        forceResolutionCheckbox = new JCheckBox("Force resolution to 1 micrometer", forceResolution);
+        forceResolutionCheckbox.setForeground(Color.black);
+        forceResolutionCheckbox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        mainPanel.add(forceResolutionCheckbox, gbc);
+        
         if (fileModeButton.isSelected()) {
         	enableDirChooserComponents(false);
         	enableFileChooserComponents(true);
@@ -442,6 +460,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
      */
     private boolean setVariables() {
         onlyProcessTiff = onlyProcessTiffCheckbox.isSelected();
+        forceResolution = forceResolutionCheckbox.isSelected();
         
         if (dirModeButton.isSelected()) {
 	        inputDir = dirChooserText.getText();

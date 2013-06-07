@@ -36,6 +36,9 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     /** Vector of the stats for all the images. */
     private Vector<Vector<String>> allStatsColumns = new Vector<Vector<String>>();
     
+    /** Whether to force the resolution of all images to 1um. */
+    private boolean forceResolution = true;
+    
     private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
 		VOIStatisticalProperties.solidityDescription, VOIStatisticalProperties.eccentricityDescription, VOIStatisticalProperties.meanCurvatureDescription,
@@ -63,9 +66,10 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @param minSize
      * @param maxSize
      */
-    public PlugInAlgorithmNucleiStatistics(Vector<File> inputFiles) {
+    public PlugInAlgorithmNucleiStatistics(Vector<File> inputFiles, boolean forceResolution) {
         super(null, null);
         this.inputFiles = inputFiles;
+        this.forceResolution = forceResolution;
     }
     
   //~ Methods --------------------------------------------------------------------------------------------------------
@@ -120,8 +124,6 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
         outputAllStatsFile();
         outputCurvatureFile(gCurvature, gMeanNegativeCurvature);
         
-        // TODO: gen heatmap image for boundary curvature
-        
         if (threadStopped) {
             finalize();
 
@@ -136,7 +138,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @param file The file to try to open.
      * @return The ModelImage of the specified file, or null if there was an error.
      */
-    private static final ModelImage openFile(File file) {
+    private ModelImage openFile(File file) {
     	ModelImage img = null;
     	
 		System.err.println("Trying to open file:\t" + file.getName());
@@ -148,6 +150,16 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     		System.err.println("Failed to open file:\t" + file.getName());
     		e.printStackTrace();
     		img = null;
+    	}
+    	
+    	if (forceResolution) {
+    		FileInfoBase[] fInfos = img.getFileInfo();
+    		for (int i = 0; i < fInfos.length; i++) {
+    			for (int j = 0; j < img.getNDims(); j++) {
+    				fInfos[i].setUnitsOfMeasure(Unit.MICROMETERS, j);
+    				fInfos[i].setResolutions(1.0f, j);
+    			}
+    		}
     	}
     	
     	return img;
