@@ -595,7 +595,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         // need to determine by what percentage...so...need to figure out by what percebtahe the xdim will go down
         // to 128
         // startSLice will be 3 less than middle slice
-        // endSlice will be 4 more than middle slixe
+        // endSlice will be 4 more than middle slice
         final int xDim = origImage.getExtents()[0];
         int percentage = 100;
         if (xDim > 128) {
@@ -2104,7 +2104,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private String[] csvParams;
         
         private final String[] unchangableElements = new String[] {
-        	"ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
+        	"ImgFileHashCode", "ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
         };
 
         /**
@@ -2890,13 +2890,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 if ( !csvParams[i].trim().equals("")) {
 
-                    if (csvFieldNames[i].equalsIgnoreCase("image_num_dimensions")) {
+                    if (csvFieldNames[i].equalsIgnoreCase("ImgDimensNum")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(nDims))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(nDims));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_extent1")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1Extent")) {
 
                         if ( !csvParams[i].trim().equals(String.valueOf(exts[0]))) {
 
@@ -2904,103 +2904,103 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_extent2")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2Extent")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(exts[1]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_extent3")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3Extent")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(exts[2]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_extent4")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4Extent")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(exts[3]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_extent5")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5Extent")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(exts[4]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_unit1")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1UoM")) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[0]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_unit2")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2UoM")) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[1]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_unit3")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3UoM")) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[2]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_unit4")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4UoM")) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[3]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_unit5")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5UoM")) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[4]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution1")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1Resol")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[0]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution2")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2Resol")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[1]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution3")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3Resol")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[2]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution4")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4Resol")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[3]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_resolution5")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5Resol")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(res[4]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_modality")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgModltyTyp")) {
                         if ( !csvParams[i].trim().equals(modalityString)) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(modalityString);
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_slice_thickness")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceThicknessVal")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(sliceThickness))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(sliceThickness));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("image_orientation")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOrientTyp")) {
                         if ( !csvParams[i].trim().equals(orientation)) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
@@ -3089,28 +3089,37 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
-                if (l.equalsIgnoreCase("image_num_dimensions")) {
-                    ((JTextField) comp).setText(String.valueOf(nDims));
+                
+                if (l.equalsIgnoreCase("ImgDimensNum")) {
+                	final JComboBox jc = (JComboBox) comp;
+                	final String item = exts.length + "D";
+                	for (int k = 0; k < jc.getItemCount(); k++) {
+                        if (((String) jc.getItemAt(k)).equalsIgnoreCase(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                	if (jc.getSelectedIndex() == 0)
+                		jc.setSelectedIndex(jc.getItemCount()-1);
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_extent1")) {
+                } else if (l.equalsIgnoreCase("ImgDim1Extent")) {
                     ((JTextField) comp).setText(String.valueOf(exts[0]));
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_extent2")) {
+                } else if (l.equalsIgnoreCase("ImgDim2Extent")) {
                     ((JTextField) comp).setText(String.valueOf(exts[1]));
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_extent3")) {
+                } else if (l.equalsIgnoreCase("ImgDim3Extent")) {
                     if (img.getNDims() > 2) {
                         ((JTextField) comp).setText(String.valueOf(exts[2]));
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_extent4")) {
+                } else if (l.equalsIgnoreCase("ImgDim4Extent")) {
                     if (img.getNDims() > 3) {
                         ((JTextField) comp).setText(String.valueOf(exts[3]));
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_extent5")) {
+                } else if (l.equalsIgnoreCase("ImgDim5Extent")) {
                     // for now...nothing
-                } else if (l.equalsIgnoreCase("image_unit1")) {
+                } else if (l.equalsIgnoreCase("ImgDim1UoM")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3119,7 +3128,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_unit2")) {
+                } else if (l.equalsIgnoreCase("ImgDim2UoM")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3128,7 +3137,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_unit3")) {
+                } else if (l.equalsIgnoreCase("ImgDim3UoM")) {
                     if (img.getNDims() > 2) {
     					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3139,7 +3148,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_unit4")) {
+                } else if (l.equalsIgnoreCase("ImgDim4UoM")) {
                     if (img.getNDims() > 3) {
     					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3150,36 +3159,32 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_unit5")) {
+                } else if (l.equalsIgnoreCase("ImgDim5UoM")) {
                     // for now...nothing
-                } else if (l.equalsIgnoreCase("image_resolution1")) {
+                } else if (l.equalsIgnoreCase("ImgDim1Resol")) {
                     ((JTextField) comp).setText(String.valueOf(res[0]));
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_resolution2")) {
+                } else if (l.equalsIgnoreCase("ImgDim2Resol")) {
                     ((JTextField) comp).setText(String.valueOf(res[1]));
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_resolution3")) {
+                } else if (l.equalsIgnoreCase("ImgDim3Resol")) {
                     if (img.getNDims() > 2) {
                         ((JTextField) comp).setText(String.valueOf(res[2]));
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_resolution4")) {
+                } else if (l.equalsIgnoreCase("ImgDim4Resol")) {
                     if (img.getNDims() > 3) {
                         ((JTextField) comp).setText(String.valueOf(res[3]));
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("image_resolution5")) {
+                } else if (l.equalsIgnoreCase("ImgDim5Resol")) {
                     // for now...nothing
-                } else if (l.equalsIgnoreCase("image_modality")) {
+                } else if (l.equalsIgnoreCase("ImgModltyTyp")) {
 					final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (modalityString.equalsIgnoreCase(item)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
+                    if (modalityString.contains("Magnetic"))
+                    	jc.setSelectedItem("MRI");
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_file_format")) {
+                } else if (l.equalsIgnoreCase("ImgFileFormat")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3188,86 +3193,149 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_slice_thickness")) {
+                } else if (l.equalsIgnoreCase("ImgSliceThicknessVal")) {
                     if (sliceThickness == 0) {
                         ((JTextField) comp).setText("");
                     } else {
                         ((JTextField) comp).setText(String.valueOf(sliceThickness));
                     }
-                    label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("image_orientation")) {
+                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (orientation.equalsIgnoreCase(item)) {
+                        if (item.contains(orientation)) {
                             jc.setSelectedIndex(k);
                         }
                     }
-                    label.setForeground(Color.red);
                 }
             }
-
-            if (fileFormatString.equalsIgnoreCase("dicom") && modalityString.equalsIgnoreCase("Magnetic Resonance")) {
-                // System.out.println("need to extract dicom tags");
-
-                FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
-
+            
+            if (fileFormatString.equalsIgnoreCase("dicom")) {
+            	
+            	FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
+            	
+            	String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+                               
                 String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
                 String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
                 String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
-                String acquisitionMatrix = (String) (fileInfoDicom.getTagTable().getValue("0018,1310"));
                 String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
-                String photoInterp = (String) (fileInfoDicom.getTagTable().getValue("0028,0002"));
-                String scannerType = (String) (fileInfoDicom.getTagTable().getValue("0018,0023"));
-
+                
+                String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+                
                 keySet = labelsAndComps.keySet();
                 iter = keySet.iterator();
                 while (iter.hasNext()) {
                     final JLabel label = (JLabel) iter.next();
                     final String l = label.getName();
                     final JComponent comp = labelsAndComps.get(label);
-                    if (l.equalsIgnoreCase("mri_field_of_view_pd")) {
+                    if (l.equalsIgnoreCase("AgeVal")) {
+                    	if (ageVal.contains("Y")){
+                    		String temp = ageVal.substring(0,ageVal.length()-6);
+                    		ageVal = Integer.toString(Integer.parseInt(temp)*12) + " Months";
+                    	}
+                        ((JTextField) comp).setText(ageVal);
+                        label.setForeground(Color.red);
+                    } else if (l.equalsIgnoreCase("SiteName")) {
+                        ((JTextField) comp).setText(siteName);
+                    } else if (l.equalsIgnoreCase("VisitDate")) {
+                        ((JTextField) comp).setText(visitDate);
+                    } else if (l.equalsIgnoreCase("ImgAntmicSite")) {
+                    	final JComboBox jc = (JComboBox) comp;
+                        for (int k = 0; k < jc.getItemCount(); k++) {
+                            final String item = (String) jc.getItemAt(k);
+                            if (bodyPart.equalsIgnoreCase(item)) {
+                                jc.setSelectedIndex(k);
+                            }
+                        }
+                        System.out.println(bodyPart);
+                    } else if (l.equalsIgnoreCase("ImgStdyDateTime")) {
+                        ((JTextField) comp).setText(visitDate + " " + visitTime);
+                        label.setForeground(Color.red);
+                    } else if (l.equalsIgnoreCase("ImgSliceOversampleVal")) {
+                        ((JTextField) comp).setText(sliceOversample);
+                    } else if (l.equalsIgnoreCase("ImgGapBtwnSlicesMeasr")) {
+                        ((JTextField) comp).setText(gap);
+                    } else if (l.equalsIgnoreCase("ImgFoVMeasr")) {
                         ((JTextField) comp).setText(fieldOfView);
+                    } else if (l.equalsIgnoreCase("ImgScanManufName")) {
+                    	final JComboBox jc = (JComboBox) comp;
+                        for (int k = 0; k < jc.getItemCount(); k++) {
+                            final String item = (String) jc.getItemAt(k);
+                            if (manufacturer.contains(item)) {
+                                jc.setSelectedIndex(k);
+                            }
+                        }
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("mri_echo_time_pd")) {
-                        ((JTextField) comp).setText(echoTime);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("mri_repetition_time_pd")) {
-                        ((JTextField) comp).setText(repetitionTime);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("scanner_manufacturer_pd")) {
-                        ((JTextField) comp).setText(manufacturer);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("scanner_software_versions_pd")) {
+                    } else if (l.equalsIgnoreCase("ImgScanSftwrVerNum")) {
                         ((JTextField) comp).setText(softwareVersion);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("magnetic_field_strength")) {
-                        ((JTextField) comp).setText(magnaticFieldStrength);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("flip_angle")) {
-                        ((JTextField) comp).setText(flipAngle);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("acquisition_matrix")) {
-                        ((JTextField) comp).setText(acquisitionMatrix);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("patient_position")) {
+                    } else if (l.equalsIgnoreCase("ImgHeadPositionTxt")) {
                         ((JTextField) comp).setText(patientPosition);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("photomet_interpret")) {
-                        ((JTextField) comp).setText(photoInterp);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("scanner_type_pd")) {
-                        ((JTextField) comp).setText(scannerType);
-                        label.setForeground(Color.red);
+                    } else if (l.equalsIgnoreCase("ImgScanModelName")) {
+                        ((JTextField) comp).setText(scannerModel);
+                    } else if (l.equalsIgnoreCase("ImgBandwidthVal")) {
+                        ((JTextField) comp).setText(bandwidth);
                     }
                 }
-
-                // String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-
+                
+                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                	
+                    String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                    String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                    String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                    String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+                    
+                    String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                    String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                    String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                    String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                    String recieveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+                    
+                    keySet = labelsAndComps.keySet();
+                    iter = keySet.iterator();
+                    while (iter.hasNext()) {
+                        final JLabel label = (JLabel) iter.next();
+                        final String l = label.getName();
+                        final JComponent comp = labelsAndComps.get(label);
+                        if (l.equalsIgnoreCase("ImgEchoTime")) {
+                            ((JTextField) comp).setText(echoTime);
+                            label.setForeground(Color.red);
+                        } else if (l.equalsIgnoreCase("ImgRepetitnTime")) {
+                            ((JTextField) comp).setText(repetitionTime);
+                        } else if (l.equalsIgnoreCase("ImgScanStrgthVal")) {
+                            final JComboBox jc = (JComboBox) comp;
+                            for (int k = 0; k < jc.getItemCount(); k++) {
+                                final String item = (String) jc.getItemAt(k);
+                                if (item.contains(magnaticFieldStrength)) {
+                                    jc.setSelectedIndex(k);
+                                }
+                            }
+                            label.setForeground(Color.red);
+                        } else if (l.equalsIgnoreCase("ImgMRIT1T2Name")) {
+                            ((JTextField) comp).setText(mriT1T2Name);
+                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum")) {
+                            ((JTextField) comp).setText(numAverages);
+                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                            ((JTextField) comp).setText(flipAngle);
+                        } else if (l.equalsIgnoreCase("ImgEchoTrainLengthMeasr")) {
+                            ((JTextField) comp).setText(echoTrainMeas);
+                        } else if (l.equalsIgnoreCase("ImgInversionTime")) {
+                            ((JTextField) comp).setText(inversionTime);
+                        } else if (l.equalsIgnoreCase("ImgRFReceivCoilName")) {
+                            ((JTextField) comp).setText(recieveCoilName);
+                        } else if (l.equalsIgnoreCase("ImgPhaseEncodeDirTxt")) {
+                            ((JTextField) comp).setText(phaseEncode);
+                        }
+                    }
+                }
             }
         }
 
@@ -3313,7 +3381,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             } else if (command.startsWith("browse_")) {
                 boolean isMultiFile = false;
                 // TODO: hardcoded structure handling
-                if (dataStructureName.startsWith("image")) {
+                //System.out.println(dataStructureName);
+                if (dataStructureName.startsWith("Imag")) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
                     fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
