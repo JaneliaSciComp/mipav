@@ -173,6 +173,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String pluginVersion = "0.4";
     
+    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
+    
     private static final String MAIN_GROUP_NAME = "Main";
     
     private static final String FILE_ELEMENT_TYPE = "File";
@@ -729,7 +731,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         csvStructRowData = new Hashtable<String, String>();
         for (int i = 0; i < numDataStructs; i++) {
             String tableName = (String) sourceTableModel.getValueAt(i, 0);
-            String lowerName = tableName.substring(0, tableName.indexOf("_TBI")).toLowerCase();
+            // format: "structname_PREFIXGUID"
+            String lowerName = getStructFromString(tableName).toLowerCase();
             if ( !csvStructRowData.containsKey(lowerName)) {
                 DataStruct structInfo = null;
                 for (DataStruct struct : dataStructures) {
@@ -776,7 +779,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             int collisionCounter = 1;
             final String name = (String) sourceTableModel.getValueAt(i, 0);
 
-            final String guid = name.substring(name.indexOf("_TBI") + 1, name.length());
+            final String guid = getGuidFromString(name);
 
             final File imageFile = imageFiles.get(i);
             String outputFileNameBase;
@@ -797,7 +800,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final int modality = origImage.getFileInfo(0).getModality();
                 final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
 
-                final String dsName = name.substring(0, name.indexOf("_TBI"));
+                final String dsName = getStructFromString(name);
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
 
@@ -868,7 +871,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 printlnToLog("Creating submission file for " + name);
 
-                String dsName = name.substring(0, name.indexOf("_TBI"));
+                String dsName = getStructFromString(name);
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
 
@@ -1730,6 +1733,66 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
+     * Checks if the given string starts with an allowed GUID prefix.
+     * @param str A string to check.
+     * @return True if the string starts with one of the BIRCS prefixes (case sensitive).
+     */
+    private static final boolean isGuid(String str) {
+    	for (String prefix : allowedGuidPrefixes) {
+    		if (str.startsWith(prefix)) {
+    			return true;
+    		}
+    	}
+    	
+    	return false;
+    }
+    
+    /**
+     * Checks to see if the given string contains an allowed GUID prefix.
+     * @param str A string to check.
+     * @return True if one of the allowed BRICS prefixes is found anywhere in the string (case sensitive).
+     */
+    private static final boolean containsGuid(String str) {
+    	for (String prefix : allowedGuidPrefixes) {
+    		if (str.contains(prefix)) {
+    			return true;
+    		}
+    	}
+    	
+    	return false;
+    }
+    
+    /**
+     * Extracts the form structure name from a string in the format 'structname_BRICSGUID'.
+     * @param str A string in the format 'structname_BRICSGUID'.
+     * @return The form structure name from the given string or null if it could not be found (if no GUID prefix was found to initiate the parsing).
+     */
+    private static final String getStructFromString(String str) {
+    	for (String prefix : allowedGuidPrefixes) {
+    		if (str.contains(prefix)) {
+    			return str.substring(0, str.indexOf(prefix) - 1);
+    		}
+    	}
+    	
+    	return null;
+    }
+    
+    /**
+     * Extracts the GUID from a string in the format 'structname_BRICSGUID'.
+     * @param str A string in the format 'structname_BRICSGUID'.
+     * @return The GUID from the given string or null if it could not be found (if no GUID prefix was found to initiate the parsing).
+     */
+    private static final String getGuidFromString(String str) {
+    	for (String prefix : allowedGuidPrefixes) {
+    		if (str.contains(prefix)) {
+    			return str.substring(str.indexOf(prefix), str.length());
+    		}
+    	}
+    	
+    	return null;
+    }
+    
+    /**
      * Multi-line tooltip creation helper method.
      *
      * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
@@ -1963,11 +2026,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             for (int i = sortedNamesArray.length - 1; i > 0; i--) {
                 String name = sortedNamesArray[i];
                 if ( !name.equals("")) {
-                    // TBI short name doesn't appear to have version number included
+                    // BRICS short name doesn't appear to have version number included
                     //String nameWithoutVersion = name.substring(0, name.length() - 2);
                     for (int k = i - 1; k >= 0; k--) {
                         String checkName = sortedNamesArray[k];
-                        // TBI short name doesn't appear to have version number included
+                        // BRICS short name doesn't appear to have version number included
                         //String checkNameWithoutVersion = checkName.substring(0, checkName.length() - 2);
                         if (name.equals(checkName)) {
                             sortedNamesArray[k] = "";
@@ -2126,9 +2189,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             if (launchedFromInProcessState) {
                 // System.out.println("*** launched from in process: " + name);
-                if (name.contains("_TBI")) {
-
-                    this.dataStructureName = name.substring(0, name.indexOf("_TBI"));
+                if (containsGuid(name)) {
+                    this.dataStructureName = getStructFromString(name);
                 } else {
                     this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
                 }
@@ -3769,9 +3831,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 errs.add(labelText + " is a required field");
                             } else {
                             	// TODO: hardcoded element handling
-                                if (key.equalsIgnoreCase("subjectkey")) {
-                                    if ( !value.trim().startsWith("TBI")) {
-                                        errs.add(labelText + " must begin with TBI");
+                                if (key.equalsIgnoreCase("GUID")) {
+                                    if ( !isGuid(value.trim())) {
+                                        errs.add(labelText + " must begin with a valid GUID prefix");
                                     }
                                 }
                             }
@@ -3911,7 +3973,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
                 // TODO: hardcoded element handling
-                if (label.getName().equalsIgnoreCase("subjectkey")) {
+                if (label.getName().equalsIgnoreCase("GUID")) {
                     guid = ((JTextField) comp).getText().trim();
                 }
                 final String key = label.getName();
