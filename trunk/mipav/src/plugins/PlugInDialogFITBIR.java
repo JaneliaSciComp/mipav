@@ -837,8 +837,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
                 
                 // TODO: calculate hash of the zip file and then put it into the image file hash code CDE (if it exists in the struct)
+                String hashCode = ",";
                 try {
-					String hashCode = computeFileHash(zipFilePath);
+					hashCode = computeFileHash(zipFilePath);
 				} catch (IOException e) {
 					e.printStackTrace();
                     MipavUtil.displayError("Unable calculate hash code of ZIP file:\n" + e.getMessage());
@@ -853,7 +854,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
 
-                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, origImage, i);
+                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, origImage, i, hashCode);
                 if ( !newRow.equals("")) {
                     String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
@@ -1101,7 +1102,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
 
-                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, null, i);
+                //may need to have hashcode field fixed
+                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, null, i, ",");
                 if ( !newRow.equals("")) {
                     String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
@@ -1126,6 +1128,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 bw.write(csvStructRowData.get(lowerName));
 
+//                System.out.println(csvStructRowData.get(lowerName) + "  ||||  ");
+                
                 bw.close();
             }
 
@@ -1175,7 +1179,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @param origImage
      */
     private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, DataStruct ds,
-            final File imageFile, final ModelImage origImage, int counter) {
+            final File imageFile, final ModelImage origImage, int counter, String hashCode) {
         String csvRow = new String();
 
         if (ds == null) {
@@ -1199,6 +1203,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         value = outputFileNameBase + ".zip";
                     } else if (name.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                         value = outputFileNameBase + ".jpg";
+                    } else if (name.equalsIgnoreCase("ImgFileHashCode")) {
+                    	value = hashCode;
                     } else {
                         // need to get appropriate value
                         for (String key : infoMap.keySet()) {
@@ -2169,6 +2175,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private final String[] unchangableElements = new String[] {
         	"ImgFileHashCode", "ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
         };
+
+		private String currFile;
 
         /**
          * constructor
@@ -3269,6 +3277,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             jc.setSelectedIndex(k);
                         }
                     }
+//                } else if (l.equalsIgnoreCase("ImgFileHashCode")) {
+//                	((JTextField) comp).setText("This will be filled for you upon generating files");
                 }
             }
             
@@ -3317,7 +3327,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 jc.setSelectedIndex(k);
                             }
                         }
-                        System.out.println(bodyPart);
+
                     } else if (l.equalsIgnoreCase("ImgStdyDateTime")) {
                         ((JTextField) comp).setText(visitDate + " " + visitTime);
                         label.setForeground(Color.red);
@@ -3399,6 +3409,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
             }
+        }
+        
+        /**
+         * clear populated fields
+         * @param labelsAndComps
+         */
+        public void clearFields(final TreeMap<JLabel, JComponent> labelsAndComps){
+        	
         }
 
         /**
@@ -3500,6 +3518,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                             final String labelName = command.substring(command.indexOf("_") + 1, command.length());
 
+                            String tempName = currFile;
                             final Set<JLabel> keySet = labelsAndComps.keySet();
                             final Iterator<JLabel> iter = keySet.iterator();
                             while (iter.hasNext()) {
@@ -3512,6 +3531,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 } else if (l.getName().equalsIgnoreCase(labelName)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
                                     tf.setText(file.getName());
+                                    tempName = file.getName();
                                     tf.setEnabled(false);
                                 }
 
@@ -3551,6 +3571,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             previewPanel.validate();
                             previewPanel.repaint();
 
+                            if (!currFile.equals(tempName))
+                            	clearFields(labelsAndComps);
                             populateFields(labelsAndComps, srcImage);
 
                             srcImage.disposeLocal();

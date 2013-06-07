@@ -822,9 +822,11 @@ public class JDialogVOIStats extends JDialogBase
 	            voi.setWatershedID(seedValue);
 	        }
         } else if (source == VOIName) {
-        	voi.setName(VOIName.getText());
-        	voi.update();
-        	updateVOIPanel(voi, image);
+        	if (VOIName.getText() != null){
+	        	voi.setName(VOIName.getText());
+	        	voi.update();
+	        	updateVOIPanel(voi, image);
+        	}
         } else if (source == VOIThicknessField) {
         	boolean changedThickness = false;
             int thickChange = 1;
@@ -1190,6 +1192,7 @@ public class JDialogVOIStats extends JDialogBase
     protected void init() {
 
         // setTitle("VOI Statistics");
+    	
         frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
                                                          BorderFactory.createLoweredBevelBorder());
 
@@ -1789,6 +1792,7 @@ public class JDialogVOIStats extends JDialogBase
             voi.update();
             updateVOIPanel(voi, image);
             updateTree();
+            image.notifyImageDisplayListeners(null, true);
         }
     }
 
