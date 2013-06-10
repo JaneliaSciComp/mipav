@@ -171,7 +171,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.4";
+    private static final String pluginVersion = "0.5";
     
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
     
@@ -182,6 +182,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String IMG_FILE_ELEMENT_NAME = "ImgFileName";
     
     private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFileName";
+    
+    private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
+    
+    private static final String recordIndicatorColumn = "record";
 
     /** Text of the privacy notice displayed to the user before the plugin can be used. */
      public static final String PRIVACY_NOTICE = "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -836,7 +840,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     continue;
                 }
                 
-                // TODO: calculate hash of the zip file and then put it into the image file hash code CDE (if it exists in the struct)
+                // calculate hash of the zip file and then put it into the image file hash code CDE (if it exists in the struct)
                 String hashCode = ",";
                 try {
 					hashCode = computeFileHash(zipFilePath);
@@ -1198,12 +1202,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 String value = "";
                 String v;
                 if (imageFile != null) {
-                	// TODO: hardcoded elements
                     if (name.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                         value = outputFileNameBase + ".zip";
                     } else if (name.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                         value = outputFileNameBase + ".jpg";
-                    } else if (name.equalsIgnoreCase("ImgFileHashCode")) {
+                    } else if (name.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
                     	value = hashCode;
                     } else {
                         // need to get appropriate value
@@ -2173,7 +2176,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private String[] csvParams;
         
         private final String[] unchangableElements = new String[] {
-        	"ImgFileHashCode", "ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
+        		IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensNum", "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent", IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME
         };
 
 		private String currFile;
@@ -2380,10 +2383,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
-                            // TODO: hardcoded elements
                             if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                tf.setText("Automatically generated JPEG");
+                                tf.setText("Automatically generated from selected image files.");
                             } else if (l.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
                                 tf.setText(imageFile);
@@ -2872,6 +2874,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     
                     disableUnchangableFields(n, tf);
                     
+                    if (n.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
+                    	tf.setText("Automatically generated from selected image files.");
+                    } else if (n.equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+                    	tf.setText("Automatically generated from selected image files.");
+                    }
+                    
                     if (r.equalsIgnoreCase("Required")) {
                         l.setForeground(Color.red);
                     }
@@ -3277,7 +3285,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             jc.setSelectedIndex(k);
                         }
                     }
-//                } else if (l.equalsIgnoreCase("ImgFileHashCode")) {
+//                } else if (l.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
 //                	((JTextField) comp).setText("This will be filled for you upon generating files");
                 }
             }
@@ -3541,10 +3549,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             while (iter.hasNext()) {
                                 final JLabel l = (JLabel) iter.next();
                                 // TODO: hardcoded element handling
-                                if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
+                                if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
                                     final String n = file.getName();
-                                    tf.setText("Automatically generated JPEG - " + n);
+                                    tf.setText("Automatically generated from selected image files.");
                                 } else if (l.getName().equalsIgnoreCase(labelName)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
                                     tf.setText(file.getName());
