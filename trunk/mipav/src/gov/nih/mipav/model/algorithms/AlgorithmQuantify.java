@@ -6,6 +6,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.text.DecimalFormat;
+import java.util.Arrays;
 
 
 /**
@@ -61,13 +63,17 @@ public class AlgorithmQuantify extends AlgorithmBase {
         int imgLength;
         int volSize = 1;
         int cf;
-        float buffer[];
+        double buffer[];
         int offset;
         int i;
-        float total[][] = null;
-        float mean[][] = null;
-        float stdDev[][] = null;
-        float diff;
+        int j;
+        int ptr;
+        double total[][] = null;
+        double mean[][] = null;
+        double stdDev[][] = null;
+        double median[][] = null;
+        double sortedValue[][][] = null;
+        double diff;
         int numObjects;
         short objID;
         int imageSize;
@@ -115,15 +121,18 @@ public class AlgorithmQuantify extends AlgorithmBase {
             return;
         }
         
-        total = new float[numObjects][cf];
-        mean = new float[numObjects][cf];
-        stdDev = new float[numObjects][cf];
+        total = new double[numObjects][cf];
+        mean = new double[numObjects][cf];
+        stdDev = new double[numObjects][cf];
+        median = new double[numObjects][cf];
+        sortedValue = new double[numObjects][cf][];
+        int index[] = new int[numObjects];
         sliceSize = srcImage.getExtents()[0] * srcImage.getExtents()[1];
         imgLength = cf * sliceSize;
         if (srcImage.getNDims() >= 3) {
             volSize = sliceSize * srcImage.getExtents()[2];
         }
-        buffer = new float[imgLength];
+        buffer = new double[imgLength];
         for (t = 0; t < tEnd; t++) {
             for (z = 0; z < zEnd; z++) {
                 offset = t * volSize + z * sliceSize;
@@ -145,6 +154,11 @@ public class AlgorithmQuantify extends AlgorithmBase {
                           total[objID-1][2] += buffer[4*i + 3];
                       } // if (objID != 0)
                   } // for (i = 0; i < sliceSize; i++)
+                  for (i = 0; i < numObjects; i++) {
+                      for (j = 0; j < 3; j++) {
+                          sortedValue[i][j] = new double[count[i]];
+                      }
+                  }
               } // if (cf == 4)
               else {
                   for (i = 0; i < sliceSize; i++) {
@@ -153,7 +167,10 @@ public class AlgorithmQuantify extends AlgorithmBase {
                           count[objID-1]++;
                           total[objID-1][0] += buffer[i];
                       } // if (objID != 0)
-                  } // for (i = 0; i < sliceSize; i++)        
+                  } // for (i = 0; i < sliceSize; i++)
+                  for (i = 0; i < numObjects; i++) {
+                      sortedValue[i][0] = new double[count[i]];
+                  }
               }
           } // for (z = 0; z < zEnd; z++)
       } // for (t = 0; t < tEnd; t++)
@@ -187,6 +204,9 @@ public class AlgorithmQuantify extends AlgorithmBase {
                           stdDev[objID-1][1] += diff * diff;
                           diff = buffer[4*i + 3] - mean[objID-1][2];
                           stdDev[objID-1][2] += diff * diff;
+                          sortedValue[objID-1][0][index[objID-1]] = buffer[4*i + 1];
+                          sortedValue[objID-1][1][index[objID-1]] = buffer[4*i + 2];
+                          sortedValue[objID-1][2][index[objID-1]++] = buffer[4*i + 3];
                       } // if (objID != 0)
                   } // for (i = 0; i < sliceSize; i++)
               } // if (cf == 4)
@@ -196,6 +216,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                       if (objID != 0) {
                           diff = buffer[i] - mean[objID-1][0];
                           stdDev[objID-1][0] += diff * diff;
+                          sortedValue[objID-1][0][index[objID-1]++] = buffer[i];
                       } // if (objID != 0)
                   } // for (i = 0; i < sliceSize; i++)        
               }
@@ -203,15 +224,39 @@ public class AlgorithmQuantify extends AlgorithmBase {
       } // for (t = 0; t < tEnd; t++)
       
       for (i = 0; i < numObjects; i++) {
-          stdDev[i][0] = (float)Math.sqrt(stdDev[i][0]/count[i]);
+          stdDev[i][0] = Math.sqrt(stdDev[i][0]/count[i]);
           if (cf == 4) {
-              stdDev[i][1] = (float)Math.sqrt(stdDev[i][1]/count[i]);
-              stdDev[i][2] = (float)Math.sqrt(stdDev[i][2]/count[i]);
+              stdDev[i][1] = Math.sqrt(stdDev[i][1]/count[i]);
+              stdDev[i][2] = Math.sqrt(stdDev[i][2]/count[i]);
           }
       } // for (i = 0; i < numObjects; i++)
+      
+      for (i = 0; i < numObjects; i++) {
+          Arrays.sort(sortedValue[i][0]);
+          if (cf == 4) {
+              Arrays.sort(sortedValue[i][1]);
+              Arrays.sort(sortedValue[i][2]);
+          }
+          if ((sortedValue[i][0].length % 2) == 1) {
+              ptr = sortedValue[i][0].length/2;
+              median[i][0] = sortedValue[i][0][ptr];
+              if (cf == 4) {
+                  median[i][1] = sortedValue[i][1][ptr];
+                  median[i][2] = sortedValue[i][2][ptr];
+              }
+          }
+          else {
+              ptr = (sortedValue[i][0].length - 1)/2;
+              median[i][0] = (sortedValue[i][0][ptr] + sortedValue[i][0][ptr+1])/2.0;
+              if (cf == 4) {
+                  median[i][1] = (sortedValue[i][1][ptr] + sortedValue[i][1][ptr+1])/2.0;
+                  median[i][2] = (sortedValue[i][2][ptr] + sortedValue[i][2][ptr+1])/2.0;
+              }
+          }
+      }
     
 
-      showRegionInfo(count, total, mean, stdDev);
+      showRegionInfo(count, total, mean, stdDev, median);
       setCompleted(true);
     }
     
@@ -222,8 +267,9 @@ public class AlgorithmQuantify extends AlgorithmBase {
      * @param  total       Sum of pixel intensities
      * @param  mean        Average pixel intensity
      * @param  stdDev      Standard deviation of pixel intensities
+     * @param  median      Median of pixel intensities
      */
-    public void showRegionInfo(int count[], float total[][], float mean[][], float stdDev[][]) {
+    public void showRegionInfo(int count[], double total[][], double mean[][], double stdDev[][], double median[][]) {
         float volume;
         float area;
         int pad;
@@ -231,6 +277,8 @@ public class AlgorithmQuantify extends AlgorithmBase {
         String areaString[];
         String volumeString[];
         int numObjects = count.length;
+        DecimalFormat kDecimalFormat = new DecimalFormat();
+        kDecimalFormat.setMaximumFractionDigits(4);
 
         ViewUserInterface.getReference().setDataText("\n Output from image quantify based on mask. ");
         try {
@@ -251,10 +299,13 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
                 if (total[0].length == 1) {
                     ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tarea");
-                    ViewUserInterface.getReference().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                    ViewUserInterface.getReference().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\tmedian\n");
                     for (i = 0; i < numObjects; i++) {
                         ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + areaString[i]);
-                        ViewUserInterface.getReference().setDataText("\t" + total[i][0] + "\t\t" + mean[i][0] + "\t\t" + stdDev[i][0] + "\n");
+                        ViewUserInterface.getReference().setDataText("\t" + kDecimalFormat.format(total[i][0]) + "\t\t" + 
+                                                                            kDecimalFormat.format(mean[i][0]) + "\t\t" + 
+                                                                            kDecimalFormat.format(stdDev[i][0]) + "\t\t" +
+                                                                            kDecimalFormat.format(median[i][0]) + "\n");
                     }
                 }
                 else {
@@ -262,10 +313,19 @@ public class AlgorithmQuantify extends AlgorithmBase {
                     for (i = 0; i < numObjects; i++) {
                         ViewUserInterface.getReference().setDataText("Object\tpixels\t\tarea\n");
                         ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + areaString[i] + "\n");
-                        ViewUserInterface.getReference().setDataText("\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
-                        ViewUserInterface.getReference().setDataText("red\t" + total[i][0] + "\t\t" + mean[i][0] + "\t\t" + stdDev[i][0] + "\n"); 
-                        ViewUserInterface.getReference().setDataText("green\t" + total[i][1] + "\t\t" + mean[i][1] + "\t\t" + stdDev[i][1] + "\n");
-                        ViewUserInterface.getReference().setDataText("blue\t" + total[i][2] + "\t\t" + mean[i][2] + "\t\t" + stdDev[i][2] + "\n");  
+                        ViewUserInterface.getReference().setDataText("\ttotal intensity\t\tmean intensity\t\tstandard deviation\tmedian\n");
+                        ViewUserInterface.getReference().setDataText("red\t" + kDecimalFormat.format(total[i][0]) + "\t\t" + 
+                                                                               kDecimalFormat.format(mean[i][0]) + "\t\t" + 
+                                                                               kDecimalFormat.format(stdDev[i][0]) + "\t\t" +
+                                                                               kDecimalFormat.format(median[i][0]) + "\n"); 
+                        ViewUserInterface.getReference().setDataText("green\t" + kDecimalFormat.format(total[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(mean[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(stdDev[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(median[i][1]) + "\n");
+                        ViewUserInterface.getReference().setDataText("blue\t" + kDecimalFormat.format(total[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(mean[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(stdDev[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(median[i][2]) + "\n");  
                     }
                 }
 
@@ -287,10 +347,13 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
                 if (total[0].length == 1) {
                     ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tvolume");
-                    ViewUserInterface.getReference().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
+                    ViewUserInterface.getReference().setDataText("\t\ttotal intensity\t\tmean intensity\t\tstandard deviation\tmedian\n");
                     for (i = 0; i < numObjects; i++) {
                         ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + volumeString[i]);
-                        ViewUserInterface.getReference().setDataText("\t" + total[i][0] + "\t\t" + mean[i][0] + "\t\t" + stdDev[i][0] + "\n");
+                        ViewUserInterface.getReference().setDataText("\t" + kDecimalFormat.format(total[i][0]) + "\t\t" + 
+                                                                            kDecimalFormat.format(mean[i][0]) + "\t\t" + 
+                                                                            kDecimalFormat.format(stdDev[i][0]) + "\t\t" + 
+                                                                            kDecimalFormat.format(median[i][0]) + "\n");
                     }
                 }
                 else {
@@ -298,10 +361,19 @@ public class AlgorithmQuantify extends AlgorithmBase {
                     for (i = 0; i < numObjects; i++) {
                         ViewUserInterface.getReference().setDataText("Object\tpixels\t\tvolume\n");
                         ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + volumeString[i] + "\n");
-                        ViewUserInterface.getReference().setDataText("\ttotal intensity\t\tmean intensity\t\tstandard deviation\n");
-                        ViewUserInterface.getReference().setDataText("red\t" + total[i][0] + "\t\t" + mean[i][0] + "\t\t" + stdDev[i][0] + "\n"); 
-                        ViewUserInterface.getReference().setDataText("green\t" + total[i][1] + "\t\t" + mean[i][1] + "\t\t" + stdDev[i][1] + "\n");
-                        ViewUserInterface.getReference().setDataText("blue\t" + total[i][2] + "\t\t" + mean[i][2] + "\t\t" + stdDev[i][2] + "\n");  
+                        ViewUserInterface.getReference().setDataText("\ttotal intensity\t\tmean intensity\t\tstandard deviation\tmedian\n");
+                        ViewUserInterface.getReference().setDataText("red\t" + kDecimalFormat.format(total[i][0]) + "\t\t" + 
+                                                                               kDecimalFormat.format(mean[i][0]) + "\t\t" + 
+                                                                               kDecimalFormat.format(stdDev[i][0]) + "\t\t" + 
+                                                                               kDecimalFormat.format(median[i][0]) + "\n"); 
+                        ViewUserInterface.getReference().setDataText("green\t" + kDecimalFormat.format(total[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(mean[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(stdDev[i][1]) + "\t\t" + 
+                                                                                 kDecimalFormat.format(median[i][1]) + "\n");
+                        ViewUserInterface.getReference().setDataText("blue\t" + kDecimalFormat.format(total[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(mean[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(stdDev[i][2]) + "\t\t" + 
+                                                                                kDecimalFormat.format(median[i][2]) + "\n");  
                     }
                 }
             }
