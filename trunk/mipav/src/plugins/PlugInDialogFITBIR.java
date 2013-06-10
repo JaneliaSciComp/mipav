@@ -3443,14 +3443,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             	final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
-                try {
-                	((JTextField) comp).setText("");
-                } catch (ClassCastException e) {
-                	try {
-                		((JComboBox) comp).setSelectedItem("");
-                	} catch (ClassCastException f) {
-                		
-                	}
+                if (!l.equalsIgnoreCase("ImgFileName")){
+	                try {
+	                	((JTextField) comp).setText("");
+	                } catch (ClassCastException e) {
+	                	try {
+	                		((JComboBox) comp).setSelectedItem("");
+	                	} catch (ClassCastException f) {
+	                		
+	                	}
+	                }
                 }
             }
         }
