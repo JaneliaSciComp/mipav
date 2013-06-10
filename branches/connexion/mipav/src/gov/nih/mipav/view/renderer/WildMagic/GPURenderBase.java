@@ -333,27 +333,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         
-        switch(e.getKeyCode()) {
-		case KeyEvent.VK_ENTER:
-	    	System.out.println("Next connexion level.");
-	    	break;
-   
-		case KeyEvent.VK_UP:
-			System.out.println("Heading up.");
-	    	break;
-	    	
-	    case KeyEvent.VK_DOWN:
-	    	System.out.println("Heading down.");
-	    	break;
-	    	
-	    case KeyEvent.VK_RIGHT:
-	    	System.out.println("Heading right.");
-	    	break;
-	    	
-	    case KeyEvent.VK_LEFT:
-	    	System.out.println("Heading left.");
-	    	break;
-	    }
+//        switch(e.getKeyCode()) {
+//		case KeyEvent.VK_ENTER:
+//	    	System.out.println("Next connexion level.");
+//	    	break;
+//   
+//		case KeyEvent.VK_UP:
+//			System.out.println("Heading up.");
+//	    	break;
+//	    	
+//	    case KeyEvent.VK_DOWN:
+//	    	System.out.println("Heading down.");
+//	    	break;
+//	    	
+//	    case KeyEvent.VK_RIGHT:
+//	    	System.out.println("Heading right.");
+//	    	break;
+//	    	
+//	    case KeyEvent.VK_LEFT:
+//	    	System.out.println("Heading left.");
+//	    	break;
+//	    }
 
         
         if(e.isAltDown()) {
@@ -385,14 +385,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        }
 	        if(rotateProcessed) {	
 		        Matrix3f kRotate = m_spkScene.Local.GetRotate();
-		        kRotate.mult(rotateMatrix);
-		        m_spkScene.Local.SetRotate(kRotate);
-		        m_spkScene.UpdateGS();
-		        m_kCuller.ComputeVisibleSet(m_spkScene);
-		        
-		        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
-		            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-		        }
+//		        kRotate.mult(rotateMatrix);
+//		        m_spkScene.Local.SetRotate(kRotate);
+//		        m_spkScene.UpdateGS();
+//		        m_kCuller.ComputeVisibleSet(m_spkScene);
+//		        
+//		        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
+//		            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+//		        }
+	        	updateScene(rotateMatrix);
 		        return;
 	        }
         }
@@ -416,6 +417,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
             return;
         }
 
+        return;
+    }
+    
+    /** just testing to see if this will also cause an error
+     * result: does not cause error for keyPressed() but still does for processSpaceNavEvent
+    **/
+    private void updateScene(Matrix3f rotateMatrix) {
+        if(m_spkScene != null){
+	    	Matrix3f kRotate = m_spkScene.Local.GetRotate();
+	        kRotate.mult(rotateMatrix);
+	        m_spkScene.Local.SetRotate(kRotate);
+	        m_spkScene.UpdateGS();
+	        m_kCuller.ComputeVisibleSet(m_spkScene);
+	        
+	        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
+	            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+	        }
+        }
         return;
     }
 
@@ -888,17 +907,36 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     }
     
     @Override
-	public void processSpaceNavEvent() {
-		DecimalFormat dec = new DecimalFormat("0.00000");
-		
-		StringBuilder builder = new StringBuilder();
-		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
-		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
-		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
-		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
-		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
-		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
-		
-		System.out.println(builder.toString());
+	public void processSpaceNavEvent()
+    {
+    	Matrix3f rotateMatrix = new Matrix3f();
+    	rotateMatrix.zero();
+    	
+    	//process the scene
+    	updateScene(rotateMatrix);
+    	
+//    	Matrix3f kRotate = m_spkScene.Local.GetRotate();
+//        kRotate.mult(rotateMatrix);
+//        m_spkScene.Local.SetRotate(kRotate);
+//        m_spkScene.UpdateGS();
+//        m_kCuller.ComputeVisibleSet(m_spkScene);
+//        
+//        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
+//            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+//        }
+//        
+//    	
+//		DecimalFormat dec = new DecimalFormat("0.00000");
+//		
+//		StringBuilder builder = new StringBuilder();
+//		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
+//		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
+//		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
+//		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
+//		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
+//		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
+//		
+//		System.out.println(builder.toString());
+    	System.out.println("testing: processSpaceNavEvent() in GPURenderBase");
 	}    
 }
