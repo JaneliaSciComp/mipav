@@ -3459,6 +3459,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 enableDisableFinishButton();
                 dispose();
             } else if (command.startsWith("browse_")) {
+            	if (currFile == null)
+            		currFile = "";
                 boolean isMultiFile = false;
                 // TODO: hardcoded structure handling
                 //System.out.println(dataStructureName);
