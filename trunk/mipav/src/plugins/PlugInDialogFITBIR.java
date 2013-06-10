@@ -3416,7 +3416,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * @param labelsAndComps
          */
         public void clearFields(final TreeMap<JLabel, JComponent> labelsAndComps){
-        	
+            Set<JLabel> keySet = labelsAndComps.keySet();
+            Iterator<JLabel> iter = keySet.iterator();
+            while (iter.hasNext()) {
+            	final JLabel label = (JLabel) iter.next();
+                final String l = label.getName();
+                final JComponent comp = labelsAndComps.get(label);
+                try {
+                	((JTextField) comp).setText("");
+                } catch (ClassCastException e) {
+                	try {
+                		((JComboBox) comp).setSelectedItem("");
+                	} catch (ClassCastException f) {
+                		
+                	}
+                }
+            }
         }
 
         /**
