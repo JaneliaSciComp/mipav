@@ -65,9 +65,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private String csvFileDir;
 
-    /** Length of the GUID */
-    private static final int GUID_LENGTH = 12;
-
     /** List of info data that is to be written out in xml...it is linked to same order as the table * */
     private final ArrayList<LinkedHashMap<String, String>> infoList = new ArrayList<LinkedHashMap<String, String>>();
 
@@ -2378,11 +2375,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
             // TODO: hardcoded structure handling
-            if (dataStructureName.startsWith("image")) {
+        	if (dataStructureName.startsWith("Imag")) {
                 // first check to see if image_file was supplied in the csv
                 int imageFileIndex = -1;
                 for (int i = 0; i < csvFieldNames.length; i++) {
-                	// TODO: hardcoded elements
                     if (csvFieldNames[i].trim().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                         imageFileIndex = i;
                         break;
@@ -2406,10 +2402,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
-                            if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
-                                final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                tf.setText("Automatically generated from selected image files.");
-                            } else if (l.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
+                            if (l.getName().equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
                                 tf.setText(imageFile);
                                 tf.setEnabled(false);
@@ -2431,7 +2424,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
-                                // TODO: hardcoded elements
                                 if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
                                     final Set<JLabel> keySet2 = labelsAndComps.keySet();
                                     final Iterator<JLabel> iter2 = keySet2.iterator();
@@ -3163,11 +3155,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * prepopulates some of the fields with info from image header
          */
         public void populateFields(final TreeMap<JLabel, JComponent> labelsAndComps, final ModelImage img) {
-        	// TODO: hardcoded element handling
             final float[] res = img.getResolutions(0);
             final int[] units = img.getUnitsOfMeasure();
             final int exts[] = img.getExtents();
-            final int nDims = img.getNDims();
             final int modality = img.getFileInfo(0).getModality();
             final String modalityString = FileInfoBase.getModalityStr(modality);
             // System.out.println(modalityString);
@@ -3508,7 +3498,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             	if (currFile == null)
             		currFile = "";
                 boolean isMultiFile = false;
-                // TODO: hardcoded structure handling
                 //System.out.println(dataStructureName);
                 if (dataStructureName.startsWith("Imag")) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
