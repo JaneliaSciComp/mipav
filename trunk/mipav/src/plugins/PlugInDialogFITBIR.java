@@ -408,10 +408,18 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (version.length() == 1) {
                 version = "0" + version;
             }
-            dsName = dsName + version;
+            // TODO: removed because new BIRCS ds names seem to not have version.  Do we need to check the version some other way?
+            //dsName = dsName + version;
+            
             // second line are the field names
             str = d.readLine().trim();
             csvFieldNames = str.split(",");
+            for (int i = 0; i < csvFieldNames.length; i++) {
+            	if (csvFieldNames[i].contains(".")) {
+            		// found a period, so assume GROUPNAME.ELEMENTNAME. discard GROUPNAME
+            		csvFieldNames[i] = csvFieldNames[i].split("\\.", 2)[1];
+            	}
+            }
 
             String[] csvParamsArr;
             while ( (str = d.readLine()) != null) {
@@ -2242,9 +2250,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
             for (BasicDataStructure ds : dataStructureList) {
-
                 if (ds.getShortName().equals(dataStructureName)) {
-
                     dataStructure = ds;
                 }
             }
@@ -2376,6 +2382,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
             // TODO: hardcoded structure handling
         	if (dataStructureName.startsWith("Imag")) {
+        		// TODO: handle the record column when we add support for repeating groups in a form record
+        		
                 // first check to see if image_file was supplied in the csv
                 int imageFileIndex = -1;
                 for (int i = 0; i < csvFieldNames.length; i++) {
@@ -2457,7 +2465,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             String key;
                             String value;
                             for (int i = 0; i < csvFieldNames.length; i++) {
-
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
                                 if ( !key.equals(IMG_FILE_ELEMENT_NAME)) {
@@ -2984,7 +2991,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 if ( !csvParams[i].trim().equals("")) {
 
                     if (csvFieldNames[i].equalsIgnoreCase("ImgDimensNum")) {
-                        if ( !csvParams[i].trim().equals(String.valueOf(nDims))) {
+                        if ( !csvParams[i].trim().equals(String.valueOf(nDims) + "D")) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(nDims));
@@ -3052,42 +3059,49 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1Resol")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(res[0]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[0]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2Resol")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(res[1]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[1]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3Resol")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(res[2]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[2]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4Resol")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(res[3]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[3]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5Resol")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(res[4]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[4]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgModltyTyp")) {
+                    	// TODO: need to do mapping between MIPAV modalities and BRICS values
                         if ( !csvParams[i].trim().equals(modalityString)) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(modalityString);
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceThicknessVal")) {
+                    	// TODO: does not handle differences like 1.0 vs 1 well
                         if ( !csvParams[i].trim().equals(String.valueOf(sliceThickness))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
