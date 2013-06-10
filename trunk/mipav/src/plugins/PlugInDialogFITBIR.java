@@ -20,6 +20,8 @@ import java.security.NoSuchAlgorithmException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.*;
 
 import javax.swing.*;
@@ -178,6 +180,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String MAIN_GROUP_NAME = "Main";
     
     private static final String FILE_ELEMENT_TYPE = "File";
+    
+    private static final String GUID_ELEMENT_NAME = "GUID";
     
     private static final String IMG_FILE_ELEMENT_NAME = "ImgFileName";
     
@@ -1802,14 +1806,33 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
+     * Converts from DICOM/US date format (MM/DD/YYYY) to ISO 8601 format (YYYY-MM-DDThh:mm:ss).
+     * @param date A date string in the format MM/DD/YYYY.
+     * @return An ISO 8601 formatted version of the given date.
+     */
+    private static final String convertDateTimeToISOFormat(String date) {
+    	String pattern = "^(\\d{2})[/-]*(\\d{2})[/-]*(\\d{4})$";
+    	Pattern p = Pattern.compile(pattern);
+    	Matcher m = p.matcher(date);
+    	if (m.find()) {
+    		String month = m.group(1);
+    		String day = m.group(2);
+    		String year = m.group(3);
+    		return year + "-" + month + "-" + day;
+    	}
+    	
+    	return "";
+    }
+    
+    /**
      * Multi-line tooltip creation helper method.
      *
      * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
      * Changed the name/method names.  Also altered main method to no add html tags.
      */
     public static class WrapText {
-        private static int DIALOG_TOOLTIP_MAX_SIZE = 75;
-        private static final int SPACE_BUFFER = 10;
+        private static int DIALOG_TOOLTIP_MAX_SIZE = 80;
+        private static final int SPACE_BUFFER = 25;
 
         /**
          * Returns the given string, with &lt;br/&gt; tags inserted to wrap the text.  Does NOT add html block tags to the beginning and end of the text.
@@ -3296,7 +3319,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             	
             	String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
                 String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
                 String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
                 String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
                 String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
@@ -3877,8 +3900,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             if (value.trim().equalsIgnoreCase("")) {
                                 errs.add(labelText + " is a required field");
                             } else {
-                            	// TODO: hardcoded element handling
-                                if (key.equalsIgnoreCase("GUID")) {
+                                if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
                                     if ( !isGuid(value.trim())) {
                                         errs.add(labelText + " must begin with a valid GUID prefix");
                                     }
@@ -4020,7 +4042,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
                 // TODO: hardcoded element handling
-                if (label.getName().equalsIgnoreCase("GUID")) {
+                if (label.getName().equalsIgnoreCase(GUID_ELEMENT_NAME)) {
                     guid = ((JTextField) comp).getText().trim();
                 }
                 final String key = label.getName();
