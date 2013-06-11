@@ -152,6 +152,48 @@ public class VOIContour extends VOIBase {
 		return new VOIContour(this);
 	}
 	
+	public void calcAsymmetryIndex() {
+	    numPixels = 0;
+	    // First moment with respect to the x axis
+	    double Mx = 0.0;
+	    // First moment with respect to the y axis
+	    double My = 0.0;
+	    // Moment of inertia or second moment of the area A with respect to the x axis
+	    double Ix = 0.0;
+	    // Moment of inertia about the y axis
+	    double Iy = 0.0;
+	    // Product of inertia
+	    double Pxy = 0.0;
+	    double xCentroid;
+	    double yCentroid;
+	    // angle of 2 principal axes, perpendicular to each other, with respect to the x axis
+	    // tan (2*theta) = -2*Pxy/(Ix - Iy)
+	    double theta;
+	    double slope;
+	    double offset;
+        Vector<Vector3f> kMaskPositions = getAllContourPoints();
+        for ( int i = 0; i < kMaskPositions.size(); i++ )
+        {
+            Vector3f kPos = kMaskPositions.elementAt(i);
+            numPixels++;
+            Mx += kPos.X;
+            My += kPos.Y;
+            Ix += kPos.Y*kPos.Y;
+            Iy += kPos.X*kPos.X;
+            Pxy += kPos.X*kPos.Y;
+        }
+        xCentroid = Mx/numPixels;
+        yCentroid = My/numPixels;
+        theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy);
+        // (y - yCentroid)/(x - xCentroid) = tan(theta)
+        // y = yCentroid + tan(theta)*(x - xCentroid)
+        // offset = yCentroid - xCentroid*tan(theta)
+        // slope = tan(theta)
+        // y = x*slope + offset
+        slope = Math.tan(theta);
+        offset = yCentroid - xCentroid*slope;
+	}
+	
 	/* Code ported from http://cm.bell-labs.com/who/clarkson/2dch.c to
 	 * Java in public void convexHull() and its supporting routines by William Gandler
 	 * Original notices follow.
