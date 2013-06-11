@@ -3032,6 +3032,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
 
+            final int fileFormatInt = img.getFileInfo(0).getFileFormat();
+            String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+            
             ArrayList<String> csvFList = new ArrayList<String>();
             ArrayList<String> csvPList = new ArrayList<String>();
             ArrayList<String> headerList = new ArrayList<String>();
@@ -3166,6 +3169,201 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
             }
+            
+            if (fileFormatString.equalsIgnoreCase("dicom")) {
+            	FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
+            	
+            	String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable().getValue("0008,0020")));
+                String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+                               
+                String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+                
+                String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
+                
+                for (int i = 0; i < csvFieldNames.length; i++) {
+
+                    if ( !csvParams[i].trim().equals("")) {
+
+                        if (csvFieldNames[i].equalsIgnoreCase("AgeVal")) {
+                        	if (ageVal.contains("Y")){
+                        		String temp = ageVal.substring(0,ageVal.length()-6);
+                        		ageVal = Integer.toString(Integer.parseInt(temp)*12) + " Months";
+                        	}
+                            if ( !csvParams[i].trim().equals(ageVal)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(ageVal);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("visitDate")) {
+                            if ( !csvParams[i].trim().equals(visitDate)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(visitDate);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("SiteName")) {
+                            if ( !csvParams[i].trim().equals(siteName)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(siteName);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgStdyDateTimet")) {
+                            if ( !csvParams[i].trim().equals(visitDate + " " + visitTime)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(visitDate + " " + visitTime);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOversampleVal")) {
+                            if ( !csvParams[i].trim().equals(sliceOversample)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(sliceOversample);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgGapBtwnSlicesMeasr")) {
+                            if ( !csvParams[i].trim().equals(gap)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(gap);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgAntmicSite")) {
+                            if ( !csvParams[i].trim().equals(bodyPart)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(bodyPart);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgFoVMeasr")) {
+                            if ( !csvParams[i].trim().equals(fieldOfView)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(fieldOfView);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanManufName")) {
+                            if ( !csvParams[i].trim().equals(manufacturer)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(manufacturer);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanSftwrVerNum")) {
+                            if ( !csvParams[i].trim().equals(softwareVersion)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(softwareVersion);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgHeadPositionTxt")) {
+                            if ( !csvParams[i].trim().equals(patientPosition)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(patientPosition);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanModelName")) {
+                            if ( !csvParams[i].trim().equals(scannerModel)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(scannerModel);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgBandwidthVal")) {
+                            if ( !csvParams[i].trim().equals(bandwidth)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(bandwidth);
+                            }
+                        } 
+                    }
+                }
+                
+                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                	
+                    String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                    String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                    String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+                    String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+                    
+                    String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                    String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                    String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                    String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                    String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                    String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+                    
+                    for (int i = 0; i < csvFieldNames.length; i++) {
+
+                        if ( !csvParams[i].trim().equals("")) {
+
+                            if (csvFieldNames[i].equalsIgnoreCase("ImgEchoTime")) {
+                                if ( !csvParams[i].trim().equals(echoTime)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(echoTime);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgReptitnTime")) {
+
+                                if ( !csvParams[i].trim().equals(repetitionTime)) {
+
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(repetitionTime);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanStrgthVal")) {
+                                if ( !csvParams[i].trim().equals(magnaticFieldStrength)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(magnaticFieldStrength);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                                if ( !csvParams[i].trim().equals(flipAngle)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(flipAngle);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgMRIT1T2Name")) {
+                                if ( !csvParams[i].trim().equals(mriT1T2Name)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(mriT1T2Name);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgInversionTime")) {
+                                if ( !csvParams[i].trim().equals(inversionTime)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(inversionTime);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgEchoTrainLengthMeasr")) {
+                                if ( !csvParams[i].trim().equals(echoTrainMeas)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(echoTrainMeas);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgPhaseEncodeDirTxt")) {
+                                if ( !csvParams[i].trim().equals(phaseEncode)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(phaseEncode);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgSignalAvgNum")) {
+                                if ( !csvParams[i].trim().equals(numAverages)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(numAverages);
+                                }
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgRFReceivCoilName")) {
+                                if ( !csvParams[i].trim().equals(receiveCoilName)) {
+                                    csvFList.add(csvFieldNames[i]);
+                                    csvPList.add(csvParams[i]);
+                                    headerList.add(receiveCoilName);
+                                }
+                            } 
+                        }
+                    }
+                }
+            }
 
             if (csvFList.size() > 0) {
                 if (resolveConflictsUsing == 0) {
@@ -3185,6 +3383,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                     JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
                     Object[] content = {message, checkbox};
+                    
+                    // I'd like to create a merge option using the selected button as the dominating input - Sara
 
                     int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
@@ -3454,7 +3654,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
                     String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
                     String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                    String recieveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
+                    String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
                     
                     keySet = labelsAndComps.keySet();
                     iter = keySet.iterator();
@@ -3487,7 +3687,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         } else if (l.equalsIgnoreCase("ImgInversionTime")) {
                             ((JTextField) comp).setText(inversionTime);
                         } else if (l.equalsIgnoreCase("ImgRFReceivCoilName")) {
-                            ((JTextField) comp).setText(recieveCoilName);
+                            ((JTextField) comp).setText(receiveCoilName);
                         } else if (l.equalsIgnoreCase("ImgPhaseEncodeDirTxt")) {
                             ((JTextField) comp).setText(phaseEncode);
                         }
