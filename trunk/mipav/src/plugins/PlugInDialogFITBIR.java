@@ -77,6 +77,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     protected FileWriter fw;
 
     private Hashtable<String, String> csvStructRowData;
+    
+    private Hashtable<String, Integer> csvStructRecordCounters;
 
     private static final String CSV_OUTPUT_DELIM = ",";
 
@@ -408,6 +410,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (version.length() == 1) {
                 version = "0" + version;
             }
+            
             // TODO: removed because new BIRCS ds names seem to not have version.  Do we need to check the version some other way?
             //dsName = dsName + version;
             
@@ -415,6 +418,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             str = d.readLine().trim();
             csvFieldNames = str.split(",");
             for (int i = 0; i < csvFieldNames.length; i++) {
+            	// TODO: when we add repeatable group support, this will need to be processed
+            	if (csvFieldNames[i].equalsIgnoreCase(recordIndicatorColumn)) {
+            		// skip the record field, since it doesn't map to a data element
+            		continue;
+            	}
+            	
             	if (csvFieldNames[i].contains(".")) {
             		// found a period, so assume GROUPNAME.ELEMENTNAME. discard GROUPNAME
             		csvFieldNames[i] = csvFieldNames[i].split("\\.", 2)[1];
@@ -742,6 +751,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         // for each data structure chosen by the user, create a place to put rows of csv data
         csvStructRowData = new Hashtable<String, String>();
+        csvStructRecordCounters = new Hashtable<String, Integer>();
         for (int i = 0; i < numDataStructs; i++) {
             String tableName = (String) sourceTableModel.getValueAt(i, 0);
             // format: "structname_PREFIXGUID"
@@ -766,20 +776,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     n = n.substring(0, n.length() - 1);
                 }
 
-                // # commas at end = # fields in struct - 2 (for name & version)
+                // # commas at end = # fields in struct - 2 (for name & version) + 1 (record column)
                 String cStr = "";
-                for (int j = 0; j < structInfo.size() - 2; j++) {
+                for (int j = 0; j < structInfo.size() - 1; j++) {
                     cStr += CSV_OUTPUT_DELIM;
                 }
 
-                String elementHeader = ((DataElement) structInfo.get(0)).getName();
-                for (int j = 1; j < structInfo.size(); j++) {
-                    elementHeader += CSV_OUTPUT_DELIM + ((DataElement) structInfo.get(j)).getName();
+                String elementHeader = recordIndicatorColumn;
+                for (int j = 0; j < structInfo.size(); j++) {
+                	DataElement de = (DataElement) structInfo.get(j);
+                    elementHeader += CSV_OUTPUT_DELIM + de.getGroup() + "." + de.getName();
                 }
 
                 String structHeader = n + CSV_OUTPUT_DELIM + v + cStr + "\n";
                 structHeader += elementHeader + "\n";
                 csvStructRowData.put(lowerName, structHeader);
+                csvStructRecordCounters.put(lowerName, 1);
             }
         }
 
@@ -866,12 +878,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         break;
                     }
                 }
+                
+                // TODO: add support for not hardcoding the record column to enable repeating groups
 
                 String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, origImage, i, hashCode);
                 if ( !newRow.equals("")) {
                     String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
-                    data += newRow + "\n";
+                    data += csvStructRecordCounters.get(lowerName) + CSV_OUTPUT_DELIM + newRow + "\n";
+                    csvStructRecordCounters.put(lowerName, csvStructRecordCounters.get(lowerName) + 1);
                     csvStructRowData.put(lowerName, data);
                 }
 
@@ -1120,7 +1135,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 if ( !newRow.equals("")) {
                     String lowerName = dsName.toLowerCase();
                     String data = csvStructRowData.get(lowerName);
-                    data += newRow + "\n";
+                    data += csvStructRecordCounters.get(lowerName) + CSV_OUTPUT_DELIM + newRow + "\n";
+                    csvStructRecordCounters.put(lowerName, csvStructRecordCounters.get(lowerName) + 1);
                     csvStructRowData.put(lowerName, data);
                 }
 
