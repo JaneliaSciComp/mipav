@@ -2225,6 +2225,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
 		private String currFile;
 
+		private boolean validFile;
+
         /**
          * constructor
          * 
@@ -2417,7 +2419,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     ModelImage srcImage = null;
                     
                     srcImage = readImgFromCSV(imageFile);
-
+                    
                     if (srcImage != null) {
 
                         // final String labelName = command.substring(command.indexOf("_") + 1, command.length());
@@ -2572,11 +2574,26 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // MipavUtil.displayWarning(errors.toString());
                 isComplete = false;
             }
-
-            complete(labelsAndComps, dataStructureName, isComplete);
+            
+            if (validFile)
+            	complete(labelsAndComps, dataStructureName, isComplete);
+            else {
+            	if ( !launchedFromInProcessState) {
+                    previewImages.remove(previewImages.size() - 1);
+                    imageFiles.remove(imageFiles.size() - 1);
+                    multifiles.remove(multifiles.size() - 1);
+                    infoList.remove(infoList.size() - 1);
+                    allOtherFilesAL.remove(allOtherFilesAL.size() - 1);
+                    if (addedPreviewImage) {
+                        previewPanel.removeAll();
+                        previewPanel.repaint();
+                    }
+                }
+            }
 
             enableDisableFinishButton();
             dispose();
+            
         }
         
         private ModelImage readImgFromCSV(String imageFile) {
@@ -2584,6 +2601,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         	boolean isMultifile;
         	FileIO fileIO = new FileIO();
             fileIO.setQuiet(true);
+            ModelImage srcImage = null;
+            validFile = true;
+            
+            try {
         	
         	if (imageFile.endsWith(".zip")) {
 
@@ -2598,7 +2619,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 File imageZipFile = new File(csvFile.getParentFile().getAbsolutePath() + File.separator
                         + imageFile);
                 String fileName = "";
-                try {
+//                try {
                     FileInputStream fis = new FileInputStream(imageZipFile);
                     ZipInputStream zin = new ZipInputStream(new BufferedInputStream(fis));
                     FileOutputStream fout;
@@ -2630,9 +2651,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     dest.flush();
                     dest.close();
                     zin.close();
-                } catch (final Exception e) {
-                    e.printStackTrace();
-                }
+//                } catch (FileNotFoundException f) {
+//                	MipavUtil.displayError("The system cannot find the file specified");
+//                } catch (final Exception e) {
+//                    e.printStackTrace();
+//                }
 
                 // now that everything has been unzipped, open the image from the tempDir
                 filePath = tempDir + File.separator + fileName;
@@ -2642,9 +2665,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             	filePath = csvFile.getParentFile().getAbsolutePath() + File.separator + imageFile;
             	isMultifile = false;
             }
-        	
+
             File file = new File(filePath);
-            ModelImage srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+            srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
             
             final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
 
@@ -2678,6 +2701,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             previewPanel.validate();
             previewPanel.repaint();
+            
+            } catch (FileNotFoundException e) {
+            	MipavUtil.displayError("The system cannot find the file specified");
+            	validFile = false;
+            } catch (NullPointerException e) {
+            	MipavUtil.displayError("The system cannot find the file specified");
+            	validFile = false;
+            } catch (final Exception e) {
+            	e.printStackTrace();
+            }
+            
             
             return srcImage;
         }
