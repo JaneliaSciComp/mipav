@@ -191,15 +191,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String recordIndicatorColumn = "record";
 
     /** Text of the privacy notice displayed to the user before the plugin can be used. */
-     public static final String PRIVACY_NOTICE = "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
+     public static final String PRIVACY_NOTICE = 
+    	   "BRICS is a collaborative environment with privacy rules that pertain to the collection\n"
          + "and display of imaging data. Before accessing and using BRICS, please ensure that you\n"
          + "familiarize yourself with our privacy rules, available through the BRICS Rules of Behavior\n"
          + "document and supporting documentation.\n"
          + "\n"
          + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
-         + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research. This information may be\n"
-         + "disclosed to researchers for research purposes, and to system administrators for evaluation\n"
-         + "and data normalization.\n"
+         + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research.\n"
+         + "This information may be disclosed to researchers for research purposes, and to system \n"
+         + "administrators for evaluation and data normalization.\n"
          + "\n"
          + "Rules governing submission of this information are based on the data sharing rules defined in\n"
          + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
@@ -3196,7 +3197,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         if (csvFieldNames[i].equalsIgnoreCase("AgeVal")) {
                         	if (ageVal.contains("Y")){
                         		String temp = ageVal.substring(0,ageVal.length()-6);
-                        		ageVal = Integer.toString(Integer.parseInt(temp)*12) + " Months";
+                        		ageVal = Integer.toString(Integer.parseInt(temp)*12);
                         	}
                             if ( !csvParams[i].trim().equals(ageVal)) {
                                 csvFList.add(csvFieldNames[i]);
@@ -3596,7 +3597,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     if (l.equalsIgnoreCase("AgeVal")) {
                     	if (ageVal.contains("Y")){
                     		String temp = ageVal.substring(0,ageVal.length()-6);
-                    		ageVal = Integer.toString(Integer.parseInt(temp)*12) + " Months";
+                    		ageVal = Integer.toString(Integer.parseInt(temp)*12);
                     	}
                         ((JTextField) comp).setText(ageVal);
                         label.setForeground(Color.red);
