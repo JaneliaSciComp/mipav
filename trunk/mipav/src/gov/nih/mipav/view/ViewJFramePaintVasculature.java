@@ -304,7 +304,8 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
      * Closes window and disposes of frame and component.
      */
     public void close() {
-
+    	isClosing = true;
+    	
         if (Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK)) {
             int reply = JOptionPane.showConfirmDialog(this, "Do you really want to close this frame?", "Close Frame",
                                                       JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);

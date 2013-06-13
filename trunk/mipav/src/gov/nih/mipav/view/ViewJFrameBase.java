@@ -119,6 +119,9 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
 
     /** Reference to the user interface. */
     protected ViewUserInterface userInterface;
+    
+    /** Whether the frame's close() method is being called. */
+    protected boolean isClosing = false;
 
     /** Blue channel value of the paint color. */
     private int blue;
@@ -742,6 +745,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
      * removes any display listeners.
      */
     public void close() {
+    	isClosing = true;
+    	
         setVisible(false);
 
         userInterface.unregisterFrame(this);
@@ -755,6 +760,8 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         }
 
         dispose();
+        
+        isClosing = false;
     }
 
     /**
@@ -932,7 +939,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         return userInterface;
     }
 
-    /**
+	/**
      * This method loads all VOIs to the active image from the default VOI directory for that image.
      * 
      * @param quietMode if true indicates that warnings should not be displayed.

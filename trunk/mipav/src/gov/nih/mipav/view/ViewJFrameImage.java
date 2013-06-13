@@ -2526,7 +2526,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * Closes window and disposes of frame and component.
      */
     public void close() {
-        if (Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK)) {
+        isClosing = true;
+    	
+    	if (Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK)) {
             final int reply = JOptionPane.showConfirmDialog(this, "Do you really want to close this frame?",
                     "Close Frame", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
@@ -2551,10 +2553,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (frameListA.elementAt(i) instanceof ViewJFrameBase) {
 
-                    if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this) {
-                        ((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
-                        ((ViewJFrameBase) frameListA.elementAt(i)).close();
-                        i--;
+                    if ( ((ViewJFrameBase) frameListA.elementAt(i)) != this && !((ViewJFrameBase)frameListA.elementAt(i)).isClosing) {
+                    	((ViewJFrameBase) frameListA.elementAt(i)).setVisible(false);
+                    	((ViewJFrameBase) frameListA.elementAt(i)).close();
+                    	i--;
                     }
                 }
             }
@@ -2562,6 +2564,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         super.close();
 
+        isClosing = true;
+        
         try {
             this.finalize();
         } catch (final Throwable t) {
@@ -2569,6 +2573,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
 
         System.gc();
+        
+        isClosing = false;
     }
 
     /**

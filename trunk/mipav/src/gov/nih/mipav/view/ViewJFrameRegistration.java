@@ -942,7 +942,9 @@ public class ViewJFrameRegistration extends ViewJFrameBase
      * Disposes of components and frame.
      */
     public void close() {
-        setVisible(false);
+        isClosing = true;
+    	
+    	setVisible(false);
 
         if (image != null) {
             image.removeImageDisplayListener(this);
