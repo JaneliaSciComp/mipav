@@ -3147,7 +3147,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgModltyTyp") && !modalityString.equals("")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgModltyTyp") && modalityString != null) {
                     	// TODO: need to do mapping between MIPAV modalities and BRICS values
                         if ( !csvParams[i].trim().equals(modalityString)) {
                             csvFList.add(csvFieldNames[i]);
@@ -3161,7 +3161,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(sliceThickness));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOrientTyp") && !orientation.equals("")) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOrientTyp") && orientation != null) {
                         if ( !csvParams[i].trim().equals(orientation)) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
@@ -3449,27 +3449,33 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 if (l.equalsIgnoreCase("ImgDimensNum")) {
                 	final JComboBox jc = (JComboBox) comp;
                 	final String item = exts.length + "D";
-                	for (int k = 0; k < jc.getItemCount(); k++) {
-                        if (((String) jc.getItemAt(k)).equalsIgnoreCase(item)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
+                	if (item != null && !item.equals("")){
+	                	for (int k = 0; k < jc.getItemCount(); k++) {
+	                        if (((String) jc.getItemAt(k)).equalsIgnoreCase(item)) {
+	                            jc.setSelectedIndex(k);
+	                        }
+	                    }
+                	}
                 	if (jc.getSelectedIndex() == 0)
                 		jc.setSelectedIndex(jc.getItemCount()-1);
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("ImgDim1Extent")) {
-                    ((JTextField) comp).setText(String.valueOf(exts[0]));
-                    label.setForeground(Color.red);
+                	if (String.valueOf(exts[0]) != null && !String.valueOf(exts[0]).equals("")){
+                		((JTextField) comp).setText(String.valueOf(exts[0]));
+                		label.setForeground(Color.red);
+                	}
                 } else if (l.equalsIgnoreCase("ImgDim2Extent")) {
-                    ((JTextField) comp).setText(String.valueOf(exts[1]));
-                    label.setForeground(Color.red);
+                	if (String.valueOf(exts[1]) != null && !String.valueOf(exts[1]).equals("")){
+                		((JTextField) comp).setText(String.valueOf(exts[1]));
+                		label.setForeground(Color.red);
+                	}
                 } else if (l.equalsIgnoreCase("ImgDim3Extent")) {
-                    if (img.getNDims() > 2) {
+                    if (img.getNDims() > 2 && (String.valueOf(exts[2]) != null && !String.valueOf(exts[2]).equals(""))) {
                         ((JTextField) comp).setText(String.valueOf(exts[2]));
                         label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("ImgDim4Extent")) {
-                    if (img.getNDims() > 3) {
+                    if (img.getNDims() > 3 && (String.valueOf(exts[3]) != null && !String.valueOf(exts[3]).equals(""))) {
                         ((JTextField) comp).setText(String.valueOf(exts[3]));
                         label.setForeground(Color.red);
                     }
@@ -3479,8 +3485,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
-                            jc.setSelectedIndex(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]) != null && !FileInfoBase.getUnitsOfMeasureStr(units[0]).equals("")){
+	                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
+	                            jc.setSelectedIndex(k);
+	                        }
                         }
                     }
                     label.setForeground(Color.red);
@@ -3488,8 +3496,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
-                            jc.setSelectedIndex(k);
+                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]) != null && !FileInfoBase.getUnitsOfMeasureStr(units[1]).equals("")){
+	                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
+	                            jc.setSelectedIndex(k);
+	                        }
                         }
                     }
                     label.setForeground(Color.red);
@@ -3498,8 +3508,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
+                            if (FileInfoBase.getUnitsOfMeasureStr(units[2]) != null && !FileInfoBase.getUnitsOfMeasureStr(units[2]).equals("")){
+    	                        if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
+    	                            jc.setSelectedIndex(k);
+    	                        }
                             }
                         }
                         label.setForeground(Color.red);
@@ -3509,8 +3521,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     					final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
+                            if (FileInfoBase.getUnitsOfMeasureStr(units[3]) != null && !FileInfoBase.getUnitsOfMeasureStr(units[3]).equals("")){
+    	                        if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
+    	                            jc.setSelectedIndex(k);
+    	                        }
                             }
                         }
                         label.setForeground(Color.red);
@@ -3518,20 +3532,28 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("ImgDim5UoM")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgDim1Resol")) {
-                    ((JTextField) comp).setText(String.valueOf(res[0]));
-                    label.setForeground(Color.red);
+                	if (String.valueOf(res[0]) != null && !String.valueOf(res[0]).equals("")){
+                		((JTextField) comp).setText(String.valueOf(res[0]));
+                		label.setForeground(Color.red);
+                	}
                 } else if (l.equalsIgnoreCase("ImgDim2Resol")) {
-                    ((JTextField) comp).setText(String.valueOf(res[1]));
-                    label.setForeground(Color.red);
+                	if (String.valueOf(res[1]) != null && !String.valueOf(res[1]).equals("")){
+                		((JTextField) comp).setText(String.valueOf(res[1]));
+                		label.setForeground(Color.red);
+                	}
                 } else if (l.equalsIgnoreCase("ImgDim3Resol")) {
                     if (img.getNDims() > 2) {
-                        ((JTextField) comp).setText(String.valueOf(res[2]));
-                        label.setForeground(Color.red);
+                    	if (String.valueOf(res[2]) != null && !String.valueOf(res[2]).equals("")){
+                    		((JTextField) comp).setText(String.valueOf(res[2]));
+                    		label.setForeground(Color.red);
+                    	}
                     }
                 } else if (l.equalsIgnoreCase("ImgDim4Resol")) {
                     if (img.getNDims() > 3) {
-                        ((JTextField) comp).setText(String.valueOf(res[3]));
-                        label.setForeground(Color.red);
+                    	if (String.valueOf(res[3]) != null && !String.valueOf(res[3]).equals("")){
+                    		((JTextField) comp).setText(String.valueOf(res[3]));
+                    		label.setForeground(Color.red);
+                    	}
                     }
                 } else if (l.equalsIgnoreCase("ImgDim5Resol")) {
                     // for now...nothing
@@ -3540,7 +3562,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     if (modalityString.contains("Magnetic"))
                     	jc.setSelectedItem("MRI");
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("ImgFileFormat")) {
+                } else if (l.equalsIgnoreCase("ImgFileFormat") && fileFormatString != null && !fileFormatString.equals("")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3552,10 +3574,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 } else if (l.equalsIgnoreCase("ImgSliceThicknessVal")) {
                     if (sliceThickness == 0) {
                         ((JTextField) comp).setText("");
-                    } else {
+                    } else if (String.valueOf(sliceThickness) != null && !String.valueOf(sliceThickness).equals("")){
                         ((JTextField) comp).setText(String.valueOf(sliceThickness));
                     }
-                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp")) {
+                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp") && orientation != null && !orientation.equals("")) {
 					final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3594,18 +3616,18 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     final JLabel label = (JLabel) iter.next();
                     final String l = label.getName();
                     final JComponent comp = labelsAndComps.get(label);
-                    if (l.equalsIgnoreCase("AgeVal")) {
+                    if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
                     	if (ageVal.contains("Y")){
                     		String temp = ageVal.substring(0,ageVal.length()-6);
                     		ageVal = Integer.toString(Integer.parseInt(temp)*12);
                     	}
                         ((JTextField) comp).setText(ageVal);
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("SiteName")) {
+                    } else if (l.equalsIgnoreCase("SiteName") && siteName != null && !siteName.equals("")) {
                         ((JTextField) comp).setText(siteName);
-                    } else if (l.equalsIgnoreCase("VisitDate")) {
+                    } else if (l.equalsIgnoreCase("VisitDate") && visitDate != null && !visitDate.equals("")) {
                         ((JTextField) comp).setText(visitDate);
-                    } else if (l.equalsIgnoreCase("ImgAntmicSite")) {
+                    } else if (l.equalsIgnoreCase("ImgAntmicSite") && bodyPart != null && !bodyPart.equals("")) {
                     	final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
@@ -3614,16 +3636,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             }
                         }
 
-                    } else if (l.equalsIgnoreCase("ImgStdyDateTime")) {
+                    } else if (l.equalsIgnoreCase("ImgStdyDateTime") && 
+                    		((visitDate != null && !visitDate.equals("")) || visitTime != null && !visitTime.equals(""))) {
                         ((JTextField) comp).setText(visitDate + " " + visitTime);
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgSliceOversampleVal")) {
+                    } else if (l.equalsIgnoreCase("ImgSliceOversampleVal") && sliceOversample != null && !sliceOversample.equals("")) {
                         ((JTextField) comp).setText(sliceOversample);
-                    } else if (l.equalsIgnoreCase("ImgGapBtwnSlicesMeasr")) {
+                    } else if (l.equalsIgnoreCase("ImgGapBtwnSlicesMeasr") && gap != null && !gap.equals("")) {
                         ((JTextField) comp).setText(gap);
-                    } else if (l.equalsIgnoreCase("ImgFoVMeasr")) {
+                    } else if (l.equalsIgnoreCase("ImgFoVMeasr") && fieldOfView != null && !fieldOfView.equals("")) {
                         ((JTextField) comp).setText(fieldOfView);
-                    } else if (l.equalsIgnoreCase("ImgScanManufName")) {
+                    } else if (l.equalsIgnoreCase("ImgScanManufName") && manufacturer != null && !manufacturer.equals("")) {
                     	final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
                             final String item = (String) jc.getItemAt(k);
@@ -3632,13 +3655,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             }
                         }
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgScanSftwrVerNum")) {
+                    } else if (l.equalsIgnoreCase("ImgScanSftwrVerNum") && softwareVersion != null && !softwareVersion.equals("")) {
                         ((JTextField) comp).setText(softwareVersion);
-                    } else if (l.equalsIgnoreCase("ImgHeadPositionTxt")) {
+                    } else if (l.equalsIgnoreCase("ImgHeadPositionTxt") && patientPosition != null && !patientPosition.equals("")) {
                         ((JTextField) comp).setText(patientPosition);
-                    } else if (l.equalsIgnoreCase("ImgScanModelName")) {
+                    } else if (l.equalsIgnoreCase("ImgScanModelName") && scannerModel != null && !scannerModel.equals("")) {
                         ((JTextField) comp).setText(scannerModel);
-                    } else if (l.equalsIgnoreCase("ImgBandwidthVal")) {
+                    } else if (l.equalsIgnoreCase("ImgBandwidthVal") && bandwidth != null && !bandwidth.equals("")) {
                         ((JTextField) comp).setText(bandwidth);
                     }
                 }
@@ -3663,12 +3686,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final JLabel label = (JLabel) iter.next();
                         final String l = label.getName();
                         final JComponent comp = labelsAndComps.get(label);
-                        if (l.equalsIgnoreCase("ImgEchoTime")) {
+                        if (l.equalsIgnoreCase("ImgEchoTime") && echoTime != null && !echoTime.equals("")) {
                             ((JTextField) comp).setText(echoTime);
                             label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgRepetitnTime")) {
+                        } else if (l.equalsIgnoreCase("ImgRepetitnTime") && repetitionTime != null && !repetitionTime.equals("")) {
                             ((JTextField) comp).setText(repetitionTime);
-                        } else if (l.equalsIgnoreCase("ImgScanStrgthVal")) {
+                        } else if (l.equalsIgnoreCase("ImgScanStrgthVal") && magnaticFieldStrength != null && !magnaticFieldStrength.equals("")) {
                             final JComboBox jc = (JComboBox) comp;
                             for (int k = 0; k < jc.getItemCount(); k++) {
                                 final String item = (String) jc.getItemAt(k);
@@ -3677,19 +3700,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 }
                             }
                             label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgMRIT1T2Name")) {
+                        } else if (l.equalsIgnoreCase("ImgMRIT1T2Name") && mriT1T2Name != null && !mriT1T2Name.equals("")) {
                             ((JTextField) comp).setText(mriT1T2Name);
-                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum")) {
+                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum") && numAverages != null && !numAverages.equals("")) {
                             ((JTextField) comp).setText(numAverages);
-                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr") && flipAngle != null && !flipAngle.equals("")) {
                             ((JTextField) comp).setText(flipAngle);
-                        } else if (l.equalsIgnoreCase("ImgEchoTrainLengthMeasr")) {
+                        } else if (l.equalsIgnoreCase("ImgEchoTrainLengthMeasr") && echoTrainMeas != null && !echoTrainMeas.equals("")) {
                             ((JTextField) comp).setText(echoTrainMeas);
-                        } else if (l.equalsIgnoreCase("ImgInversionTime")) {
+                        } else if (l.equalsIgnoreCase("ImgInversionTime") && inversionTime != null && !inversionTime.equals("")) {
                             ((JTextField) comp).setText(inversionTime);
-                        } else if (l.equalsIgnoreCase("ImgRFReceivCoilName")) {
+                        } else if (l.equalsIgnoreCase("ImgRFReceivCoilName") && receiveCoilName != null && !receiveCoilName.equals("")) {
                             ((JTextField) comp).setText(receiveCoilName);
-                        } else if (l.equalsIgnoreCase("ImgPhaseEncodeDirTxt")) {
+                        } else if (l.equalsIgnoreCase("ImgPhaseEncodeDirTxt") && phaseEncode != null && !phaseEncode.equals("")) {
                             ((JTextField) comp).setText(phaseEncode);
                         }
                     }
