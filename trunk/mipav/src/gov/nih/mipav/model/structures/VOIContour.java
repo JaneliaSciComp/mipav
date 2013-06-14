@@ -152,6 +152,205 @@ public class VOIContour extends VOIBase {
 		return new VOIContour(this);
 	}
 	
+	public double pinpol(double xpoint, double ypoint, boolean snear[], int index1[], int index2[]) {
+	    // Check if point is inside a polygon, on a side of the polygon, or outside the polygon
+	    // This is an improved version of the Algorithm of Nordbeck and Rydstedt written by S. W. Sloan
+	    // The original FORTRAN 77 code by S. W. Sloan appeared in "A point-in-polygon program",
+	    // Advanced Engineering Software, 1985, Vol. 7, No. 1, pp. 45-47.
+	    // Permission to port the pinpol routine was granted by Professor Sloan.
+	    // xpoint is the x coordinate of the point to be tested
+	    // ypoint is the y coordinate of the point to be tested
+	    // Return mindst, the distance from the point to the nearest point of the polygon
+	    // If mindst is less than zero, then the point is outside the polygon
+	    // If mindst is equal to zero, then the point is on a side of the polygon
+	    // If mindst is greater than zero, then the point is inside the polygon
+	    double mindst;
+	    // Return snear
+	    // snear is true if distance to the nearest side is less than distance to nearest vertex
+        // snear if false if distance to the nearest vertex is less than distance to nearest side
+	    // Return index1 and index2 
+	    // If snear is true index1 and index2 are indices of endpoints of side
+	    // If snear if false index1 is index of vertex
+	    // smalld is a small double precision number
+	    // In the original FORTRAN 77 implementation a smalld value is not specified
+	    // smalld is a calling argument in the original implementation
+	    // The MIT licensed python 3 implementation sets smalld = 1.0E-12
+	    double smalld = 1.0E-12;
+	    // Need a counterclockwise contour and don't want to change the original
+	    VOIContour newContour;
+	    double x[];
+	    double y[];
+	    // n is the number of sides/vertices defining the polygon
+	    int n;
+	    // mindstSquared is the square of the distance to the closest point on the polygon
+	    double mindstSquared;
+	    int i;
+	    double x1;
+	    double y1;
+	    double x21;
+	    double y21;
+	    double x1p;
+	    double y1p;
+	    double t;
+	    double d;
+	    int j = 0;
+	    double dx;
+	    double dy;
+	    double area;
+	    newContour = new VOIContour(this);
+	    newContour.makeCounterClockwise();
+	    n = newContour.size();
+	    x = new double[n+2];
+	    y = new double[n+2];
+	    for (i = 0; i < n; i++) {
+	        x[i] = newContour.elementAt(i).X;
+	        y[i] = newContour.elementAt(i).Y;
+	    }
+	    x[n] = x[0];
+	    x[n+1] = x[1];
+	    y[n] = y[0];
+	    y[n+1] = y[1];
+	    
+	    mindstSquared = Double.MAX_VALUE;
+	    
+	    // Loop over each side defining the polygon
+	    for (i = 0; i < n; i++) {
+	        
+	        // Start of side has coords (x1, y1)
+	        // End of side has coords (x2, y2)
+	        // Point has coords (xpoint, ypoint)
+	        
+	        x1 = x[i];
+	        y1 = y[i];
+	        x21 = x[i+1] - x1;
+	        y21 = y[i+1] - y1;
+	        x1p = x1 - xpoint;
+	        y1p = y1 - ypoint;
+	        
+	        // Points on infinite line defined by
+	        // x = x1 + t*(x1-x2)
+	        // y = y1 + t*(y1-y2)
+	        // where
+	        // t = 0 at (x1, y1)
+	        // t = 1 at (x2, y2)
+	        // Find where normal passing through (xpoint, ypoint)
+	        // intersects infinite line
+	        
+	        t = -(x1p*x21 + y1p*y21)/(x21*x21 + y21*y21);
+	        if (t < 0.0) {
+	        
+	            // Normal does not intersect side
+	            // Point is closest to vertex (x1, y1)
+	            // Compute square of distance to this vertex
+	            
+	            d = x1p*x1p + y1p*y1p;
+	            if (d < mindstSquared) {
+	                
+	                // Point is closer to (x1, y1) than any other vertex or
+	                // side
+	                
+	                snear[0] = false;
+	                mindstSquared = d;
+	                j = i;
+	            } // if (d < mindstSquared)
+	        } // if (t < 0.0)
+	        else if (t <= 1.0) {
+	        
+	            // Normal intersects side
+	            
+	            dx = x1p + t*x21;
+	            dy = y1p + t*y21;
+	            d = dx*dx + dy*dy;
+	            if (d < mindstSquared) {
+	                
+	                // Point is closer to this side than to any
+	                // other side or vertex
+	                
+	                snear[0] = true;
+	                mindstSquared = d;
+	                j = i;
+	            } // if (d < mindstSquared)
+	        } // else if (t <= 1.0) 
+	    } // for (i = 0; i < n; i++)
+	    mindst = Math.sqrt(mindstSquared);
+	    if (mindst < smalld) {
+	        
+	        // Point is on side of polygon
+	        mindst = 0.0;
+	    } // if (mindst < smalld)
+	    else if (snear[0]) {
+	        
+	         // Point is closer to its nearest side than to its nearest
+	         // vertex.  Check if point is to left or right of this side.
+	         // If point is to left of side, it is inside polygon, else
+	         // point is outside polygon
+	        area = det(x[j],x[j+1],xpoint,y[j],y[j+1],ypoint);
+	        if (area >= 0.0) {
+	            mindst = Math.abs(mindst);
+	        }
+	        else {
+	            mindst = -Math.abs(mindst);
+	        }
+	    } // else if (snear[0])
+	    else {
+	        
+	        // Point is closer to its nearest vertex than to its nearest side,
+	        // Check if the nearest vertex is concave.
+	        // If the nearest vertex is concave, then point is inside the
+	        // polygon, else the point is outside the polygon
+	        
+	        if (j == 0) {
+	            j = n;
+	        }
+	        area = det(x[j+1],x[j],x[j-1],y[j+1],y[j],y[j-1]);
+	        if (area >= 0.0) {
+                mindst = Math.abs(mindst);
+            }
+            else {
+                mindst = -Math.abs(mindst);
+            }
+	    } // else
+	    // Find indices in original contour that correspond to j and j+1
+	    for (i = 0; i < n; i++) {
+	        if ((this.elementAt(i).X == (float)x[j]) && (this.elementAt(i).Y == (float)y[j])) {
+	            index1[0] = i;
+	        }
+	        if (snear[0]) {
+	            if ((this.elementAt(i).X == (float)x[j+1]) && (this.elementAt(i).Y == (float)y[j+1])) {
+	                index2[0] = i;
+	            }
+	        } // if (snear[0])
+	    } // for (i = 0; i < n; i++)
+	    return mindst;
+	} // pinpol
+	
+	private double det(double x1, double x2, double x3, double y1, double y2, double y3) {
+	    double determinant;
+	    // Compute twice the area of the triangle defined by three points
+	    // with coords (x1, y1), (x2, y2), and (x3, y3) using determinant
+	    // formula
+	    
+	    // Input parameters: 
+	    // x1, y1 coords of point 1
+	    // x2, y2 coords of point 2
+	    // x3, y3 coords of point 3
+	    
+	    // Output parameters:
+	    // determinant twice the area of the triangle defined by the three points
+	    
+	    // Notes:
+	    
+	    // determinant is positive is points 1, 2, and 3 define the triangle in
+	    // counterclockwise order
+	    // determinant is negative if points 1, 2, and 3 define the triangle in
+	    // clockwise order
+	    // determinant is zero if at least 2 of the points are coincident or if
+	    // all three points are collinear
+	    
+	    determinant = (x1-x3)*(y2-y3) - (x2-x3)*(y1-y3);
+	    return determinant;    
+	} // det
+	
 	public void calcAsymmetryIndex() {
 	    numPixels = 0;
 	    // First moment with respect to the x axis
