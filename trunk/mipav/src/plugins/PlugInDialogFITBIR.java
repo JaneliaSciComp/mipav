@@ -326,56 +326,79 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             // MipavUtil.showHelp("ISPImages01");
 
         } else if (command.equalsIgnoreCase("Finish")) {
-            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
-                public Object doInBackground() {
-                    createSubmissionFiles();
-
-                    return null;
-                }
-            };
-            final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
-                    "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
-            // we're now letting the fields be enforced by the validation tool
-            // final int numRows = sourceTableModel.getRowCount();
-            // boolean areAllCompleted = true;
-            // for (int i = 0; i < numRows; i++) {
-            // if ( ((String) sourceTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
-            // areAllCompleted = false;
-            // break;
-            // }
-            // }
-            //
-            // if ( !areAllCompleted) {
-            // MipavUtil.displayError("Please complete required fields for all Form Structures");
-            // return;
-            // }
-
-            // instead, just require that the GUIDs are filled in
-            final int numRows = sourceTableModel.getRowCount();
-            boolean areGuidsCompleted = true;
-            for (int i = 0; i < numRows; i++) {
-                String struct = (String) sourceTableModel.getValueAt(i, 0);
-                if (struct.endsWith("_UNKNOWNGUID")) {
-                    areGuidsCompleted = false;
-                    break;
-                }
-            }
-
-            if ( !areGuidsCompleted) {
-                MipavUtil.displayError("Please complete GUID field for all Form Structures");
-                return;
-            }
-
-            if (response == JOptionPane.YES_OPTION) {
-                worker.execute();
-                removeSourceButton.setEnabled(false);
-                finishButton.setEnabled(false);
-                outputDirButton.setEnabled(false);
-                addSourceButton.setEnabled(false);
-                completeDataElementsButton.setEnabled(false);
-                loadCSVButton.setEnabled(false);
-            }
+        	
+        	if (isFinished){
+        		System.exit(0);
+        	} else {
+	        	
+	            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
+	                public Object doInBackground() {
+	                    createSubmissionFiles();
+	
+	                    return null;
+	                }
+	            };
+	            final int response = JOptionPane.showConfirmDialog(this, "Done adding image datasets?",
+	                    "Done adding image datasets?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+	
+	            // we're now letting the fields be enforced by the validation tool
+	            // final int numRows = sourceTableModel.getRowCount();
+	            // boolean areAllCompleted = true;
+	            // for (int i = 0; i < numRows; i++) {
+	            // if ( ((String) sourceTableModel.getValueAt(i, 1)).equalsIgnoreCase("No")) {
+	            // areAllCompleted = false;
+	            // break;
+	            // }
+	            // }
+	            //
+	            // if ( !areAllCompleted) {
+	            // MipavUtil.displayError("Please complete required fields for all Form Structures");
+	            // return;
+	            // }
+	
+	            // instead, just require that the GUIDs are filled in
+	            final int numRows = sourceTableModel.getRowCount();
+	            int validGuids = 1;
+	            for (int i = 0; i < numRows; i++) {
+	                String struct = (String) sourceTableModel.getValueAt(i, 0);
+	                if (struct.endsWith("_UNKNOWNGUID")) {
+	                    validGuids = -1;
+	                    break;
+	                } else {
+	                	String guidTester = struct.substring(struct.indexOf("_") + 1, struct.length() - 1);
+	                	if (!isGuid(guidTester)){
+	                		validGuids = 0;
+	                		break;
+	                	}
+	                }
+	            }
+	
+	            if (response == JOptionPane.YES_OPTION) {
+	            	
+	            	if ( validGuids == -1) {
+	                    MipavUtil.displayError("Please complete GUID field for all Form Structures");
+	                    return;
+	                } else if (validGuids == 0) {
+	                	MipavUtil.displayError("One or more GUID is invalid");
+	                    return;
+	                }
+	            	
+	            	removeSourceButton.setEnabled(false);
+	                finishButton.setEnabled(false);
+	                outputDirButton.setEnabled(false);
+	                addSourceButton.setEnabled(false);
+	                completeDataElementsButton.setEnabled(false);
+	                loadCSVButton.setEnabled(false);
+	            	
+	                worker.execute();
+	                
+	                //need to fix this so it actually works
+//	                if (isFinished){
+//	                	finishButton.setText("Close");
+//	                	finishButton.setEnabled(true);
+//	                }
+	            }
+        	}
         } else if (command.equalsIgnoreCase("completeDataElements")) {
 
             final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
