@@ -8,6 +8,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorController;
+import gov.nih.mipav.view.input.spacenav.SpaceNavigatorEvent;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorListener;
 import gov.nih.mipav.view.input.spacenav.SpaceNavigatorPoller;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -17,9 +18,10 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.flythroughview.JpegImagesToMovie;
 import gov.nih.mipav.view.renderer.flythroughview.MovieMaker;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
@@ -45,6 +47,7 @@ import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
 import com.jogamp.opengl.util.Animator;
@@ -421,7 +424,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     }
     
     /** just testing to see if this will also cause an error
-     * result: does not cause error for keyPressed() but still does for processSpaceNavEvent
+     * result: does not cause error for keyPressed() but still does for processSpaceNavEvent (same as before I made this change)
     **/
     private void updateScene(Matrix3f rotateMatrix) {
         if(m_spkScene != null){
@@ -909,9 +912,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     @Override
 	public void processSpaceNavEvent()
     {
-    	Matrix3f rotateMatrix = new Matrix3f();
-    	rotateMatrix.zero();
+    	Matrix3f rotateMatrix = new Matrix3f(Matrix3f.IDENTITY);
     	
+    	//copy & pasted from JavaApplication3D.moveObject(), copy ends at end of if statement
+		Spatial pkParent = m_spkMotionObject.GetParent();
+	    Vector3f kAxis = new Vector3f(Vector3f.UNIT_X);
+	    float fAngle;
+	    Matrix3f kRot, kIncr = new Matrix3f();
+	
+	    if (true)
+	    {
+	    	kRot = m_spkMotionObject.Local.GetRotate();
+	
+	        fAngle = m_iDoRoll*m_fRotSpeed;
+	        rollRotationAngle += fAngle;
+	        if (pkParent != null)
+	        {
+	            pkParent.World.GetRotate().getColumn(0, kAxis);
+	        }
+	
+	        kIncr.fromAxisAngle(kAxis,fAngle);
+	        kRot.multLeft( kIncr ).orthonormalize();
+	        m_spkMotionObject.Local.SetRotate(kRot);
+	        kIncr = null;
+	        kAxis = null;
+	        // System.err.println("rollRotationAngle = " + rollRotationAngle);
+	    }
+//    	RotateTrackBall(400, 300, 402, 301);
     	//process the scene
     	updateScene(rotateMatrix);
     	
@@ -937,6 +964,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
 //		
 //		System.out.println(builder.toString());
-    	System.out.println("testing: processSpaceNavEvent() in GPURenderBase");
-	}    
+	}  
+    
+    /**
+     * the parameter i is only so that the method has a different signiture than the original
+     *     -this was done just to make my life easier during testing
+     * @param i
+     */
+	public void processSpaceNavEvent(int i)
+    {
+		InitializeObjectMotion(m_spkScene);
+		processSpaceNavEvent();
+    }
+	
+	public void processSpaceNavEvent(SpaceNavigatorEvent e)
+    {
+		InitializeObjectMotion(m_spkScene);
+		processSpaceNavEvent();
+    }
+	
+	
+	public void mousePressed(MouseEvent e)
+	{
+//		System.out.println(e.getButton());
+		super.mousePressed(e);
+		 if ( e.getButton() == MouseEvent.BUTTON2 )
+         {
+			 processSpaceNavEvent(2);
+         }
+	}
 }
