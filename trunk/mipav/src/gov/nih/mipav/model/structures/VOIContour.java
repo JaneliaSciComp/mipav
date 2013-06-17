@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 
 
@@ -351,7 +352,17 @@ public class VOIContour extends VOIBase {
 	    return determinant;    
 	} // det
 	
-	public void calcAsymmetryIndex() {
+	/**
+	 * 
+	 * @param xDim
+	 * @param yDim
+	 * @return
+	 */
+	public double calcAsymmetryIndex(int xDim, int yDim) {
+	    // Reference: "Automatic Detection of Asymmetry In Skin Tumors" by William V. Stoecker,
+	    // William Weiling Li, and Randy H. Moss, Computerized Medical Imaging and Graphics,
+	    // Vol. 16, No. 3, pp. 191-197, 1992.
+	    int sliceSize = xDim * yDim;
 	    numPixels = 0;
 	    // First moment with respect to the x axis
 	    double Mx = 0.0;
@@ -390,10 +401,20 @@ public class VOIContour extends VOIBase {
         Vector<Vector3f> kMaskPositions;
         int group1Num;
         int group2Num;
-        Vector3f group1[];
-        Vector3f group2[];
-        Vector3f group1Mirror[];
-        Vector3f group2Mirror[];
+        Vector<Vector3f> group1;
+        Vector<Vector3f> group2;
+        Vector<Vector3f> group1Mirror;
+        Vector<Vector3f> group2Mirror;
+        VOIContour contour1;
+        VOIContour contour2;
+        VOIContour contour1Mirror;
+        VOIContour contour2Mirror;
+        BitSet mask1;
+        BitSet mask2;
+        BitSet mask1Mirror;
+        BitSet mask2Mirror;
+        boolean fixed = true;
+        boolean closed = true;
         int index1;
         int index2;
         boolean indicesFromEndPoint10Increasing = true;
@@ -402,6 +423,15 @@ public class VOIContour extends VOIBase {
         float mirrorY;
         double slopeSquared;
         double denom;
+        int m1AndM2Mirror;
+        int m1Only;
+        int m2MirrorOnly;
+        int m2AndM1Mirror;
+        int m2Only;
+        int m1MirrorOnly;
+        double asymmetryIndexArray[] = new double[2];
+        double alternateAsymmetry;
+        double asymmetryIndex;
         n = size();
         kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
@@ -649,25 +679,23 @@ public class VOIContour extends VOIBase {
                 } // if ((i != vertexUsed[0]) && (i != vertexUsed[1]))
             } // for (i = 0; i < n; i++)
             
-            group1 = new Vector3f[group1Num];
-            group2 = new Vector3f[group2Num];
-            group1[0] = new Vector3f(intersectX[0], intersectY[0], 0.0f);
-            group2[0] = new Vector3f(intersectX[0], intersectY[0], 0.0f);
-            group1[group1Num-1] = new Vector3f(intersectX[1], intersectY[1], 0.0f);
-            group2[group2Num-1] = new Vector3f(intersectX[1], intersectY[1], 0.0f);
+            group1 = new Vector<Vector3f>();
+            group2 = new Vector<Vector3f>();
+            group1.add(0,new Vector3f(intersectX[0], intersectY[0], 0.0f));
+            group2.add(0,new Vector3f(intersectX[0], intersectY[0], 0.0f));
             if (indicesFromEndPoint10Increasing) {
                 if (endPoint1[1] < endPoint1[0]) {
                     i = 1;
                     for (index1 = endPoint1[0]; index1 <= n-1; index1++, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);   
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));   
                     }
                     for (index1 = 0; index1 <= endPoint1[1]; index1++, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
                     }
                 } // if (endPoint1[1] < endPoint1[0])
                 else { // endPoint1[1] > endPoint1[0]
                     for (index1 = endPoint1[0], i = 1; index1 <= endPoint1[1]; index1++, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
                     }    
                 } // endPoint1[1] > endPoint1[0]
             } // if (indicesFromEndPoint10Increasing)
@@ -675,15 +703,15 @@ public class VOIContour extends VOIBase {
                 if (endPoint1[1] > endPoint1[0]) {
                     i = 1;
                     for (index1 = endPoint1[0]; index1 >= 0; index1--, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);       
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));       
                     }
                     for (index1 = n-1; index1 >= endPoint1[1]; index1--, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);   
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));   
                     }
                 } // if (endPoint1[1] > endPoint1[0)
                 else { // endPoint1[1] < endPoint1[0]
                     for (index1 = endPoint1[0], i = 1; index1 >= endPoint1[1]; index1--, i++) {
-                        group1[i] = new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f);
+                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
                     }       
                 } // else endPoint1[1] < endPoint1[0]
             } // else index1 indices decreasing
@@ -692,15 +720,15 @@ public class VOIContour extends VOIBase {
                 if (endPoint2[1] < endPoint2[0]) {
                     i = 1;
                     for (index2 = endPoint2[0]; index2 <= n-1; index2++, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);   
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));   
                     }
                     for (index2 = 0; index2 <= endPoint2[1]; index2++, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
                     }
                 } // if (endPoint2[1] < endPoint2[0])
                 else { // endPoint2[1] > endPoint2[0]
                     for (index2 = endPoint2[0], i = 1; index2 <= endPoint2[1]; index2++, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
                     }    
                 } // endPoint2[1] > endPoint2[0]
             } // if (indicesFromEndPoint20Increasing)
@@ -708,55 +736,103 @@ public class VOIContour extends VOIBase {
                 if (endPoint2[1] > endPoint2[0]) {
                     i = 1;
                     for (index2 = endPoint2[0]; index2 >= 0; index2--, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);       
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));       
                     }
                     for (index2 = n-1; index2 >= endPoint2[1]; index2--, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);   
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));   
                     }
                 } // if (endPoint2[1] > endPoint2[0])
                 else { // endPoint2[1] < endPoint2[0]
                     for (index2 = endPoint2[0], i = 1; index2 >= endPoint2[1]; index2--, i++) {
-                        group2[i] = new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f);
+                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
                     }       
                 } // else endPoint2[1] < endPoint2[0]
             } // else index2 indices decreasing
+            group1.add(group1Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
+            group2.add(group2Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
             // For Valid slope
             // x0' = (-slope*slope*x0 + x0 + 2*slope*y0 - 2*slope*offset)/(slope*slope + 1)
             // y0' = (slope*slope*y0 - y0 + 2*slope*x0 + 2*offset)/(slope*slope + 1)
-            // For invalid or infinite slope\
+            // For invalid or infinite slope
             // x0' = -x0 + 2*xCentroid
             // y0' = y0
-            group1Mirror = new Vector3f[group1Num];
-            group2Mirror = new Vector3f[group2Num];
-            group1Mirror[0] = new Vector3f(intersectX[0], intersectY[0], 0.0f);
-            group2Mirror[0] = new Vector3f(intersectX[0], intersectY[0], 0.0f);
-            group1Mirror[group1Num-1] = new Vector3f(intersectX[1], intersectY[1], 0.0f);
-            group2Mirror[group2Num-1] = new Vector3f(intersectX[1], intersectY[1], 0.0f);
+            group1Mirror = new Vector<Vector3f>();
+            group2Mirror = new Vector<Vector3f>();
+            group1Mirror.add(0,new Vector3f(intersectX[0], intersectY[0], 0.0f));
+            group2Mirror.add(0,new Vector3f(intersectX[0], intersectY[0], 0.0f));
+            
             slopeSquared = slope * slope;
             denom = slopeSquared + 1.0;
             for (i = 1; i <= group1Num-2; i++) {
                 if (validSlope) {
-                    mirrorX = (float)((-slopeSquared*group1[i].X + group1[i].X + 2.0*slope*group1[i].Y - 2.0*slope*offset)/denom);
-                    mirrorY = (float)((slopeSquared*group1[i].Y - group1[i].Y + 2.0*slope*group1[i].X + 2.0*offset)/denom);
+                    mirrorX = (float)((-slopeSquared*group1.get(i).X + group1.get(i).X + 2.0*slope*group1.get(i).Y - 2.0*slope*offset)/denom);
+                    mirrorY = (float)((slopeSquared*get(i).Y - group1.get(i).Y + 2.0*slope*get(i).X + 2.0*offset)/denom);
                 } // if (validSlope)
                 else {
-                    mirrorX = (float)(-group1[i].X + 2.0 * xCentroid);
-                    mirrorY = group1[i].Y;
+                    mirrorX = (float)(-group1.get(i).X + 2.0 * xCentroid);
+                    mirrorY = group1.get(i).Y;
                 }
-                group1Mirror[i] = new Vector3f(mirrorX, mirrorY, 0.0f);
+                group1Mirror.add(i,new Vector3f(mirrorX, mirrorY, 0.0f));
             } // for (i = 1; i <= group1Num-2; i++)
             for (i = 1; i <= group2Num-2; i++) {
                 if (validSlope) {
-                    mirrorX = (float)((-slopeSquared*group2[i].X + group2[i].X + 2.0*slope*group2[i].Y - 2.0*slope*offset)/denom);
-                    mirrorY = (float)((slopeSquared*group2[i].Y - group2[i].Y + 2.0*slope*group2[i].X + 2.0*offset)/denom);
+                    mirrorX = (float)((-slopeSquared*group2.get(i).X + group2.get(i).X + 2.0*slope*group2.get(i).Y - 2.0*slope*offset)/denom);
+                    mirrorY = (float)((slopeSquared*group2.get(i).Y - group2.get(i).Y + 2.0*slope*group2.get(i).X + 2.0*offset)/denom);
                 } // if (validSlope)
                 else {
-                    mirrorX = (float)(-group2[i].X + 2.0 * xCentroid);
-                    mirrorY = group2[i].Y;
+                    mirrorX = (float)(-group2.get(i).X + 2.0 * xCentroid);
+                    mirrorY = group2.get(i).Y;
                 }
-                group2Mirror[i] = new Vector3f(mirrorX, mirrorY, 0.0f);
+                group2Mirror.add(i,new Vector3f(mirrorX, mirrorY, 0.0f));
             } // for (i = 1; i <= group2Num-2; i++)
+            group1Mirror.add(group1Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
+            group2Mirror.add(group2Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
+            contour1 = new VOIContour(fixed, closed, group1);
+            mask1 = new BitSet(sliceSize); 
+            contour1.setMask(mask1, xDim, yDim, false, VOI.ADDITIVE ); 
+            contour2 = new VOIContour(fixed, closed, group2);
+            mask2 = new BitSet(sliceSize);
+            contour2.setMask(mask2, xDim, yDim, false, VOI.ADDITIVE);
+            contour1Mirror = new VOIContour(fixed, closed, group1Mirror);
+            mask1Mirror = new BitSet(sliceSize);
+            contour1Mirror.setMask(mask1Mirror, xDim, yDim, false, VOI.ADDITIVE);
+            contour2Mirror = new VOIContour(fixed, closed, group2Mirror);
+            mask2Mirror = new BitSet(sliceSize);
+            contour2Mirror.setMask(mask2Mirror, xDim, yDim, false, VOI.ADDITIVE);
+            m1AndM2Mirror = 0;
+            m1Only = 0;
+            m2MirrorOnly = 0;
+            m2AndM1Mirror = 0;
+            m2Only = 0;
+            m1MirrorOnly = 0;
+            for (i = 0; i < sliceSize; i++) {
+                if (mask1.get(i) && mask2Mirror.get(i)) {
+                    m1AndM2Mirror++;    
+                }
+                else if (mask1.get(i)) {
+                    m1Only++;
+                }
+                else if (mask2Mirror.get(i)) {
+                    m2MirrorOnly++;
+                }
+                if (mask2.get(i) && mask1Mirror.get(i)) {
+                    m2AndM1Mirror++;    
+                }
+                else if (mask2.get(i)) {
+                    m2Only++;
+                }
+                else if (mask1Mirror.get(i)) {
+                    m1MirrorOnly++;
+                }
+                asymmetryIndexArray[numAxis] = 100.0 * (m1Only + m2MirrorOnly)/numPixels;
+                Preferences.debug("On axis " + numAxis + " asymmetry index = " + asymmetryIndexArray[numAxis] + "\n", Preferences.DEBUG_ALGORITHM);
+                alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/numPixels;
+                Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
+                                   Preferences.DEBUG_ALGORITHM);
+            }
         } // for (numAxis = 0; numAxis <= 1; numAxis++)
+        asymmetryIndex = Math.min(asymmetryIndexArray[0], asymmetryIndexArray[1]);
+        return asymmetryIndex;
 	}
 	
 	/* Code ported from http://cm.bell-labs.com/who/clarkson/2dch.c to
