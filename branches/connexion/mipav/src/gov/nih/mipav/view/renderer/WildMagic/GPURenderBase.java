@@ -122,6 +122,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
+    protected boolean isSpaceNavCodeRunning;
+    
     /**
      * Default GPURenderBase constructor.
      */
@@ -869,6 +871,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
                 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
             }
         }
+//        processSpaceNavEvent();
     }
     
     /**
@@ -912,7 +915,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     @Override
 	public void processSpaceNavEvent()
     {
-    	Matrix3f rotateMatrix = new Matrix3f(Matrix3f.IDENTITY);
+    	isSpaceNavCodeRunning = true;
+//    	Component temp = getFocusOwner();
+    	if(m_spkMotionObject == null)
+    		return;
+    	
+//    	Matrix3f rotateMatrix = new Matrix3f(Matrix3f.IDENTITY);
     	
     	//copy & pasted from JavaApplication3D.moveObject(), copy ends at end of if statement
 		Spatial pkParent = m_spkMotionObject.GetParent();
@@ -920,11 +928,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	    float fAngle;
 	    Matrix3f kRot, kIncr = new Matrix3f();
 	
+	    //moves about the x axis
 	    if (true)
 	    {
 	    	kRot = m_spkMotionObject.Local.GetRotate();
 	
-	        fAngle = m_iDoRoll*m_fRotSpeed;
+//	        fAngle = m_iDoRoll*m_fRotSpeed;
+	    	fAngle = 1*m_fRotSpeed;
 	        rollRotationAngle += fAngle;
 	        if (pkParent != null)
 	        {
@@ -940,7 +950,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	    }
 //    	RotateTrackBall(400, 300, 402, 301);
     	//process the scene
-    	updateScene(rotateMatrix);
+    	UpdateSceneRotation();
     	
 //    	Matrix3f kRotate = m_spkScene.Local.GetRotate();
 //        kRotate.mult(rotateMatrix);
@@ -954,7 +964,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //        
 //    	
 //		DecimalFormat dec = new DecimalFormat("0.00000");
-//		
+		
+//		SpaceNavigatorController.poll();
+		
 //		StringBuilder builder = new StringBuilder();
 //		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
 //		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
@@ -964,6 +976,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
 //		
 //		System.out.println(builder.toString());
+		
+		isSpaceNavCodeRunning = false;
 	}  
     
     /**
@@ -979,8 +993,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	
 	public void processSpaceNavEvent(SpaceNavigatorEvent e)
     {
-		InitializeObjectMotion(m_spkScene);
-		processSpaceNavEvent();
+//		GLCanvas temp = GetCanvas();
+//		temp.requestFocus();
+		if(m_spkScene != null){
+			InitializeObjectMotion(m_spkScene);
+//			processSpaceNavEvent();
+		}processSpaceNavEvent();
     }
 	
 	
@@ -990,7 +1008,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 		super.mousePressed(e);
 		 if ( e.getButton() == MouseEvent.BUTTON2 )
          {
-			 processSpaceNavEvent(2);
+//			 processSpaceNavEvent(2);
+			 try {
+		    		if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.HasInstanceOf(this)) {
+		    			SpaceNavigatorPoller.registerListener(this);
+		    		}
+			 } catch (Error er) {
+				 Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+				 er.printStackTrace();
+			 }
          }
 	}
 }
