@@ -232,6 +232,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             setVisible(true);
             validate();
         } else {
+        	dispose();
             if (JDialogStandalonePlugin.isExitRequired()) {
                 System.exit(0);
                 // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -329,6 +330,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         	
         	if (isFinished){
         		dispose();
+        		if (JDialogStandalonePlugin.isExitRequired())
+        			System.exit(0);
         	} else {
 	        	
 	            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
@@ -418,6 +421,21 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
         }
     }
+    
+
+    public void windowActivated(final WindowEvent e) {}
+
+    public void windowClosed(final WindowEvent e) {}
+
+    public void windowClosing(final WindowEvent e) {}
+
+    public void windowDeactivated(final WindowEvent e) {}
+
+    public void windowDeiconified(final WindowEvent e) {}
+
+    public void windowIconified(final WindowEvent e) {}
+
+    public void windowOpened(final WindowEvent e) {}
 
     private boolean readCSVFile() {
         try {
@@ -516,7 +534,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private void init() {
         setTitle("Image Submission Package Creation Tool v" + pluginVersion);
-
+        addWindowListener(this);
         dataStructures = new ArrayList<DataStruct>();
 
         final JPanel topPanel = new JPanel(new GridBagLayout());
