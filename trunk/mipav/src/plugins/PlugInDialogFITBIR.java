@@ -328,13 +328,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         } else if (command.equalsIgnoreCase("Finish")) {
         	
         	if (isFinished){
-        		System.exit(0);
+        		dispose();
         	} else {
 	        	
 	            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
 	                public Object doInBackground() {
 	                    createSubmissionFiles();
-	
+
+		                //need to fix this so it actually works
+		                if (isFinished){
+		                	finishButton.setText("Close");
+		                	finishButton.setEnabled(true);
+		                }
+		                
 	                    return null;
 	                }
 	            };
@@ -391,12 +397,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 	                loadCSVButton.setEnabled(false);
 	            	
 	                worker.execute();
-	                
-	                //need to fix this so it actually works
-//	                if (isFinished){
-//	                	finishButton.setText("Close");
-//	                	finishButton.setEnabled(true);
-//	                }
 	            }
         	}
         } else if (command.equalsIgnoreCase("completeDataElements")) {
