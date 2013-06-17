@@ -427,7 +427,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     public void windowClosed(final WindowEvent e) {}
 
     public void windowClosing(final WindowEvent e) {
-    	//clear temp files
+    	if (tempDirs.size() > 0) {
+            for (int i = 0; i < tempDirs.size(); i++) {
+                String dir = tempDirs.get(i);
+                File f = new File(dir);
+                if (f.exists()) {
+                    String[] list = f.list();
+                    if (list != null) {
+                        for (int k = 0; k < list.length; k++) {
+                            File entry = new File(f, list[k]);
+                            entry.delete();
+                        }
+                    }
+                    f.delete();
+                }
+            }
+        }
     }
 
     public void windowDeactivated(final WindowEvent e) {}
