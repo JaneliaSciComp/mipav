@@ -232,8 +232,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             setVisible(true);
             validate();
         } else {
-        	dispose();
-            if (JDialogStandalonePlugin.isExitRequired()) {
+            if (ViewUserInterface.getReference() != null && ViewUserInterface.getReference().isPlugInFrameVisible()) {
                 System.exit(0);
                 // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
             } else {
@@ -427,7 +426,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     public void windowClosed(final WindowEvent e) {}
 
-    public void windowClosing(final WindowEvent e) {}
+    public void windowClosing(final WindowEvent e) {
+    	//clear temp files
+    }
 
     public void windowDeactivated(final WindowEvent e) {}
 
