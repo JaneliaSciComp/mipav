@@ -1889,6 +1889,89 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
+     * Tries to convert a MIPAV/DICOM modality string to the equivalent BRICS CDE value.  Still needs a good bit of work/addtions/integration with MR sequence type.
+     * @param mipavModality The MIPAV modality description string.
+     * @return The BRICS ImgModltyTyp CDE value, or an empty string if no matching modality was found.
+     */
+    private static final String convertModalityToBRICS(String mipavModality) {
+    	if (mipavModality.equalsIgnoreCase("Unknown Modality")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Biomagnetic Imaging")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Color Flow Doppler")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Computed Radiography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Computed Tomography")) {
+    		return "CT";
+    	} else if (mipavModality.equalsIgnoreCase("Duplex Doppler")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Diaphanography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Digital Radiography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Endoscopy")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("General Microscopy")) {
+    		return "Microscopy";
+    	} else if (mipavModality.equalsIgnoreCase("Intraoral Radiography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Laser Surface Scan")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Magnetic Resonance Angiography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Mammography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Magnetic Resonance")) {
+    		return "MRI";
+    	} else if (mipavModality.equalsIgnoreCase("Magnetic Resonance Spectroscopy")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Nuclear Medicine")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Other")) {
+    		return "Other, specify";
+    	} else if (mipavModality.equalsIgnoreCase("Positron Emission Tomography")) {
+    		return "PET";
+    	} else if (mipavModality.equalsIgnoreCase("Panoramic XRay")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radio Fluoroscopy")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiographic Imaging")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiotherapy Dose")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiotherapy Image")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiotherapy Plan")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiotherapy Record")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Radiotherapy Structure Set")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Slide Microscopy")) {
+    		return "Microscopy";
+    	} else if (mipavModality.equalsIgnoreCase("Single Photon Emission Computed Tomography")) {
+    		return "SPECT";
+    	} else if (mipavModality.equalsIgnoreCase("Thermography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Ultrasound")) {
+    		return "Ultrasound";
+    	} else if (mipavModality.equalsIgnoreCase("XRay Angiography")) {
+    		return "X-Ray Angiography";
+    	} else if (mipavModality.equalsIgnoreCase("External Camera Photography")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("Red Free")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("FA")) {
+    		return "";
+    	} else if (mipavModality.equalsIgnoreCase("ICG")) {
+    		return "";
+    	}
+    	
+    	return "";
+    }
+    
+    /**
      * Multi-line tooltip creation helper method.
      *
      * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
@@ -2311,7 +2394,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
             for (BasicDataStructure ds : dataStructureList) {
-                if (ds.getShortName().equals(dataStructureName)) {
+                if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
                     dataStructure = ds;
                 }
             }
@@ -2442,7 +2525,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
             // TODO: hardcoded structure handling
-        	if (dataStructureName.startsWith("Imag")) {
+        	if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")) {
         		// TODO: handle the record column when we add support for repeating groups in a form record
         		
                 // first check to see if image_file was supplied in the csv
@@ -3190,11 +3273,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             headerList.add(String.valueOf(res[4]));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgModltyTyp") && modalityString != null) {
-                    	// TODO: need to do mapping between MIPAV modalities and BRICS values
-                        if ( !csvParams[i].trim().equals(modalityString)) {
+                        if ( !csvParams[i].trim().equals(convertModalityToBRICS(modalityString))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
-                            headerList.add(modalityString);
+                            headerList.add(convertModalityToBRICS(modalityString));
                         }
                     } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceThicknessVal") && String.valueOf(sliceThickness) != null) {
                     	// TODO: does not handle differences like 1.0 vs 1 well
@@ -3601,8 +3683,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgModltyTyp")) {
 					final JComboBox jc = (JComboBox) comp;
-                    if (modalityString.contains("Magnetic"))
-                    	jc.setSelectedItem("MRI");
+					String bricsMod = convertModalityToBRICS(modalityString);
+					if (!bricsMod.equals("")) {
+                    	jc.setSelectedItem(bricsMod);
+					}
                     label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("ImgFileFormat") && fileFormatString != null && !fileFormatString.equals("")) {
 					final JComboBox jc = (JComboBox) comp;
