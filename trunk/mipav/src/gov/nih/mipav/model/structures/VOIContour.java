@@ -655,7 +655,7 @@ public class VOIContour extends VOIBase {
                 } // for (i = 0; i < n; i++)
             } // if (numIntersectFound < 2)
             
-            // 2 points at end of axis
+            // 2 points at end of axis belong to both groups
             group1Num = 2;
             group2Num = 2;
             for (i = 0; i < n; i++) {
@@ -699,7 +699,7 @@ public class VOIContour extends VOIBase {
                     }    
                 } // endPoint1[1] > endPoint1[0]
             } // if (indicesFromEndPoint10Increasing)
-            else { // index1 indices decreasing
+            else { // indices from end point10 decreasing
                 if (endPoint1[1] > endPoint1[0]) {
                     i = 1;
                     for (index1 = endPoint1[0]; index1 >= 0; index1--, i++) {
@@ -714,7 +714,7 @@ public class VOIContour extends VOIBase {
                         group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
                     }       
                 } // else endPoint1[1] < endPoint1[0]
-            } // else index1 indices decreasing
+            } // else indices from end point 10 decreasing
             indicesFromEndPoint20Increasing = !indicesFromEndPoint10Increasing;
             if (indicesFromEndPoint20Increasing) {
                 if (endPoint2[1] < endPoint2[0]) {
@@ -732,7 +732,7 @@ public class VOIContour extends VOIBase {
                     }    
                 } // endPoint2[1] > endPoint2[0]
             } // if (indicesFromEndPoint20Increasing)
-            else { // index2 indices decreasing
+            else { // indices from endPoint20 decreasing
                 if (endPoint2[1] > endPoint2[0]) {
                     i = 1;
                     for (index2 = endPoint2[0]; index2 >= 0; index2--, i++) {
@@ -747,7 +747,7 @@ public class VOIContour extends VOIBase {
                         group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
                     }       
                 } // else endPoint2[1] < endPoint2[0]
-            } // else index2 indices decreasing
+            } // else indices from endPoint20 decreasing
             group1.add(group1Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
             group2.add(group2Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
             // For Valid slope
@@ -766,7 +766,7 @@ public class VOIContour extends VOIBase {
             for (i = 1; i <= group1Num-2; i++) {
                 if (validSlope) {
                     mirrorX = (float)((-slopeSquared*group1.get(i).X + group1.get(i).X + 2.0*slope*group1.get(i).Y - 2.0*slope*offset)/denom);
-                    mirrorY = (float)((slopeSquared*get(i).Y - group1.get(i).Y + 2.0*slope*get(i).X + 2.0*offset)/denom);
+                    mirrorY = (float)((slopeSquared*group1.get(i).Y - group1.get(i).Y + 2.0*slope*group1.get(i).X + 2.0*offset)/denom);
                 } // if (validSlope)
                 else {
                     mirrorX = (float)(-group1.get(i).X + 2.0 * xCentroid);
@@ -824,12 +824,12 @@ public class VOIContour extends VOIBase {
                 else if (mask1Mirror.get(i)) {
                     m1MirrorOnly++;
                 }
-                asymmetryIndexArray[numAxis] = 100.0 * (m1Only + m2MirrorOnly)/numPixels;
-                Preferences.debug("On axis " + numAxis + " asymmetry index = " + asymmetryIndexArray[numAxis] + "\n", Preferences.DEBUG_ALGORITHM);
-                alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/numPixels;
-                Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
-                                   Preferences.DEBUG_ALGORITHM);
-            }
+            } // for (i = 0; i < sliceSize; i++)
+            asymmetryIndexArray[numAxis] = 100.0 * (m1Only + m2MirrorOnly)/numPixels;
+            Preferences.debug("On axis " + numAxis + " asymmetry index = " + asymmetryIndexArray[numAxis] + "\n", Preferences.DEBUG_ALGORITHM);
+            alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/numPixels;
+            Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
+                               Preferences.DEBUG_ALGORITHM);
         } // for (numAxis = 0; numAxis <= 1; numAxis++)
         asymmetryIndex = Math.min(asymmetryIndexArray[0], asymmetryIndexArray[1]);
         return asymmetryIndex;
