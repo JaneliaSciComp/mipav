@@ -1987,6 +1987,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
+     * Converts a magnetic field strength number to the format used by BRICS (for example 3.0T or 1.5T).
+     * @param magField A magnetic field strength number string.
+     * @return The magnetic field strength with T appended, and .0 if it was an integer value originally.
+     */
+    private static final String convertMagFieldStrengthToBRICS(String magField) {
+    	if (magField.contains(".")) {
+    		return magField + "T";
+    	} else {
+    		return magField + ".0T";
+    	}
+    }
+    
+    /**
      * Multi-line tooltip creation helper method.
      *
      * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
@@ -2539,7 +2552,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
-            // TODO: hardcoded structure handling
         	if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")) {
         		// TODO: handle the record column when we add support for repeating groups in a form record
         		
@@ -3452,10 +3464,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     headerList.add(repetitionTime);
                                 }
                             } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanStrgthVal")) {
-                                if ( !csvParams[i].trim().equals(magnaticFieldStrength)) {
+                                if ( !csvParams[i].trim().equals(convertMagFieldStrengthToBRICS(magnaticFieldStrength))) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
-                                    headerList.add(magnaticFieldStrength);
+                                    headerList.add(convertMagFieldStrengthToBRICS(magnaticFieldStrength));
                                 }
                             } else if (csvFieldNames[i].equalsIgnoreCase("ImgFlipAngleMeasr")) {
                                 if ( !(Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(flipAngle)))) {
@@ -3836,7 +3848,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             final JComboBox jc = (JComboBox) comp;
                             for (int k = 0; k < jc.getItemCount(); k++) {
                                 final String item = (String) jc.getItemAt(k);
-                                if (item.contains(magnaticFieldStrength)) {
+                                if (item.contains(convertMagFieldStrengthToBRICS(magnaticFieldStrength))) {
                                     jc.setSelectedIndex(k);
                                 }
                             }
