@@ -1026,6 +1026,9 @@ public class FileVOI extends FileXML {
         				}
         				fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
         				file = new File(fileDir + fileName);
+        				String voiName = fileName.substring(0, fileName.indexOf(".xml"));
+        				voi.setName(voiName);
+        	        	voi.update();
         			} else {
         				return;
         			}
