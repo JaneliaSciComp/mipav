@@ -812,52 +812,55 @@ public class JDialogVOIStats extends JDialogBase
      * @param  event  Event that triggered function.
      */
     public void focusLost(FocusEvent event) {
-    	Object source = event.getSource();
     	
-    	if (source == seedValueTF) {
-	        String tmpStr = seedValueTF.getText();
+    	if (voi != null) {
+	    	Object source = event.getSource();
+	    	
+	    	if (source == seedValueTF) {
+		        String tmpStr = seedValueTF.getText();
+		
+		        if (testParameter(tmpStr, 0, 32000)) {
+		            seedValue = Short.valueOf(tmpStr).shortValue();
+		            voi.setWatershedID(seedValue);
+		        }
+	        } else if (source == VOIName) {
+	        	if (VOIName.getText() != null){
+		        	voi.setName(VOIName.getText());
+		        	voi.update();
+		        	updateVOIPanel(voi, image);
+	        	}
+	        } else if (source == VOIThicknessField) {
+	        	boolean changedThickness = false;
+	            int thickChange = 1;
 	
-	        if (testParameter(tmpStr, 0, 32000)) {
-	            seedValue = Short.valueOf(tmpStr).shortValue();
-	            voi.setWatershedID(seedValue);
+	            try {
+	                int thickness = voi.getThickness();
+	                thickChange = Integer.parseInt(VOIThicknessField.getText());
+	
+	                if (((thickChange < 0) || (thickChange > 20))) {
+	                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
+	                } else if (thickness != thickChange) {
+	                    changedThickness = true;
+	                }
+	            } catch (Exception e) {
+	                VOIThicknessField.setText("1");
+	            }
+	
+	            if (changedThickness) {
+	                voi.setThickness(thickChange);
+	                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+	                voi.update();
+	            	updateVOIPanel(voi, image);
+	            }
+	        } else if (source == UIDfield) {
+	        	try { 
+	                int uid = Integer.valueOf(UIDfield.getText()).intValue();
+	                voi.setUID(uid);
+	            } catch(NumberFormatException e) {
+	                MipavUtil.displayError("UID must be an integer");
+	            }
 	        }
-        } else if (source == VOIName) {
-        	if (VOIName.getText() != null){
-	        	voi.setName(VOIName.getText());
-	        	voi.update();
-	        	updateVOIPanel(voi, image);
-        	}
-        } else if (source == VOIThicknessField) {
-        	boolean changedThickness = false;
-            int thickChange = 1;
-
-            try {
-                int thickness = voi.getThickness();
-                thickChange = Integer.parseInt(VOIThicknessField.getText());
-
-                if (((thickChange < 0) || (thickChange > 20))) {
-                    MipavUtil.displayWarning("VOI thickness must be greater than 0 and less than 20");
-                } else if (thickness != thickChange) {
-                    changedThickness = true;
-                }
-            } catch (Exception e) {
-                VOIThicknessField.setText("1");
-            }
-
-            if (changedThickness) {
-                voi.setThickness(thickChange);
-                Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
-                voi.update();
-            	updateVOIPanel(voi, image);
-            }
-        } else if (source == UIDfield) {
-        	try { 
-                int uid = Integer.valueOf(UIDfield.getText()).intValue();
-                voi.setUID(uid);
-            } catch(NumberFormatException e) {
-                MipavUtil.displayError("UID must be an integer");
-            }
-        }
+    	}
     }
 
     // *******************************************************************
