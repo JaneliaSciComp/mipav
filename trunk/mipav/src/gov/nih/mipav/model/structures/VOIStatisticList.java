@@ -155,6 +155,8 @@ public interface VOIStatisticList {
     String numberOfIndentationsCurvatureDescription = "Number of Indentations Curvature";
     
     String numberOfIndentationsHullDescription = "Number of Indentations Hull";
+    
+    String asymmetryIndexDescription = "Asymmetry Index";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -167,7 +169,8 @@ public interface VOIStatisticList {
         geometricCenterDescription, massCenterDescription, axisDescription, eccentricityDescription, majorAxisDescription,
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
         largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
-        meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription
+        meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription,
+        asymmetryIndexDescription
     };
 
     /** number of statistics in the list. */
