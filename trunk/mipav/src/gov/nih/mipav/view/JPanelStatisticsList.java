@@ -151,12 +151,14 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(meanNegativeCurvatureDescription, false);
             setEnabledList(numberOfIndentationsHullDescription, false);
             setEnabledList(numberOfIndentationsCurvatureDescription, false);
+            setEnabledList(asymmetryIndexDescription, false);
         }
         
         if (!byContour) {
             setEnabledList(meanCurvatureDescription, false);
             setEnabledList(stdDevCurvatureDescription, false);
             setEnabledList(meanNegativeCurvatureDescription, false);
+            setEnabledList(asymmetryIndexDescription, false);
         }
     }
 
