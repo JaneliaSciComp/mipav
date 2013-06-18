@@ -3398,7 +3398,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 headerList.add(fieldOfView);
                             }
                         } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanManufName") && !manufacturer.equals("")) {
-                            if ( !csvParams[i].trim().equals(manufacturer)) {
+                            if ( !manufacturer.contains(csvParams[i].trim())) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(manufacturer);
