@@ -4761,8 +4761,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @author pandyan
      * 
      */
-    public class WebServiceThread extends Thread {
+    public class WebServiceThread extends Thread implements ActionListener {
 
+    	JButton progressCancelButton;
         PlugInDialogFITBIR dial;
 
         WebServiceThread(final PlugInDialogFITBIR dial) {
@@ -4777,6 +4778,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
+                progressCancelButton = progressBar.getCancelButton();
+                progressCancelButton.addActionListener(this);
                 
                 // try to read the server config from disk, if it is there.  otherwise the value set above at initialization is used.
                 readConfig();
@@ -4801,8 +4804,21 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     progressBar.dispose();
                     MipavUtil.displayError("Error in connecting to web service");
                     dial.dispose();
+                    if (JDialogStandalonePlugin.isExitRequired())
+            			System.exit(0);
                 }
             }
         }
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+
+			if (e.getSource() == progressCancelButton){
+				dispose();
+        		if (JDialogStandalonePlugin.isExitRequired())
+        			System.exit(0);
+			}
+			
+		}
     }
 }

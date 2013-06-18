@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.util.MipavMath;
 
 import java.awt.*;
@@ -264,7 +265,7 @@ public class ViewJProgressBar extends JFrame
     public void actionPerformed(ActionEvent e) {
 
         if (e.getSource() == cancelButton) {
-            dispose();
+        	dispose();    	
         }
     }
 
@@ -288,6 +289,15 @@ public class ViewJProgressBar extends JFrame
     public void appendMessage(String msg) {
         String text = messagePBar.getText();
         messagePBar.setText(text + msg);
+    }
+    
+    /**
+     * Get the cancel button
+     * 
+     * @return canelButton cancel button
+     */
+    public JButton getCancelButton(){
+    	return cancelButton;
     }
 
     /**
