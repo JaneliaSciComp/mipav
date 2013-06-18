@@ -432,7 +432,18 @@ public class VOIContour extends VOIBase {
         double asymmetryIndexArray[] = new double[2];
         double alternateAsymmetry;
         double asymmetryIndex;
+        double largestXAboveCentroid;
+        double smallestXBelowCentroid;
+        double largestYAboveCentroid;
+        double smallestYBelowCentroid;
+        boolean isGroup1[];
+        //boolean snear[] = new boolean[1];
+        //int p1[] = new int[1];
+        //int p2[] = new int[1];
+        //int x;
+        //int y;
         n = size();
+        isGroup1 = new boolean[n];
         kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
         {
@@ -444,10 +455,26 @@ public class VOIContour extends VOIBase {
             Iy += kPos.X*kPos.X;
             Pxy += kPos.X*kPos.Y;
         }
+        /*for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pinpol(x, y, snear, p1, p2) >= 0.0) {
+                    numPixels++;
+                    Mx += x;
+                    My += y;
+                    Ix += y*y;
+                    Iy += x*x;
+                    Pxy += x*y;    
+                }
+            }
+        }*/
         xCentroid = Mx/numPixels;
         yCentroid = My/numPixels;
         theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy);
         for (numAxis = 0; numAxis <= 1; numAxis++) {
+            largestXAboveCentroid = xCentroid;
+            smallestXBelowCentroid = xCentroid;
+            largestYAboveCentroid = yCentroid;
+            smallestYBelowCentroid = yCentroid;
             if (numAxis == 1) {
                 if (theta >= 0.0) {
                     theta = theta - Math.PI/2.0;
@@ -467,7 +494,10 @@ public class VOIContour extends VOIBase {
                 validSlope = false;
             }
             offset = yCentroid - xCentroid*slope;
-            // Find 2 intersection points of principal axis with contour
+            Preferences.debug("On numAxis = " + numAxis + " slope = " + slope + " offset = " + offset + "\n",
+                               Preferences.DEBUG_ALGORITHM);
+            // Find 2 farthest intersection points of principal axis with contour
+            // Note that axis could intersect contour many times
             numIntersectFound = 0;
             vertexUsed[0] = -1;
             vertexUsed[1] = -1;
@@ -492,6 +522,17 @@ public class VOIContour extends VOIBase {
                 if ((validSlope && (elementAt(i).Y == (float)(slope * elementAt(i).X + offset))) ||
                     (!validSlope && (elementAt(i).X == (float)xCentroid))) {
                     if (validSlope) {
+                        if (elementAt(i).X > largestXAboveCentroid) {
+                            largestXAboveCentroid = elementAt(i).X;
+                            numIntersectFound = 0;
+                        }
+                        else if (elementAt(i).X < smallestXBelowCentroid) {
+                            numIntersectFound = 1;
+                            smallestXBelowCentroid = elementAt(i).X;
+                        }
+                        else {
+                            continue;
+                        }
                         if (elementAt(j).Y >= slope * elementAt(j).X + offset) {
                             endPoint1[numIntersectFound] = j;
                             endPoint2[numIntersectFound] = k;
@@ -502,6 +543,17 @@ public class VOIContour extends VOIBase {
                         }    
                     } // if (validSlope)
                     else { // !validSlope
+                        if (elementAt(i).Y > largestYAboveCentroid) {
+                            numIntersectFound = 0;
+                            largestYAboveCentroid = elementAt(i).Y;
+                        }
+                        else if (elementAt(i).Y < smallestYBelowCentroid) {
+                            numIntersectFound = 1;
+                            smallestYBelowCentroid = elementAt(i).Y;
+                        }
+                        else {
+                            continue;
+                        }
                         if (elementAt(j).X <= xCentroid) {
                             endPoint1[numIntersectFound] = j;
                             endPoint2[numIntersectFound] = k;
@@ -524,108 +576,54 @@ public class VOIContour extends VOIBase {
                             indicesFromEndPoint10Increasing = false;
                         }
                     }
-                    vertexUsed[numIntersectFound++] = i;
-                    if (numIntersectFound == 2) {
-                        break;
-                    }
+                    vertexUsed[numIntersectFound] = i;
                 }
-            }
-            // Find the remaining intersections on the sides
-            if (numIntersectFound < 2) {
-                for (i = 0; i < n; i++) {
-                   if (i < n-1) {
-                       j = i+1;
-                   }
-                   else {
-                       j = 0;
-                   }
-                   segmentSlope= (elementAt(j).Y - elementAt(i).Y)/(elementAt(j).X - elementAt(i).X);
-                   validSegmentSlope = true;
-                   segmentOffset = elementAt(i).Y - elementAt(i).X * segmentSlope;
-                   if ((Double.isInfinite(segmentSlope)) || Double.isNaN(segmentSlope)) {
-                       validSegmentSlope = false;
-                   }
-                   if (validSlope && validSegmentSlope) {
-                       if (slope == segmentSlope) {
-                           // Either parallel and no intersection or
-                           // intersect all along segment
-                           if (offset != segmentOffset) {
-                               // Parallel and no intersection
-                           }
-                           else {
-                               // Intersect all along segment
-                               // Should have previously found vertex as an intersection point
-                           }
-                       } // if (slope == segmentSlope)
+            } // for (i = 0; i < n; i++)
+            
+            // Look for intersections on the sides
+            for (i = 0; i < n; i++) {
+               if (i < n-1) {
+                   j = i+1;
+               }
+               else {
+                   j = 0;
+               }
+               segmentSlope= (elementAt(j).Y - elementAt(i).Y)/(elementAt(j).X - elementAt(i).X);
+               validSegmentSlope = true;
+               segmentOffset = elementAt(i).Y - elementAt(i).X * segmentSlope;
+               if ((Double.isInfinite(segmentSlope)) || Double.isNaN(segmentSlope)) {
+                   validSegmentSlope = false;
+               }
+               if (validSlope && validSegmentSlope) {
+                   if (slope == segmentSlope) {
+                       // Either parallel and no intersection or
+                       // intersect all along segment
+                       if (offset != segmentOffset) {
+                           // Parallel and no intersection
+                       }
                        else {
-                           xInter = (segmentOffset - offset)/(slope - segmentSlope);
-                           yInter = (slope * xInter + offset);
-                           if ((xInter <= Math.max(elementAt(i).X, elementAt(j).X)) &&
-                               (xInter >= Math.min(elementAt(i).X, elementAt(j).X)) &&
-                               (yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
-                               (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
-                               if (elementAt(i).Y >= slope * elementAt(i).X + offset) {
-                                   endPoint1[numIntersectFound] = i;
-                                   endPoint2[numIntersectFound] = j;
-                               }
-                               else {
-                                   endPoint2[numIntersectFound] = i;
-                                   endPoint1[numIntersectFound] = j;
-                               }
-                               if (numIntersectFound == 0) {
-                                   if ((endPoint2[0] == n-1) && (endPoint1[0] == 0)) {
-                                       indicesFromEndPoint10Increasing = true;    
-                                   }
-                                   else if (endPoint1[0] == endPoint2[0] + 1) {
-                                       indicesFromEndPoint10Increasing = true;
-                                   }
-                                   else {
-                                       indicesFromEndPoint10Increasing = false;
-                                   }
-                               } // if (numIntersectFound == 0)
-                               intersectX[numIntersectFound] = (float)xInter;
-                               intersectY[numIntersectFound++] = (float)yInter;
-                               if (numIntersectFound == 2) {
-                                   break;
-                               }
-                           }
+                           // Intersect all along segment
+                           // Should have previously found vertex as an intersection point
                        }
-                       
-                   } // if (validSlope && validSegmentSlope)
-                   else if ((!validSlope) && validSegmentSlope) {
-                       if ((xCentroid <= Math.max(elementAt(i).X, elementAt(j).X)) &&
-                           (xCentroid >= Math.min(elementAt(i).X, elementAt(j).X))) {
-                           yInter = xCentroid * segmentSlope + segmentOffset;
-                           if (elementAt(i).X <= xCentroid) {
-                               endPoint1[numIntersectFound] = i;
-                               endPoint2[numIntersectFound] = j;
+                   } // if (slope == segmentSlope)
+                   else {
+                       xInter = (segmentOffset - offset)/(slope - segmentSlope);
+                       yInter = (slope * xInter + offset);
+                       if ((xInter <= Math.max(elementAt(i).X, elementAt(j).X)) &&
+                           (xInter >= Math.min(elementAt(i).X, elementAt(j).X)) &&
+                           (yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
+                           (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
+                           if (xInter > largestXAboveCentroid) {
+                               numIntersectFound = 0;
+                               largestXAboveCentroid = xInter;
+                           }
+                           else if (xInter < smallestXBelowCentroid) {
+                               numIntersectFound = 1;
+                               smallestXBelowCentroid = xInter;
                            }
                            else {
-                               endPoint2[numIntersectFound] = i;
-                               endPoint1[numIntersectFound] = j;
+                               continue;
                            }
-                           if (numIntersectFound == 0) {
-                               if ((endPoint2[0] == n-1) && (endPoint1[0] == 0)) {
-                                   indicesFromEndPoint10Increasing = true;    
-                               }
-                               else if (endPoint1[0] == endPoint2[0] + 1) {
-                                   indicesFromEndPoint10Increasing = true;
-                               }
-                               else {
-                                   indicesFromEndPoint10Increasing = false;
-                               }
-                           } // if (numIntersectFound == 0)
-                           intersectX[numIntersectFound] = (float)xCentroid;
-                           intersectY[numIntersectFound++] = (float)yInter;
-                           if (numIntersectFound == 2) {
-                               break;
-                           }
-                       }
-                   } // else if ((!validSlope) && validSegmentSlope)
-                   else if (validSlope && (!validSegmentSlope)) {
-                       yInter = slope * elementAt(i).X + offset;
-                       if ((yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
-                           (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
                            if (elementAt(i).Y >= slope * elementAt(i).X + offset) {
                                endPoint1[numIntersectFound] = i;
                                endPoint2[numIntersectFound] = j;
@@ -645,16 +643,93 @@ public class VOIContour extends VOIBase {
                                    indicesFromEndPoint10Increasing = false;
                                }
                            } // if (numIntersectFound == 0)
-                           intersectX[numIntersectFound] = elementAt(i).X;
-                           intersectY[numIntersectFound++] = (float)yInter;
-                           if (numIntersectFound == 2) {
-                               break;
-                           }
+                           intersectX[numIntersectFound] = (float)xInter;
+                           intersectY[numIntersectFound] = (float)yInter;
+                           vertexUsed[numIntersectFound] = -1;
                        }
-                   } // else if (validSlope && (!validSegmentSlope))
-                } // for (i = 0; i < n; i++)
-            } // if (numIntersectFound < 2)
-            
+                   }
+                   
+               } // if (validSlope && validSegmentSlope)
+               else if ((!validSlope) && validSegmentSlope) {
+                   if ((xCentroid <= Math.max(elementAt(i).X, elementAt(j).X)) &&
+                       (xCentroid >= Math.min(elementAt(i).X, elementAt(j).X))) {
+                       yInter = xCentroid * segmentSlope + segmentOffset;
+                       if (yInter > largestYAboveCentroid) {
+                           numIntersectFound = 0;
+                           largestYAboveCentroid = yInter;
+                       }
+                       else if (yInter < smallestYBelowCentroid) {
+                           numIntersectFound = 1;
+                           smallestYBelowCentroid = yInter;
+                       }
+                       else {
+                           continue;
+                       }
+                       if (elementAt(i).X <= xCentroid) {
+                           endPoint1[numIntersectFound] = i;
+                           endPoint2[numIntersectFound] = j;
+                       }
+                       else {
+                           endPoint2[numIntersectFound] = i;
+                           endPoint1[numIntersectFound] = j;
+                       }
+                       if (numIntersectFound == 0) {
+                           if ((endPoint2[0] == n-1) && (endPoint1[0] == 0)) {
+                               indicesFromEndPoint10Increasing = true;    
+                           }
+                           else if (endPoint1[0] == endPoint2[0] + 1) {
+                               indicesFromEndPoint10Increasing = true;
+                           }
+                           else {
+                               indicesFromEndPoint10Increasing = false;
+                           }
+                       } // if (numIntersectFound == 0)
+                       intersectX[numIntersectFound] = (float)xCentroid;
+                       intersectY[numIntersectFound] = (float)yInter;
+                       vertexUsed[numIntersectFound] = -1;
+                   }
+               } // else if ((!validSlope) && validSegmentSlope)
+               else if (validSlope && (!validSegmentSlope)) {
+                   yInter = slope * elementAt(i).X + offset;
+                   if ((yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
+                       (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
+                       if (elementAt(i).X > largestXAboveCentroid) {
+                           largestXAboveCentroid = elementAt(i).X;
+                           numIntersectFound = 0;
+                       }
+                       else if (elementAt(i).X < smallestXBelowCentroid) {
+                           numIntersectFound = 1;
+                           smallestXBelowCentroid = elementAt(i).X;
+                       }
+                       else {
+                           continue;
+                       }
+                       if (elementAt(i).Y >= slope * elementAt(i).X + offset) {
+                           endPoint1[numIntersectFound] = i;
+                           endPoint2[numIntersectFound] = j;
+                       }
+                       else {
+                           endPoint2[numIntersectFound] = i;
+                           endPoint1[numIntersectFound] = j;
+                       }
+                       if (numIntersectFound == 0) {
+                           if ((endPoint2[0] == n-1) && (endPoint1[0] == 0)) {
+                               indicesFromEndPoint10Increasing = true;    
+                           }
+                           else if (endPoint1[0] == endPoint2[0] + 1) {
+                               indicesFromEndPoint10Increasing = true;
+                           }
+                           else {
+                               indicesFromEndPoint10Increasing = false;
+                           }
+                       } // if (numIntersectFound == 0)
+                       intersectX[numIntersectFound] = elementAt(i).X;
+                       intersectY[numIntersectFound] = (float)yInter;
+                       vertexUsed[numIntersectFound] = -1;
+                   }
+               } // else if (validSlope && (!validSegmentSlope))
+            } // for (i = 0; i < n; i++)
+        
             // 2 points at end of axis belong to both groups
             group1Num = 2;
             group2Num = 2;
@@ -662,17 +737,21 @@ public class VOIContour extends VOIBase {
                 if ((i != vertexUsed[0]) && (i != vertexUsed[1])) {
                     if (validSlope) {
                         if (elementAt(i).Y >= slope * elementAt(i).X + offset) {
+                            isGroup1[i] = true;
                             group1Num++;
                         }
                         else {
+                            isGroup1[i] = false;
                             group2Num++;
                         }
                     } // if (validSlope)
                     else { // !validSlope
                         if (elementAt(i).X <= xCentroid) {
+                            isGroup1[i] = true;
                             group1Num++;
                         }
                         else {
+                            isGroup1[i] = false;
                             group2Num++;
                         }
                     }
@@ -686,70 +765,101 @@ public class VOIContour extends VOIBase {
             if (indicesFromEndPoint10Increasing) {
                 if (endPoint1[1] < endPoint1[0]) {
                     i = 1;
-                    for (index1 = endPoint1[0]; index1 <= n-1; index1++, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));   
+                    for (index1 = endPoint1[0]; index1 <= n-1; index1++) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));  
+                        }
                     }
-                    for (index1 = 0; index1 <= endPoint1[1]; index1++, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                    for (index1 = 0; index1 <= endPoint1[1]; index1++) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                        }
                     }
                 } // if (endPoint1[1] < endPoint1[0])
                 else { // endPoint1[1] > endPoint1[0]
-                    for (index1 = endPoint1[0], i = 1; index1 <= endPoint1[1]; index1++, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                    for (index1 = endPoint1[0], i = 1; index1 <= endPoint1[1]; index1++) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                        }
                     }    
                 } // endPoint1[1] > endPoint1[0]
             } // if (indicesFromEndPoint10Increasing)
             else { // indices from end point10 decreasing
                 if (endPoint1[1] > endPoint1[0]) {
                     i = 1;
-                    for (index1 = endPoint1[0]; index1 >= 0; index1--, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));       
+                    for (index1 = endPoint1[0]; index1 >= 0; index1--) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                        }
                     }
-                    for (index1 = n-1; index1 >= endPoint1[1]; index1--, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));   
+                    for (index1 = n-1; index1 >= endPoint1[1]; index1--) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                        }
                     }
                 } // if (endPoint1[1] > endPoint1[0)
                 else { // endPoint1[1] < endPoint1[0]
-                    for (index1 = endPoint1[0], i = 1; index1 >= endPoint1[1]; index1--, i++) {
-                        group1.add(i,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                    for (index1 = endPoint1[0], i = 1; index1 >= endPoint1[1]; index1--) {
+                        if (isGroup1[index1]) {
+                            group1.add(i++,new Vector3f(elementAt(index1).X, elementAt(index1).Y, 0.0f));
+                        }
                     }       
                 } // else endPoint1[1] < endPoint1[0]
             } // else indices from end point 10 decreasing
+            if (i != group1Num-1) {
+                return Double.NaN;
+            }
             indicesFromEndPoint20Increasing = !indicesFromEndPoint10Increasing;
             if (indicesFromEndPoint20Increasing) {
                 if (endPoint2[1] < endPoint2[0]) {
                     i = 1;
-                    for (index2 = endPoint2[0]; index2 <= n-1; index2++, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));   
+                    for (index2 = endPoint2[0]; index2 <= n-1; index2++) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f)); 
+                        }
                     }
-                    for (index2 = 0; index2 <= endPoint2[1]; index2++, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                    for (index2 = 0; index2 <= endPoint2[1]; index2++) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                        }
                     }
                 } // if (endPoint2[1] < endPoint2[0])
                 else { // endPoint2[1] > endPoint2[0]
-                    for (index2 = endPoint2[0], i = 1; index2 <= endPoint2[1]; index2++, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                    for (index2 = endPoint2[0], i = 1; index2 <= endPoint2[1]; index2++) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                        }
                     }    
                 } // endPoint2[1] > endPoint2[0]
             } // if (indicesFromEndPoint20Increasing)
             else { // indices from endPoint20 decreasing
                 if (endPoint2[1] > endPoint2[0]) {
                     i = 1;
-                    for (index2 = endPoint2[0]; index2 >= 0; index2--, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));       
+                    for (index2 = endPoint2[0]; index2 >= 0; index2--) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f)); 
+                        }
                     }
-                    for (index2 = n-1; index2 >= endPoint2[1]; index2--, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));   
+                    for (index2 = n-1; index2 >= endPoint2[1]; index2--) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f)); 
+                        }
                     }
                 } // if (endPoint2[1] > endPoint2[0])
                 else { // endPoint2[1] < endPoint2[0]
-                    for (index2 = endPoint2[0], i = 1; index2 >= endPoint2[1]; index2--, i++) {
-                        group2.add(i,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                    for (index2 = endPoint2[0], i = 1; index2 >= endPoint2[1]; index2--) {
+                        if (!isGroup1[index2]) {
+                            group2.add(i++,new Vector3f(elementAt(index2).X, elementAt(index2).Y, 0.0f));
+                        }
                     }       
                 } // else endPoint2[1] < endPoint2[0]
             } // else indices from endPoint20 decreasing
+            if (i != group2Num-1) {
+                return Double.NaN;
+            }
             group1.add(group1Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
             group2.add(group2Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
+            
             // For Valid slope
             // x0' = (-slope*slope*x0 + x0 + 2*slope*y0 - 2*slope*offset)/(slope*slope + 1)
             // y0' = (slope*slope*y0 - y0 + 2*slope*x0 + 2*offset)/(slope*slope + 1)
