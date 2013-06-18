@@ -121,6 +121,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public double solidity;
             public int numberOfIndentationsCurvature;
             public int numberOfIndentationsHull;
+            public double asymmetryIndex;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -1159,6 +1160,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + end, nf.format(stats.largestContourDistance));
             }
+            
+            if (statsList[ indexOf(asymmetryIndexDescription)]) {
+                stats.asymmetryIndex = ((VOIContour)contour).calcAsymmetryIndex(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.asymmetryIndexDescription + end, nf.format(stats.asymmetryIndex));
+            }
+            
             return stats;
         }
         
@@ -1473,6 +1480,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 statProperty.setProperty(VOIStatisticList.largestSliceDistanceDescription + end, nf.format(stats.largestContourDistance));
             }
+            
+            if (statsList[ indexOf(asymmetryIndexDescription)]) {
+                stats.asymmetryIndex = ((VOIContour)contour).calcAsymmetryIndex(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.asymmetryIndexDescription + end, nf.format(stats.asymmetryIndex));
+            }
+            
             return stats;
         }
         /**
@@ -3577,6 +3590,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      */
     public String getMeanNegativeCurvature() {
         return propertyList.firstElement().getProperty(VOIStatisticList.meanNegativeCurvatureDescription);    
+    }
+    
+    public String getAsymmetryIndex() {
+        return propertyList.firstElement().getProperty(VOIStatisticList.asymmetryIndexDescription);    
     }
 
     /**
