@@ -400,7 +400,7 @@ public class VOIContour extends VOIBase {
 	    double segmentOffset;
 	    double xInter;
 	    double yInter;
-        Vector<Vector3f> kMaskPositions;
+        //Vector<Vector3f> kMaskPositions;
         int group1Num;
         int group2Num;
         Vector<Vector3f> group1;
@@ -425,10 +425,10 @@ public class VOIContour extends VOIBase {
         float mirrorY;
         double slopeSquared;
         double denom;
-        int m1AndM2Mirror;
+        //int m1AndM2Mirror;
         int m1Only;
         int m2MirrorOnly;
-        int m2AndM1Mirror;
+        //int m2AndM1Mirror;
         int m2Only;
         int m1MirrorOnly;
         double asymmetryIndexArray[] = new double[2];
@@ -439,10 +439,30 @@ public class VOIContour extends VOIBase {
         double largestYAboveCentroid;
         double smallestYBelowCentroid;
         boolean isGroup1[];
+        double epsilon = 1.0e-12;
+        boolean snear[] = new boolean[1];
+        int i1[] = new int[1];
+        int i2[] = new int[2];
+        int x;
+        int y;
         
         n = size();
         isGroup1 = new boolean[n];
-        kMaskPositions = getAllContourPoints();
+        
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
+                    numPixels++;
+                    Mx += x;
+                    My += y;
+                    Ix += y*y;
+                    Iy += x*x;
+                    Pxy += x*y;
+                }
+            }
+        }
+        
+        /*kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
@@ -452,11 +472,19 @@ public class VOIContour extends VOIBase {
             Ix += kPos.Y*kPos.Y;
             Iy += kPos.X*kPos.X;
             Pxy += kPos.X*kPos.Y;
-        }
+        }*/
        
         xCentroid = Mx/numPixels;
         yCentroid = My/numPixels;
-        theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy);
+        Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
+        // One rectangle had asymmetry index = 3.6478 with PI/4.0 and 
+        // asymmetry index = 38.9103 without PI/4.0
+        // Also need PI/4.0 for ellipses with long major axis along x axis and small minor axis along y axis
+        // Switching getAllContourPoints() to pinpol reduced rectsym.xml from 3.6478 to 3.4618
+        // pinpol includes right and lower contour points not included by getAllContourPoints.
+        // asyme.xml was 5.8524 with pinpol and 70.7059 with getAllContourPoints
+        theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy) + Math.PI/4.0;
         for (numAxis = 0; numAxis <= 1; numAxis++) {
             largestXAboveCentroid = xCentroid;
             smallestXBelowCentroid = xCentroid;
@@ -492,6 +520,10 @@ public class VOIContour extends VOIBase {
             endPoint1[1] = -1;
             endPoint2[0] = -1;
             endPoint2[1] = -1;
+            intersectX[0] = -1;
+            intersectX[1] = -1;
+            intersectY[0] = -1;
+            intersectY[1] = -1;
             // See if any of the vertices are intersection points
             for (i = 0; i < n; i++) {
                 if (i < n-1) {
@@ -596,10 +628,10 @@ public class VOIContour extends VOIBase {
                    else {
                        xInter = (segmentOffset - offset)/(slope - segmentSlope);
                        yInter = (slope * xInter + offset);
-                       if ((xInter <= Math.max(elementAt(i).X, elementAt(j).X)) &&
-                           (xInter >= Math.min(elementAt(i).X, elementAt(j).X)) &&
-                           (yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
-                           (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
+                       if ((xInter <= Math.max(elementAt(i).X, elementAt(j).X) + epsilon) &&
+                           (xInter >= Math.min(elementAt(i).X, elementAt(j).X) - epsilon) &&
+                           (yInter <= Math.max(elementAt(i).Y, elementAt(j).Y) + epsilon) &&
+                           (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y) - epsilon)) {
                            if (xInter > largestXAboveCentroid) {
                                numIntersectFound = 0;
                                largestXAboveCentroid = xInter;
@@ -638,8 +670,8 @@ public class VOIContour extends VOIBase {
                    
                } // if (validSlope && validSegmentSlope)
                else if ((!validSlope) && validSegmentSlope) {
-                   if ((xCentroid <= Math.max(elementAt(i).X, elementAt(j).X)) &&
-                       (xCentroid >= Math.min(elementAt(i).X, elementAt(j).X))) {
+                   if ((xCentroid <= Math.max(elementAt(i).X, elementAt(j).X) + epsilon) &&
+                       (xCentroid >= Math.min(elementAt(i).X, elementAt(j).X) - epsilon)) {
                        yInter = xCentroid * segmentSlope + segmentOffset;
                        if (yInter > largestYAboveCentroid) {
                            numIntersectFound = 0;
@@ -678,8 +710,8 @@ public class VOIContour extends VOIBase {
                } // else if ((!validSlope) && validSegmentSlope)
                else if (validSlope && (!validSegmentSlope)) {
                    yInter = slope * elementAt(i).X + offset;
-                   if ((yInter <= Math.max(elementAt(i).Y, elementAt(j).Y)) &&
-                       (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y))) {
+                   if ((yInter <= Math.max(elementAt(i).Y, elementAt(j).Y) + epsilon) &&
+                       (yInter >= Math.min(elementAt(i).Y, elementAt(j).Y) - epsilon)) {
                        if (elementAt(i).X > largestXAboveCentroid) {
                            largestXAboveCentroid = elementAt(i).X;
                            numIntersectFound = 0;
@@ -716,7 +748,45 @@ public class VOIContour extends VOIBase {
                    }
                } // else if (validSlope && (!validSegmentSlope))
             } // for (i = 0; i < n; i++)
-        
+            
+            Preferences.debug("For numAxis = " + numAxis + " intersectX[0] = " + intersectX[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("For numAxis = " + numAxis + " intersectY[0] = " + intersectY[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            if (endPoint1[0] >= 0) {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[0].X = " + elementAt(endPoint1[0]).X + "\n",
+                        Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[0].Y = " + elementAt(endPoint1[0]).Y + "\n",
+                        Preferences.DEBUG_ALGORITHM);
+	        }
+            else {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[0] = " + endPoint1[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+            if (endPoint2[0] > 0) {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[0].X = " + elementAt(endPoint2[0]).X + "\n",
+                        Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[0].Y = " + elementAt(endPoint2[0]).Y + "\n",
+                        Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[0] = " + endPoint2[0] + "\n", Preferences.DEBUG_ALGORITHM);        
+            }
+            Preferences.debug("For numAxis = " + numAxis + " intersectX[1] = " + intersectX[1] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("For numAxis = " + numAxis + " intersectY[1] = " + intersectY[1] + "\n", Preferences.DEBUG_ALGORITHM);
+            if (endPoint1[1] >= 0) {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[1].X = " + elementAt(endPoint1[1]).X + "\n",
+                    Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[1].Y = " + elementAt(endPoint1[1]).Y + "\n",
+                    Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint1[1] = " + endPoint1[1] + "\n", Preferences.DEBUG_ALGORITHM);    
+            }
+            if (endPoint2[1] >= 0) {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[1].X = " + elementAt(endPoint2[1]).X + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[1].Y = " + elementAt(endPoint2[1]).Y + "\n", Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                Preferences.debug("For numAxis = " + numAxis + " endPoint2[1] = " + endPoint2[1] + "\n", Preferences.DEBUG_ALGORITHM);        
+            }
             // 2 points at end of axis belong to both groups
             group1Num = 2;
             group2Num = 2;
@@ -896,15 +966,15 @@ public class VOIContour extends VOIBase {
             contour2Mirror = new VOIContour(fixed, closed, group2Mirror);
             mask2Mirror = new BitSet(sliceSize);
             contour2Mirror.setMask(mask2Mirror, xDim, yDim, false, VOI.ADDITIVE);
-            m1AndM2Mirror = 0;
+            //m1AndM2Mirror = 0;
             m1Only = 0;
             m2MirrorOnly = 0;
-            m2AndM1Mirror = 0;
+            //m2AndM1Mirror = 0;
             m2Only = 0;
             m1MirrorOnly = 0;
             for (i = 0; i < sliceSize; i++) {
                 if (mask1.get(i) && mask2Mirror.get(i)) {
-                    m1AndM2Mirror++;    
+                    //m1AndM2Mirror++;    
                 }
                 else if (mask1.get(i)) {
                     m1Only++;
@@ -913,7 +983,7 @@ public class VOIContour extends VOIBase {
                     m2MirrorOnly++;
                 }
                 if (mask2.get(i) && mask1Mirror.get(i)) {
-                    m2AndM1Mirror++;    
+                    //m2AndM1Mirror++;    
                 }
                 else if (mask2.get(i)) {
                     m2Only++;
