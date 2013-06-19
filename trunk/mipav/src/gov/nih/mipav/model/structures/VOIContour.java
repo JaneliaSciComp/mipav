@@ -177,7 +177,9 @@ public class VOIContour extends VOIBase {
 	    // smalld is a calling argument in the original implementation
 	    // The MIT licensed python 3 implementation sets smalld = 1.0E-12
 	    double smalld = 1.0E-12;
-	    // Need a counterclockwise contour and don't want to change the original
+	    // Original code specifies a counterclockwise contour, but I need a clockwise contour
+	    // for my signs to match his signs.
+	    // Need a clockwise contour and don't want to change the original contour
 	    VOIContour newContour;
 	    double x[];
 	    double y[];
@@ -199,7 +201,7 @@ public class VOIContour extends VOIBase {
 	    double dy;
 	    double area;
 	    newContour = new VOIContour(this);
-	    newContour.makeCounterClockwise();
+	    newContour.makeClockwise();
 	    n = newContour.size();
 	    x = new double[n+2];
 	    y = new double[n+2];
@@ -437,11 +439,7 @@ public class VOIContour extends VOIBase {
         double largestYAboveCentroid;
         double smallestYBelowCentroid;
         boolean isGroup1[];
-        //boolean snear[] = new boolean[1];
-        //int p1[] = new int[1];
-        //int p2[] = new int[1];
-        //int x;
-        //int y;
+        
         n = size();
         isGroup1 = new boolean[n];
         kMaskPositions = getAllContourPoints();
@@ -455,18 +453,7 @@ public class VOIContour extends VOIBase {
             Iy += kPos.X*kPos.X;
             Pxy += kPos.X*kPos.Y;
         }
-        /*for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
-                if (pinpol(x, y, snear, p1, p2) >= 0.0) {
-                    numPixels++;
-                    Mx += x;
-                    My += y;
-                    Ix += y*y;
-                    Iy += x*x;
-                    Pxy += x*y;    
-                }
-            }
-        }*/
+       
         xCentroid = Mx/numPixels;
         yCentroid = My/numPixels;
         theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy);
