@@ -1,5 +1,7 @@
 package gov.nih.mipav.view.input.spacenav;
 
+import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -81,11 +83,10 @@ public class SpaceNavigatorPoller {
 		return listeners;
 	}
 	
-	public static boolean isListener(Object obj) {
-		for(int i=0; i<listeners.length; i++) {
-			if(listeners[i] == obj) {
+	public static boolean HasInstanceOf(SpaceNavigatorListener temp){
+		for(int i=0; i<listeners.length; i++){
+			if(listeners[i].equals(temp))
 				return true;
-			}
 		}
 		
 		return false;
