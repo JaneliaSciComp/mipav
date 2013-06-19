@@ -635,10 +635,16 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                     newXPts[i] = interpPt.X +
                                  getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, u);
+                    if (newXPts[i] < 0.0f) {
+                        newXPts[i] = 0.0f;
+                    }
 
                     newYPts[i] = interpPt.Y +
                                  getBilinear(position, interpPt.X - (int) interpPt.X, interpPt.Y - (int) interpPt.Y,
                                              extents, v);
+                    if (newYPts[i] < 0.0f) {
+                        newYPts[i] = 0.0f;
+                    }
 
                     if ((Math.abs(newXPts[i] - interpPt.X) >= 0.02f) || (Math.abs(newYPts[i] - interpPt.Y) >= 0.02f)) {
                         finished = false;
