@@ -157,7 +157,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );      
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
@@ -1075,7 +1075,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //         {
 //			 processSpaceNavEvent(2);
 			 try {
-		    		if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.HasInstanceOf(this)) {
+		    		if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.hasInstanceOf(this)) {
 		    			SpaceNavigatorPoller.registerListener(this);
 		    		}
 			 } catch (Error er) {
