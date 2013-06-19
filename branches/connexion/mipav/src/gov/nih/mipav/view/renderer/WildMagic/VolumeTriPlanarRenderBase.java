@@ -3465,7 +3465,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	   protected void UpdateSceneRotation()
 	   {
 		   super.UpdateSceneRotation();
-		   m_kSceneToWorld.copy(m_kVolumeRayCast.GetWorld());
+		   
+		   if(!isSpaceNavCodeRunning){
+			   m_kSceneToWorld.copy(m_kVolumeRayCast.GetWorld());
+		   }
 	   }
 	   
 		void NormalKernel(  float[] a, float[] b, int width, int height, int depth, int color, int numElements) {
@@ -3567,5 +3570,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				opacityLabel.setText( new Float( opacitySlider.getValue() / 100f ).toString() );
 			}
 		}
+		
+//		public void processSpaceNavEvent(SpaceNavigatorEvent e)
+//		{
+//			super.processSpaceNavEvent(e);
+//			System.out.println("testing: processSpaceNavEvent() in VolumeTriPlanerBaseRender");
+//		}
 
 }
