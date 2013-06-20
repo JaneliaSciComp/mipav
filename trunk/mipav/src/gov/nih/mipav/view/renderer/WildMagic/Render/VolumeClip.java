@@ -267,14 +267,21 @@ public class VolumeClip extends VolumeObject
      * Set the position of the arbitrary clipping plane, before rotation.
      * @param fX the position of the arbitrary clipping plane, before rotation.
      */
-    public void SetArbPlane( float fX )
+    public Vector3f SetArbPlane( float fX )
     {
-        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 0, fX, 0, 0 ) ;
-        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 1, fX, 0, m_fMax ) ;
-        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 2, fX, m_fMax, m_fMax ) ;
-        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 3, fX, m_fMax, 0 ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 0, fX*m_fX, 0, 0 ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 1, fX*m_fX, 0, m_fZ ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 2, fX*m_fX, m_fY, m_fZ ) ;
+        m_akPolyline[CLIP_A].VBuffer.SetPosition3( 3, fX*m_fX, m_fY, 0 ) ;
         m_akPolyline[CLIP_A].Reload(true);
         m_kScene.UpdateGS();
+    	Vector3f center = new Vector3f();
+    	for ( int i = 0; i < m_akPolyline[CLIP_A].VBuffer.GetVertexQuantity(); i++ )
+    	{
+    		center.add( m_akPolyline[CLIP_A].VBuffer.GetPosition3(i) );
+    	}
+    	center.scale( 1f/(float)m_akPolyline[CLIP_A].VBuffer.GetVertexQuantity() );
+    	return center;
     }
     /**
      * Sets the axis-aligned clip plane clipping position.

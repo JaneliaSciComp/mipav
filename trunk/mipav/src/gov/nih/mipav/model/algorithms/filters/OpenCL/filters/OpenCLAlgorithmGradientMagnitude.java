@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters.OpenCL.filters;
 
 
+import static org.jocl.CL.CL_DEVICE_GLOBAL_MEM_SIZE;
 import static org.jocl.CL.CL_DEVICE_MAX_MEM_ALLOC_SIZE;
 import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
 import static org.jocl.CL.CL_TRUE;
@@ -19,6 +20,7 @@ import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.io.*;
@@ -885,16 +887,26 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 	private void gradientMagnitudeSep3D( int time )
 	{
 		initCL(m_iDeviceType, null);				
-
-		int nBuffers = 4; // 4 buffers needed for the computation.
-		int elementCount = width * height * depth * color;		
+		int nBuffers = 4;
+		int elementCount = width * height * depth * color;	
+		long memoryUsed = getMaxMemoryUsed( nBuffers, elementCount, sigmas );	
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( (Sizeof.cl_float * elementCount * nBuffers) > maxAllocSize )
+		long totalMemSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_GLOBAL_MEM_SIZE);
+		if ( (elementCount > (maxAllocSize / (Sizeof.cl_float))) || (memoryUsed >= (totalMemSize / Sizeof.cl_float)) )
 		{
-			gradientMagnitudeSep25DSlices();
-			return;
+			// Try switching to the CPU device for more memory:
+			MipavUtil.displayInfo( "Not enough GPU memory. Calling CPU version" );
+			m_iDeviceType = CL.CL_DEVICE_TYPE_CPU;
+			initCL(m_iDeviceType, null);
+			maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+			if ( elementCount > (maxAllocSize / (Sizeof.cl_float)) )
+			{
+				// Both CPU and GPU devices do not have enough memory for the algorithm:
+				MipavUtil.displayError( "Image size too big: select per-slice processing." );
+				return;
+			}
 		}
-		
+				
 		float[] input = new float[ elementCount ];
 		try {
 			if ( this.entireImage )

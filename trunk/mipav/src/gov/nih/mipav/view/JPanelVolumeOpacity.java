@@ -245,11 +245,19 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	{
 		if (panelOpacityGM_A == null) {
 
-			loadGM();
-			buildPanelGM_A();
+			if ( loadGM() )
+			{
+				buildPanelGM_A();
 
-			if (imageB != null) {
-				buildPanelGM_B();
+				if (imageB != null) {
+					buildPanelGM_B();
+				}
+			}
+			else
+			{
+				GMCheckBox.removeItemListener(this);
+				GMCheckBox.setSelected(false);
+				GMCheckBox.setEnabled(false);
 			}
 		} else {
 
@@ -1448,35 +1456,46 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	/**
 	 * Calculates histogram for the gradient magnitude imageA, B.
 	 */
-	private void loadGM()
+	private boolean loadGM()
 	{
 		if ( gradMagRescale_A == null )
 		{
 			String kImageName = ModelImage.makeImageName(imageA.getFileInfo(0).getFileName(), "");
 			String dir = imageA.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
 			ModelImage gradMag_A = VolumeImage.getGradientMagnitude( imageA, 0, dir );
-
-			/** Scale the intensity range to 1024. */
-			gradMagRescale_A = new ModelImage(imageA.getType(), imageA.getExtents(),
-					imageA.getImageName() + "_gm_rescale");
-			AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
-					gradMag_A.getMin(), gradMag_A.getMax(),
-					0, 1023, false);
-
-			changeTypeAlgo_A.setRunningInSeparateThread(false);
-			changeTypeAlgo_A.run();
-			gradMagRescale_A.calcMinMax();
-
-
-			ModelImage gradMag_B;
-			if ( imageB != null )
+			if ( gradMag_A != null )
 			{
-				if ( gradMagRescale_B == null )
-				{
-					kImageName = ModelImage.makeImageName(imageB.getFileInfo(0).getFileName(), "");
-					dir = imageB.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-					gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0, dir );
-					/** Scale the intensity range to 1024. */
+				/** Scale the intensity range to 1024. */
+				try {
+					gradMagRescale_A = new ModelImage(imageA.getType(), imageA.getExtents(),
+							imageA.getImageName() + "_gm_rescale");
+					AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
+							gradMag_A.getMin(), gradMag_A.getMax(),
+							0, 1023, false);
+
+					changeTypeAlgo_A.setRunningInSeparateThread(false);
+					changeTypeAlgo_A.run();
+					gradMagRescale_A.calcMinMax();
+				}  catch (final OutOfMemoryError error) {
+					gradMagRescale_A = null;
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		if ( (imageB != null) && (gradMagRescale_B == null) )
+		{
+			String kImageName = ModelImage.makeImageName(imageB.getFileInfo(0).getFileName(), "");
+			String dir = imageB.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+			ModelImage gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0, dir );
+			if ( gradMag_B != null )
+			{
+				/** Scale the intensity range to 1024. */
+				try {
 					gradMagRescale_B = new ModelImage(imageB.getType(), imageB.getExtents(),
 							imageB.getImageName() + "_gm_rescale");
 					AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
@@ -1486,8 +1505,16 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 					changeTypeAlgo_B.setRunningInSeparateThread(false);
 					changeTypeAlgo_B.run();
 					gradMagRescale_B.calcMinMax();
+				}  catch (final OutOfMemoryError error) {
+					gradMagRescale_B = null;
+					return false;
 				}
 			}
+			else
+			{
+				return false;
+			}
 		}
+		return true;
 	}
 }
