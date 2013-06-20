@@ -1612,29 +1612,6 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		}
 		return kernelSize;
 	}
-
-	/**
-	 * Determines the amount of memory used for the OpenCL buffers
-	 * required for the gaussian kernels for the given sigmas.
-	 * Plus the memory used for the nBuffers OpenCL buffers, each
-	 * elementCount in size.
-	 * @param nBuffers number of buffers
-	 * @param elementCount buffer size
-	 * @param sigmas
-	 * @return
-	 */
-	private long getMaxMemoryUsed( int nBuffers, int elementCount, float[] sigmas )
-	{
-		int kernelSize = 0;
-		for ( int i = 0; i < sigmas.length; i++ )
-		{
-			int halfWidth = (int)(4.0 * sigmas[i] + 0.5);
-			int size = (2 * halfWidth + 1);
-			kernelSize += size;
-		}
-		return kernelSize + nBuffers * elementCount;
-	}
-	
 	
 	/**
 	 * Creates the Convolution kernels (data arrays) in OpenCL.

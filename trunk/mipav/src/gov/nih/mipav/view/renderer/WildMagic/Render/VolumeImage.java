@@ -102,6 +102,7 @@ public class VolumeImage implements Serializable {
 
 	/** Image scale factors for display in 3D */
 	private float m_fX = 1, m_fY = 1, m_fZ = 1, m_fMax = 1;
+	private int m_iMaxExtent = 1;
 
 	/** Image name post-fix typically either 'A' or 'B' */
 	private String m_kPostfix = null;
@@ -990,6 +991,11 @@ public class VolumeImage implements Serializable {
 	public float GetScaleMax() {
 		return m_fMax;
 	}
+	
+	public int GetMaxExtent()
+	{
+		return m_iMaxExtent;
+	}
 
 	/**
 	 * The ModelImage Volume x-scale factor.
@@ -1773,15 +1779,17 @@ public class VolumeImage implements Serializable {
 			kCalcMagnitude.actionPerformed(new ActionEvent(new Object(), 0, "OK"));
 			kImageGM = kCalcMagnitude.getResultImage();
 			kCalcMagnitude = null;
+			if ( kImageGM != null )
+			{
+				kImageGM.setImageDirectory( dir );
+				kImageGM.setImageName( kImageName + ".xml" );
+				JDialogBase.updateFileInfo( kImage, kImageGM );
+				ModelImage.saveImage(kImageGM, kImageName + ".xml", dir );
 
-			kImageGM.setImageDirectory( dir );
-			kImageGM.setImageName( kImageName + ".xml" );
-			JDialogBase.updateFileInfo( kImage, kImageGM );
-			ModelImage.saveImage(kImageGM, kImageName + ".xml", dir );
-
-			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
-			if (kImageFrame != null) {
-				kImageFrame.setVisible(false);
+				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+				if (kImageFrame != null) {
+					kImageFrame.setVisible(false);
+				}
 			}
 		}
 		return kImageGM;
@@ -2164,6 +2172,12 @@ public class VolumeImage implements Serializable {
 	 * Initialize the scale factors. Based on the ModelImage Volume.
 	 */
 	private void InitScale() {
+
+		int dimX = m_kImage.getExtents().length > 0 ? m_kImage.getExtents()[0] : 1;
+		int dimY = m_kImage.getExtents().length > 1 ? m_kImage.getExtents()[1] : 1;
+		int dimZ = m_kImage.getExtents().length > 2 ? m_kImage.getExtents()[2] : 1;
+		m_iMaxExtent = Math.max( dimX, Math.max( dimY, dimZ ) );
+		
 		final float fMaxX = (m_kImage.getExtents()[0] - 1) * m_kImage.getFileInfo(0).getResolutions()[0];
 		final float fMaxY = (m_kImage.getExtents()[1] - 1) * m_kImage.getFileInfo(0).getResolutions()[1];
 		final float fMaxZ = (m_kImage.getExtents()[2] - 1) * m_kImage.getFileInfo(0).getResolutions()[2];

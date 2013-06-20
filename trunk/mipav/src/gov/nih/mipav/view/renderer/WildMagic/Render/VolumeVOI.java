@@ -60,12 +60,12 @@ public class VolumeVOI extends VolumeObject
 	public VolumeVOI ( VolumeImage kImageA, Vector3f kTranslate, VOIBase kVOI, ColorRGBA kColor )
 	{
 		super(kImageA,kTranslate, kImageA.GetScaleX(),kImageA.GetScaleY(),kImageA.GetScaleZ());
+		m_kColor.Set( kColor.R, kColor.G, kColor.B );
 		m_kAlphaTransparency.BlendEnabled = false;
 		m_kZBufferTransparency.Enabled = false;
 		m_kVOI = kVOI;
 		scaleVOI();
 		m_bDisplay = true;
-		update(kColor);
 		m_bUpdateDisplay = true;
 	}
 

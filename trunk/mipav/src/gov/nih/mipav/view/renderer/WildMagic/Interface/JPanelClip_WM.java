@@ -95,7 +95,7 @@ public class JPanelClip_WM extends JInterfaceBase
         clipValue[CLIP_Z] = 0;
         clipValue[CLIP_EYE_INV] = kVolumeViewer.getImageA().getExtents()[2];
         clipValue[CLIP_EYE] = 0;
-        clipValue[CLIP_A] = (int)(clipValue[CLIP_X_INV]*Math.sqrt(2));
+        clipValue[CLIP_A] = clipValue[CLIP_X_INV];//(int)(Math.max( clipValue[CLIP_X_INV], Math.max( clipValue[CLIP_Y_INV], clipValue[CLIP_Z_INV]) ) );
 
         // Build dialog.
         init();

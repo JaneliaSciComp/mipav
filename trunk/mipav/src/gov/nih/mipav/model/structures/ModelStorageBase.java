@@ -2325,7 +2325,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 		values[ (j * iBound) + i] = (float) this.min;
                 	}
                 } else {
-                	if ( duplicateMask.get(index) )
+                	if ( (duplicateMask != null) && duplicateMask.get(index) )
                 	{
                 		if ( bSetZero )
                 		{
@@ -2402,9 +2402,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
             z0 = z0 + zSlopeY;
         }
         
-        for ( int i = 0; i < maskBits.size(); i++ )
+        if ( duplicateMask != null )
         {
-        	duplicateMask.set(maskBits.elementAt(i));
+        	for ( int i = 0; i < maskBits.size(); i++ )
+        	{
+        		duplicateMask.set(maskBits.elementAt(i));
+        	}
         }
         maskBits.clear();
         maskBits = null;

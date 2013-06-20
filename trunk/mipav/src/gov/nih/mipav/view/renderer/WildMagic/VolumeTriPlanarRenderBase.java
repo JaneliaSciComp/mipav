@@ -1887,7 +1887,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	   */
 	  public void setArbitraryClipPlane( float f4, boolean bEnable )
 	  {
-		  f4 /= (m_kVolumeImageA.GetImage().getExtents()[0] -1);     
+		  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+		  f4 /= (aiExtents[0] -1);
+//		  f4 /= (m_kVolumeImageA.GetMaxExtent() -1);     
 		  m_kArbitraryClip = new Vector4f(1,0,0,f4);
 		  doClip(bEnable);
 	  }
@@ -2877,6 +2879,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  m_fX = m_kVolumeImageA.GetScaleX();
 		  m_fY = m_kVolumeImageA.GetScaleY();
 		  m_fZ = m_kVolumeImageA.GetScaleZ();
+		  m_fMax = Math.max( m_fX, Math.max( m_fY, m_fZ ) );
 
 		  if ( m_kSlices == null )
 		  {
@@ -2915,42 +2918,44 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  {
 			  m_kArbitraryClip = new Vector4f(1,0,0,0);            
 		  }
-		  if ( m_kVolumeClip != null )
+		  if ( m_kVolumeClip == null )
 		  {
-			  m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W * m_fX );
+			  return;
 		  }
+		  Vector3f center = m_kVolumeClip.SetArbPlane( m_kArbitraryClip.W );
 
 		  // Rotate normal vector:
-			  Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
-			  Vector3f kNormal = new Vector3f( 1,0,0 );
-			  kNormal = kClipRotate.mult(kNormal);
-			  kNormal.normalize();
+		  Matrix3f kClipRotate = m_kVolumeClip.ArbRotate().Local.GetRotate();
+		  Vector3f kNormal = new Vector3f( 1,0,0 );
+		  kNormal = kClipRotate.mult(kNormal);
+		  kNormal.normalize();
 
-			  // Scale kNormal based on the scaled volume:
-			  kNormal.set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
-			  float fLength = kNormal.length();
-			  kNormal.normalize();
-			  m_afArbEquation[0] = kNormal.X;
-			  m_afArbEquation[1] = kNormal.Y;
-			  m_afArbEquation[2] = kNormal.Z;
 
-			  // Calculate the distance to the plane, scaled based on the scaled kNormal:
-			  Vector3f kPos = Vector3f.scale( (m_kArbitraryClip.W - 0.5f)/fLength, kNormal );
-			  kPos.add( new Vector3f( .5f, .5f, .5f ));
-			  m_afArbEquation[3] = kNormal.dot(kPos);   
+		  // Scale kNormal based on the scaled volume:
+		  kNormal.set( kNormal.X * m_fX, kNormal.Y * m_fY, kNormal.Z * m_fZ );
+		  kNormal.normalize();
+		  m_afArbEquation[0] = kNormal.X;
+		  m_afArbEquation[1] = kNormal.Y;
+		  m_afArbEquation[2] = kNormal.Z;
 
-			  // Update shader with rotated normal and distance:
-			  if ( m_kVolumeRayCast != null )
+		  center.add(m_kTranslate);
+		  center = kClipRotate.mult(center);
+		  center.set( center.X / m_fX, center.Y / m_fY, center.Z / m_fZ );
+		  center.add(new Vector3f( .5f, .5f, .5f ));
+		  m_afArbEquation[3] = kNormal.dot(center);
+
+		  // Update shader with rotated normal and distance:
+		  if ( m_kVolumeRayCast != null )
+		  {
+			  m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
+		  }
+		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
+		  {
+			  if ( m_kDisplayList.get(i) instanceof VolumeSurface )
 			  {
-				  m_kVolumeRayCast.SetClipArb(m_afArbEquation, bEnable);
+				  ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation, bEnable);
 			  }
-			  for ( int i = 0; i < m_kDisplayList.size(); i++ )
-			  {
-				  if ( m_kDisplayList.get(i) instanceof VolumeSurface )
-				  {
-					  ((VolumeSurface)m_kDisplayList.get(i)).SetClipArb(m_afArbEquation, bEnable);
-				  }
-			  }
+		  }
 	  }
 
 	  public static int getHistogramLUTTextureIndex( String kCommand )

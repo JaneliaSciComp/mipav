@@ -556,6 +556,13 @@ public class VOI extends ModelSerialCloneable {
     			this.curves.add( kContour );
     		}
 		}
+		else
+		{
+    		for ( int j = 0; j < kVOI.curves.size(); j++ )
+    		{
+    			this.curves.add( kVOI.curves.get(j).clone() );
+    		}
+		}
 
 		this.curveType = kVOI.curveType;
 		this.displayMode = kVOI.displayMode;

@@ -80,7 +80,9 @@ public class VOIPoint extends VOIBase {
      */
     public VOIPoint(int iType, Vector3f kPosition )
     {
-        super( false, false);
+        process = true;
+        fixed = false;
+        closed = false;
         m_iVOIType = iType;
         add(kPosition);
     }

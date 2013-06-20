@@ -541,10 +541,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     		OpenCLAlgorithmGradientMagnitude gradientMagAlgo;
     		if ( displayInNewFrame )
     		{
-    			resultImage = new ModelImage( outputImageType, image.getExtents(), name );
-    			JDialogBase.updateFileInfo( image, resultImage );
-    			gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(resultImage, image, sigmas,
-        				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+    			try {
+    				resultImage = new ModelImage( outputImageType, image.getExtents(), name );
+    				JDialogBase.updateFileInfo( image, resultImage );
+    				gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(resultImage, image, sigmas,
+    						outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+    			} catch (final OutOfMemoryError error) {
+    				resultImage = null;
+    				return;
+    			}
     		}
     		else
     		{
