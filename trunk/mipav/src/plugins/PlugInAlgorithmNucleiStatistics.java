@@ -36,8 +36,11 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     /** Vector of the stats for all the images. */
     private Vector<Vector<String>> allStatsColumns = new Vector<Vector<String>>();
     
-    /** Whether to force the resolution of all images to 1um. */
-    private boolean forceResolution = true;
+    /** Whether to force the resolution of all images to a new resolution. */
+    private boolean forceResolutionFlag = true;
+    
+    /** The new resolution (in um) to set for the images if the force resolution flag is set. */
+    private double forceResolutionValue;
     
     private static final String[] statsToCalculate = new String[] {VOIStatisticalProperties.quantityDescription, VOIStatisticalProperties.areaDescription, 
 		VOIStatisticalProperties.perimeterDescription, VOIStatisticalProperties.circularityDescription,
@@ -66,10 +69,11 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      * @param minSize
      * @param maxSize
      */
-    public PlugInAlgorithmNucleiStatistics(Vector<File> inputFiles, boolean forceResolution) {
+    public PlugInAlgorithmNucleiStatistics(Vector<File> inputFiles, boolean forceResolutionFlag, double forceResolutionValue) {
         super(null, null);
         this.inputFiles = inputFiles;
-        this.forceResolution = forceResolution;
+        this.forceResolutionFlag = forceResolutionFlag;
+        this.forceResolutionValue = forceResolutionValue;
     }
     
   //~ Methods --------------------------------------------------------------------------------------------------------
@@ -152,12 +156,12 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     		img = null;
     	}
     	
-    	if (forceResolution) {
+    	if (forceResolutionFlag) {
     		FileInfoBase[] fInfos = img.getFileInfo();
     		for (int i = 0; i < fInfos.length; i++) {
     			for (int j = 0; j < img.getNDims(); j++) {
     				fInfos[i].setUnitsOfMeasure(Unit.MICROMETERS, j);
-    				fInfos[i].setResolutions(1.0f, j);
+    				fInfos[i].setResolutions((float)forceResolutionValue, j);
     			}
     		}
     	}
