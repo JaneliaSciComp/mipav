@@ -29,6 +29,7 @@ import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import org.apache.commons.lang3.text.WordUtils;
 import org.bouncycastle.util.encoders.Hex;
 
 import WildMagic.LibFoundation.Mathematics.*;
@@ -443,6 +444,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
             }
         }
+    	super.windowClosing(e);
     }
 
     public void windowDeactivated(final WindowEvent e) {}
@@ -2000,70 +2002,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
     
     /**
-     * Multi-line tooltip creation helper method.
-     *
-     * Posted by user Paul Taylor at http://stackoverflow.com/questions/868651/multi-line-tooltips-in-java.
-     * Changed the name/method names.  Also altered main method to no add html tags.
-     */
-    public static class WrapText {
-        private static int DIALOG_TOOLTIP_MAX_SIZE = 80;
-        private static final int SPACE_BUFFER = 25;
-
-        /**
-         * Returns the given string, with &lt;br/&gt; tags inserted to wrap the text.  Does NOT add html block tags to the beginning and end of the text.
-         * @param tip The string to wrap.
-         * @return The wrapped text.
-         */
-        public static String wrap(String tip) {
-            return wrap(tip,DIALOG_TOOLTIP_MAX_SIZE);
-        }
-        
-        /**
-         * Returns the given string, with &lt;br/&gt; tags inserted to wrap the text.  Does NOT add html block tags to the beginning and end of the text.
-         * @param tip The string to wrap.
-         * @param length The length to wrap to.
-         * @return The wrapped text.
-         */
-        public static String wrap(String tip,int length) {
-            if(tip.length()<=length + SPACE_BUFFER ) {
-                return tip;
-            }
-
-            List<String>  parts = new ArrayList<String>();
-
-            int maxLength = 0;
-            String overLong = tip.substring(0, length + SPACE_BUFFER);
-            int lastSpace = overLong.lastIndexOf(' ');
-            if(lastSpace >= length) {
-                parts.add(tip.substring(0,lastSpace));
-                maxLength = lastSpace;
-            } else {
-                parts.add(tip.substring(0,length));
-                maxLength = length;
-            }
-
-            while(maxLength < tip.length()) {
-                if(maxLength + length < tip.length()) {
-                    parts.add(tip.substring(maxLength, maxLength + length));
-                    maxLength+=maxLength+length;
-                } else {
-                    parts.add(tip.substring(maxLength));
-                    break;
-                }
-            }
-
-            //StringBuilder  sb = new StringBuilder("<html>");
-            StringBuilder  sb = new StringBuilder("");
-            for(int i=0;i<parts.size() - 1;i++) {
-                sb.append(parts.get(i)+"<br/>");
-            }
-            sb.append(parts.get(parts.size() - 1));
-            //sb.append(("</html>"));
-            return sb.toString();
-        }
-    }
-
-    /**
      * 
      * Inner class Right Renderer
      * 
@@ -3031,7 +2969,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 l.setName(n);
                 
                 String tooltip = "<html><p><b>Name:</b> " + dataElement.getName() + "<br/>";
-                tooltip += "<b>Description:</b><br/>" + WrapText.wrap(d);
+                tooltip += "<b>Description:</b><br/>" + WordUtils.wrap(d, 80, "<br/>", false);
                 tooltip += "</p></html>";
                 l.setToolTipText(tooltip);
                 
@@ -3066,13 +3004,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     
                     tooltip = "<html>";
                     if (guide != null) {
-                    	tooltip += "<p><b>Guidelines & Instructions:</b> " + WrapText.wrap(guide) + "</p>";
+                    	tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false) + "</p>";
                     }
                     if (notes != null) {
-                    	tooltip += "<p><b>Notes:</b><br/>" + WrapText.wrap(notes) + "</p>";
+                    	tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
                     }
                     tooltip += "</html>";
-                    l.setToolTipText(tooltip);
+                    cb .setToolTipText(tooltip); 
 
                     labelsAndComps.put(l, cb);
                 } else {
@@ -3088,10 +3026,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         tooltip += ".  Value range: " + v;
                     }
                     if (guide != null) {
-                    	tooltip += "<p><b>Guidelines & Instructions:</b><br/>" + WrapText.wrap(guide) + "</p>";
+                    	tooltip += "<p><b>Guidelines & Instructions:</b><br/>" + WordUtils.wrap(guide, 80, "<br/>", false) + "</p>";
                     }
                     if (notes != null) {
-                    	tooltip += "<p><b>Notes:</b><br/>" + WrapText.wrap(notes) + "</p>";
+                    	tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
                     }
                     tooltip += "</html>";
                     tf.setToolTipText(tooltip);
