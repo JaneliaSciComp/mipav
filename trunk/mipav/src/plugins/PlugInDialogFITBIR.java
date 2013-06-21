@@ -324,7 +324,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("Help")) {
 
-            // MipavUtil.showHelp("ISPImages01");
+        	MipavUtil.showWebHelp("Image_submission_plug-in");
 
         } else if (command.equalsIgnoreCase("Finish")) {
         	
@@ -1462,6 +1462,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         finishButton.addActionListener(this);
         finishButton.setActionCommand("Finish");
 
+        helpButton = new JButton("Help");
+        helpButton.setToolTipText("Help");
+        helpButton.addActionListener(this);
+        helpButton.setActionCommand("Help");
+        
+        
         completeDataElementsButton = new JButton("Edit Data Elements");
         completeDataElementsButton.setToolTipText("Edit data elements for selected Form Structure");
         completeDataElementsButton.addActionListener(this);
@@ -1488,6 +1494,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         buttonPanel1.add(completeDataElementsButton, gbc);
         gbc.gridx = 4;
         buttonPanel1.add(finishButton, gbc);
+        gbc.gridx = 5;
+        buttonPanel1.add(helpButton, gbc);
 
         return buttonPanel1;
     }
