@@ -400,7 +400,7 @@ public class VOIContour extends VOIBase {
 	    double segmentOffset;
 	    double xInter;
 	    double yInter;
-        //Vector<Vector3f> kMaskPositions;
+        Vector<Vector3f> kMaskPositions;
         int group1Num;
         int group2Num;
         Vector<Vector3f> group1;
@@ -440,51 +440,38 @@ public class VOIContour extends VOIBase {
         double smallestYBelowCentroid;
         boolean isGroup1[];
         double epsilon = 1.0e-12;
-        boolean snear[] = new boolean[1];
-        int i1[] = new int[1];
-        int i2[] = new int[2];
-        int x;
-        int y;
+        double diffX;
+        double diffY;
         
         n = size();
         isGroup1 = new boolean[n];
         
-        for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
-                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
-                    numPixels++;
-                    Mx += x;
-                    My += y;
-                    Ix += y*y;
-                    Iy += x*x;
-                    Pxy += x*y;
-                }
-            }
-        }
-        
-        /*kMaskPositions = getAllContourPoints();
+        kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
             numPixels++;
             Mx += kPos.X;
             My += kPos.Y;
-            Ix += kPos.Y*kPos.Y;
-            Iy += kPos.X*kPos.X;
-            Pxy += kPos.X*kPos.Y;
-        }*/
+        }
        
         xCentroid = Mx/numPixels;
         yCentroid = My/numPixels;
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
-        // One rectangle had asymmetry index = 3.6478 with PI/4.0 and 
-        // asymmetry index = 38.9103 without PI/4.0
-        // Also need PI/4.0 for ellipses with long major axis along x axis and small minor axis along y axis
-        // Switching getAllContourPoints() to pinpol reduced rectsym.xml from 3.6478 to 3.4618
-        // pinpol includes right and lower contour points not included by getAllContourPoints.
-        // asyme.xml was 5.8524 with pinpol and 70.7059 with getAllContourPoints
-        theta = 0.5*Math.atan2(-2.0*Pxy, Ix-Iy) + Math.PI/4.0;
+        
+        for (i = 0; i < kMaskPositions.size(); i++ )
+        {
+            Vector3f kPos = kMaskPositions.elementAt(i);
+            diffX = kPos.X - xCentroid;
+            diffY = kPos.Y - yCentroid;
+            Ix += diffY*diffY;
+            Iy += diffX*diffX;
+            Pxy += diffX*diffY;
+        }
+        
+        theta = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
+        Preferences.debug("theta = " + (180.0*theta/Math.PI) + "\n", Preferences.DEBUG_ALGORITHM);
         for (numAxis = 0; numAxis <= 1; numAxis++) {
             largestXAboveCentroid = xCentroid;
             smallestXBelowCentroid = xCentroid;
@@ -505,7 +492,7 @@ public class VOIContour extends VOIBase {
             // y = x*slope + offset
             slope = Math.tan(theta);
             validSlope = true;
-            if ((Double.isInfinite(slope)) || (Double.isNaN(slope))) {
+            if ((Double.isInfinite(slope)) || (Double.isNaN(slope) || (Math.abs(slope) > 1.0E6))) {
                 validSlope = false;
             }
             offset = yCentroid - xCentroid*slope;
@@ -956,7 +943,7 @@ public class VOIContour extends VOIBase {
             group2Mirror.add(group2Num-1,new Vector3f(intersectX[1], intersectY[1], 0.0f));
             contour1 = new VOIContour(fixed, closed, group1);
             mask1 = new BitSet(sliceSize); 
-            contour1.setMask(mask1, xDim, yDim, false, VOI.ADDITIVE ); 
+            contour1.setMask(mask1, xDim, yDim, false, VOI.ADDITIVE );
             contour2 = new VOIContour(fixed, closed, group2);
             mask2 = new BitSet(sliceSize);
             contour2.setMask(mask2, xDim, yDim, false, VOI.ADDITIVE);
@@ -966,6 +953,7 @@ public class VOIContour extends VOIBase {
             contour2Mirror = new VOIContour(fixed, closed, group2Mirror);
             mask2Mirror = new BitSet(sliceSize);
             contour2Mirror.setMask(mask2Mirror, xDim, yDim, false, VOI.ADDITIVE);
+            
             //m1AndM2Mirror = 0;
             m1Only = 0;
             m2MirrorOnly = 0;
