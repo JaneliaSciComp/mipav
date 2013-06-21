@@ -1005,6 +1005,7 @@ public class VOIContour extends VOIBase {
             alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/numPixels;
             Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
                                Preferences.DEBUG_ALGORITHM);
+            asymmetryIndexArray[numAxis] = Math.min(asymmetryIndexArray[numAxis], alternateAsymmetry);
         } // for (numAxis = 0; numAxis <= 1; numAxis++)
         asymmetryIndex = Math.min(asymmetryIndexArray[0], asymmetryIndexArray[1]);
         return asymmetryIndex;
