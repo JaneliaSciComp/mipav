@@ -379,7 +379,7 @@ public class VOIContour extends VOIBase {
 	    double xCentroid;
 	    double yCentroid;
 	    // angle of 2 principal axes, perpendicular to each other, with respect to the x axis
-	    // tan (2*theta) = -2*Pxy/(Ix - Iy)
+	    // tan (2*theta) = 2*Pxy/(Iy - Ix)
 	    double theta;
 	    double slope;
 	    double offset;
@@ -400,7 +400,7 @@ public class VOIContour extends VOIBase {
 	    double segmentOffset;
 	    double xInter;
 	    double yInter;
-        Vector<Vector3f> kMaskPositions;
+        //Vector<Vector3f> kMaskPositions;
         int group1Num;
         int group2Num;
         Vector<Vector3f> group1;
@@ -442,17 +442,35 @@ public class VOIContour extends VOIBase {
         double epsilon = 1.0e-12;
         double diffX;
         double diffY;
+        int x;
+        int y;
+        boolean snear[] = new boolean[1];
+        int i1[] = new int[1];
+        int i2[] = new int[1];
         
         n = size();
         isGroup1 = new boolean[n];
         
-        kMaskPositions = getAllContourPoints();
+        /*kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
             numPixels++;
             Mx += kPos.X;
             My += kPos.Y;
+        }*/
+        
+        // pinpol >= 0.0 includes all of the contour boundary
+        // getAllContourPoints only includes upper and left contour points
+        // getAllContourPoints does not include lower and right contour points
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
+                    numPixels++;
+                    Mx += x;
+                    My += y;    
+                }
+            }
         }
        
         xCentroid = Mx/numPixels;
@@ -460,14 +478,16 @@ public class VOIContour extends VOIBase {
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         
-        for (i = 0; i < kMaskPositions.size(); i++ )
-        {
-            Vector3f kPos = kMaskPositions.elementAt(i);
-            diffX = kPos.X - xCentroid;
-            diffY = kPos.Y - yCentroid;
-            Ix += diffY*diffY;
-            Iy += diffX*diffX;
-            Pxy += diffX*diffY;
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
+                    diffX = x - xCentroid;
+                    diffY = y - yCentroid;
+                    Ix += diffY*diffY;
+                    Iy += diffX*diffX;
+                    Pxy += diffX*diffY;
+                }
+            }
         }
         
         theta = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
