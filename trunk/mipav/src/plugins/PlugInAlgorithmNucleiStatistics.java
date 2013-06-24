@@ -1,4 +1,5 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBtoGray;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
@@ -144,6 +145,7 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
      */
     private ModelImage openFile(File file) {
     	ModelImage img = null;
+    	ModelImage grayImg = null;
     	
 		System.err.println("Trying to open file:\t" + file.getName());
     	
@@ -166,7 +168,68 @@ public class PlugInAlgorithmNucleiStatistics extends AlgorithmBase {
     		}
     	}
     	
-    	return img;
+    	if (!img.isColorImage()) {
+    	    return img; 
+    	}
+    	else {
+    	    grayImg = createGrayImage(img);
+    	    return grayImg;
+    	}
+    }
+    
+    /**
+     * create a gray image from the input color image
+     */
+    private ModelImage createGrayImage(ModelImage img) {
+        ModelImage grayImg;
+        String originalName = img.getImageName();
+        img.setImageName(originalName + "tmp");
+        
+        if (img.getType() == ModelStorageBase.ARGB) {
+            grayImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), originalName);
+        } else if (img.getType() == ModelStorageBase.ARGB_USHORT) {
+            grayImg = new ModelImage(ModelStorageBase.USHORT, img.getExtents(), originalName);
+        } else if (img.getType() == ModelStorageBase.ARGB_FLOAT) {
+            grayImg = new ModelImage(ModelStorageBase.FLOAT, img.getExtents(), originalName);
+        } else {
+            // default to standard rgb
+            grayImg = new ModelImage(ModelStorageBase.UBYTE, img.getExtents(), originalName);
+        }
+
+        for (int n = 0; n < img.getFileInfo().length; n++) {
+            FileInfoBase fInfoBase = (FileInfoBase) (img.getFileInfo(n).clone());
+            fInfoBase.setDataType(grayImg.getType());
+            grayImg.setFileInfo(fInfoBase, n);
+        }
+
+        // Make algorithm
+        float redValue = 0.0f;
+        float greenValue = 0.0f;
+        float blueValue = 0.0f;
+        double redMin = img.getMinR();
+        double redMax = img.getMaxR();
+        double greenMin = img.getMinG();
+        double greenMax = img.getMaxG();
+        double blueMin = img.getMinB();
+        double blueMax = img.getMaxB();
+        if (redMin != redMax) {
+            redValue = 1.0f;
+        }
+        else if (greenMin != greenMax) {
+            greenValue = 1.0f;
+        }
+        else if (blueMin != blueMax) {
+            blueValue = 1.0f;
+        }
+        final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(grayImg, img, redValue, greenValue,
+                blueValue, false, 0f, false, true, 0f, 0f, 0.0f, 0f, 0.0f, 0f);
+
+        RGBAlgo.run();
+        
+        img.disposeLocal();
+        img = null;
+        
+        return grayImg;
     }
     
     /**
