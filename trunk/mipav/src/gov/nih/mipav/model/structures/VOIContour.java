@@ -354,6 +354,34 @@ public class VOIContour extends VOIBase {
 	    return determinant;    
 	} // det
 	
+	public void boxCountBoundary2D(int xDim, int yDim, int n[], int r[]) {
+        // Portions of boxcount.m revision 2.10, written by F. Moisy on 07/09/2008
+        // were ported to Java in creating this routine.
+        // n[] is the number n of 2D dimensional boxes of size r[] needed to cover the 
+        // points on the boundary of the VOIContour.  The box sizes are powers of two, i.e.,
+        // 1, 2, 4, ..., 2 ^p, where p is the smallest integer such that 
+	    // max(x max of contour - x min of contour, y max of contour - y min of contour) <= 2^p.
+	    // The box counting method is used in determining fractal properties of the 
+	    // contour boundary.  If the boundary is a fractal set, wiht fractal dimension
+	    // df < d, then n scales as r^(-df).  df is know as the Minkowski-Bouligand dimension,
+	    // or Kolmogorov capacity, or Kolmogorov dimension, or simply box-counting dimension.
+	    int x;
+	    int y;
+	    int numBoundaryPoints = 0;
+	    boolean snear[] = new boolean[1];
+	    int i1[] = new int[1];
+	    int i2[] = new int[1];
+	    Vector<Vector3f> boundaryVector = new Vector<Vector3f>();
+	    
+	    for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pinpol(x,y,snear,i1,i2) == 0.0) {
+                    numBoundaryPoints++;  
+                }
+            }
+        }
+    }
+	
 	/**
 	 * 
 	 * @param xDim
