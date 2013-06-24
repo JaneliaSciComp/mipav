@@ -565,8 +565,26 @@ public class PlugInAlgorithmNucleiSegmentation extends AlgorithmBase {
         }
 
         // Make algorithm
-        final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(grayImg, img, 1f, 0f,
-                0f, false, 0f, false, true, 0f, 0f, 0.0f, 0f, 0.0f, 0f);
+        float redValue = 0.0f;
+        float greenValue = 0.0f;
+        float blueValue = 0.0f;
+        double redMin = img.getMinR();
+        double redMax = img.getMaxR();
+        double greenMin = img.getMinG();
+        double greenMax = img.getMaxG();
+        double blueMin = img.getMinB();
+        double blueMax = img.getMaxB();
+        if (redMin != redMax) {
+            redValue = 1.0f;
+        }
+        else if (greenMin != greenMax) {
+            greenValue = 1.0f;
+        }
+        else if (blueMin != blueMax) {
+            blueValue = 1.0f;
+        }
+        final AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(grayImg, img, redValue, greenValue,
+                blueValue, false, 0f, false, true, 0f, 0f, 0.0f, 0f, 0.0f, 0f);
 
         RGBAlgo.run();
         
