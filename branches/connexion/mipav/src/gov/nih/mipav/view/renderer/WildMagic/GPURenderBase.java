@@ -122,10 +122,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
-    protected boolean isSpaceNavCodeRunning;
-    private float SpaceNavMax = 1400, SpaceNavMin = -1400;
-    private final int zoomScaleFactor = 5, translationScaleFactor = 3;
-    private float YAxisCuttoff = 50, XAxisCuttoff = 50;
+    protected boolean isSpaceNavCodeRunning = false;
+    private static float SpaceNavMax, SpaceNavMin;
+    private int zoomScaleFactor = 5, translationScaleFactor = 3;
+    private float normalizedYAxisCuttoff = 0.0358f, normalizedXAxisCuttoff = 0.0358f;
+    
+    static{
+    	String osName = System.getProperty("os.name").toLowerCase();
+    	if(osName.startsWith("windows")) {
+    		SpaceNavMax = 1400;
+    		SpaceNavMin = -1400;
+    	} else {
+    		SpaceNavMax = .35f;
+    		SpaceNavMin = -.35f;
+    	} 
+    }
     
     /**
      * Default GPURenderBase constructor.
@@ -918,6 +929,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	public void processSpaceNavEvent()
     {
     	isSpaceNavCodeRunning = true;
+    	float scaleValue;
 
     	if(m_spkMotionObject == null)
     		return;
@@ -926,27 +938,37 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	rotateAboutYAxis();
     	rotateAboutZAxis();
     	
-    	//for keeping track of modifications so this code does not mess up a part of other code. had to be done this way because of private variables
-    	float[] tempArray = getCameraParameters();
-    	
-    	//calculate the zoom and move the camera accordingly 
+    	//process the up and down, these are mapped to the z-axis
     	Vector3f oldLoc = new Vector3f();
     	Vector3f newLoc = new Vector3f();
-        Vector3f kLoc = new Vector3f(m_akWorldAxis[0]);
+        Vector3f kLoc = new Vector3f(m_akWorldAxis[1]);
         kLoc.scale(-(normalizeSpaceNavValue(SpaceNavigatorController.getTZ()) / zoomScaleFactor));
         oldLoc.copy(m_spkCamera.GetLocation());
-        kLoc = Vector3f.sub( m_spkCamera.GetLocation(), kLoc );
+        kLoc = Vector3f.sub(m_spkCamera.GetLocation(), kLoc);
         m_spkCamera.SetLocation(kLoc);
         newLoc.copy(m_spkCamera.GetLocation());
         newLoc.sub(oldLoc);
-        zCameraMove -= newLoc.length();
         
-        //process up and down, these are mapped to the Y-Axis
-        if(SpaceNavigatorController.getTY() > YAxisCuttoff || SpaceNavigatorController.getTY() < -YAxisCuttoff){
+        if(SpaceNavigatorController.getTZ() < 0){
+        	zCameraMove -= newLoc.length();
+        }else{
+        	zCameraMove += newLoc.length();
+        }
+        
+        //process forwards and backwards, these are mapped to the Y-Axis
+        if(normalizeSpaceNavValue( SpaceNavigatorController.getTY() ) > normalizedYAxisCuttoff || 
+        		normalizeSpaceNavValue( SpaceNavigatorController.getTY() ) < -normalizedYAxisCuttoff){
 	        oldLoc = new Vector3f();
 	    	newLoc = new Vector3f();
-	        kLoc = new Vector3f(m_akWorldAxis[1]); 
-	        kLoc.scale(( normalizeSpaceNavValue(SpaceNavigatorController.getTY()) / translationScaleFactor ));
+	        kLoc = new Vector3f(m_akWorldAxis[0]); 
+	        if(SpaceNavigatorController.getTY() < 0)
+	        {
+	        	scaleValue = normalizeSpaceNavValue(SpaceNavigatorController.getTY()) + normalizedYAxisCuttoff;
+	        }else
+	        {
+	        	scaleValue = normalizeSpaceNavValue(SpaceNavigatorController.getTY()) - normalizedYAxisCuttoff;
+	        }
+	        kLoc.scale(( scaleValue / translationScaleFactor ));
 	        oldLoc.copy(m_spkCamera.GetLocation());
 	        kLoc.add(m_spkCamera.GetLocation());
 	        m_spkCamera.SetLocation(kLoc);
@@ -954,14 +976,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        newLoc.sub(oldLoc);
 	        
 	        if(SpaceNavigatorController.getTY() < 0){
-	        	tempArray[1] += newLoc.length();
+	        	yCameraMove -= newLoc.length();
 	        }else{
-	        	tempArray[1] -= newLoc.length();
+	        	yCameraMove += newLoc.length();
 	        }
         }
         
         //process the right and left movements 
-        if(SpaceNavigatorController.getTX() > XAxisCuttoff || SpaceNavigatorController.getTX() < -XAxisCuttoff){
+//        if(normalizeSpaceNavValue( SpaceNavigatorController.getTX() ) > normalizedXAxisCuttoff || 
+//        		normalizeSpaceNavValue( SpaceNavigatorController.getTX() ) < -normalizedXAxisCuttoff){
 	        oldLoc = new Vector3f();
 	    	newLoc = new Vector3f();
 	        kLoc = new Vector3f(m_akWorldAxis[2]);
@@ -973,17 +996,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        newLoc.sub(oldLoc);
 	        
 	        if(SpaceNavigatorController.getTX() < 0){
-	        	tempArray[0] += newLoc.length();
+	        	xCameraMove -= newLoc.length();
 	        }else{
-	        	tempArray[0] -= newLoc.length();
+	        	xCameraMove += newLoc.length();
 	        }
-        }
-        
-        //reset the camera properties
-        setCameraParameters(tempArray);
+//        }
         
 	    //process the scene
     	UpdateSceneRotation();
+    	
+//    System.out.println(zCameraMove);
     	        
 //    	printSpaceNavData();
 		
@@ -995,11 +1017,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	    float fAngle;
 	    Matrix3f kRot, kIncr = new Matrix3f();
 	
-	    //moves about the x axis
     	kRot = m_spkMotionObject.Local.GetRotate();
 	
     	fAngle = m_fRotSpeed * normalizeSpaceNavValue(SpaceNavigatorController.getRX());
-//        rollRotationAngle += fAngle;
 	
         kIncr.fromAxisAngle(kAxis,fAngle);
         kRot.multLeft( kIncr ).orthonormalize();
@@ -1013,11 +1033,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	    float fAngle;
 	    Matrix3f kRot, kIncr = new Matrix3f();
 	
-	    //moves about the x axis
     	kRot = m_spkMotionObject.Local.GetRotate();
 	
     	fAngle = m_fRotSpeed * normalizeSpaceNavValue(SpaceNavigatorController.getRY());
-//        rollRotationAngle += fAngle;
 	
         kIncr.fromAxisAngle(kAxis,fAngle);
         kRot.multLeft( kIncr ).orthonormalize();
@@ -1031,11 +1049,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	    float fAngle;
 	    Matrix3f kRot, kIncr = new Matrix3f();
 	
-	    //moves about the x axis
     	kRot = m_spkMotionObject.Local.GetRotate();
 	
     	fAngle = m_fRotSpeed * normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
-//        rollRotationAngle += fAngle;
 	
         kIncr.fromAxisAngle(kAxis,fAngle);
         kRot.multLeft( kIncr ).orthonormalize();
@@ -1044,45 +1060,31 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         kAxis = null;
     }
     
+    private void setRotateSpeedModifier()
+    {
+    	Vector3f cameraLocation = m_spkCamera.GetLocation();
+    	Vector3f oldLoc = new Vector3f();
+
+    	Vector3f kLoc = new Vector3f(m_akWorldAxis[0]);
+        kLoc.scale(-(normalizeSpaceNavValue(SpaceNavigatorController.getTZ()) / zoomScaleFactor));
+        oldLoc.copy(m_spkCamera.GetLocation());
+        kLoc = Vector3f.sub(m_spkCamera.GetLocation(), kLoc);
+        m_spkCamera.SetLocation(kLoc);
+    }
     
-    /**
-     * the parameter i is only so that the method has a different signiture than the original
-     *     -this was done just to make my life easier during testing
-     * @param i
-     */
-	public void processSpaceNavEvent(int i)
-    {
-		InitializeObjectMotion(m_spkScene);
-		processSpaceNavEvent();
-    }
-	
-	public void processSpaceNavEvent(SpaceNavigatorEvent e)
-    {
-//		GLCanvas temp = GetCanvas();
-//		temp.requestFocus();
-		if(m_spkScene != null){
-			InitializeObjectMotion(m_spkScene);
-//			processSpaceNavEvent();
-		}processSpaceNavEvent();
-    }
-	
+	public void processSpaceNavEvent(SpaceNavigatorEvent e) {}
 	
 	public void mousePressed(MouseEvent e)
 	{
-//		System.out.println(e.getButton());
 		super.mousePressed(e);
-//		 if ( e.getButton() == MouseEvent.BUTTON2 )
-//         {
-//			 processSpaceNavEvent(2);
-			 try {
-		    		if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.hasInstanceOf(this)) {
-		    			SpaceNavigatorPoller.registerListener(this);
-		    		}
-			 } catch (Error er) {
-				 Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-				 er.printStackTrace();
-			 }
-//         }
+		try {
+	    	if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.hasInstanceOf(this)) {
+	    		SpaceNavigatorPoller.registerListener(this);
+	    	}
+		} catch (Error er) {
+			Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+			er.printStackTrace();
+		}
 	}
 	
 	/**
