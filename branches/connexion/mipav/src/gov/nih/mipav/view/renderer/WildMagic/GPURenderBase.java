@@ -1098,6 +1098,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 		return result;
 	}
 	
+	/**
+	 * got this formula from the video at http://www.youtube.com/watch?v=7DQMAXaiXmk
+	 * @param value
+	 * @param maxValue
+	 * @param minValue
+	 * @param maxRange
+	 * @param minRange
+	 * @return
+	 */
+	private double normalizeValue(double value, double maxValue, double minValue, double maxRange, double minRange){
+		double result;
+		result = minRange + ( ( (value - minValue) * (maxRange - minRange) ) / (maxValue - minValue) );
+		return result;
+	}
+	
 	private void printSpaceNavData(){
 		DecimalFormat dec = new DecimalFormat("0.00000");
 		
