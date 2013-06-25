@@ -354,7 +354,7 @@ public class VOIContour extends VOIBase {
 	    return determinant;    
 	} // det
 	
-	public void boxCountBoundary2D(int xDim, int yDim, int n[], int r[]) {
+	public double boxCountBoundary2D(int xDim, int yDim, int n[], int r[], double localDF[]) {
         // Portions of boxcount.m revision 2.10, written by F. Moisy on 07/09/2008
         // were ported to Java in creating this routine.
         // n[] is the number n of 2D dimensional boxes of size r[] needed to cover the 
@@ -365,6 +365,13 @@ public class VOIContour extends VOIBase {
 	    // contour boundary.  If the boundary is a fractal set, wiht fractal dimension
 	    // df < d, then n scales as r^(-df).  df is know as the Minkowski-Bouligand dimension,
 	    // or Kolmogorov capacity, or Kolmogorov dimension, or simply box-counting dimension.
+	    
+	    // Note that the reference High precision  boundary fractal analysis for shape characterization
+	    // by Dominique Berube and Michel Jebrak found:
+	    // "Dilation and euclidean distance mapping methods(EDM) produce the more reliable results with a
+	    // low sensitivity to object size and resolution.  The precision of the EDM method (+-0.01) is
+	    // higher than that for the dilation method(+-0.03).  Box-counting behaves erratically when used
+	    // to analyze outlines."
 	    int x;
 	    int y;
 	    int numBoundaryPoints = 0;
@@ -381,12 +388,22 @@ public class VOIContour extends VOIBase {
 	    int width;
 	    double p;
 	    int pCeil;
-	    double c[][];
+	    byte c[][];
 	    int i;
 	    int g;
 	    int siz;
 	    int siz2;
 	    int j;
+	    int nInit[];
+	    double ln[];
+	    double lr[];
+	    double gradn[];
+	    double gradr[];
+	    double sumxy;
+	    double sumx;
+	    double sumy;
+	    double sumxx;
+	    double bestFitDF;
 	    
 	    for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
@@ -415,7 +432,7 @@ public class VOIContour extends VOIBase {
 	    
         pCeil = (int)Math.ceil(p);
         width = (int)Math.round(Math.pow(2.0, pCeil));
-        c = new double[width][width];
+        c = new byte[width][width];
         for (i = 0; i < numBoundaryPoints; i++) {
             x = Math.round(boundaryVector.get(i).X);
             y = Math.round(boundaryVector.get(i).X);
@@ -424,16 +441,72 @@ public class VOIContour extends VOIBase {
 	    
 	    // Preallocate the number of boxes of size r
 	    n = new int[pCeil+1];
-	    n[pCeil] = numBoundaryPoints;
+	    nInit = new int[pCeil+1];
+	    nInit[pCeil] = numBoundaryPoints;
 	    for (g = pCeil-1; g >= 0; g--) {
 	        siz = (int)Math.round(Math.pow(2.0, pCeil-g));
 	        siz2 = (int)Math.round(siz/2.0);
 	        for (i = 0; i < width-siz+1; i += siz) {
 	            for (j = 0; j < width-siz+1; j += siz) {
-	                    
+	                if ((c[i+siz2][j] == 1) || (c[i][j+siz2] == 1) || (c[i+siz2][j+siz2] == 1)) {
+	                    c[i][j] = 1;
+	                }
+	            }
+	        }
+	        for (i = 0; i < width-siz+1; i+= siz) {
+	            for (j = 0; j < width-siz+1; j += siz) {
+	                if (c[i][j] == 1) {
+	                    nInit[g]++;
+	                }
 	            }
 	        }
 	    } // for (g = pCeil-1; g >= 0; g--)
+	    
+	    ln = new double[n.length];
+	    lr = new double[n.length];
+	    for (i = 0; i < n.length; i++) {
+	        n[i] = nInit[n.length-1-i];
+	        ln[i] = Math.log(n[i]);
+	        if (i == 0) {
+	            r[i] = 1;
+	        }
+	        else {
+	            r[i] = 2 * r[i-1]; // box size (1, 2, 4, 8, ...)
+	        }
+	        lr[i] = Math.log(r[i]);
+	    }
+	    
+	    gradn = new double[n.length];
+	    gradr = new double[n.length];
+	    localDF = new double[n.length];
+	    gradn[0] = ln[1] - ln[0];
+	    gradr[0] = lr[1] - lr[0];
+	    gradn[n.length-1] = ln[n.length-1] - ln[n.length-2];
+	    gradr[n.length-1] = lr[n.length-1] - ln[n.length-2];
+	    for (i = 1; i < n.length-2; i++) {
+	        gradn[i] = (ln[i+1] - ln[i-1])/2.0;
+	        gradr[i] = (lr[i+1] - lr[i-1])/2.0;
+	    }
+	    
+	    for (i = 0; i < n.length; i++) {
+	        localDF[i] = -gradn[i]/gradr[i];
+	    }
+	    
+	    // log(n) = slope * log(r) + intercept
+	    // df = -slope
+	    // slope = (sumXiYi - sumXi*sumYi/n)/(sumXiSquared - sumXi*sumXi/n)
+	    sumxy = 0.0;
+	    sumx = 0.0;
+	    sumy = 0.0;
+	    sumxx = 0.0;
+	    for (i = 0; i < n.length; i++) {
+	        sumxy += lr[i]*ln[i];
+	        sumx += lr[i];
+	        sumy += ln[i];
+	        sumxx += lr[i]*lr[i];
+	    }
+	    bestFitDF = -(sumxy - sumx*sumy/n.length)/(sumxx - sumx*sumx/n.length);
+	    return bestFitDF;
     }
 	
 	/**
