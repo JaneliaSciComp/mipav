@@ -372,15 +372,174 @@ public class VOIContour extends VOIBase {
 	    int i1[] = new int[1];
 	    int i2[] = new int[1];
 	    Vector<Vector3f> boundaryVector = new Vector<Vector3f>();
+	    int xLow = Integer.MAX_VALUE;
+	    int xHigh = Integer.MIN_VALUE;
+	    int yLow = Integer.MAX_VALUE;
+	    int yHigh = Integer.MIN_VALUE;
+	    int xRange;
+	    int yRange;
+	    int width;
+	    double p;
+	    int pCeil;
+	    double c[][];
+	    int i;
+	    int g;
+	    int siz;
+	    int siz2;
+	    int j;
 	    
 	    for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
                 if (pinpol(x,y,snear,i1,i2) == 0.0) {
-                    numBoundaryPoints++;  
+                    numBoundaryPoints++;
+                    if (x < xLow) {
+                        xLow = x;
+                    }
+                    if (x > xHigh) {
+                        xHigh = x;
+                    }
+                    if (y < yLow) {
+                        yLow = y;
+                    }
+                    if (y > yHigh) {
+                        yHigh = y;
+                    }
+                    boundaryVector.add(new Vector3f(x, y, 0.0f));
+                }
+            }
+        } // for (y = 0; y < yDim; y++)
+	    xRange = xHigh - xLow + 1;
+	    yRange = yHigh - yLow + 1;
+	    width = Math.max(xRange, yRange); // largest size of box
+	    p = Math.log(width)/Math.log(2.0); // number of generations
+	    
+        pCeil = (int)Math.ceil(p);
+        width = (int)Math.round(Math.pow(2.0, pCeil));
+        c = new double[width][width];
+        for (i = 0; i < numBoundaryPoints; i++) {
+            x = Math.round(boundaryVector.get(i).X);
+            y = Math.round(boundaryVector.get(i).X);
+            c[x - xLow][y - yLow] = 1;
+        }
+	    
+	    // Preallocate the number of boxes of size r
+	    n = new int[pCeil+1];
+	    n[pCeil] = numBoundaryPoints;
+	    for (g = pCeil-1; g >= 0; g--) {
+	        siz = (int)Math.round(Math.pow(2.0, pCeil-g));
+	        siz2 = (int)Math.round(siz/2.0);
+	        for (i = 0; i < width-siz+1; i += siz) {
+	            for (j = 0; j < width-siz+1; j += siz) {
+	                    
+	            }
+	        }
+	    } // for (g = pCeil-1; g >= 0; g--)
+    }
+	
+	/**
+	 * From statics it is known that any planar shape or closed curve possesses two principal axes 90 degrees
+	 * apart intersecting at the centroid of the area.  (For certain areas such as a circle, there may be more
+	 * than two principal axes about the centroid, but there are always at least two.)  The moment of inertia is
+	 * maximum about one principal axis and minimum about the other principal axis.  Here the angle in degrees 
+	 * with the principal axis having the minimum moment of inertia is reported.  For an ellipse with semimajor
+	 * axis = a and semiminor axis = b, the moment of inertia has its smallest value of PI*a*b^3/8 about the
+	 * major axis and its largest value of PI*a^3*b/8 about the minor axis.
+	 * @param xDim
+	 * @param yDim
+	 * @return
+	 */
+	public double principalAxis(int xDim, int yDim) {
+	    double theta = 0.0;
+	    numPixels = 0;
+        // First moment with respect to the x axis
+        double Mx = 0.0;
+        // First moment with respect to the y axis
+        double My = 0.0;
+        // Moment of inertia or second moment of the area A with respect to the x axis
+        double Ix = 0.0;
+        // Moment of inertia about the y axis
+        double Iy = 0.0;
+        // Product of inertia
+        double Pxy = 0.0;
+        double xCentroid;
+        double yCentroid;
+        int x;
+        int y;
+        double diffX;
+        double diffY;
+        double pin[][] = new double[xDim][yDim];
+        boolean snear[] = new boolean[1];
+        int i1[] = new int[1];
+        int i2[] = new int[1];
+        double theta1;
+        double theta2;
+        double Iave;
+        double Idiff;
+        double Ixp1;
+        double Ixp2;
+        double R;
+        double Imin;
+        double Imax;
+        
+	    // pinpol >= 0.0 includes all of the contour boundary
+        // getAllContourPoints only includes upper and left contour points
+        // getAllContourPoints does not include lower and right contour points
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                pin[x][y] = pinpol(x, y, snear, i1, i2);
+                if (pin[x][y] >= 0.0) {
+                    numPixels++;
+                    Mx += x;
+                    My += y;    
                 }
             }
         }
-    }
+       
+        xCentroid = Mx/numPixels;
+        yCentroid = My/numPixels;
+        Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
+        
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                if (pin[x][y] >= 0.0) {
+                    diffX = x - xCentroid;
+                    diffY = y - yCentroid;
+                    Ix += diffY*diffY;
+                    Iy += diffX*diffX;
+                    Pxy += diffX*diffY;
+                }
+            }
+        }
+        
+        theta1 = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
+        if (theta1 >= 0.0) {
+            theta2 = theta1 - Math.PI/2.0;
+        }
+        else {
+            theta2 = theta1 + Math.PI/2.0;
+        }
+        Iave = (Ix + Iy)/2.0;
+        Idiff = (Ix - Iy)/2.0;
+        Ixp1 = Iave + Idiff*Math.cos(2.0*theta1) - Pxy*Math.sin(2.0*theta1);
+        Preferences.debug("Ixp1 = " + Ixp1 + "\n", Preferences.DEBUG_ALGORITHM);
+        Ixp2 = Iave + Idiff*Math.cos(2.0*theta2) - Pxy*Math.sin(2.0*theta2);
+        Preferences.debug("Ixp2 = " + Ixp2 + "\n", Preferences.DEBUG_ALGORITHM);
+        // Double check
+        R = Math.sqrt(Idiff*Idiff + Pxy*Pxy);
+        Imin = Iave - R;
+        Preferences.debug("Imin = " + Imin + "\n", Preferences.DEBUG_ALGORITHM);
+        Imax = Iave + R;
+        Preferences.debug("Imax = " + Imax + "\n", Preferences.DEBUG_ALGORITHM);
+        if (Ixp1 < Ixp2) {
+            theta = theta1;
+        }
+        else {
+            theta = theta2;
+        }
+        theta = (180.0/Math.PI)*theta;
+	    return theta;
+	}
 	
 	/**
 	 * 
@@ -475,6 +634,7 @@ public class VOIContour extends VOIBase {
         boolean snear[] = new boolean[1];
         int i1[] = new int[1];
         int i2[] = new int[1];
+        double pin[][] = new double[xDim][yDim];
         
         n = size();
         isGroup1 = new boolean[n];
@@ -493,7 +653,8 @@ public class VOIContour extends VOIBase {
         // getAllContourPoints does not include lower and right contour points
         for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
-                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
+                pin[x][y] = pinpol(x, y, snear, i1, i2);
+                if (pin[x][y] >= 0.0) {
                     numPixels++;
                     Mx += x;
                     My += y;    
@@ -508,7 +669,7 @@ public class VOIContour extends VOIBase {
         
         for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
-                if (pinpol(x,y,snear,i1,i2) >= 0.0) {
+                if (pin[x][y] >= 0.0) {
                     diffX = x - xCentroid;
                     diffY = y - yCentroid;
                     Ix += diffY*diffY;
