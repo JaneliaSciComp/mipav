@@ -3121,6 +3121,8 @@ public class Preferences {
         Preferences.defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK
                 + Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("SaveAllImages", KeyStroke.getKeyStroke('S', Event.ALT_MASK 
+        		+ Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));

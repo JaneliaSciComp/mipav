@@ -469,8 +469,11 @@ public class ViewMenuBar {
         final JMenuItem saveImageItem = menuBuilder.buildMenuItem("Save image", "SaveImage", 0, "save.gif", true);
         final JMenuItem saveImageAsItem = menuBuilder
                 .buildMenuItem("Save image as", "SaveImageAs", 0, "save.gif", true);
+        final JMenuItem saveAllImagesItem = menuBuilder
+        		.buildMenuItem("Save all open images",  "SaveAllImages", 0, "save.gif", true);
         menuBuilder.setMenuItemEnabled("Save image", isAnImageOpen);
         menuBuilder.setMenuItemEnabled("Save image as", isAnImageOpen);
+        menuBuilder.setMenuItemEnabled("Save all open images", isAnImageOpen);
 
         return menuBuilder.makeMenu("File", 'F', false, new JComponent[] {
                 menuBuilder.buildMenuItem("Open image (A) from disk", "OpenNewImage", 0, "open.gif", true),
@@ -480,9 +483,10 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Create blank image", "CreateBlankImage", 0, "open.gif", true),
                         menuBuilder.buildMenuItem("Image browser", "BrowseImages", 0, null, true),}),
                 menuBuilder.buildMenuItem("Close all images", "closeAllImages", 0, null, true), ViewMenuBar.separator,
-                loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator, saveImageItem, saveImageAsItem,
-                captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator, menuBuilder.buildQuickList(),
-                ViewMenuBar.separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)});
+                loadMenu, extractImageBItem, closeImageBItem, ViewMenuBar.separator, saveImageItem, saveImageAsItem, 
+                saveAllImagesItem, captureMenu, ViewMenuBar.separator, dicomMenu, ViewMenuBar.separator, 
+                menuBuilder.buildQuickList(), ViewMenuBar.separator, menuBuilder.
+                buildMenuItem("Exit", "Exit", 'x', null, true)});
     }
 
     /**
