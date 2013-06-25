@@ -1121,8 +1121,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, stats.gCenterString);
             }
             // Ellipsoid fit parameters are calculated as a group, if one is selected, calculate all:
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {               
@@ -1133,16 +1132,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ((VOIContour)contour).secondOrderAttributes(srcImage,
                         tmpPAxis, tmpEcc, tmpMajorAxis,
                         tmpMinorAxis);
-                stats.PAxis = tmpPAxis[0];
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
 
-                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats.Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + end, nf.format(stats.MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + end, nf.format(stats.MinorAxis));
             }
+            
+            if (statsList[ indexOf(axisDescription)]) {
+                stats.PAxis = ((VOIContour)contour).principalAxis(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
+            }
+            
             // If user selects largestSliceDistanceDescription:
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {               
@@ -1441,8 +1444,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, stats.gCenterString);
             }
             // Ellipsoid fit parameters are calculated as a group, if one is selected, calculate all:
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {               
@@ -1453,16 +1455,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ((VOIContour)contour).secondOrderAttributes(srcImage,
                         tmpPAxis, tmpEcc, tmpMajorAxis,
                         tmpMinorAxis);
-                stats.PAxis = tmpPAxis[0];
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
 
-                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats.Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + end, nf.format(stats.MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + end, nf.format(stats.MinorAxis));
             }
+            
+            if (statsList[ indexOf(axisDescription)]) {
+                stats.PAxis = ((VOIContour)contour).principalAxis(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats.PAxis));
+            }
+            
             // If user selects largestSliceDistanceDescription:
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {               
@@ -2136,8 +2142,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             // Ellipsoid fit parameters are calculated as a group, if one is selected, calculate all.
             // For the VOI, only calculate these parameters for one contour:
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {               
@@ -2148,15 +2153,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ((VOIContour)kVOI.getCurves().firstElement()).secondOrderAttributes(srcImage,
                         tmpPAxis, tmpEcc, tmpMajorAxis,
                         tmpMinorAxis);
-                stats.PAxis = tmpPAxis[0];
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
                 
-                statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(stats.Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(stats.MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(stats.MinorAxis));
+            }
+        
+            if (statsList[ indexOf(axisDescription)]) {
+                stats.PAxis = ((VOIContour)kVOI.getCurves().firstElement()).principalAxis(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
             }
         }
         
@@ -2490,8 +2498,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             // Ellipsoid fit parameters are calculated as a group, if one is selected, calculate all.
             // For the VOI, only calculate these parameters for one contour:
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {               
@@ -2502,15 +2509,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 ((VOIContour)kVOI.getCurves().firstElement()).secondOrderAttributes(srcImage,
                         tmpPAxis, tmpEcc, tmpMajorAxis,
                         tmpMinorAxis);
-                stats.PAxis = tmpPAxis[0];
                 stats.Ecc = tmpEcc[0];
                 stats.MajorAxis = tmpMajorAxis[0];
                 stats.MinorAxis = tmpMinorAxis[0];
                 
-                statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(stats.Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(stats.MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(stats.MinorAxis));
+            }
+            
+            if (statsList[ indexOf(axisDescription)]) {
+                stats.PAxis = ((VOIContour)kVOI.getCurves().firstElement()).principalAxis(srcImage.getExtents()[0], srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(stats.PAxis));
             }
         }
 
@@ -2673,15 +2683,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, comStr);                
             }
 
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {            
-                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats[0].PAxis));
+                
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats[0].Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + end, nf.format(stats[0].MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + end, nf.format(stats[0].MinorAxis));                
+            }
+            
+            if (statsList[ indexOf(axisDescription)]) {
+                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats[0].PAxis));    
             }
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {             
@@ -2898,16 +2911,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.geometricCenterDescription + end, comStr);                
             }
 
-            if ( statsList[ indexOf( axisDescription ) ] ||
-                    statsList[ indexOf( eccentricityDescription ) ] ||
+            if ( statsList[ indexOf( eccentricityDescription ) ] ||
                     statsList[ indexOf( majorAxisDescription ) ] ||
                     statsList[ indexOf( minorAxisDescription ) ] )
             {            
-                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats[0].PAxis));
                 statProperty.setProperty(VOIStatisticList.eccentricityDescription + end, nf.format(stats[0].Ecc));
                 statProperty.setProperty(VOIStatisticList.majorAxisDescription + end, nf.format(stats[0].MajorAxis));
                 statProperty.setProperty(VOIStatisticList.minorAxisDescription + end, nf.format(stats[0].MinorAxis));                
             }
+            
+            if ( statsList[ indexOf( axisDescription ) ]) {
+                statProperty.setProperty(VOIStatisticList.axisDescription + end, nf.format(stats[0].PAxis));
+            }
+            
             if ( statsList[ indexOf( largestSliceDistanceDescription ) ] )
             {             
                 double largestAllSlicesDistance = 0;
