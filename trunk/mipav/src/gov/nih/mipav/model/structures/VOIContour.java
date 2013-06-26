@@ -354,19 +354,20 @@ public class VOIContour extends VOIBase {
 	    return determinant;    
 	} // det
 	
-	public double boxCountBoundary2D(int xDim, int yDim, int n[], int r[], double localDF[]) {
+	public double boxCountBoundary2D(int xDim, int yDim, int n[], int r[], double localFD[]) {
         // Portions of boxcount.m revision 2.10, written by F. Moisy on 07/09/2008
         // were ported to Java in creating this routine.
         // n[] is the number n of 2D dimensional boxes of size r[] needed to cover the 
         // points on the boundary of the VOIContour.  The box sizes are powers of two, i.e.,
         // 1, 2, 4, ..., 2 ^p, where p is the smallest integer such that 
-	    // max(x max of contour - x min of contour, y max of contour - y min of contour) <= 2^p.
+	    // max(x max of contour - x min + 1 of contour, y max of contour - y min of contour + 1) <= 2^p.
 	    // The box counting method is used in determining fractal properties of the 
-	    // contour boundary.  If the boundary is a fractal set, wiht fractal dimension
-	    // df < d, then n scales as r^(-df).  df is know as the Minkowski-Bouligand dimension,
+	    // contour boundary.  If the boundary is a fractal set, with fractal dimension
+	    // fd < d, then n scales as r^(-fd).  fd is know as the Minkowski-Bouligand dimension,
 	    // or Kolmogorov capacity, or Kolmogorov dimension, or simply box-counting dimension.
+	    // Complex outlines can be defined in 2D using a fractal dimension ranging from 1 to 2.
 	    
-	    // Note that the reference High precision  boundary fractal analysis for shape characterization
+	    // Note that the reference "High precision  boundary fractal analysis for shape characterization"
 	    // by Dominique Berube and Michel Jebrak found:
 	    // "Dilation and euclidean distance mapping methods(EDM) produce the more reliable results with a
 	    // low sensitivity to object size and resolution.  The precision of the EDM method (+-0.01) is
@@ -403,7 +404,7 @@ public class VOIContour extends VOIBase {
 	    double sumx;
 	    double sumy;
 	    double sumxx;
-	    double bestFitDF;
+	    double bestFitFD;
 	    
 	    for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
@@ -435,12 +436,13 @@ public class VOIContour extends VOIBase {
         c = new byte[width][width];
         for (i = 0; i < numBoundaryPoints; i++) {
             x = Math.round(boundaryVector.get(i).X);
-            y = Math.round(boundaryVector.get(i).X);
+            y = Math.round(boundaryVector.get(i).Y);
             c[x - xLow][y - yLow] = 1;
         }
 	    
 	    // Preallocate the number of boxes of size r
 	    n = new int[pCeil+1];
+	    r = new int[pCeil+1];
 	    nInit = new int[pCeil+1];
 	    nInit[pCeil] = numBoundaryPoints;
 	    for (g = pCeil-1; g >= 0; g--) {
@@ -478,22 +480,22 @@ public class VOIContour extends VOIBase {
 	    
 	    gradn = new double[n.length];
 	    gradr = new double[n.length];
-	    localDF = new double[n.length];
+	    localFD = new double[n.length];
 	    gradn[0] = ln[1] - ln[0];
 	    gradr[0] = lr[1] - lr[0];
 	    gradn[n.length-1] = ln[n.length-1] - ln[n.length-2];
-	    gradr[n.length-1] = lr[n.length-1] - ln[n.length-2];
-	    for (i = 1; i < n.length-2; i++) {
+	    gradr[n.length-1] = lr[n.length-1] - lr[n.length-2];
+	    for (i = 1; i < n.length-1; i++) {
 	        gradn[i] = (ln[i+1] - ln[i-1])/2.0;
 	        gradr[i] = (lr[i+1] - lr[i-1])/2.0;
 	    }
 	    
 	    for (i = 0; i < n.length; i++) {
-	        localDF[i] = -gradn[i]/gradr[i];
+	        localFD[i] = -gradn[i]/gradr[i];
 	    }
 	    
 	    // log(n) = slope * log(r) + intercept
-	    // df = -slope
+	    // fd = -slope
 	    // slope = (sumXiYi - sumXi*sumYi/n)/(sumXiSquared - sumXi*sumXi/n)
 	    sumxy = 0.0;
 	    sumx = 0.0;
@@ -505,8 +507,14 @@ public class VOIContour extends VOIBase {
 	        sumy += ln[i];
 	        sumxx += lr[i]*lr[i];
 	    }
-	    bestFitDF = -(sumxy - sumx*sumy/n.length)/(sumxx - sumx*sumx/n.length);
-	    return bestFitDF;
+	    bestFitFD = -(sumxy - sumx*sumy/n.length)/(sumxx - sumx*sumx/n.length);
+	    Preferences.debug("For 2D outlines a valid fractal dimension ranges from 1 to 2\n", Preferences.DEBUG_ALGORITHM);
+	    for (i = 0; i < n.length; i++) {
+	        Preferences.debug("Box size = " + r[i] + " Box number = " + n[i] + " Local fractal dimension = " + localFD[i] + "\n",
+	                           Preferences.DEBUG_ALGORITHM);
+	    }
+	    Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
+	    return bestFitFD;
     }
 	
 	/**
