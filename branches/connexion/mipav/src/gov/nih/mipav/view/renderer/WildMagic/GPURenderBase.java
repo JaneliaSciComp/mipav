@@ -24,7 +24,11 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -35,6 +39,8 @@ import javax.media.MediaLocator;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -123,18 +129,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
     protected boolean isSpaceNavCodeRunning = false;
-    private static float SpaceNavMax, SpaceNavMin;
+    private static float spaceNavMax, spaceNavMin;
     private int zoomScaleFactor = 5, translationScaleFactor = 3;
     private float normalizedYAxisCuttoff = 0.0358f, normalizedXAxisCuttoff = 0.0358f;
     
     static{
     	String osName = System.getProperty("os.name").toLowerCase();
     	if(osName.startsWith("windows")) {
-    		SpaceNavMax = 1400;
-    		SpaceNavMin = -1400;
+    		spaceNavMax = 1400;
+    		spaceNavMin = -1400;
     	} else {
-    		SpaceNavMax = .35f;
-    		SpaceNavMin = -.35f;
+    		spaceNavMax = .35f;
+    		spaceNavMin = -.35f;
     	} 
     }
     
@@ -269,6 +275,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         }
         
         m_kZRotate = null;
+        
+        SpaceNavigatorPoller.deRegisterListener(this);
 
         super.dispose();
     }
@@ -403,7 +411,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        	break;
 	        }
 	        if(rotateProcessed) {	
-		        Matrix3f kRotate = m_spkScene.Local.GetRotate();
+//		        Matrix3f kRotate = m_spkScene.Local.GetRotate();
 //		        kRotate.mult(rotateMatrix);
 //		        m_spkScene.Local.SetRotate(kRotate);
 //		        m_spkScene.UpdateGS();
@@ -963,11 +971,12 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        kLoc = new Vector3f(m_akWorldAxis[0]); 
 	        if(SpaceNavigatorController.getTY() < 0)
 	        {
-	        	scaleValue = normalizeSpaceNavValue(SpaceNavigatorController.getTY()) + normalizedYAxisCuttoff;
+	        	scaleValue = (float) normalizeValue(SpaceNavigatorController.getTY(), spaceNavMin, -50, -1, 0);
 	        }else
 	        {
-	        	scaleValue = normalizeSpaceNavValue(SpaceNavigatorController.getTY()) - normalizedYAxisCuttoff;
+	        	scaleValue = (float) normalizeValue(SpaceNavigatorController.getTY(), 50, spaceNavMax, 0, 1);
 	        }
+	        
 	        kLoc.scale(( scaleValue / translationScaleFactor ));
 	        oldLoc.copy(m_spkCamera.GetLocation());
 	        kLoc.add(m_spkCamera.GetLocation());
@@ -1007,7 +1016,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	
 //    System.out.println(zCameraMove);
     	        
-//    	printSpaceNavData();
+    	printSpaceNavData();
 		
 		isSpaceNavCodeRunning = false;
 	}
@@ -1094,20 +1103,20 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	 * @return
 	 */
 	private float normalizeSpaceNavValue(float value){
-		float result = 2*(value - SpaceNavMin) / (SpaceNavMax - SpaceNavMin) - 1;
+		float result = 2*(value - spaceNavMin) / (spaceNavMax - spaceNavMin) - 1;
 		return result;
 	}
 	
 	/**
 	 * got this formula from the video at http://www.youtube.com/watch?v=7DQMAXaiXmk
 	 * @param value
-	 * @param maxValue
 	 * @param minValue
-	 * @param maxRange
+	 * @param maxValue
 	 * @param minRange
+	 * @param maxRange
 	 * @return
 	 */
-	private double normalizeValue(double value, double maxValue, double minValue, double maxRange, double minRange){
+	private double normalizeValue(double value, double minValue, double maxValue, double minRange, double maxRange){
 		double result;
 		result = minRange + ( ( (value - minValue) * (maxRange - minRange) ) / (maxValue - minValue) );
 		return result;
@@ -1126,6 +1135,58 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 		
 		System.out.println(builder.toString());
 	}
+	
+//	private void checkIfSpaceNavNeedsCalibration(){
+//		
+//		if(SpaceNavigatorController.checkIfSpaceNavNeedsCalibration()){
+//			
+//		}
+//		final JOptionPane optionPane = new JOptionPane(
+//                "The only way to close this dialog is by\n"
+//                + "pressing one of the following buttons.\n"
+//                + "Do you understand?",
+//                JOptionPane.QUESTION_MESSAGE,
+//                JOptionPane.YES_NO_OPTION);
+//
+//		final JDialog dialog = new JDialog(frame, 
+//		                             "Click a button",
+//		                             true);
+//		dialog.setContentPane(optionPane);
+//		dialog.setDefaultCloseOperation(
+//		    JDialog.DO_NOTHING_ON_CLOSE);
+//		dialog.addWindowListener(new WindowAdapter() {
+//		    public void windowClosing(WindowEvent we) {
+//		        setLabel("Thwarted user attempt to close window.");
+//		    }
+//		});
+//		optionPane.addPropertyChangeListener(
+//		    new PropertyChangeListener() {
+//		        public void propertyChange(PropertyChangeEvent e) {
+//		            String prop = e.getPropertyName();
+//		
+//		            if (dialog.isVisible() 
+//		             && (e.getSource() == optionPane)
+//		             && (prop.equals(JOptionPane.VALUE_PROPERTY))) {
+//		                //If you were going to check something
+//		                //before closing the window, you'd do
+//		                //it here.
+//		                dialog.setVisible(false);
+//		            }
+//		        }
+//		    });
+//		dialog.pack();
+//		dialog.setVisible(true);
+//		
+//		int value = ((Integer)optionPane.getValue()).intValue();
+//		if (value == JOptionPane.YES_OPTION) {
+//		    setLabel("Good.");
+//		} else if (value == JOptionPane.NO_OPTION) {
+//		    setLabel("Try using the window decorations "
+//		             + "to close the non-auto-closing dialog. "
+//		             + "You can't!");
+//		}
+//		
+//	}
 	
 	
 }
