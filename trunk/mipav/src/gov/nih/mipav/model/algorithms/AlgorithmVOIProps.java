@@ -122,6 +122,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public int numberOfIndentationsCurvature;
             public int numberOfIndentationsHull;
             public double asymmetryIndex;
+            public double fractalDimensionBoxCount;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -1169,6 +1170,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.asymmetryIndexDescription + end, nf.format(stats.asymmetryIndex));
             }
             
+            if (statsList[indexOf(fractalDimensionBoxCountDescription)]) {
+                int n[] = null;
+                int r[] = null;
+                double localFD[] = null;
+                stats.fractalDimensionBoxCount = ((VOIContour)contour).boxCountBoundary2D(srcImage.getExtents()[0], 
+                        srcImage.getExtents()[1], n, r, localFD);
+                statProperty.setProperty(VOIStatisticList.fractalDimensionBoxCountDescription + end, nf.format(stats.fractalDimensionBoxCount));
+            }
+            
             return stats;
         }
         
@@ -1490,6 +1500,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             if (statsList[ indexOf(asymmetryIndexDescription)]) {
                 stats.asymmetryIndex = ((VOIContour)contour).calcAsymmetryIndex(srcImage.getExtents()[0], srcImage.getExtents()[1]);
                 statProperty.setProperty(VOIStatisticList.asymmetryIndexDescription + end, nf.format(stats.asymmetryIndex));
+            }
+            
+            if (statsList[indexOf(fractalDimensionBoxCountDescription)]) {
+                int n[] = null;
+                int r[] = null;
+                double localFD[] = null;
+                stats.fractalDimensionBoxCount = ((VOIContour)contour).boxCountBoundary2D(srcImage.getExtents()[0], 
+                        srcImage.getExtents()[1], n, r, localFD);
+                statProperty.setProperty(VOIStatisticList.fractalDimensionBoxCountDescription + end, nf.format(stats.fractalDimensionBoxCount));
             }
             
             return stats;
@@ -3620,6 +3639,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public float getPrincipalAxis() {
         return Float.valueOf(propertyList.firstElement().getProperty(VOIStatisticList.axisDescription)).floatValue();
     } // {return principalAxis;}
+    
+    public double getFractalDimensionBoxCount() {
+        return Double.valueOf(propertyList.firstElement().getProperty(VOIStatisticList.fractalDimensionBoxCountDescription)).doubleValue();
+    } // {return fractalDimensionBoxCount;}
 
     /**
      * Reports if algorithm is performing calcs per slice, per contour, or for entire VOI.
