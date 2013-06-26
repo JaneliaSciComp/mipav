@@ -157,6 +157,8 @@ public interface VOIStatisticList {
     String numberOfIndentationsHullDescription = "Number of Indentations Hull";
     
     String asymmetryIndexDescription = "Asymmetry Index";
+    
+    String fractalDimensionBoxCountDescription = "Fractal Dimension Box Count";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -170,7 +172,7 @@ public interface VOIStatisticList {
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
         largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
         meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription,
-        asymmetryIndexDescription
+        asymmetryIndexDescription, fractalDimensionBoxCountDescription
     };
 
     /** number of statistics in the list. */
