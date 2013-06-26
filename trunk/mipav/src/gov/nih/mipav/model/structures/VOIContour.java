@@ -373,6 +373,21 @@ public class VOIContour extends VOIBase {
 	    // low sensitivity to object size and resolution.  The precision of the EDM method (+-0.01) is
 	    // higher than that for the dilation method(+-0.03).  Box-counting behaves erratically when used
 	    // to analyze outlines."
+	    
+	    // For 1024 by 1024 Koch_snowflake.png generating a VOI with levelset the boxCountBoundary2D calculations were:
+	    // Box size = 1 Box number = 8800 Local fractal dimension = 0.8786831268735233
+	    // Box size = 2 Box number = 4786 Local fractal dimension = 0.9435741259934443
+	    // Box size = 4 Box number = 2379 Local fractal dimension = 1.0521834020982703
+	    // Box size = 8 Box number = 1113 Local fractal dimension = 1.0982744140336271
+	    // Box size = 16 Box number = 519 Local fractal dimension = 1.2064393726305385
+	    // Box size = 32 Box number = 209 Local fractal dimension = 1.2719286486957417
+	    // Box size = 64 Box number = 89 Local fractal dimension = 1.3099481454152717
+	    // Box size = 128 Box number = 34 Local fractal dimension = 1.2844214176789392
+	    // Box size = 256 Box number = 15 Local fractal dimension = 1.5437314206251695
+	    // Box size = 512 Box number = 4 Local fractal dimension = 1.953445297804259
+	    // Box size = 1024 Box number = 1 Local fractal dimension = 1.9999999999999998
+	    // Best fit fractal dimension = 1.2813819274567155
+	    // The actual answer is log(4)/log(3) = 1.26186
 	    int x;
 	    int y;
 	    int numBoundaryPoints = 0;
@@ -407,30 +422,65 @@ public class VOIContour extends VOIBase {
 	    double bestFitFD;
 	    float xf;
 	    float yf;
+	    float xf2;
+	    float yf2;
+	    int xfl;
+	    int xfc;
+	    int yfl;
+	    int yfc;
+	    int xfl2;
+        int xfc2;
+        int yfl2;
+        int yfc2;
 	    int nPts = size();
+	    int sliceSize = xDim*yDim;
+	    BitSet includeSet = new BitSet(sliceSize);
 	    
 	    for (i = 0; i < nPts; i++) {
             xf = elementAt(i).X;
             yf = elementAt(i).Y;
-            if (Math.floor(xf) < xLow) {
-                xLow = (int)Math.floor(xf);
+            xfl = (int)Math.floor(xf);
+            xfc = (int)Math.ceil(xf);
+            yfl = (int)Math.floor(yf);
+            yfc = (int)Math.ceil(yf);
+            if (xfl < xLow) {
+                xLow = xfl;
             }
-            if (Math.ceil(xf) > xHigh) {
-                xHigh = (int)Math.ceil(xf);
+            if (xfc > xHigh) {
+                xHigh = xfc;
             }
-            if (Math.floor(yf) < yLow) {
-                yLow = (int)Math.floor(yf);
+            if (yfl < yLow) {
+                yLow = yfl;
             }
-            if (Math.ceil(yf) > yHigh) {
-                yHigh = (int)Math.ceil(yf);
+            if (yfc > yHigh) {
+                yHigh = yfc;
+            }
+            if (i < nPts-1) {
+                j = i+1;
+            }
+            else {
+                j = 0;
+            }
+            xf2 = elementAt(j).X;
+            yf2 = elementAt(j).Y;
+            xfl2 = (int)Math.floor(xf2);
+            xfc2 = (int)Math.ceil(xf2);
+            yfl2 = (int)Math.floor(yf2);
+            yfc2 = (int)Math.ceil(yf2);
+            for (y = Math.min(yfl, yfl2); y <= Math.max(yfc, yfc2); y++) {
+                for (x = Math.min(xfl, xfl2); x <= Math.max(xfc, xfc2); x++) {
+                    includeSet.set(x + y * xDim);
+                }
             }
         }
 	    
 	    for (y = yLow; y <= yHigh; y++) {
             for (x = xLow; x <= xHigh; x++) {
-                if (pinpol(x,y,snear,i1,i2) == 0.0) {
-                    numBoundaryPoints++;
-                    boundaryVector.add(new Vector3f(x, y, 0.0f));
+                if (includeSet.get(x + y * xDim)) {
+                    if (pinpol(x,y,snear,i1,i2) == 0.0) {
+                        numBoundaryPoints++;
+                        boundaryVector.add(new Vector3f(x, y, 0.0f));
+                    }
                 }
             }
         } // for (y = yLow; y <= yHigh; y++)
