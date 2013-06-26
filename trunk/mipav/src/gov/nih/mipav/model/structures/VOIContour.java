@@ -433,7 +433,8 @@ public class VOIContour extends VOIBase {
                     boundaryVector.add(new Vector3f(x, y, 0.0f));
                 }
             }
-        } // for (y = 0; y < yDim; y++)
+        } // for (y = yLow; y <= yHigh; y++)
+	    
 	    xRange = xHigh - xLow + 1;
 	    yRange = yHigh - yLow + 1;
 	    width = Math.max(xRange, yRange); // largest size of box
