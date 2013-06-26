@@ -561,12 +561,38 @@ public class VOIContour extends VOIBase {
         double R;
         double Imin;
         double Imax;
+        int i;
+        float xf;
+        float yf;
+        int xLow = Integer.MAX_VALUE;
+        int xHigh = Integer.MIN_VALUE;
+        int yLow = Integer.MAX_VALUE;
+        int yHigh = Integer.MIN_VALUE;
+        int n = size();
+        
+        
+        for (i = 0; i < n; i++) {
+            xf = elementAt(i).X;
+            yf = elementAt(i).Y;
+            if (Math.floor(xf) < xLow) {
+                xLow = (int)Math.floor(xf);
+            }
+            if (Math.ceil(xf) > xHigh) {
+                xHigh = (int)Math.ceil(xf);
+            }
+            if (Math.floor(yf) < yLow) {
+                yLow = (int)Math.floor(yf);
+            }
+            if (Math.ceil(yf) > yHigh) {
+                yHigh = (int)Math.ceil(yf);
+            }
+        }
         
 	    // pinpol >= 0.0 includes all of the contour boundary
         // getAllContourPoints only includes upper and left contour points
         // getAllContourPoints does not include lower and right contour points
-        for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
+        for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
                 pin[x][y] = pinpol(x, y, snear, i1, i2);
                 if (pin[x][y] >= 0.0) {
                     numPixels++;
@@ -581,8 +607,8 @@ public class VOIContour extends VOIBase {
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         
-        for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
+        for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
                 if (pin[x][y] >= 0.0) {
                     diffX = x - xCentroid;
                     diffY = y - yCentroid;
@@ -716,9 +742,32 @@ public class VOIContour extends VOIBase {
         int i1[] = new int[1];
         int i2[] = new int[1];
         double pin[][] = new double[xDim][yDim];
+        float xf;
+        float yf;
+        int xLow = Integer.MAX_VALUE;
+        int xHigh = Integer.MIN_VALUE;
+        int yLow = Integer.MAX_VALUE;
+        int yHigh = Integer.MIN_VALUE;
         
         n = size();
         isGroup1 = new boolean[n];
+        
+        for (i = 0; i < n; i++) {
+            xf = elementAt(i).X;
+            yf = elementAt(i).Y;
+            if (Math.floor(xf) < xLow) {
+                xLow = (int)Math.floor(xf);
+            }
+            if (Math.ceil(xf) > xHigh) {
+                xHigh = (int)Math.ceil(xf);
+            }
+            if (Math.floor(yf) < yLow) {
+                yLow = (int)Math.floor(yf);
+            }
+            if (Math.ceil(yf) > yHigh) {
+                yHigh = (int)Math.ceil(yf);
+            }
+        }
         
         /*kMaskPositions = getAllContourPoints();
         for (i = 0; i < kMaskPositions.size(); i++ )
@@ -732,8 +781,8 @@ public class VOIContour extends VOIBase {
         // pinpol >= 0.0 includes all of the contour boundary
         // getAllContourPoints only includes upper and left contour points
         // getAllContourPoints does not include lower and right contour points
-        for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
+        for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
                 pin[x][y] = pinpol(x, y, snear, i1, i2);
                 if (pin[x][y] >= 0.0) {
                     numPixels++;
@@ -748,8 +797,8 @@ public class VOIContour extends VOIBase {
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         
-        for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
+        for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
                 if (pin[x][y] >= 0.0) {
                     diffX = x - xCentroid;
                     diffY = y - yCentroid;
