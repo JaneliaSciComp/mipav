@@ -405,23 +405,31 @@ public class VOIContour extends VOIBase {
 	    double sumy;
 	    double sumxx;
 	    double bestFitFD;
+	    float xf;
+	    float yf;
+	    int nPts = size();
 	    
-	    for (y = 0; y < yDim; y++) {
-            for (x = 0; x < xDim; x++) {
+	    for (i = 0; i < nPts; i++) {
+            xf = elementAt(i).X;
+            yf = elementAt(i).Y;
+            if (Math.floor(xf) < xLow) {
+                xLow = (int)Math.floor(xf);
+            }
+            if (Math.ceil(xf) > xHigh) {
+                xHigh = (int)Math.ceil(xf);
+            }
+            if (Math.floor(yf) < yLow) {
+                yLow = (int)Math.floor(yf);
+            }
+            if (Math.ceil(yf) > yHigh) {
+                yHigh = (int)Math.ceil(yf);
+            }
+        }
+	    
+	    for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
                 if (pinpol(x,y,snear,i1,i2) == 0.0) {
                     numBoundaryPoints++;
-                    if (x < xLow) {
-                        xLow = x;
-                    }
-                    if (x > xHigh) {
-                        xHigh = x;
-                    }
-                    if (y < yLow) {
-                        yLow = y;
-                    }
-                    if (y > yHigh) {
-                        yHigh = y;
-                    }
                     boundaryVector.add(new Vector3f(x, y, 0.0f));
                 }
             }
