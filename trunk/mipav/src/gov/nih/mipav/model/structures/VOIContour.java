@@ -387,6 +387,7 @@ public class VOIContour extends VOIBase {
 	    // Box size = 512 Box number = 4 Local fractal dimension = 1.953445297804259
 	    // Box size = 1024 Box number = 1 Local fractal dimension = 1.9999999999999998
 	    // Best fit fractal dimension = 1.2813819274567155
+	    
 	    // The actual answer is log(4)/log(3) = 1.26186
 	    int x;
 	    int y;
@@ -467,6 +468,9 @@ public class VOIContour extends VOIBase {
             xfc2 = (int)Math.ceil(xf2);
             yfl2 = (int)Math.floor(yf2);
             yfc2 = (int)Math.ceil(yf2);
+            // Decreasing the floors by 1 and increasing the ceilings by 1 in the Koch snowflake example
+            // only changed the result for box size 1, increasing the count from 8800 to 8802
+            // Not worth the extra time.
             for (y = Math.min(yfl, yfl2); y <= Math.max(yfc, yfc2); y++) {
                 for (x = Math.min(xfl, xfl2); x <= Math.max(xfc, xfc2); x++) {
                     includeSet.set(x + y * xDim);
