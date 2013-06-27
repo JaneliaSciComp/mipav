@@ -203,6 +203,8 @@ public class ViewMenuBar {
                         // null, null, null),
                         menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
                         menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null, false),}),
+                menuBuilder.makeMenu("Fractal dimension", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Box counting", "boxcount", 0, null, false),}),
                 menuBuilder.makeMenu("Fuzzy", false, new JMenuItem[] {
                 		menuBuilder.buildMenuItem("Edge extraction by FIRE operators", "fireEdgeExtraction", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
@@ -1073,6 +1075,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
             menuBuilder.setMenuItemEnabled("Isophote curvature", false);
+            menuBuilder.setMenuItemEnabled("Box counting", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1210,6 +1213,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Inverse gradient", false);
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
             menuBuilder.setMenuItemEnabled("Isophote curvature", false);
+            menuBuilder.setMenuItemEnabled("Box counting", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
