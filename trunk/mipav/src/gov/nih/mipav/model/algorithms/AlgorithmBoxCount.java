@@ -9,6 +9,25 @@ import java.io.IOException;
 import java.util.*;
 
 public class AlgorithmBoxCount extends AlgorithmBase {
+    // Portions of boxcount.m revision 2.10, written by F. Moisy on 07/09/2008
+    // were ported to Java in creating this routine.
+    // n[] is the number n of 2D dimensional boxes of size r[] needed to cover the 
+    // points on the boundary of the VOIContour.  The box sizes are powers of two, i.e.,
+    // 1, 2, 4, ..., 2 ^p, where p is the smallest integer such that 
+    // where xmin, xmax, ymin, and ymax are the smallest and largest positions with nonzero values
+    // max(x max - x min + 1, y max - y min + 1) <= 2^p.
+    // The box counting method is used in determining fractal properties of the 
+    // contour boundary.  If the boundary is a fractal set, with fractal dimension
+    // fd < d, then n scales as r^(-fd).  fd is know as the Minkowski-Bouligand dimension,
+    // or Kolmogorov capacity, or Kolmogorov dimension, or simply box-counting dimension.
+    // Complex outlines can be defined in 2D using a fractal dimension ranging from 1 to 2.
+    
+    // Note that the reference "High precision  boundary fractal analysis for shape characterization"
+    // by Dominique Berube and Michel Jebrak found:
+    // "Dilation and euclidean distance mapping methods(EDM) produce the more reliable results with a
+    // low sensitivity to object size and resolution.  The precision of the EDM method (+-0.01) is
+    // higher than that for the dilation method(+-0.03).  Box-counting behaves erratically when used
+    // to analyze outlines."
     
     private boolean entireImage;
     
