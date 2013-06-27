@@ -1203,6 +1203,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogAutoCorrelation(this, getActiveImage());
         } else if (command.equals("ACCOV")) {
             new JDialogAutoCovariance(this, getActiveImage());
+        } else if (command.equals("boxcount")) {
+            new JDialogBoxCount(this, getActiveImage());
         } else if (command.equals("nmsuppression")) {
             new JDialogNMSuppression(this, getActiveImage());
         } else if (command.equals("sobel")) {
