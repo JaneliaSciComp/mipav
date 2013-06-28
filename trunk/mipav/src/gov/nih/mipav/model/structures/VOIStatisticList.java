@@ -65,7 +65,7 @@ public interface VOIStatisticList {
      *
      * @see  gov.nih.mipav.view.JPanelStatisticsList
      */
-    String axisDescription = "Principal Axis";
+    String axisDescription = "Principal Axis with Minimum Moment of Inertia";
 
     /**
      * string to test for when checking on statistics to calculate.
