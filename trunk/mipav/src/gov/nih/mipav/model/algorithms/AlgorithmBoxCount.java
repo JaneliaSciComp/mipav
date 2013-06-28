@@ -29,7 +29,18 @@ public class AlgorithmBoxCount extends AlgorithmBase {
     // higher than that for the dilation method(+-0.03).  Box-counting behaves erratically when used
     // to analyze outlines."
     
+    // Also ported is the file randcantor.m revision 2.00, written by F. Moisy on 11/222/2006
+    // Generates generalized random Cantor set
+    // randcantor generates a logical 2D or 3D array of size n^d, containing a set of fractally distributed
+    // 1 where d is the dimension 2 or 2 and the size n must be a power of 2.  The resulting set c is
+    // obtained by iteratively dividing an initial set filled with 1 ito 2^d subsets, multiplying each
+    // by 0 with probability p (with 0 < p < 1).  The resulting array c has a fractal dimension
+    // df = d + log(p)/log(2) < d.
+    // p = 0.8 yields df = 1.68 for 2D image.
+    
     private boolean entireImage;
+    private boolean createTestImage = false;
+    RandomNumberGen randomGen;
     
     public AlgorithmBoxCount(ModelImage srcImg, boolean entireImage) {
         super(null, srcImg);
@@ -40,6 +51,11 @@ public class AlgorithmBoxCount extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
+        
+        if (createTestImage) {
+            create3DRandImage();
+            return;
+        }
 
         // do all source image verification before logging:
         if (srcImage == null) {
@@ -80,6 +96,471 @@ public class AlgorithmBoxCount extends AlgorithmBase {
 
             return;
         }
+    }
+    
+    private void create2DRandImage() {
+        double p = 0.8;
+        int n = 1024;
+        byte buffer[][] = null;
+        randomGen = new RandomNumberGen();
+        buffer = randcantor2D(p, n);
+        String imageName = "randcantor2D";
+        int extents[] = new int[2];
+        extents[0] = n;
+        extents[1] = n;
+        ModelImage randImage = new ModelImage(ModelStorageBase.BYTE, extents, imageName);
+        byte buffer2[] = new byte[n * n];
+        int x;
+        int y;
+        for (y = 0; y < n; y++) {
+            for (x = 0; x < n; x++) {
+                buffer2[x + y * n] = buffer[y][x];
+            }
+        }
+        try {
+            randImage.importData(0, buffer2, true);
+        }
+        catch(IOException e) {
+            displayError("IOException " + e + "on randImage.importData(0, buffer2, true");
+            setCompleted(false);
+            return;
+        }
+        new ViewJFrameImage(randImage);
+        setCompleted(true);
+        return;
+    }
+    
+    /**
+     * 
+     * @param p (0 < p < 1)
+     * @param n must be a power of 2
+     * @return
+     */
+    private byte[][] randcantor2D(double p, int n) {
+        int i;
+        int j;
+        byte c[][] = new byte[n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                c[i][j] = 1;
+            }
+        }
+        boxdiv2(c, p);
+        return c;
+    }
+    
+    private void boxdiv2(byte c[][], double p) {
+        int siz = c.length;
+        int siz2;
+        double rand;
+        int i;
+        int j;
+        byte cin[][];
+        if (siz == 1) {
+            c[0][0] = 1;
+        }
+        else {
+            siz2 = (int)Math.round(siz/2.0);
+            cin = new byte[siz2][siz2];
+            // sub-square top-left
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        c[i][j] = 0;
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][0] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        cin[i][j] = c[i][j];
+                    }
+                }
+                boxdiv2(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        c[i][j] = cin[i][j];
+                    }
+                }
+            } // if (c[0][0] == 1)
+            
+            // sub-square top right
+            rand  = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        c[i][j] = 0;
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][0] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        cin[i-siz2][j] = c[i][j];
+                    }
+                }
+                boxdiv2(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        c[i][j] = cin[i-siz2][j];
+                    }
+                }
+            } // if (c[siz2][0] == 1)
+            
+            // sub-square bottom-left
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        c[i][j] = 0;
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][siz2] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        cin[i][j-siz2] = c[i][j];
+                    }
+                }
+                boxdiv2(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        c[i][j] = cin[i][j-siz2];
+                    }
+                }
+            } // if (c[0][siz2] == 1)
+            
+            // sub-square bottom-right
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        c[i][j] = 0;
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][siz2] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        cin[i-siz2][j-siz2] = c[i][j];
+                    }
+                }
+                boxdiv2(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        c[i][j] = cin[i-siz2][j-siz2];
+                    }
+                }
+            } // if (c[siz2][siz2] == 1)
+        } // else siz > 1
+    }
+    
+    private void create3DRandImage() {
+        double p = 0.8;
+        int n = 256;
+        byte buffer[][][] = null;
+        randomGen = new RandomNumberGen();
+        buffer = randcantor3D(p, n);
+        String imageName = "randcantor3D";
+        int extents[] = new int[3];
+        extents[0] = n;
+        extents[1] = n;
+        extents[2] = n;
+        ModelImage randImage = new ModelImage(ModelStorageBase.BYTE, extents, imageName);
+        byte buffer2[] = new byte[n * n * n];
+        int x;
+        int y;
+        int z;
+        int nsq = n*n;
+        for (z = 0; z < n; z++) {
+            for (y = 0; y < n; y++) {
+                for (x = 0; x < n; x++) {
+                    buffer2[x + y * n + z * nsq] = buffer[z][y][x];
+                }
+            }
+        }
+        try {
+            randImage.importData(0, buffer2, true);
+        }
+        catch(IOException e) {
+            displayError("IOException " + e + "on randImage.importData(0, buffer2, true");
+            setCompleted(false);
+            return;
+        }
+        new ViewJFrameImage(randImage);
+        setCompleted(true);
+        return;
+    }
+    
+    /**
+     * 
+     * @param p (0 < p < 1)
+     * @param n must be a power of 2
+     * @return
+     */
+    private byte[][][] randcantor3D(double p, int n) {
+        int i;
+        int j;
+        int k;
+        byte c[][][] = new byte[n][n][n];
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                for (k = 0; k < n; k++) {
+                   c[i][j][k] = 1;
+                }
+            }
+        }
+        boxdiv3(c, p);
+        return c;
+    }
+    
+    private void boxdiv3(byte c[][][], double p) {
+        int siz = c.length;
+        int siz2;
+        double rand;
+        int i;
+        int j;
+        int k;
+        byte cin[][][];
+        if (siz == 1) {
+            c[0][0][0] = 1;
+        }
+        else {
+            siz2 = (int)Math.round(siz/2.0);
+            cin = new byte[siz2][siz2][siz2];
+            // sub-cube top-left front
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {   
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][0][0] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            cin[i][j][k] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = cin[i][j][k];
+                        }
+                    }
+                }
+            } // if (c[0][0][0] == 1)
+            
+            // sub-cube top right front
+            rand  = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][0][0] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            cin[i-siz2][j][k] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = cin[i-siz2][j][k];
+                        }
+                    }
+                }
+            } // if (c[siz2][0][0] == 1)
+            
+            // sub-cube bottom-left front
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {   
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][siz2][0] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            cin[i][j-siz2][k] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = cin[i][j-siz2][k];
+                        }
+                    }
+                }
+            } // if (c[0][siz2][0] == 1)
+            
+            // sub-cube bottom-right front
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][siz2][0] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            cin[i-siz2][j-siz2][k] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = 0; k < siz2; k++) {
+                            c[i][j][k] = cin[i-siz2][j-siz2][k];
+                        }
+                    }
+                }
+            } // if (c[siz2][siz2][0] == 1)
+            
+            // sub-cube top-left bottom
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {   
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][0][siz2] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            cin[i][j][k-siz2] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = cin[i][j][k-siz2];
+                        }
+                    }
+                }
+            } // if (c[0][0][siz2] == 1)
+            
+            // sub-cube top right bottom
+            rand  = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][0][siz2] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            cin[i-siz2][j][k-siz2] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = 0; j < siz2; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = cin[i-siz2][j][k-siz2];
+                        }
+                    }
+                }
+            } // if (c[siz2][0][siz2] == 1)
+            
+            // sub-cube bottom-left bottom
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {   
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[0][siz2][siz2] == 1) {
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            cin[i][j-siz2][k-siz2] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = 0; i < siz2; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = cin[i][j-siz2][k-siz2];
+                        }
+                    }
+                }
+            } // if (c[0][siz2][siz2] == 1)
+            
+            // sub-cube bottom-right bottom
+            rand = randomGen.genUniformRandomNum(0.0, 1.0);
+            if (rand >= p) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = 0;
+                        }
+                    }
+                }
+            } // if (rand >= p)
+            if (c[siz2][siz2][siz2] == 1) {
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            cin[i-siz2][j-siz2][k-siz2] = c[i][j][k];
+                        }
+                    }
+                }
+                boxdiv3(cin, p);
+                for (i = siz2; i < siz; i++) {
+                    for (j = siz2; j < siz; j++) {
+                        for (k = siz2; k < siz; k++) {
+                            c[i][j][k] = cin[i-siz2][j-siz2][k-siz2];
+                        }
+                    }
+                }
+            } // if (c[siz2][siz2][siz2] == 1)
+        } // else siz > 1
     }
     
     private void boxCount2D() {
@@ -252,6 +733,19 @@ public class AlgorithmBoxCount extends AlgorithmBase {
         }
         UI.setDataText("Best fit fractal dimension = " + bestFitFD + "\n");
         Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
+        sumxy = 0.0;
+        sumx = 0.0;
+        sumy = 0.0;
+        sumxx = 0.0;
+        for (i = 0; i < n.length-3; i++) {
+            sumxy += lr[i]*ln[i];
+            sumx += lr[i];
+            sumy += ln[i];
+            sumxx += lr[i]*lr[i];
+        }
+        bestFitFD = -(sumxy - sumx*sumy/(n.length-3))/(sumxx - sumx*sumx/(n.length-3));
+        UI.setDataText("Best fit fractal dimension excluding 3 largest box sizes = " + bestFitFD + "\n");
+        Preferences.debug("Best fit fractal dimension excluding 3 largest box sizes = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;
     }
@@ -450,6 +944,19 @@ public class AlgorithmBoxCount extends AlgorithmBase {
         }
         UI.setDataText("Best fit fractal dimension = " + bestFitFD + "\n");
         Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
+        sumxy = 0.0;
+        sumx = 0.0;
+        sumy = 0.0;
+        sumxx = 0.0;
+        for (i = 0; i < n.length-3; i++) {
+            sumxy += lr[i]*ln[i];
+            sumx += lr[i];
+            sumy += ln[i];
+            sumxx += lr[i]*lr[i];
+        }
+        bestFitFD = -(sumxy - sumx*sumy/(n.length-3))/(sumxx - sumx*sumx/(n.length-3));
+        UI.setDataText("Best fit fractal dimension excluding 3 largest box sizes = " + bestFitFD + "\n");
+        Preferences.debug("Best fit fractal dimension excluding 3 largest box sizes = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
         setCompleted(true);
         return;
     }
