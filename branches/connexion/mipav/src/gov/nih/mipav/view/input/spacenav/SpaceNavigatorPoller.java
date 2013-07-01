@@ -89,4 +89,23 @@ public class SpaceNavigatorPoller {
 		
 		return false;
 	}
+	
+	public static boolean checkIfNeedCalibration(){
+		SpaceNavigatorController.poll();
+		if(SpaceNavigatorController.getRX() != 0 || 
+				SpaceNavigatorController.getRY() != 0 || 
+				SpaceNavigatorController.getRZ() != 0 || 
+				SpaceNavigatorController.getTX() != 0 || 
+				SpaceNavigatorController.getTY() != 0 || 
+				SpaceNavigatorController.getTZ() != 0) {
+			return true;
+		}
+		return false;
+	}
+	
+	public static void deregisterAllListeners(){
+		for(int i = 0; i < listeners.length; i++){
+			deRegisterListener(listeners[i]);
+		}
+	}
 }
