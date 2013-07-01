@@ -5,6 +5,8 @@ import gov.nih.mipav.view.Preferences;
 import net.java.games.input.Component; 
 import net.java.games.input.Controller; 
 import net.java.games.input.ControllerEnvironment; 
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 /** 
  * 
@@ -26,7 +28,7 @@ import net.java.games.input.ControllerEnvironment;
  *  @author justinsenseney
  */ 
 
-public class SpaceNavigatorController { 
+public class SpaceNavigatorController{ 
 
 	public static final int NUM_BUTTONS = 2; 
 	
@@ -59,6 +61,30 @@ public class SpaceNavigatorController {
 		if(controller != null) {
 			Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
 		}
+//		ce.addControllerListener(new ControllerListener() {
+//			
+//			@Override
+//			public void controllerAdded(ControllerEvent arg0) {
+//				System.out.println("entered controllerAdded");
+//				ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
+//				Controller[] cs = ce.getControllers(); 
+//				if (cs.length == 0) { 
+//					Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
+//				} else {
+//					Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
+//				}
+//				
+//				controller = findSpaceNavigator(cs); 
+//				if(controller != null) {
+//					Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
+//				}
+//			}
+//			
+//			@Override
+//			public void controllerRemoved(ControllerEvent arg0) {
+//				SpaceNavigatorPoller.deregisterAllListeners();
+//			}
+//		});
 	}
 	
 	private static final Component[] comps; 
@@ -227,7 +253,9 @@ public class SpaceNavigatorController {
 	} // end of isButtonPressed() 
 	
 	public static void poll() { 
-		controller.poll(); 
+		if(!controller.poll()){
+			SpaceNavigatorPoller.deregisterAllListeners();
+		}
 	} 
 	
 	
@@ -285,4 +313,19 @@ public class SpaceNavigatorController {
 	public static float getRZ () { 
 		return comps[rzAxisIdx].getPollData(); 
 	} 
+	
+	public static boolean checkIfSpaceNavNeedsCalibration(){
+		return SpaceNavigatorPoller.checkIfNeedCalibration();
+	}
+
+//	@Override
+//	public void controllerAdded(ControllerEvent arg0) {
+//		
+//	}
+//
+//	@Override
+//	public void controllerRemoved(ControllerEvent arg0) {
+//		SpaceNavigatorPoller.deregisterAllListeners();
+//		
+//	}
 } 
