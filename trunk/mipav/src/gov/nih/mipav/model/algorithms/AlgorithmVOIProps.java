@@ -1178,7 +1178,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(fractalDimensionEuclideanDistanceDescription)]) {
-                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).boxCountBoundary2D(srcImage.getExtents()[0], 
+                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).euclideanDistance2D(srcImage.getExtents()[0], 
                         srcImage.getExtents()[1]);
                 statProperty.setProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription + end, 
                         nf.format(stats.fractalDimensionEuclideanDistance));
@@ -1514,7 +1514,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
             
             if (statsList[indexOf(fractalDimensionEuclideanDistanceDescription)]) {
-                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).boxCountBoundary2D(srcImage.getExtents()[0], 
+                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).euclideanDistance2D(srcImage.getExtents()[0], 
                         srcImage.getExtents()[1]);
                 statProperty.setProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription + end, 
                         nf.format(stats.fractalDimensionEuclideanDistance));
