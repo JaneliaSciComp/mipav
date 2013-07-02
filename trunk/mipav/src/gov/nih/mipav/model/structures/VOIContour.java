@@ -354,7 +354,135 @@ public class VOIContour extends VOIBase {
 	    return determinant;    
 	} // det
 	
-	public double boxCountBoundary2D(int xDim, int yDim, int n[], int r[], double localFD[]) {
+	public double euclideanDistance2D(int xDim, int yDim) {
+	    // Calculates fractal dimensionality of a contour
+	    // Reference "High precision  boundary fractal analysis for shape characterization"
+        // by Dominique Berube and Michel Jebrak 
+	    int i;
+	    float xf;
+	    float yf;
+	    // Maximum distance from boundary considered on each side
+	    int distance = 8;
+	    // 1.0, 1.1,  ... distance - 0.1, distance
+	    int numLevels = 10*(distance - 1) + 1;
+	    int area[] = new int[numLevels];
+	    double width[] = new double[numLevels];
+	    int xLow = Integer.MAX_VALUE;
+        int xHigh = Integer.MIN_VALUE;
+        int yLow = Integer.MAX_VALUE;
+        int yHigh = Integer.MIN_VALUE;
+        int n = size();
+        double pin;
+        boolean snear[] = new boolean[1];
+        int i1[] = new int[1];
+        int i2[] = new int[1];
+        int x;
+        int y;
+        int level;
+        double logArea[] = new double[numLevels];
+        double logWidth[] = new double[numLevels];
+        double sumx;
+        double sumy;
+        double sumxx;
+        double sumxy;
+        double bestFitFD;
+        int xfl;
+        int xfc;
+        int yfl;
+        int yfc;
+        int j;
+        float xf2;
+        float yf2;
+        int xfl2;
+        int yfl2;
+        int xfc2;
+        int yfc2;
+        int sliceSize = xDim * yDim;
+        BitSet includeSet = new BitSet(sliceSize);
+        
+        for (i = 0; i < n; i++) {
+            xf = elementAt(i).X;
+            yf = elementAt(i).Y;
+            xfl = (int)Math.floor(xf);
+            xfc = (int)Math.ceil(xf);
+            yfl = (int)Math.floor(yf);
+            yfc = (int)Math.ceil(yf);
+            if (xfl < xLow) {
+                xLow = xfl;
+            }
+            if (xfc > xHigh) {
+                xHigh = xfc;
+            }
+            if (yfl < yLow) {
+                yLow = yfl;
+            }
+            if (yfc > yHigh) {
+                yHigh = yfc;
+            }
+            if (i < n-1) {
+                j = i+1;
+            }
+            else {
+                j = 0;
+            }
+            xf2 = elementAt(j).X;
+            yf2 = elementAt(j).Y;
+            xfl2 = (int)Math.floor(xf2);
+            xfc2 = (int)Math.ceil(xf2);
+            yfl2 = (int)Math.floor(yf2);
+            yfc2 = (int)Math.ceil(yf2);
+            for (y = Math.max(Math.min(yfl, yfl2)-distance, 0); y <= Math.min(Math.max(yfc, yfc2) + distance, yDim-1); y++) {
+                for (x = Math.max(Math.min(xfl, xfl2)-distance, 0); x <= Math.min(Math.max(xfc, xfc2) + distance, xDim-1); x++) {
+                    includeSet.set(x + y * xDim);
+                }
+            }
+        }
+        
+        xLow = Math.max(0, xLow-distance);
+        xHigh = Math.min(xDim-1, xHigh + distance);
+        yLow = Math.max(0, yLow - distance);
+        yHigh = Math.min(yDim-1, yHigh + distance);
+        
+        for (i = 0; i < numLevels; i++) {
+            width[i] = (1.0 + 0.1*i);
+        }
+        
+        for (y = yLow; y <= yHigh; y++) {
+            for (x = xLow; x <= xHigh; x++) {
+                if (includeSet.get(x + y*xDim)) {
+                    pin = Math.abs(pinpol(x, y, snear, i1, i2));
+                    if (pin >= 1.0) {
+                        level = (int)Math.floor(10.0 * pin - 10.0);
+                        for (i = level; i < numLevels; i++) {
+                            area[i]++;
+                        }
+                    }
+                }
+            }
+        } // for (y = yLow; y <= yHigh; y++)
+        
+        for (i = 0; i < numLevels; i++) {
+            logWidth[i] = Math.log(width[i]);
+            logArea[i] = Math.log(area[i]);
+        }
+        
+        sumxy = 0.0;
+        sumx = 0.0;
+        sumy = 0.0;
+        sumxx = 0.0;
+        for (i = 0; i < numLevels; i++) {
+            sumxy += logWidth[i]*logArea[i];
+            sumx += logWidth[i];
+            sumy += logArea[i];
+            sumxx += logWidth[i]*logWidth[i];
+        }
+        bestFitFD = (sumxy - sumx*sumy/numLevels)/(sumxx - sumx*sumx/numLevels);
+        Preferences.debug("For 2D outlines a valid fractal dimension ranges from 1 to 2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
+	    return bestFitFD;
+	}
+	
+	public double boxCountBoundary2D(int xDim, int yDim) {
         // Portions of boxcount.m revision 2.10, written by F. Moisy on 07/09/2008
         // were ported to Java in creating this routine.
         // n[] is the number n of 2D dimensional boxes of size r[] needed to cover the 
@@ -504,8 +632,8 @@ public class VOIContour extends VOIBase {
         }
 	    
 	    // Preallocate the number of boxes of size r
-	    n = new int[pCeil+1];
-	    r = new int[pCeil+1];
+	    int n[] = new int[pCeil+1];
+	    int r[] = new int[pCeil+1];
 	    nInit = new int[pCeil+1];
 	    nInit[pCeil] = numBoundaryPoints;
 	    for (g = pCeil-1; g >= 0; g--) {
@@ -543,7 +671,7 @@ public class VOIContour extends VOIBase {
 	    
 	    gradn = new double[n.length];
 	    gradr = new double[n.length];
-	    localFD = new double[n.length];
+	    double localFD[] = new double[n.length];
 	    gradn[0] = ln[1] - ln[0];
 	    gradr[0] = lr[1] - lr[0];
 	    gradn[n.length-1] = ln[n.length-1] - ln[n.length-2];
