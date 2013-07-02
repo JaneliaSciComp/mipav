@@ -435,7 +435,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         
 
         raycastRenderWM.setVisible(true);
-//        raycastRenderWM.startAnimator(true);
+        raycastRenderWM.startAnimator(true);
     	
     	
     }
