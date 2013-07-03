@@ -651,12 +651,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SaveAllImages")) {
         	
              final Enumeration<ModelImage> names = userInterface.getRegisteredImages();
-
              
              while (names.hasMoreElements()) {
             	 ModelImage curr = names.nextElement();
-                 Frame frame = userInterface.getFrameContainingImage(curr);
-                 userInterface.setActiveFrame(frame);
                  saveImageInfo();
                  save(curr, new FileWriteOptions(false), -1);
              }
