@@ -358,6 +358,11 @@ public class VOIContour extends VOIBase {
 	    // Calculates fractal dimensionality of a contour
 	    // Reference "High precision  boundary fractal analysis for shape characterization"
         // by Dominique Berube and Michel Jebrak 
+	    // Koch_small.jpg voi generated from Koch snowflake by levelset
+	    // Fractal dimension calculated as 1.2664
+	    // The actual answer is log(4)/log(3) = 1.26186
+	    // x and y padded by distance on each side so that distance from any 
+	    // contour can be obtained without the user having to pad the image.
 	    int i;
 	    float xf;
 	    float yf;
@@ -397,12 +402,14 @@ public class VOIContour extends VOIBase {
         int yfl2;
         int xfc2;
         int yfc2;
-        int sliceSize = xDim * yDim;
+        int extendedXDim = xDim + 2 * distance;
+        int extendedYDim = yDim + 2 * distance;
+        int sliceSize = extendedXDim * extendedYDim;
         BitSet includeSet = new BitSet(sliceSize);
         
         for (i = 0; i < n; i++) {
-            xf = elementAt(i).X;
-            yf = elementAt(i).Y;
+            xf = elementAt(i).X + distance;
+            yf = elementAt(i).Y + distance;
             xfl = (int)Math.floor(xf);
             xfc = (int)Math.ceil(xf);
             yfl = (int)Math.floor(yf);
@@ -425,23 +432,23 @@ public class VOIContour extends VOIBase {
             else {
                 j = 0;
             }
-            xf2 = elementAt(j).X;
-            yf2 = elementAt(j).Y;
+            xf2 = elementAt(j).X + distance;
+            yf2 = elementAt(j).Y + distance;
             xfl2 = (int)Math.floor(xf2);
             xfc2 = (int)Math.ceil(xf2);
             yfl2 = (int)Math.floor(yf2);
             yfc2 = (int)Math.ceil(yf2);
-            for (y = Math.max(Math.min(yfl, yfl2)-distance, 0); y <= Math.min(Math.max(yfc, yfc2) + distance, yDim-1); y++) {
-                for (x = Math.max(Math.min(xfl, xfl2)-distance, 0); x <= Math.min(Math.max(xfc, xfc2) + distance, xDim-1); x++) {
-                    includeSet.set(x + y * xDim);
+            for (y = Math.min(yfl, yfl2)-distance; y <= Math.max(yfc, yfc2) + distance; y++) {
+                for (x = Math.min(xfl, xfl2)-distance; x <= Math.max(xfc, xfc2) + distance; x++) {
+                    includeSet.set(x + y * extendedXDim);
                 }
             }
         }
         
-        xLow = Math.max(0, xLow-distance);
-        xHigh = Math.min(xDim-1, xHigh + distance);
-        yLow = Math.max(0, yLow - distance);
-        yHigh = Math.min(yDim-1, yHigh + distance);
+        xLow = xLow-distance;
+        xHigh = xHigh + distance;
+        yLow = yLow - distance;
+        yHigh = yHigh + distance;
         
         for (i = 0; i < numLevels; i++) {
             width[i] = (1.0 + 0.1*i);
@@ -449,8 +456,8 @@ public class VOIContour extends VOIBase {
         
         for (y = yLow; y <= yHigh; y++) {
             for (x = xLow; x <= xHigh; x++) {
-                if (includeSet.get(x + y*xDim)) {
-                    pin = Math.abs(pinpol(x, y, snear, i1, i2));
+                if (includeSet.get(x + y*extendedXDim)) {
+                    pin = Math.abs(pinpol(x-distance, y-distance, snear, i1, i2));
                     if (pin >= 1.0) {
                         level = (int)Math.floor(10.0 * pin - 10.0);
                         for (i = level; i < numLevels; i++) {
