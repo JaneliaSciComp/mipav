@@ -2894,7 +2894,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                         ((ViewJFrameImage) frame).incSlice();
                     } else {
-                        ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f);
+                    	int xCoord = mouseWheelEvent.getX();
+                    	int yCoord = mouseWheelEvent.getY();
+                    	
+                        ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f, xCoord, yCoord);
                     }
                 } else {
 
@@ -2913,7 +2916,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                         ((ViewJFrameImage) frame).decSlice();
                     } else {
-                        ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);
+                    	int xCoord = mouseWheelEvent.getX();
+                    	int yCoord = mouseWheelEvent.getY();
+                    	
+                        ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f, xCoord, yCoord);
                     }
                 }
         		
