@@ -355,9 +355,8 @@ public class VOIContour extends VOIBase {
 	} // det
 	
 	public double euclideanDistance2D(int xDim, int yDim) {
+	    // Cannot get to work properly
 	    // Calculates fractal dimensionality of a contour
-	    // Reference "Quantifying biofilm structure using image analysis
-	    // by Xinmin Yang, Haluk Beyenal, Gary Harkin, and Zbigniew Lewandowski
 	    // x and y padded by distance on each side so that distance from any 
 	    // contour can be obtained without the user having to pad the image.
 	    int i;
@@ -365,11 +364,10 @@ public class VOIContour extends VOIBase {
 	    float yf;
 	    // Maximum distance from boundary considered on each side
 	    int distance = 10;
-	    // 1.0,1.1  ... distance - 0.1, distance
-	    int numLevels = 10*(distance-1) + 1;
+	    // 1, 2,  ..., distance
+	    int numLevels = distance;
 	    int area[] = new int[numLevels];
 	    double radius[] = new double[numLevels];
-	    double perimiter[] = new double[numLevels];
 	    int xLow = Integer.MAX_VALUE;
         int xHigh = Integer.MIN_VALUE;
         int yLow = Integer.MAX_VALUE;
@@ -381,8 +379,7 @@ public class VOIContour extends VOIBase {
         int i2[] = new int[1];
         int x;
         int y;
-        double logPerimiter[] = new double[numLevels];
-        double logDiameter[] = new double[numLevels];
+        double logRadius[] = new double[numLevels];
         double sumx;
         double sumy;
         double sumxx;
@@ -403,7 +400,10 @@ public class VOIContour extends VOIBase {
         int extendedYDim = yDim + 2 * distance;
         int sliceSize = extendedXDim * extendedYDim;
         BitSet includeSet = new BitSet(sliceSize);
-        double slope;
+        double gradr[] = new double[numLevels];
+        double grada[] = new double[numLevels];
+        double localSlope[] = new double[numLevels];
+        double logArea[] = new double[numLevels];
         
         for (i = 0; i < n; i++) {
             xf = elementAt(i).X + distance;
@@ -449,7 +449,7 @@ public class VOIContour extends VOIBase {
         yHigh = yHigh + distance;
         
         for (i = 0; i < numLevels; i++) {
-            radius[i] = (1.0 + 0.1*i);
+            radius[i] = (1.0 + i);
         }
         
         pin = new double[xHigh - xLow + 1][yHigh - yLow + 1];
@@ -465,7 +465,7 @@ public class VOIContour extends VOIBase {
             for (y = yLow; y <= yHigh; y++) {
                 for (x = xLow; x <= xHigh; x++) {
                     if (includeSet.get(x + y*extendedXDim)) {
-                        if (pin[x - xLow][y - yLow] < radius[i]) {
+                        if (pin[x - xLow][y - yLow] <= radius[i]) {
                             area[i]++;
                         }  
                     }
@@ -474,26 +474,37 @@ public class VOIContour extends VOIBase {
         }
         
         for (i = 0; i < numLevels; i++) {
-            perimiter[i] = area[i]/(2.0*radius[i]);
+            logRadius[i] = Math.log(radius[i]);
+            logArea[i] = Math.log(area[i]);
+        }
+        
+        gradr[0] = logRadius[1] - logRadius[0];
+        grada[0] = logArea[1] - logArea[0];
+        gradr[numLevels-1] = logRadius[numLevels-1] - logRadius[numLevels-2];
+        grada[numLevels-1] = logArea[numLevels-1] - logArea[numLevels-2];
+        for (i = 1; i < numLevels-1; i++) {
+            gradr[i] = (logRadius[i+1] - logRadius[i-1])/2.0;
+            grada[i] = (logArea[i+1] - logArea[i-1])/2.0;
         }
         
         for (i = 0; i < numLevels; i++) {
-            logDiameter[i] = Math.log(2.0*radius[i]);
-            logPerimiter[i] = Math.log(perimiter[i]);
+            localSlope[i] = grada[i]/gradr[i];
+            Preferences.debug("i = " + i + " radius = " + radius[i] + " area = " + area[i] + " local slope = " + localSlope[i] + "\n",
+                               Preferences.DEBUG_ALGORITHM);
         }
+        
         
         sumxy = 0.0;
         sumx = 0.0;
         sumy = 0.0;
         sumxx = 0.0;
         for (i = 0; i < numLevels; i++) {
-            sumxy += logDiameter[i]*logPerimiter[i];
-            sumx += logDiameter[i];
-            sumy += logPerimiter[i];
-            sumxx += logDiameter[i]*logDiameter[i];
+            sumxy += logRadius[i]*logArea[i];
+            sumx += logRadius[i];
+            sumy += logArea[i];
+            sumxx += logRadius[i]*logRadius[i];
         }
-        slope = (sumxy - sumx*sumy/numLevels)/(sumxx - sumx*sumx/numLevels);
-        bestFitFD = 1.0 - slope;
+        bestFitFD = (sumxy - sumx*sumy/numLevels)/(sumxx - sumx*sumx/numLevels);
         Preferences.debug("For 2D outlines a valid fractal dimension ranges from 1 to 2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
 	    return bestFitFD;
