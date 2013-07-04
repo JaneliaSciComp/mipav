@@ -159,8 +159,6 @@ public interface VOIStatisticList {
     String asymmetryIndexDescription = "Asymmetry Index";
     
     String fractalDimensionBoxCountDescription = "Fractal Dimension Box Count";
-    
-    String fractalDimensionEuclideanDistanceDescription = "Fractal Dimension Euclidean Distance";
 
     /**
      * strings to test for when checking on statistics to calculate.
@@ -174,7 +172,7 @@ public interface VOIStatisticList {
         minorAxisDescription, skewnessDescription, kurtosisDescription, largestSliceDistanceDescription, 
         largestDistanceDescription, median, mode, modeCount, meanCurvatureDescription, stdDevCurvatureDescription,
         meanNegativeCurvatureDescription, numberOfIndentationsCurvatureDescription, numberOfIndentationsHullDescription,
-        asymmetryIndexDescription, fractalDimensionBoxCountDescription, fractalDimensionEuclideanDistanceDescription
+        asymmetryIndexDescription, fractalDimensionBoxCountDescription
     };
 
     /** number of statistics in the list. */
