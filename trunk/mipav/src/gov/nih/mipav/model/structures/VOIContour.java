@@ -474,6 +474,7 @@ public class VOIContour extends VOIBase {
         }
         
         for (i = 0; i < numLevels; i++) {
+            // Note no need to use log(2*radius) since log(2*radius2) - log(2*radius1) = log(radius2) - log(radius1)
             logRadius[i] = Math.log(radius[i]);
             logArea[i] = Math.log(area[i]);
         }
