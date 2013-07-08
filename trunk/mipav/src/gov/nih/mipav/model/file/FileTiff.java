@@ -14676,39 +14676,88 @@ public class FileTiff extends FileBase {
 
 
                             // For the moment I compress RGB images to unsigned bytes.
-                            for (j = 0; j < nBytes; j += 6, i += 4) {
-
-                                if (((i + progress) % mod) == 0) {
-                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                            
+                           
+                            if (samplesPerPixel == 3) {
+                                for (j = 0; j < nBytes; j += 6, i += 4) {
+    
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+    
+                                    buffer[i] = 65535;
+                                    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+    
+                                    if (endianess) {
+                                        buffer[i + 1] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 1] = ((b2 << 8) + b1);
+                                    }
+    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+    
+                                    if (endianess) {
+                                        buffer[i + 2] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 2] = ((b2 << 8) + b1);
+                                    }
+    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
+    
+                                    if (endianess) {
+                                        buffer[i + 3] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 3] = ((b2 << 8) + b1);
+                                    }
                                 }
-
-                                buffer[i] = 65535;
-                                b1 = getUnsignedByte(byteBuffer, j + currentIndex);
-                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
-
-                                if (endianess) {
-                                    buffer[i + 1] = ((b1 << 8) + b2);
-                                } else {
-                                    buffer[i + 1] = ((b2 << 8) + b1);
-                                }
-
-                                b1 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
-                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
-
-                                if (endianess) {
-                                    buffer[i + 2] = ((b1 << 8) + b2);
-                                } else {
-                                    buffer[i + 2] = ((b2 << 8) + b1);
-                                }
-
-                                b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
-                                b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
-
-                                if (endianess) {
-                                    buffer[i + 3] = ((b1 << 8) + b2);
-                                } else {
-                                    buffer[i + 3] = ((b2 << 8) + b1);
-                                }
+                            } // if (samplesPerPixel == 3)
+                            else if (samplesPerPixel == 4) {
+                                for (j = 0; j < nBytes; j += 8, i += 4) {
+                                    
+                                    if (((i + progress) % mod) == 0) {
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
+                                    }
+    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 1);
+    
+                                    if (endianess) {
+                                        buffer[i] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i] = ((b2 << 8) + b1);
+                                    }
+                                    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 2);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 3);
+    
+                                    if (endianess) {
+                                        buffer[i + 1] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 1] = ((b2 << 8) + b1);
+                                    }
+    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 4);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 5);
+    
+                                    if (endianess) {
+                                        buffer[i + 2] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 2] = ((b2 << 8) + b1);
+                                    }
+    
+                                    b1 = getUnsignedByte(byteBuffer, j + currentIndex + 6);
+                                    b2 = getUnsignedByte(byteBuffer, j + currentIndex + 7);
+    
+                                    if (endianess) {
+                                        buffer[i + 3] = ((b1 << 8) + b2);
+                                    } else {
+                                        buffer[i + 3] = ((b2 << 8) + b1);
+                                    }
+                                }    
                             }
                         } // if (chunky == true)
                         else { // planar RGB configuration
