@@ -82,7 +82,7 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     private JCheckBox chckbxLeftright;
     private JCheckBox chckbxUpdown;
     private JCheckBox chckbxForwardsbackwards;
-    private JCheckBox chckbxRotation;
+    private JCheckBox chckbxRotationRX;
     private JCheckBox chckbxRotationRy;
     private JCheckBox chckbxRotationRz;
     private JSlider mouseTranslationCutoffSlider;
@@ -141,21 +141,15 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          gbc_3.gridx = 1;
          gbc_3.gridy = 0;
          mouseSpeedPanel.add(mouseTranslationSpeedLabel, gbc_3);
-         mouseTranslationSpeedSlider = new JSlider( 0, 40, 20 );
+         mouseTranslationSpeedSlider = new JSlider( 1, 10, GPURenderBase.getTranslationScaleFactor() );
          mouseTranslationSpeedSlider.addChangeListener(this);
          
          gbc_1 = new GridBagConstraints();
          gbc_1.insets = new Insets(0, 0, 5, 5);
          gbc_1.gridy = 0;
          gbc_1.anchor = GridBagConstraints.WEST;
-         
          gbc_1.gridx = 2;
          mouseSpeedPanel.add(mouseTranslationSpeedSlider, gbc_1);         
-         
-         if(DEBUG){
-        	 mouseTranslationSpeedSlider.setBorder(BorderFactory.createLineBorder(Color.black));
-        	 mouseTranslationSpeedLabel.setBorder(BorderFactory.createLineBorder(Color.black));
-         }
          
          gbc_4 = new GridBagConstraints();
          gbc_4.insets = new Insets(0, 0, 0, 5);
@@ -165,7 +159,7 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          gbc_4.gridx = 1;
          gbc_4.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc_4);
-         mouseRotationSpeedSlider = new JSlider(0, 100, 1);
+         mouseRotationSpeedSlider = new JSlider(0, 100, (int)( GPURenderBase.getRotationScaleFactor() * 100 ));
          mouseRotationSpeedSlider.setPaintTicks(true);
          mouseRotationSpeedSlider.setPaintLabels(true);
          mouseRotationSpeedSlider.setMinorTickSpacing(10);
@@ -232,18 +226,18 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          chckbxUpdown.setBounds(104, 110, 69, 23);
          chckbxUpdown.addChangeListener(this);
          
-         chckbxRotation = new JCheckBox("Rotation RX\r\n");
-         chckbxRotation.setBounds(304, 54, 83, 23);
-         chckbxRotation.addChangeListener(this);
+         chckbxRotationRX = new JCheckBox("Tilt ");
+         chckbxRotationRX.setBounds(304, 54, 83, 23);
+         chckbxRotationRX.addChangeListener(this);
          
          chckbxLeftright = new JCheckBox("Left/Right");
          chckbxLeftright.setBounds(104, 54, 73, 23);
          chckbxLeftright.addChangeListener(this);
 
          invertPanel.add(chckbxLeftright);
-         invertPanel.add(chckbxRotation);
+         invertPanel.add(chckbxRotationRX);
          
-         chckbxRotationRy = new JCheckBox("Rotation RY");
+         chckbxRotationRy = new JCheckBox("Roll");
          chckbxRotationRy.setBounds(304, 110, 83, 23);
          chckbxRotationRy.addChangeListener(this);
          
@@ -254,7 +248,7 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          invertPanel.add(chckbxRotationRy);
          invertPanel.add(chckbxUpdown);
          
-         chckbxRotationRz = new JCheckBox("Rotation RZ");
+         chckbxRotationRz = new JCheckBox("Spin");
          chckbxRotationRz.setBounds(304, 170, 83, 23);
          chckbxRotationRz.addChangeListener(this);
          invertPanel.add(chckbxRotationRz);
@@ -431,12 +425,18 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
 			GPURenderBase.invertTY();
 		}else if(source == chckbxUpdown){
 			GPURenderBase.invertTZ();
-		}else if(source == chckbxRotation){
+		}else if(source == chckbxRotationRX){
 			GPURenderBase.invertRX();
 		}else if(source == chckbxRotationRy){
 			GPURenderBase.invertRY();
 		}else if(source == chckbxRotationRz){
 			GPURenderBase.invertRZ();
+		}else if(source == mouseTranslationSpeedSlider){
+			if(!mouseTranslationSpeedSlider.getValueIsAdjusting())
+				GPURenderBase.setTranslationScaleFactor((mouseTranslationSpeedSlider.getValue()));
+		}else if(source == mouseRotationSpeedSlider){
+			if(!mouseRotationSpeedSlider.getValueIsAdjusting())
+				GPURenderBase.setRotationScaleFactor((mouseRotationSpeedSlider.getValue()));
 		}
 	}
 	
