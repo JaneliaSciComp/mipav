@@ -130,15 +130,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
     protected boolean isSpaceNavCodeRunning = false;
-    /** min and max values for the 3D mouse (the space navigator) */
+    /** actual min and max values for the 3D mouse (the space navigator) */
     private static float spaceNavMax, spaceNavMin;
-    /** min and max mouse values for calculations, this is the range of the normalized input values */
+    /** logical min and max mouse values for calculations, this is the range of the normalized input values */
     private static int mouseMax = 100, mouseMin = -100;
     /** used for slowing down the rate that the 3D mouse moves the image*/
-    private int zoomScaleFactor = 5, translationScaleFactor = 3;
-    /** cutoff values used to make mouse less sensitive, used normalized values for cross platform compatibility */ 
-    private double normalizedYAxisCuttoff = 0.0358f, normalizedXAxisCuttoff = 0.0358f, normalizedRotationCutoff = 0.0358f;
-    /** values used as cutoffs for making space navigator mouse less sensitive to the low range values that may not be intentional user input */
+    private static float rotationScaleFactor = 0.5f;
+	private static int translationScaleFactor = 3;
+    /** used as cutoffs for making space navigator mouse less sensitive to the low range values that may not be intentional user input */
     private static int translationCutoff = 10, rotationCutoff = 10;
     /** used to change the speed that the 3D mouse moves the camera*/
     private static double mouseSpeedScaler = 1;
@@ -956,7 +955,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     {
     	Vector3f oldLoc, newLoc, kLoc;
     	isSpaceNavCodeRunning = true;
-    	float scaleValue;
+    	double scaleValue;
     	
     	if(m_spkMotionObject == null)
     		return;
@@ -969,120 +968,142 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	rotateAboutZAxis();
     	
     	//process the up and down, these are mapped to the z-axis
-//    	if(normalizeSpaceNavValue( SpaceNavigatorController.getTZ() ) > normalizedYAxisCuttoff || 
-//        		normalizeSpaceNavValue( SpaceNavigatorController.getTZ() ) < -normalizedYAxisCuttoff)
+    	scaleValue = normalizeSpaceNavValue( SpaceNavigatorController.getTZ() );
     	if(useMouseTranslationCutoffs)
     	{
     		if(tZ < -translationCutoff || tZ > translationCutoff)
     		{
-    			
+    			double temp;
+    			if(tZ < 0)
+    	        {
+    	        	temp = tZ + translationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = tZ - translationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			scaleValue = temp/100;
+    		}
+    		else
+    		{
+    			scaleValue = 0;
     		}
     	}
-    	if(tZ < -translationCutoff || tZ > translationCutoff)
-    	{
-	    	oldLoc = new Vector3f();
-	    	newLoc = new Vector3f();
-	        kLoc = new Vector3f(m_akWorldAxis[1]);
-	        
-	        if(tZ < 0)
-	        {
-	        	scaleValue = (float) normalizeValue(tZ, -100, -translationCutoff, -1, 0);
-	        }
-	        else
-	        {
-	        	scaleValue = (float) normalizeValue(tZ, translationCutoff, 100, 0, 1);
-	        }
-	        
-	        kLoc.scale( (float) (invertTZ * scaleValue / ( zoomScaleFactor * mouseSpeedScaler ) ));
-	        oldLoc.copy(m_spkCamera.GetLocation());
-	        kLoc = Vector3f.sub(m_spkCamera.GetLocation(), kLoc);
-	        m_spkCamera.SetLocation(kLoc);
-	        newLoc.copy(m_spkCamera.GetLocation());
-	        newLoc.sub(oldLoc);
-	        
-	        if(tZ < 0)
-	        {
-	        	yCameraMove -= newLoc.length();
-	        }
-	        else
-	        {
-	        	yCameraMove += newLoc.length();
-	        }
-    	}
-        //process forwards and backwards (zoom), these are mapped to the Y-Axis
-//        if(normalizeSpaceNavValue( SpaceNavigatorController.getTY() ) > normalizedYAxisCuttoff || 
-//        		normalizeSpaceNavValue( SpaceNavigatorController.getTY() ) < -normalizedYAxisCuttoff)
-    	if(tY < -translationCutoff || tY > translationCutoff)
+    	oldLoc = new Vector3f();
+    	newLoc = new Vector3f();
+        kLoc = new Vector3f(m_akWorldAxis[1]);
+        
+        kLoc.scale( (float) (invertTZ * scaleValue / ( translationScaleFactor * mouseSpeedScaler ) ));
+        oldLoc.copy(m_spkCamera.GetLocation());
+        kLoc = Vector3f.sub(m_spkCamera.GetLocation(), kLoc);
+        m_spkCamera.SetLocation(kLoc);
+        newLoc.copy(m_spkCamera.GetLocation());
+        newLoc.sub(oldLoc);
+        if(tZ < 0)
         {
-	        oldLoc = new Vector3f();
-	    	newLoc = new Vector3f();
-	        kLoc = new Vector3f(m_akWorldAxis[0]); 
-	        if(tY < 0)
-	        {
-	        	scaleValue = (float) normalizeValue(tY, mouseMin, -translationCutoff, -1, 0);
-	        }
-	        else
-	        {
-	        	scaleValue = (float) normalizeValue(tY, translationCutoff, mouseMax, 0, 1);
-	        }
-	        
-	        //is there a reason to call .GetLocation() so much? like a threading issue? or can it be optimized without worrying about the
-	        //	data being changed midway.
-	        kLoc.scale((float) -(invertTY *  scaleValue / ( translationScaleFactor * mouseSpeedScaler ) ));
-	        oldLoc.copy(m_spkCamera.GetLocation());
-	        kLoc.add(m_spkCamera.GetLocation());
-	        m_spkCamera.SetLocation(kLoc);
-	        newLoc.copy(m_spkCamera.GetLocation());
-	        newLoc.sub(oldLoc);
-	        
-	        if(tY < 0)
-	        {
-	        	zCameraMove -= newLoc.length();
-	        }
-	        else
-	        {
-	        	zCameraMove += newLoc.length();
-	        }
-	        
-	        System.out.println("zCameraMove: " + zCameraMove + ", mouseSpeedScaler: " + mouseSpeedScaler);
+        	yCameraMove -= newLoc.length();
+        }
+        else
+        {
+        	yCameraMove += newLoc.length();
+        }
+    	
+        //process forwards and backwards (zoom), these are mapped to the Y-Axis
+    	scaleValue = normalizeSpaceNavValue( SpaceNavigatorController.getTY() );
+    	if(useMouseTranslationCutoffs)
+    	{
+    		if(tY < -translationCutoff || tY > translationCutoff)
+    		{
+    			double temp;
+    			if(tY < 0)
+    	        {
+    	        	temp = tY + translationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = tY - translationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			scaleValue = temp/100;
+    		}
+    		else
+    		{
+    			scaleValue = 0;
+    		}
+    	}
+        oldLoc = new Vector3f();
+    	newLoc = new Vector3f();
+        kLoc = new Vector3f(m_akWorldAxis[0]); 
+        
+        kLoc.scale((float) -(invertTY *  scaleValue / ( translationScaleFactor * mouseSpeedScaler ) ));
+        oldLoc.copy(m_spkCamera.GetLocation());
+        kLoc.add(m_spkCamera.GetLocation());
+        m_spkCamera.SetLocation(kLoc);
+        newLoc.copy(m_spkCamera.GetLocation());
+        newLoc.sub(oldLoc);
+        if(tY < 0)
+        {
+        	zCameraMove -= newLoc.length();
+        }
+        else
+        {
+        	zCameraMove += newLoc.length();
         }
         
+//        System.out.println("zCameraMove: " + zCameraMove + ", mouseSpeedScaler: " + mouseSpeedScaler);
+        
         //process the right and left movements 
-        float valueTX = normalizeSpaceNavValue( SpaceNavigatorController.getTX() );
-//        if(tX < -translationCutoff || tX > translationCutoff)
-    	if(true)
+        scaleValue = normalizeSpaceNavValue( SpaceNavigatorController.getTX() );
+        if(useMouseTranslationCutoffs)
+    	{
+        	if(tX < -translationCutoff || tX > translationCutoff)
+        	{
+        		double temp;
+    			if(tX < 0)
+    	        {
+    	        	temp = tX + translationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = tX - translationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			if(temp != 0)
+    				scaleValue = temp/100;
+    		}
+        	else
+    		{
+    			scaleValue = 0;
+    		}
+    	}
+        oldLoc = new Vector3f();
+    	newLoc = new Vector3f();
+        kLoc = new Vector3f(m_akWorldAxis[2]); 
+	        
+	    kLoc.scale((float) ( invertTX * scaleValue / ( translationScaleFactor * mouseSpeedScaler) ));
+        oldLoc.copy(m_spkCamera.GetLocation());
+        kLoc.add(m_spkCamera.GetLocation());
+        m_spkCamera.SetLocation(kLoc);
+        newLoc.copy(m_spkCamera.GetLocation());
+        newLoc.sub(oldLoc);
+        
+        if(tX < 0)
         {
-	        oldLoc = new Vector3f();
-	    	newLoc = new Vector3f();
-	        kLoc = new Vector3f(m_akWorldAxis[2]);
-	        
-	        if(tX < 0)
-	        {
-	        	scaleValue = (float) normalizeValue(tX, mouseMin, -translationCutoff, -1, 0);
-	        }
-	        else
-	        {
-	        	scaleValue = (float) normalizeValue(tX, translationCutoff, mouseMax, 0, 1);
-	        }
-	        
-	     System.out.println("tX: " + tX + ", scaleValue: " + scaleValue + ", valueTX: " + valueTX + ", tCutoff: " + translationCutoff + ", rCutoff: " + rotationCutoff);
-	        
-//	        kLoc.scale((float) ( invertTX * scaleValue / ( translationScaleFactor * mouseSpeedScaler) ));
-	     kLoc.scale((float) ( invertTX * valueTX / ( translationScaleFactor * mouseSpeedScaler) ));
-	        oldLoc.copy(m_spkCamera.GetLocation());
-	        kLoc.add(m_spkCamera.GetLocation());
-	        m_spkCamera.SetLocation(kLoc);
-	        newLoc.copy(m_spkCamera.GetLocation());
-	        newLoc.sub(oldLoc);
-	        
-	        if(tX < 0)
-	        {
-	        	xCameraMove -= newLoc.length();
-	        }
-	        else
-	        {
-	        	xCameraMove += newLoc.length();
-	        }
+        	xCameraMove -= newLoc.length();
+        }
+        else
+        {
+        	xCameraMove += newLoc.length();
         }
         
 	    //process the scene
@@ -1090,80 +1111,140 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	
 //    	printSpaceNavData();
 		isSpaceNavCodeRunning = false;
+		
+//		System.out.println("tX: " + tX + ", scaleValue: " + scaleValue + ", tCutoff: " + translationCutoff + ", rCutoff: " + rotationCutoff);
+	    
 	}
     
     private void rotateAboutXAxis()
     {
-    	double rXValue;
-//    	if( normalizedRXValue < -normalizedRotationCutoff || normalizedRXValue > normalizedRotationCutoff)
-    	if(rX < -rotationCutoff || rX > rotationCutoff)
+    	double rXValue = normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
+    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_X);
+	    double fAngle;
+	    Matrix3f kRot, kIncr = new Matrix3f();
+    	
+    	if(useMouseRotationCutoffs)
     	{
-	    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_X);
-		    double fAngle;
-		    Matrix3f kRot, kIncr = new Matrix3f();
-		    
-		    if(tY < 0)
-	        {
-	        	rXValue = normalizeValue(rX, mouseMin, -rotationCutoff, -1, 0);
-	        }
-	        else
-	        {
-	        	rXValue = normalizeValue(rX, rotationCutoff, mouseMax, 0, 1);
-	        }
-		    
-	    	kRot = m_spkMotionObject.Local.GetRotate();
-	    	fAngle = invertRX * m_fRotSpeed * rXValue;
-		
-	        kIncr.fromAxisAngle(kAxis,(float)fAngle);
-	        kRot.multLeft( kIncr ).orthonormalize();
-	        m_spkMotionObject.Local.SetRotate(kRot);
-	        kIncr = null;
-	        kAxis = null;
+    		if(rX < -rotationCutoff || rX > rotationCutoff)
+    		{
+    			double temp;
+    			if(rX < 0)
+    	        {
+    	        	temp = rX + rotationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = rX - rotationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			if(temp != 0)
+    				rXValue = temp/100;
+    		}
+    		else
+    		{
+    			rXValue = 0;
+    		}
     	}
-    	
-    	
+	    
+    	kRot = m_spkMotionObject.Local.GetRotate();
+    	fAngle = invertRX * m_fRotSpeed * rXValue * rotationScaleFactor; 
+       
+    	kIncr.fromAxisAngle(kAxis, (float)fAngle);
+        kRot.multLeft( kIncr ).orthonormalize();
+        m_spkMotionObject.Local.SetRotate(kRot);
+        kIncr = null;
+        kAxis = null;
     }
     
+    //currently mapped to the RZ axis
     private void rotateAboutYAxis()
     {
-    	float normalizedRYValue = normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
-    	if( normalizedRYValue < -normalizedRotationCutoff || normalizedRYValue > normalizedRotationCutoff)
+    	double rYValue = normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
+    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_Y);
+	    double fAngle;
+	    Matrix3f kRot, kIncr = new Matrix3f();
+	    
+	    if(useMouseRotationCutoffs)
     	{
-	    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_Y);
-		    float fAngle;
-		    Matrix3f kRot, kIncr = new Matrix3f();
-		    
-	    	kRot = m_spkMotionObject.Local.GetRotate();
-		
-	    	fAngle = invertRY * m_fRotSpeed * normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
-		
-	        kIncr.fromAxisAngle(kAxis,fAngle);
-	        kRot.multLeft( kIncr ).orthonormalize();
-	        m_spkMotionObject.Local.SetRotate(kRot);
-	        kIncr = null;
-	        kAxis = null;
+    		if(rZ < -rotationCutoff || rZ > rotationCutoff)
+    		{
+    			double temp;
+    			if(rZ < 0)
+    	        {
+    	        	temp = rZ + rotationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = rZ - rotationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			if(temp != 0)
+    				rYValue = temp/100;
+    		}
+    		else
+    		{
+    			rYValue = 0;
+    		}
     	}
+	    
+    	kRot = m_spkMotionObject.Local.GetRotate();
+    	fAngle = invertRZ * m_fRotSpeed * rYValue * rotationScaleFactor;
+	
+        kIncr.fromAxisAngle(kAxis, (float)fAngle);
+        kRot.multLeft( kIncr ).orthonormalize();
+        m_spkMotionObject.Local.SetRotate(kRot);
+        kIncr = null;
+        kAxis = null;
     }
     
+    //currently mapped to the Y axis
+    //TODO change method names to make more sense
     private void rotateAboutZAxis()
     {
-    	float normalizedRZValue = normalizeSpaceNavValue(SpaceNavigatorController.getRY());
-    	if( normalizedRZValue < -normalizedRotationCutoff || normalizedRZValue > normalizedRotationCutoff )
+    	double rZValue = normalizeSpaceNavValue(SpaceNavigatorController.getRY());
+    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_Z);
+	    double fAngle;
+	    Matrix3f kRot, kIncr = new Matrix3f();
+	
+	    if(useMouseRotationCutoffs)
     	{
-	    	Vector3f kAxis = new Vector3f(Vector3f.UNIT_Z);
-		    float fAngle;
-		    Matrix3f kRot, kIncr = new Matrix3f();
-		
-	    	kRot = m_spkMotionObject.Local.GetRotate();
-		
-	    	fAngle = invertRZ * m_fRotSpeed * normalizeSpaceNavValue(SpaceNavigatorController.getRY());
-		
-	        kIncr.fromAxisAngle(kAxis,fAngle);
-	        kRot.multLeft( kIncr ).orthonormalize();
-	        m_spkMotionObject.Local.SetRotate(kRot);
-	        kIncr = null;
-	        kAxis = null;
+    		if(rY < -rotationCutoff || rY > rotationCutoff)
+    		{
+    			double temp;
+    			if(rY < 0)
+    	        {
+    	        	temp = rY + rotationCutoff;
+    	        	if(temp > 0)
+    	        		temp = 0;
+    	        }
+    	        else
+    	        {
+    	        	temp = rY - rotationCutoff;
+    	        	if(temp < 0)
+    	        		temp = 0;
+    	        }
+    			if(temp != 0)
+    				rZValue = temp/100;
+    		}
+    		else
+    		{
+    			rZValue = 0;
+    		}
     	}
+    	kRot = m_spkMotionObject.Local.GetRotate();
+    	fAngle = invertRY * m_fRotSpeed * rZValue * rotationScaleFactor;
+	
+        kIncr.fromAxisAngle(kAxis, (float)fAngle);
+        kRot.multLeft( kIncr ).orthonormalize();
+        m_spkMotionObject.Local.SetRotate(kRot);
+        kIncr = null;
+        kAxis = null;
     }
     
     private void setMouseSpeedModifier()
@@ -1294,19 +1375,46 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 		return (int)rotationCutoff;
 	}
 
-	public int getZoomScaleFactor() {
-		return zoomScaleFactor;
-	}
-
-	public void setZoomScaleFactor(int zoomScaleFactor) {
-		this.zoomScaleFactor = zoomScaleFactor;
-	}
-
-	public int getTranslationScaleFactor() {
+	public static int getTranslationScaleFactor() {
 		return translationScaleFactor;
 	}
+	/**
+	 * the translationScaleFactor is used to change how fast the camera moves around the object
+	 * ranging from 1, the fastest, to 10, the slowest
+	*/
+	public static void setTranslationScaleFactor(int i) {
+		if(i >= 1 && i <= 10)
+			translationScaleFactor = i;
+	}
 
-	public void setTranslationScaleFactor(int translationScaleFactor) {
-		this.translationScaleFactor = translationScaleFactor;
+	public boolean isUseMouseTranslationCutoffs() {
+		return useMouseTranslationCutoffs;
+	}
+
+	public void setUseMouseTranslationCutoffs(boolean useMouseTranslationCutoffs) {
+		this.useMouseTranslationCutoffs = useMouseTranslationCutoffs;
+	}
+
+	public boolean isUseMouseRotationCutoffs() {
+		return useMouseRotationCutoffs;
+	}
+
+	public void setUseMouseRotationCutoffs(boolean useMouseRotationCutoffs) {
+		this.useMouseRotationCutoffs = useMouseRotationCutoffs;
+	}
+
+	public static float getRotationScaleFactor() {
+		return rotationScaleFactor;
+	}
+	
+	/**
+	 * the rotationScaleFactor is used to change how fast the camera moves around the object
+	 * ranging from 1%, the slowest, to 100%, the fastest
+	 * 
+	 * @param rotationScaleFactor - value must be between 0.0f and 1.0f representing the percentage to scale the raw input speed
+	 */
+	public static void setRotationScaleFactor(float rotationScaleFactor) {//TODO finish making the type/values consistent for this and gui
+		if(0f <= rotationScaleFactor && rotationScaleFactor <= 1.0f)
+			GPURenderBase.rotationScaleFactor = rotationScaleFactor;
 	}
 }
