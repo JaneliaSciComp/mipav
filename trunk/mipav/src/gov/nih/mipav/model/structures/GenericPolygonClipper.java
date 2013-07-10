@@ -61,7 +61,7 @@ Copyright: (C) Advanced Interfaces Group,
     private static final int CLIP = 0;
     private static final int SUBJ = 1;
 
-    private enum gpc_op {
+    public enum gpc_op {
         // Set operation type
         GPC_DIFF, // Difference
         GPC_INT, // Intersection
@@ -119,34 +119,34 @@ Copyright: (C) Advanced Interfaces Group,
         // Internal vertex list
         double x; // X coordinate component
         double y; // Y coordinate component
-        vertex_node next[] = new vertex_node[1]; // Pointer to next vertex in list
+        vertex_node next; // Pointer to next vertex in list
     }
     
     private class polygon_node {
         // Internal contour / tristripe type
         int active; // Active flag / vertex count
         int hole; // Hole / external contour flag
-        vertex_node v[][] = new vertex_node[1][2]; // Left and right vertex node pointers
-        polygon_node next[] = new polygon_node[1]; // Pointer to next polygon contour
-        polygon_node proxy[] = new polygon_node[1]; // Pointer to actual structure used
+        vertex_node v[] = new vertex_node[2]; // Left and right vertex node pointers
+        polygon_node next; // Pointer to next polygon contour
+        polygon_node proxy; // Pointer to actual structure used
     }
     
     private class edge_node {
-        gpc_vertex vertex; // Piggy-backed contour vertex data
-        gpc_vertex bot; // Edge lower (x, y) coordinate
-        gpc_vertex top; // Edge upper (x, y) coordinate
+        gpc_vertex vertex = new gpc_vertex(); // Piggy-backed contour vertex data
+        gpc_vertex bot = new gpc_vertex(); // Edge lower (x, y) coordinate
+        gpc_vertex top = new gpc_vertex(); // Edge upper (x, y) coordinate
         double xb; // Scanbeam bottom x coordinate
         double xt; // Scanbeam top x coordinate
         double dx; // Change in x for a unit y increase
         int type; // Clip / subject edge flag
-        int bundle[][] = new int[2][2]; // Bundle edge flags
+        boolean bundle[][] = new boolean[2][2]; // Bundle edge flags
         int bside[] = new int[2]; // Bundle left / right indicators
         bundle_state bstate[] = new bundle_state[2]; // Edge bundle state
-        polygon_node outp[][] = new polygon_node[1][2]; // Output polygon / tristrip pointer
-        edge_node prev[] = new edge_node[1]; // Previous edge in the AET
-        edge_node next[] = new edge_node[1]; // Next edge in the AET
-        edge_node pred[] = new edge_node[1]; // Edge connected at the lower end
-        edge_node succ[] = new edge_node[1]; // Edge connected at the upper end
+        polygon_node outp[] = new polygon_node[2]; // Output polygon / tristrip pointer
+        edge_node prev; // Previous edge in the AET
+        edge_node next; // Next edge in the AET
+        edge_node pred; // Edge connected at the lower end
+        edge_node succ; // Edge connected at the upper end
         edge_node next_bound[] = new edge_node[1]; // Pointer to the next bound in LMT
     }
     
@@ -154,14 +154,14 @@ Copyright: (C) Advanced Interfaces Group,
         // Local minima table
         double y; // Y coordinate at local minimum
         edge_node first_bound[] = new edge_node[1]; // Pointer to bound list
-        lmt_node next[] = new lmt_node[1]; // Pointer to next local minimum
+        lmt_node next; // Pointer to next local minimum
     }
     
     private class it_node {
         // Intersection table
-        edge_node ie[][] = new edge_node[1][2]; // Intersecting edge (bundle) pair
+        edge_node ie[] = new edge_node[2]; // Intersecting edge (bundle) pair
         gpc_vertex point; // Point of intersection
-        it_node next[] = new it_node[1]; // The next intersection table node
+        it_node next; // The next intersection table node
     }
     
     private class bbox {
@@ -190,11 +190,98 @@ Copyright: (C) Advanced Interfaces Group,
     
     private boolean FWD_MIN(edge_node v[], int i, int n) {
         return ((v[PREV_INDEX(i, n)].vertex.y >= v[i].vertex.y) &&
-                (v[NEXT_INDEX(i, n)].vertex.y >= v[i].vertex.y));
+                (v[NEXT_INDEX(i, n)].vertex.y > v[i].vertex.y));
     }
     
     private boolean NOT_FMAX(edge_node v[], int i, int n) {
         return (v[NEXT_INDEX(i, n)].vertex.y > v[i].vertex.y);
+    }
+    
+    private boolean REV_MIN(edge_node v[], int i, int n) {
+        return ((v[PREV_INDEX(i, n)].vertex.y > v[i].vertex.y) &&
+                (v[NEXT_INDEX(i, n)].vertex.y >= v[i].vertex.y));
+    }
+    
+    private boolean NOT_RMAX(edge_node v[], int i, int n) {
+        return (v[PREV_INDEX(i, n)].vertex.y > v[i].vertex.y);
+    }
+    
+    private void reset_lmt(lmt_node lmt) {
+        lmt_node lmtn;
+        while (lmt != null) {
+            lmtn = lmt.next;
+            lmt = null;
+            lmt = lmtn;
+        }
+    }
+    
+    private void insert_bound(edge_node b[], edge_node e[], int index) {
+        edge_node existing_bound;
+        if (b[0] == null) {
+            // Link node e to the tail of the list
+            b[0] = e[index];
+        }
+        else {
+            // Do primary sort on the x field
+            if (e[index].bot.x < b[0].bot.x) {
+                // Insert a new node mid-list
+                existing_bound = b[0];
+                b[0] = e[index];
+                b[0].next_bound[0] = existing_bound;
+            }
+            else {
+                if (e[index].bot.x == b[0].bot.x) {
+                    // Do secondary sort on the dx field
+                    if (e[index].dx < b[0].dx) {
+                        // Insert a new node mid-list
+                        existing_bound = b[0];
+                        b[0] = e[index];
+                        b[0].next_bound[0] = existing_bound;
+                    }
+                    else {
+                        // Head further down the list
+                        insert_bound(b[0].next_bound, e, index);
+                    }
+                }
+                else {
+                    // Head further down the list
+                    insert_bound(b[0].next_bound, e, index);
+                }
+            }
+        }
+    }
+    
+    private edge_node[] bound_list(lmt_node lmt, double y) {
+        lmt_node existing_node;
+        if (lmt == null) {
+            // Add node onto the tail end of the LMT */
+            lmt = new lmt_node();
+            lmt.y = y;
+            lmt.first_bound[0] = null;
+            lmt.next = null;
+            return lmt.first_bound;
+        }
+        else {
+            if (y < lmt.y) {
+                // Insert a new LMT node before the current node
+                existing_node = lmt;
+                lmt = new lmt_node();
+                lmt.y = y;
+                lmt.first_bound[0] = null;
+                lmt.next = existing_node;
+                return lmt.first_bound;
+            }
+            else {
+                if (y > lmt.y) {
+                    // Head further up the lmt
+                    return bound_list(lmt.next, y);
+                }
+                else {
+                    // Use this existing LMT node
+                    return lmt.first_bound;
+                }
+            }
+        }
     }
     
     private void add_to_sbtree(int entries[], sb_tree sbtree, double y) {
@@ -219,6 +306,25 @@ Copyright: (C) Advanced Interfaces Group,
         }
     }
     
+    private void build_sbt(int entries[], double sbt[], sb_tree sbtree) {
+        if (sbtree.less != null) {
+            build_sbt(entries, sbt, sbtree.less);
+        }
+        sbt[entries[0]] = sbtree.y;
+        entries[0]++;
+        if (sbtree.more != null) {
+            build_sbt(entries, sbt, sbtree.more);
+        }
+    }
+    
+    private void free_sbtree(sb_tree sbtree) {
+        if (sbtree != null) {
+            free_sbtree(sbtree.less);
+            free_sbtree(sbtree.more);
+            sbtree = null;
+        }
+    }
+    
     private int count_optimal_vertices(gpc_vertex_list c) {
         int result = 0;
         int i;
@@ -234,10 +340,9 @@ Copyright: (C) Advanced Interfaces Group,
         return result;
     }
     
-    private edge_node[] build_lmt(lmt_node[] lmt, sb_tree sbtree, int[] sbt_entries, VOIBaseVector p, int type, gpc_op op) {
+    private edge_node[] build_lmt(lmt_node lmt, sb_tree sbtree, int[] sbt_entries, VOIBaseVector p, int type, gpc_op op) {
         int c;
         int i;
-        int j;
         int min;
         int max;
         int num_edges;
@@ -245,10 +350,11 @@ Copyright: (C) Advanced Interfaces Group,
         int num_vertices;
         int total_vertices = 0;
         int e_index = 0;
-        edge_node e[] = new edge_node[]{new edge_node()};
+        edge_node e[];
         edge_node edge_table[];
         gpc_vertex vertex[];
         gpc_vertex_list vl;
+        int index;
         
         for (c = 0; c < p.size(); c++) {
             if (((type == SUBJ) && (!subjContributingStatus[c])) || ((type == CLIP) && (!clipContributingStatus[c]))) {
@@ -297,25 +403,140 @@ Copyright: (C) Advanced Interfaces Group,
                         add_to_sbtree(sbt_entries, sbtree, edge_table[num_vertices].vertex.y);
                         num_vertices++;
                     }
+                }
                     
-                    // Do the contour forward pass
-                    for (min = 0; min < num_vertices; min++) {
-                        // If a forward local minimum ...
-                        if (FWD_MIN(edge_table, min, num_vertices)) {
-                            // Search for the next local maximum...
-                            num_edges = 1;
-                            max = NEXT_INDEX(min, num_vertices);
-                            while (NOT_FMAX(edge_table, max, num_vertices)) {
-                                num_edges++;
-                                max = NEXT_INDEX(max, num_vertices);
-                            }
-                        } // if (FWD_MIN(edge_table, min, num_vertices))
-                    } // for (min = 0; min < num_vertices; min++)
-                } // for (i = 0; i < p.get(c).size(); i++)
+                // Do the contour forward pass
+                for (min = 0; min < num_vertices; min++) {
+                    // If a forward local minimum ...
+                    if (FWD_MIN(edge_table, min, num_vertices)) {
+                        // Search for the next local maximum...
+                        num_edges = 1;
+                        max = NEXT_INDEX(min, num_vertices);
+                        while (NOT_FMAX(edge_table, max, num_vertices)) {
+                            num_edges++;
+                            max = NEXT_INDEX(max, num_vertices);
+                        }
+                        
+                        // Build the next edge list
+                        index = e_index;
+                        e_index += num_edges;
+                        v = min;
+                        edge_table[index].bstate[BELOW] = bundle_state.UNBUNDLED;
+                        edge_table[index].bundle[BELOW][CLIP] = false;
+                        edge_table[index].bundle[BELOW][SUBJ] = false;
+                        for (i = 0; i < num_edges; i++) {
+                            edge_table[index + i].xb = edge_table[v].vertex.x;
+                            edge_table[index + i].bot.x = edge_table[v].vertex.x;
+                            edge_table[index + i].bot.y = edge_table[v].vertex.y;
+                            
+                            v = NEXT_INDEX(v, num_vertices);
+                            
+                            edge_table[index + i].top.x = edge_table[v].vertex.x;
+                            edge_table[index + i].top.y = edge_table[v].vertex.y;
+                            edge_table[index + i].dx = (edge_table[v].vertex.x - edge_table[index + i].bot.x)/
+                                                       (edge_table[index + i].top.y - edge_table[index + i].bot.y);
+                            edge_table[index + i].type = type;
+                            edge_table[index + i].outp[ABOVE] = null;
+                            edge_table[index + i].outp[BELOW] = null;
+                            edge_table[index + i].next = null;
+                            edge_table[index + i].prev = null;
+                            edge_table[index + i].succ = ((num_edges > 1) && (i < (num_edges-1))) ? edge_table[index + i + 1] : null; 
+                            edge_table[index + i].pred = ((num_edges > 1) && (i > 0)) ? edge_table[index + i - 1] : null;
+                            edge_table[index + i].next_bound[0] = null;
+                            edge_table[index + i].bside[CLIP] = (op == gpc_op.GPC_DIFF) ? RIGHT : LEFT;
+                            edge_table[index + i].bside[SUBJ] = LEFT;
+                        } // for (i = 0; i < num_edges; i++)
+                        insert_bound(bound_list(lmt, edge_table[min].vertex.y), edge_table, index);
+                    } // if (FWD_MIN(edge_table, min, num_vertices))
+                } // for (min = 0; min < num_vertices; min++)
+                
+                // Do the contour reverse pass
+                for (min = 0; min < num_vertices; min++) {
+                    // If a reverse local minimum...
+                    if (REV_MIN(edge_table, min, num_vertices)) {
+                        // Search for the previous local maximum...
+                        num_edges = 1;
+                        max = PREV_INDEX(min, num_vertices);
+                        while (NOT_RMAX(edge_table, max, num_vertices)) {
+                            num_edges++;
+                            max = PREV_INDEX(max, num_vertices);
+                        }
+                        
+                        // Build the previous edge list
+                        index = e_index;
+                        e_index += num_edges;
+                        v = min;
+                        edge_table[index].bstate[BELOW] = bundle_state.UNBUNDLED;
+                        edge_table[index].bundle[BELOW][CLIP] = false;
+                        edge_table[index].bundle[BELOW][SUBJ] = false;
+                        for (i = 0; i < num_edges; i++) {
+                            edge_table[index + i].xb = edge_table[v].vertex.x;
+                            edge_table[index + i].bot.x = edge_table[v].vertex.x;
+                            edge_table[index + i].bot.y = edge_table[v].vertex.y;
+                            
+                            v = PREV_INDEX(v, num_vertices);
+                            
+                            edge_table[index + i].top.x = edge_table[v].vertex.x;
+                            edge_table[index + i].top.y = edge_table[v].vertex.y;
+                            edge_table[index + i].dx = (edge_table[v].vertex.x - edge_table[index + i].bot.x)/
+                                                       (edge_table[index + i].top.y - edge_table[index + i].bot.y);
+                            edge_table[index + i].type = type;
+                            edge_table[index + i].outp[ABOVE] = null;
+                            edge_table[index + i].outp[BELOW] = null;
+                            edge_table[index + i].next = null;
+                            edge_table[index + i].prev = null;
+                            edge_table[index + i].succ = ((num_edges > 1) && (i < (num_edges - 1))) ? edge_table[index + i + 1] : null;
+                            edge_table[index + i].pred = ((num_edges > 1) && (i > 0)) ? edge_table[index + i - 1] : null;
+                            edge_table[index + i].next_bound[0] = null;
+                            edge_table[index + i].bside[CLIP] = (op == gpc_op.GPC_DIFF) ? RIGHT : LEFT;
+                            edge_table[index + i].bside[SUBJ] = LEFT;
+                        } // for (i = 0; i < num_edges; i++)
+                        insert_bound(bound_list(lmt, edge_table[min].vertex.y), edge_table, index);
+                    } // if (REV_MIN(edge_table, min, num_vertices))
+                } // for (min = 0; min < num_vertices; min++)
             } // else
         } // for (c = 0; c < p.size; c++)
         
         return edge_table;
+    }
+    
+    private void add_edge_to_aet(edge_node aet, edge_node edge, edge_node prev) {
+        if (aet == null) {
+            // Append edge onto the tail end of the AET
+            aet = edge;
+            edge.prev = prev;
+            edge.next = null;
+        }
+        else {
+            // Do primary sort on the xb field
+            if (edge.xb < aet.xb) {
+                // Insert edge here (before the AET edge)
+                edge.prev = prev;
+                edge.next = aet;
+                aet.prev = edge;
+                aet = edge;
+            }
+            else {
+                if (edge.xb == aet.xb) {
+                    // Do secondary sort on the dx field
+                    if (edge.dx < aet.dx) {
+                        // Insert edge here (before the AET edge)
+                        edge.prev = prev;
+                        edge.next = aet;
+                        aet.prev = edge;
+                        aet = edge;
+                    }
+                    else {
+                        // Head further into the AET
+                        add_edge_to_aet(aet.next, edge, aet);
+                    }
+                }
+                else {
+                    // Head further into the AET
+                    add_edge_to_aet(aet.next, edge, aet);
+                }
+            }
+        }
     }
     
     private bbox[] create_contour_bboxes(VOIBaseVector p) {
@@ -327,6 +548,7 @@ Copyright: (C) Advanced Interfaces Group,
         
         // Construct contour bounding boxes
         for (c = 0; c < p.size(); c++) {
+            box[c] = new bbox();
             // Initialize bounding box extent
             box[c].xmin = Double.MAX_VALUE;
             box[c].ymin = Double.MAX_VALUE;
@@ -418,6 +640,9 @@ Copyright: (C) Advanced Interfaces Group,
         o_table = null;
     }
     
+    
+
+    
     public GenericPolygonClipper(gpc_op op, VOI subj, VOI clip,
                                  VOI result) {
         
@@ -439,17 +664,17 @@ Copyright: (C) Advanced Interfaces Group,
         sb_tree sbtree = null;
         it_node it[] = null;
         it_node intersect[] = new it_node[]{new it_node()};
-        edge_node edge[] = new edge_node[]{new edge_node()};
+        edge_node edge;
         edge_node prev_edge[] = new edge_node[]{new edge_node()};
         edge_node next_edge[] = new edge_node[]{new edge_node()};
         edge_node succ_edge[] = new edge_node[]{new edge_node()};
         edge_node e0[] = new edge_node[]{new edge_node()};
         edge_node e1[] = new edge_node[]{new edge_node()};
-        edge_node aet[] = null;
+        edge_node aet = null;
         edge_node c_heap[] = null;
         edge_node s_heap[] = null;
-        lmt_node lmt[] = null;
-        lmt_node local_min[] = new lmt_node[]{new lmt_node()};
+        lmt_node lmt = null;
+        lmt_node local_min;
         polygon_node outpoly[] = null;
         polygon_node p[] = new polygon_node[]{new polygon_node()};
         polygon_node q[] = new polygon_node[]{new polygon_node()};
@@ -466,7 +691,7 @@ Copyright: (C) Advanced Interfaces Group,
         int v;
         int contributing;
         int search;
-        int scanbeam = 0;
+        int scanbeam[] = new int[]{0};
         int sbt_entries[] = new int[]{0};
         int vclass = 0;
         int bl;
@@ -501,6 +726,53 @@ Copyright: (C) Advanced Interfaces Group,
         if (subjCurves.size() > 0) {
             s_heap = build_lmt(lmt, sbtree, sbt_entries, subjCurves, SUBJ, op);
         }
+        if (clipCurves.size() > 0) {
+            c_heap = build_lmt(lmt, sbtree, sbt_entries, clipCurves, CLIP, op);
+        }
+        
+        // Return a null result if no contours contribute
+        if (lmt == null) {
+            s_heap = null;
+            c_heap = null;
+            System.out.println("lmt == null");
+            return;
+        }
+        
+        // Build scanbeam table from scanbeam tree
+        sbt = new double[sbt_entries[0]];
+        build_sbt(scanbeam, sbt, sbtree);
+        scanbeam[0] = 0;
+        free_sbtree(sbtree);
+        
+        // Invert clip polygon for difference operation
+        if (op == gpc_op.GPC_DIFF) {
+            parity[CLIP] = RIGHT;
+        }
+        
+        local_min = lmt;
+        
+        // Process each scanbeam
+        while (scanbeam[0] < sbt_entries[0]) {
+          // Set yb and yt to the bottom and top of the scanbeam
+            yb = sbt[scanbeam[0]++];
+            if (scanbeam[0] < sbt_entries[0]) {
+                yt = sbt[scanbeam[0]];
+                dy = yt - yb;
+            }
+            
+            // SCANBEAM BOUNDARY PROCESSING
+            
+            // If LMT node corresponding to yb exists
+            if (local_min != null) {
+                if (local_min.y == yb) {
+                    // Add edges starting at this local minimum to the AET
+                    for (edge = local_min.first_bound[0]; edge != null; edge = edge.next_bound[0]) {
+                        add_edge_to_aet(aet, edge, null);
+                    }
+                } // if (local_min.y == yb)
+            } // if (local_min != null)
+        } // while (scanbeam[0] < sbt_entries[0])
+        System.out.println("I did GPC");
     } 
     
 }
