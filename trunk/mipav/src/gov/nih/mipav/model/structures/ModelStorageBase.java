@@ -2413,6 +2413,137 @@ public class ModelStorageBase extends ModelSerialCloneable {
         maskBits = null;
     }
 
+    /**
+     */
+    public final synchronized Vector3f findMax( final int tSlice, final int slice,
+            final Vector3f[] verts, final float diameter, final boolean bInterpolate) throws IOException {
+
+        try {
+            setLock(ModelStorageBase.W_LOCKED);
+        } catch (final IOException error) {
+            releaseLock();
+            throw error;
+        }
+
+        final int iBound = (int)(Math.ceil(verts[1].X - verts[0].X));
+        final int jBound = (int)(Math.ceil(verts[3].Y - verts[0].Y));
+
+        /*
+         * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
+         * coordinate-systems: transformation:
+         */
+        final int iFactor = 1;
+        final int jFactor = dimExtents[0];
+        final int kFactor = dimExtents[0] * dimExtents[1];
+        final int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+
+        if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
+                || (bufferType == DataType.ARGB_FLOAT)) {
+            buffFactor = 4;
+        }
+        
+        Vector3f center = new Vector3f();
+        for ( int i = 0; i < verts.length; i++ )
+        {
+        	center.add(verts[i]);
+        }
+        center.scale( 1f/(float)verts.length );
+        
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].X - verts[0].X;
+        float ySlopeX = verts[1].Y - verts[0].Y;
+        float zSlopeX = verts[1].Z - verts[0].Z;
+
+        float xSlopeY = verts[3].X - verts[0].X;
+        float ySlopeY = verts[3].Y - verts[0].Y;
+        float zSlopeY = verts[3].Z - verts[0].Z;
+
+        float x0 = verts[0].X;
+        float y0 = verts[0].Y;
+        float z0 = verts[0].Z;
+
+        xSlopeX /= (iBound - 1);
+        ySlopeX /= (iBound - 1);
+        zSlopeX /= (iBound - 1);
+
+        xSlopeY /= (jBound - 1);
+        ySlopeY /= (jBound - 1);
+        zSlopeY /= (jBound - 1);
+
+        /* loop over the 2D image (values) we're writing into */
+        float x = x0;
+        float y = y0;
+        float z = z0;
+        
+        Vector3f currentPoint = new Vector3f();
+
+        float maxValue = -Float.MAX_VALUE;
+        float maxX = -1, maxY = -1, maxZ = -1;
+        for (int j = 0; j < jBound; j++) {
+
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+
+            for (int i = 0; i < iBound; i++) {
+                final int iIndex = (int) Math.round(x);
+                final int jIndex = (int) Math.round(y);
+                final int kIndex = (int) Math.round(z);
+
+                /* calculate the ModelImage space index: */
+                final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
+
+                currentPoint.set(x, y, z);
+                float distance = center.distance(currentPoint);
+                
+                /* Bounds checking, if out of bounds, set to zero: */
+                if ( (distance > diameter ) ||
+                		( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                		|| ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+
+                } else {
+                	float val;
+                	if (bInterpolate) {
+                		val = getFloatTriLinearBounds(x, y, z);
+                	} else {
+                		val = getFloat(index);
+                	}
+                	if ( val > maxValue )
+                	{
+                		maxValue = val;
+                		maxX = x;
+                		maxY = y;
+                		maxZ = z;
+                	}
+                }
+
+                /*
+                 * Inner loop: Move to the next diagonal point along the x-direction of the plane, using the xSlopeX,
+                 * ySlopeX and zSlopeX values:
+                 */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+
+            /*
+             * Outer loop: Move to the next diagonal point along the y-direction of the plane, using the xSlopeY,
+             * ySlopeY and zSlopeY values:
+             */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+        if ( maxX != -1 && maxY != -1 && maxZ != -1 )
+        {
+        	return new Vector3f( Math.round(maxX), Math.round(maxY), Math.round(maxZ) );
+        }
+        return null;
+    }
+
     
     /**
      * Export magnitude data to values array.
