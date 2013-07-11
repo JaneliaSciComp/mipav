@@ -52,6 +52,11 @@ Copyright: (C) Advanced Interfaces Group,
     There is no warranty or other guarantee of fitness of this
     software for any purpose. It is provided solely "as is".*/
     
+    private static final double DBL_EPSILON = 2.2204460492503131e-16;
+    
+    // Increase GPC_EPSILON to encourage merging of near coincident edges
+    private static final double GPC_EPSILON = DBL_EPSILON;
+    
     private static final int LEFT = 0;
     private static final int RIGHT = 1;
     
@@ -111,8 +116,8 @@ Copyright: (C) Advanced Interfaces Group,
     private class sb_tree {
         // Scanbeam tree
         double y; // Scanbeam node y value
-        sb_tree less; // Pointer to nodes with lower y
-        sb_tree more; // Pointer to nodes with higher y
+        sb_tree less[] = new sb_tree[1]; // Pointer to nodes with lower y
+        sb_tree more[] = new sb_tree[1]; // Pointer to nodes with higher y
     }
     
     private class vertex_node {
@@ -139,12 +144,12 @@ Copyright: (C) Advanced Interfaces Group,
         double xt; // Scanbeam top x coordinate
         double dx; // Change in x for a unit y increase
         int type; // Clip / subject edge flag
-        boolean bundle[][] = new boolean[2][2]; // Bundle edge flags
+        int bundle[][] = new int[2][2]; // Bundle edge flags
         int bside[] = new int[2]; // Bundle left / right indicators
         bundle_state bstate[] = new bundle_state[2]; // Edge bundle state
         polygon_node outp[] = new polygon_node[2]; // Output polygon / tristrip pointer
         edge_node prev; // Previous edge in the AET
-        edge_node next; // Next edge in the AET
+        edge_node next[] = new edge_node[1]; // Next edge in the AET
         edge_node pred; // Edge connected at the lower end
         edge_node succ; // Edge connected at the upper end
         edge_node next_bound[] = new edge_node[1]; // Pointer to the next bound in LMT
@@ -154,7 +159,7 @@ Copyright: (C) Advanced Interfaces Group,
         // Local minima table
         double y; // Y coordinate at local minimum
         edge_node first_bound[] = new edge_node[1]; // Pointer to bound list
-        lmt_node next; // Pointer to next local minimum
+        lmt_node next[] = new lmt_node[1]; // Pointer to next local minimum
     }
     
     private class it_node {
@@ -172,8 +177,20 @@ Copyright: (C) Advanced Interfaces Group,
         double ymax; // Maximum y coordinate
     }
     
+    // Horizontal edge state transitions within the scanbeam boundary
+    h_state next_h_state[][] = new h_state[][] 
+            //             ABOVE                          BELOW                         CROSS
+            //             L           R                  L           R                 L           R
+            /* NH */     {{h_state.BH, h_state.TH,        h_state.TH, h_state.BH,       h_state.NH, h_state.NH},
+            /* BH */      {h_state.NH, h_state.NH,        h_state.NH, h_state.NH,       h_state.TH, h_state.TH},
+            /* TH */      {h_state.NH, h_state.NH,        h_state.NH, h_state.NH,       h_state.BH, h_state.BH}}; 
+    
     private boolean clipContributingStatus[];
     private boolean subjContributingStatus[];
+    
+    private boolean EQ(double a, double b) {
+        return (Math.abs(a - b) <= GPC_EPSILON);
+    }
     
     private int PREV_INDEX(int i, int n) {
         return ((i - 1 + n) % n);
@@ -209,13 +226,16 @@ Copyright: (C) Advanced Interfaces Group,
     private void reset_lmt(lmt_node lmt) {
         lmt_node lmtn;
         while (lmt != null) {
-            lmtn = lmt.next;
+            lmtn = lmt.next[0];
             lmt = null;
             lmt = lmtn;
         }
     }
     
     private void insert_bound(edge_node b[], edge_node e[], int index) {
+        // Original code for this routine does not seem to make sense
+        // It has (*b)[0].bot.x, (*b)[0].dx which seem to be
+        // in contradiction with (*b)->next_bound
         edge_node existing_bound;
         if (b[0] == null) {
             // Link node e to the tail of the list
@@ -251,77 +271,77 @@ Copyright: (C) Advanced Interfaces Group,
         }
     }
     
-    private edge_node[] bound_list(lmt_node lmt, double y) {
+    private edge_node[] bound_list(lmt_node lmt[], double y) {
         lmt_node existing_node;
-        if (lmt == null) {
+        if (lmt[0] == null) {
             // Add node onto the tail end of the LMT */
-            lmt = new lmt_node();
-            lmt.y = y;
-            lmt.first_bound[0] = null;
-            lmt.next = null;
-            return lmt.first_bound;
+            lmt[0] = new lmt_node();
+            lmt[0].y = y;
+            lmt[0].first_bound[0] = null;
+            lmt[0].next[0] = null;
+            return lmt[0].first_bound;
         }
         else {
-            if (y < lmt.y) {
+            if (y < lmt[0].y) {
                 // Insert a new LMT node before the current node
-                existing_node = lmt;
-                lmt = new lmt_node();
-                lmt.y = y;
-                lmt.first_bound[0] = null;
-                lmt.next = existing_node;
-                return lmt.first_bound;
+                existing_node = lmt[0];
+                lmt[0] = new lmt_node();
+                lmt[0].y = y;
+                lmt[0].first_bound[0] = null;
+                lmt[0].next[0] = existing_node;
+                return lmt[0].first_bound;
             }
             else {
-                if (y > lmt.y) {
+                if (y > lmt[0].y) {
                     // Head further up the lmt
-                    return bound_list(lmt.next, y);
+                    return bound_list(lmt[0].next, y);
                 }
                 else {
                     // Use this existing LMT node
-                    return lmt.first_bound;
+                    return lmt[0].first_bound;
                 }
             }
         }
     }
     
-    private void add_to_sbtree(int entries[], sb_tree sbtree, double y) {
-        if (sbtree == null) {
-            sbtree = new sb_tree(); 
-            sbtree.y = y;
-            sbtree.less = null;
-            sbtree.more = null;
+    private void add_to_sbtree(int entries[], sb_tree sbtree[], double y) {
+        if (sbtree[0] == null) {
+            sbtree[0] = new sb_tree(); 
+            sbtree[0].y = y;
+            sbtree[0].less[0] = null;
+            sbtree[0].more[0] = null;
             entries[0]++;
         }
         else {
-            if (sbtree.y > y) {
+            if (sbtree[0].y > y) {
                 // Head into the 'less' sub-tree
-                add_to_sbtree(entries, sbtree.less, y);
+                add_to_sbtree(entries, sbtree[0].less, y);
             }
             else {
-                if (sbtree.y < y) {
+                if (sbtree[0].y < y) {
                     // Head into the 'more' sub-tree
-                    add_to_sbtree(entries, sbtree.more, y);
+                    add_to_sbtree(entries, sbtree[0].more, y);
                 }
             }
         }
     }
     
     private void build_sbt(int entries[], double sbt[], sb_tree sbtree) {
-        if (sbtree.less != null) {
-            build_sbt(entries, sbt, sbtree.less);
+        if (sbtree.less[0] != null) {
+            build_sbt(entries, sbt, sbtree.less[0]);
         }
         sbt[entries[0]] = sbtree.y;
         entries[0]++;
-        if (sbtree.more != null) {
-            build_sbt(entries, sbt, sbtree.more);
+        if (sbtree.more[0] != null) {
+            build_sbt(entries, sbt, sbtree.more[0]);
         }
     }
     
-    private void free_sbtree(sb_tree sbtree) {
-        if (sbtree != null) {
-            free_sbtree(sbtree.less);
-            free_sbtree(sbtree.more);
-            sbtree = null;
+    private void free_sbtree(sb_tree sbtree[]) {
+        if (sbtree[0] != null) {
+            free_sbtree(sbtree[0].less);
+            free_sbtree(sbtree[0].more);
+            sbtree[0] = null;
         }
     }
     
@@ -340,7 +360,7 @@ Copyright: (C) Advanced Interfaces Group,
         return result;
     }
     
-    private edge_node[] build_lmt(lmt_node lmt, sb_tree sbtree, int[] sbt_entries, VOIBaseVector p, int type, gpc_op op) {
+    private edge_node[] build_lmt(lmt_node lmt[], sb_tree sbtree[], int[] sbt_entries, VOIBaseVector p, int type, gpc_op op) {
         int c;
         int i;
         int min;
@@ -350,7 +370,6 @@ Copyright: (C) Advanced Interfaces Group,
         int num_vertices;
         int total_vertices = 0;
         int e_index = 0;
-        edge_node e[];
         edge_node edge_table[];
         gpc_vertex vertex[];
         gpc_vertex_list vl;
@@ -422,8 +441,8 @@ Copyright: (C) Advanced Interfaces Group,
                         e_index += num_edges;
                         v = min;
                         edge_table[index].bstate[BELOW] = bundle_state.UNBUNDLED;
-                        edge_table[index].bundle[BELOW][CLIP] = false;
-                        edge_table[index].bundle[BELOW][SUBJ] = false;
+                        edge_table[index].bundle[BELOW][CLIP] = 0;
+                        edge_table[index].bundle[BELOW][SUBJ] = 0;
                         for (i = 0; i < num_edges; i++) {
                             edge_table[index + i].xb = edge_table[v].vertex.x;
                             edge_table[index + i].bot.x = edge_table[v].vertex.x;
@@ -438,7 +457,7 @@ Copyright: (C) Advanced Interfaces Group,
                             edge_table[index + i].type = type;
                             edge_table[index + i].outp[ABOVE] = null;
                             edge_table[index + i].outp[BELOW] = null;
-                            edge_table[index + i].next = null;
+                            edge_table[index + i].next[0] = null;
                             edge_table[index + i].prev = null;
                             edge_table[index + i].succ = ((num_edges > 1) && (i < (num_edges-1))) ? edge_table[index + i + 1] : null; 
                             edge_table[index + i].pred = ((num_edges > 1) && (i > 0)) ? edge_table[index + i - 1] : null;
@@ -467,8 +486,8 @@ Copyright: (C) Advanced Interfaces Group,
                         e_index += num_edges;
                         v = min;
                         edge_table[index].bstate[BELOW] = bundle_state.UNBUNDLED;
-                        edge_table[index].bundle[BELOW][CLIP] = false;
-                        edge_table[index].bundle[BELOW][SUBJ] = false;
+                        edge_table[index].bundle[BELOW][CLIP] = 0;
+                        edge_table[index].bundle[BELOW][SUBJ] = 0;
                         for (i = 0; i < num_edges; i++) {
                             edge_table[index + i].xb = edge_table[v].vertex.x;
                             edge_table[index + i].bot.x = edge_table[v].vertex.x;
@@ -483,7 +502,7 @@ Copyright: (C) Advanced Interfaces Group,
                             edge_table[index + i].type = type;
                             edge_table[index + i].outp[ABOVE] = null;
                             edge_table[index + i].outp[BELOW] = null;
-                            edge_table[index + i].next = null;
+                            edge_table[index + i].next[0] = null;
                             edge_table[index + i].prev = null;
                             edge_table[index + i].succ = ((num_edges > 1) && (i < (num_edges - 1))) ? edge_table[index + i + 1] : null;
                             edge_table[index + i].pred = ((num_edges > 1) && (i > 0)) ? edge_table[index + i - 1] : null;
@@ -500,40 +519,40 @@ Copyright: (C) Advanced Interfaces Group,
         return edge_table;
     }
     
-    private void add_edge_to_aet(edge_node aet, edge_node edge, edge_node prev) {
-        if (aet == null) {
+    private void add_edge_to_aet(edge_node aet[], edge_node edge, edge_node prev) {
+        if (aet[0] == null) {
             // Append edge onto the tail end of the AET
-            aet = edge;
+            aet[0] = edge;
             edge.prev = prev;
-            edge.next = null;
+            edge.next[0] = null;
         }
         else {
             // Do primary sort on the xb field
-            if (edge.xb < aet.xb) {
+            if (edge.xb < aet[0].xb) {
                 // Insert edge here (before the AET edge)
                 edge.prev = prev;
-                edge.next = aet;
-                aet.prev = edge;
-                aet = edge;
+                edge.next[0] = aet[0];
+                aet[0].prev = edge;
+                aet[0] = edge;
             }
             else {
-                if (edge.xb == aet.xb) {
+                if (edge.xb == aet[0].xb) {
                     // Do secondary sort on the dx field
-                    if (edge.dx < aet.dx) {
+                    if (edge.dx < aet[0].dx) {
                         // Insert edge here (before the AET edge)
                         edge.prev = prev;
-                        edge.next = aet;
-                        aet.prev = edge;
-                        aet = edge;
+                        edge.next[0] = aet[0];
+                        aet[0].prev = edge;
+                        aet[0] = edge;
                     }
                     else {
                         // Head further into the AET
-                        add_edge_to_aet(aet.next, edge, aet);
+                        add_edge_to_aet(aet[0].next, edge, aet[0]);
                     }
                 }
                 else {
                     // Head further into the AET
-                    add_edge_to_aet(aet.next, edge, aet);
+                    add_edge_to_aet(aet[0].next, edge, aet[0]);
                 }
             }
         }
@@ -661,19 +680,19 @@ Copyright: (C) Advanced Interfaces Group,
             return;
         }
         
-        sb_tree sbtree = null;
+        sb_tree sbtree[] = new sb_tree[1];
         it_node it[] = null;
         it_node intersect[] = new it_node[]{new it_node()};
         edge_node edge;
         edge_node prev_edge[] = new edge_node[]{new edge_node()};
-        edge_node next_edge[] = new edge_node[]{new edge_node()};
+        edge_node next_edge;
         edge_node succ_edge[] = new edge_node[]{new edge_node()};
-        edge_node e0[] = new edge_node[]{new edge_node()};
-        edge_node e1[] = new edge_node[]{new edge_node()};
-        edge_node aet = null;
+        edge_node e0;
+        edge_node e1;
+        edge_node aet[] = new edge_node[1];
         edge_node c_heap[] = null;
         edge_node s_heap[] = null;
-        lmt_node lmt = null;
+        lmt_node lmt[] = new lmt_node[1];
         lmt_node local_min;
         polygon_node outpoly[] = null;
         polygon_node p[] = new polygon_node[]{new polygon_node()};
@@ -731,16 +750,16 @@ Copyright: (C) Advanced Interfaces Group,
         }
         
         // Return a null result if no contours contribute
-        if (lmt == null) {
+        if (lmt[0] == null) {
             s_heap = null;
             c_heap = null;
-            System.out.println("lmt == null");
+            Preferences.debug("lmt[0 == null", Preferences.DEBUG_ALGORITHM);
             return;
         }
         
         // Build scanbeam table from scanbeam tree
         sbt = new double[sbt_entries[0]];
-        build_sbt(scanbeam, sbt, sbtree);
+        build_sbt(scanbeam, sbt, sbtree[0]);
         scanbeam[0] = 0;
         free_sbtree(sbtree);
         
@@ -749,7 +768,7 @@ Copyright: (C) Advanced Interfaces Group,
             parity[CLIP] = RIGHT;
         }
         
-        local_min = lmt;
+        local_min = lmt[0];
         
         // Process each scanbeam
         while (scanbeam[0] < sbt_entries[0]) {
@@ -769,8 +788,189 @@ Copyright: (C) Advanced Interfaces Group,
                     for (edge = local_min.first_bound[0]; edge != null; edge = edge.next_bound[0]) {
                         add_edge_to_aet(aet, edge, null);
                     }
+                    local_min = local_min.next[0];
                 } // if (local_min.y == yb)
             } // if (local_min != null)
+            
+            // Set dummy previous x value
+            px = -Double.MAX_VALUE;
+            
+            // Create bundles within AET
+            e0 = aet[0];
+            e1 = aet[0];
+            
+            // Set up bundle fields of first edge
+            if (aet[0].top.y != yb) {
+                aet[0].bundle[ABOVE][aet[0].type] = 1;
+            }
+            else {
+                aet[0].bundle[ABOVE][aet[0].type] = 0;
+            }
+            aet[0].bundle[ABOVE][1 - aet[0].type] = 0;
+            aet[0].bstate[ABOVE] = bundle_state.UNBUNDLED;
+            
+            for (next_edge = aet[0].next[0]; (next_edge != null); next_edge = next_edge.next[0]) {
+                // Set up bundle fields of next edge
+                if (next_edge.top.y != yb) {
+                    next_edge.bundle[ABOVE][next_edge.type] = 1;
+                }
+                else {
+                    next_edge.bundle[ABOVE][next_edge.type] = 0;
+                }
+                next_edge.bundle[ABOVE][1 - next_edge.type] = 0;
+                next_edge.bstate[ABOVE] = bundle_state.UNBUNDLED;
+                
+                // Bundle edges above the scanbeam boundary if they coincide
+                if (next_edge.bundle[ABOVE][next_edge.type] > 0) {
+                    if (EQ(e0.xb, next_edge.xb) && EQ(e0.dx, next_edge.dx) && (e0.top.y != yb)) {
+                        next_edge.bundle[ABOVE][next_edge.type] ^= e0.bundle[ABOVE][next_edge.type];
+                        next_edge.bundle[ABOVE][1 - next_edge.type] = e0.bundle[ABOVE][1 - next_edge.type];
+                        next_edge.bstate[ABOVE] = bundle_state.BUNDLE_HEAD;
+                        e0.bundle[ABOVE][CLIP] = 0;
+                        e0.bundle[ABOVE][SUBJ] = 0;
+                        e0.bstate[ABOVE] = bundle_state.BUNDLE_TAIL;
+                    } // if (EQ(e0.xb, next_edge.xb) && EQ(e0.dx, next_edge.dx) && (e0.top.y != yb)) 
+                    e0 = next_edge;
+                } // if (next_edge.bundle[ABOVE][next_edge.type])
+            } // for (next_edge = aet[0].next[0]; (next_edge != null); next_edge = next_edge.next[0])
+            
+            horiz[CLIP] = h_state.NH;
+            horiz[SUBJ] = h_state.NH;
+            
+            // Process each edge at this scanbeam boundary
+            for (edge = aet[0]; (edge != null); edge = edge.next[0]) {
+                exists[CLIP] = edge.bundle[ABOVE][CLIP] + (edge.bundle[BELOW][CLIP] << 1);
+                exists[SUBJ] = edge.bundle[ABOVE][SUBJ] + (edge.bundle[BELOW][SUBJ] << 1);
+                
+                if ((exists[CLIP] > 0) || (exists[SUBJ] > 0)) {
+                    // Set bundle side
+                    edge.bside[CLIP] = parity[CLIP];
+                    edge.bside[SUBJ] = parity[SUBJ];
+                    
+                    // Determine contributing status and quadrant occupancies */
+                    switch (op) {
+                        case GPC_DIFF:
+                        case GPC_INT:
+                           if (((exists[CLIP] > 0) && ((parity[SUBJ] > 0) || (horiz[SUBJ] != h_state.NH))) ||
+                                           ((exists[SUBJ] > 0) && ((parity[CLIP] > 0) || (horiz[CLIP] != h_state.NH))) ||
+                                           ((exists[CLIP] > 0) && (exists[SUBJ] > 0) && (parity[CLIP] == parity[SUBJ]))) {
+                               contributing = 1;
+                           }
+                           else {
+                               contributing = 0;
+                           }
+                           if ((parity[CLIP] > 0) && (parity[SUBJ] > 0)) {
+                               br = 1;
+                           }
+                           else {
+                               br = 0;
+                           }
+                           if (((parity[CLIP] > 0) ^ (edge.bundle[ABOVE][CLIP] > 0)) &&
+                               ((parity[SUBJ] > 0) ^ (edge.bundle[ABOVE][SUBJ] > 0))) {
+                               bl = 1;
+                           }
+                           else {
+                               bl = 0;
+                           }
+                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) &&
+                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                               tr = 1;
+                           }
+                           else {
+                               tr = 0;
+                           }
+                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0)) &&
+                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                               tl = 1;
+                           }
+                           else {
+                               tl = 0;
+                           }
+                           break;
+                        case GPC_XOR:
+                            if ((exists[CLIP] > 0) || (exists[SUBJ] > 0)) {
+                                contributing = 1;
+                            }
+                            else {
+                                contributing = 0;
+                            }
+                            if ((parity[CLIP] > 0) ^ (parity[SUBJ] > 0)) {
+                                br = 1;
+                            }
+                            else {
+                                br = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (edge.bundle[ABOVE][CLIP] > 0)) ^
+                                ((parity[SUBJ] > 0) ^ (edge.bundle[ABOVE][SUBJ] > 0))) {
+                                bl = 1;
+                            }
+                            else {
+                                bl = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) ^
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                                tr = 1;
+                            }
+                            else {
+                                tr = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0)) ^
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                                tl = 1;
+                            }
+                            else {
+                                tl = 0;
+                            }
+                            break;
+                        case GPC_UNION:
+                            if (((exists[CLIP] > 0) && ((parity[SUBJ] == 0) || (horiz[SUBJ] != h_state.NH))) ||
+                                ((exists[SUBJ] > 0) && ((parity[CLIP] == 0) || (horiz[CLIP] != h_state.NH)))  ||
+                                ((exists[CLIP] > 0) && (exists[SUBJ] > 0) && (parity[CLIP] == parity[SUBJ]))) {
+                                contributing = 1;
+                            }
+                            else {
+                                contributing = 0;
+                            }
+                            if ((parity[CLIP] > 0) || (parity[SUBJ] > 0)) {
+                                br = 1;
+                            }
+                            else {
+                                br = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (edge.bundle[ABOVE][CLIP] > 0)) ||
+                                ((parity[SUBJ] > 0) ^ (edge.bundle[ABOVE][SUBJ] > 0))) {
+                                bl = 1;
+                            }
+                            else {
+                                bl = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) ||
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                                tr = 1;
+                            }
+                            else {
+                                tr = 0;
+                            }
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0))||
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                                tl = 1;
+                            }
+                            else {
+                                tl = 0;
+                            }
+                            break;
+                    } // switch (op)
+                    
+                    // Update parity
+                    parity[CLIP] ^= edge.bundle[ABOVE][CLIP];
+                    parity[SUBJ] ^= edge.bundle[ABOVE][SUBJ];
+                    
+                    // Update horizontal state
+                    if (exists[CLIP] > 0) {
+                        //horiz[CLIP] = next_h_state[horiz[CLIP]][((exists[CLIP] - 1) << 1) + parity[CLIP]];
+                    }
+                } // if ((exists[CLIP] > 0) || (exists[SUBJ] > 0))
+            } // for (edge = aet[0]; (edge != null); edge = edge.next[0])
         } // while (scanbeam[0] < sbt_entries[0])
         System.out.println("I did GPC");
     } 
