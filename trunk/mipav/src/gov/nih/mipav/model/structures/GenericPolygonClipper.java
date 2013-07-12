@@ -65,6 +65,24 @@ Copyright: (C) Advanced Interfaces Group,
     
     private static final int CLIP = 0;
     private static final int SUBJ = 1;
+    
+    // Edge intersection classes
+    private static final int NUL = 0; // Empty non-intersection
+    private static final int EMX = 1; // External maximum
+    private static final int ELI = 2; // External left intermediate
+    private static final int TED = 3; // Top edge
+    private static final int ERI = 4; // External right intermediate
+    private static final int RED = 5; // Right edge
+    private static final int IMM = 6; // Internal maximum and minimum
+    private static final int IMN = 7; // Internal minimum
+    private static final int EMN = 8; // External minimum
+    private static final int EMM = 9; // External maximum and minimum
+    private static final int LED = 10; // Left edge
+    private static final int ILI = 11; // Internal left intermediate
+    private static final int BED = 12; // Bottom edge
+    private static final int IRI = 13; // Internal right intermediate
+    private static final int IMX = 14; // Internal maximum
+    private static final int FUL = 15; // Full non-intersection
 
     public enum gpc_op {
         // Set operation type
@@ -74,12 +92,10 @@ Copyright: (C) Advanced Interfaces Group,
         GPC_UNION; // Union
     }
     
-    private enum h_state {
-        // Horizontal edge states
-        NH, // No horizontal edge
-        BH, // Bottom horizontal edge
-        TH; // Top horizontal edge
-    }
+    // Horizontal edge states
+    private static final int NH = 0; // No horizontal edge
+    private static final int BH = 1; // Bottom horizontal edge
+    private static final int TH = 2; // Top horizontal edge
     
     private enum bundle_state {
         // Edge bundle state
@@ -166,7 +182,16 @@ Copyright: (C) Advanced Interfaces Group,
         // Intersection table
         edge_node ie[] = new edge_node[2]; // Intersecting edge (bundle) pair
         gpc_vertex point; // Point of intersection
-        it_node next; // The next intersection table node
+        it_node next[] = new it_node[1]; // The next intersection table node
+    }
+    
+    private class st_node {
+        // Sorted edge table
+        edge_node edge; // Pointer to AET edge
+        double xb; // Scanbeam bottom x coordinate
+        double xt; // Scanbeam top x coordinate
+        double dx; // Change in x for a unit y increase
+        st_node prev[] = new st_node[1]; // Previous edge in sorted list
     }
     
     private class bbox {
@@ -178,12 +203,12 @@ Copyright: (C) Advanced Interfaces Group,
     }
     
     // Horizontal edge state transitions within the scanbeam boundary
-    h_state next_h_state[][] = new h_state[][] 
-            //             ABOVE                          BELOW                         CROSS
-            //             L           R                  L           R                 L           R
-            /* NH */     {{h_state.BH, h_state.TH,        h_state.TH, h_state.BH,       h_state.NH, h_state.NH},
-            /* BH */      {h_state.NH, h_state.NH,        h_state.NH, h_state.NH,       h_state.TH, h_state.TH},
-            /* TH */      {h_state.NH, h_state.NH,        h_state.NH, h_state.NH,       h_state.BH, h_state.BH}}; 
+    int next_h_state[][] = new int[][] 
+            //             ABOVE       BELOW      CROSS
+            //             L   R       L   R      L   R
+            /* NH */     {{BH, TH,     TH, BH,    NH, NH},
+            /* BH */      {NH, NH,     NH, NH,    TH, TH},
+            /* TH */      {NH, NH,     NH, NH,    BH, BH}}; 
     
     private boolean clipContributingStatus[];
     private boolean subjContributingStatus[];
@@ -223,10 +248,21 @@ Copyright: (C) Advanced Interfaces Group,
         return (v[PREV_INDEX(i, n)].vertex.y > v[i].vertex.y);
     }
     
+    private void reset_it(it_node it[]) {
+        it_node itn;
+        while (it[0] != null) {
+            itn = it[0].next[0];
+            it[0].next = null;
+            it[0] = null;
+            it[0] = itn;
+        }
+    }
+    
     private void reset_lmt(lmt_node lmt) {
         lmt_node lmtn;
         while (lmt != null) {
             lmtn = lmt.next[0];
+            lmt.next = null;
             lmt = null;
             lmt = lmtn;
         }
@@ -558,6 +594,209 @@ Copyright: (C) Advanced Interfaces Group,
         }
     }
     
+    private void add_intersection(it_node it[], edge_node edge0, edge_node edge1, double x, double y) {
+        it_node existing_node;
+        
+        if (it[0] != null) {
+            // Append a new node to the tail of the list
+            it[0].ie[0] = edge0;
+            it[0].ie[1] = edge1;
+            it[0].point.x = x;
+            it[0].point.y = y;
+            it[0].next[0] = null;
+        }
+        else {
+            if (it[0].point.y > y) {
+                // Insert a new node mid-list
+                existing_node = it[0];
+                it[0] = new it_node();
+                it[0].ie[0] = edge0;
+                it[0].ie[1] = edge1;
+                it[0].point.x = x;
+                it[0].point.y = y;
+                it[0].next[0] = existing_node;
+            }
+            else {
+                // Head further down the list
+                add_intersection(it[0].next, edge0, edge1, x, y);
+            }
+        }
+    }
+    
+    private void add_st_edge(st_node st[], it_node it[], edge_node edge, double dy) {
+        st_node existing_node;
+        double den;
+        double r;
+        double x;
+        double y;
+        
+        if (st[0] != null) {
+            // Append edge onto the tail end of the ST
+            st[0] = new st_node();
+            st[0].edge = edge;
+            st[0].xb = edge.xb;
+            st[0].xt = edge.xt;
+            st[0].dx = edge.dx;
+            st[0].prev[0] = null;
+        }
+        else {
+            den = (st[0].xt - st[0].xb) - (edge.xt - edge.xb);
+            
+            // If new edge and ST edge don't cross
+            if ((edge.xt >= st[0].xt) || (edge.dx == st[0].dx) || (Math.abs(den) <= DBL_EPSILON)) {
+                // No intersection - insert edge here (before the ST edge)
+                existing_node = st[0];
+                st[0] = new st_node();
+                st[0].edge = edge;
+                st[0].xb = edge.xb;
+                st[0].xt = edge.xt;
+                st[0].dx = edge.dx;
+                st[0].prev[0] = existing_node;
+            }
+            else {
+                // Compute intersection between new edge and ST edge
+                r = (edge.xb - st[0].xb) / den;
+                x = st[0].xb + r * (st[0].xt - st[0].xb);
+                y = r * dy;
+                
+                // Insert the edge pointers and the intersection point in the IT
+                add_intersection(it, st[0].edge, edge, x, y);
+                
+                // Head further into the ST
+                add_st_edge(st[0].prev, it, edge, dy);
+            }
+        }
+    }
+    
+    private void build_intersection_table(it_node[] it, edge_node aet, double dy) {
+        st_node st[] = new st_node[1]; 
+        st_node stp;
+        edge_node edge;
+        st_node stActual;
+        
+        // Build intersection table for the current scanbeam
+        reset_it(it);
+        st[0] = null;
+        
+        // Process each AET edge
+        for (edge = aet; edge != null; edge = edge.next[0]) {
+            if ((edge.bstate[ABOVE]  == bundle_state.BUNDLE_HEAD) ||
+                 (edge.bundle[ABOVE][CLIP] > 0) || (edge.bundle[ABOVE][SUBJ] > 0)) {
+                add_st_edge(st, it, edge, dy);
+            }
+        }
+        
+        // Free the sorted edge table
+        stActual = st[0];
+        st = null;
+        while (stActual != null) {
+            stp = stActual.prev[0];
+            stActual.prev = null;
+            stActual = null;
+            stActual = stp;
+        }
+    }
+    
+    private void add_left(polygon_node p, double x, double y) {
+        vertex_node nv;
+        
+        // Create a new vertex node and set its fields
+        nv = new vertex_node();
+        nv.x = x;
+        nv.y = y;
+        
+        // Add vertex nv to the left end of the polygon's vertex list
+        nv.next = p.proxy.v[LEFT];
+        
+        // Update proxy.v[LEFT] to point to nv
+        p.proxy.v[LEFT] = nv;
+    }
+    
+    private void merge_left(polygon_node p, polygon_node q, polygon_node list) {
+        polygon_node target;
+        
+        // Label contour as hole
+        q.proxy.hole = 1;
+        
+        if (p.proxy != q.proxy) {
+            // Assign p's vertex list to the end of q's list
+            p.proxy.v[RIGHT].next = q.proxy.v[LEFT];
+            q.proxy.v[LEFT] = p.proxy.v[LEFT];
+            
+            // Redirect any p.proxy references to q.proxy
+            for (target = p.proxy; list != null; list = list.next) {
+                if (list.proxy == target) {
+                    list.active = 0;
+                    list.proxy = q.proxy;
+                }
+            }
+        } // if (p.proxy != q.proxy)
+    }
+    
+    private void add_right(polygon_node p, double x, double y) {
+        vertex_node nv;
+        
+        // Create a new vertex node and set its fields
+        nv = new vertex_node();
+        nv.x = x;
+        nv.y = y;
+        nv.next = null;
+        
+        // Add vertex nv to the right end of the polygon's vertex list
+        p.proxy.v[RIGHT].next = nv;
+        
+        // Update proxy.v[RIGHT] to point to nv
+        p.proxy.v[RIGHT] = nv;
+    }
+    
+    private void merge_right(polygon_node p, polygon_node q, polygon_node list) {
+        polygon_node target;
+        
+        // Label contour as external
+        q.proxy.hole = 0;
+        
+        if (p.proxy != q.proxy) {
+            // Assign p's vertex list to the right end of q's list
+            q.proxy.v[RIGHT].next = p.proxy.v[LEFT];
+            q.proxy.v[RIGHT] = p.proxy.v[RIGHT];
+            
+            // Redirect any p.proxy references to q.proxy
+            for (target = p.proxy; list != null; list = list.next) {
+                if (list.proxy == target) {
+                    list.active = 0;
+                    list.proxy = q.proxy;
+                }
+            }
+        } // if (p.proxy != q.proxy)
+    }
+    
+    private void add_local_min(polygon_node p[], edge_node edge, double x, double y) {
+        polygon_node existing_min;
+        vertex_node nv;
+        
+        existing_min = p[0];
+        
+        p[0] = new polygon_node();
+        
+        // Create a new vertex node and set its fields
+        nv = new vertex_node();
+        nv.x = x;
+        nv.y = y;
+        nv.next = null;
+        
+        // Initialize proxy to point to p itself
+        p[0].proxy = p[0];
+        p[0].active = 1;
+        p[0].next = existing_min;
+        
+        // Make v[LEFT] and v[RIGHT] point to next vertex nv
+        p[0].v[LEFT] = nv;
+        p[0].v[RIGHT] = nv;
+        
+        // Assign polygon p to the edge
+        edge.outp[ABOVE] = p[0];
+    }
+    
     private bbox[] create_contour_bboxes(VOIBaseVector p) {
         bbox[] box;
         int c;
@@ -682,9 +921,9 @@ Copyright: (C) Advanced Interfaces Group,
         
         sb_tree sbtree[] = new sb_tree[1];
         it_node it[] = null;
-        it_node intersect[] = new it_node[]{new it_node()};
+        it_node intersect;
         edge_node edge;
-        edge_node prev_edge[] = new edge_node[]{new edge_node()};
+        edge_node prev_edge;
         edge_node next_edge;
         edge_node succ_edge[] = new edge_node[]{new edge_node()};
         edge_node e0;
@@ -694,35 +933,35 @@ Copyright: (C) Advanced Interfaces Group,
         edge_node s_heap[] = null;
         lmt_node lmt[] = new lmt_node[1];
         lmt_node local_min;
-        polygon_node outpoly[] = null;
-        polygon_node p[] = new polygon_node[]{new polygon_node()};
-        polygon_node q[] = new polygon_node[]{new polygon_node()};
+        polygon_node out_poly[] = null;
+        polygon_node p;
+        polygon_node q;
         polygon_node poly[] = new polygon_node[]{new polygon_node()};
         polygon_node npoly[] = new polygon_node[]{new polygon_node()};
-        polygon_node cf[] = null;
+        polygon_node cf = null;
         vertex_node vtx[] = new vertex_node[]{new vertex_node()};
         vertex_node nv[] = new vertex_node[]{new vertex_node()};
-        h_state horiz[] = new h_state[2];
+        int horiz[] = new int[2];
         int in[] = new int[2];
         int exists[] = new int[2];
         int parity[] = new int[]{LEFT, LEFT};
         int c;
         int v;
-        int contributing;
+        int contributing = 0;
         int search;
         int scanbeam[] = new int[]{0};
         int sbt_entries[] = new int[]{0};
         int vclass = 0;
-        int bl;
-        int br;
-        int tl;
-        int tr;
+        int bl = 0;
+        int br = 0;
+        int tl = 0;
+        int tr = 0;
         double sbt[] = null;
         double xb;
         double px;
         double yb;
-        double yt;
-        double dy;
+        double yt = 0.0;
+        double dy = 0.0;
         double ix;
         double iy;
         VOIBaseVector subjCurves = subj.getCurves();
@@ -834,8 +1073,8 @@ Copyright: (C) Advanced Interfaces Group,
                 } // if (next_edge.bundle[ABOVE][next_edge.type])
             } // for (next_edge = aet[0].next[0]; (next_edge != null); next_edge = next_edge.next[0])
             
-            horiz[CLIP] = h_state.NH;
-            horiz[SUBJ] = h_state.NH;
+            horiz[CLIP] = NH;
+            horiz[SUBJ] = NH;
             
             // Process each edge at this scanbeam boundary
             for (edge = aet[0]; (edge != null); edge = edge.next[0]) {
@@ -851,8 +1090,8 @@ Copyright: (C) Advanced Interfaces Group,
                     switch (op) {
                         case GPC_DIFF:
                         case GPC_INT:
-                           if (((exists[CLIP] > 0) && ((parity[SUBJ] > 0) || (horiz[SUBJ] != h_state.NH))) ||
-                                           ((exists[SUBJ] > 0) && ((parity[CLIP] > 0) || (horiz[CLIP] != h_state.NH))) ||
+                           if (((exists[CLIP] > 0) && ((parity[SUBJ] > 0) || (horiz[SUBJ] != NH))) ||
+                                           ((exists[SUBJ] > 0) && ((parity[CLIP] > 0) || (horiz[CLIP] != NH))) ||
                                            ((exists[CLIP] > 0) && (exists[SUBJ] > 0) && (parity[CLIP] == parity[SUBJ]))) {
                                contributing = 1;
                            }
@@ -872,15 +1111,15 @@ Copyright: (C) Advanced Interfaces Group,
                            else {
                                bl = 0;
                            }
-                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) &&
-                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH)) &&
+                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH))) {
                                tr = 1;
                            }
                            else {
                                tr = 0;
                            }
-                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0)) &&
-                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                           if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH) ^ (edge.bundle[BELOW][CLIP] > 0)) &&
+                               ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
                                tl = 1;
                            }
                            else {
@@ -907,15 +1146,15 @@ Copyright: (C) Advanced Interfaces Group,
                             else {
                                 bl = 0;
                             }
-                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) ^
-                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH)) ^
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH))) {
                                 tr = 1;
                             }
                             else {
                                 tr = 0;
                             }
-                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0)) ^
-                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH) ^ (edge.bundle[BELOW][CLIP] > 0)) ^
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
                                 tl = 1;
                             }
                             else {
@@ -923,8 +1162,8 @@ Copyright: (C) Advanced Interfaces Group,
                             }
                             break;
                         case GPC_UNION:
-                            if (((exists[CLIP] > 0) && ((parity[SUBJ] == 0) || (horiz[SUBJ] != h_state.NH))) ||
-                                ((exists[SUBJ] > 0) && ((parity[CLIP] == 0) || (horiz[CLIP] != h_state.NH)))  ||
+                            if (((exists[CLIP] > 0) && ((parity[SUBJ] == 0) || (horiz[SUBJ] != NH))) ||
+                                ((exists[SUBJ] > 0) && ((parity[CLIP] == 0) || (horiz[CLIP] != NH)))  ||
                                 ((exists[CLIP] > 0) && (exists[SUBJ] > 0) && (parity[CLIP] == parity[SUBJ]))) {
                                 contributing = 1;
                             }
@@ -944,15 +1183,15 @@ Copyright: (C) Advanced Interfaces Group,
                             else {
                                 bl = 0;
                             }
-                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH)) ||
-                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH))) {
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH)) ||
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH))) {
                                 tr = 1;
                             }
                             else {
                                 tr = 0;
                             }
-                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != h_state.NH) ^ (edge.bundle[BELOW][CLIP] > 0))||
-                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != h_state.NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
+                            if (((parity[CLIP] > 0) ^ (horiz[CLIP] != NH) ^ (edge.bundle[BELOW][CLIP] > 0))||
+                                ((parity[SUBJ] > 0) ^ (horiz[SUBJ] != NH) ^ (edge.bundle[BELOW][SUBJ] > 0))) {
                                 tl = 1;
                             }
                             else {
@@ -967,10 +1206,277 @@ Copyright: (C) Advanced Interfaces Group,
                     
                     // Update horizontal state
                     if (exists[CLIP] > 0) {
-                        //horiz[CLIP] = next_h_state[horiz[CLIP]][((exists[CLIP] - 1) << 1) + parity[CLIP]];
-                    }
+                        horiz[CLIP] = next_h_state[horiz[CLIP]][((exists[CLIP] - 1) << 1) + parity[CLIP]];
+                    } // if (exists[CLIP] > 0)
+                    if (exists[SUBJ] > 0) {
+                        horiz[SUBJ] = next_h_state[horiz[SUBJ]][((exists[SUBJ] - 1) << 1) + parity[SUBJ]];
+                    } // if (exists[SUBJ] > 0)
+                    vclass = tr + (tl << 1) + (br << 2) + (bl << 3);
+                    
+                    if (contributing > 0) {
+                        xb = edge.xb;
+                        
+                        switch (vclass) {
+                            case EMN:
+                            case IMN:
+                                add_local_min(out_poly, edge, xb, yb);
+                                px = xb;
+                                cf = edge.outp[ABOVE];
+                                break;
+                            case ERI:
+                                if (xb != px) {
+                                    add_right(cf, xb, yb);
+                                    px = xb;
+                                }
+                                edge.outp[ABOVE] = cf;
+                                cf = null;
+                                break;
+                            case ELI:
+                                add_left(edge.outp[BELOW], xb, yb);
+                                px = xb;
+                                cf = edge.outp[BELOW];
+                                break;
+                            case EMX:
+                                if (xb != px) {
+                                    add_left(cf, xb, yb);
+                                    px = xb;
+                                }
+                                merge_right(cf, edge.outp[BELOW], out_poly[0]);
+                                cf = null;
+                                break;
+                            case ILI:
+                                if (xb != px) {
+                                    add_left(cf, xb, yb);
+                                    px = xb;
+                                }
+                                edge.outp[ABOVE] = cf;
+                                cf = null;
+                                break;
+                            case IRI:
+                                add_right(edge.outp[BELOW], xb, yb);
+                                px = xb;
+                                cf = edge.outp[BELOW];
+                                edge.outp[BELOW] = null;
+                                break;
+                            case IMX:
+                                if (xb != px) {
+                                    add_right(cf, xb, yb);
+                                    px = xb;
+                                }
+                                merge_left(cf, edge.outp[BELOW], out_poly[0]);
+                                cf = null;
+                                edge.outp[BELOW] = null;
+                                break;
+                            case IMM:
+                                if (xb != px) {
+                                    add_right(cf, xb, yb);
+                                    px = xb;
+                                }
+                                merge_left(cf, edge.outp[BELOW], out_poly[0]);
+                                edge.outp[BELOW] = null;
+                                add_local_min(out_poly, edge, xb, yb);
+                                cf = edge.outp[ABOVE];
+                                break;
+                            case EMM:
+                                if (xb != px) {
+                                    add_left(cf, xb, yb);
+                                    px = xb;
+                                }
+                                merge_right(cf, edge.outp[BELOW], out_poly[0]);
+                                edge.outp[BELOW] = null;
+                                add_local_min(out_poly, edge, xb, yb);
+                                cf = edge.outp[ABOVE];
+                                break;
+                            case LED:
+                                if (edge.bot.y == yb) {
+                                    add_left(edge.outp[BELOW], xb, yb);
+                                }
+                                edge.outp[ABOVE] = edge.outp[BELOW];
+                                px = xb;
+                                break;
+                            case RED:
+                                if (edge.bot.y == yb) {
+                                    add_right(edge.outp[BELOW], xb, yb);
+                                }
+                                edge.outp[ABOVE] = edge.outp[BELOW];
+                                px = xb;
+                                break;
+                                default:
+                                    break;
+                        } // switch (vclass)
+                    } // if (contributing > 0)
                 } // if ((exists[CLIP] > 0) || (exists[SUBJ] > 0))
             } // for (edge = aet[0]; (edge != null); edge = edge.next[0])
+            
+            // Delete the terminating edges from the AET, otherwise compute xt
+            for (edge = aet[0]; edge != null; edge = edge.next[0]) {
+                if (edge.top.y == yb) {
+                    prev_edge = edge.prev;
+                    next_edge = edge.next[0];
+                    if (prev_edge != null) {
+                        prev_edge.next[0] = next_edge;
+                    }
+                    else {
+                        aet[0] = next_edge;
+                    }
+                    if (next_edge != null) {
+                        next_edge.prev = prev_edge;
+                    }
+                    // Copy bundle head to the adjacent tail edge if required
+                    if ((edge.bstate[BELOW] == bundle_state.BUNDLE_HEAD)  && (prev_edge != null)) {
+                        if (prev_edge.bstate[BELOW] == bundle_state.BUNDLE_TAIL) {
+                            prev_edge.outp[BELOW] = edge.outp[BELOW];
+                            prev_edge.bstate[BELOW] = bundle_state.UNBUNDLED;
+                            if (prev_edge.prev != null) {
+                                if (prev_edge.prev.bstate[BELOW] == bundle_state.BUNDLE_TAIL) {
+                                    prev_edge.bstate[BELOW] = bundle_state.BUNDLE_HEAD; 
+                                }
+                            }
+                        } // if (prev_edge.bstate[BELOW] == bundle_state.BUNDLE_TAIL)
+                    } // if ((edge.bstate[BELOW] == bundle_state.BUNDLE_HEAD)  && (prev_edge != null))
+                } // if (edge.top.y == yb)
+                else {
+                    if (edge.top.y == yt) {
+                        edge.xt = edge.top.x;    
+                    }
+                    else {
+                        edge.xt = edge.bot.x + edge.dx * (yt - edge.bot.y); 
+                    }
+                }
+                
+                if (scanbeam[0] < sbt_entries[0]) {
+                    // SCANBEAM INTERIOR PROCESSING
+                    
+                    build_intersection_table(it, aet[0], dy);
+                    
+                    // Process each node in the intersection table
+                    for (intersect = it[0]; intersect != null; intersect = intersect.next[0]) {
+                        e0 = intersect.ie[0];
+                        e1 = intersect.ie[1];
+                        
+                        // Only generate output for contributing intersections
+                        if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
+                            ((e1.bundle[ABOVE][CLIP] > 0) || (e1.bundle[ABOVE][SUBJ] > 0))) {
+                            p = e0.outp[ABOVE];
+                            q = e1.outp[ABOVE];
+                            ix = intersect.point.x;
+                            iy = intersect.point.y + yb;
+                            if (((e0.bundle[ABOVE][CLIP] > 0) && (e0.bside[CLIP] == 0)) ||
+                                        ((e1.bundle[ABOVE][CLIP] > 0) && (e1.bside[CLIP] > 0)) ||
+                                        ((e0.bundle[ABOVE][CLIP] == 0) && (e1.bundle[ABOVE][CLIP] == 0) &&
+                                         (e0.bside[CLIP] > 0) && (e1.bside[CLIP] > 0))) {
+                                in[CLIP] = 1;
+                            }
+                            else {
+                                in[CLIP] = 0;
+                            }
+                            if (((e0.bundle[ABOVE][SUBJ] > 0) && (e0.bside[SUBJ] == 0)) ||
+                                    ((e1.bundle[ABOVE][SUBJ] > 0) && (e1.bside[SUBJ] > 0)) ||
+                                    ((e0.bundle[ABOVE][SUBJ] == 0) && (e1.bundle[ABOVE][SUBJ] == 0) &&
+                                     (e0.bside[SUBJ] > 0) && (e1.bside[SUBJ] > 0))) {
+                                in[SUBJ] = 1;
+                            }
+                            else {
+                                in[SUBJ] = 0;
+                            }
+                            
+                            // Determine quadrant occupancies
+                            switch (op) {
+                                case GPC_DIFF:
+                                case GPC_INT:
+                                    if ((in[CLIP] > 0) && (in[SUBJ] > 0)) {
+                                        tr = 1;
+                                    }
+                                    else {
+                                        tr = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) &&
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                        tl = 1;
+                                    }
+                                    else {
+                                        tl = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
+                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        br = 1;
+                                    }
+                                    else {
+                                        br = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        bl = 1;
+                                    }
+                                    else {
+                                        bl = 0;
+                                    }
+                                    break;
+                                case GPC_XOR:
+                                    if ((in[CLIP] > 0) ^ (in[SUBJ] > 0)) {
+                                        tr = 1;
+                                    }
+                                    else {
+                                        tr = 0;
+                                    } 
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ^
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                        tl = 1;
+                                    }
+                                    else {
+                                        tl = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
+                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        br = 1;
+                                    }
+                                    else {
+                                        br = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        bl = 1;
+                                    }
+                                    else {
+                                        bl = 0;
+                                    }
+                                    break;
+                                case GPC_UNION:
+                                    if ((in[CLIP] > 0) || (in[SUBJ] > 0)) {
+                                        tr = 1;
+                                    }
+                                    else {
+                                        tr = 0;
+                                    } 
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ||
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                        tl = 1;
+                                    }
+                                    else {
+                                        tl = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
+                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        br = 1;
+                                    }
+                                    else {
+                                        br = 0;
+                                    }
+                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
+                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                        bl = 1;
+                                    }
+                                    else {
+                                        bl = 0;
+                                    }
+                                    break;
+                            } // switch (op)
+                            
+                            vclass = tr + (tl << 1) + (br << 2) + (bl << 3);
+                        } // if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
+                    } // for (intersect = it[0]; intersect != null; intersect = intersect.next[0])
+                } // if (scanbeam[0] < sbt_entries[0])
+            } // for (edge = aet[0]; edge != null; edge = edge.next[0])
         } // while (scanbeam[0] < sbt_entries[0])
         System.out.println("I did GPC");
     } 
