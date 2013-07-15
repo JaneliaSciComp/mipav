@@ -52,6 +52,74 @@ Copyright: (C) Advanced Interfaces Group,
     There is no warranty or other guarantee of fitness of this
     software for any purpose. It is provided solely "as is".*/
     
+    /* The simple below example worked for all 4 operations, GPC_DIFF, GPC_INT, GPC_XOR, GPC_UNION 
+     * short subjID = 0;
+        String subjName = "subjName";
+        float subjX[] = new float[]{0.0f, 100.0f, 100.0f, 0.0f};
+        float subjY[] = new float[]{0.0f, 0.0f, 100.0f, 100.0f};
+        float subjZ[] = new float[]{0.0f, 0.0f, 0.0f, 0.0f};
+        VOI subj = new VOI(subjID, subjName, VOI.CONTOUR, -1.0f); 
+        subj.importCurve(subjX, subjY, subjZ);
+        short clipID = 1;
+        String clipName = "clipName";
+        float clipX[] = new float[]{50.0f, 150.0f, 150.0f, 50.0f};
+        float clipY[] = new float[]{50.0f, 50.0f, 150.0f, 150.0f};
+        float clipZ[] = new float[]{0.0f, 0.0f, 0.0f, 0.0f};
+        VOI clip = new VOI(clipID, clipName, VOI.CONTOUR, -1.0f);
+        clip.importCurve(clipX, clipY, clipZ);
+        short resultID = 2;
+        String resultName = "resultName";
+        VOI result = new VOI(resultID, resultName, VOI.CONTOUR, -1.0f);
+        new GenericPolygonClipper(GenericPolygonClipper.gpc_op.GPC_INT, subj, clip, result);
+        
+        GPC_DIFF yielded:
+        Result number of contours = 1
+        For contour = 0 the 6 vertices are: 
+        Vertex number 0 x = 50.0 y = 50.0
+        Vertex number 1 x = 100.0 y = 50.0
+        Vertex number 2 x = 100.0 y = 0.0
+        Vertex number 3 x = 0.0 y = 0.0
+        Vertex number 4 x = 0.0 y = 100.0
+        Vertex number 5 x = 50.0 y = 100.0
+        
+        GPC_INT yielded:
+        Result number of contours = 1
+        For contour = 0 the 4 vertices are: 
+        Vertex number 0 x = 100.0 y = 50.0
+        Vertex number 1 x = 50.0 y = 50.0
+        Vertex number 2 x = 50.0 y = 100.0
+        Vertex number 3 x = 100.0 y = 100.0
+        
+        GPC_XOR yielded:
+        Result number of contours = 2
+        For contour = 0 the 6 vertices are: 
+        Vertex number 0 x = 150.0 y = 50.0
+        Vertex number 1 x = 100.0 y = 50.0
+        Vertex number 2 x = 100.0 y = 100.0
+        Vertex number 3 x = 50.0 y = 100.0
+        Vertex number 4 x = 50.0 y = 150.0
+        Vertex number 5 x = 150.0 y = 150.0
+        For contour = 1 the 6 vertices are: 
+        Vertex number 0 x = 50.0 y = 50.0
+        Vertex number 1 x = 100.0 y = 50.0
+        Vertex number 2 x = 100.0 y = 0.0
+        Vertex number 3 x = 0.0 y = 0.0
+        Vertex number 4 x = 0.0 y = 100.0
+        Vertex number 5 x = 50.0 y = 100.0
+        
+        GPC_UNION yielded:
+        Result number of contours = 1
+        For contour = 0 the 8 vertices are: 
+        Vertex number 0 x = 150.0 y = 50.0
+        Vertex number 1 x = 100.0 y = 50.0
+        Vertex number 2 x = 100.0 y = 0.0
+        Vertex number 3 x = 0.0 y = 0.0
+        Vertex number 4 x = 0.0 y = 100.0
+        Vertex number 5 x = 50.0 y = 100.0
+        Vertex number 6 x = 50.0 y = 150.0
+        Vertex number 7 x = 150.0 y = 150.0
+     */
+    
     private static final double DBL_EPSILON = 2.2204460492503131e-16;
     
     // Increase GPC_EPSILON to encourage merging of near coincident edges
@@ -630,7 +698,7 @@ Copyright: (C) Advanced Interfaces Group,
         double x;
         double y;
         
-        if (st[0] != null) {
+        if (st[0] == null) {
             // Append edge onto the tail end of the ST
             st[0] = new st_node();
             st[0].edge = edge;
@@ -695,6 +763,38 @@ Copyright: (C) Advanced Interfaces Group,
             stActual = null;
             stActual = stp;
         }
+    }
+    
+    private int count_contours(polygon_node polygon) {
+        int nc;
+        int nv;
+        vertex_node v;
+        vertex_node nextv;
+        
+        for (nc = 0; polygon != null; polygon = polygon.next) {
+            if (polygon.active > 0) {
+                // Count the vertices in the current contour
+                nv = 0;
+                for (v = polygon.proxy.v[LEFT]; v != null; v = v.next) {
+                    nv++;
+                }
+                
+                // Record valid vertex counts in the active field
+                if (nv > 2) {
+                    polygon.active = nv;
+                    nc++;
+                }
+                else {
+                    // Invalid contour: jst free the heap
+                    for (v = polygon.proxy.v[LEFT]; v != null; v = nextv) {
+                        nextv = v.next;
+                        v = null;
+                    }
+                    polygon.active = 0;
+                }
+            }
+        }
+        return nc;
     }
     
     private void add_left(polygon_node p, double x, double y) {
@@ -840,15 +940,6 @@ Copyright: (C) Advanced Interfaces Group,
         boolean o_table[];
         boolean overlap;
         
-        subjContributingStatus = new boolean[subj.size()];
-        for (s = 0; s < subj.size(); s++) {
-            subjContributingStatus[s] = true;
-        }
-        clipContributingStatus = new boolean[clip.size()];
-        for (c = 0; c < clip.size(); c++) {
-            clipContributingStatus[c] = true;
-        }
-        
         s_bbox = create_contour_bboxes(subj);
         c_bbox = create_contour_bboxes(clip);
         
@@ -920,12 +1011,12 @@ Copyright: (C) Advanced Interfaces Group,
         }
         
         sb_tree sbtree[] = new sb_tree[1];
-        it_node it[] = null;
+        it_node it[] = new it_node[1];
         it_node intersect;
         edge_node edge;
         edge_node prev_edge;
         edge_node next_edge;
-        edge_node succ_edge[] = new edge_node[]{new edge_node()};
+        edge_node succ_edge;
         edge_node e0;
         edge_node e1;
         edge_node aet[] = new edge_node[1];
@@ -933,19 +1024,20 @@ Copyright: (C) Advanced Interfaces Group,
         edge_node s_heap[] = null;
         lmt_node lmt[] = new lmt_node[1];
         lmt_node local_min;
-        polygon_node out_poly[] = null;
+        polygon_node out_poly[] = new polygon_node[1];
         polygon_node p;
         polygon_node q;
-        polygon_node poly[] = new polygon_node[]{new polygon_node()};
-        polygon_node npoly[] = new polygon_node[]{new polygon_node()};
+        polygon_node poly;
+        polygon_node npoly = null;
         polygon_node cf = null;
-        vertex_node vtx[] = new vertex_node[]{new vertex_node()};
-        vertex_node nv[] = new vertex_node[]{new vertex_node()};
+        vertex_node vtx;
+        vertex_node nv;
         int horiz[] = new int[2];
         int in[] = new int[2];
         int exists[] = new int[2];
         int parity[] = new int[]{LEFT, LEFT};
         int c;
+        int s;
         int v;
         int contributing = 0;
         int search;
@@ -966,6 +1058,16 @@ Copyright: (C) Advanced Interfaces Group,
         double iy;
         VOIBaseVector subjCurves = subj.getCurves();
         VOIBaseVector clipCurves = clip.getCurves();
+        VOIBaseVector resultCurves;
+        int resultNumContours = 0;
+        VOIContour kContour;
+        boolean closed = true;
+        boolean fixed = true;
+        int numContourVertices;
+        float xf[];
+        float yf[];
+        float zf[]; 
+        int i;
         
         // Test for trivial null result cases
         if (((subjCurves.size() == 0) || (clipCurves.size() == 0))
@@ -973,6 +1075,15 @@ Copyright: (C) Advanced Interfaces Group,
          || ((clipCurves.size() == 0) && (op == gpc_op.GPC_INT))) {
              return;    
          }
+        
+        subjContributingStatus = new boolean[subjCurves.size()];
+        for (s = 0; s < subjCurves.size(); s++) {
+            subjContributingStatus[s] = true;
+        }
+        clipContributingStatus = new boolean[clipCurves.size()];
+        for (c = 0; c < clipCurves.size(); c++) {
+            clipContributingStatus[c] = true;
+        }
         
         // Identify potentially contributing contours
         if (((op == gpc_op.GPC_INT) || (op == gpc_op.GPC_DIFF))
@@ -1343,142 +1454,343 @@ Copyright: (C) Advanced Interfaces Group,
                         edge.xt = edge.bot.x + edge.dx * (yt - edge.bot.y); 
                     }
                 }
-                
-                if (scanbeam[0] < sbt_entries[0]) {
-                    // SCANBEAM INTERIOR PROCESSING
-                    
-                    build_intersection_table(it, aet[0], dy);
-                    
-                    // Process each node in the intersection table
-                    for (intersect = it[0]; intersect != null; intersect = intersect.next[0]) {
-                        e0 = intersect.ie[0];
-                        e1 = intersect.ie[1];
-                        
-                        // Only generate output for contributing intersections
-                        if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
-                            ((e1.bundle[ABOVE][CLIP] > 0) || (e1.bundle[ABOVE][SUBJ] > 0))) {
-                            p = e0.outp[ABOVE];
-                            q = e1.outp[ABOVE];
-                            ix = intersect.point.x;
-                            iy = intersect.point.y + yb;
-                            if (((e0.bundle[ABOVE][CLIP] > 0) && (e0.bside[CLIP] == 0)) ||
-                                        ((e1.bundle[ABOVE][CLIP] > 0) && (e1.bside[CLIP] > 0)) ||
-                                        ((e0.bundle[ABOVE][CLIP] == 0) && (e1.bundle[ABOVE][CLIP] == 0) &&
-                                         (e0.bside[CLIP] > 0) && (e1.bside[CLIP] > 0))) {
-                                in[CLIP] = 1;
-                            }
-                            else {
-                                in[CLIP] = 0;
-                            }
-                            if (((e0.bundle[ABOVE][SUBJ] > 0) && (e0.bside[SUBJ] == 0)) ||
-                                    ((e1.bundle[ABOVE][SUBJ] > 0) && (e1.bside[SUBJ] > 0)) ||
-                                    ((e0.bundle[ABOVE][SUBJ] == 0) && (e1.bundle[ABOVE][SUBJ] == 0) &&
-                                     (e0.bside[SUBJ] > 0) && (e1.bside[SUBJ] > 0))) {
-                                in[SUBJ] = 1;
-                            }
-                            else {
-                                in[SUBJ] = 0;
-                            }
-                            
-                            // Determine quadrant occupancies
-                            switch (op) {
-                                case GPC_DIFF:
-                                case GPC_INT:
-                                    if ((in[CLIP] > 0) && (in[SUBJ] > 0)) {
-                                        tr = 1;
-                                    }
-                                    else {
-                                        tr = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) &&
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
-                                        tl = 1;
-                                    }
-                                    else {
-                                        tl = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
-                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        br = 1;
-                                    }
-                                    else {
-                                        br = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        bl = 1;
-                                    }
-                                    else {
-                                        bl = 0;
-                                    }
-                                    break;
-                                case GPC_XOR:
-                                    if ((in[CLIP] > 0) ^ (in[SUBJ] > 0)) {
-                                        tr = 1;
-                                    }
-                                    else {
-                                        tr = 0;
-                                    } 
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ^
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
-                                        tl = 1;
-                                    }
-                                    else {
-                                        tl = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
-                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        br = 1;
-                                    }
-                                    else {
-                                        br = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        bl = 1;
-                                    }
-                                    else {
-                                        bl = 0;
-                                    }
-                                    break;
-                                case GPC_UNION:
-                                    if ((in[CLIP] > 0) || (in[SUBJ] > 0)) {
-                                        tr = 1;
-                                    }
-                                    else {
-                                        tr = 0;
-                                    } 
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ||
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
-                                        tl = 1;
-                                    }
-                                    else {
-                                        tl = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
-                                        ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        br = 1;
-                                    }
-                                    else {
-                                        br = 0;
-                                    }
-                                    if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
-                                        ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
-                                        bl = 1;
-                                    }
-                                    else {
-                                        bl = 0;
-                                    }
-                                    break;
-                            } // switch (op)
-                            
-                            vclass = tr + (tl << 1) + (br << 2) + (bl << 3);
-                        } // if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
-                    } // for (intersect = it[0]; intersect != null; intersect = intersect.next[0])
-                } // if (scanbeam[0] < sbt_entries[0])
             } // for (edge = aet[0]; edge != null; edge = edge.next[0])
+                
+            if (scanbeam[0] < sbt_entries[0]) {
+                // SCANBEAM INTERIOR PROCESSING
+                
+                build_intersection_table(it, aet[0], dy);
+                
+                // Process each node in the intersection table
+                for (intersect = it[0]; intersect != null; intersect = intersect.next[0]) {
+                    e0 = intersect.ie[0];
+                    e1 = intersect.ie[1];
+                    
+                    // Only generate output for contributing intersections
+                    if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
+                        ((e1.bundle[ABOVE][CLIP] > 0) || (e1.bundle[ABOVE][SUBJ] > 0))) {
+                        p = e0.outp[ABOVE];
+                        q = e1.outp[ABOVE];
+                        ix = intersect.point.x;
+                        iy = intersect.point.y + yb;
+                        if (((e0.bundle[ABOVE][CLIP] > 0) && (e0.bside[CLIP] == 0)) ||
+                                    ((e1.bundle[ABOVE][CLIP] > 0) && (e1.bside[CLIP] > 0)) ||
+                                    ((e0.bundle[ABOVE][CLIP] == 0) && (e1.bundle[ABOVE][CLIP] == 0) &&
+                                     (e0.bside[CLIP] > 0) && (e1.bside[CLIP] > 0))) {
+                            in[CLIP] = 1;
+                        }
+                        else {
+                            in[CLIP] = 0;
+                        }
+                        if (((e0.bundle[ABOVE][SUBJ] > 0) && (e0.bside[SUBJ] == 0)) ||
+                                ((e1.bundle[ABOVE][SUBJ] > 0) && (e1.bside[SUBJ] > 0)) ||
+                                ((e0.bundle[ABOVE][SUBJ] == 0) && (e1.bundle[ABOVE][SUBJ] == 0) &&
+                                 (e0.bside[SUBJ] > 0) && (e1.bside[SUBJ] > 0))) {
+                            in[SUBJ] = 1;
+                        }
+                        else {
+                            in[SUBJ] = 0;
+                        }
+                        
+                        // Determine quadrant occupancies
+                        switch (op) {
+                            case GPC_DIFF:
+                            case GPC_INT:
+                                if ((in[CLIP] > 0) && (in[SUBJ] > 0)) {
+                                    tr = 1;
+                                }
+                                else {
+                                    tr = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) &&
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                    tl = 1;
+                                }
+                                else {
+                                    tl = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
+                                    ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    br = 1;
+                                }
+                                else {
+                                    br = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) &&
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    bl = 1;
+                                }
+                                else {
+                                    bl = 0;
+                                }
+                                break;
+                            case GPC_XOR:
+                                if ((in[CLIP] > 0) ^ (in[SUBJ] > 0)) {
+                                    tr = 1;
+                                }
+                                else {
+                                    tr = 0;
+                                } 
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ^
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                    tl = 1;
+                                }
+                                else {
+                                    tl = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
+                                    ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    br = 1;
+                                }
+                                else {
+                                    br = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ^
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    bl = 1;
+                                }
+                                else {
+                                    bl = 0;
+                                }
+                                break;
+                            case GPC_UNION:
+                                if ((in[CLIP] > 0) || (in[SUBJ] > 0)) {
+                                    tr = 1;
+                                }
+                                else {
+                                    tr = 0;
+                                } 
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0)) ||
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0))) {
+                                    tl = 1;
+                                }
+                                else {
+                                    tl = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
+                                    ((in[SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    br = 1;
+                                }
+                                else {
+                                    br = 0;
+                                }
+                                if (((in[CLIP] > 0) ^ (e1.bundle[ABOVE][CLIP] > 0) ^ (e0.bundle[ABOVE][CLIP] > 0)) ||
+                                    ((in[SUBJ] > 0) ^ (e1.bundle[ABOVE][SUBJ] > 0) ^ (e0.bundle[ABOVE][SUBJ] > 0))) {
+                                    bl = 1;
+                                }
+                                else {
+                                    bl = 0;
+                                }
+                                break;
+                        } // switch (op)
+                        
+                        vclass = tr + (tl << 1) + (br << 2) + (bl << 3);
+                        
+                        switch (vclass) {
+                            case EMN:
+                                add_local_min(out_poly, e0, ix, iy);
+                                e1.outp[ABOVE] = e0.outp[ABOVE];
+                                break;
+                            case ERI:
+                                if (p != null) {
+                                    add_right(p, ix, iy);
+                                    e1.outp[ABOVE] = p;
+                                    e0.outp[ABOVE] = null;
+                                } // if (p != null)
+                                break;
+                            case ELI:
+                                if (q != null) {
+                                    add_left(q, ix, iy);
+                                    e0.outp[ABOVE] = q;
+                                    e1.outp[ABOVE] = null;
+                                } // if (q != null)
+                                break;
+                            case EMX:
+                                if ((p != null) && (q != null)) {
+                                    add_left(p, ix, iy);
+                                    merge_right(p, q, out_poly[0]);
+                                    e0.outp[ABOVE] = null;
+                                    e1.outp[ABOVE] = null;
+                                } // if ((p != null) && (q != null))
+                                break;
+                            case IMN:
+                                add_local_min(out_poly, e0, ix, iy);
+                                e1.outp[ABOVE] = e0.outp[ABOVE];
+                                break;
+                            case ILI:
+                                if (p != null) {
+                                    add_left(p, ix, iy);
+                                    e1.outp[ABOVE] = p;
+                                    e0.outp[ABOVE] = null;
+                                } // if (p != null)
+                                break;
+                            case IRI:
+                                if (q != null) {
+                                    add_right(q, ix, iy);
+                                    e0.outp[ABOVE] = q;
+                                    e1.outp[ABOVE] = null;
+                                } // if (q != null)
+                                break;
+                            case IMX:
+                                if ((p != null) &&(q != null)) {
+                                    add_right(p, ix, iy);
+                                    merge_left(p ,q, out_poly[0]);
+                                    e0.outp[ABOVE] = null;
+                                    e1.outp[ABOVE] = null;
+                                } // if ((p !- null) && (q != null))
+                                break;
+                            case IMM:
+                                if ((p != null) && (q != null)) {
+                                    add_right(p, ix, iy);
+                                    merge_left(p, q, out_poly[0]);
+                                    add_local_min(out_poly, e0, ix, iy);
+                                    e1.outp[ABOVE] = e0.outp[ABOVE];
+                                } // if ((p != null) && (q != null))
+                                break;
+                            case EMM:
+                                if ((p != null) && (q != null)) {
+                                    add_left(p, ix, iy);
+                                    merge_right(p, q, out_poly[0]);
+                                    add_local_min(out_poly, e0, ix, iy);
+                                    e1.outp[ABOVE] = e0.outp[ABOVE];
+                                } // if (p != null) && (q != null))
+                                break;
+                                default:
+                                    break;
+                        } // switch (vclass)
+                    } // if (((e0.bundle[ABOVE][CLIP] > 0) || (e0.bundle[ABOVE][SUBJ] > 0)) &&
+                    
+                    // Swap bundle sides in response to edge crossing
+                    if (e0.bundle[ABOVE][CLIP] > 0) {
+                        e1.bside[CLIP] = (1 - e1.bside[CLIP]);
+                    }
+                    if (e1.bundle[ABOVE][CLIP] > 0) {
+                        e0.bside[CLIP] = (1 - e0.bside[CLIP]);
+                    }
+                    if (e0.bundle[ABOVE][SUBJ] > 0) {
+                        e1.bside[SUBJ] = 1 - e1.bside[SUBJ];
+                    }
+                    if (e1.bundle[ABOVE][SUBJ] > 0) {
+                        e0.bside[SUBJ] = 1 - e0.bside[SUBJ];
+                    }
+                    
+                    // Swap e0 and e1 bundles in the AET
+                    prev_edge = e0.prev;
+                    next_edge = e1.next[0];
+                    if (next_edge != null) {
+                        next_edge.prev = e0;
+                    }
+                    
+                    if (e0.bstate[ABOVE] == bundle_state.BUNDLE_HEAD) {
+                        search = 1;
+                        while (search > 0) {
+                            prev_edge = prev_edge.prev;
+                            if (prev_edge != null) {
+                                if (prev_edge.bstate[ABOVE] != bundle_state.BUNDLE_TAIL) {
+                                    search = 0;
+                                }
+                            }
+                            else {
+                                search = 0;
+                            }
+                        } // while(search > 0)
+                    } // if (e0.bstate[ABOVE] == bundle_state.BUNDLE_HEAD)
+                    if (prev_edge == null) {
+                        aet[0].prev = e1;
+                        e1.next[0] = aet[0];
+                        aet[0] = e0.next[0];
+                    } // if (prev_edge == null)
+                    else {
+                        prev_edge.next[0].prev = e1;
+                        e1.next[0] = prev_edge.next[0];
+                        prev_edge.next[0] = e0.next[0];
+                    }
+                    e0.next[0].prev = prev_edge;
+                    e0.next[0].prev = e1;
+                    e0.next[0] = next_edge;
+                } // for (intersect = it[0]; intersect != null; intersect = intersect.next[0])
+                
+                // Prepare for next scanbeam
+                for (edge = aet[0]; edge != null; edge = next_edge) {
+                    next_edge = edge.next[0];
+                    succ_edge = edge.succ;
+                    
+                    if ((edge.top.y == yt) && (succ_edge != null)) {
+                        // Replace AET edge by its successor
+                        succ_edge.outp[BELOW] = edge.outp[ABOVE];
+                        succ_edge.bstate[BELOW] = edge.bstate[ABOVE];
+                        succ_edge.bundle[BELOW][CLIP] = edge.bundle[ABOVE][CLIP];
+                        succ_edge.bundle[BELOW][SUBJ] = edge.bundle[ABOVE][SUBJ];
+                        prev_edge = edge.prev;
+                        if (prev_edge != null) {
+                            prev_edge.next[0] = succ_edge;
+                        }
+                        else {
+                            aet[0] = succ_edge;
+                        }
+                        if (next_edge != null) {
+                            next_edge.prev = succ_edge;
+                        }
+                        succ_edge.prev = prev_edge;
+                        succ_edge.next[0] = next_edge;
+                    } // if ((edge.top.y == yt) && (succ_edge != null))
+                    else {
+                        // Update this edge
+                        edge.outp[BELOW] = edge.outp[ABOVE];
+                        edge.bstate[BELOW] = edge.bstate[ABOVE];
+                        edge.bundle[BELOW][CLIP] = edge.bundle[ABOVE][CLIP];
+                        edge.bundle[BELOW][SUBJ] = edge.bundle[ABOVE][SUBJ];
+                        edge.xb = edge.xt;
+                    }
+                    edge.outp[ABOVE] = null;
+                } // for (edge = aet[0]; edge != null; edge = next_edge)
+            } // if (scanbeam[0] < sbt_entries[0])    
         } // while (scanbeam[0] < sbt_entries[0])
-        System.out.println("I did GPC");
+        
+        // Generate result polygon from out_poly
+        resultNumContours = count_contours(out_poly[0]);
+        Preferences.debug("Result number of contours = " + resultNumContours + "\n", Preferences.DEBUG_ALGORITHM);
+        if (resultNumContours > 0) {
+            c = 0;
+            for (poly = out_poly[0]; poly != null; poly = npoly) {
+                npoly = poly.next;
+                if (poly.active > 0) {
+                    numContourVertices = poly.active;
+                    v = numContourVertices - 1;
+                    xf = new float[numContourVertices];
+                    yf = new float[numContourVertices];
+                    zf = new float[numContourVertices];
+                    for (vtx = poly.proxy.v[LEFT]; vtx != null; vtx = nv) {
+                        nv = vtx.next;
+                        xf[v] = (float)vtx.x;
+                        yf[v] = (float)vtx.y;
+                        zf[v] = 0.0f;
+                        vtx = null;
+                        v--;
+                    }
+                    result.importCurve(xf, yf, zf);
+                    Preferences.debug("For contour = " + c + " the " + numContourVertices + " vertices are: \n", Preferences.DEBUG_ALGORITHM);
+                    for (i = 0; i < numContourVertices; i++) {
+                        Preferences.debug("Vertex number " + i + " x = " + xf[i] + " y = " + yf[i] + "\n", Preferences.DEBUG_ALGORITHM);
+                    }
+                    c++;
+                } // if (poly.active > 0)
+                poly = null;
+            } // for (poly = out_poly[0]; poly != null; poly = npoly)
+        } // if (resultNumContours > 0)
+        else {
+            for (poly = out_poly[0]; poly != null; poly = npoly) {
+                npoly = poly.next;
+                poly = null;
+            }
+        }
+        
+        // Tidy up
+        reset_it(it);
+        reset_lmt(lmt[0]);
+        c_heap = null;
+        s_heap = null;
+        sbt = null;
     } 
     
 }
