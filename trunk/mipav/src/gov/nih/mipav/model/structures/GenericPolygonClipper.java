@@ -1058,11 +1058,7 @@ Copyright: (C) Advanced Interfaces Group,
         double iy;
         VOIBaseVector subjCurves = subj.getCurves();
         VOIBaseVector clipCurves = clip.getCurves();
-        VOIBaseVector resultCurves;
         int resultNumContours = 0;
-        VOIContour kContour;
-        boolean closed = true;
-        boolean fixed = true;
         int numContourVertices;
         float xf[];
         float yf[];
