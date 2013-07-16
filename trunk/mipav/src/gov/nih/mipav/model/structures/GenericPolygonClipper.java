@@ -212,7 +212,7 @@ Copyright: (C) Advanced Interfaces Group,
     }
     
     private class polygon_node {
-        // Internal contour / tristripe type
+        // Internal contour / tristrip type
         int active; // Active flag / vertex count
         int hole; // Hole / external contour flag
         vertex_node v[] = new vertex_node[2]; // Left and right vertex node pointers
@@ -397,7 +397,7 @@ Copyright: (C) Advanced Interfaces Group,
             }
             else {
                 if (y > lmt[0].y) {
-                    // Head further up the lmt
+                    // Head further up the LMT
                     return bound_list(lmt[0].next, y);
                 }
                 else {
@@ -453,7 +453,7 @@ Copyright: (C) Advanced Interfaces Group,
         int result = 0;
         int i;
         
-        // Ignore non-contributing contours already take care of in build_lmt
+        // if (c.num_vertices > 0) line to gnore non-contributing contours already taken care of in build_lmt
         for (i = 0; i < c.num_vertices; i++) {
             // Ignore superfluous vertices embedded in horizontal edges
             if (OPTIMAL(c.vertex, i, c.num_vertices)) {
@@ -665,8 +665,9 @@ Copyright: (C) Advanced Interfaces Group,
     private void add_intersection(it_node it[], edge_node edge0, edge_node edge1, double x, double y) {
         it_node existing_node;
         
-        if (it[0] != null) {
+        if (it[0] == null) {
             // Append a new node to the tail of the list
+            it[0] = new it_node();
             it[0].ie[0] = edge0;
             it[0].ie[1] = edge1;
             it[0].point.x = x;
