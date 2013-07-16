@@ -786,7 +786,7 @@ Copyright: (C) Advanced Interfaces Group,
                     nc++;
                 }
                 else {
-                    // Invalid contour: jst free the heap
+                    // Invalid contour: just free the heap
                     for (v = polygon.proxy.v[LEFT]; v != null; v = nextv) {
                         nextv = v.next;
                         v = null;
@@ -890,7 +890,7 @@ Copyright: (C) Advanced Interfaces Group,
         p[0].active = 1;
         p[0].next = existing_min;
         
-        // Make v[LEFT] and v[RIGHT] point to next vertex nv
+        // Make v[LEFT] and v[RIGHT] point to ne vertex nv
         p[0].v[LEFT] = nv;
         p[0].v[RIGHT] = nv;
         
@@ -1067,10 +1067,11 @@ Copyright: (C) Advanced Interfaces Group,
         int i;
         
         // Test for trivial null result cases
-        if (((subjCurves.size() == 0) || (clipCurves.size() == 0))
+        if (((subjCurves.size() == 0) && (clipCurves.size() == 0))
          || ((subjCurves.size() == 0) && ((op == gpc_op.GPC_INT) || (op == gpc_op.GPC_DIFF)))
          || ((clipCurves.size() == 0) && (op == gpc_op.GPC_INT))) {
-             return;    
+            Preferences.debug("Result VOI is null\n", Preferences.DEBUG_ALGORITHM);
+            return;    
          }
         
         subjContributingStatus = new boolean[subjCurves.size()];
