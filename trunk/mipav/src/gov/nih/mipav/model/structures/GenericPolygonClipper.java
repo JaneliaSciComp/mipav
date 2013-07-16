@@ -1101,7 +1101,8 @@ Copyright: (C) Advanced Interfaces Group,
         if (lmt[0] == null) {
             s_heap = null;
             c_heap = null;
-            Preferences.debug("lmt[0 == null", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("lmt[0] == null", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Result VOI is null\n", Preferences.DEBUG_ALGORITHM);
             return;
         }
         
@@ -1431,7 +1432,7 @@ Copyright: (C) Advanced Interfaces Group,
                     if (next_edge != null) {
                         next_edge.prev = prev_edge;
                     }
-                    // Copy bundle head to the adjacent tail edge if required
+                    // Copy bundle head state to the adjacent tail edge if required
                     if ((edge.bstate[BELOW] == bundle_state.BUNDLE_HEAD)  && (prev_edge != null)) {
                         if (prev_edge.bstate[BELOW] == bundle_state.BUNDLE_TAIL) {
                             prev_edge.outp[BELOW] = edge.outp[BELOW];
@@ -1704,7 +1705,7 @@ Copyright: (C) Advanced Interfaces Group,
                         prev_edge.next[0] = e0.next[0];
                     }
                     e0.next[0].prev = prev_edge;
-                    e0.next[0].prev = e1;
+                    e1.next[0].prev = e1;
                     e0.next[0] = next_edge;
                 } // for (intersect = it[0]; intersect != null; intersect = intersect.next[0])
                 
