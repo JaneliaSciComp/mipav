@@ -249,7 +249,7 @@ Copyright: (C) Advanced Interfaces Group,
     private class it_node {
         // Intersection table
         edge_node ie[] = new edge_node[2]; // Intersecting edge (bundle) pair
-        gpc_vertex point; // Point of intersection
+        gpc_vertex point = new gpc_vertex(); // Point of intersection
         it_node next[] = new it_node[1]; // The next intersection table node
     }
     
