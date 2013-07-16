@@ -968,6 +968,11 @@ public class VOIContour extends VOIBase {
         int xHigh = Integer.MIN_VALUE;
         int yLow = Integer.MAX_VALUE;
         int yHigh = Integer.MIN_VALUE;
+        double exactTotalPixelCount;
+        VOIBaseVector resultCurves;
+        int numVertices;
+        double exactContourPixelCount;
+        double exactXORPixelCount;
         
         n = size();
         isGroup1 = new boolean[n];
@@ -1011,6 +1016,13 @@ public class VOIContour extends VOIBase {
                 }
             }
         }
+        
+        exactTotalPixelCount = 0.0;
+        for (i = 0; i < n-1; i++) {
+            exactTotalPixelCount += (elementAt(i).X*elementAt(i+1).Y - elementAt(i+1).X*elementAt(i).Y);
+        }
+        exactTotalPixelCount += (elementAt(n-1).X*elementAt(0).Y - elementAt(0).X*elementAt(n-1).Y);
+        exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
        
         xCentroid = Mx/numPixels;
         yCentroid = My/numPixels;
@@ -1545,6 +1557,29 @@ public class VOIContour extends VOIBase {
             Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
                                Preferences.DEBUG_ALGORITHM);
             asymmetryIndexArray[numAxis] = Math.min(asymmetryIndexArray[numAxis], alternateAsymmetry);
+            // Exact calculation
+            VOI voi1 = new VOI((short)0, "voi1", VOI.CONTOUR, -1.0f); 
+            voi1.importCurve(contour1);
+            VOI voi2Mirror = new VOI((short)1, "voi2Mirror", VOI.CONTOUR, -1.0f);
+            voi2Mirror.importCurve(contour2Mirror);
+            VOI voiResult = new VOI((short)2, "voiResult", VOI.CONTOUR, -1.0f);
+            new GenericPolygonClipper(GenericPolygonClipper.gpc_op.GPC_XOR, voi1, voi2Mirror, voiResult);
+            resultCurves = voiResult.getCurves();
+            exactXORPixelCount = 0.0;
+            for (i = 0; i < resultCurves.size(); i++) {
+                numVertices = resultCurves.get(i).size();
+                exactContourPixelCount = 0.0;
+                for (j = 0; j < numVertices-1; j++) {
+                    exactContourPixelCount += (resultCurves.get(i).get(j).X*resultCurves.get(i).get(j+1).Y - 
+                                           resultCurves.get(i).get(j+1).X*resultCurves.get(i).get(j).Y);    
+                }
+                exactContourPixelCount += (resultCurves.get(i).get(numVertices-1).X*resultCurves.get(i).get(0).Y - 
+                        resultCurves.get(i).get(0).X*resultCurves.get(i).get(numVertices-1).Y); 
+                exactContourPixelCount = 0.5*Math.abs(exactContourPixelCount);
+                exactXORPixelCount += exactContourPixelCount;
+            }
+            asymmetryIndexArray[numAxis] = 100.0 * exactXORPixelCount/exactTotalPixelCount;
+            Preferences.debug("On axis " + numAxis + " exact asymmetry index = " + asymmetryIndexArray[numAxis] + "\n", Preferences.DEBUG_ALGORITHM);
         } // for (numAxis = 0; numAxis <= 1; numAxis++)
         asymmetryIndex = Math.min(asymmetryIndexArray[0], asymmetryIndexArray[1]);
         return asymmetryIndex;
