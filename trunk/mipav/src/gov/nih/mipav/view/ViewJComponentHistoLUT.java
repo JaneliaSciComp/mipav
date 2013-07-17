@@ -370,10 +370,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             lut.getRedFunction().exportArrays(x, y);
             nPts = lut.getRedFunction().size();
 
-            setLinearIndex(mx, my);
+            float newMx = setLinearIndex(mx, my);
 
             lut.getRedFunction().importArrays(x, y, nPts);
-            histogramParent.setRangeText(mx, my, index);
+            histogramParent.setRangeText(newMx, my, index);
             lut.makeLUT(-1); // make LUT and use nColors already set for LUT
             histogramParent.setLUT(lut);
 
@@ -388,10 +388,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             lut.getGreenFunction().exportArrays(x, y);
             nPts = lut.getGreenFunction().size();
 
-            setLinearIndex(mx, my);
+            float newMx = setLinearIndex(mx, my);
 
             lut.getGreenFunction().importArrays(x, y, nPts);
-            histogramParent.setRangeText(mx, my, index);
+            histogramParent.setRangeText(newMx, my, index);
             lut.makeLUT(-1);
             histogramParent.setLUT(lut);
 
@@ -406,10 +406,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             lut.getBlueFunction().exportArrays(x, y);
             nPts = lut.getBlueFunction().size();
 
-            setLinearIndex(mx, my);
+            float newMx = setLinearIndex(mx, my);
 
             lut.getBlueFunction().importArrays(x, y, nPts);
-            histogramParent.setRangeText(mx, my, index);
+            histogramParent.setRangeText(newMx, my, index);
             lut.makeLUT(-1);
             histogramParent.setLUT(lut);
 
@@ -424,10 +424,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             lut.getAlphaFunction().exportArrays(x, y);
             nPts = lut.getAlphaFunction().size();
 
-            setLinearIndex(mx, my);
+            float newMx = setLinearIndex(mx, my);
 
             lut.getAlphaFunction().importArrays(x, y, nPts);
-            histogramParent.setRangeText(mx, my, index);
+            histogramParent.setRangeText(newMx, my, index);
             lut.makeLUT(-1);
             histogramParent.setLUT(lut);
 
@@ -442,10 +442,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             lut.getTransferFunction().exportArrays(x, y);
             nPts = lut.getTransferFunction().size();
 
-            setLinearIndex(mx, my);
+            float newMx = setLinearIndex(mx, my);
 	            
             lut.getTransferFunction().importArrays(x, y, nPts);
-            histogramParent.setRangeText(mx, my, index);
+            histogramParent.setRangeText(newMx, my, index);
 
             if (histogramParent.isImageUpdate() == true) {
                 histogramParent.updateFrames(false);
@@ -538,8 +538,10 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
      * 
      * @param mx new x value for point based on mouse movement
      * @param my new y value for point based on mouse movement
+     * 
+     * @return the resulting x[index] based on boundary checks
      */
-    private void setLinearIndex(float mx, float my) {
+    private float setLinearIndex(float mx, float my) {
     	if ((index != (lut.getTransferFunction().size() - 1)) && (mx > x[index + 1])) {
             x[index] = x[index + 1];
         } else if ((index != 0) && (mx < x[index - 1])) {
@@ -551,6 +553,8 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
         }
         
         y[index] = my;
+        
+        return x[index];
     }
 
     /**
