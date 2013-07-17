@@ -765,6 +765,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
         comboBoxOperator.addItemListener(this);
         comboBoxOperator.setSelectedIndex(0);
+        opType = Operator.ABSOLUTE_VALUE;
 
         group = new ButtonGroup();
         radioClip = new JRadioButton("Clip", true);
