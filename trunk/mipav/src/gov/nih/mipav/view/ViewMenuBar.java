@@ -881,6 +881,8 @@ public class ViewMenuBar {
                                 ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("Convex hull 2D", "ConvexHull2D", 0, null, true),
                                 ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem("Boolean VOIs", "BooleanVOIs", 0, null, true),
+                                ViewMenuBar.separator,
                                 menuBuilder.buildMenuItem("VOI indentations 2D", "IndentationVOIs2D", 0, null, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Prostate VOI", true,
