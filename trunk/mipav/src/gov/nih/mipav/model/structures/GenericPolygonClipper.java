@@ -4,9 +4,11 @@ import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 
 
+import java.awt.Dimension;
 import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -410,7 +412,7 @@ Copyright: (C) Advanced Interfaces Group,
     
     private void add_to_sbtree(int entries[], sb_tree sbtree[], double y) {
         if (sbtree[0] == null) {
-            sbtree[0] = new sb_tree(); 
+            sbtree[0] = new sb_tree();
             sbtree[0].y = y;
             sbtree[0].less[0] = null;
             sbtree[0].more[0] = null;
@@ -515,7 +517,7 @@ Copyright: (C) Advanced Interfaces Group,
                 num_vertices = 0;
                 vertex = new gpc_vertex[p.get(c).size()];  
                 for (i = 0; i < p.get(c).size(); i++) {
-                    vertex[i] = new gpc_vertex();   
+                    vertex[i] = new gpc_vertex();  
                     vertex[i].setXY(p.get(c).get(i).X, p.get(c).get(i).Y);
                 } // for (i = 0; i < p.get(c).size(); i++)
                 for (i = 0; i < p.get(c).size(); i++) {
@@ -1791,5 +1793,158 @@ Copyright: (C) Advanced Interfaces Group,
         s_heap = null;
         sbt = null;
     } 
+    
+    public GenericPolygonClipper() {
+        
+    }
+    
+    public void selfTest(int testNum) {
+       int extents[] = new int[2];
+       extents[0] = 256;
+       extents[1] = 256;
+       ModelImage image1 = new ModelImage(ModelStorageBase.BYTE, extents, "image1");
+       short subjID = 0;
+       String subjName = "subjName";
+       float subjX[] = null;
+       float subjY[] = null;
+       float subjZ[] = null;
+       VOI subj = new VOI(subjID, subjName, VOI.CONTOUR, 0.0f); 
+       short clipID = 1;
+       String clipName = "clipName";
+       float clipX[] = null;
+       float clipY[] = null;
+       float clipZ[] = null;
+       VOI clip = new VOI(clipID, clipName, VOI.CONTOUR, 1.0f/3.0f);
+       short result1ID = 2;
+       String result1Name = "result1Name";
+       VOI result1 = new VOI(result1ID, result1Name, VOI.CONTOUR, 0.0f);
+       ModelImage image2 = new ModelImage(ModelStorageBase.BYTE, extents, "image2");
+       short result2ID = 3;
+       String result2Name = "result2Name";
+       VOI result2 = new VOI(result2ID, result2Name, VOI.CONTOUR, 0.0f);
+       ModelImage image3 = new ModelImage(ModelStorageBase.BYTE, extents, "image3");
+       short result3ID = 4;
+       String result3Name = "result3Name";
+       VOI result3 = new VOI(result3ID, result3Name, VOI.CONTOUR, 0.0f);
+       ModelImage image4 = new ModelImage(ModelStorageBase.BYTE, extents, "image4");
+       gpc_op op1 = gpc_op.GPC_INT;
+       gpc_op op2 = gpc_op.GPC_UNION;
+       gpc_op op3 = gpc_op.GPC_XOR;
+       int numOps = 1;
+       float y1;
+       float y2;
+       float x1;
+       float x2;
+       float x3;
+       switch(testNum) {
+           case 0:    
+           y1 = (float)(200.0 - 50.0*Math.sqrt(3.0));
+           subjX = new float[]{100.0f, 150.0f, 200.0f};
+           subjY = new float[]{200.0f, y1, 200.0f};
+           subjZ = new float[]{0.0f, 0.0f, 0.0f};
+           clipX = new float[]{150.0f, 100.0f, 200.0f};
+           clipY = new float[]{200.0f, y1, y1};
+           clipZ = new float[]{0.0f, 0.0f, 0.0f};
+           op1 = gpc_op.GPC_INT;
+           op2 = gpc_op.GPC_UNION;
+           op3 = gpc_op.GPC_XOR;
+           numOps = 3;
+           break;
+           case 1:
+           y1 = (float)(200.0 - 50.0*Math.sqrt(3.0));
+           y2 = (float)(200 - 50.0/Math.sqrt(3.0));
+           x1 = (float)(100.0 + 100.0/3.0);
+           x2 = (float)(100.0 + 200.0/3.0);
+           x3 = (float)(150.0 + 200.0/3.0);
+           subjX = new float[]{50.0f, 100.0f, x1, x2, x3};
+           subjY = new float[]{200.0f, y1, y2, y1, 200.0f};
+           subjZ = new float[]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+           clipX = new float[]{100.0f, 50.0f, x3, x2, x1};
+           clipY = new float[]{y2, 100.0f, 100.0f, y2, y1};
+           clipZ = new float[]{0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+           op1 = gpc_op.GPC_INT;
+           numOps = 1;
+           break;
+       }
+       subj.importCurve(subjX, subjY, subjZ);
+       clip.importCurve(clipX, clipY, clipZ);
+       image1.getVOIs().add(subj);
+       image1.getVOIs().add(clip);
+       new ViewJFrameImage(image1, null, new Dimension(610,200));
+       new GenericPolygonClipper(op1, subj, clip, result1);
+       image2.getVOIs().add(result1);
+       new ViewJFrameImage(image2, null, new Dimension(610, 350));
+       if (numOps > 1) {
+           new GenericPolygonClipper(op2, subj, clip, result2);
+           image3.getVOIs().add(result2);
+           new ViewJFrameImage(image3, null, new Dimension(610, 500));
+           if (numOps > 2) {
+               new GenericPolygonClipper(op3, subj, clip, result3);
+               image4.getVOIs().add(result3);
+               new ViewJFrameImage(image4, null, new Dimension(610, 650));    
+           }
+       }
+    }
+    
+    public void selfTest2() {
+        // Union of 8 circles
+        int extents[] = new int[2];
+        extents[0] = 256;
+        extents[1] = 256;
+        ModelImage image1 = new ModelImage(ModelStorageBase.BYTE, extents, "image1");
+        short subjID = 0;
+        String subjName = "subjName";
+        float subjX[] = new float[360];
+        float subjY[] = new float[360];
+        float subjZ[] = new float[360];
+        VOI subj = new VOI(subjID, subjName, VOI.CONTOUR, 0.0f); 
+        short clipID = 1;
+        String clipName = "clipName";
+        float clipX[] = new float[360];
+        float clipY[] = new float[360];
+        float clipZ[] = new float[360];
+        VOI clip = new VOI(clipID, clipName, VOI.CONTOUR, 0.0f);
+        short resultID = 2;
+        String resultName = "resultName";
+        VOI result = new VOI(resultID, resultName, VOI.CONTOUR, 0.0f); 
+        gpc_op op = gpc_op.GPC_UNION;
+        int i;
+        int j;
+        double scale;
+        for (i = 0; i < 360; i++) {
+            scale = i * (2.0 * Math.PI)/360.0; 
+            subjX[i] = (float)(128.0 + 50.0 + 50.0*Math.cos(scale)); 
+            subjY[i] = (float)(128.0 + 50.0*Math.sin(scale));
+            subjZ[i] = 0.0f;
+            clipX[i] = (float)(128.0 + 50.0*Math.cos(Math.PI/4.0) +  50.0*Math.cos(scale));
+            clipY[i] = (float)(128.0 + 50.0*Math.sin(Math.PI/4.0) +  50.0*Math.sin(scale));
+            clipZ[i] = 0.0f;
+        }
+        subj.importCurve(subjX, subjY, subjZ);
+        clip.importCurve(clipX, clipY, clipZ);
+        new GenericPolygonClipper(op, subj, clip, result);
+        subj.dispose();
+        subj = null;
+        subj = (VOI)result.clone();
+        result.removeCurves();
+        for (j = 2; j <= 7; j++) {
+            for (i = 0; i < 360; i++) {
+                scale = i * (2.0 * Math.PI)/360.0; 
+                clipX[i] = (float)(128.0 + 50.0*Math.cos(j*Math.PI/4.0) +  50.0*Math.cos(scale));
+                clipY[i] = (float)(128.0 + 50.0*Math.sin(j*Math.PI/4.0) +  50.0*Math.sin(scale));
+                clipZ[i] = 0.0f;   
+            }
+            clip.importCurve(clipX, clipY, clipZ);
+            new GenericPolygonClipper(op, subj, clip, result);
+            if (j <= 6) {
+                subj.dispose();
+                subj = null;
+                subj = (VOI)result.clone();
+                result.removeCurves();    
+            }
+        }
+        image1.getVOIs().add(result);
+        new ViewJFrameImage(image1);
+    }
     
 }
