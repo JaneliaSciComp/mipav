@@ -79,6 +79,7 @@ import gov.nih.mipav.view.dialogs.JDialogSaveMergedVOIs;
 import gov.nih.mipav.view.dialogs.JDialogSnake;
 import gov.nih.mipav.view.dialogs.JDialogSurfaceReconstruction;
 import gov.nih.mipav.view.dialogs.JDialogTrim;
+import gov.nih.mipav.view.dialogs.JDialogVOIBoolean;
 import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
@@ -932,6 +933,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             saveVOIs(command);
             new JDialogConvexHull2D(m_kParent.getFrame(), this, getActiveImage());
+        } else if (command.equals("BooleanVOIs")) {
+            saveVOIs(command);
+            new JDialogVOIBoolean(m_kParent.getFrame(), this, getActiveImage());
         } else if (command.equals("IndentationVOIs2D")) {
             if ( !checkForActiveVOIs()) {
                 MipavUtil.displayWarning("Please select a VOI!");
