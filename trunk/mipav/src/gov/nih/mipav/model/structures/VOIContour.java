@@ -745,17 +745,13 @@ public class VOIContour extends VOIBase {
 	 * with the principal axis having the minimum moment of inertia is reported.  For an ellipse with semimajor
 	 * axis = a and semiminor axis = b, the moment of inertia has its smallest value of PI*a*b^3/8 about the
 	 * major axis and its largest value of PI*a^3*b/8 about the minor axis.
+	 * Reference: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
 	 * @param xDim
 	 * @param yDim
 	 * @return
 	 */
 	public double principalAxis(int xDim, int yDim) {
 	    double theta = 0.0;
-	    numPixels = 0;
-        // First moment with respect to the x axis
-        double Mx = 0.0;
-        // First moment with respect to the y axis
-        double My = 0.0;
         // Moment of inertia or second moment of the area A with respect to the x axis
         double Ix = 0.0;
         // Moment of inertia about the y axis
@@ -764,14 +760,6 @@ public class VOIContour extends VOIBase {
         double Pxy = 0.0;
         double xCentroid;
         double yCentroid;
-        int x;
-        int y;
-        double diffX;
-        double diffY;
-        double pin[][] = new double[xDim][yDim];
-        boolean snear[] = new boolean[1];
-        int i1[] = new int[1];
-        int i2[] = new int[1];
         double theta1;
         double theta2;
         double Iave;
@@ -782,62 +770,58 @@ public class VOIContour extends VOIBase {
         double Imin;
         double Imax;
         int i;
-        float xf;
-        float yf;
-        int xLow = Integer.MAX_VALUE;
-        int xHigh = Integer.MIN_VALUE;
-        int yLow = Integer.MAX_VALUE;
-        int yHigh = Integer.MIN_VALUE;
+        double exactTotalPixelCount;
+        double term;
+        double diffx1;
+        double diffx2;
+        double diffy1;
+        double diffy2;
         int n = size();
         
-        
-        for (i = 0; i < n; i++) {
-            xf = elementAt(i).X;
-            yf = elementAt(i).Y;
-            if (Math.floor(xf) < xLow) {
-                xLow = (int)Math.floor(xf);
-            }
-            if (Math.ceil(xf) > xHigh) {
-                xHigh = (int)Math.ceil(xf);
-            }
-            if (Math.floor(yf) < yLow) {
-                yLow = (int)Math.floor(yf);
-            }
-            if (Math.ceil(yf) > yHigh) {
-                yHigh = (int)Math.ceil(yf);
-            }
+        xCentroid = 0.0;
+        yCentroid = 0.0;
+        exactTotalPixelCount = 0.0;
+        for (i = 0; i < n-1; i++) {
+            term = (elementAt(i).X*elementAt(i+1).Y - elementAt(i+1).X*elementAt(i).Y);
+            exactTotalPixelCount += term;
+            xCentroid += (elementAt(i).X + elementAt(i+1).X) * term;
+            yCentroid += (elementAt(i).Y + elementAt(i+1).Y) * term;
         }
+        term =  (elementAt(n-1).X*elementAt(0).Y - elementAt(0).X*elementAt(n-1).Y);
+        exactTotalPixelCount += term;
+        exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
+        xCentroid += (elementAt(n-1).X + elementAt(0).X) * term;
+        yCentroid += (elementAt(n-1).Y + elementAt(0).Y) * term;
+        xCentroid = Math.abs(xCentroid/(6.0 * exactTotalPixelCount));
+        yCentroid = Math.abs(yCentroid/(6.0 * exactTotalPixelCount));
         
-	    // pinpol >= 0.0 includes all of the contour boundary
-        // getAllContourPoints only includes upper and left contour points
-        // getAllContourPoints does not include lower and right contour points
-        for (y = yLow; y <= yHigh; y++) {
-            for (x = xLow; x <= xHigh; x++) {
-                pin[x][y] = pinpol(x, y, snear, i1, i2);
-                if (pin[x][y] >= 0.0) {
-                    numPixels++;
-                    Mx += x;
-                    My += y;    
-                }
-            }
+        Ix = 0.0;
+        Iy = 0.0;
+        Pxy = 0.0;
+        for (i = 0; i < n-1; i++) {
+            diffx1 = elementAt(i).X - xCentroid;
+            diffx2 = elementAt(i+1).X - xCentroid;
+            diffy1 = elementAt(i).Y - yCentroid;
+            diffy2 = elementAt(i+1).Y - yCentroid;
+            term = (diffx1*diffy2 - diffx2*diffy1);
+            Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+            Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+            Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
         }
-       
-        xCentroid = Mx/numPixels;
-        yCentroid = My/numPixels;
+        diffx1 = elementAt(n-1).X - xCentroid;
+        diffx2 = elementAt(0).X - xCentroid;
+        diffy1 = elementAt(n-1).Y - yCentroid;
+        diffy2 = elementAt(0).Y - yCentroid;
+        term = (diffx1*diffy2 - diffx2*diffy1);
+        Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+        Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+        Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+        Ix = Ix/12.0;
+        Iy = Iy/12.0;
+        Pxy = Pxy/24.0;
+        
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
-        
-        for (y = yLow; y <= yHigh; y++) {
-            for (x = xLow; x <= xHigh; x++) {
-                if (pin[x][y] >= 0.0) {
-                    diffX = x - xCentroid;
-                    diffY = y - yCentroid;
-                    Ix += diffY*diffY;
-                    Iy += diffX*diffX;
-                    Pxy += diffX*diffY;
-                }
-            }
-        }
         
         theta1 = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
         if (theta1 >= 0.0) {
@@ -878,12 +862,8 @@ public class VOIContour extends VOIBase {
 	    // Reference: "Automatic Detection of Asymmetry In Skin Tumors" by William V. Stoecker,
 	    // William Weiling Li, and Randy H. Moss, Computerized Medical Imaging and Graphics,
 	    // Vol. 16, No. 3, pp. 191-197, 1992.
+	    // Reference: On the Computation of the Moments of a Polygon, with Some Applications by Soerjadi
 	    int sliceSize = xDim * yDim;
-	    numPixels = 0;
-	    // First moment with respect to the x axis
-	    double Mx = 0.0;
-	    // First moment with respect to the y axis
-	    double My = 0.0;
 	    // Moment of inertia or second moment of the area A with respect to the x axis
 	    double Ix = 0.0;
 	    // Moment of inertia about the y axis
@@ -954,92 +934,64 @@ public class VOIContour extends VOIBase {
         double smallestYBelowCentroid;
         boolean isGroup1[];
         double epsilon = 1.0e-12;
-        double diffX;
-        double diffY;
-        int x;
-        int y;
-        boolean snear[] = new boolean[1];
-        int i1[] = new int[1];
-        int i2[] = new int[1];
-        double pin[][] = new double[xDim][yDim];
-        float xf;
-        float yf;
-        int xLow = Integer.MAX_VALUE;
-        int xHigh = Integer.MIN_VALUE;
-        int yLow = Integer.MAX_VALUE;
-        int yHigh = Integer.MIN_VALUE;
         double exactTotalPixelCount;
         VOIBaseVector resultCurves;
         int numVertices;
         double exactContourPixelCount;
         double exactXORPixelCount;
+        double term;
+        double diffx1;
+        double diffx2;
+        double diffy1;
+        double diffy2;
         
         n = size();
         isGroup1 = new boolean[n];
         
-        for (i = 0; i < n; i++) {
-            xf = elementAt(i).X;
-            yf = elementAt(i).Y;
-            if (Math.floor(xf) < xLow) {
-                xLow = (int)Math.floor(xf);
-            }
-            if (Math.ceil(xf) > xHigh) {
-                xHigh = (int)Math.ceil(xf);
-            }
-            if (Math.floor(yf) < yLow) {
-                yLow = (int)Math.floor(yf);
-            }
-            if (Math.ceil(yf) > yHigh) {
-                yHigh = (int)Math.ceil(yf);
-            }
-        }
-        
-        /*kMaskPositions = getAllContourPoints();
-        for (i = 0; i < kMaskPositions.size(); i++ )
-        {
-            Vector3f kPos = kMaskPositions.elementAt(i);
-            numPixels++;
-            Mx += kPos.X;
-            My += kPos.Y;
-        }*/
-        
-        // pinpol >= 0.0 includes all of the contour boundary
-        // getAllContourPoints only includes upper and left contour points
-        // getAllContourPoints does not include lower and right contour points
-        for (y = yLow; y <= yHigh; y++) {
-            for (x = xLow; x <= xHigh; x++) {
-                pin[x][y] = pinpol(x, y, snear, i1, i2);
-                if (pin[x][y] >= 0.0) {
-                    numPixels++;
-                    Mx += x;
-                    My += y;    
-                }
-            }
-        }
-        
+        xCentroid = 0.0;
+        yCentroid = 0.0;
         exactTotalPixelCount = 0.0;
         for (i = 0; i < n-1; i++) {
-            exactTotalPixelCount += (elementAt(i).X*elementAt(i+1).Y - elementAt(i+1).X*elementAt(i).Y);
+            term = (elementAt(i).X*elementAt(i+1).Y - elementAt(i+1).X*elementAt(i).Y);
+            exactTotalPixelCount += term;
+            xCentroid += (elementAt(i).X + elementAt(i+1).X) * term;
+            yCentroid += (elementAt(i).Y + elementAt(i+1).Y) * term;
         }
-        exactTotalPixelCount += (elementAt(n-1).X*elementAt(0).Y - elementAt(0).X*elementAt(n-1).Y);
+        term =  (elementAt(n-1).X*elementAt(0).Y - elementAt(0).X*elementAt(n-1).Y);
+        exactTotalPixelCount += term;
         exactTotalPixelCount = 0.5*Math.abs(exactTotalPixelCount);
+        xCentroid += (elementAt(n-1).X + elementAt(0).X) * term;
+        yCentroid += (elementAt(n-1).Y + elementAt(0).Y) * term;
+        xCentroid = Math.abs(xCentroid/(6.0 * exactTotalPixelCount));
+        yCentroid = Math.abs(yCentroid/(6.0 * exactTotalPixelCount));
+        
+        Ix = 0.0;
+        Iy = 0.0;
+        Pxy = 0.0;
+        for (i = 0; i < n-1; i++) {
+            diffx1 = elementAt(i).X - xCentroid;
+            diffx2 = elementAt(i+1).X - xCentroid;
+            diffy1 = elementAt(i).Y - yCentroid;
+            diffy2 = elementAt(i+1).Y - yCentroid;
+            term = (diffx1*diffy2 - diffx2*diffy1);
+            Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+            Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+            Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+        }
+        diffx1 = elementAt(n-1).X - xCentroid;
+        diffx2 = elementAt(0).X - xCentroid;
+        diffy1 = elementAt(n-1).Y - yCentroid;
+        diffy2 = elementAt(0).Y - yCentroid;
+        term = (diffx1*diffy2 - diffx2*diffy1);
+        Ix += (diffy1*diffy1 + diffy1*diffy2 + diffy2*diffy2) * term;
+        Iy += (diffx1*diffx1 + diffx1*diffx2 + diffx2*diffx2) * term;
+        Pxy += (diffx1*(2.0*diffy1 + diffy2) + diffx2*(diffy1 + 2.0*diffy2)) * term;
+        Ix = Ix/12.0;
+        Iy = Iy/12.0;
+        Pxy = Pxy/24.0;
        
-        xCentroid = Mx/numPixels;
-        yCentroid = My/numPixels;
         Preferences.debug("xCentroid = " + xCentroid + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("yCentroid = " + yCentroid + "\n", Preferences.DEBUG_ALGORITHM);
-        
-        for (y = yLow; y <= yHigh; y++) {
-            for (x = xLow; x <= xHigh; x++) {
-                if (pin[x][y] >= 0.0) {
-                    diffX = x - xCentroid;
-                    diffY = y - yCentroid;
-                    Ix += diffY*diffY;
-                    Iy += diffX*diffX;
-                    Pxy += diffX*diffY;
-                }
-            }
-        }
         
         theta = 0.5*Math.atan2(2.0*Pxy, Iy-Ix);
         Preferences.debug("theta = " + (180.0*theta/Math.PI) + "\n", Preferences.DEBUG_ALGORITHM);
@@ -1551,9 +1503,9 @@ public class VOIContour extends VOIBase {
                     m1MirrorOnly++;
                 }
             } // for (i = 0; i < sliceSize; i++)
-            asymmetryIndexArray[numAxis] = 100.0 * (m1Only + m2MirrorOnly)/numPixels;
+            asymmetryIndexArray[numAxis] = 100.0 * (m1Only + m2MirrorOnly)/exactTotalPixelCount;
             Preferences.debug("On axis " + numAxis + " asymmetry index = " + asymmetryIndexArray[numAxis] + "\n", Preferences.DEBUG_ALGORITHM);
-            alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/numPixels;
+            alternateAsymmetry = 100.0 * (m2Only + m1MirrorOnly)/exactTotalPixelCount;
             Preferences.debug("On axis " + numAxis + " alternate asymmetry index = " + alternateAsymmetry + "\n",
                                Preferences.DEBUG_ALGORITHM);
             asymmetryIndexArray[numAxis] = Math.min(asymmetryIndexArray[numAxis], alternateAsymmetry);
