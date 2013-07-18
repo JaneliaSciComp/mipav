@@ -592,6 +592,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         gbc2.weighty = 1;
         gbc2.gridheight = 2;
         topPanel.add(buildSourcePanel(), gbc2);
+        
+        JMenuBar menuBar = new JMenuBar();
+        JMenu menu = new JMenu("Help");
+        menuBar.add(menu);
+        JMenuItem menuItem = new JMenuItem("Help");
+        menuItem.setActionCommand("Help");
+        menuItem.addActionListener(this);
+        menu.add(menuItem);
+        this.setJMenuBar(menuBar);
 
         getContentPane().add(topPanel, BorderLayout.NORTH);
 
@@ -1462,11 +1471,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         finishButton.addActionListener(this);
         finishButton.setActionCommand("Finish");
 
-        helpButton = new JButton("Help");
-        helpButton.setToolTipText("Help");
-        helpButton.addActionListener(this);
-        helpButton.setActionCommand("Help");
-        
+//        helpButton = new JButton("Help");
+//        helpButton.setToolTipText("Help");
+//        helpButton.addActionListener(this);
+//        helpButton.setActionCommand("Help");
         
         completeDataElementsButton = new JButton("Edit Data Elements");
         completeDataElementsButton.setToolTipText("Edit data elements for selected Form Structure");
@@ -1494,8 +1502,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         buttonPanel1.add(completeDataElementsButton, gbc);
         gbc.gridx = 4;
         buttonPanel1.add(finishButton, gbc);
-        gbc.gridx = 5;
-        buttonPanel1.add(helpButton, gbc);
+//        gbc.gridx = 5;
+//        buttonPanel1.add(helpButton, gbc);
 
         return buttonPanel1;
     }
