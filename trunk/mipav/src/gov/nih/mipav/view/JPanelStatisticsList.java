@@ -153,6 +153,7 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(numberOfIndentationsCurvatureDescription, false);
             setEnabledList(asymmetryIndexDescription, false);
             setEnabledList(fractalDimensionBoxCountDescription, false);
+            setEnabledList(fractalDimensionEuclideanDistanceDescription, false);
         }
         
         if (!byContour) {
@@ -161,6 +162,7 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
             setEnabledList(meanNegativeCurvatureDescription, false);
             setEnabledList(asymmetryIndexDescription, false);
             setEnabledList(fractalDimensionBoxCountDescription, false);
+            setEnabledList(fractalDimensionEuclideanDistanceDescription, false);
         }
     }
 
