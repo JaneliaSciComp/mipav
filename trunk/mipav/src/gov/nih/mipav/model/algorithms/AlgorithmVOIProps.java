@@ -123,6 +123,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             public int numberOfIndentationsHull;
             public double asymmetryIndex;
             public double fractalDimensionBoxCount;
+            public double fractalDimensionEuclideanDistance;
             public double meanCurvature;
             public double stdDevCurvature;
             public double meanNegativeCurvature;
@@ -1176,6 +1177,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(VOIStatisticList.fractalDimensionBoxCountDescription + end, nf.format(stats.fractalDimensionBoxCount));
             }
             
+            if (statsList[indexOf(fractalDimensionEuclideanDistanceDescription)]) {
+                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).euclideanDistance2D(srcImage.getExtents()[0], 
+                        srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription + end, 
+                        nf.format(stats.fractalDimensionEuclideanDistance));
+            }
+            
             return stats;
         }
         
@@ -1503,6 +1511,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stats.fractalDimensionBoxCount = ((VOIContour)contour).boxCountBoundary2D(srcImage.getExtents()[0], 
                         srcImage.getExtents()[1]);
                 statProperty.setProperty(VOIStatisticList.fractalDimensionBoxCountDescription + end, nf.format(stats.fractalDimensionBoxCount));
+            }
+            
+            if (statsList[indexOf(fractalDimensionEuclideanDistanceDescription)]) {
+                stats.fractalDimensionEuclideanDistance = ((VOIContour)contour).euclideanDistance2D(srcImage.getExtents()[0], 
+                        srcImage.getExtents()[1]);
+                statProperty.setProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription + end, 
+                        nf.format(stats.fractalDimensionEuclideanDistance));
             }
             
             return stats;
@@ -3637,6 +3652,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     public double getFractalDimensionBoxCount() {
         return Double.valueOf(propertyList.firstElement().getProperty(VOIStatisticList.fractalDimensionBoxCountDescription)).doubleValue();
     } // {return fractalDimensionBoxCount;}
+    
+    public double getFractalDimensionEuclideanDistance() {
+        return Double.valueOf(propertyList.firstElement().getProperty(VOIStatisticList.fractalDimensionEuclideanDistanceDescription)).doubleValue();
+    } // {return fractalDimensionEuclideanDistance;}
 
     /**
      * Reports if algorithm is performing calcs per slice, per contour, or for entire VOI.
