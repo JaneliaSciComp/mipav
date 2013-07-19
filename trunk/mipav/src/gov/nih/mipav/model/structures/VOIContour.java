@@ -4,10 +4,12 @@ import gov.nih.mipav.util.MipavMath;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 
 
 import java.awt.Polygon;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -355,15 +357,17 @@ public class VOIContour extends VOIBase {
 	} // det
 	
 	public double euclideanDistance2D(int xDim, int yDim) {
-	    // Cannot get to work properly
 	    // Calculates fractal dimensionality of a contour
 	    // x and y padded by distance on each side so that distance from any 
 	    // contour can be obtained without the user having to pad the image.
+	    // Reference: Fractal and Multi-Scale Fractal Dimension analysis:
+	    // a comparative study of the Bouligand-Minkowski method
+	    // by Andre Ricardo Backes and Odemir Martinez Bruno
 	    int i;
 	    float xf;
 	    float yf;
 	    // Maximum distance from boundary considered on each side
-	    int distance = 10;
+	    int distance = 6;
 	    // 1, 2,  ..., distance
 	    int numLevels = distance;
 	    int area[] = new int[numLevels];
@@ -384,6 +388,7 @@ public class VOIContour extends VOIBase {
         double sumy;
         double sumxx;
         double sumxy;
+        double bestFitSlope;
         double bestFitFD;
         int xfl;
         int xfc;
@@ -403,7 +408,9 @@ public class VOIContour extends VOIBase {
         double gradr[] = new double[numLevels];
         double grada[] = new double[numLevels];
         double localSlope[] = new double[numLevels];
+        double localFD[] = new double[numLevels];
         double logArea[] = new double[numLevels];
+        boolean displayMethod = false;
         
         for (i = 0; i < n; i++) {
             xf = elementAt(i).X + distance;
@@ -461,6 +468,27 @@ public class VOIContour extends VOIBase {
             }
         } // for (y = yLow; y <= yHigh; y++)
         
+        if (displayMethod) {
+            int extents[] = new int[2];
+            extents[0] = xHigh - xLow + 1;
+            extents[1] = yHigh - yLow + 1;
+            ModelImage pImage = new ModelImage(ModelStorageBase.DOUBLE, extents, "pImage");
+            double buffer[] = new double[extents[0]*extents[1]];
+            for (y = yLow; y <= yHigh; y++) {
+                for (x = xLow; x <= xHigh; x++) {
+                    buffer[(x-xLow) + extents[0]* (y - yLow)] = pin[x - xLow][y - yLow];
+                }
+            }
+            try {
+                pImage.importData(0, buffer, true);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException " + e + " on pImage.importData");
+                return 0.0;
+            }
+            new ViewJFrameImage(pImage);
+        } // if (displayMethod)
+        
         for (i = 0; i < numLevels; i++) {
             for (y = yLow; y <= yHigh; y++) {
                 for (x = xLow; x <= xHigh; x++) {
@@ -490,7 +518,8 @@ public class VOIContour extends VOIBase {
         
         for (i = 0; i < numLevels; i++) {
             localSlope[i] = grada[i]/gradr[i];
-            Preferences.debug("i = " + i + " radius = " + radius[i] + " area = " + area[i] + " local slope = " + localSlope[i] + "\n",
+            localFD[i] = 2.0 - localSlope[i];
+            Preferences.debug("i = " + i + " radius = " + radius[i] + " area = " + area[i] + " local FD = " + localFD[i] + "\n",
                                Preferences.DEBUG_ALGORITHM);
         }
         
@@ -505,7 +534,8 @@ public class VOIContour extends VOIBase {
             sumy += logArea[i];
             sumxx += logRadius[i]*logRadius[i];
         }
-        bestFitFD = (sumxy - sumx*sumy/numLevels)/(sumxx - sumx*sumx/numLevels);
+        bestFitSlope = (sumxy - sumx*sumy/numLevels)/(sumxx - sumx*sumx/numLevels);
+        bestFitFD = 2.0 - bestFitSlope;
         Preferences.debug("For 2D outlines a valid fractal dimension ranges from 1 to 2\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Best fit fractal dimension = " + bestFitFD + "\n", Preferences.DEBUG_ALGORITHM);
 	    return bestFitFD;
