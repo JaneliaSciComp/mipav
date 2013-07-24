@@ -1395,7 +1395,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  */
 		  
 		  
-		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+//		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+          m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.5f,10.0f);
 		  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
 		  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
 		  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
@@ -1435,7 +1436,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	   * Roll back the image back to center, reset the camera view close to original view. 
 	   */
 	  public void rollbackToCenter() {
-		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+//		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.5f,10.0f);
 		  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
 		  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
 		  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
