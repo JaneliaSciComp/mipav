@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.input.spacenav;
 import java.util.ArrayList;
 
+import javax.media.ControllerAdapter;
+
 import gov.nih.mipav.view.Preferences;
 import net.java.games.input.Component; 
 import net.java.games.input.Controller; 
@@ -179,7 +181,7 @@ public class SpaceNavigatorController{
 		for(int j=0; j<nameCompares.length; j++) {
 			nameCompares[j] = cs[stickNums.get(j)].getName().toLowerCase();
 
-			if(nameCompares[j].contains("space") && nameCompares[j].contains("navigator")) {
+			if(nameCompares[j].contains("space") ){ //&& nameCompares[j].contains("navigator")) {
 				return cs[stickNums.get(j)]; //returns controller indicated by the given name
 			}
 		}
