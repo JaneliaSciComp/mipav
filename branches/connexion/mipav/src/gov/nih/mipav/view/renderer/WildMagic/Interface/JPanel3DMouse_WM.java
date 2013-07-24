@@ -75,6 +75,9 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     
     /** Text fields that display the sensitivity number next to the sliders. */
     private JTextField rotationCutoffTextField;
+    
+    private boolean inMenu = false;
+    
     private GridBagConstraints gbc_1;
     private GridBagConstraints gbc_2;
     private GridBagConstraints gbc_3;
@@ -159,7 +162,7 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          gbc_4.gridx = 1;
          gbc_4.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc_4);
-         mouseRotationSpeedSlider = new JSlider(0, 100, (int)( GPURenderBase.getRotationScaleFactor() * 100 ));
+         mouseRotationSpeedSlider = new JSlider(0, 100, GPURenderBase.getRotationScaleFactor());
          mouseRotationSpeedSlider.setPaintTicks(true);
          mouseRotationSpeedSlider.setPaintLabels(true);
          mouseRotationSpeedSlider.setMinorTickSpacing(10);
@@ -211,9 +214,10 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          contentBox.add(invertPanel);
          
          leftRighticon = new JLabel("icon");
-         try {         			
+         try {
+               leftRighticon_1 = new JLabel(new ImageIcon(MipavUtil.getIconImage("panRightLeft_alphaBlended.gif").getScaledInstance(80, -80, Image.SCALE_DEFAULT)));
          //  leftRighticon_1 = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif").getScaledInstance(-1, 100, Image.SCALE_DEFAULT)));
-        	 leftRighticon_1 = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
+//        	 leftRighticon_1 = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight_alphaBlended.gif")));
         	 leftRighticon_1.setBounds(10, 46, 88, 48);
         	 invertPanel.add(leftRighticon_1);
 //			 leftRighticon_1.setPreferredSize(new Dimension(80, 80));
@@ -224,52 +228,48 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          
          chckbxUpdown = new JCheckBox("Up/Down");
          chckbxUpdown.setBounds(104, 110, 69, 23);
-         chckbxUpdown.addChangeListener(this);
+         chckbxUpdown.addActionListener(this);
          
          chckbxRotationRX = new JCheckBox("Tilt ");
          chckbxRotationRX.setBounds(304, 54, 83, 23);
-         chckbxRotationRX.addChangeListener(this);
+         chckbxRotationRX.addActionListener(this);
          
          chckbxLeftright = new JCheckBox("Left/Right");
          chckbxLeftright.setBounds(104, 54, 73, 23);
-         chckbxLeftright.addChangeListener(this);
+         chckbxLeftright.addActionListener(this);
 
          invertPanel.add(chckbxLeftright);
          invertPanel.add(chckbxRotationRX);
          
          chckbxRotationRy = new JCheckBox("Roll");
          chckbxRotationRy.setBounds(304, 110, 83, 23);
-         chckbxRotationRy.addChangeListener(this);
+         chckbxRotationRy.addActionListener(this);
          
          chckbxForwardsbackwards = new JCheckBox("Zoom In/Out");
          chckbxForwardsbackwards.setBounds(104, 170, 88, 23);
-         chckbxForwardsbackwards.addChangeListener(this);
+         chckbxForwardsbackwards.addActionListener(this);
          invertPanel.add(chckbxForwardsbackwards);
          invertPanel.add(chckbxRotationRy);
          invertPanel.add(chckbxUpdown);
          
          chckbxRotationRz = new JCheckBox("Spin");
          chckbxRotationRz.setBounds(304, 170, 83, 23);
-         chckbxRotationRz.addChangeListener(this);
+         chckbxRotationRz.addActionListener(this);
          invertPanel.add(chckbxRotationRz);
          
          JLabel upDownIcon = new JLabel("Up/Down Icon");
          try {         			
-        	 upDownIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panUpDown.gif").getScaledInstance(80, -1, Image.SCALE_DEFAULT)));
-//        	 upDownIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
-//			 upDownIcon.setPreferredSize(new Dimension(80, 80));
+        	 upDownIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panUpDown_alphaBlended.gif").getScaledInstance(80, -1, Image.SCALE_DEFAULT)));
 		 } catch (FileNotFoundException e) {
 			System.err.println("Exception ocurred while getting <" + e.getMessage()
                     + ">.  Check that this file is available.\n");
 		 }
-         upDownIcon.setBounds(10, 95, 83, 63);
+         upDownIcon.setBounds(15, 93, 83, 63);
          invertPanel.add(upDownIcon);
          
          JLabel forwardsBackwardsIcon = new JLabel("Forwards/Backwards Icon");
          try {         			
-        	 forwardsBackwardsIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panZoom.gif").getScaledInstance(-1, 80, Image.SCALE_DEFAULT)));
-//        	 forwardsBackwardsIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
-//			 forwardsBackwardsIcon.setPreferredSize(new Dimension(80, 80));
+        	 forwardsBackwardsIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panZoom_alphaBlended.gif").getScaledInstance(85, -80, Image.SCALE_DEFAULT)));
 		 } catch (FileNotFoundException e) {
 			System.err.println("Exception ocurred while getting <" + e.getMessage()
                     + ">.  Check that this file is available.\n");
@@ -277,40 +277,34 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          forwardsBackwardsIcon.setBounds(10, 157, 88, 48);
          invertPanel.add(forwardsBackwardsIcon);
          
-         tilticon = new JLabel("tiltIcon");
+         tilticon = new JLabel("tilt Icon");
          try {         			
-        	 tilticon = new JLabel(new ImageIcon(MipavUtil.getIconImage("tilt.gif").getScaledInstance(-1, 80, Image.SCALE_DEFAULT)));
-//        	 tilticon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
-//			 tilticon.setPreferredSize(new Dimension(80, 80));
+        	 tilticon = new JLabel(new ImageIcon(MipavUtil.getIconImage("tilt_alphaBlended.gif").getScaledInstance(80, -80, Image.SCALE_DEFAULT)));
 		 } catch (FileNotFoundException e) {
 			System.err.println("Exception ocurred while getting <" + e.getMessage()
                     + ">.  Check that this file is available.\n");
 		 }
-         tilticon.setBounds(203, 46, 88, 48);
+         tilticon.setBounds(203, 35, 88, 74);
          invertPanel.add(tilticon);
          
          spinIcon = new JLabel("Spin Icon");
          try {         			
-        	 spinIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("spin.gif").getScaledInstance(-1, 80, Image.SCALE_DEFAULT)));
-//        	 spinIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
-//			 spinIcon.setPreferredSize(new Dimension(80, 80));
+        	 spinIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("spin_alphaBlended.gif").getScaledInstance(-80, 70, Image.SCALE_DEFAULT)));
 		 } catch (FileNotFoundException e) {
 			System.err.println("Exception ocurred while getting <" + e.getMessage()
                     + ">.  Check that this file is available.\n");
 		 }
-         spinIcon.setBounds(203, 157, 88, 55);
+         spinIcon.setBounds(208, 78, 80, 80);
          invertPanel.add(spinIcon);
          
          rollIcon = new JLabel("Roll Icon");
          try {         			
-        	 rollIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("roll.gif").getScaledInstance(-1, 80, Image.SCALE_DEFAULT)));
-//        	 rollIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("panLeftRight.gif")));
-//			 rollIcon.setPreferredSize(new Dimension(80, 80));
+        	 rollIcon = new JLabel(new ImageIcon(MipavUtil.getIconImage("roll_alphaBlended.gif").getScaledInstance(85, -80, Image.SCALE_DEFAULT)));
 		 } catch (FileNotFoundException e) {
 			System.err.println("Exception ocurred while getting <" + e.getMessage()
                     + ">.  Check that this file is available.\n");
 		 }
-         rollIcon.setBounds(208, 95, 83, 63);
+         rollIcon.setBounds(210, 155, 83, 63);
          invertPanel.add(rollIcon);
          
          lblTranslations = new JLabel("Translations");
@@ -401,25 +395,10 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     }
 
 	@Override
-	public void actionPerformed(ActionEvent arg0) {
-		// TODO is this method needed for this gui?
-		
-	}
-
-	@Override
-	public void stateChanged(ChangeEvent e) {
-		// TODO finish making each button/ckbx/slider work
+	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
-		if(source == mouseRotationCutoffSlider){
-			rotationCutoffTextField.setText(String.valueOf(mouseRotationCutoffSlider.getValue()));
-			if(!mouseRotationCutoffSlider.getValueIsAdjusting())
-				GPURenderBase.setRotationCutoffValue(mouseRotationCutoffSlider.getValue());
-		}else if(source == mouseTranslationCutoffSlider){
-			translationCutoffTextField.setText(String.valueOf(mouseTranslationCutoffSlider.getValue()));
-			if(!mouseTranslationCutoffSlider.getValueIsAdjusting()){
-				GPURenderBase.setTranslationCutoffValue(mouseTranslationCutoffSlider.getValue());
-			}
-		}else if(source == chckbxLeftright){
+		
+		if(source == chckbxLeftright){
 			GPURenderBase.invertTX();
 		}else if(source == chckbxForwardsbackwards){
 			GPURenderBase.invertTY();
@@ -431,11 +410,27 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
 			GPURenderBase.invertRY();
 		}else if(source == chckbxRotationRz){
 			GPURenderBase.invertRZ();
+		}
+		
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		// TODO finish making each button/ckbx/slider work
+		Object source = e.getSource();
+		if(source == mouseRotationCutoffSlider){
+			rotationCutoffTextField.setText(String.valueOf(mouseRotationCutoffSlider.getValue()));
+//			if(!mouseRotationCutoffSlider.getValueIsAdjusting())
+				GPURenderBase.setRotationCutoffValue(mouseRotationCutoffSlider.getValue());
+		}else if(source == mouseTranslationCutoffSlider){
+			translationCutoffTextField.setText(String.valueOf(mouseTranslationCutoffSlider.getValue()));
+//			if(!mouseTranslationCutoffSlider.getValueIsAdjusting())
+				GPURenderBase.setTranslationCutoffValue(mouseTranslationCutoffSlider.getValue());
 		}else if(source == mouseTranslationSpeedSlider){
-			if(!mouseTranslationSpeedSlider.getValueIsAdjusting())
+//			if(!mouseTranslationSpeedSlider.getValueIsAdjusting())
 				GPURenderBase.setTranslationScaleFactor((mouseTranslationSpeedSlider.getValue()));
 		}else if(source == mouseRotationSpeedSlider){
-			if(!mouseRotationSpeedSlider.getValueIsAdjusting())
+//			if(!mouseRotationSpeedSlider.getValueIsAdjusting())
 				GPURenderBase.setRotationScaleFactor((mouseRotationSpeedSlider.getValue()));
 		}
 	}
@@ -446,23 +441,13 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     public void disposeLocal() {
     	
     }
+
+	public boolean isInMenu() {
+		return inMenu;
+	}
+
+	public void setInMenu(boolean inMenu) {
+		this.inMenu = inMenu;
+	}
     
-    /**
-     * Helper method that adds components to the control panel for the grid
-     * bag layout.
-     *
-     * @param  c    Component added to the control panel.
-     * @param  gbc  GridBagConstraints of added component.
-     * @param  x    Gridx location
-     * @param  y    Gridy location
-     * @param  w    Gridwidth
-     * @param  h    Gridheight
-     */
-    private void addToMouseSpeedPanel(Component c, GridBagConstraints gbc, int x, int y, int w, int h) {
-        gbc.gridx = x;
-        gbc.gridy = y;
-        gbc.gridwidth = w;
-        gbc.gridheight = h;
-        mainPanel.add(c, gbc);
-    }
 }
