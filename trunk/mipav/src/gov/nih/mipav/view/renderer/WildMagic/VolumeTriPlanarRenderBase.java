@@ -490,6 +490,40 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 GetCanvas().display();
 	 }
 
+	 protected void Move()
+	 {        
+		 if (MoveCamera())
+		 {
+			 m_kCuller.ComputeVisibleSet(m_spkScene);
+			 updateBoundingCube = true;
+		 }        
+		 if (MoveObject())
+		 {
+			 UpdateSceneRotation();
+			 updateBoundingCube = true;
+		 }
+		 if ( updateBoundingCube && m_bDoClip )
+		 {
+			 m_kVolumeRayCast.CheckViewIntersection( m_pkRenderer, m_kCuller );
+			 updateBoundingCube = false;
+		 }
+
+		 if ( m_bTestFrameRate )
+		 {
+			 Matrix3f kRotate = m_spkScene.Local.GetRotate();
+			 kRotate.mult(m_kZRotate);
+			 m_spkScene.Local.SetRotate(kRotate);
+			 m_spkScene.UpdateGS();
+			 m_kCuller.ComputeVisibleSet(m_spkScene);
+
+			 for ( int i = 0; i < m_kDisplayList.size(); i++ )
+			 {
+				 m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
+			 }
+		 }
+	 }
+	    
+	    
 	 /* (non-Javadoc)
 	  * @see javax.media.opengl.GLEventListener#display(javax.media.opengl.GLAutoDrawable)
 	  */
@@ -548,6 +582,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 
 		 Move();
 		 Pick();
+		 
 		 
 		 if ( profile )
 		 {
@@ -1438,8 +1473,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  case '3':
 			  m_iUpdateNormals = 3;
 			  break;
-		  case '4':
-			  m_iUpdateNormals = 4;
+		  case 'z':
+			  m_bDoClip = !m_bDoClip;
+			  System.err.println( "Clipping is " + m_bDoClip );
 			  break;
 		  case 'b':
 			  m_bDisplaySecond = !m_bDisplaySecond;
