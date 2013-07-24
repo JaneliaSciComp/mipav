@@ -475,7 +475,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             if ( m_spkCamera != null ) {
 	            if ( m_spkCamera.Perspective )
 	            {
-	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
+	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.5f,10.0f);
 	            }
 	            else
 	            {
@@ -572,7 +572,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void setPerspectiveProjection()
     {
         m_spkCamera.Perspective = true;
-        m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+        m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.5f,10.0f);
+//        m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         m_pkRenderer.OnFrustumChange();
     }
     
