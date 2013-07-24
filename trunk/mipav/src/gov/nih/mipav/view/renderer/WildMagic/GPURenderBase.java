@@ -92,6 +92,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bSurfaceMaskUpdate = false;
     protected int m_iUpdateNormals = -1;
     protected boolean m_bExtract = false;
+    
+    protected boolean m_bDoClip = true;
 
     /** Picking support: */
     protected int m_iXPick = -1, m_iYPick = -1;
@@ -113,6 +115,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected boolean m_bStandAlone = false;
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
+	protected boolean updateBoundingCube = false;
     
     /**
      * Default GPURenderBase constructor.
@@ -422,6 +425,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
         UpdateSceneRotation();
+        updateBoundingCube = true;
     }
 
     /**
@@ -432,6 +436,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
         m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_X, (float)Math.PI/2.0f );
         UpdateSceneRotation();
+        updateBoundingCube = true;
     }
 
 
@@ -443,6 +448,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkScene.Local.SetRotateCopy( Matrix3f.IDENTITY );
         m_spkScene.Local.GetRotate().fromAxisAngle( Vector3f.UNIT_Y, -(float)Math.PI/2.0f );
         UpdateSceneRotation();
+        updateBoundingCube = true;
     }
 
     /**
@@ -469,7 +475,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             if ( m_spkCamera != null ) {
 	            if ( m_spkCamera.Perspective )
 	            {
-	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
 	            }
 	            else
 	            {
@@ -787,7 +793,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         {
             UpdateSceneRotation();
         }
-
         if ( m_bTestFrameRate )
         {
             Matrix3f kRotate = m_spkScene.Local.GetRotate();
