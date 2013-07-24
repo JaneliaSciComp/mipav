@@ -619,7 +619,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         } else if (command.equals("LoadState")) {
             LoadState();
         } else if (command.equals("Mouse3D")) {
-            insertTab("3D Mouse", mouseGUI.getMainPanel());
+        	if(mouseGUI.isInMenu()){
+        		tabbedPane.remove(mouseGUI.getMainPanel());
+        		mouseGUI.setInMenu(false);
+        	}else{
+        		insertTab("3D Mouse", mouseGUI.getMainPanel());
+        		mouseGUI.setInMenu(true);
+        	}
         }
 
     }
@@ -3108,12 +3114,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)}));
         menuBar.add(menuObj.makeMenu("Options", false, new JComponent[] {
                 menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
-                menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),
-                menuObj.buildMenuItem("Open 3D Mouse Options", "Mouse3D", 0, null, false)}));
+                menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true)//,
+//                menuObj.buildMenuItem("Open 3D Mouse Options", "Mouse3D", 0, null, false)
+                }));
         menuBar.add(menuObj.makeMenu("Toolbars", false, new JMenuItem[] {
                 menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
-                menuObj.buildCheckBoxMenuItem("4D toolbar", "4DToolbar", false)
+                menuObj.buildCheckBoxMenuItem("4D toolbar", "4DToolbar", false),
         // menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", false)
+                menuObj.buildCheckBoxMenuItem("Open 3D Mouse Options", "Mouse3D",false)
                 }));
 
         menuObj.setMenuItemEnabled("RFA toolbar", false);
