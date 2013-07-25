@@ -237,7 +237,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 			adjustVOIs(imageAxial);
 			adjustVOIs(imageSagittal);
 			adjustVOIs(imageCoronal);
-			
+		
 			// Parallel processing the prostate segmentation concurrently.
 			int numberCore = (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime
 					.getRuntime().availableProcessors() - 2 : 1;
@@ -266,7 +266,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 			// computer the VOI binary mask based volume.
 			calculateVOIsVolume();
 			// System.gc();
-
+          
 			long endTime = System.currentTimeMillis();
 			int min = (int) ((endTime - startTime) / 1000f / 60f);
 			int sec = (int) ((endTime - startTime) / 1000f % 60f);
@@ -3558,21 +3558,23 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		}
 		
 		// sort index
-	    minIndex = Math.min(indexFirst, Math.min(indexSecond, indexThird));
-	    maxIndex = Math.max(indexFirst, Math.max(indexSecond, indexThird));
+		int[] indexArray = new int[3];
+		indexArray[0] = indexFirst;
+		indexArray[1] = indexSecond;
+		indexArray[2] = indexThird;
 		
-	    if ( minIndex == indexFirst && maxIndex == indexSecond ) {
-	             midIndex = indexThird;
-	    } else if ( minIndex == indexFirst && maxIndex == indexThird ) {
-	    	     midIndex = indexSecond;
-	    } else if ( minIndex == indexSecond && maxIndex == indexThird ) {
-	    	     midIndex = indexFirst;
-	    }
+		Arrays.sort(indexArray);
+		
+		minIndex = indexArray[0];
+		midIndex = indexArray[1];
+		maxIndex = indexArray[2];
+		
+		// System.err.println("minIndex = " + minIndex + "  midIndex = " + midIndex + " maxIndex = " + maxIndex);
 	    
 	    image.getVOIs().removeAllElements();
 	    
 	    VOIVector voiFirstNew = new VOIVector();
-	    VOI voiFirst = new VOI((short) 0, "blank");
+	    VOI voiFirst = new VOI((short) 0, "First");
 	    if ( minIndex == indexFirst) {
 	    	voiFirst.importCurve(vArrayFirst[indexFirst].get(0));	
 	    } else if ( minIndex == indexSecond ) {
@@ -3585,7 +3587,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 	    
 	    
 	    VOIVector voiSecondNew = new VOIVector();
-	    VOI voiSecond = new VOI((short) 0, "blank");
+	    VOI voiSecond = new VOI((short) 0, "Second");
 	    if ( midIndex == indexFirst) {
 	    	voiSecond.importCurve(vArrayFirst[indexFirst].get(0));	
 	    } else if ( midIndex == indexSecond ) {
@@ -3598,7 +3600,7 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 	    
 	    
 	    VOIVector voiThirdNew = new VOIVector();
-	    VOI voiThird = new VOI((short) 0, "blank");
+	    VOI voiThird = new VOI((short) 0, "Third");
 	    if ( maxIndex == indexFirst) {
 	    	voiThird.importCurve(vArrayFirst[indexFirst].get(0));	
 	    } else if ( maxIndex == indexSecond ) {
