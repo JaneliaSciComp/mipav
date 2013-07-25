@@ -118,6 +118,14 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
     public boolean keyTyped = false;
 
+	private int allowChangesWin;
+
+	private int allowChangesMinMax;
+
+	private JLabel sliderMinMax, sliderMinMin, sliderMaxMax, sliderMaxMin;
+	
+	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -259,14 +267,36 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 if (lev != null && win != null) {
                     final float num1 = validateCurrentNum(lev, levelMinFloat, levelMaxFloat);
                     final float num2 = validateCurrentNum(win, winMinFloat, winMaxFloat);
-
+                    
                     if (num1 != -1 && num2 != -1) {
-                        final float val = ( (num1 - minImage) * levelSliderMax) / (maxImage - minImage);
-                        levelSlider.setValue((int) val);
+                    	final float val = ( (num1 - minImage) * levelSliderMax) / (maxImage - minImage);
                         final float val2 = (num2 * windowSliderMax) / (2 * (maxImage - minImage));
+                        levelSlider.setValue((int) val);
                         windowSlider.setValue((int) val2);
                     } else {
                         MipavUtil.displayError("Window and level preference values are not valid with this dataset");
+                    	
+//                    	if (allowChangesWin == 1){
+//                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
+//                    	} else if (allowChangesWin == 0){
+//	                        String message = "The preference values you are attempting to load are outside your image bounds." +
+//	                        		"\nWould you like to change the bounds? \n\nWARNING: Selecting yes will permanently change your image";
+//	                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
+//	                        Object[] content = {message, checkbox};
+//	                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
+//	                                JOptionPane.WARNING_MESSAGE);
+//	                        
+//	                        if (response == JOptionPane.YES_OPTION) {
+//	                            if (checkbox.isSelected()) {
+//	                                allowChangesWin = 1;
+//	                            }
+//	                            changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
+//	                        } else {
+//	                            if (checkbox.isSelected()) {
+//	                                allowChangesWin = 2;
+//	                            }
+//	                        } 
+//                    	}
                     }
                 } else {
                     MipavUtil.displayError("There are no window and level preference values saved");
@@ -292,7 +322,30 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
                         maxSlider.setValue((int) val2);
                     } else {
-                        MipavUtil.displayError("Min and max preference values are not valid with this dataset");
+                    	float val1 = Float.parseFloat(minString);
+                    	float val2 = Float.parseFloat(maxString);
+//                        MipavUtil.displayError("Min and max preference values are not valid with this dataset");
+                    	if (allowChangesMinMax == 1) {
+                    		changeBounds(val1, val2, false);
+                    	} else if (allowChangesMinMax == 0){
+	                    	String message = "The preference values you are attempting to load are outside your image bounds." +
+	                        		"\nWould you like to change the bounds? \nWARNING: Selecting yes will permanently change your image";
+	                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
+	                        Object[] content = {message, checkbox};
+	                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
+	                                JOptionPane.WARNING_MESSAGE);
+	                        
+							if (response == JOptionPane.YES_OPTION) {
+	                            if (checkbox.isSelected()) {
+	                                allowChangesMinMax = 1;
+	                            }
+	                            changeBounds(val1, val2, false);
+	                        } else {
+	                            if (checkbox.isSelected()) {
+	                                allowChangesMinMax = 2;
+	                            }
+	                        }
+                    	}
                     }
                 } else {
                     MipavUtil.displayError("There are no min and max preference values saved");
@@ -328,7 +381,91 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     // levelValLabel.setText(Float.toString(Math.round(level)));
     // }
 
-    /**
+    private void changeBounds(float left, float right, boolean levWin) {   
+        
+    	if (levWin) {
+    		String levString = Float.toString(left);
+    		String winString = Float.toString(right);
+    		     
+	        if (levelMinFloat > left) {
+	        	sliderLevMin.setText(levString);
+	        	levelSlider.setMinimum((int) left);
+	        } else if(levelMaxFloat < left) {
+	        	sliderLevMax.setText(levString);
+	        	levelSlider.setMaximum((int) left);
+	        }
+	        levelSlider.setValue((int) left);
+	        levelValTextField.setText(levString);
+	        
+	        if(winMaxFloat < right) {
+	        	sliderWinMax.setText(winString);
+	        	windowSlider.setMaximum((int) right);
+	        }
+	        windowSlider.setValue((int) right);
+	        winValTextField.setText(winString);
+	        
+	        windowLevelPanel.validate();
+	        windowLevelPanel.repaint();
+    	} else {
+    		String minString = Float.toString(left);
+        	String maxString = Float.toString(right);
+        	
+            minValTextField.setText(minString);
+            left = (left - minMaxBInt) / minMaxSlope;
+            maxValTextField.setText(maxString);
+            right = (right - minMaxBInt) / minMaxSlope;
+
+            if (minSlider.getMinimum() > left) {
+            	sliderMinMin.setText(minString);
+            	sliderMaxMin.setText(minString);
+            	minSlider.setMinimum((int) left);
+//            	image.setMin(left);
+//                keyTyped = true;
+            }
+            minSlider.setValue((int) left);
+            
+            if (maxSlider.getMaximum() < right) {
+            	sliderMinMax.setText(maxString);
+            	sliderMaxMax.setText(maxString);
+            	maxSlider.setMaximum((int) right);
+//            	image.setMax(right);
+//                keyTyped = true;
+            }
+            maxSlider.setValue((int) right);
+            
+            minMaxPanel.validate();
+            minMaxPanel.repaint();
+    	}
+    }
+//    
+//    private void changeBounds(float min, float max){
+//    	String minString = Float.toString(min);
+//    	String maxString = Float.toString(max);
+//    	
+//        minValTextField.setText(minString);
+//        min = (min - minMaxBInt) / minMaxSlope;
+//        maxValTextField.setText(maxString);
+//        max = (max - minMaxBInt) / minMaxSlope;
+//
+//        if (minSlider.getMinimum() > min) {
+//        	sliderMinMin.setText(minString);
+//        	sliderMaxMin.setText(minString);
+//        	minSlider.setMinimum((int) min);
+//        }
+//        minSlider.setValue((int) min);
+//        
+//        if (maxSlider.getMaximum() < max) {
+//        	sliderMinMax.setText(maxString);
+//        	sliderMaxMax.setText(maxString);
+//        	maxSlider.setMaximum((int) max);
+//        }
+//        maxSlider.setValue((int) max);
+//        
+//        minMaxPanel.validate();
+//        minMaxPanel.repaint();
+//	}
+
+	/**
      * Setting location of window-level adjustment panel based on the amount of space available near the image window.
      */
     public void locateDialog() {
@@ -667,10 +804,10 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // discovers the slider max and applies it to a
         // label at the top of the slider
-        final JLabel levelMax = new JLabel(Float.toString(maxImage));
+        sliderLevMax = new JLabel(Float.toString(maxImage));
         levelMaxFloat = maxImage;
-        levelMax.setForeground(Color.black);
-        levelMax.setFont(serif12);
+        sliderLevMax.setForeground(Color.black);
+        sliderLevMax.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -686,7 +823,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         gbc.gridy = 1;
 
-        spanel.add(levelMax, gbc);
+        spanel.add(sliderLevMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         level = (x[1] + x[2]) / 2.0f;
@@ -727,11 +864,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        final JLabel levelMin = new JLabel(Float.toString(minImage));
+        sliderLevMin = new JLabel(Float.toString(minImage));
         levelMinFloat = minImage;
-        levelMin.setForeground(Color.black);
-        levelMin.setFont(serif12);
-        spanel.add(levelMin, gbc);
+        sliderLevMin.setForeground(Color.black);
+        sliderLevMin.setFont(serif12);
+        spanel.add(sliderLevMin, gbc);
 
         // current value of level label applied to the
         // bottom of the slider
@@ -760,10 +897,10 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // discovers the slider max and applies it to a
         // label at the top of the slider
-        final JLabel sliderMax = new JLabel(Float.toString(maxImage));
+        sliderMinMax = new JLabel(Float.toString(maxImage));
         // levelMaxFloat = maxImage;
-        sliderMax.setForeground(Color.black);
-        sliderMax.setFont(serif12);
+        sliderMinMax.setForeground(Color.black);
+        sliderMinMax.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -778,7 +915,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(minLabel, gbc);
 
         gbc.gridy = 1;
-        spanel.add(sliderMax, gbc);
+        spanel.add(sliderMinMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         min = .25f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
@@ -819,11 +956,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        final JLabel sliderMin = new JLabel(Float.toString(minImage));
+        sliderMinMin = new JLabel(Float.toString(minImage));
         // levelMinFloat = minImage;
-        sliderMin.setForeground(Color.black);
-        sliderMin.setFont(serif12);
-        spanel.add(sliderMin, gbc);
+        sliderMinMin.setForeground(Color.black);
+        sliderMinMin.setFont(serif12);
+        spanel.add(sliderMinMin, gbc);
 
         // current value of level label applied to the
         // bottom of the slider
@@ -850,10 +987,10 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         // discovers the slider max and applies it to a
         // label at the top of the slider
-        final JLabel sliderMax = new JLabel(Float.toString(maxImage));
+        sliderMaxMax = new JLabel(Float.toString(maxImage));
         // levelMaxFloat = maxImage;
-        sliderMax.setForeground(Color.black);
-        sliderMax.setFont(serif12);
+        sliderMaxMax.setForeground(Color.black);
+        sliderMaxMax.setFont(serif12);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -869,7 +1006,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
         gbc.gridy = 1;
 
-        spanel.add(sliderMax, gbc);
+        spanel.add(sliderMaxMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
         max = .75f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
@@ -910,11 +1047,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        final JLabel sliderMin = new JLabel(Float.toString(minImage));
+        sliderMaxMin = new JLabel(Float.toString(minImage));
         // levelMinFloat = minImage;
-        sliderMin.setForeground(Color.black);
-        sliderMin.setFont(serif12);
-        spanel.add(sliderMin, gbc);
+        sliderMaxMin.setForeground(Color.black);
+        sliderMaxMin.setFont(serif12);
+        spanel.add(sliderMaxMin, gbc);
 
         // current value of level label applied to the
         // bottom of the slider
@@ -981,17 +1118,17 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        final JLabel winMax = new JLabel(Float.toString(2.0f * (maxImage - minImage)));
+        sliderWinMax = new JLabel(Float.toString(2.0f * (maxImage - minImage)));
         winMaxFloat = 2.0f * (maxImage - minImage);
-        winMax.setForeground(Color.black);
-        winMax.setFont(serif12);
+        sliderWinMax.setForeground(Color.black);
+        sliderWinMax.setFont(serif12);
 
         final JLabel windowLabel = new JLabel("Window");
         spanel.add(windowLabel, gbc);
 
         gbc.gridy = 1;
 
-        spanel.add(winMax, gbc);
+        spanel.add(sliderWinMax, gbc);
 
         // current setting of the slider
         window = x[2] - x[1]; // the width of the window x[2] (max) - x[1] (min)
@@ -1033,11 +1170,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         gbc.gridheight = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        final JLabel winMin = new JLabel("0.0");
+        sliderWinMin = new JLabel("0.0");
         winMinFloat = 0.0f;
-        winMin.setForeground(Color.black);
-        winMin.setFont(serif12);
-        spanel.add(winMin, gbc);
+        sliderWinMin.setForeground(Color.black);
+        sliderWinMin.setFont(serif12);
+        spanel.add(sliderWinMin, gbc);
 
         // current value of window
         gbc.gridx = 1;
