@@ -271,6 +271,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
+    	boolean appFrameFlag = ViewUserInterface.getReference().isAppFrameVisible();
+    	ViewUserInterface.getReference().setAppFrameVisible(false);
     	
     	ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         
@@ -283,7 +285,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             while(exec.getActiveCount() == concurrentNum) {}
             
-            FusionAlg algInstance = new FusionAlg(null, baseImage, transformImage);
+            FusionAlg algInstance = new FusionAlg(this, baseImage, transformImage);
             algList.add(algInstance);
             exec.execute(algInstance);
 
@@ -298,6 +300,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             e.printStackTrace();
         }
         
+        ViewUserInterface.getReference().setAppFrameVisible(appFrameFlag);
         
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
@@ -323,12 +326,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
         private ModelImage baseImage, transformImage;
         
-        private Frame parentFrame;
+        private Object parentObject;
 
         private int xExtents, yExtents, zExtents;
         
-        public MeasureAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
-            this.parentFrame = parentFrame;
+        public MeasureAlg(Object parentObject, ModelImage baseImage, ModelImage transformImage) {
+            this.parentObject = parentObject;
             this.baseImage = baseImage;
             this.transformImage = transformImage;
         }
@@ -338,7 +341,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
 
         private void test() {
-            fireProgressStateChanged(5, "Measure", "Measure init");
+            //fireProgressStateChanged(5, "Measure", "Measure init");
             
             xExtents = baseImage.getExtents()[0] < transformImage.getExtents()[0] ? baseImage.getExtents()[0] : transformImage.getExtents()[0];
             yExtents = baseImage.getExtents()[1] < transformImage.getExtents()[1] ? baseImage.getExtents()[1] : transformImage.getExtents()[1];
@@ -368,7 +371,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             try {
                 for(int i=0; i<futureList.size(); i++) {
-                    fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 1 fitting");
+                    //fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 1 fitting");
                     System.out.println(i);
                     if(futureList.get(i).get() < firstMinValue) {
                         thirdMinValue = secondMinValue;
@@ -391,7 +394,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 exe.printStackTrace();
             }
             
-            fireProgressStateChanged(10, "Measure", "Measure init");
+            //fireProgressStateChanged(10, "Measure", "Measure init");
             
             int minX = Math.min(Math.min(firstMinX, secondMinX), thirdMinX);
             int minY = Math.min(Math.min(firstMinY, secondMinY), thirdMinY);
@@ -429,7 +432,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             double minValue = 0;
             try {
                 for(int i=0; i<futureList.size(); i++) {
-                    fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 2 fitting");
+                    //fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 2 fitting");
                     System.out.println(i);
                     if(futureList.get(i).get() < firstMinValue) {
                         minValue = futureList.get(i).get();
@@ -570,10 +573,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         private float[] finalRes;
         
-        private Frame parentFrame;
+        private Object parentObject;
         
-        public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
-            this.parentFrame = parentFrame;
+        public FusionAlg(Object parentObject, ModelImage baseImage, ModelImage transformImage) {
+            this.parentObject = parentObject;
             this.baseImage = baseImage;
             this.baseImageName = baseImage.getImageName();
             this.transformImage = transformImage;
@@ -585,8 +588,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
         
         public Boolean call() {
-            
-            fireProgressStateChanged(5, "Transform", "Rotating");
+            //fireProgressStateChanged(5, "Transform", "Rotating");
 
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
@@ -606,19 +608,19 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             transformImage = rotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
             
-            fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+            //fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
             
             transform();
             
-            fireProgressStateChanged(15, "Generating movements", "Performing "+mode.toString());
+            //fireProgressStateChanged(15, "Generating movements", "Performing "+mode.toString());
             
-            synchronized(this) {
+            synchronized(parentObject) {
                 if(xMovement == null && yMovement == null && zMovement == null) {
                     if(exec == null) {
                         exec = Executors.newFixedThreadPool(1);
                         System.out.println("Print once");
-                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                        //fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                        MeasureAlg alg = new MeasureAlg(parentObject, baseImage, transformImage);
                         exec.submit(alg);
                         exec.shutdown();
                     }
@@ -632,7 +634,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             }
          
-            fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
+            //fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
             
             FileIO io = new FileIO();
             FileWriteOptions options = new FileWriteOptions(null, null, true);
@@ -692,8 +694,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 threshold(transformImage, thresholdIntensity); //all transformations are complete
             }
             
-            if(doShowPrefusion || doSavePrefusion) {
-                fireProgressStateChanged(15, "Transform", "Creating prefusion images");
+            if(doShowPrefusion || doSavePrefusion || doDeconv) {
+                //fireProgressStateChanged(15, "Transform", "Creating prefusion images");
                 
                 ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
                 ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
@@ -762,6 +764,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     io.writeImage(deconvImg, options, false);
                     
                     doMaxProj(deconvImg, false, true, deconvDir, options, io);
+                    
+                    deconvImg.unRegisterImage();
+                    deconvImg.disposeLocal(false);
                 }
                 
                 if(!doShowPrefusion && !doInterImages) {
@@ -773,7 +778,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             }
             
-            fireProgressStateChanged(75, "Transform", "Calculating means");
+            //fireProgressStateChanged(75, "Transform", "Calculating means");
             
             if(showAriMean || saveAriMean) {
                 calcAriMean();
@@ -908,7 +913,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
 
         private void transform() {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, transformImage);
             transform.setPadFlag(false);
             transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
@@ -986,7 +991,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
         
         private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
             transform.setPadFlag(true);
             transform.setMatrix(mat);
             transform.setImage25D(false);
@@ -1160,14 +1165,17 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
          */
         private ModelImage deconvolve(ModelImage imageA, ModelImage imageB) {
         	final String name = JDialogBase.makeImageName(imageA.getImageName(), "_deconvolution");
-        	ModelImage resultImage = new ModelImage( imageA.getType(), imageA.getExtents(), name );
-        	JDialogBase.updateFileInfo( imageA, resultImage );
+        	ModelImage resultImage = (ModelImage) imageA.clone(name);
         	
         	OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA, imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
         	deconvAlgo.setRed(true);
         	deconvAlgo.setGreen(true);
         	deconvAlgo.setBlue(true);
-        	deconvAlgo.run();
+        	
+        	// can only perform one deconvolution at a time because it uses the GPU
+        	synchronized(parentObject) {
+        		deconvAlgo.run();
+        	}
         	
         	if (deconvShowResults) {
         		resultImageList.add(deconvAlgo.getDestImage());
