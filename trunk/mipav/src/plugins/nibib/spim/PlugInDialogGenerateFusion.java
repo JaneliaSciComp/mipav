@@ -88,7 +88,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private ModelImage resultImage = null;
 
     /** This source image is typically set by the constructor */
-    private ModelImage image; // 
+    private ModelImage image;
     
     /** This is your algorithm */
     private PlugInAlgorithmGenerateFusion generateFusionAlgo = null;
@@ -330,7 +330,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             generateFusionAlgo.addListener(this);
-            createProgressBar("Creating plugin", " ...", generateFusionAlgo);
+            //createProgressBar("Creating plugin", " ...", generateFusionAlgo);
 
             setVisible(false); // Hide dialog
 
