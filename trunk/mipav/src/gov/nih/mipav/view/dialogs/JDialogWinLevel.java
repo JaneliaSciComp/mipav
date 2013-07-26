@@ -274,29 +274,31 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                         levelSlider.setValue((int) val);
                         windowSlider.setValue((int) val2);
                     } else {
-                        MipavUtil.displayError("Window and level preference values are not valid with this dataset");
-                    	
-//                    	if (allowChangesWin == 1){
-//                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
-//                    	} else if (allowChangesWin == 0){
-//	                        String message = "The preference values you are attempting to load are outside your image bounds." +
-//	                        		"\nWould you like to change the bounds? \n\nWARNING: Selecting yes will permanently change your image";
-//	                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
-//	                        Object[] content = {message, checkbox};
-//	                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
-//	                                JOptionPane.WARNING_MESSAGE);
-//	                        
-//	                        if (response == JOptionPane.YES_OPTION) {
-//	                            if (checkbox.isSelected()) {
-//	                                allowChangesWin = 1;
-//	                            }
-//	                            changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
-//	                        } else {
-//	                            if (checkbox.isSelected()) {
-//	                                allowChangesWin = 2;
-//	                            }
-//	                        } 
-//                    	}
+                    	if(num1 != -1){
+                    		MipavUtil.displayError("Level preference values are not valid with this dataset");
+                    	} else {
+	                    	if (allowChangesWin == 1){
+	                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
+	                    	} else if (allowChangesWin == 0){
+		                        String message = "The preference values you are attempting to load are outside your image bounds." +
+		                        		"\nWould you like to change the bounds? \n\nWARNING: Selecting yes will permanently change your image";
+		                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
+		                        Object[] content = {message, checkbox};
+		                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
+		                                JOptionPane.WARNING_MESSAGE);
+		                        
+		                        if (response == JOptionPane.YES_OPTION) {
+		                            if (checkbox.isSelected()) {
+		                                allowChangesWin = 1;
+		                            }
+		                            changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
+		                        } else {
+		                            if (checkbox.isSelected()) {
+		                                allowChangesWin = 2;
+		                            }
+		                        } 
+	                    	}
+	                    }
                     }
                 } else {
                     MipavUtil.displayError("There are no window and level preference values saved");
@@ -386,24 +388,45 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     	if (levWin) {
     		String levString = Float.toString(left);
     		String winString = Float.toString(right);
-    		     
+    		    
+            
+	        levelValTextField.setText(levString);
+    		winValTextField.setText(winString);	  
+
 	        if (levelMinFloat > left) {
 	        	sliderLevMin.setText(levString);
-	        	levelSlider.setMinimum((int) left);
+	        	levelSlider.setMinimum((int)left);
+	        	sliderMinMin.setText(levString);
+            	sliderMaxMin.setText(levString);
+            	minSlider.setMinimum((int) left);
+            	image.setMin(left);
 	        } else if(levelMaxFloat < left) {
 	        	sliderLevMax.setText(levString);
 	        	levelSlider.setMaximum((int) left);
+	        	sliderMinMax.setText(levString);
+            	sliderMaxMax.setText(levString);
+            	maxSlider.setMaximum((int) left);
+            	image.setMax(left);
 	        }
-	        levelSlider.setValue((int) left);
-	        levelValTextField.setText(levString);
+	        
+    		left = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
+            right = (right * windowSliderMax) / (2 * (maxImage - minImage));
+	        
+	        
+	        
+
+	        calcMinMaxSlope(image);
+	        calcMinMax();
 	        
 	        if(winMaxFloat < right) {
 	        	sliderWinMax.setText(winString);
 	        	windowSlider.setMaximum((int) right);
 	        }
+	        levelSlider.setValue((int) left);
 	        windowSlider.setValue((int) right);
-	        winValTextField.setText(winString);
 	        
+//	        calcMinMaxSlope(image);
+//	        calcMinMax();
 	        windowLevelPanel.validate();
 	        windowLevelPanel.repaint();
     	} else {
@@ -419,7 +442,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             	sliderMinMin.setText(minString);
             	sliderMaxMin.setText(minString);
             	minSlider.setMinimum((int) left);
-//            	image.setMin(left);
+            	maxSlider.setMinimum((int) left);
+            	image.setMin(left);
 //                keyTyped = true;
             }
             minSlider.setValue((int) left);
@@ -428,11 +452,14 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             	sliderMinMax.setText(maxString);
             	sliderMaxMax.setText(maxString);
             	maxSlider.setMaximum((int) right);
-//            	image.setMax(right);
+            	minSlider.setMinimum((int) right);
+            	image.setMax(right);
 //                keyTyped = true;
             }
             maxSlider.setValue((int) right);
-            
+
+            calcMinMaxSlope(image);
+            calcMinMax();
             minMaxPanel.validate();
             minMaxPanel.repaint();
     	}
