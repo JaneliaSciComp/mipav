@@ -417,7 +417,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         
         if ( source == mouseRotationSpeedSlider) {
-        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/50.0f;
         	rayBasedRenderWM.setMouseRotationSpeed(rotationSpeed);
         }
         

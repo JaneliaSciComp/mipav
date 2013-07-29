@@ -1435,7 +1435,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
 		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 		  InitializeCameraMotion(.05f, 0.1f);
+		  UpdateCameraZoomSpeed(.05f);
 		  resetAxis();
+		  m_kCuller.ComputeVisibleSet(m_spkScene);
+		  InitializeObjectMotion(m_spkScene);
+		  
 	  }
 	  
 	  /**
