@@ -410,18 +410,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
         if ( source == mouseTranslationSpeedSlider) {
         	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
-        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/10.0f;
-        	// System.err.println("translationSpeed = " + translationSpeed);
-        	// System.err.println("rotationSpeed = " + rotationSpeed);
-        	rayBasedRenderWM.setMouseTranslationSpeed(translationSpeed, rotationSpeed);
+        	rayBasedRenderWM.setMouseTranslationSpeed(translationSpeed);
         }
         
         if ( source == mouseRotationSpeedSlider) {
-        	float translationSpeed = mouseTranslationSpeedSlider.getValue()/1000.0f;
-        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/10.0f;
-        	// System.err.println("translationSpeed = " + translationSpeed);
-        	// System.err.println("rotationSpeed = " + rotationSpeed);
-        	rayBasedRenderWM.setMouseRotationSpeed(translationSpeed, rotationSpeed);
+        	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
+        	rayBasedRenderWM.setMouseRotationSpeed(rotationSpeed);
         }
     }
     
@@ -623,7 +617,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          JPanel mouseSpeedPanel = new JPanel(new GridBagLayout());
          mouseSpeedPanel.setBorder(buildTitledBorder("Mouse Sensitivity"));
          
-         JLabel mouseTranslationSpeedLabel = new JLabel("Translation/Zoom Speed");
+         JLabel mouseTranslationSpeedLabel = new JLabel("Translation Speed");
          gbc.gridx = 0;
          gbc.gridy = 0;
          mouseSpeedPanel.add(mouseTranslationSpeedLabel, gbc);
@@ -636,7 +630,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc);
-         mouseRotationSpeedSlider = new JSlider(0, 100, 1);
+         mouseRotationSpeedSlider = new JSlider(0, 40, 20);
          mouseRotationSpeedSlider.addChangeListener(this);
          gbc.gridx = 1;
          mouseSpeedPanel.add(mouseRotationSpeedSlider, gbc);
