@@ -2572,6 +2572,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  return;
 	  }
 	  
+	  /**
+	   * Set the mouse zoom speed from the zoom control slider
+	   * @param zoomSpeed      mouse zoom speed
+	   */
+	  public void setMouseZoomSpeed(float zoomSpeed) {
+		  UpdateCameraZoomSpeed(zoomSpeed);
+		  return;
+	  }
+	  
+	  
 	  /** Turns on/off displaying the bounding box for the given plane.
 	   * @param i the plane index (0-3) in file coordinates.
 	   * @param bShow when true, the bounding box is displayed.
