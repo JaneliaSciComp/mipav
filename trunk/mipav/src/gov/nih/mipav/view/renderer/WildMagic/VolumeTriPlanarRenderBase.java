@@ -2554,22 +2554,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  }    
 
 	  /**
-	   * Set the mouse rotation and translation speed from the rotation and translation control sliders
+	   * Set the mouse translation speed from the translation control slider
 	   * @param translationSpeed   mouse translation speed
 	   * @param rotationSpeed      mouse rotation speed
 	   */
-	  public void setMouseTranslationSpeed(float translationSpeed, float rotationSpeed) {
-		  InitializeCameraMotion(translationSpeed,rotationSpeed);
+	  public void setMouseTranslationSpeed(float translationSpeed) {
+		  UpdateCameraTranslationSpeed(translationSpeed);
 		  return;
 	  }
 	  
 	  /**
-	   * Set the mouse rotation and translation speed from the rotation and translation control sliders
-	   * @param translationSpeed   mouse translation speed
+	   * Set the mouse rotation speed from the rotation control slider
 	   * @param rotationSpeed      mouse rotation speed
 	   */
-	  public void setMouseRotationSpeed(float translationSpeed, float rotationSpeed) {
-		  InitializeCameraMotion(translationSpeed, rotationSpeed);
+	  public void setMouseRotationSpeed(float rotationSpeed) {
+		  UpdateCameraRotationSpeed(rotationSpeed);
 		  return;
 	  }
 	  
