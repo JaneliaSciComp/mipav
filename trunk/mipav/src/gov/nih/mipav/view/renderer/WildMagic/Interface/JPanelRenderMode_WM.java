@@ -131,6 +131,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Mouse rotation speed slider. */
     private JSlider mouseRotationSpeedSlider;
     
+    /** Mouse zoom speed slider. */
+    private JSlider mouseZoomSpeedSlider;
+    
     /**
      * Constructor.
      * @param kVolumeViewer parent frame.
@@ -417,6 +420,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	float rotationSpeed = mouseRotationSpeedSlider.getValue()/1000.0f;
         	rayBasedRenderWM.setMouseRotationSpeed(rotationSpeed);
         }
+        
+        if ( source == mouseZoomSpeedSlider) {
+        	float zoomSpeed = mouseZoomSpeedSlider.getValue()/1000.0f;
+        	rayBasedRenderWM.setMouseZoomSpeed(zoomSpeed);
+        }
+        
     }
     
     /**
@@ -625,6 +634,15 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          mouseTranslationSpeedSlider.addChangeListener(this);
          gbc.gridx = 1;
          mouseSpeedPanel.add(mouseTranslationSpeedSlider, gbc);         
+         
+         JLabel mouseZoomSpeedLabel = new JLabel("Zoom Speed");
+         gbc.gridx = 0;
+         gbc.gridy = 2;
+         mouseSpeedPanel.add(mouseZoomSpeedLabel, gbc);
+         mouseZoomSpeedSlider = new JSlider(0, 40, 20);
+         mouseZoomSpeedSlider.addChangeListener(this);
+         gbc.gridx = 1;
+         mouseSpeedPanel.add(mouseZoomSpeedSlider, gbc);
          
          JLabel mouseRotationSpeedLabel = new JLabel("Rotation Speed");
          gbc.gridx = 0;
