@@ -2042,6 +2042,7 @@ public class DialogDTIColorDisplay extends ViewJFrameBase implements AlgorithmIn
             resultImageSlider.setValue(slice + 1);
 
             try {
+            	Thread.sleep(100);
                 imagePix = robot.createScreenCapture(currentRectangle);
 
                 PixelGrabber pgTest = new PixelGrabber(imagePix, 0, 0, extents[0], extents[1], pixels, 0, extents[0]);
