@@ -126,6 +126,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 	
 	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
 
+	private float levelSliderMin;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -274,9 +276,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                         levelSlider.setValue((int) val);
                         windowSlider.setValue((int) val2);
                     } else {
-                    	if(num1 != -1){
-                    		MipavUtil.displayError("Level preference values are not valid with this dataset");
-                    	} else {
+//                    	if(num1 == -1){
+//                    		MipavUtil.displayError("Level preference values are not valid with this dataset");
+//                    	} else {
 	                    	if (allowChangesWin == 1){
 	                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
 	                    	} else if (allowChangesWin == 0){
@@ -299,7 +301,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 		                        } 
 	                    	}
 	                    }
-                    }
+//                    }
                 } else {
                     MipavUtil.displayError("There are no window and level preference values saved");
                 }
@@ -399,34 +401,39 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 	        	sliderMinMin.setText(levString);
             	sliderMaxMin.setText(levString);
             	minSlider.setMinimum((int) left);
+            	maxSlider.setMinimum((int) left);
             	image.setMin(left);
-	        } else if(levelMaxFloat < left) {
-	        	sliderLevMax.setText(levString);
-	        	levelSlider.setMaximum((int) left);
-	        	sliderMinMax.setText(levString);
-            	sliderMaxMax.setText(levString);
-            	maxSlider.setMaximum((int) left);
-            	image.setMax(left);
-	        }
-	        
-    		left = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
-            right = (right * windowSliderMax) / (2 * (maxImage - minImage));
-	        
-	        
-	        
+            	levelMinFloat = Float.parseFloat(levString);
+//            	levelSliderMin = (int)Float.parseFloat(levString);
+	        } 
+//	        else if(levelMaxFloat < left) {
+//	        	sliderLevMax.setText(levString);
+//	        	levelSlider.setMaximum((int) Float.parseFloat(levString));
+//	        	sliderMinMax.setText(levString);
+//            	sliderMaxMax.setText(levString);
+//            	maxSlider.setMaximum((int) left);
+//            	minSlider.setMaximum((int) left);
+//            	image.setMax(left);
+//            	levelMaxFloat = Float.parseFloat(levString);
+//	        }
 
 	        calcMinMaxSlope(image);
 	        calcMinMax();
+    		left = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
+            right = (right * windowSliderMax) / (2 * (maxImage - minImage));
+
 	        
-	        if(winMaxFloat < right) {
+	        if(windowSliderMax < right) {
 	        	sliderWinMax.setText(winString);
 	        	windowSlider.setMaximum((int) right);
+	        	winMaxFloat = Float.parseFloat(winString);
+	        	windowSliderMax = (int)Float.parseFloat(winString);
 	        }
 	        levelSlider.setValue((int) left);
 	        windowSlider.setValue((int) right);
 	        
-//	        calcMinMaxSlope(image);
-//	        calcMinMax();
+//    	        calcMinMaxSlope(image);
+//    	        calcMinMax();
 	        windowLevelPanel.validate();
 	        windowLevelPanel.repaint();
     	} else {
@@ -452,7 +459,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             	sliderMinMax.setText(maxString);
             	sliderMaxMax.setText(maxString);
             	maxSlider.setMaximum((int) right);
-            	minSlider.setMinimum((int) right);
+            	minSlider.setMaximum((int) right);
             	image.setMax(right);
 //                keyTyped = true;
             }
@@ -465,29 +472,37 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     	}
     }
 //    
-//    private void changeBounds(float min, float max){
-//    	String minString = Float.toString(min);
-//    	String maxString = Float.toString(max);
+//    private void changeBounds(float left, float right){
+//    	String minString = Float.toString(left);
+//    	String maxString = Float.toString(right);
 //    	
 //        minValTextField.setText(minString);
-//        min = (min - minMaxBInt) / minMaxSlope;
+//        left = (left - minMaxBInt) / minMaxSlope;
 //        maxValTextField.setText(maxString);
-//        max = (max - minMaxBInt) / minMaxSlope;
+//        right = (right - minMaxBInt) / minMaxSlope;
 //
-//        if (minSlider.getMinimum() > min) {
+//        if (minSlider.getMinimum() > left) {
 //        	sliderMinMin.setText(minString);
 //        	sliderMaxMin.setText(minString);
-//        	minSlider.setMinimum((int) min);
+//        	minSlider.setMinimum((int) left);
+//        	maxSlider.setMinimum((int) left);
+//        	image.setMin(left);
+////            keyTyped = true;
 //        }
-//        minSlider.setValue((int) min);
+//        minSlider.setValue((int) left);
 //        
-//        if (maxSlider.getMaximum() < max) {
+//        if (maxSlider.getMaximum() < right) {
 //        	sliderMinMax.setText(maxString);
 //        	sliderMaxMax.setText(maxString);
-//        	maxSlider.setMaximum((int) max);
+//        	maxSlider.setMaximum((int) right);
+//        	minSlider.setMaximum((int) right);
+//        	image.setMax(right);
+////            keyTyped = true;
 //        }
-//        maxSlider.setValue((int) max);
-//        
+//        maxSlider.setValue((int) right);
+//
+////        calcMinMaxSlope(image);
+////        calcMinMax();
 //        minMaxPanel.validate();
 //        minMaxPanel.repaint();
 //	}
