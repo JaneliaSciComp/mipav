@@ -1383,16 +1383,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 				  return;
 			  }
 		  }
-/*
-		  // set up camera
-		  Vector3f kCDir = new Vector3f(0.0f,0.0f,1.0f);
-		  Vector3f kCUp = new Vector3f(0.0f, -1.0f,0.0f);
-		  Vector3f kCRight = new Vector3f();
-		  kCRight.Cross( kCDir, kCUp );
-		  Vector3f kCLoc = new Vector3f(0.0f,0.0f,-7.0f);
-		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-		  m_spkCamera.SetFrustum( -.2f, .2f, -.2f, .2f, 1f, 20 );
-		  */
 		  
 		  
 //		  m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
@@ -1443,7 +1433,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  Vector3f kCRight = Vector3f.cross( kCDir, kCUp );
 		  Vector3f kCLoc = Vector3f.scale(-1.4f, kCDir);
 		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-		  m_kCuller.SetCamera(m_spkCamera);
+		  InitializeCameraMotion(.05f, 0.1f);
+		  resetAxis();
 	  }
 	  
 	  /**

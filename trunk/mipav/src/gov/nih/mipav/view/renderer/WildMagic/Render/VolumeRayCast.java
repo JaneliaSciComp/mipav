@@ -143,16 +143,20 @@ public class VolumeRayCast extends VolumeObject
     {
         super(kImageA,kImageB);
     }
-    
+
+	Matrix4f kWorldInv;
     public void CheckViewIntersection(Renderer kRenderer, Culler kCuller)
     {   	    	
     	m_kRenderer = kRenderer;
     	m_kCullPlane = new Plane3f(kCuller.GetPlanes()[0]);
     	m_kCullPlane.Constant += .1f;
-    	Vector4f vtemp = new Vector4f();
-    	Matrix4f kWorld = GetWorld();
     	
-		int intersectionCount = 0;
+    	Matrix4f kWorld = GetWorld();
+    	kWorldInv = Matrix4f.inverse(kWorld);
+    	
+    	Vector4f vtemp = new Vector4f();
+    	
+		int clippedCount = 0;
 		float[] clippedDistance = new float[numPoints];
     	for ( int i = 0; i < cornerPoints.length; i++ )
     	{
@@ -166,22 +170,21 @@ public class VolumeRayCast extends VolumeObject
     		Vector4f resultW = kWorld.multLeft( vtemp );
 
 			clippedPoints[i] = false;
-			clippedDistance[i] = resultW.Z ;
+			clippedDistance[i] = m_kCullPlane.Normal.dot( new Vector3f( resultW.X, resultW.Y, resultW.Z ) );
 
 			rotatedPoints[i] = new Vector3f( resultW.X, resultW.Y, resultW.Z );
     		if ( clippedDistance[i] < m_kCullPlane.Constant )
     		{
     			clippedPoints[i] = true;
-    			intersectionCount++;
+    			clippedCount++;
     		}
     	}
-    	if ( (intersectionCount > 0) && (intersectionCount < 8) )
+    	if ( (clippedCount > 0) && ((numPoints - clippedCount) > 2) )
     	{
     		cullPoints( clippedDistance );
     	}
-    	else if ( intersectionCount == 0 )
+    	else
     	{
-//    		System.err.println( "NO CULL" );
     		checkMeshPoints();
     	}
     	m_kRenderer = null;
@@ -542,8 +545,6 @@ public class VolumeRayCast extends VolumeObject
     private void retriangulate( Vector<Vector3f> intersectionPoints )
     {
     	Vector<Vector3f> normalizedPts = new Vector<Vector3f>();
-    	Matrix4f kWorld = GetWorld();
-    	Matrix4f kWorldInv = Matrix4f.inverse(kWorld);
     	for ( int i = 0; i < intersectionPoints.size(); i++ )
     	{
     		Vector3f temp = intersectionPoints.elementAt(i);
@@ -1060,8 +1061,8 @@ public class VolumeRayCast extends VolumeObject
     			newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 8;
     			newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
     			// front right:
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 5;
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 2;
+    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 5;
+    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 7;
     			// back left:
     			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 3;
     			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 4;
@@ -1100,16 +1101,16 @@ public class VolumeRayCast extends VolumeObject
     		m_kMesh.VBuffer = newVBuffer;
     		m_kMesh.IBuffer = newIBuffer;   	    	
     	}
-//    	else if ( numClipped == 5 )
-//    	{
-//    		for ( int i = 0; i < reorderedList.length; i++ )
-//    		{
-//    			if ( !clippedPoints[reorderedList[i]] )
-//    			{
+    	else if ( numClipped == 5 )
+    	{
+    		for ( int i = 0; i < reorderedList.length; i++ )
+    		{
+    			if ( !clippedPoints[reorderedList[i]] )
+    			{
 //    				System.err.println( i + " " + reorderedList[i] );
-//    			}
-//    		}
-//    	}
+    			}
+    		}
+    	}
     }
 
     private void retriangulate6( Vector<Vector3f> normalizedPts )
