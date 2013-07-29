@@ -804,11 +804,12 @@ public class ViewJFrameAnimate extends ViewJFrameBase implements ChangeListener 
 
                 for (zShow = 0; zShow < nImage; zShow++) {
                     updateImages(true);
-                    imagePix = robot.createScreenCapture(currentRectangle);
-
-                    PixelGrabber pgTest = new PixelGrabber(imagePix, 0, 0, d.width, d.height, pixels, 0, d.width);
 
                     try {
+                    	Thread.sleep(100);
+                        imagePix = robot.createScreenCapture(currentRectangle);
+
+                        PixelGrabber pgTest = new PixelGrabber(imagePix, 0, 0, d.width, d.height, pixels, 0, d.width);
                         pgTest.grabPixels();
                     } catch (InterruptedException e) {
                         MipavUtil.displayError("Interrupted waiting for pixels");
