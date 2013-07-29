@@ -148,7 +148,8 @@ public class JDialogCaptureScreens extends JDialogBase {
             imageFrame.setSlice(slice);
 
             try {
-                imagePix = robot.createScreenCapture(currentRectangle);
+            	Thread.sleep(100);
+            	imagePix = robot.createScreenCapture(currentRectangle);
 
                 PixelGrabber pgTest = new PixelGrabber(imagePix, 0, 0, extents[0], extents[1], pixels, 0, extents[0]);
                 pgTest.grabPixels();
