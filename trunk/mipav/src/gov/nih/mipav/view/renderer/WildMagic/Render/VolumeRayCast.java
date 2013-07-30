@@ -170,7 +170,7 @@ public class VolumeRayCast extends VolumeObject
     		Vector4f resultW = kWorld.multLeft( vtemp );
 
 			clippedPoints[i] = false;
-			clippedDistance[i] = m_kCullPlane.Normal.dot( new Vector3f( resultW.X, resultW.Y, resultW.Z ) );
+			clippedDistance[i] = resultW.Z;//m_kCullPlane.Normal.dot( new Vector3f( resultW.X, resultW.Y, resultW.Z ) );
 
 			rotatedPoints[i] = new Vector3f( resultW.X, resultW.Y, resultW.Z );
     		if ( clippedDistance[i] < m_kCullPlane.Constant )
