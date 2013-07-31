@@ -126,7 +126,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 	
 	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
 
-	private float levelSliderMin;
+	private boolean boundsChanged = false;
+
+	private int levelSliderMin;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -386,126 +388,108 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     // }
 
     private void changeBounds(float left, float right, boolean levWin) {   
-        
+        boundsChanged = true;
+    	
     	if (levWin) {
     		String levString = Float.toString(left);
     		String winString = Float.toString(right);
-    		    
-            
+
 	        levelValTextField.setText(levString);
     		winValTextField.setText(winString);	  
 
+    		
+            float minTemp = (left - minMaxBInt) / minMaxSlope;
+            
 	        if (levelMinFloat > left) {
 	        	sliderLevMin.setText(levString);
-	        	levelSlider.setMinimum((int)left);
 	        	sliderMinMin.setText(levString);
             	sliderMaxMin.setText(levString);
-            	minSlider.setMinimum((int) left);
-            	maxSlider.setMinimum((int) left);
+            	minSlider.setMinimum((int) minTemp);
+            	maxSlider.setMinimum((int) minTemp);
             	image.setMin(left);
-            	levelMinFloat = Float.parseFloat(levString);
-//            	levelSliderMin = (int)Float.parseFloat(levString);
-	        } 
-//	        else if(levelMaxFloat < left) {
-//	        	sliderLevMax.setText(levString);
-//	        	levelSlider.setMaximum((int) Float.parseFloat(levString));
-//	        	sliderMinMax.setText(levString);
-//            	sliderMaxMax.setText(levString);
-//            	maxSlider.setMaximum((int) left);
-//            	minSlider.setMaximum((int) left);
-//            	image.setMax(left);
-//            	levelMaxFloat = Float.parseFloat(levString);
-//	        }
-
+	        } else if(levelMaxFloat < right) {
+	        	sliderLevMax.setText(levString);
+	        	sliderMinMax.setText(levString);
+            	sliderMaxMax.setText(levString);
+            	maxSlider.setMaximum((int) minTemp);
+            	minSlider.setMaximum((int) minTemp);
+            	image.setMax(left);	
+	        }
 	        calcMinMaxSlope(image);
 	        calcMinMax();
-    		left = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
-            right = (right * windowSliderMax) / (2 * (maxImage - minImage));
+    		float levTemp = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
+    		float winTemp = (right * windowSliderMax) / (2 * (maxImage - minImage));
 
-	        
-	        if(windowSliderMax < right) {
+    		if (levelMinFloat > left) {
+    			levelSlider.setMinimum((int)levTemp);
+    			levelMinFloat = left;
+    		} else if (levelMaxFloat < left) {
+    			levelSlider.setMaximum((int)levTemp);
+            	levelMaxFloat = left;
+    		}
+
+	        if(winMaxFloat < right) {
 	        	sliderWinMax.setText(winString);
-	        	windowSlider.setMaximum((int) right);
-	        	winMaxFloat = Float.parseFloat(winString);
-	        	windowSliderMax = (int)Float.parseFloat(winString);
+	        	windowSlider.setMaximum((int) winTemp);
+	        	winMaxFloat = right;
 	        }
-	        levelSlider.setValue((int) left);
-	        windowSlider.setValue((int) right);
 	        
-//    	        calcMinMaxSlope(image);
-//    	        calcMinMax();
-	        windowLevelPanel.validate();
-	        windowLevelPanel.repaint();
+	        levelSlider.setValue((int) levTemp);
+	        windowSlider.setValue((int) winTemp);
     	} else {
     		String minString = Float.toString(left);
         	String maxString = Float.toString(right);
         	
             minValTextField.setText(minString);
-            left = (left - minMaxBInt) / minMaxSlope;
+            float minTemp = (left - minMaxBInt) / minMaxSlope;
             maxValTextField.setText(maxString);
-            right = (right - minMaxBInt) / minMaxSlope;
-
-            if (minSlider.getMinimum() > left) {
+            float maxTemp = (right - minMaxBInt) / minMaxSlope;
+            
+            boolean minChanged = false;
+            boolean maxChanged = false;
+            if (minSlider.getMinimum() > minTemp) {
             	sliderMinMin.setText(minString);
             	sliderMaxMin.setText(minString);
-            	minSlider.setMinimum((int) left);
-            	maxSlider.setMinimum((int) left);
+            	minSlider.setMinimum((int) minTemp);
+            	maxSlider.setMinimum((int) minTemp);
             	image.setMin(left);
-//                keyTyped = true;
+            	sliderLevMin.setText(minString);
+            	minChanged = true;
             }
-            minSlider.setValue((int) left);
+            minSlider.setValue((int) minTemp);
             
-            if (maxSlider.getMaximum() < right) {
+            if (maxSlider.getMaximum() < maxTemp) {
             	sliderMinMax.setText(maxString);
             	sliderMaxMax.setText(maxString);
-            	maxSlider.setMaximum((int) right);
-            	minSlider.setMaximum((int) right);
+            	maxSlider.setMaximum((int) maxTemp);
+            	minSlider.setMaximum((int) maxTemp);
             	image.setMax(right);
-//                keyTyped = true;
+            	sliderLevMax.setText(maxString);
+            	maxChanged = true;
             }
-            maxSlider.setValue((int) right);
+            maxSlider.setValue((int) maxTemp);
 
-            calcMinMaxSlope(image);
             calcMinMax();
-            minMaxPanel.validate();
-            minMaxPanel.repaint();
+            
+            float levMinTemp = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
+        	float levMaxTemp = ( (right - minImage) * levelSliderMax) / (maxImage - minImage);
+
+    		if (minChanged || maxChanged) {
+    			if (minChanged){
+    				levelSlider.setMinimum((int)levMinTemp);
+    				levelMinFloat = left;
+    			}
+    			if (maxChanged){
+    				levelMaxFloat = right;
+    				levelSlider.setMaximum((int)levMaxTemp);
+    			}
+    		}
+    		
+    		float winMax = (windowSlider.getMaximum() * 2 * (maxImage - minImage) / windowSliderMax);
+    		sliderWinMax.setText(Float.toString(winMax));
     	}
     }
-//    
-//    private void changeBounds(float left, float right){
-//    	String minString = Float.toString(left);
-//    	String maxString = Float.toString(right);
-//    	
-//        minValTextField.setText(minString);
-//        left = (left - minMaxBInt) / minMaxSlope;
-//        maxValTextField.setText(maxString);
-//        right = (right - minMaxBInt) / minMaxSlope;
-//
-//        if (minSlider.getMinimum() > left) {
-//        	sliderMinMin.setText(minString);
-//        	sliderMaxMin.setText(minString);
-//        	minSlider.setMinimum((int) left);
-//        	maxSlider.setMinimum((int) left);
-//        	image.setMin(left);
-////            keyTyped = true;
-//        }
-//        minSlider.setValue((int) left);
-//        
-//        if (maxSlider.getMaximum() < right) {
-//        	sliderMinMax.setText(maxString);
-//        	sliderMaxMax.setText(maxString);
-//        	maxSlider.setMaximum((int) right);
-//        	minSlider.setMaximum((int) right);
-//        	image.setMax(right);
-////            keyTyped = true;
-//        }
-//        maxSlider.setValue((int) right);
-//
-////        calcMinMaxSlope(image);
-////        calcMinMax();
-//        minMaxPanel.validate();
-//        minMaxPanel.repaint();
-//	}
+
 
 	/**
      * Setting location of window-level adjustment panel based on the amount of space available near the image window.
@@ -563,8 +547,10 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         if (source == levelSlider || source == windowSlider) {
             calcMinMax();
             
-            level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
-            window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
+
+                level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
+                window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
+
 
             if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
                 winValTextField.setText(Float.toString(window));
@@ -632,9 +618,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 calcMinMax();
                 
                 // TODO use shared method
-                
-                level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
-                window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
+
+	                level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
+	                window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
                 if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
                     winValTextField.setText(Float.toString(window));
@@ -643,7 +629,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     winValTextField.setText(Float.toString(Math.round(window)));
                     levelValTextField.setText(Float.toString(Math.round(level)));
                 }
-                
                 calcWinLevTransferFunction(image, window, level, x, y);
 
                 // update the transfer function so the on-screen image
@@ -871,6 +856,15 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         level = (x[1] + x[2]) / 2.0f;
         levelSlider = new JSlider(0, levelSliderMax,
                 (int) ( (level - minImage) * levelSliderMax / (maxImage - minImage)));
+        
+//        if (boundsChanged){
+//        	levelSlider = new JSlider((int)levelMinFloat, (int)levelMaxFloat, (int)level);
+//        } else {
+//        	level = (x[1] + x[2]) / 2.0f;
+//            levelSlider = new JSlider(0, levelSliderMax,
+//                    (int) ( (level - minImage) * levelSliderMax / (maxImage - minImage)));
+//            
+//        }
 
         // set slider attributes
         levelSlider.setFont(serif12);
