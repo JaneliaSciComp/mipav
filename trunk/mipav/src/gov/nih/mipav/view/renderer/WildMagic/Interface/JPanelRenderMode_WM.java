@@ -687,7 +687,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          contentBox.add(blendPanel);
          contentBox.add(mouseSpeedPanel);
          contentBox.add(extractPanel);
-         // contentBox.add(naviPanel);
+         contentBox.add(naviPanel);
   
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
          

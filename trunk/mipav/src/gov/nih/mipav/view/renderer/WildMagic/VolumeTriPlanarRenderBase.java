@@ -22,6 +22,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
+import gov.nih.mipav.view.renderer.WildMagic.Navigation.VolumeShaderEffectMultiPassDynamicCPU;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
@@ -33,6 +34,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeOrientationCube;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeShaderEffectMultiPass;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
@@ -186,6 +188,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	
 	/** main container for this object, contains the scroll pane and the depth slider: */
 	private JPanelGPU container;
+	
+	protected boolean isNavigationEnabled = false;
 	
 	/**
 	 * Default Constructor.
@@ -1435,7 +1439,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  Vector3f kCLoc = Vector3f.scale(-2.4f, kCDir);
 		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 		  
-		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 		  InitializeCameraMotion(.05f, 0.1f);
 		  UpdateCameraZoomSpeed(.05f);
 		  resetAxis();
@@ -3618,4 +3621,52 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			}
 		}
 
+		/**
+		 * Being used by VolumeShaderEffectMultiPassDynamicCPU to get the geometry info
+		 * @return raycast volume bounding box geometry.
+		 */
+		public TriMesh getGeometry() {
+			return m_kVolumeRayCast.getGeometry();
+		}
+	
+		/**
+		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the material info
+		 * @return  material info
+		 */
+		public MaterialState getMaterialState() {
+			return m_kVolumeRayCast.GetMaterialState();
+		}
+		
+		/**
+		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the current camera
+		 * @return  current camera
+		 */
+		public Camera getViewCamera() {
+			return m_spkCamera;
+		}
+		
+		/**
+		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the current shader effect
+		 * @return  current shader effect
+		 */
+		public VolumeShaderEffectMultiPassDynamicCPU getShaderEffectCPU() {
+			return m_kVolumeRayCast.GetShaderEffectCPU();
+		}
+		
+		/**
+		 * Toggle navigation fly-thru tracking mode
+		 * @param _isNavigationEnabled      is Navigation checkbox selected or not. 
+		 */
+		public void toggleNavigation(boolean _isNavigationEnabled) {
+			isNavigationEnabled = _isNavigationEnabled;	
+		}
+	
+		/**
+		 * Set the parentScene in the volume
+		 * @param _parentScene
+		 */
+		public void setParentScene(VolumeTriPlanarRender _parentScene) {
+		    	m_kVolumeRayCast.setParentScene(_parentScene);
+		}
+		
 }
