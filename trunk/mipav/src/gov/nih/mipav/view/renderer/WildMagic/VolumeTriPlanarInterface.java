@@ -626,7 +626,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             SaveState();
         } else if (command.equals("LoadState")) {
             LoadState();
-        } 
+        } else if ( command.equals("Navigation")) {
+		    raycastRenderWM.toggleNavigation(rendererGUI.getNaviCheckBox().isSelected());
+		}
 
     }
 
@@ -3480,6 +3482,16 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		
 		System.out.println(builder.toString());
 	}        
+
+	
+	public TransferFunction getTransferFunction() {
+    	return m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
+	}
+
+	public Light[] getLights() {
+		return m_kLightsPanel.getAllLights();
+	}
+	
 	
 	public void setCameraNearPlane( float distance )
 	{
@@ -3488,4 +3500,5 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 			raycastRenderWM.setCameraNearPlane(distance);
 		}
 	}
+
 }

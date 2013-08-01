@@ -858,4 +858,44 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             m_kDisplayList.get(i).GetScene().UpdateGS();
         }
     }
+    
+    /**
+     * Called by the doPick() method in Navigation behavior.
+     * @return  the display list
+     */
+    public Vector<VolumeObject> getDisplayList() {
+        return m_kDisplayList;
+    }
+    
+    /**
+     * Called by the NavigationBehavior to get normalized bounding box, x dim
+     * @return  normalized bounding box x component.
+     */
+    public float getNormalizedXDim() {
+    	return m_fX;
+    }
+    
+    /**
+     * Called by the NavigationBehavior to get normalized bounding box, y dim
+     * @return   normalized bounding box y component.
+     */
+    public float getNormalizedYDim() {
+    	return m_fY;
+    }
+    
+    /**
+     * Called by the NavigationBehavior to get normalized bounding box, z dim
+     * @return  normalized bounding box z component. 
+     */
+    public float getNormalizedZDim() {
+    	return m_fZ;
+    }
+    
+    /**
+     * Get the world matrix. 
+     * @return world matrix
+     */
+    public Matrix4f getSceneToWorldMatrix() {
+    	return m_kSceneToWorld;
+    }
 }
