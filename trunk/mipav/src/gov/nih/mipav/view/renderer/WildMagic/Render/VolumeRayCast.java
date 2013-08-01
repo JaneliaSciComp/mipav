@@ -150,10 +150,35 @@ public class VolumeRayCast extends VolumeObject
     	m_kRenderer = kRenderer;
     	m_kCullPlane = new Plane3f(kCuller.GetPlanes()[0]);
     	m_kCullPlane.Constant += .1f;
+//    	System.err.println( m_kCullPlane.Normal + "    " + m_kCullPlane.Constant );
+    	m_kCullPlane.Normal = new Vector3f(0,0,1);
     	
-    	Matrix4f kWorld = GetWorld();
+//    	Matrix4f kWorld = GetWorld();
+//    	kWorldInv = Matrix4f.inverse(kWorld);
+    	
+    	float[] afData = new float[16];
+    	kRenderer.SetConstantVMatrix (0, afData);
+    	Matrix4f kV = new Matrix4f( );
+
+    	kV.M00 = afData[0];
+    	kV.M01 = afData[1];
+    	kV.M02 = afData[2];
+    	kV.M03 = afData[3];
+    	kV.M10 = afData[4];
+    	kV.M11 = afData[5];
+    	kV.M12 = afData[6];
+    	kV.M13 = afData[7];
+    	kV.M20 = afData[8];
+    	kV.M21 = afData[9];
+    	kV.M22 = afData[10];
+    	kV.M23 = afData[11];
+    	kV.M30 = 0;
+    	kV.M31 = 0;
+    	kV.M32 = 0;
+    	kV.M33 = 1;
+
+    	Matrix4f kWorld = Matrix4f.mult(GetWorld(), kV);
     	kWorldInv = Matrix4f.inverse(kWorld);
-    	
     	Vector4f vtemp = new Vector4f();
     	
 		int clippedCount = 0;
@@ -170,7 +195,7 @@ public class VolumeRayCast extends VolumeObject
     		Vector4f resultW = kWorld.multLeft( vtemp );
 
 			clippedPoints[i] = false;
-			clippedDistance[i] = resultW.Z;//m_kCullPlane.Normal.dot( new Vector3f( resultW.X, resultW.Y, resultW.Z ) );
+			clippedDistance[i] = resultW.Z;
 
 			rotatedPoints[i] = new Vector3f( resultW.X, resultW.Y, resultW.Z );
     		if ( clippedDistance[i] < m_kCullPlane.Constant )
@@ -179,7 +204,7 @@ public class VolumeRayCast extends VolumeObject
     			clippedCount++;
     		}
     	}
-    	if ( (clippedCount > 0) && ((numPoints - clippedCount) > 2) )
+    	if ( (clippedCount > 0) && (clippedCount < 8) )
     	{
     		cullPoints( clippedDistance );
     	}
@@ -338,9 +363,53 @@ public class VolumeRayCast extends VolumeObject
     	
     	computeIntersections();
     }
-    
+
+	Vector<Vector3f> topFace = new Vector<Vector3f>();
+	Vector<Vector3f> bottomFace = new Vector<Vector3f>();
+	Vector<Vector3f> leftFace = new Vector<Vector3f>();
+	Vector<Vector3f> rightFace = new Vector<Vector3f>();
+	Vector<Vector3f> frontFace = new Vector<Vector3f>();
+	Vector<Vector3f> backFace = new Vector<Vector3f>();
     private void computeIntersections(  ) 
     {
+    	topFace.clear();
+    	topFace.add( rotatedPoints[reorderedList[0]] );
+    	topFace.add( rotatedPoints[reorderedList[1]] );
+    	topFace.add( rotatedPoints[reorderedList[4]] );
+    	topFace.add( rotatedPoints[reorderedList[3]] );
+
+    	bottomFace.clear();
+    	bottomFace.add( rotatedPoints[reorderedList[5]] );
+    	bottomFace.add( rotatedPoints[reorderedList[2]] );
+    	bottomFace.add( rotatedPoints[reorderedList[6]] );
+    	bottomFace.add( rotatedPoints[reorderedList[7]] );
+
+    	leftFace.clear();
+    	leftFace.add( rotatedPoints[reorderedList[3]] );
+    	leftFace.add( rotatedPoints[reorderedList[4]] );
+    	leftFace.add( rotatedPoints[reorderedList[7]] );
+    	leftFace.add( rotatedPoints[reorderedList[6]] );
+
+    	rightFace.clear();
+    	rightFace.add( rotatedPoints[reorderedList[0]] );
+    	rightFace.add( rotatedPoints[reorderedList[2]] );
+    	rightFace.add( rotatedPoints[reorderedList[5]] );
+    	rightFace.add( rotatedPoints[reorderedList[1]] );
+
+    	frontFace.clear();
+    	frontFace.add( rotatedPoints[reorderedList[0]] );
+    	frontFace.add( rotatedPoints[reorderedList[3]] );
+    	frontFace.add( rotatedPoints[reorderedList[6]] );
+    	frontFace.add( rotatedPoints[reorderedList[2]] );
+
+    	backFace.clear();
+    	backFace.add( rotatedPoints[reorderedList[1]] );
+    	backFace.add( rotatedPoints[reorderedList[5]] );
+    	backFace.add( rotatedPoints[reorderedList[7]] );
+    	backFace.add( rotatedPoints[reorderedList[4]] );
+
+        Vector<Vector3f> clippedList = new Vector<Vector3f>();
+    	
     	Vector<Vector3f> intersectionPoints = new Vector<Vector3f>();
     	int edgeCount = 0;
     	for ( int i = 0; i < cutEdgeLists.length; i++ )
@@ -362,6 +431,11 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "0-1 " + reorderedList[0] + " " + reorderedList[1] + " " + clippedPoints[reorderedList[0]] + " " + clippedPoints[reorderedList[1]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[0];
     		cutEdgeLists[edgeCount++][1] = reorderedList[1];
+    		
+    		topFace.add( topFace.indexOf(rotatedPoints[reorderedList[0]]) + 1, intersectionPoint );
+    		rightFace.add( intersectionPoint );
+    		
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
     	}
     	else
     	{
@@ -378,6 +452,12 @@ public class VolumeRayCast extends VolumeObject
 //        		System.err.println( "1-4 " + reorderedList[1] + " " + reorderedList[4] + " " + clippedPoints[reorderedList[1]] + " " + clippedPoints[reorderedList[4]]  );
         		cutEdgeLists[edgeCount][0] = reorderedList[1];
         		cutEdgeLists[edgeCount++][1] = reorderedList[4];
+        		
+        		topFace.add( topFace.indexOf(rotatedPoints[reorderedList[1]]) + 1, intersectionPoint );
+        		backFace.add( intersectionPoint );
+
+        		clippedList.add( rotatedPoints[reorderedList[0]] );
+        		clippedList.add( rotatedPoints[reorderedList[1]] );
         	}
         	else
         	{
@@ -394,6 +474,13 @@ public class VolumeRayCast extends VolumeObject
 //            		System.err.println( "4-7 " + reorderedList[4] + " " + reorderedList[7] + " " + clippedPoints[reorderedList[4]] + " " + clippedPoints[reorderedList[7]]  );
             		cutEdgeLists[edgeCount][0] = reorderedList[4];
             		cutEdgeLists[edgeCount++][1] = reorderedList[7];
+
+            		leftFace.add( leftFace.indexOf( rotatedPoints[reorderedList[4]] ) + 1, intersectionPoint);
+            		backFace.add( backFace.indexOf( rotatedPoints[reorderedList[7]] ) + 1, intersectionPoint);
+
+            		clippedList.add( rotatedPoints[reorderedList[0]] );
+            		clippedList.add( rotatedPoints[reorderedList[1]] );
+            		clippedList.add( rotatedPoints[reorderedList[4]] );
             	}
         	}
     	}
@@ -410,6 +497,12 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "1-5 " + reorderedList[1] + " " + reorderedList[5] + " " + clippedPoints[reorderedList[1]] + " " + clippedPoints[reorderedList[5]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[1];
     		cutEdgeLists[edgeCount++][1] = reorderedList[5];
+    		
+    		rightFace.add( rightFace.indexOf( rotatedPoints[reorderedList[5]] ) + 1, intersectionPoint );
+    		backFace.add( backFace.indexOf( rotatedPoints[reorderedList[1]] ) + 1, intersectionPoint );
+
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
+    		clippedList.add( rotatedPoints[reorderedList[1]] );
     	}
     	// Test Edge 0-2:
     	segment = new Segment3f( rotatedPoints[reorderedList[0]], rotatedPoints[reorderedList[2]] );
@@ -424,6 +517,11 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "0-2 " + reorderedList[0] + " " + reorderedList[2] + " " + clippedPoints[reorderedList[0]] + " " + clippedPoints[reorderedList[2]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[0];
     		cutEdgeLists[edgeCount++][1] = reorderedList[2];
+
+    		frontFace.add( intersectionPoint );
+    		rightFace.add( rightFace.indexOf( rotatedPoints[reorderedList[0]] ) + 1, intersectionPoint );
+    		
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
     	}
     	else
     	{
@@ -440,6 +538,12 @@ public class VolumeRayCast extends VolumeObject
 //        		System.err.println( "2-5 " + reorderedList[2] + " " + reorderedList[5] + " " + clippedPoints[reorderedList[2]] + " " + clippedPoints[reorderedList[5]]  );
         		cutEdgeLists[edgeCount][0] = reorderedList[2];
         		cutEdgeLists[edgeCount++][1] = reorderedList[5];
+
+        		bottomFace.add( bottomFace.indexOf( rotatedPoints[reorderedList[5]] ) + 1, intersectionPoint );
+        		rightFace.add( rightFace.indexOf( rotatedPoints[reorderedList[2]] ) + 1, intersectionPoint );
+
+        		clippedList.add( rotatedPoints[reorderedList[0]] );
+        		clippedList.add( rotatedPoints[reorderedList[2]] );
         	}
         	else
         	{
@@ -456,6 +560,13 @@ public class VolumeRayCast extends VolumeObject
 //            		System.err.println( "5-7 " + reorderedList[5] + " " + reorderedList[7] + " " + clippedPoints[reorderedList[5]] + " " + clippedPoints[reorderedList[7]]  );
             		cutEdgeLists[edgeCount][0] = reorderedList[5];
             		cutEdgeLists[edgeCount++][1] = reorderedList[7];
+
+            		bottomFace.add( intersectionPoint );
+            		backFace.add( backFace.indexOf( rotatedPoints[reorderedList[5]] ) + 1, intersectionPoint );
+
+            		clippedList.add( rotatedPoints[reorderedList[0]] );
+            		clippedList.add( rotatedPoints[reorderedList[2]] );
+            		clippedList.add( rotatedPoints[reorderedList[5]] );
             	}           	        		
         	}
     	}
@@ -472,6 +583,12 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "2-6 " + reorderedList[2] + " " + reorderedList[6] + " " + clippedPoints[reorderedList[2]] + " " + clippedPoints[reorderedList[6]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[2];
     		cutEdgeLists[edgeCount++][1] = reorderedList[6];
+
+    		frontFace.add( frontFace.indexOf( rotatedPoints[reorderedList[6]] ) + 1, intersectionPoint );
+    		bottomFace.add( bottomFace.indexOf( rotatedPoints[reorderedList[2]] ) + 1, intersectionPoint );
+
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
+    		clippedList.add( rotatedPoints[reorderedList[2]] );
     	}
     	// Test Edge 0-3:
     	segment = new Segment3f( rotatedPoints[reorderedList[0]], rotatedPoints[reorderedList[3]] );
@@ -486,6 +603,11 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "0-3 " + reorderedList[0] + " " + reorderedList[3] + " " + clippedPoints[reorderedList[0]] + " " + clippedPoints[reorderedList[3]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[0];
     		cutEdgeLists[edgeCount++][1] = reorderedList[3];
+
+    		topFace.add( intersectionPoint );
+    		frontFace.add( frontFace.indexOf( rotatedPoints[reorderedList[0]] ) + 1, intersectionPoint );
+    		
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
     	}
     	else
     	{
@@ -502,6 +624,12 @@ public class VolumeRayCast extends VolumeObject
 //        		System.err.println( "3-6 " + reorderedList[3] + " " + reorderedList[6] + " " + clippedPoints[reorderedList[3]] + " " + clippedPoints[reorderedList[6]]  );
         		cutEdgeLists[edgeCount][0] = reorderedList[3];
         		cutEdgeLists[edgeCount++][1] = reorderedList[6];
+
+        		leftFace.add( intersectionPoint );
+        		frontFace.add( frontFace.indexOf( rotatedPoints[reorderedList[3]] ) + 1, intersectionPoint );
+
+        		clippedList.add( rotatedPoints[reorderedList[0]] );
+        		clippedList.add( rotatedPoints[reorderedList[3]] );
         	}
         	else
         	{
@@ -518,6 +646,13 @@ public class VolumeRayCast extends VolumeObject
 //            		System.err.println( "6-7 " + reorderedList[6] + " " + reorderedList[7] + " " + clippedPoints[reorderedList[6]] + " " + clippedPoints[reorderedList[7]] );
             		cutEdgeLists[edgeCount][0] = reorderedList[6];
             		cutEdgeLists[edgeCount++][1] = reorderedList[7];
+
+            		leftFace.add( leftFace.indexOf( rotatedPoints[reorderedList[7]] ) + 1, intersectionPoint );
+            		bottomFace.add( bottomFace.indexOf( rotatedPoints[reorderedList[6]] ) + 1, intersectionPoint );
+
+            		clippedList.add( rotatedPoints[reorderedList[0]] );
+            		clippedList.add( rotatedPoints[reorderedList[3]] );
+            		clippedList.add( rotatedPoints[reorderedList[6]] );
             	}        		
         	}
     	}
@@ -534,660 +669,263 @@ public class VolumeRayCast extends VolumeObject
 //    		System.err.println( "3-4 " + reorderedList[3] + " " + reorderedList[4] + " " + clippedPoints[reorderedList[3]] + " " + clippedPoints[reorderedList[4]]  );
     		cutEdgeLists[edgeCount][0] = reorderedList[3];
     		cutEdgeLists[edgeCount++][1] = reorderedList[4];
+
+    		topFace.add( topFace.indexOf( rotatedPoints[reorderedList[4]] ) + 1, intersectionPoint );
+    		leftFace.add( leftFace.indexOf( rotatedPoints[reorderedList[3]]) + 1, intersectionPoint );
+
+    		clippedList.add( rotatedPoints[reorderedList[0]] );
+    		clippedList.add( rotatedPoints[reorderedList[3]] );
+    	}
+    
+    	for ( int i = 0; i < clippedList.size(); i++ )
+    	{
+    		topFace.remove( clippedList.elementAt(i) );
+    		bottomFace.remove( clippedList.elementAt(i) );
+    		frontFace.remove( clippedList.elementAt(i) );
+    		backFace.remove( clippedList.elementAt(i) );
+    		leftFace.remove( clippedList.elementAt(i) );
+    		rightFace.remove( clippedList.elementAt(i) );
     	}
     	
-    	if ( intersectionPoints.size() > 0 )
-    	{
-    		retriangulate( intersectionPoints );
-    	}
+//    	System.err.println( clippedList.size() + " " + intersectionPoints.size() );
+    	
+    	
+    	retriangulate(intersectionPoints);
+    	
     }
+    
     
     private void retriangulate( Vector<Vector3f> intersectionPoints )
     {
-    	Vector<Vector3f> normalizedPts = new Vector<Vector3f>();
+    	int newNumPoints = topFace.size() + bottomFace.size() + frontFace.size() + backFace.size() + leftFace.size() + rightFace.size() + intersectionPoints.size();
+    	int newNumTris = 0;
+    	if ( topFace.size() >=3 )
+    	{
+    		newNumTris += (topFace.size() - 2);
+    	}
+    	if ( bottomFace.size() >=3 )
+    	{
+    		newNumTris += (bottomFace.size() - 2);
+    	}
+    	if ( frontFace.size() >=3 )
+    	{
+    		newNumTris += (frontFace.size() - 2);
+    	}
+    	if ( backFace.size() >=3 )
+    	{
+    		newNumTris += (backFace.size() - 2);
+    	}
+    	if ( leftFace.size() >=3 )
+    	{
+    		newNumTris += (leftFace.size() - 2);
+    	}
+    	if ( rightFace.size() >=3 )
+    	{
+    		newNumTris += (rightFace.size() - 2);
+    	}
+    	if ( intersectionPoints.size() >=3 )
+    	{
+    		newNumTris += (intersectionPoints.size() - 2);
+    	}
+    	
+    	
+		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
+		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
+		
+		// Add points and triangles for each face:
+
+		// Top Face:
+		int pIndex = 0;
+		int firstPIndex = 0;
+    	for ( int i = 0; i < topFace.size(); i++ )
+    	{
+    		Vector3f temp = topFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		int index = 0;
+		int nextPIndex = firstPIndex + 1;
+    	int numTris = (topFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	  
+    		newIBuffer.GetData()[index++] = firstPIndex; 
+    		newIBuffer.GetData()[index++] = nextPIndex;     	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+
+		// Bottom Face:
+		firstPIndex = pIndex;
+    	for ( int i = 0; i < bottomFace.size(); i++ )
+    	{
+    		Vector3f temp = bottomFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		nextPIndex = firstPIndex + 1;
+    	numTris = (bottomFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	
+    		newIBuffer.GetData()[index++] = firstPIndex;   
+    		newIBuffer.GetData()[index++] = nextPIndex;     	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+
+		// Left Face:
+		firstPIndex = pIndex;
+    	for ( int i = 0; i < leftFace.size(); i++ )
+    	{
+    		Vector3f temp = leftFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		nextPIndex = firstPIndex + 1;
+    	numTris = (leftFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	 
+    		newIBuffer.GetData()[index++] = firstPIndex;  
+    		newIBuffer.GetData()[index++] = nextPIndex;     	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+
+		// Right Face:
+		firstPIndex = pIndex;
+    	for ( int i = 0; i < rightFace.size(); i++ )
+    	{
+    		Vector3f temp = rightFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		nextPIndex = firstPIndex + 1;
+    	numTris = (rightFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	
+    		newIBuffer.GetData()[index++] = firstPIndex;   
+    		newIBuffer.GetData()[index++] = nextPIndex;     	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+
+		// Front Face:
+		firstPIndex = pIndex;
+    	for ( int i = 0; i < frontFace.size(); i++ )
+    	{
+    		Vector3f temp = frontFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		nextPIndex = firstPIndex + 1;
+    	numTris = (frontFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	
+    		newIBuffer.GetData()[index++] = firstPIndex;    
+    		newIBuffer.GetData()[index++] = nextPIndex;    	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+		
+
+		// Back Face:
+		firstPIndex = pIndex;
+    	for ( int i = 0; i < backFace.size(); i++ )
+    	{
+    		Vector3f temp = backFace.elementAt(i);
+    		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
+    		Vector4f result = kWorldInv.multLeft(temp4);
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
+    	}
+		nextPIndex = firstPIndex + 1;
+    	numTris = (backFace.size() - 2);
+		for ( int i = 0; i < numTris; i++ )
+		{	
+    		newIBuffer.GetData()[index++] = firstPIndex;    
+    		newIBuffer.GetData()[index++] = nextPIndex;    	
+    		nextPIndex++;
+    		newIBuffer.GetData()[index++] = nextPIndex;			
+		}
+
+		// New Face:
+		firstPIndex = pIndex;
     	for ( int i = 0; i < intersectionPoints.size(); i++ )
     	{
     		Vector3f temp = intersectionPoints.elementAt(i);
     		Vector4f temp4 = new Vector4f( temp.X, temp.Y, temp.Z, 1);
     		Vector4f result = kWorldInv.multLeft(temp4);
-    		normalizedPts.add( new Vector3f( result.X, result.Y, result.Z ) );
+    		newVBuffer.SetPosition3( pIndex, result.X, result.Y, result.Z );
+    		result.X /= m_fX;
+    		result.Y /= m_fY;
+    		result.Z /= m_fZ;
+
+			newVBuffer.SetColor3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 0, pIndex, result.X, result.Y, result.Z );
+			newVBuffer.SetTCoord3( 1, pIndex, result.X, result.Y, result.Z );     
+    		pIndex++;
     	}
-    	int numClipped = 0;
-    	for ( int i = 0; i < clippedPoints.length; i++ )
-    	{
-    		if ( clippedPoints[i] )
-    		{
-    			numClipped++;
-    		}
-    	}
-    	
-//    	System.err.println( numClipped + " " + intersectionPoints.size() );
-    	
-    	switch ( intersectionPoints.size() )
-    	{
-    	case 3: retriangulate3( numClipped, normalizedPts ); break;
-    	case 4: retriangulate4( numClipped, normalizedPts ); break;
-    	case 5: retriangulate5( numClipped, normalizedPts ); break;
-    	case 6: retriangulate6( normalizedPts ); break;
-    	default: break;
-    	}
-    }
-    
-    private void retriangulate3( int numClipped, Vector<Vector3f> normalizedPts )
-    {    	    	
-    	// Two cases:
-    	if ( numClipped == 1 )
-    	{    		
-    		int newNumPoints = 10;
-    		int newNumTris = 16;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		// add new:
-    		int pIndex = 0;
-    		for ( int i = 0; i < normalizedPts.size(); i++ )
-    		{
-    			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-    			
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );   
-    			pIndex++;
-    		}
-    		// add old points, except point reorderedList[0]:
-    		for ( int i = 1; i < reorderedList.length; i++ )
-    		{
-    			Vector3f pos = new Vector3f( cornerPoints[reorderedList[i]] );
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );     
-    			pIndex++; 			
-    		}
-    		
-    		// Add Triangles:
-    		int index = 0;
-    		// new face
-    		int firstPIndex = 0;
-    		int nextPIndex = firstPIndex + 1;
-        	int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
-    		for ( int i = 0; i < numTris; i++ )
-    		{	
-        		newIBuffer.GetData()[index++] = nextPIndex;    
-        		newIBuffer.GetData()[index++] = firstPIndex;    	
-        		nextPIndex++;
-        		newIBuffer.GetData()[index++] = nextPIndex;			
-    		}
-    		// top
-    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 6;
-    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;
-    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;
-    		// front right
-    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 3;
-    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;
-    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 7;
-    		// front left
-    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 8;
-    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 1;
-    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 4;
-    		// bottom
-    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 9;
-    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;
-    		// back right
-    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 6;
-    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 3;
-    		// back left
-    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
-    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 6;
-
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;
-    	}
-    	else if ( numClipped == 7 )
-    	{
-    		int newNumPoints = 4;
-    		int newNumTris = 4;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		// add new:
-    		int pIndex = 0;
-    		for ( int i = 0; i < normalizedPts.size(); i++ )
-    		{
-    			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-    			
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );  
-    			pIndex++;
-    		}
-    		int lastPt = reorderedList.length-1;
-    		Vector3f pos = new Vector3f( cornerPoints[reorderedList[lastPt]] );
-    		newVBuffer.SetPosition3( pIndex, pos );
-    		pos.X /= m_fX;
-    		pos.Y /= m_fY;
-    		pos.Z /= m_fZ;
-
-    		newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    		newVBuffer.SetTCoord3( 0, pIndex, pos );
-    		newVBuffer.SetTCoord3( 1, pIndex, pos );     
-
-    		
-    		// Add Triangles:
-    		int index = 0;
-    		// front face
-    		// new face
-    		int firstPIndex = 0;
-    		int nextPIndex = firstPIndex + 1;
-        	int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
-    		for ( int i = 0; i < numTris; i++ )
-    		{	
-        		newIBuffer.GetData()[index++] = nextPIndex;    
-        		newIBuffer.GetData()[index++] = firstPIndex;    	
-        		nextPIndex++;
-        		newIBuffer.GetData()[index++] = nextPIndex;			
-    		}
-    		// side triangle 1
-    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 3;
-    		// side triangle 2
-    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 2;
-    		// side triangle 3
-    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 1;
-
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;
-    	}   
-    }
-    
-    private void retriangulate4( int numClipped, Vector<Vector3f> normalizedPts )
-    {    	
-    	// Three cases:
-    	if ( numClipped == 2 )
-    	{
-    		int newNumPoints = 10;
-    		int newNumTris = 16;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		// add new:
-    		int pIndex = 0;
-    		for ( int i = 0; i < normalizedPts.size(); i++ )
-    		{
-    			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-    			
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );   
-    			pIndex++;
-    		}
-    		// add old points, except clippedPoints[reorderedList[i]] :
-    		for ( int i = 0; i < reorderedList.length; i++ )
-    		{
-    			if ( !clippedPoints[reorderedList[i]] )
-    			{
-    				Vector3f pos = new Vector3f( cornerPoints[reorderedList[i]] );
-    				newVBuffer.SetPosition3( pIndex, pos );
-    				pos.X /= m_fX;
-    				pos.Y /= m_fY;
-    				pos.Z /= m_fZ;
-
-    				newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    				newVBuffer.SetTCoord3( 0, pIndex, pos );
-    				newVBuffer.SetTCoord3( 1, pIndex, pos );     
-    				pIndex++; 			
-    			}
-    		}
-    		
-    		// Add Triangles:
-    		int index = 0;
-    		//New Face:
-    		// new face
-    		int firstPIndex = 0;
-    		int nextPIndex = firstPIndex + 1;
-        	int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
-    		for ( int i = 0; i < numTris; i++ )
-    		{	
-        		newIBuffer.GetData()[index++] = nextPIndex;    
-        		newIBuffer.GetData()[index++] = firstPIndex;    	
-        		nextPIndex++;
-        		newIBuffer.GetData()[index++] = nextPIndex;			
-    		}
-    		// Closest two are V0 - V2:
-    		if ( (cutEdgeLists[0][0] == reorderedList[0]) && (cutEdgeLists[1][0] == reorderedList[2]) )
-    		{
-    			//Top
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 6;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 3;
-    			newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;
-    			// Left front
-    			newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;
-    			newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 5;
-    			// right front
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 4;
-    			// bottom
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 1;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;
-    			// right back
-    			newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 6;
-    			newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 4;
-    			// left back
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 6;
-    		}
-    		// Asymmetric case. Clipped points are either L-R or R-L
-    		else
-    		{
-        		// Closest two are V3 - V0:
-    			if ( (cutEdgeLists[0][0] == reorderedList[0]) )
-    			{
-    				//V0-V1 are R-L:
-    				// Top
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 6;
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 3;
-    				//Bottom
-    				newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 8;
-    				newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 9;
-    				//Front
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
-    				//Back
-    				newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 7;
-    				newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;
-    				//Left
-    				newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 9;
-    				newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 2;
-    				newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;
-    				//Right
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 7;
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 0;
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 4;
-    			}
-        		// Closest two are V0 - V1:
-    			else if ( (cutEdgeLists[0][0] == reorderedList[1]) )
-    			{
-    				//V0-V1 are L-R:
-    				// Top
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 3;
-    				//Bottom
-    				newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 4;
-    				newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 8;
-    				//Front
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 4;
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 7;
-    				//Back
-    				newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 9;
-    				newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;
-    				//Left
-    				newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 8;
-    				newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 2;
-    				newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 4;
-    				//Right
-    				newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 9;
-    				newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 6;
-    			}
-    		}
-    		
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;    		
-    	}
-    	else if ( numClipped == 4 )
-    	{
-
-    		int newNumPoints = 8;
-    		int newNumTris = 12;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		fillBox(newVBuffer);
-    		fillBox(newIBuffer);
-    		for ( int i = 0; i < 4; i++ )
-    		{
-    			Vector3f pos = normalizedPts.elementAt(i);
-    			newVBuffer.SetPosition3( cutEdgeLists[i][0], pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-
-    			newVBuffer.SetColor3( 0, cutEdgeLists[i][0], new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, cutEdgeLists[i][0], pos );
-    			newVBuffer.SetTCoord3( 1, cutEdgeLists[i][0], pos );   
-    		}
-
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;
-    	}
-    	else if ( numClipped == 6 )
-    	{
-    		int newNumPoints = 6;
-    		int newNumTris = 8;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		// add new:
-    		int pIndex = 0;
-    		for ( int i = 0; i < normalizedPts.size(); i++ )
-    		{
-    			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-    			
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );   
-    			pIndex++;
-    		}
-    		// add old points, except clippedPoints[reorderedList[i]] :
-    		int[] nonClipped = new int[2];
-    		int ncIndex = 0;
-    		for ( int i = 0; i < reorderedList.length; i++ )
-    		{
-    			if ( !clippedPoints[reorderedList[i]] )
-    			{
-    				Vector3f pos = new Vector3f( cornerPoints[reorderedList[i]] );
-    				newVBuffer.SetPosition3( pIndex, pos );
-    				pos.X /= m_fX;
-    				pos.Y /= m_fY;
-    				pos.Z /= m_fZ;
-
-    				newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    				newVBuffer.SetTCoord3( 0, pIndex, pos );
-    				newVBuffer.SetTCoord3( 1, pIndex, pos );     
-    				pIndex++; 			
-    				
-    				nonClipped[ncIndex++] = i;
-    			}
-    		}
-    		
-//    		System.err.println( nonClipped[0] + " " + nonClipped[1] );
-    		
-    		// Add Triangles:
-    		int index = 0;
-    		//New Face:
-    		// new face
-    		int firstPIndex = 0;
-    		int nextPIndex = firstPIndex + 1;
-        	int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
-    		for ( int i = 0; i < numTris; i++ )
-    		{	
-        		newIBuffer.GetData()[index++] = nextPIndex;    
-        		newIBuffer.GetData()[index++] = firstPIndex;    	
-        		nextPIndex++;
-        		newIBuffer.GetData()[index++] = nextPIndex;			
-    		}
-    		if ( Math.abs(nonClipped[0] - nonClipped[1]) == 1  )
-    		{
-    			int rightBackIndex = 5;
-    			int leftBackIndex = 4;
-    			// right:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = rightBackIndex;
-    			// left:
-    			newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = leftBackIndex;    		newIBuffer.GetData()[index++] = 2;
-    			// back top:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = leftBackIndex;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = leftBackIndex;    		newIBuffer.GetData()[index++] = 3;
-    			// back bottom:
-    			newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;
-    			newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = leftBackIndex;
-    		}
-    		else {
-    			int rightBackIndex = nonClipped[0] == 4 ? 5 : 4;
-    			int leftBackIndex = nonClipped[0] == 4 ? 4 : 5;
-    			
-    			// top:
-    			newIBuffer.GetData()[index++] = leftBackIndex;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 0;
-    			// bottom:
-    			newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;
-    			// back left:
-    			newIBuffer.GetData()[index++] = leftBackIndex;    		newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = 2;
-    			newIBuffer.GetData()[index++] = leftBackIndex;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;
-    			// back right:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = rightBackIndex;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = rightBackIndex;    		newIBuffer.GetData()[index++] = leftBackIndex;
-    		}
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;    		
-    	}       	
-    }
-
-    private void retriangulate5( int numClipped, Vector<Vector3f> normalizedPts )
-    {
-    	if ( numClipped == 3 )
-    	{
-    		int newNumPoints = 10;
-    		int newNumTris = 16;
-    		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-    		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-    		// add new:
-    		int pIndex = 0;
-    		for ( int i = 0; i < normalizedPts.size(); i++ )
-    		{
-    			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-    			newVBuffer.SetPosition3( pIndex, pos );
-    			pos.X /= m_fX;
-    			pos.Y /= m_fY;
-    			pos.Z /= m_fZ;
-
-    			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    			newVBuffer.SetTCoord3( 0, pIndex, pos );
-    			newVBuffer.SetTCoord3( 1, pIndex, pos );   
-    			pIndex++;
-    		}
-    		// add old points, except clippedPoints[reorderedList[i]] :
-    		for ( int i = 0; i < reorderedList.length; i++ )
-    		{
-    			if ( !clippedPoints[reorderedList[i]] )
-    			{
-    				Vector3f pos = new Vector3f( cornerPoints[reorderedList[i]] );
-    				newVBuffer.SetPosition3( pIndex, pos );
-    				pos.X /= m_fX;
-    				pos.Y /= m_fY;
-    				pos.Z /= m_fZ;
-
-    				newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-    				newVBuffer.SetTCoord3( 0, pIndex, pos );
-    				newVBuffer.SetTCoord3( 1, pIndex, pos );     
-    				pIndex++; 			
-    			}
-    		}
-    		// Add Triangles:
-    		int index = 0;
-    		//New Face:
-    		// new face
-    		int firstPIndex = 0;
-    		int nextPIndex = firstPIndex + 1;
-    		int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
-    		for ( int i = 0; i < numTris; i++ )
-    		{	
-    			newIBuffer.GetData()[index++] = nextPIndex;    
-    			newIBuffer.GetData()[index++] = firstPIndex;    	
-    			nextPIndex++;
-    			newIBuffer.GetData()[index++] = nextPIndex;			
-    		}
-
-    		if ( clippedPoints[reorderedList[1]] && clippedPoints[reorderedList[2]] )
-    		{
-//    			System.err.println( "Case 1 " + clippedPoints[reorderedList[1]] + " " + clippedPoints[reorderedList[2]] );
-    			//Top:
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 4;
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 0;
-    			// bottom:
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 2;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 8;
-    			// front left:
-    			newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 8;
-    			newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 3;
-    			// front right:
-    			newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 1;
-    			// back left:
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
-    			// back right:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 6;			
-    		}
-    		else if ( clippedPoints[reorderedList[1]] && clippedPoints[reorderedList[3]] )
-    		{
-//    			System.err.println( "Case 2 " + clippedPoints[reorderedList[1]] + " " + clippedPoints[reorderedList[3]] );
-    			//Top:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 4;
-    			// bottom:
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 5;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 8;
-    			// front left:
-    			newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 8;
-    			newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 5;
-    			// front right:
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 5;
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 7;
-    			// back left:
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 3;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 4;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 6;
-    			// back right:
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 0;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;
-    			newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;				
-    		}
-    		else if ( clippedPoints[reorderedList[2]] && clippedPoints[reorderedList[3]] )
-    		{
-//    			System.err.println( "Case 3 " + clippedPoints[reorderedList[2]] + " " + clippedPoints[reorderedList[3]] );
-    			//Top:
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 6;
-    			newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 4;
-    			// bottom:
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 8;
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 9;
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;
-    			// front left:
-    			newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;
-    			// front right:
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 5;
-    			newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 0;
-    			// back left:
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 4;
-    			newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 3;
-    			newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;
-    			// back right:
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 7;
-    			newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;				
-    		}
-
-
-    		m_kMesh.Release(m_kRenderer);
-    		m_kMesh.VBuffer = newVBuffer;
-    		m_kMesh.IBuffer = newIBuffer;   	    	
-    	}
-    	else if ( numClipped == 5 )
-    	{
-    		for ( int i = 0; i < reorderedList.length; i++ )
-    		{
-    			if ( !clippedPoints[reorderedList[i]] )
-    			{
-//    				System.err.println( i + " " + reorderedList[i] );
-    			}
-    		}
-    	}
-    }
-
-    private void retriangulate6( Vector<Vector3f> normalizedPts )
-    {
-		int newNumPoints = 10;
-		int newNumTris = 16;
-		VertexBuffer newVBuffer = new VertexBuffer( m_kMesh.VBuffer.GetAttributes(), newNumPoints );
-		IndexBuffer newIBuffer = new IndexBuffer(3*newNumTris);
-		// add new:
-		int pIndex = 0;
-		for ( int i = 0; i < normalizedPts.size(); i++ )
-		{
-			Vector3f pos = new Vector3f(normalizedPts.elementAt(i));
-			newVBuffer.SetPosition3( pIndex, pos );
-			pos.X /= m_fX;
-			pos.Y /= m_fY;
-			pos.Z /= m_fZ;
-			
-			newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-			newVBuffer.SetTCoord3( 0, pIndex, pos );
-			newVBuffer.SetTCoord3( 1, pIndex, pos );   
-			pIndex++;
-		}
-		// add old points, except clippedPoints[reorderedList[i]] :
-		for ( int i = 0; i < reorderedList.length; i++ )
-		{
-			if ( !clippedPoints[reorderedList[i]] )
-			{
-				Vector3f pos = new Vector3f( cornerPoints[reorderedList[i]] );
-				newVBuffer.SetPosition3( pIndex, pos );
-				pos.X /= m_fX;
-				pos.Y /= m_fY;
-				pos.Z /= m_fZ;
-
-				newVBuffer.SetColor3( 0, pIndex, new ColorRGB( pos.X, pos.Y, pos.Z ) );
-				newVBuffer.SetTCoord3( 0, pIndex, pos );
-				newVBuffer.SetTCoord3( 1, pIndex, pos );     
-				pIndex++; 			
-			}
-		}
-		// Add Triangles:
-		int index = 0;
-		//New Face:
-		// new face
-		int firstPIndex = 0;
-		int nextPIndex = firstPIndex + 1;
-    	int numTris = normalizedPts.size() == 3 ? 1 : normalizedPts.size() == 4 ? 2 : normalizedPts.size() == 5 ? 3 : 4;
+		nextPIndex = firstPIndex + 1;
+    	numTris = (intersectionPoints.size() - 2);
 		for ( int i = 0; i < numTris; i++ )
-		{	
-    		newIBuffer.GetData()[index++] = nextPIndex;    
-    		newIBuffer.GetData()[index++] = firstPIndex;    	
+		{	  
+    		newIBuffer.GetData()[index++] = nextPIndex;     	
+    		newIBuffer.GetData()[index++] = firstPIndex; 
     		nextPIndex++;
     		newIBuffer.GetData()[index++] = nextPIndex;			
 		}
-//		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 4;
-//		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 3;
-//		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 2;
-//		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 1;
-
-		// top:
-		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 0;
-		// bottom:
-		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 2;
-		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 3;
-		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 3;    		newIBuffer.GetData()[index++] = 8;
-		// front left:
-		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 8;    		newIBuffer.GetData()[index++] = 3;
-		// front right:
-		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 2;    		newIBuffer.GetData()[index++] = 7;
-		// back left:
-		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 5;
-		newIBuffer.GetData()[index++] = 5;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 4;
-		newIBuffer.GetData()[index++] = 4;    		newIBuffer.GetData()[index++] = 9;    		newIBuffer.GetData()[index++] = 8;
-		// top:
-		newIBuffer.GetData()[index++] = 6;    		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 9;
-		newIBuffer.GetData()[index++] = 0;    		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 9;
-		newIBuffer.GetData()[index++] = 1;    		newIBuffer.GetData()[index++] = 7;    		newIBuffer.GetData()[index++] = 9;
+    	
 
 		m_kMesh.Release(m_kRenderer);
 		m_kMesh.VBuffer = newVBuffer;
