@@ -126,10 +126,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 	
 	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
 
-	private boolean boundsChanged = false;
-
-	private int levelSliderMin;
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -388,8 +384,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     // }
 
     private void changeBounds(float left, float right, boolean levWin) {   
-        boundsChanged = true;
-    	
     	if (levWin) {
     		String levString = Float.toString(left);
     		String winString = Float.toString(right);
@@ -407,7 +401,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             	minSlider.setMinimum((int) minTemp);
             	maxSlider.setMinimum((int) minTemp);
             	image.setMin(left);
-	        } else if(levelMaxFloat < right) {
+	        } else if(levelMaxFloat < left) {
 	        	sliderLevMax.setText(levString);
 	        	sliderMinMax.setText(levString);
             	sliderMaxMax.setText(levString);
@@ -420,6 +414,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     		float levTemp = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
     		float winTemp = (right * windowSliderMax) / (2 * (maxImage - minImage));
 
+    		
     		if (levelMinFloat > left) {
     			levelSlider.setMinimum((int)levTemp);
     			levelMinFloat = left;
