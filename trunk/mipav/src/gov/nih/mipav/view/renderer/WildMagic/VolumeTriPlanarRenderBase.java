@@ -1604,7 +1604,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 	  {
 		  if ( !e.isControlDown() )
 		  {
-			  super.mousePressed(e);
+			  if ( isNavigationEnabled && e.isShiftDown() ) {
+				    super.mousePressed(e);
+			    } else if ( !isNavigationEnabled ){
+			    	super.mousePressed(e);
+			    }
 		  }
 		  else if ( (m_kVolumeClip != null) && (m_kVolumeClip.DisplayArb()) )
 		  {

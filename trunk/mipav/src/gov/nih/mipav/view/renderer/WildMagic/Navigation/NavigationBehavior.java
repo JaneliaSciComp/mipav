@@ -457,15 +457,16 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				mouse.start();
 			}
 
-			if (SwingUtilities.isLeftMouseButton(e) && e.isControlDown()) {
+			if (SwingUtilities.isLeftMouseButton(e)) {
 				pressed = false;
-				int x = e.getX();
-				int y = e.getY();
-				Vector3f kPos = new Vector3f(0, 0, 10);
-				Vector3f kDir = new Vector3f(0, 0, 1);
-				doPick(x, y, kPos, kDir, firstPoint, secondPoint, resultPoint, findPickingPoint);
-
-			}
+				if ( e.isControlDown() ) {
+					int x = e.getX();
+					int y = e.getY();
+					Vector3f kPos = new Vector3f(0, 0, 10);
+					Vector3f kDir = new Vector3f(0, 0, 1);
+					doPick(x, y, kPos, kDir, firstPoint, secondPoint, resultPoint, findPickingPoint);
+				}
+			} 
 		}
 
 	}
