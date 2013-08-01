@@ -554,7 +554,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         oml = null;
 
     }
-
+    
+	public void setCameraNearPlane( float distance )
+	{
+		if ( distance < 0 || distance > 10 )
+		{
+			return;
+		}
+		m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,distance,10.0f);
+		m_pkRenderer.OnFrustumChange();
+        updateBoundingCube = true;
+	}
+	
     /** 
      * Changes the projection to Orthographic Projection.
      */
@@ -563,6 +574,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_spkCamera.Perspective = false;
         m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
+        updateBoundingCube = true;
     }
   
     
@@ -573,8 +585,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     {
         m_spkCamera.Perspective = true;
         m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.5f,10.0f);
-//        m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
         m_pkRenderer.OnFrustumChange();
+        updateBoundingCube = true;
     }
     
     /**

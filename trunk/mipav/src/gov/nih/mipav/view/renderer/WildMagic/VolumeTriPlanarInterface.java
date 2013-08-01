@@ -566,11 +566,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             resizePanel();
         } else if (command.equals("FlyThru")) {
             if (m_kFlyThroughRender == null) {
-                m_kFlyThroughRender = new FlyThroughRender(this, m_kVolumeImageA, m_kVolumeImageB,
-                        raycastRenderWM.getTranslate());
+                m_kFlyThroughRender = FlyThroughRender.main(new GLCanvas(caps, sharedDrawable.getContext()), this,
+						m_kVolumeImageA, m_kVolumeImageB, raycastRenderWM.getTranslate(), false);
+                
+//                new FlyThroughRender(this, m_kVolumeImageA, m_kVolumeImageB, raycastRenderWM.getTranslate());
                 final TriMesh kSurface = raycastRenderWM.getSurface(surfaceGUI.getSelectedSurface());
-                m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter(surfaceGUI
-                        .getSelectedSurface()));
+                m_kFlyThroughRender.addSurface(kSurface, raycastRenderWM.getSurfaceCenter(surfaceGUI.getSelectedSurface()));
                 bf_flyPanel.add(m_kFlyThroughRender.GetCanvas(), BorderLayout.CENTER);
                 dualPane.setDividerLocation(0.5f);
                 m_kLightsPanel.enableLight(0, true);
@@ -3479,4 +3480,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		
 		System.out.println(builder.toString());
 	}        
+	
+	public void setCameraNearPlane( float distance )
+	{
+		if ( raycastRenderWM != null )
+		{
+			raycastRenderWM.setCameraNearPlane(distance);
+		}
+	}
 }

@@ -28,7 +28,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -38,7 +41,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * The display panel control the red bounding box frame ( on/off ), texture aligned rendering mode, cubic controk,
  * perspective and parallel viewing mode, and back ground color.
  */
-public class JPanelDisplay_WM extends JInterfaceBase {
+public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
 
 
     /** Use serialVersionUID for interoperability. */
@@ -89,6 +92,9 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     /** Scroll panel that holding the all the control components. */
     private DrawingPanel scrollPanel;
         
+    /** Slider for moving the camera near-plane in/out from the eye position. */
+    private JSlider cameraNearPlane;
+    
     /** Camera move parameter labels */
     private JLabel cameraXLabel, cameraYLabel, cameraZLabel;
     
@@ -446,8 +452,9 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         radioButtonGroupProjections.add(radioButtonPerspective);
         radioButtonGroupProjections.add(radioButtonOrthographic);
         projectionTypeBox.add(radioButtonPerspective);
-        projectionTypeBox.add(radioButtonOrthographic);
+        projectionTypeBox.add(radioButtonOrthographic);        
         projectionTypePanel.add(projectionTypeBox);
+        
 
         cubicCheck = new JCheckBox("Show orientation cube");
         cubicCheck.setFont(MipavUtil.font12);
@@ -464,16 +471,27 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         
         cameraParametersBox.setBorder(buildTitledBorder("Camera"));
         
+        
         JPanel cameraMovePanel = new JPanel(new GridBagLayout());
         cameraMovePanel.setBorder(buildTitledBorder("Movements"));
         cameraParametersBox.add(cameraMovePanel);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        cameraMovePanel.add( new JLabel( "Near-Plane"), gbc);
+        gbc.gridy = 1;
+        cameraNearPlane = new JSlider(1, 100, 50);
+        cameraNearPlane.addChangeListener(this);
+        cameraMovePanel.add( cameraNearPlane );
+        
+        
         
         cameraXLabel = new JLabel("X ( Move left or Right ) ");
         cameraXLabel.setFont(serif12);
         cameraXLabel.setForeground(Color.black);
         cameraXLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         cameraMovePanel.add(cameraXLabel, gbc);
         xCameraMoveText = new JTextField(8);
        
@@ -487,7 +505,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         cameraYLabel.setForeground(Color.black);
         cameraYLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         cameraMovePanel.add(cameraYLabel, gbc);
         yCameraMoveText = new JTextField(8);
        
@@ -501,7 +519,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         cameraZLabel.setForeground(Color.black);
         cameraZLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         cameraMovePanel.add(cameraZLabel, gbc);
         zCameraMoveText = new JTextField(8);
        
@@ -615,4 +633,15 @@ public class JPanelDisplay_WM extends JInterfaceBase {
         mainPanel = new JPanel();
         mainPanel.add(scroller);
     }
+
+	@Override
+	public void stateChanged(ChangeEvent arg0)
+	{
+        Object source = arg0.getSource();
+        if ( (source == cameraNearPlane) && (m_kVolumeViewer != null) )
+        {
+        	float distance = cameraNearPlane.getValue()/100.0f;
+        	m_kVolumeViewer.setCameraNearPlane(distance);
+        }		
+	}
 }

@@ -8,9 +8,11 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.renderer.WildMagic.GPURenderBase;
+import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.SurfaceLightingEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphSamples;
@@ -19,12 +21,16 @@ import gov.nih.mipav.view.renderer.flythroughview.ModelImage3DLayout;
 import gov.nih.mipav.view.renderer.flythroughview.Skeleton3D;
 
 import java.awt.Canvas;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 import javax.swing.SwingUtilities;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
@@ -151,8 +157,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * @param kVolumeImageA volume data and textures for ModelImage A.
      * @param kVolumeImageB volume data and textures for ModelImage B.
      */
-    public FlyThroughRender( VolumeTriPlanarInterface kParent, VolumeImage kVolumeImageA, 
-                             VolumeImage kVolumeImageB, Vector3f kTranslate  )
+    public FlyThroughRender( GLCanvas kCanvas, VolumeTriPlanarInterface kParent, Animator kAnimator, 
+    		VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, Vector3f kTranslate  )
     {
         super();
         
@@ -161,7 +167,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                                            m_eBuffering, m_eMultisampling,
-                                           m_iWidth, m_iHeight );
+                                           m_iWidth, m_iHeight, kCanvas );
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );  
@@ -169,7 +175,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this ); 
         m_pkRenderer.SetExternalDir(MipavInitGPU.getExternalDirs());      
 
-        m_kAnimator = new Animator(GetCanvas());
+		m_kAnimator = kAnimator;
+		if ( m_kAnimator != null )
+		{
+			m_kAnimator.add( GetCanvas() );
+		}
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
@@ -178,6 +188,41 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         m_fY = m_kVolumeImageA.GetScaleY();
         m_fZ = m_kVolumeImageA.GetScaleZ();
     }
+	/**
+	 */
+	public static FlyThroughRender main(GLCanvas kCanvas, VolumeTriPlanarInterface kParent, 
+			VolumeImage kVolumeImageA, VolumeImage kVolumeImageB, Vector3f kTranslate, boolean displayInSeparateFrame )
+	{
+		/* Animator serves the purpose of the idle function, calls display: */
+		final Animator animator = new Animator( );
+		FlyThroughRender kWorld = new FlyThroughRender(kCanvas, kParent, animator, 
+				kVolumeImageA, kVolumeImageB, kTranslate);
+		
+		animator.start();
+		if ( displayInSeparateFrame )
+		{
+			Frame frame = new Frame(kWorld.GetWindowTitle());
+			frame.add( kWorld.GetCanvas() );
+			frame.setSize(kWorld.GetCanvas().getWidth(), kWorld.GetCanvas().getHeight());
+			/* Animator serves the purpose of the idle function, calls display: */
+			frame.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					// Run this on another thread than the AWT event queue to
+					// avoid deadlocks on shutdown on some platforms
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							animator.stop();
+							System.exit(0);
+						}
+					}).start();
+				}
+			});
+			frame.setVisible(true);
+		}
+		return kWorld;
+	}
 
     /**
      * Add the fly-through surface.
