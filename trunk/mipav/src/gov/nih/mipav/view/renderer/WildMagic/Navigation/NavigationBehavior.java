@@ -207,6 +207,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			parentScene.GetCanvas().addMouseWheelListener(this);
 		} else {
 			// parentScene.GetCanvas().removeKeyListener(this);
+			pressed = false;
 			parentScene.GetCanvas().removeMouseListener(this);
 			parentScene.GetCanvas().removeMouseMotionListener(this);
 			parentScene.GetCanvas().removeMouseWheelListener(this);
