@@ -164,7 +164,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             // determine along which axis the imagePositionCoords the image varies
-            if (srcImage.getFileInfo(1) != null) {
+            if ((srcImage.getFileInfo(1) != null) && (((FileInfoDicom)srcImage.getFileInfo(0)).getTagTable().getValue("0020,0032") != null)) {
                 imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(0)).parseTagValue("0020,0032"));
                 nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(1)).parseTagValue("0020,0032"));
 
@@ -251,37 +251,44 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
 
                             // change the slice number ("0020,0013"):
                             // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
-                            fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(zDest + 1),
+                            if (fileInfoBuffer.getTagTable().get("0020,0013") != null) {
+                                fileInfoBuffer.getTagTable().setValue("0020,0013", String.valueOf(zDest + 1),
                                                                   fileInfoBuffer.getTagTable().get("0020,0013").getLength()); // Reset the image (slice) number with the new number ordering
-
+                            }
+                            
                             // readjust the image position ("0020,0032"): copy the "image position (patient)" info so
                             // that axis-position left by extracting slices (zSrc) will change by sliding the next
                             // included slice forward (to the zDest position). So: the X&Y info for the zSrc (the one
                             // not removed with some large index) and we use the zDest info from the index of the
                             // copy-to slice (which has a low index).
-                            imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(zSrc))
-                                                                       .parseTagValue("0020,0032"));
-                            nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(zDest))
-                                                                      .parseTagValue("0020,0032"));
-
-                            // axis of change can only be set to X (0), Y (1), or Z (2)
-                            imagePositionCoords[axisOfChange] = nextPositionCoords[axisOfChange];
-
-                            // *** Only works if length of string for imagePositionCoords is the
-                            // same as length for nextPositionCoords - should not need a third
-                            // length parameter
-                            fileInfoBuffer.getTagTable().setValue("0020,0032",
+                            if (fileInfoBuffer.getTagTable().getValue("0020,0032") != null) {
+                                imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(zSrc))
+                                                                           .parseTagValue("0020,0032"));
+                                nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(zDest))
+                                                                          .parseTagValue("0020,0032"));
+    
+                                // axis of change can only be set to X (0), Y (1), or Z (2)
+                                imagePositionCoords[axisOfChange] = nextPositionCoords[axisOfChange];
+    
+                                // *** Only works if length of string for imagePositionCoords is the
+                                // same as length for nextPositionCoords - should not need a third
+                                // length parameter
+                            
+                                fileInfoBuffer.getTagTable().setValue("0020,0032",
                                                                   imagePositionCoords[0] + "\\" +
                                                                   imagePositionCoords[1] + "\\" +
                                                                   imagePositionCoords[2],
                                                                   fileInfoBuffer.getTagTable().get("0020,0032").getLength());
+                            }
 
                             // readjust the slice location ("0020,1041")
                             // same change as image position above:
-                            fileInfoBuffer.getTagTable().setValue("0020,1041",
+                            if (fileInfoBuffer.getTagTable().get("0020,1041") != null) {
+                                fileInfoBuffer.getTagTable().setValue("0020,1041",
                                                                   ((FileInfoDicom) (srcImage.getFileInfo(zDest)))
                                                                       .getTagTable().getValue("0020,1041"),
                                                                   fileInfoBuffer.getTagTable().get("0020,1041").getLength());
+                            }
 
                             destImage.setFileInfo(fileInfoBuffer, zDest);
                         } else { // not a DICOM image, so these can be processed similarly
