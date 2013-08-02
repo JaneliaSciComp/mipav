@@ -617,7 +617,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             for (int i = 0; i < numVisibleSlices; i++) {
                 componentImage[i].setCursorMode(ViewJComponentEditImage.MAG_REGION);
             }
-        } else if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER)) {
+        } else if (event.getActionCommand().equals(CustomUIBuilder.PARAM_VOI_DEFAULT_POINTER.getActionCommand())) {
 
             for (int i = 0; i < numVisibleSlices; i++) {
                 componentImage[i].setCursorMode(ViewJComponentEditImage.DEFAULT);
