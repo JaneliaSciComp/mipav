@@ -1149,16 +1149,14 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 			int count = 0;
 
-			Vector3f kCDir = camera.GetDVector();
-			Vector3f kCUp = camera.GetUVector();
-			Vector3f kCRight = camera.GetRVector();
-			Vector3f kCLoc = camera.GetLocation();
-
 			Vector3f cameraLocation = new Vector3f();
 			Vector3f pickingPointLocation = new Vector3f();
 		
-			cameraLocation.copy(kCLoc);
-
+			cameraLocation.copy(camera.GetLocation());
+			m_kViewRight.copy(camera.GetRVector());
+			m_kViewUp.copy(camera.GetUVector());
+			m_kViewDirection.copy(camera.GetDVector());
+			
 			if ( findPickingPoint[0] ) {
 				pickingPointLocation.copy(resultPoint);
 			} else {
