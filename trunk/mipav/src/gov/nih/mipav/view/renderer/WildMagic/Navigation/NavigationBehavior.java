@@ -1189,9 +1189,9 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 				parentScene.GetCanvas().dispatchEvent(evt);
 
-				// System.err.println(trackingPointLocation.distance(pickingPointLocation));
+				System.err.println(trackingPointLocation.distance(pickingPointLocation));
 				if (moveForward < 0 ) {
-					if (Math.abs(trackingPointLocation.distance(pickingPointLocation)) <= 0.001 ) {
+					if (Math.abs(trackingPointLocation.distance(pickingPointLocation)) <= 0.01 ) {
 						pressed = false;
 						break;
 					}
