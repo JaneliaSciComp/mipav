@@ -732,6 +732,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			   	System.err.println("test color = " + color);
 			   	parentScene.translateSurface("Threshold", currentLocation);
 			   	if ( color.X >= 0.7f &&  color.Y >= 0.7f && color.Z >= 0.7f ) {
+			   		bestLocation.copy(currentLocation);
 			   		found = true;
 			   		System.err.println("Multi-histo finding");
 			   		break;
@@ -1183,13 +1184,15 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				trackingPointLocation = Vector3f.add(cameraLocation, trackingBackward);
 			}
 
+			float trackingStep = trackingPointLocation.distance(cameraLocation);
+			
 			while (pressed) {
 
 				parentScene.GetCanvas().dispatchEvent(evt);
 
 				System.err.println(trackingPointLocation.distance(pickingPointLocation));
 				if (moveForward < 0 ) {
-					if (Math.abs(trackingPointLocation.distance(pickingPointLocation)) <= 0.01 ) {
+					if (trackingPointLocation.distance(pickingPointLocation) <= trackingStep ) {
 						pressed = false;
 						break;
 					}
