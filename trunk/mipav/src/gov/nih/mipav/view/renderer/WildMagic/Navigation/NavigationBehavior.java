@@ -199,6 +199,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	}
 
+	
 	public void setNaviMode(boolean isNavigationEnabled) {
 		if (isNavigationEnabled) {
 			// parentScene.GetCanvas().addKeyListener(this);
@@ -1190,7 +1191,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 				// System.err.println(trackingPointLocation.distance(pickingPointLocation));
 				if (moveForward < 0 ) {
-					if (Math.abs(trackingPointLocation.distance(pickingPointLocation)) <= 0.01 ) {
+					if (Math.abs(trackingPointLocation.distance(pickingPointLocation)) <= 0.001 ) {
 						pressed = false;
 						break;
 					}
