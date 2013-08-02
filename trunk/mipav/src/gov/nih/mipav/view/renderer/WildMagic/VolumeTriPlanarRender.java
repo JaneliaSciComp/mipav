@@ -569,9 +569,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		if (isNavigationEnabled) {
 
 			Vector3f cameraLocation = navigationBehavior.getViewPoint();
-			Vector3f cameraDir = m_spkCamera.GetDVector(); 
-			Vector3f cameraUp = m_spkCamera.GetUVector();
-			Vector3f cameraRight = m_spkCamera.GetRVector();
+			Vector3f cameraDir = navigationBehavior.getViewDirection();
+			Vector3f cameraUp = navigationBehavior.getViewUp();
+			Vector3f cameraRight = Vector3f.unitCross(cameraDir, cameraUp);
 			m_spkCamera.SetFrame(cameraLocation, cameraDir, cameraUp, cameraRight);
 		
 			float fRMin = m_spkCamera.GetRMin(); 
