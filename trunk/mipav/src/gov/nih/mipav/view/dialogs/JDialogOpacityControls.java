@@ -90,7 +90,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
     /**
      * Creates new dialog with a slider and close button.
-     *
+     * @deprecated
      * @param  theParentFrame  The parent frame
      * @param  cntrls          The controls that the opacity will apply to.
      * @param  isVisible       Dialog visible or not
@@ -103,7 +103,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
     /**
      * Creates new dialog with a slider and close button.
-     *
+     * @deprecated
      * @param  theParentFrame  The parent frame
      * @param  initVal         The initial value of the opacity.
      * @param  isVisible       Dialog visible or not
@@ -181,7 +181,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
     /**
      * Makes slider to set opacity of VOI. Opaque = 1, Transparency = 0.
-     *
+     * @deprecated
      * @param   initValue  Initial value of slider.
      *
      * @return  DOCUMENT ME!
