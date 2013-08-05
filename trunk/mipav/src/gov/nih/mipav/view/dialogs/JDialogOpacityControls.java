@@ -387,7 +387,7 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
         pack();
         setVisible(true);
         
-        // Kludge to enforce visibility
+        // Kludge to enforce visibility only 1 click now needed to make icon appear
         parentFrame.setExtendedState(Frame.ICONIFIED);
         parentFrame.setExtendedState(Frame.NORMAL);
     }
