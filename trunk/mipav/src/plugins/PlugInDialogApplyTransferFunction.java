@@ -160,6 +160,7 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
         	if (setVariables(mode.isSelected())){
         		loadButton.setText("OK");
         		loadButton.setActionCommand("OK");
+        		mode.setEnabled(false);
         	}
         } else if (command.equals("OK")) {
         	dispose();
