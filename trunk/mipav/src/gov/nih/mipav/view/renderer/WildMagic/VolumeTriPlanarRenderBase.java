@@ -506,10 +506,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 UpdateSceneRotation();
 			 updateBoundingCube = true;
 		 }
+		 
+		 // check camera location
+		 Vector3f cameraLocation = m_spkCamera.GetLocation();
+		 if ( cameraLocation.distance(new Vector3f(0f, 0f, 0f)) < 0.5f ) {
+			 updateBoundingCube = true;
+		 }
+		 
 		 if ( updateBoundingCube && m_bDoClip )
 		 {
 			 m_kVolumeRayCast.CheckViewIntersection( m_pkRenderer, m_kCuller );
-			 updateBoundingCube = true;
+			 updateBoundingCube = false;
 		 }
 
 		 if ( m_bTestFrameRate )
