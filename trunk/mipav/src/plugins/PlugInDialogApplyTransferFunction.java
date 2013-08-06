@@ -1,62 +1,65 @@
-package gov.nih.mipav.view.dialogs;
-
-
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.Preferences.DefaultDisplay;
+import gov.nih.mipav.view.dialogs.JDialogWinLevel;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.util.Vector;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 
-/**
- * Dialog creates 2 sliders which adjust the level and window of an image. The level is found at the x coordinate of the
- * mid point of the sloping transfer segment. The window is the x width of the sloping transfer segment. Note y
- * inversion in transfer segment because graphical origin is in upper left corner.
- * 
- * <p>
- * ________ / 255 ^ / | / | / | / <------- Transfer function | / L | / U | / T | / | / | / |______/ 0
- * |________________________________> | | | minImage | level | maxImage | | st win end win
- * </p>
- * 
- * <p>
- * Image intensity
- * </p>
- * 
- * @author senseneyj
- */
-public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyListener, MouseListener {
+public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, ItemListener, PreviewImageContainer, ChangeListener, KeyListener, MouseListener{
 
-    // ~ Static fields/initializers
-    // -------------------------------------------------------------------------------------
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = -3270517526341902110L;
+//	private static final long serialVersionUID = 3516843154999038969L;
 
-    /** DOCUMENT ME! */
-    public static final int IMAGE_A = 0;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    public static final int IMAGE_B = 1;
+    private PlugInAlgorithmApplyTransferFunction winLev = null;
+    
+    private String inputDir;
+    
+    private Vector<File> inputFiles = new Vector<File>();
+    
+    private JTextField dirChooserText;
+    
+    private JButton dirChooserButton;
 
-    // ~ Instance fields
-    // ------------------------------------------------------------------------------------------------
+	private ViewTableModel galleryModel;
+	
+	private JTable galleryTable;
 
-    /** DOCUMENT ME! */
-    private JButton closeButton, saveButton, loadButton;
+	private JButton loadButton;
+	
+	private JButton helpButton;
 
-    /**
-     * Reference to the image data of the slice presently displayed. Needed to calculate the max/min of the slice used
-     * to adjust the transfer function.
-     */
-    private final float[] dataSlice;
+	private ModelImage[] srcImages;
 
+	private JDialogWinLevel[] srcInfo;
+
+	private float minImage, maxImage, winMax;
+
+	private JPanel previewPanel;
+
+	private ViewUserInterface userInterface = ViewUserInterface.getReference();
+    
+    private static final ViewImageFileFilter niftiFilter = new ViewImageFileFilter(new String[] { ".img", ".nii" });
+    
     /** Reference to the image that will be affected by the adjust of the window and level. */
-    private final ModelImage image;
+    private ModelImage image;
 
     /** Average of the min and max extents of the transfer window that describes the window size. */
     private float level;
@@ -70,16 +73,12 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     private int levelSliderMax;
 
     /** Reference to the LUT used to display the image. */
-    private final ModelLUT LUT;
-
-    /** Image's maximum intensity. */
-    private float maxImage;
-
-    /** Image's minimum intensity. */
-    private float minImage;
+    private ModelLUT[] LUT;
 
     /** DOCUMENT ME! */
-    private final JPanel windowLevelPanel, minMaxPanel;
+    private JPanel windowLevelPanel;
+
+	private JPanel minMaxPanel;
 
     /** The size of the window. */
     private float window;
@@ -104,9 +103,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /** DOCUMENT ME! */
     private final float[] y = new float[4];
 
-    /** DOCUMENT ME! */
-    private final float[] z = new float[4];
-
     /** tabbed pane for w/L and min/max * */
     public JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -118,446 +114,446 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
     public boolean keyTyped = false;
 
-	private int allowChangesWin;
-
-	private int allowChangesMinMax;
-
 	private JLabel sliderMinMax, sliderMinMin, sliderMaxMax, sliderMaxMin;
 	
 	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
 
-    // ~ Constructors
-    // ---------------------------------------------------------------------------------------------------
+	private ViewJFrameImage[] srcFrames;
+
+	private JPanel workPanel;
+
+	private JCheckBox mode;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Constructor.
-     * 
-     * @param theParentFrame parent frame
-     * @param image source image
-     * @param LUT DOCUMENT ME!
+     * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public JDialogWinLevel(final Frame theParentFrame, final ModelImage image, final ModelLUT LUT) {
-        this(theParentFrame, image, LUT, ((ViewJFrameImage) theParentFrame).getComponentImage().getActiveImageBuffer());
-    }
-    
-    /**
-     * Constructor.
-     * 
-     * @param theParentFrame parent frame
-     * @param image source image
-     * @param LUT DOCUMENT ME!
-     */
-    public JDialogWinLevel(final ModelImage image, final ModelLUT LUT, boolean plugIn) {
-
-    	float min, max;
-        int i;
-
-        this.image = image;
-        this.LUT = LUT;
-
-        calcMinMax();
-        
-        // TODO replace with shared method call to set up tf
-
-        float[] dataS = (image.getParentFrame()).getComponentImage().getActiveImageBuffer();
-        dataSlice = dataS;
-        min = Float.MAX_VALUE;
-        max = -Float.MAX_VALUE;
-
-        for (i = 0; i < dataSlice.length; i++) {
-
-            if (dataSlice[i] > max) {
-                max = dataSlice[i];
-            }
-
-            if (dataSlice[i] < min) {
-                min = dataSlice[i];
-            }
-        }
-        
-        //calcWinLevTransferFuntion(image, win, lev, x, y);
-
-        // Set LUT min max values of the image slice !!
-        x[0] = minImage;
-        y[0] = 255;
-        z[0] = 0;
-        x[1] = min;
-        y[1] = 255;
-        z[1] = 0;
-        x[2] = max;
-        y[2] = 0;
-        z[2] = 0;
-        x[3] = maxImage;
-        y[3] = 0;
-        z[3] = 0;
-        
-        LUT.getTransferFunction().importArrays(x, y, 4);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        final GridBagConstraints gbc = new GridBagConstraints();
-
-        // build a monochrome window/level slider panel and populate it
-        windowLevelPanel = buildWindowLevelPanel();
-        minMaxPanel = buildMinMaxPanel();
-
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-        buildButtons(gbc);
-
-        setVisibleStandard(false);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-
-        System.gc();
-    }
+    public PlugInDialogApplyTransferFunction() { }
 
     /**
-     * Constructor.
-     * 
-     * @param theParentFrame parent frame
-     * @param image source image
-     * @param LUT DOCUMENT ME!
+     * Creates new dialog for distances within a cell from the geometric center using a plugin.
+     *
+     * @param  modal	Whether the dialog should be made modal.
      */
-    public JDialogWinLevel(final Frame theParentFrame, final ModelImage image, final ModelLUT LUT, float[] dataS) {
-        super(theParentFrame, false);
+    public PlugInDialogApplyTransferFunction(boolean modal) {
+        super(modal);
 
-        float min, max;
-        int i;
-
-        this.image = image;
-        this.LUT = LUT;
-
-        setTitle("Level and Window");
-        setForeground(Color.black);
-        try {
-            setIconImage(MipavUtil.getIconImage("winlevel.gif"));
-        } catch (final Exception e) {
-            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
-        }
-        getContentPane().setLayout(new BorderLayout());
-        calcMinMax();
-        
-        // TODO replace with shared method call to set up tf
-
-        dataSlice = dataS;
-        min = Float.MAX_VALUE;
-        max = -Float.MAX_VALUE;
-
-        for (i = 0; i < dataSlice.length; i++) {
-
-            if (dataSlice[i] > max) {
-                max = dataSlice[i];
-            }
-
-            if (dataSlice[i] < min) {
-                min = dataSlice[i];
-            }
-        }
-        
-        //calcWinLevTransferFuntion(image, win, lev, x, y);
-
-        // Set LUT min max values of the image slice !!
-        x[0] = minImage;
-        y[0] = 255;
-        z[0] = 0;
-        x[1] = min;
-        y[1] = 255;
-        z[1] = 0;
-        x[2] = max;
-        y[2] = 0;
-        z[2] = 0;
-        x[3] = maxImage;
-        y[3] = 0;
-        z[3] = 0;
-        
-        LUT.getTransferFunction().importArrays(x, y, 4);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        final GridBagConstraints gbc = new GridBagConstraints();
-
-        // build a monochrome window/level slider panel and populate it
-        windowLevelPanel = buildWindowLevelPanel();
-        minMaxPanel = buildMinMaxPanel();
-
-        buildLevelSlider(windowLevelPanel, gbc);
-        buildWindowSlider(windowLevelPanel, gbc);
-        buildMinSlider(minMaxPanel, gbc);
-        buildMaxSlider(minMaxPanel, gbc);
-        tabbedPane.add("Level & Window", windowLevelPanel);
-        tabbedPane.add("Min & Max", minMaxPanel);
-        tabbedPane.addChangeListener(this);
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-        getContentPane().add(tabbedPane, BorderLayout.CENTER);
-        buildButtons(gbc);
-
-        setResizable(true);
-        setMinimumSize(new Dimension(250, 400));
-        pack();
-        locateDialog();
-
-        setVisibleStandard(true);
-        image.notifyImageDisplayListeners(LUT, false);
-
-        if (image.getHistogramFrame() != null) {
-            updateHistoLUTFrame();
-        }
-
-        System.gc();
-
+        init();
     }
 
-    // ~ Methods
-    // --------------------------------------------------------------------------------------------------------
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    // ************************************************************************
+    // ************************** Event Processing ****************************
+    // ************************************************************************
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event event that triggers function
+     *
+     * @param  event  Event that triggers function.
      */
-    public void actionPerformed(final ActionEvent event) {
-        final Object source = event.getSource();
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
 
-        if (source == closeButton) {
-            dispose();
-        } else if (source == saveButton) {
-            if (tabbedPane.getSelectedIndex() == 0) {
-                Preferences.setProperty(Preferences.PREF_LEVEL, levelValTextField.getText());
-                Preferences.setProperty(Preferences.PREF_WINDOW, winValTextField.getText());
-                Preferences.setDefaultDisplay(DefaultDisplay.WindowLevel);
-            } else if (tabbedPane.getSelectedIndex() == 1) {
-                Preferences.setProperty(Preferences.PREF_MIN, minValTextField.getText());
-                Preferences.setProperty(Preferences.PREF_MAX, maxValTextField.getText());
-                Preferences.setDefaultDisplay(DefaultDisplay.MinMax);
+        if (command.equals("Load")) {
+        	if (setVariables(mode.isSelected())){
+        		loadButton.setText("OK");
+        		loadButton.setActionCommand("OK");
+        	}
+        } else if (command.equals("OK")) {
+        	dispose();
+        } else if (command.equals("BrowseDir")) {
+        	final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
+        	String initDir = dirChooserText.getText();
+        	final File initDirFile = new File(initDir);
+        	if (!initDirFile.exists() || !initDirFile.isDirectory()) {
+        		initDir = Preferences.getImageDirectory();
+        	}
+        	final String dir = chooser.chooseDirectory(initDir);
+            if (dir != null) {
+            	dirChooserText.setText(dir);
+            } else {
+            	dirChooserText.setText("");
             }
-        } else if (source == loadButton) {
-        	// TODO switch to use common function
-            if (tabbedPane.getSelectedIndex() == 0) {
-                final String lev = Preferences.getProperty(Preferences.PREF_LEVEL);
-                final String win = Preferences.getProperty(Preferences.PREF_WINDOW);
-                if (lev != null && win != null) {
-                    final float num1 = validateCurrentNum(lev, levelMinFloat, levelMaxFloat);
-                    final float num2 = validateCurrentNum(win, winMinFloat, winMaxFloat);
-                    
-                    if (num1 != -1 && num2 != -1) {
-                    	final float val = ( (num1 - minImage) * levelSliderMax) / (maxImage - minImage);
-                        final float val2 = (num2 * windowSliderMax) / (2 * (maxImage - minImage));
-                        levelSlider.setValue((int) val);
-                        windowSlider.setValue((int) val2);
-                    } else {
-//                    	if(num1 == -1){
-//                    		MipavUtil.displayError("Level preference values are not valid with this dataset");
-//                    	} else {
-	                    	if (allowChangesWin == 1){
-	                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
-	                    	} else if (allowChangesWin == 0){
-		                        String message = "The preference values you are attempting to load are outside your image bounds." +
-		                        		"\nWould you like to change the bounds? \n\nWARNING: Selecting yes will permanently change your image";
-		                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
-		                        Object[] content = {message, checkbox};
-		                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
-		                                JOptionPane.WARNING_MESSAGE);
-		                        
-		                        if (response == JOptionPane.YES_OPTION) {
-		                            if (checkbox.isSelected()) {
-		                                allowChangesWin = 1;
-		                            }
-		                            changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
-		                        } else {
-		                            if (checkbox.isSelected()) {
-		                                allowChangesWin = 2;
-		                            }
-		                        } 
-	                    	}
-	                    }
-//                    }
-                } else {
-                    MipavUtil.displayError("There are no window and level preference values saved");
-                }
-            } else if (tabbedPane.getSelectedIndex() == 1) {
-                final String minString = Preferences.getProperty(Preferences.PREF_MIN);
-                final String maxString = Preferences.getProperty(Preferences.PREF_MAX);
-                if (minString != null && maxString != null) {
-                    final boolean success = validateMinMaxNums(image, minString, maxString);
-
-                    if (success == true) {
-                        float val1 = Float.parseFloat(minString);
-                        minValTextField.setText(Float.toString(val1));
-                        val1 = (val1 - minMaxBInt) / minMaxSlope;
-                        keyTyped = true;
-
-                        minSlider.setValue((int) val1);
-
-                        float val2 = Float.parseFloat(maxString);
-                        maxValTextField.setText(Float.toString(val2));
-                        val2 = (val2 - minMaxBInt) / minMaxSlope;
-                        keyTyped = true;
-
-                        maxSlider.setValue((int) val2);
-                    } else {
-                    	float val1 = Float.parseFloat(minString);
-                    	float val2 = Float.parseFloat(maxString);
-//                        MipavUtil.displayError("Min and max preference values are not valid with this dataset");
-                    	if (allowChangesMinMax == 1) {
-                    		changeBounds(val1, val2, false);
-                    	} else if (allowChangesMinMax == 0){
-	                    	String message = "The preference values you are attempting to load are outside your image bounds." +
-	                        		"\nWould you like to change the bounds? \nWARNING: Selecting yes will permanently change your image";
-	                        JCheckBox checkbox = new JCheckBox("Do not show this message again", false);
-	                        Object[] content = {message, checkbox};
-	                        int response = JOptionPane.showConfirmDialog(null, content, "", JOptionPane.YES_NO_OPTION,
-	                                JOptionPane.WARNING_MESSAGE);
-	                        
-							if (response == JOptionPane.YES_OPTION) {
-	                            if (checkbox.isSelected()) {
-	                                allowChangesMinMax = 1;
-	                            }
-	                            changeBounds(val1, val2, false);
-	                        } else {
-	                            if (checkbox.isSelected()) {
-	                                allowChangesMinMax = 2;
-	                            }
-	                        }
-                    	}
-                    }
-                } else {
-                    MipavUtil.displayError("There are no min and max preference values saved");
-                }
-            }
+        } else if (command.equalsIgnoreCase("Help")) {
+        	MipavUtil.showWebHelp("Changing_Image_Contrast#Adjust_Window_and_Level");
+        } else if (command.equalsIgnoreCase("mode")) {
+        	if (!mode.isSelected()) {
+        		dirChooserButton.setEnabled(true);
+        		dirChooserText.setEnabled(true);
+        		pack();
+        		validate();
+        		repaint();
+        	} else {
+        		dirChooserButton.setEnabled(false);
+        		dirChooserText.setEnabled(false);
+        		pack();
+        		validate();
+        		repaint();
+        	}
         } else {
             super.actionPerformed(event);
         }
     }
 
-    // this code commented out. idea is to make the sliders assume a value
-    // based on a limitd number of data points from the histogram...
-    // ie., say the histogram has been changed. the histogram then tells the w/l
-    // that it should update the sliders accordingly. The sliders only permit a
-    // certain change in the histogram, so they need to make some assumptions to
-    // get a "decent" value (even if they cannot represent fully the histgram
-    // transfer function).
-    // /** upafe
-    // */
-    // public void updateSliders() {
-    //
-    // // check old values...see if the corners x&y [1] is along the max/min
-    // // and then adjust sliders to match....
-    // // else, adjust the histgram to match the sliders... maybe later
-    // // keep the current histopoints inside the window/level adjustment.
-    // float X[], Y[], Z[];
-    // LUT.getTransferFunction().exportArrays(X, Y, Z, 4);
-    // levelSlider.setValue(_______________)
-    // level = (levelSlider.getValue() * (maxImage - minImage)/levelSliderMax) + minImage;
-    // window = (windowSlider.getValue() * 2 * (maxImage - minImage)/windowSliderMax);
-    //
-    // winValLabel.setText(Float.toString(Math.round(window)));
-    // levelValLabel.setText(Float.toString(Math.round(level)));
-    // }
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
 
-    private void changeBounds(float left, float right, boolean levWin) {   
-    	if (levWin) {
-    		String levString = Float.toString(left);
-    		String winString = Float.toString(right);
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
+     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
 
-	        levelValTextField.setText(levString);
-    		winValTextField.setText(winString);	  
+        if (algorithm instanceof PlugInAlgorithmApplyTransferFunction) {
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
-    		
-            float minTemp = (left - minMaxBInt) / minMaxSlope;
+            if (algorithm != null) {
+                algorithm.finalize();
+                algorithm = null;
+            }
+
+            //dispose();
+            if (isExitRequired()) {
+                System.exit(0);
+                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
+        }
+    }
+    
+    public void setInputDir(String dir) {
+    	inputDir = dir;
+    	
+    	File dirFile = new File(inputDir);
+        if (!dirFile.exists()) {
+        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+        } else if (!dirFile.isDirectory()) {
+        	MipavUtil.displayError("Please select a directory of images to process.");
+        } else {
+        	File[] dirListing;
+        	dirListing = dirFile.listFiles(niftiFilter);
+        	for (File file : dirListing) {
+        		if (file.isDirectory()) {
+            		System.err.println("Skipping directory:\t" + file.getName());
+            	} else if (file.getName().startsWith(".")) {
+            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+            	} else {
+            		inputFiles.add(file);
+            	}
+        	}
+        }
+    }
+
+    /**
+     * Once all the necessary variables are set, call PlugInAlgorithmApplyTransferFunction
+     */
+    protected void callAlgorithm() {
+
+        try {
+            winLev = new PlugInAlgorithmApplyTransferFunction();
+
+            // This is very important. Adding this object as a listener allows
+            // the algorithm to
+            // notify this object when it has completed or failed. See algorithm
+            // performed event.
+            // This is made possible by implementing AlgorithmedPerformed
+            // interface
+            winLev.addListener(this);
             
-	        if (levelMinFloat > left) {
-	        	sliderLevMin.setText(levString);
-	        	sliderMinMin.setText(levString);
-            	sliderMaxMin.setText(levString);
-            	minSlider.setMinimum((int) minTemp);
-            	maxSlider.setMinimum((int) minTemp);
-            	image.setMin(left);
-	        } else if(levelMaxFloat < left) {
-	        	sliderLevMax.setText(levString);
-	        	sliderMinMax.setText(levString);
-            	sliderMaxMax.setText(levString);
-            	maxSlider.setMaximum((int) minTemp);
-            	minSlider.setMaximum((int) minTemp);
-            	image.setMax(left);	
-	        }
-	        calcMinMaxSlope(image);
-	        calcMinMax();
-    		float levTemp = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
-    		float winTemp = (right * windowSliderMax) / (2 * (maxImage - minImage));
+            if (isRunInSeparateThread()) {
 
-    		
-    		if (levelMinFloat > left) {
-    			levelSlider.setMinimum((int)levTemp);
-    			levelMinFloat = left;
-    		} else if (levelMaxFloat < left) {
-    			levelSlider.setMaximum((int)levTemp);
-            	levelMaxFloat = left;
-    		}
+                // Start the thread as a low priority because we wish to still
+                // have user interface work fast.
+                if (winLev.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                winLev.run();
+            }
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Unable to allocate enough memory");
 
-	        if(winMaxFloat < right) {
-	        	sliderWinMax.setText(winString);
-	        	windowSlider.setMaximum((int) winTemp);
-	        	winMaxFloat = right;
-	        }
-	        
-	        levelSlider.setValue((int) levTemp);
-	        windowSlider.setValue((int) winTemp);
-    	} else {
-    		String minString = Float.toString(left);
-        	String maxString = Float.toString(right);
+            return;
+        }
+    }
+
+//    /**
+//     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+//     */
+    private void init() {
+    	
+    	try {
+            setIconImage(MipavUtil.getIconImage("winlevel.gif"));
+        } catch (final Exception e) {
+            // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
+        }
+    	
+    	this.setLocationRelativeTo(userInterface.getMainFrame());
+        setForeground(Color.black);
+        setTitle("Apply Transfer Function");
+        //int length = image.getExtents()[0] * image.getExtents()[1];
+
+        
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setBorder(buildTitledBorder("Select Directory"));
+        mainPanel.setPreferredSize(new Dimension(230, 120));
+
+        mode = new JCheckBox();
+        mode.setSelected(false);
+        mode.setActionCommand("mode");
+        mode.addActionListener(this);
+        mode.setText("Use open images");
+        mainPanel.add(mode, gbc);
+        gbc.gridy++;
+        
+        dirChooserText = new JTextField(200);
+        dirChooserText.setFont(serif12);
+        dirChooserText.setText(Preferences.getImageDirectory());
+        gbc.gridy++;
+        gbc.gridx++;
+        mainPanel.add(dirChooserText, gbc);
+        gbc.gridy++;
+        JPanel buttonPanel = new JPanel();
+        dirChooserButton = new JButton("Browse");
+        dirChooserButton.setActionCommand("BrowseDir");
+        dirChooserButton.addActionListener(this);
+        dirChooserButton.setFont(serif12B);
+        dirChooserButton.setSize(new Dimension(30,10));
+        
+        loadButton = new JButton("Load");
+        loadButton.setActionCommand("Load");
+        loadButton.addActionListener(this);
+        loadButton.setFont(serif12B);
+        loadButton.setSize(new Dimension(30,10));
+        
+        helpButton = new JButton("Help");
+        helpButton.setActionCommand("Help");
+        helpButton.addActionListener(this);
+        helpButton.setFont(serif12B);
+        helpButton.setSize(new Dimension(30,10));
+        
+        
+        
+        gbc.gridy++;
+        buttonPanel.add(dirChooserButton);
+        buttonPanel.add(loadButton);
+        buttonPanel.add(helpButton);
+        mainPanel.add(buttonPanel, gbc);
+        workPanel = new JPanel(new GridBagLayout());
+//        workPanel.setPreferredSize(new Dimension(300, 400));
+        
+        galleryModel = new ViewTableModel();
+        galleryTable = new JTable(galleryModel);
+        
+        JScrollPane gallery = new JScrollPane(galleryTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        gallery.setBorder(buildTitledBorder("Image previews"));
+        
+        previewPanel = new JPanel();
+        previewPanel.setBorder(buildTitledBorder("Current Image"));
+        previewPanel.setPreferredSize(new Dimension(300, 300));
+
+//        previewPanel.add(previewImage);
+
+        getContentPane().add(mainPanel, BorderLayout.NORTH);
+        getContentPane().add(workPanel, BorderLayout.CENTER);
+
+        pack();
+        setVisible(true);
+        setResizable(false);
+        System.gc();
+    }
+
+	/**
+     * Use the GUI results to set up the variables needed to run the algorithm.
+     *
+     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
+     */
+    private boolean setVariables(boolean mode) {
+        if (!mode) {
+	        inputDir = dirChooserText.getText();
+	        File dirFile = new File(inputDir);
+	        if (!dirFile.exists()) {
+	        	MipavUtil.displayError("The directory selected does not exist.  Please choose another.");
+	        	return false;
+	        } else if (!dirFile.isDirectory()) {
+	        	MipavUtil.displayError("Please select a directory of images to process.");
+	        	return false;
+	        } else {
+	        	File[] dirListing;
+	        	dirListing = dirFile.listFiles(niftiFilter);
+	        	for (File file : dirListing) {
+	        		if (file.isDirectory()) {
+	            		System.err.println("Skipping directory:\t" + file.getName());
+	            	} else if (file.getName().startsWith(".")) {
+	            		System.err.println("Skipping file that starts with .:\t" + file.getName());
+	            	} else {
+	            		inputFiles.add(file);
+	            	}
+	        	}
+	        	srcFrames = new ViewJFrameImage[inputFiles.size()];
+	        	srcImages = new ModelImage[inputFiles.size()];
+	        	srcInfo = new JDialogWinLevel[inputFiles.size()];
+	        	LUT = new ModelLUT[inputFiles.size()];
+	        	for(int count = 0; count < inputFiles.size(); count++){
+	//        		srcImages[count] = io.readImage(inputFiles.get(count).getAbsolutePath());
+	        		userInterface.openImageFrame(inputFiles.get(count).getAbsolutePath());
+	        		srcFrames[count] = userInterface.getActiveImageFrame();
+	        		srcImages[count] = userInterface.getActiveImageFrame().getActiveImage();
+	        		srcInfo[count] = new JDialogWinLevel(srcImages[count], ViewJFrameBase.initLUT(srcImages[count]), true);
+	        		LUT[count] = srcInfo[count].getLUT();
+	        	}
+	        	
+	        	minImage = srcInfo[0].getMin();
+	        	maxImage = srcInfo[0].getMax();
+	        	winMax = srcInfo[0].getWinMax();
+	        	
+	        	for(int count = 0; count < srcImages.length; count++){
+	        		if (minImage > srcInfo[count].getMin())
+	        			minImage = srcInfo[count].getMin();
+	        		if (maxImage < srcInfo[count].getMax())
+	        			maxImage = srcInfo[count].getMax();
+	        		if (winMax < srcInfo[count].getWinMax())
+	        			winMax = srcInfo[count].getWinMax();        			
+	        	}
+	        	
+	        	System.out.println(winMax);
+	
+		        image = srcImages[0];
+		        
+		        GridBagConstraints gbc = new GridBagConstraints();
+		        gbc.gridwidth = 1;
+		        gbc.gridheight = 1;
+		        gbc.anchor = GridBagConstraints.WEST;
+		        gbc.weightx = 1;
+		        gbc.insets = new Insets(3, 3, 3, 3);
+		        gbc.fill = GridBagConstraints.HORIZONTAL;
+		        
+		        windowLevelPanel = buildWindowLevelPanel();
+		        minMaxPanel = buildMinMaxPanel();
+		        buildLevelSlider(windowLevelPanel, gbc);
+		        buildWindowSlider(windowLevelPanel, gbc);
+		        buildMinSlider(minMaxPanel, gbc);
+		        buildMaxSlider(minMaxPanel, gbc);
+		        tabbedPane.setPreferredSize(new Dimension(200, 400));
+		        tabbedPane.add("Level & Window", windowLevelPanel);
+		        tabbedPane.add("Min & Max", minMaxPanel);
+		        tabbedPane.addChangeListener(this);
+		        
+		        changeBounds(minImage, maxImage, winMax);
+		        
+		        workPanel.setSize(tabbedPane.getMaximumSize());
+		        workPanel.add(tabbedPane);
+	
+		        pack();
+		        validate();
+		        repaint();
+		        return true;
+        	}
+        } else {
+        	Vector<Frame> openFrames = userInterface.getImageFrameVector();
         	
-            minValTextField.setText(minString);
-            float minTemp = (left - minMaxBInt) / minMaxSlope;
-            maxValTextField.setText(maxString);
-            float maxTemp = (right - minMaxBInt) / minMaxSlope;
-            
-            boolean minChanged = false;
-            boolean maxChanged = false;
-            if (minSlider.getMinimum() > minTemp) {
-            	sliderMinMin.setText(minString);
-            	sliderMaxMin.setText(minString);
-            	minSlider.setMinimum((int) minTemp);
-            	maxSlider.setMinimum((int) minTemp);
-            	image.setMin(left);
-            	sliderLevMin.setText(minString);
-            	minChanged = true;
-            }
-            minSlider.setValue((int) minTemp);
-            
-            if (maxSlider.getMaximum() < maxTemp) {
-            	sliderMinMax.setText(maxString);
-            	sliderMaxMax.setText(maxString);
-            	maxSlider.setMaximum((int) maxTemp);
-            	minSlider.setMaximum((int) maxTemp);
-            	image.setMax(right);
-            	sliderLevMax.setText(maxString);
-            	maxChanged = true;
-            }
-            maxSlider.setValue((int) maxTemp);
+        	for (Frame frame : openFrames){
+        		if(!(frame instanceof ViewJFrameImage)){
+        			openFrames.remove(frame);
+        		} 
+        	}
+        	
+        	srcFrames = new ViewJFrameImage[openFrames.size()];
+        	srcImages = new ModelImage[openFrames.size()];
+        	srcInfo = new JDialogWinLevel[openFrames.size()];
+        	LUT = new ModelLUT[openFrames.size()];
+        	for(int count = 0; count < openFrames.size(); count++){
+        		srcFrames[count] = (ViewJFrameImage) openFrames.get(count);
+        		srcImages[count] = srcFrames[count].getActiveImage();
+        		srcInfo[count] = new JDialogWinLevel(srcImages[count], ViewJFrameBase.initLUT(srcImages[count]), true);
+        		LUT[count] = srcInfo[count].getLUT();
+        	}
+        	
+        	minImage = srcInfo[0].getMin();
+        	maxImage = srcInfo[0].getMax();
+        	winMax = srcInfo[0].getWinMax();
+        	
+        	for(int count = 0; count < srcImages.length; count++){
+        		if (minImage > srcInfo[count].getMin())
+        			minImage = srcInfo[count].getMin();
+        		if (maxImage < srcInfo[count].getMax())
+        			maxImage = srcInfo[count].getMax();
+        		if (winMax < srcInfo[count].getWinMax())
+        			winMax = srcInfo[count].getWinMax();        			
+        	}
+        	
+	        image = srcImages[0];
+	        
+	        GridBagConstraints gbc = new GridBagConstraints();
+	        gbc.gridwidth = 1;
+	        gbc.gridheight = 1;
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.weightx = 1;
+	        gbc.insets = new Insets(3, 3, 3, 3);
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        
+	        windowLevelPanel = buildWindowLevelPanel();
+	        minMaxPanel = buildMinMaxPanel();
+	        buildLevelSlider(windowLevelPanel, gbc);
+	        buildWindowSlider(windowLevelPanel, gbc);
+	        buildMinSlider(minMaxPanel, gbc);
+	        buildMaxSlider(minMaxPanel, gbc);
+	        tabbedPane.setPreferredSize(new Dimension(200, 400));
+	        tabbedPane.add("Level & Window", windowLevelPanel);
+	        tabbedPane.add("Min & Max", minMaxPanel);
+	        tabbedPane.addChangeListener(this);
+	        
+	        changeBounds(minImage, maxImage, winMax);
+	        
+	        workPanel.setSize(tabbedPane.getMaximumSize());
+	        workPanel.add(tabbedPane);
 
-            calcMinMax();
-            
-            float levMinTemp = ( (left - minImage) * levelSliderMax) / (maxImage - minImage);
-        	float levMaxTemp = ( (right - minImage) * levelSliderMax) / (maxImage - minImage);
-
-    		if (minChanged || maxChanged) {
-    			if (minChanged){
-    				levelSlider.setMinimum((int)levMinTemp);
-    				levelMinFloat = left;
-    			}
-    			if (maxChanged){
-    				levelMaxFloat = right;
-    				levelSlider.setMaximum((int)levMaxTemp);
-    			}
-    		}
+	        pack();
+	        validate();
+	        repaint();
+	        return true;
+        }
+    }
+    
+    
+    private void changeBounds(float min, float max, float winMax) {   
+    	float minTemp = (min - minMaxBInt) / minMaxSlope;
+    	for (int count = 0; count < srcImages.length; count++){
+    		image = srcImages[count];
+    		image.setMin(min);
+    		image.setMax(max);
+    		minSlider.setMinimum((int) minTemp);
+    		maxSlider.setMinimum((int) minTemp);
+    		calcMinMaxSlope(image);
+    		calcMinMax();
     		
-    		float winMax = (windowSlider.getMaximum() * 2 * (maxImage - minImage) / windowSliderMax);
-    		sliderWinMax.setText(Float.toString(winMax));
+    		float levMinTemp = ( (min - minImage) * levelSliderMax) / (maxImage - minImage);
+    		float levMaxTemp = ( (max - minImage) * levelSliderMax) / (maxImage - minImage);
+    		levelSlider.setMinimum((int) levMinTemp);
+    		levelSlider.setMaximum((int) levMaxTemp);
+    		levelMinFloat = min;
+    		levelMaxFloat = max;
+    		
+    		float winTemp = (winMax * windowSliderMax) / (2 * (maxImage - minImage));
+    		windowSlider.setMaximum((int) winTemp);
+    		winMaxFloat = winMax;
     	}
     }
 
@@ -622,30 +618,33 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                 level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
                 window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
 
+           for (int count = 0; count < srcImages.length; count++){
 
-            if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
-                winValTextField.setText(Float.toString(window));
-                levelValTextField.setText(Float.toString(level));
-            } else {
-                winValTextField.setText(Float.toString(Math.round(window)));
-                levelValTextField.setText(Float.toString(Math.round(level)));
-            }
-
-            calcWinLevTransferFunction(image, window, level, x, y);
-
-            // update the transfer function so the on-screen image
-            // (modelImage/viewJFrameImage) updates for the user
-            LUT.getTransferFunction().importArrays(x, y, 4);
-            image.notifyImageDisplayListeners(LUT, false);
-
-            // if ((levelSlider.getValueIsAdjusting()) || (windowSlider.getValueIsAdjusting())) {
-            // return;
-            // }
-
-            // if the slider is finally done, update the transfer function
-            // in the histogram.
-            if (image.getHistogramFrame() != null) {
-                updateHistoLUTFrame();
+	          	image = srcImages[count];
+	            if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
+	                winValTextField.setText(Float.toString(window));
+	                levelValTextField.setText(Float.toString(level));
+	            } else {
+	                winValTextField.setText(Float.toString(Math.round(window)));
+	                levelValTextField.setText(Float.toString(Math.round(level)));
+	            }
+	
+	            calcWinLevTransferFunction(image, window, level, x, y);
+	
+	            // update the transfer function so the on-screen image
+	            // (modelImage/viewJFrameImage) updates for the user
+	            LUT[count].getTransferFunction().importArrays(x, y, 4);
+	            image.notifyImageDisplayListeners(LUT[count], false);
+	
+	            // if ((levelSlider.getValueIsAdjusting()) || (windowSlider.getValueIsAdjusting())) {
+	            // return;
+	            // }
+	
+	            // if the slider is finally done, update the transfer function
+	            // in the histogram.
+	            if (image.getHistogramFrame() != null) {
+	                updateHistoLUTFrame(LUT[count]);
+	            }
             }
         } else if (source == minSlider || source == maxSlider) {
         	// TODO use shared method
@@ -678,10 +677,14 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
             y[2] = 0;
             x[2] = max;
 
-            LUT.getTransferFunction().importArrays(x, y, 4);
-            image.notifyImageDisplayListeners(LUT, false);
-            if (image.getHistogramFrame() != null) {
-                updateHistoLUTFrame();
+            for (int count = 0; count < srcImages.length; count++){
+
+	          	image = srcImages[count];
+	            LUT[count].getTransferFunction().importArrays(x, y, 4);
+	            image.notifyImageDisplayListeners(LUT[count], false);
+	            if (image.getHistogramFrame() != null) {
+	                updateHistoLUTFrame(LUT[count]);
+	            }
             }
 
         } else if (source == tabbedPane) {
@@ -692,30 +695,38 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
 	                level = (levelSlider.getValue() * (maxImage - minImage) / levelSliderMax) + minImage;
 	                window = (windowSlider.getValue() * 2 * (maxImage - minImage) / windowSliderMax);
+	                
+	            
+	            	
+	                if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
+	                    winValTextField.setText(Float.toString(window));
+	                    levelValTextField.setText(Float.toString(level));
+	                } else {
+	                    winValTextField.setText(Float.toString(Math.round(window)));
+	                    levelValTextField.setText(Float.toString(Math.round(level)));
+	                }
+	                
+	            for (int count = 0; count < srcImages.length; count++){
 
-                if (image.getType() == ModelStorageBase.FLOAT || image.getType() == ModelStorageBase.ARGB_FLOAT) {
-                    winValTextField.setText(Float.toString(window));
-                    levelValTextField.setText(Float.toString(level));
-                } else {
-                    winValTextField.setText(Float.toString(Math.round(window)));
-                    levelValTextField.setText(Float.toString(Math.round(level)));
-                }
-                calcWinLevTransferFunction(image, window, level, x, y);
-
-                // update the transfer function so the on-screen image
-                // (modelImage/viewJFrameImage) updates for the user
-                LUT.getTransferFunction().importArrays(x, y, 4);
-                image.notifyImageDisplayListeners(LUT, false);
-
-                // if ((levelSlider.getValueIsAdjusting()) || (windowSlider.getValueIsAdjusting())) {
-                // return;
-                // }
-
-                // if the slider is finally done, update the transfer function
-                // in the histogram.
-                if (image.getHistogramFrame() != null) {
-                    updateHistoLUTFrame();
-                }
+	            	image = srcImages[count];
+	                calcWinLevTransferFunction(image, window, level, x, y);
+	
+	                // update the transfer function so the on-screen image
+	                // (modelImage/viewJFrameImage) updates for the user
+	                LUT[count].getTransferFunction().importArrays(x, y, 4);
+	                image.notifyImageDisplayListeners(LUT[count], false);
+	
+	                // if ((levelSlider.getValueIsAdjusting()) || (windowSlider.getValueIsAdjusting())) {
+	                // return;
+	                // }
+	
+	                // if the slider is finally done, update the transfer function
+	                // in the histogram.
+	                if (image.getHistogramFrame() != null) {
+	                    updateHistoLUTFrame(LUT[count]);
+	                }
+	                
+	            }
             } else if (tabbedPane.getSelectedIndex() == 1) {
             	// TODO use shared method
             	
@@ -738,11 +749,16 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
                 y[2] = 0;
                 x[2] = max;
-
-                LUT.getTransferFunction().importArrays(x, y, 4);
-                image.notifyImageDisplayListeners(LUT, false);
-                if (image.getHistogramFrame() != null) {
-                    updateHistoLUTFrame();
+                
+                for (int count = 0; count < srcImages.length; count++){
+                	
+                	image = srcImages[count];
+                	LUT[count].getTransferFunction().importArrays(x, y, 4);
+	            
+	                image.notifyImageDisplayListeners(LUT[count], false);
+	                if (image.getHistogramFrame() != null) {
+	                    updateHistoLUTFrame(LUT[count]);
+	                }
                 }
             }
         }
@@ -852,44 +868,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         winValTextField.setText(Float.toString(Math.round(window)));
         levelValTextField.setText(Float.toString(Math.round(level)));
 
-    }
-
-    /**
-     * Builds the close button.
-     * 
-     * @param gbc DOCUMENT ME!
-     */
-    private void buildButtons(final GridBagConstraints gbc) {
-
-        final JPanel buttonPanel = new JPanel();
-
-        saveButton = new JButton("Save");
-        saveButton.addActionListener(this);
-        // closeButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        // closeButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        saveButton.setFont(serif12B);
-        saveButton.setSize(MipavUtil.defaultButtonSize);
-        saveButton.setToolTipText("Save values to Preferences file");
-        buttonPanel.add(saveButton);
-
-        loadButton = new JButton("Load");
-        loadButton.addActionListener(this);
-        // closeButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        // closeButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        loadButton.setFont(serif12B);
-        loadButton.setSize(MipavUtil.defaultButtonSize);
-        loadButton.setToolTipText("Load values from Preferences file");
-        buttonPanel.add(loadButton);
-
-        closeButton = new JButton("Close");
-        closeButton.addActionListener(this);
-        // closeButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        // closeButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        closeButton.setFont(serif12B);
-        closeButton.setSize(MipavUtil.defaultButtonSize);
-        buttonPanel.add(closeButton);
-
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
     }
 
     /**
@@ -1346,8 +1324,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /**
      * Displays histoLUT frame for a gray scale image.
      */
-    private void updateHistoLUTFrame() {
-        image.notifyImageDisplayListeners(LUT, false);
+    private void updateHistoLUTFrame(ModelLUT lut) {
+        image.notifyImageDisplayListeners(lut, false);
         image.getHistogramFrame().redrawFrames();
     }
 
@@ -1378,8 +1356,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
     }
 
-    public void notifyImageDisplayListeners() {
-        image.notifyImageDisplayListeners(LUT, false);
+    public void notifyImageDisplayListeners(ModelLUT lut) {
+        image.notifyImageDisplayListeners(lut, false);
     }
     
     /**
@@ -1489,20 +1467,25 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     	windowSliderMax = calcWindowSliderMax(image);
     }
 
-	public float getMin() {
-		return minImage;
-	}
-	public float getMax() {
-		return maxImage;
-	}
-	public float getWinMax() {
-		return 2.0f * (maxImage - minImage);
-	}
-	public JTabbedPane getTabbedPane() {
-		return tabbedPane;
-	}
-	public ModelLUT getLUT() {
-		return LUT;
+    
+    
+	@Override
+	protected void setGUIFromParams() {
+		setInputDir(scriptParameters.getParams().getString("input_dir"));
+		
 	}
 
-} // end class JDialogWinLevel
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+		scriptParameters.getParams().put(ParameterFactory.newParameter("input_dir", inputDir));
+		
+	}
+
+	@Override
+	public Dimension getPanelSize() {
+		// TODO Auto-generated method stub
+		return new Dimension(previewPanel.getBounds().width,
+				previewPanel.getBounds().height);
+	}
+
+}
