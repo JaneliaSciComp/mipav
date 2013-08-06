@@ -4495,11 +4495,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		// direction of the unit vector of the partial derivative in the y direction
 		yDirections = new float[length];
 
-		imageBufferActive = new float[length];
-
-		if (m_kLocalImage.isColorImage()) {
+		if (m_kLocalImage.isColorImage()  && (m_iLiveWireSelection == RubberbandLivewire.INTENSITY)) {
 
 			// for color images, average the array values
+		    imageBufferActive = new float[length];
 			float[] temp = new float[length * 4];
 
 			try {
@@ -4512,7 +4511,16 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{
 				imageBufferActive[i] = (temp[4*i+1] + temp[4*i+2] + temp[4*i+3])/3f;
 			}
+		} else if (m_kLocalImage.isColorImage()) {
+		    imageBufferActive = new float[4 * length]; 
+		    try {
+                m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
+                m_abInitLiveWire[iSlice] = true;
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to retrieve RGB data.");
+            }
 		} else {
+		    imageBufferActive = new float[length];
 			try {
 				m_kLocalImage.exportData(iSlice * imageBufferActive.length, imageBufferActive.length, imageBufferActive);
 				m_abInitLiveWire[iSlice] = true;
