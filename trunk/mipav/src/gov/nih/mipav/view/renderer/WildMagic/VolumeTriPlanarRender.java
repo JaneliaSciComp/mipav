@@ -616,16 +616,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			// System.err.println("Wbr = " + Wbr);
 			// System.err.println("Wtl = " + Wtl);
 			
-			m_kParent.translateSurface("Vbl", Vbl);
-			m_kParent.translateSurface("Vtl", Vtl);
-			m_kParent.translateSurface("Vbr", Vbr);
-			m_kParent.translateSurface("Vtr", Vtr);
+			updateSceneNodePoint("Vbl", Vbl);
+			updateSceneNodePoint("Vtl", Vtl);
+			updateSceneNodePoint("Vbr", Vbr);
+			updateSceneNodePoint("Vtr", Vtr);
 			
-			m_kParent.translateSurface("Wbl", Wbl);
-			m_kParent.translateSurface("Wtl", Wtl);
-			m_kParent.translateSurface("Wbr", Wbr);
-			m_kParent.translateSurface("Wtr", Wtr);
-		
+			updateSceneNodePoint("Wbl", Wbl);
+			updateSceneNodePoint("Wtl", Wtl);
+			updateSceneNodePoint("Wbr", Wbr);
+			updateSceneNodePoint("Wtr", Wtr);
+			
 			if (m_kVolumeRayCast != null) {
 				m_kVolumeRayCast.SetDisplay(m_kParent.getRendererGUI().getVolumeCheck().isSelected());
 			}
@@ -638,6 +638,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		updateFrustumPoints();
 
 	}
+	
+	public void updateSceneNodePoint(String name, Vector3f position) {
+		Matrix3f currentRotation = getObjectRotation();
+		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+		Vector3f location = rotationInverse.mult(position);
+		m_kParent.translateSurface(name, location);
+	}
 
 	/**
 	 * Update the representation of the current viewpoint in the Volume
@@ -646,10 +653,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	public void updateFrustumPoints() {
 
 		Vector3f trackPoint = navigationBehavior.getTrackingPoint();
-		m_kParent.translateSurface("TrackPoint", trackPoint);
+		updateSceneNodePoint("TrackPoint", trackPoint);
 		
 		Vector3f kPositionScaled = navigationBehavior.getViewPoint();
-		m_kParent.translateSurface("Camera", kPositionScaled);
+		updateSceneNodePoint("Camera", kPositionScaled);
 		
 	}
 	
