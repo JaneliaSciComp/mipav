@@ -548,8 +548,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 						secondIntersectionPoint.copy(start);
 					}
 
-					parentScene.translateSurface("StartPoint", firstIntersectionPoint);
-					parentScene.translateSurface("EndPoint", secondIntersectionPoint);
+					parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
+					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
 					System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
 					System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
@@ -575,13 +575,13 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					end = new Vector3f();
 					end = Vector3f.scale(t1, kDir);
 					end.add(kPos);
-					parentScene.translateSurface("EndPoint", end);
+					parentScene.updateSceneNodePoint("EndPoint", end);
 
 					firstIntersectionPoint.copy(kPos);
 					secondIntersectionPoint.copy(end);
 
-					parentScene.translateSurface("StartPoint", firstIntersectionPoint);
-					parentScene.translateSurface("EndPoint", secondIntersectionPoint);
+					parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
+					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
 					// show the threshold detection point
 					tracingThreshold(firstIntersectionPoint,
@@ -677,7 +677,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			Vector4f color = shaderEffectCPU.p_VolumeShaderMultiPass(currentLocation);
 			if ( color != null && (color.X != 0f && color.Y != 0f && color.Z != 0f)) {
 			   	System.err.println("test color = " + color);
-			   	parentScene.translateSurface("Threshold", currentLocation);
+			   	parentScene.updateSceneNodePoint("Threshold", currentLocation);
 			   	if ( color.X >= 0.7f &&  color.Y >= 0.7f && color.Z >= 0.7f ) {
 			   		bestLocation.copy(currentLocation);
 			   		found = true;
@@ -697,7 +697,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			d = Math.abs(value - pre_value);
 			if (d > 20) {
 				bestLocation.copy(currentLocation);
-				parentScene.translateSurface("Threshold", bestLocation);
+				parentScene.updateSceneNodePoint("Threshold", bestLocation);
 				found = true;
 				System.err.println("Opacity threshold finding");
 				break;
@@ -953,7 +953,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		    d = Math.abs(value-pre_value);
 			if ( d > 20 ) {
 				bestLocation.copy(currentLocation);
-				parentScene.translateSurface("Threshold", bestLocation);
+				parentScene.updateSceneNodePoint("Threshold", bestLocation);
 				found = true;
 	
 				break;
