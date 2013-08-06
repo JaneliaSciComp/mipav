@@ -482,70 +482,13 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		isDoPicking = true;
 		Vector3f start;
 		Vector3f end;
-
-		float fRMin = camera.GetRMin();
-		float fRMax = camera.GetRMax();
-		float fUMin = camera.GetUMin();
-		float fUMax = camera.GetUMax();
-		float fDMin = camera.GetDMin();
-		float fDMax = camera.GetDMax();
-
-		Vector3f kCDir = new Vector3f();
-		kCDir.copy(camera.GetDVector());
-		Vector3f kCUp = new Vector3f();
-		kCUp.copy(camera.GetUVector());
-		Vector3f kCRight = new Vector3f();
-		kCRight.copy(camera.GetRVector());
-		Vector3f kCLoc = new Vector3f();
-		kCLoc.copy(camera.GetLocation());
-
-		// System.err.println("\nkCDir = " + kCDir);
-		// System.err.println("kCUp = " + kCUp);
-		// System.err.println("kCRight = " + kCRight);
-		// System.err.println("kCLoc = " + kCLoc);
-
-		// should apply the view projection matrix????????????????????
-		
-	    // float[] afData = new float[16];
-		// parentScene.GetRenderer().SetConstantVPMatrix (0, afData);
-		// Matrix4f kVP = new Matrix4f( afData, true );
-		// kWorld World-view-projection matrix
-	    // Matrix4f kWVPMatrix = Matrix4f.mult(parentScene.getSceneToWorldMatrix(), kVP);
-		
-		
-		// System.err.println("kVP = " + kVP);
-		// Matrix3f worldMatrix = new Matrix3f();
-		// worldMatrix.M00 = kWorld.M00; worldMatrix.M01 = kWorld.M01;
-		// worldMatrix.M02 = kWorld.M02;
-		// worldMatrix.M10 = kWorld.M10; worldMatrix.M11 = kWorld.M11;
-		// worldMatrix.M12 = kWorld.M12;
-		// worldMatrix.M20 = kWorld.M20; worldMatrix.M21 = kWorld.M21;
-		// worldMatrix.M22 = kWorld.M22;
-        
-		Matrix3f currentRotation = parentScene.getObjectRotation();
-		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-		
-		Vector3f cameraLocationInverse = rotationInverse.mult(kCLoc);
-		Vector3f cameraDirInverse = rotationInverse.mult(kCDir);
-		Vector3f cameraUpInverse = rotationInverse.mult(kCUp);
-		Vector3f cameraRightInverse = rotationInverse.mult(kCRight);
-		
+				
 		Vector3f firstIntersectionPoint = new Vector3f();
 		Vector3f secondIntersectionPoint = new Vector3f();
-
-		// set the camera to the current out of screen view location
-		Camera virtualCamera = new Camera();
-		
-		virtualCamera.SetFrustum(fRMin, fRMax, fUMin, fUMax, fDMin, fDMax);
-		virtualCamera.SetFrame(cameraLocationInverse, cameraDirInverse, cameraUpInverse, cameraRightInverse);
 		
 		shaderEffectCPU.createProgramText();
 		
-		if (virtualCamera.GetPickRay(x, y, parentScene.GetWidth(),
-				parentScene.GetHeight(), kPos, kDir)) {
-
-			// System.err.println("in doPick(),  kPos = " + kPos.toString() +
-			// "   kDir = " + kDir.toString());
+		if (camera.GetPickRay(x, y, parentScene.GetWidth(), parentScene.GetHeight(), kPos, kDir)) {
 
 			for (int i = 0; i < parentScene.getDisplayList().size(); i++) {
 				naviPicker.Execute(
@@ -608,10 +551,14 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					parentScene.translateSurface("StartPoint", firstIntersectionPoint);
 					parentScene.translateSurface("EndPoint", secondIntersectionPoint);
 
+					System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
+					System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
+					
 					// show the threshold detection point
 					tracingThreshold(firstIntersectionPoint,
 							secondIntersectionPoint, detectPoint, findPickingPoint);
    
+					System.err.println("detectPoint = " + detectPoint);
 					
 					first.copy(firstIntersectionPoint);
 					second.copy(secondIntersectionPoint);
