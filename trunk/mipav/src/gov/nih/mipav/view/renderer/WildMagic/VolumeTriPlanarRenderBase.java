@@ -509,7 +509,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		 if ( updateBoundingCube && m_bDoClip )
 		 {
 			 m_kVolumeRayCast.CheckViewIntersection( m_pkRenderer, m_kCuller );
-			 updateBoundingCube = false;
+			 updateBoundingCube = true;
 		 }
 
 		 if ( m_bTestFrameRate )
