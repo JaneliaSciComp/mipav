@@ -20,15 +20,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 
-public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, ItemListener, PreviewImageContainer, ChangeListener, KeyListener, MouseListener{
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-//	private static final long serialVersionUID = 3516843154999038969L;
+public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptablePlugin implements ItemListener, PreviewImageContainer, ChangeListener, KeyListener, MouseListener{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    private PlugInAlgorithmApplyTransferFunction winLev = null;
     
     private String inputDir;
     
@@ -162,6 +156,7 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
         		loadButton.setActionCommand("OK");
         		mode.setEnabled(false);
         	}
+        	dirChooserButton.setEnabled(false);
         } else if (command.equals("OK")) {
         	dispose();
         } else if (command.equals("BrowseDir")) {
@@ -197,38 +192,6 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
             super.actionPerformed(event);
         }
     }
-
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
-    /**
-     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
-     * has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
-     *
-     * @param  algorithm  Algorithm that caused the event.
-     */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (algorithm instanceof PlugInAlgorithmApplyTransferFunction) {
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
-
-            if (algorithm != null) {
-                algorithm.finalize();
-                algorithm = null;
-            }
-
-            //dispose();
-            if (isExitRequired()) {
-                System.exit(0);
-                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-            } else {
-                return;
-            }
-        }
-    }
     
     public void setInputDir(String dir) {
     	inputDir = dir;
@@ -250,39 +213,6 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
             		inputFiles.add(file);
             	}
         	}
-        }
-    }
-
-    /**
-     * Once all the necessary variables are set, call PlugInAlgorithmApplyTransferFunction
-     */
-    protected void callAlgorithm() {
-
-        try {
-            winLev = new PlugInAlgorithmApplyTransferFunction();
-
-            // This is very important. Adding this object as a listener allows
-            // the algorithm to
-            // notify this object when it has completed or failed. See algorithm
-            // performed event.
-            // This is made possible by implementing AlgorithmedPerformed
-            // interface
-            winLev.addListener(this);
-            
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still
-                // have user interface work fast.
-                if (winLev.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                winLev.run();
-            }
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("Unable to allocate enough memory");
-
-            return;
         }
     }
 
@@ -433,8 +363,6 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
 	        		if (winMax < srcInfo[count].getWinMax())
 	        			winMax = srcInfo[count].getWinMax();        			
 	        	}
-	        	
-	        	System.out.println(winMax);
 	
 		        image = srcImages[0];
 		        
@@ -1487,6 +1415,12 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
 		// TODO Auto-generated method stub
 		return new Dimension(previewPanel.getBounds().width,
 				previewPanel.getBounds().height);
+	}
+
+	@Override
+	protected void callAlgorithm() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
