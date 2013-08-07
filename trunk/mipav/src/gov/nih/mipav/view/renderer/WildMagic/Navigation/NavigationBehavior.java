@@ -714,6 +714,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	public void mouseReleased(MouseEvent e) {
 		pressed = false;
+		m_kViewPoint.copy(camera.GetLocation());
+		m_kViewRight.copy(camera.GetRVector());
+		m_kViewUp.copy(camera.GetUVector());
+		m_kViewDirection.copy(camera.GetDVector());
 	}
 
 	public void mouseDragged(MouseEvent e) {
@@ -736,11 +740,12 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 		currEventTime = e.getWhen();
 
+		/*
 		if ((currEventTime - prevEventTime) < 200) {
 			pressed = false;
 			return;
 		}
-
+          */
 		if (pressed == false && isDoPicking == false) {
 
 			/*
@@ -784,7 +789,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	}
 
 	private void makeMove(Vector3f _currentLocation) {
-		m_kViewPoint = _currentLocation;
+		m_kViewPoint.copy(_currentLocation);
+		m_kViewRight.copy(camera.GetRVector());
+		m_kViewUp.copy(camera.GetUVector());
+		m_kViewDirection.copy(camera.GetDVector());
 		notifyCallback(EVENT_CHANGE_POSITION);
 	}
 
@@ -1100,7 +1108,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			Vector3f cameraLocation = new Vector3f();
 			Vector3f pickingPointLocation = new Vector3f();
 		
-			cameraLocation.copy(camera.GetLocation());
+			cameraLocation.copy(m_kViewPoint);
 			m_kViewRight.copy(camera.GetRVector());
 			m_kViewUp.copy(camera.GetUVector());
 			m_kViewDirection.copy(camera.GetDVector());
@@ -1124,11 +1132,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			Vector3f currentLocation = new Vector3f();
 			
 			if (moveForward < 0) {
-				currentLocation = Vector3f.add(cameraLocation, deltaForward);
-				trackingPointLocation = Vector3f.add(cameraLocation, trackingForward);
+				currentLocation.copy(cameraLocation);   // = Vector3f.add(cameraLocation, deltaForward);
+				trackingPointLocation.copy(cameraLocation);  //  = Vector3f.add(cameraLocation, trackingForward);
 			} else {
-				currentLocation = Vector3f.add(cameraLocation, deltaBackward);
-				trackingPointLocation = Vector3f.add(cameraLocation, trackingBackward);
+				currentLocation.copy(cameraLocation);   //  = Vector3f.add(cameraLocation, deltaBackward);
+				trackingPointLocation.copy(cameraLocation); //  = Vector3f.add(cameraLocation, trackingBackward);
 			}
 
 			float trackingStep = trackingPointLocation.distance(cameraLocation);
