@@ -151,7 +151,7 @@ public class VolumeRayCast extends VolumeObject
     {   	    	
     	m_kRenderer = kRenderer;
     	m_kCullPlane = new Plane3f(kCuller.GetPlanes()[0]);
-    	m_kCullPlane.Constant += .1f;
+    	m_kCullPlane.Constant += .01f;
 //    	System.err.println( m_kCullPlane.Normal + "    " + m_kCullPlane.Constant );
     	m_kCullPlane.Normal = new Vector3f(0,0,1);
     	

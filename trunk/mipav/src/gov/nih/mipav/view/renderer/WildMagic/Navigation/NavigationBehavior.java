@@ -550,7 +550,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
 					System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
 					
-					detectPoint.copy(firstIntersectionPoint);
+					detectPoint.copy(secondIntersectionPoint);
 					System.err.println("detectPoint = " + detectPoint);
 					
 					first.copy(firstIntersectionPoint);
@@ -934,10 +934,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			trackingForward = Vector3f.sub(pickingPointLocation, cameraLocation);
 			trackingBackward = Vector3f.sub(cameraLocation, pickingPointLocation);
 				
-			deltaForward.scale(0.002f);
-			deltaBackward.scale(0.002f);
-			trackingForward.scale(0.003f);
-		    trackingBackward.scale(0.003f);
+			deltaForward.scale(0.005f);
+			deltaBackward.scale(0.005f);
+			trackingForward.scale(0.005f);
+		    trackingBackward.scale(0.005f);
 
 			Vector3f currentLocation = new Vector3f();
 			
