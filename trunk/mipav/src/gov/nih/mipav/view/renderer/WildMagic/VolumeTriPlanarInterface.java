@@ -3483,16 +3483,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		System.out.println(builder.toString());
 	}        
 
-	
-	public TransferFunction getTransferFunction() {
-    	return m_kVolOpacityPanel.getCompA().getOpacityTransferFunction();
-	}
-
-	public Light[] getLights() {
-		return m_kLightsPanel.getAllLights();
-	}
-	
-	
 	public void setCameraNearPlane( float distance )
 	{
 		if ( raycastRenderWM != null )

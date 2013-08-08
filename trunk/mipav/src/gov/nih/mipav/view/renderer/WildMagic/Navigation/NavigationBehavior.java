@@ -151,7 +151,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	private Vector3f trackingPointLocation = new Vector3f();
 	
-	private VolumeShaderEffectMultiPassDynamicCPU shaderEffectCPU;
+	// private VolumeShaderEffectMultiPassDynamicCPU shaderEffectCPU;
 	
 	private boolean isDoPicking = false;
 	
@@ -194,8 +194,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		m_kViewPoint = camera.GetLocation();
 		m_kViewDirection = camera.GetDVector();
 		m_kViewUp = camera.GetUVector();
-		
-		shaderEffectCPU = parentScene.getShaderEffectCPU();
 
 	}
 
@@ -486,8 +484,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		Vector3f firstIntersectionPoint = new Vector3f();
 		Vector3f secondIntersectionPoint = new Vector3f();
 		
-		shaderEffectCPU.createProgramText();
-		
 		if (camera.GetPickRay(x, y, parentScene.GetWidth(), parentScene.GetHeight(), kPos, kDir)) {
 
 			for (int i = 0; i < parentScene.getDisplayList().size(); i++) {
@@ -554,10 +550,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
 					System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
 					
-					// show the threshold detection point
-					tracingThreshold(firstIntersectionPoint,
-							secondIntersectionPoint, detectPoint, findPickingPoint);
-   
+					detectPoint.copy(firstIntersectionPoint);
 					System.err.println("detectPoint = " + detectPoint);
 					
 					first.copy(firstIntersectionPoint);
@@ -583,17 +576,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
 					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
-					// show the threshold detection point
-					tracingThreshold(firstIntersectionPoint,
-							secondIntersectionPoint, detectPoint, findPickingPoint);
-
-					if ( findPickingPoint[0] ) {
-					  first.copy(detectPoint);
-					  second.copy(secondIntersectionPoint);
-					} else {
-					  first.copy(secondIntersectionPoint);
-					  second.copy(secondIntersectionPoint);
-					}
+					detectPoint.copy(secondIntersectionPoint);
+					
 					break;
 
 				case 0:
@@ -607,111 +591,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
         isDoPicking = false;
 	}
 
-	public void tracingThreshold(Vector3f firstIntersectionPoint,
-			Vector3f secondIntersectionPoint, Vector3f bestLocation, boolean[] findPickingPoint) {
-
-		Vector3f startImagespace = new Vector3f();
-		Vector3f endImageSpace = new Vector3f();
-		Vector3f delta = new Vector3f();
-		Vector3f currentLocation = new Vector3f();
-
-		float intensity;
-		float value;
-		float pre_value = 0;
-		TransferFunction transfer = parentScene.getParent().getTransferFunction();
-
-		float d;
-
-		boolean found = false;
-
-		startImagespace.copy(firstIntersectionPoint);
-		endImageSpace.copy(secondIntersectionPoint);
-
-		// translate the start and end points to image space
-		delta = delta.sub(secondIntersectionPoint, firstIntersectionPoint);
-		delta.scale(0.002f);
-
-		currentLocation.copy(firstIntersectionPoint);
-
-		found = false;
-		
-		 float[] afData = new float[16];
-		 parentScene.GetRenderer().SetConstantVPMatrix (0, afData);
-		 Matrix4f kVP = new Matrix4f( afData, true );
-			// kWorld World-view-projection matrix
-		 Matrix4f kWVPMatrix = Matrix4f.mult(parentScene.getSceneToWorldMatrix(), kVP);
-			
-		for (int w = 0; w < 500; w++) {
-
-			Vector3f imageLocation = new Vector3f();
-		
-			// imageLocation = kWVPMatrix.mult(new Vector4f(currentLocation.X, currentLocation.Y, currentLocation.Z, 1.0f)).getVector3();
-			
-			imageLocation.copy(currentLocation);
-		    imageLocation.sub(parentScene.getTranslate());
-			imageLocation.X *= 1.0f / parentScene.getNormalizedXDim();
-			imageLocation.Y *= 1.0f / parentScene.getNormalizedYDim();
-			imageLocation.Z *= 1.0f / parentScene.getNormalizedZDim();
-			imageLocation.X *= (parentScene.getImage().getExtents()[0] - 1);
-			imageLocation.Y *= (parentScene.getImage().getExtents()[1] - 1);
-			imageLocation.Z *= (parentScene.getImage().getExtents()[2] - 1);
-
-			// System.err.println("w = " + w + " imageL.X = " + imageLocation.X
-			//   + " imageL.Y = " + imageLocation.Y + " imageL.Z = " +
-			// imageLocation.Z);
-			// if out of bounds, just ignore
-		
-			if ((int)imageLocation.X < 0
-					|| (int)imageLocation.X > (parentScene.getImage().getExtents()[0] - 1)
-					|| (int)imageLocation.Y < 0
-					|| (int)imageLocation.Y > (parentScene.getImage().getExtents()[1] - 1)
-					|| (int)imageLocation.Z < 0
-					|| (int)imageLocation.Z > (parentScene.getImage().getExtents()[2] - 1)) {
-				currentLocation.add(delta);
-				continue;
-			}
-			
-			// Vector4f color = thresholdTracing.getColorVolumeShaderMultiPass(new Vector3f((int)imageLocation.X, (int)imageLocation.Y, (int)imageLocation.Z));
-			// System.err.println("test color = " + color);
-			
-			Vector4f color = shaderEffectCPU.p_VolumeShaderMultiPass(currentLocation);
-			if ( color != null && (color.X != 0f && color.Y != 0f && color.Z != 0f)) {
-			   	System.err.println("test color = " + color);
-			   	parentScene.updateSceneNodePoint("Threshold", currentLocation);
-			   	if ( color.X >= 0.7f &&  color.Y >= 0.7f && color.Z >= 0.7f ) {
-			   		bestLocation.copy(currentLocation);
-			   		found = true;
-			   		System.err.println("Multi-histo finding");
-			   		break;
-			   	}
-			   	
-			}
-			
-			// search from opacity histogram
-			intensity = parentScene.getImage().getFloat(
-					(int) imageLocation.X, (int) imageLocation.Y,
-					(int) imageLocation.Z);
-			value = transfer.getRemappedValue(intensity, 256);
-
-			// System.err.println("value = " + value);
-			d = Math.abs(value - pre_value);
-			if (d > 20) {
-				bestLocation.copy(currentLocation);
-				parentScene.updateSceneNodePoint("Threshold", bestLocation);
-				found = true;
-				System.err.println("Opacity threshold finding");
-				break;
-			}
-			pre_value = value;
-			currentLocation.add(delta);
-
-			
-		}
-		
-		System.err.println("find = " + found);
-		findPickingPoint[0] = found;
-	}
-
+	
 	public void mouseReleased(MouseEvent e) {
 		pressed = false;
 		m_kViewPoint.copy(camera.GetLocation());
@@ -904,76 +784,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			m_kCallback.viewChanged(this, iEvent);
 		}
 	}
-
-	public void tracingMultihisto(Vector3f firstIntersectionPoint, Vector3f secondIntersectionPoint, Vector3f bestLocation) {
-		
-    	Vector3f startImagespace = new Vector3f();
-    	Vector3f endImageSpace = new Vector3f();
-    	Vector3f delta = new Vector3f();
-    	Vector3f currentLocation = new Vector3f();
-		
-		float intensity;
-		float value;
-		float pre_value = 0;
-		TransferFunction transfer = parentScene.getParent().getTransferFunction();
-		
-		float d;
-		
-		boolean found = false;
-		
-		startImagespace.copy(firstIntersectionPoint);
-		endImageSpace.copy(secondIntersectionPoint);
-		
-	    // translate the start and end points to image space
-		delta = delta.sub(secondIntersectionPoint, firstIntersectionPoint);
-		delta.scale(0.002f);
-		
-		
-		currentLocation.copy(firstIntersectionPoint);
-	
-		found = false;
-		for ( int w = 0; w < 500; w++ ) {
-
-			
-			Vector3f imageLocation = new Vector3f();
-			imageLocation.copy(currentLocation);
-			imageLocation.sub( parentScene.getTranslate() );
-			imageLocation.X *= 1.0f/parentScene.getNormalizedXDim();
-			imageLocation.Y *= 1.0f/parentScene.getNormalizedYDim();
-			imageLocation.Z *= 1.0f/parentScene.getNormalizedZDim();
-			imageLocation.X *= (parentScene.getImage().getExtents()[0]-1);
-			imageLocation.Y *= (parentScene.getImage().getExtents()[1]-1);
-			imageLocation.Z *= (parentScene.getImage().getExtents()[2]-1);
-		
-			// System.err.println("w = " + w + " imageL.X = " + imageLocation.X 
-			// 		 + " imageL.Y = " + imageLocation.Y  + " imageL.Z = " + imageLocation.Z);
-			// if out of bounds, just ignore
-			if ( (int)imageLocation.X < 0 || imageLocation.X > (parentScene.getImage().getExtents()[0]-1) ||
-					(int)imageLocation.Y < 0 || imageLocation.Y > (parentScene.getImage().getExtents()[1]-1) ||
-					(int)imageLocation.Z < 0 || imageLocation.Z > (parentScene.getImage().getExtents()[2]-1) )
-				continue;
-			
-			// search from opacity histogram
-			intensity = parentScene.getImage().getFloat((int)imageLocation.X, (int)imageLocation.Y, (int)imageLocation.Z);
-			value = transfer.getRemappedValue(intensity, 256);
-
-			// System.err.println("value = " + value);
-		    d = Math.abs(value-pre_value);
-			if ( d > 20 ) {
-				bestLocation.copy(currentLocation);
-				parentScene.updateSceneNodePoint("Threshold", bestLocation);
-				found = true;
-	
-				break;
-			}
-			pre_value = value;
-			currentLocation.add(delta);
-			
-			System.err.println("find = " + found);		
-		}
-	}
-	    
-	
 	
 	/**
 	 * Reset the view orientation transformation to the identity. That is,

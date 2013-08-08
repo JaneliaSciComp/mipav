@@ -212,7 +212,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	protected void CreateScene ()
 	{
 		super.CreateScene();
-		super.setParentScene(this);
 		if ( m_kParent != null )
 		{
 			m_kParent.addSlices(m_kSlices);
@@ -658,14 +657,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Vector3f kPositionScaled = navigationBehavior.getViewPoint();
 		updateSceneNodePoint("Camera", kPositionScaled);
 		
-	}
-	
-	/**
-	 * get the reference to the  VolumeTriPlanarInterface
-	 * @return  the parent VolumeTriPlanarInterface
-	 */
-	public VolumeTriPlanarInterface getParent() {
-		return m_kParent;
 	}
 	
 }

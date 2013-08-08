@@ -22,7 +22,6 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
-import gov.nih.mipav.view.renderer.WildMagic.Navigation.VolumeShaderEffectMultiPassDynamicCPU;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeBoundingBox;
@@ -506,12 +505,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			 UpdateSceneRotation();
 			 updateBoundingCube = true;
 		 }
-		 
-		 // check camera location
-		 Vector3f cameraLocation = m_spkCamera.GetLocation();
-		 if ( cameraLocation.distance(new Vector3f(0f, 0f, 0f)) < 0.5f ) {
-			 updateBoundingCube = true;
-		 }
+				 
+		 updateBoundingCube = true;
 		 
 		 if ( updateBoundingCube && m_bDoClip )
 		 {
@@ -3768,37 +3763,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			}
 		}
 
-		/**
-		 * Being used by VolumeShaderEffectMultiPassDynamicCPU to get the geometry info
-		 * @return raycast volume bounding box geometry.
-		 */
-		public TriMesh getGeometry() {
-			return m_kVolumeRayCast.getGeometry();
-		}
-	
-		/**
-		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the material info
-		 * @return  material info
-		 */
-		public MaterialState getMaterialState() {
-			return m_kVolumeRayCast.GetMaterialState();
-		}
-		
-		/**
-		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the current camera
-		 * @return  current camera
-		 */
-		public Camera getViewCamera() {
-			return m_spkCamera;
-		}
-		
-		/**
-		 * Being used by the VolumeShaderEffectMultiPassDynamicCPU to get the current shader effect
-		 * @return  current shader effect
-		 */
-		public VolumeShaderEffectMultiPassDynamicCPU getShaderEffectCPU() {
-			return m_kVolumeRayCast.GetShaderEffectCPU();
-		}
 		
 		/**
 		 * Toggle navigation fly-thru tracking mode
@@ -3808,12 +3772,5 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			isNavigationEnabled = _isNavigationEnabled;	
 		}
 	
-		/**
-		 * Set the parentScene in the volume
-		 * @param _parentScene
-		 */
-		public void setParentScene(VolumeTriPlanarRender _parentScene) {
-		    	m_kVolumeRayCast.setParentScene(_parentScene);
-		}
 		
 }
