@@ -35,16 +35,16 @@ import javax.swing.SwingUtilities;
 
 /**
  * A Livewire rubberband. It makes segmentation easier by "snapping to" appropriate pixels to outline features. The
- * pixels it snaps to are those with the minumum cost; cost is a function of gradient magnitude, gradient direction, and
+ * pixels it snaps to are those with the minimum cost; cost is a function of gradient magnitude, gradient direction, and
  * zero x-crossings. Whenever an anchor is established, a directed graph of costs is created, so that from any pixel in
- * the image, the shortest path from that pixel to the anchor can be drawn. Once the user is satified with that path
+ * the image, the shortest path from that pixel to the anchor can be drawn. Once the user is satisfied with that path
  * they can put down another anchor, for a new directed cost graph.
  *
  * <p>This is based on the method described by Eric N Mortensen and William A Barrett from Brigham Young University, in
  * their paper "Interactive Segmentation with Intelligent Scissors", Graphical Models and Image Processing, v 60, n 5,
  * September 1998, p.349-384.</p>
  *
- * <p>A description of the color gradient direction is given in The Docotoral Dissertation of Eric N. Mortensen:
+ * <p>A description of the color gradient direction is given in The Doctoral Dissertation of Eric N. Mortensen:
  * "Simultaneous Multi-Frame Subpixel Boundary Definition using Toboggan-Based Intelligent Scissors for Image and Movie
  * Editing, Department of Computer Science, Brigham Young University, Provo, Utah, December, 2000, Section 4.3.1.1
  * Domain projection vector: vx. The description of summing gradient magnitudes of the different color bands is
