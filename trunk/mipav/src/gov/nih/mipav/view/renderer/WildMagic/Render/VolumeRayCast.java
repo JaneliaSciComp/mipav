@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
-import gov.nih.mipav.view.renderer.WildMagic.Navigation.VolumeShaderEffectMultiPassDynamicCPU;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 
@@ -136,10 +135,6 @@ public class VolumeRayCast extends VolumeObject
     private int rightFaceIndex = 5;
 
     private VolumeTriPlanarRender parentScene; 
-    
-    private VolumeShaderEffectMultiPassDynamicCPU m_kVolumeShaderEffectCPU = null;
-    
-    
     /**
      * Creates a new VolumeRayCast object.
      * @param kImageA the VolumeImage containing the data and textures for
@@ -945,7 +940,6 @@ public class VolumeRayCast extends VolumeObject
     public void CMPMode()
     {
         m_kVolumeShaderEffect.CMPMode();
-        m_kVolumeShaderEffectCPU.CMPMode();
     }
 
     /**
@@ -1014,12 +1008,6 @@ public class VolumeRayCast extends VolumeObject
             m_spkVertexColor3Shader = null;
         }       
         
-        if ( m_kVolumeShaderEffectCPU != null )
-        {
-            m_kVolumeShaderEffectCPU.dispose();
-            m_kVolumeShaderEffectCPU = null;
-        }
-        
         super.dispose(kRenderer);
     }
 
@@ -1029,7 +1017,6 @@ public class VolumeRayCast extends VolumeObject
     public void DRRMode()
     {
         m_kVolumeShaderEffect.DRRMode();
-        m_kVolumeShaderEffectCPU.DRRMode();
     }
 
     /**
@@ -1081,7 +1068,6 @@ public class VolumeRayCast extends VolumeObject
     public void MIPMode( )
     {
         m_kVolumeShaderEffect.MIPMode();
-        m_kVolumeShaderEffectCPU.MIPMode();
     }
 
     /**
@@ -1090,7 +1076,6 @@ public class VolumeRayCast extends VolumeObject
     public void MULTIHISTOMode(boolean bOn)
     {
         m_kVolumeShaderEffect.MULTIHISTOMode(bOn);
-        m_kVolumeShaderEffectCPU.MULTIHISTOMode(bOn);
     }
            
     public void printProgram()
@@ -1107,7 +1092,6 @@ public class VolumeRayCast extends VolumeObject
     public void ReloadVolumeShader( Renderer kRenderer )
     {
         m_kVolumeShaderEffect.Reload( kRenderer );
-        m_kVolumeShaderEffectCPU.Reload( kRenderer );
     }
 
     /**
@@ -1156,15 +1140,6 @@ public class VolumeRayCast extends VolumeObject
         m_kScene.UpdateRS();
         Vector3f kLength = new Vector3f( m_fX, m_fY, m_fZ );
         m_kVolumeShaderEffect.setMaxLength( kLength.length() );
-        
-        m_kVolumeShaderEffectCPU = new VolumeShaderEffectMultiPassDynamicCPU( m_kVolumeImageA, m_kVolumeImageB, targetTexture, parentScene);
-    	m_kVolumeShaderEffectCPU.LoadResources(kRenderer,m_kMesh);
-    	kRenderer.LoadResources(m_kMesh);
-        m_kScene.UpdateGS();
-        m_kScene.UpdateRS();
-        kLength = new Vector3f( m_fX, m_fY, m_fZ );
-        m_kVolumeShaderEffectCPU.setMaxLength( kLength.length() );
-        
     }
     
     /**
@@ -1174,7 +1149,7 @@ public class VolumeRayCast extends VolumeObject
     public void SelfShadow(boolean bShadow)
     {
         m_kVolumeShaderEffect.SelfShadow(bShadow);
-        m_kVolumeShaderEffectCPU.SelfShadow(bShadow);
+       
     }
 
     /**
@@ -1184,7 +1159,6 @@ public class VolumeRayCast extends VolumeObject
     public void setABBlend( float fValue )
     {
         m_kVolumeShaderEffect.setABBlend(fValue);
-        m_kVolumeShaderEffectCPU.setABBlend(fValue);
     }
 
 
@@ -1196,7 +1170,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetBackgroundColor( ColorRGBA kColor )
     {
         m_kVolumeShaderEffect.SetBackgroundColor( kColor );
-        m_kVolumeShaderEffectCPU.SetBackgroundColor( kColor );
     }    
     
     /** Sets axis-aligned clipping for the VolumeShaderEffect.
@@ -1205,7 +1178,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetClip( int iWhich, float data, boolean bEnable)
     {
         m_kVolumeShaderEffect.SetClip(iWhich, data, bEnable);
-        m_kVolumeShaderEffectCPU.SetClip(iWhich, data, bEnable);
     }
     
     /** Sets arbitrary clipping for the VolumeShaderEffect.
@@ -1214,7 +1186,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetClipArb( float[] afEquation, boolean bEnable )
     {
         m_kVolumeShaderEffect.SetClipArb(afEquation, bEnable);
-        m_kVolumeShaderEffectCPU.SetClipArb(afEquation, bEnable);
     }
 
     /** Sets eye clipping for the VolumeShaderEffect.
@@ -1223,7 +1194,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetClipEye( float[] afEquation, boolean bEnable )
     {
         m_kVolumeShaderEffect.SetClipEye(afEquation, bEnable);
-        m_kVolumeShaderEffectCPU.SetClipEye(afEquation, bEnable);
     }
 
     /** Sets inverse-eye clipping for the VolumeShaderEffect.
@@ -1232,13 +1202,11 @@ public class VolumeRayCast extends VolumeObject
     public void SetClipEyeInv( float[] afEquation, boolean bEnable )
     {
         m_kVolumeShaderEffect.SetClipEyeInv(afEquation, bEnable);
-        m_kVolumeShaderEffectCPU.SetClipEyeInv(afEquation, bEnable);
     }
     
     public void SetCustomBlend(int iBlendEquation, int iLogicOp, int iSrcBlend, int iDstBlend, ColorRGBA kColor  )
     {
         m_kVolumeShaderEffect.SetCustomBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
-        m_kVolumeShaderEffectCPU.SetCustomBlend( iBlendEquation, iLogicOp, iSrcBlend, iDstBlend, kColor );
     }
     
     public boolean GetGradientMagnitude()
@@ -1254,7 +1222,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetGradientMagnitude(boolean bShow)
     {
         m_kVolumeShaderEffect.SetGradientMagnitude(bShow);
-        m_kVolumeShaderEffectCPU.SetGradientMagnitude(bShow);
     }
 
     /** Sets lighting in the VolumeShaderEffect.
@@ -1264,7 +1231,6 @@ public class VolumeRayCast extends VolumeObject
     public void SetLight( String kLightType, float[] afType )
     {
         m_kVolumeShaderEffect.SetLight(kLightType, afType);
-        m_kVolumeShaderEffectCPU.SetLight(kLightType, afType);
     }
     /**
      * Called from the AdvancedMaterialProperties dialog. Sets the material
@@ -1284,11 +1250,9 @@ public class VolumeRayCast extends VolumeObject
 
     public void setRGBTA(ModelRGB RGBT) {
         m_kVolumeShaderEffect.setRGBTA(RGBT);
-        m_kVolumeShaderEffectCPU.setRGBTA(RGBT);
     }
     public void setRGBTB(ModelRGB RGBT) {
         m_kVolumeShaderEffect.setRGBTB(RGBT);
-        m_kVolumeShaderEffectCPU.setRGBTB(RGBT);
     }
     
     /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
@@ -1300,10 +1264,6 @@ public class VolumeRayCast extends VolumeObject
         {
             m_kVolumeShaderEffect.Blend(fBlend);
         }
-        if ( m_kVolumeShaderEffectCPU != null )
-        {
-            m_kVolumeShaderEffectCPU.Blend(fBlend);
-        }
     }
     
     public int setVolumeSamples( float fSample )
@@ -1311,7 +1271,6 @@ public class VolumeRayCast extends VolumeObject
         boolean bTemp = m_bDisplay;
         m_bDisplay = false;
         int samples = m_kVolumeShaderEffect.setVolumeSamples( fSample );
-        m_kVolumeShaderEffectCPU.setVolumeSamples( fSample );
         m_bDisplay = bTemp;
         return samples;
     }
@@ -1321,7 +1280,6 @@ public class VolumeRayCast extends VolumeObject
     public void SURFASTMode()
     {
         m_kVolumeShaderEffect.SURFASTMode();
-        m_kVolumeShaderEffectCPU.SURFASTMode();
     }
     /**
      * Display the volume in Composite Surface mode.
@@ -1329,13 +1287,11 @@ public class VolumeRayCast extends VolumeObject
     public void SURMode()
     {
         m_kVolumeShaderEffect.SURMode();
-        m_kVolumeShaderEffectCPU.SURMode();
     }
     
     public void updateLevWidgetState( Vector<ClassificationWidget> kLWS )
     {
         m_kVolumeShaderEffect.updateLevWidgetState( kLWS );
-        m_kVolumeShaderEffectCPU.updateLevWidgetState( kLWS );
     }
     
     
@@ -1562,23 +1518,5 @@ public class VolumeRayCast extends VolumeObject
     		m_kMesh.IBuffer = pkIB;
     	}
     }
-    
-    public TriMesh getGeometry() {
-    	return m_kMesh;
-    }
-    
-    /** Returns the VolumeShaderEffectCPU.
-     * @return the VolumeShaderEffectCPU.
-     */
-    public VolumeShaderEffectMultiPassDynamicCPU GetShaderEffectCPU()
-    {
-        return m_kVolumeShaderEffectCPU;
-        
-    }
-    
-    public void setParentScene(VolumeTriPlanarRender _parentScene) {
-    	parentScene = _parentScene;
-    }
-    
     
 }
