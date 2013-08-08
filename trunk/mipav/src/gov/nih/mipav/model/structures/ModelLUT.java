@@ -63,6 +63,31 @@ public class ModelLUT extends ModelStorageBase {
     /** Sets up the transfer function to be yellow-ish orange which is supposed to make bones look good. */
     public static final int BONE = 10;
 
+    /*******************************  Customized LUTs ********************************/
+    public static final int BlackBody = 11;
+    public static final int Cardiac = 12;
+    public static final int Flow  = 13;
+    public static final int GEcolor = 14;
+    public static final int GrayRainbow = 15;
+    public static final int HotGreen = 16;
+    public static final int HotIron = 17;
+    public static final int HotMetal = 18;
+    public static final int Hue1 = 19;
+    public static final int Hue2 = 20;
+    public static final int ired = 21;
+    public static final int NIH = 22;
+    public static final int Rainbow = 23;
+    public static final int Rainbow2 = 24;
+    public static final int Rainbow3 = 25;
+    public static final int Ratio = 26;
+    public static final int Spectrum = 27;
+    public static final int Stern = 28;
+    public static final int UCLA = 29;
+    public static final int VR_Bones = 30;
+    public static final int VR_Muscles_Bones = 31;
+    public static final int VR_Red_Vessels = 32;
+     
+    
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
 

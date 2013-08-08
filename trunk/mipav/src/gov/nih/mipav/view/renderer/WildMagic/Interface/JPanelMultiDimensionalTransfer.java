@@ -4,6 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentGraphAxes;
+import gov.nih.mipav.view.ViewJPanelLUT;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
@@ -26,6 +27,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -147,6 +149,13 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		else
 		{
 			m_kMultiHistogram.update( event.getActionCommand() );
+		}
+		
+		if (event.getSource() instanceof JComboBox ) {
+	          JComboBox cb = (JComboBox)event.getSource();
+	          String lutName = (String)cb.getSelectedItem();
+	          System.err.println("lutName = " + lutName);
+	          m_kMultiHistogram.update(lutName);
 		}
 	}
 
@@ -396,6 +405,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
 		JToolBar lutToolBar = toolBarObj.buildLUTToolBarTop();
+		JToolBar toolBarCenter = ViewJPanelLUT.buildLUTSelectionList(this);
 		colorButton = toolBarObj.buildButton( "", "Change histogram color", CustomUIBuilder.PARAM_PAINT_COLOR.getIconBase() );
 		saveButton = toolBarObj.buildButton( "save", "Save histograms", "save" );
 		loadButton = toolBarObj.buildButton( "load", "Change histogram color", "open" );
@@ -405,8 +415,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		lutToolBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		Box contentBox = new Box(BoxLayout.Y_AXIS);
-		contentBox.add(lutToolBar);
 		contentBox.add(histogramPanel);
+		contentBox.add(lutToolBar);
+		contentBox.add(toolBarCenter);
 		contentBox.add(buttonPanel);
 		contentBox.add(helpPanel);
 

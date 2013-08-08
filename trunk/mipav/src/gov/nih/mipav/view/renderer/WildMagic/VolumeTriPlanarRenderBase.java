@@ -183,7 +183,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 
 	protected boolean m_bWriteImage = false;
 	
-	protected static int ms_NumHistogramLUTs = 11;
+	protected static int ms_NumHistogramLUTs = 33;
 	protected static Texture[] ms_akLUTTexture = new Texture[ms_NumHistogramLUTs];
 	
 	/** main container for this object, contains the scroll pane and the depth slider: */
@@ -3063,6 +3063,96 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  {
 			  return 10;
 		  }
+		  // ----------------------  customized LUTs --------------------------------
+		  if ( kCommand.equals("BlackBody") )
+		  {
+			  return 11;
+		  }
+		  if ( kCommand.equals("Cardiac") )
+		  {
+			  return 12;
+		  }
+		  if ( kCommand.equals("Flow") )
+		  {
+			  return 13;
+		  }
+		  if ( kCommand.equals("GEcolor") )
+		  {
+			  return 14;
+		  }
+		  if ( kCommand.equals("GrayRainbow") )
+		  {
+			  return 15;
+		  }
+		  if ( kCommand.equals("HotGreen") )
+		  {
+			  return 16;
+		  }
+		  if ( kCommand.equals("HotIron") )
+		  {
+			  return 17;
+		  }
+		  if ( kCommand.equals("HotMetal") )
+		  {
+			  return 18;
+		  }
+		  if ( kCommand.equals("Hue1") )
+		  {
+			  return 19;
+		  }
+		  if ( kCommand.equals("Hue2") )
+		  {
+			  return 20;
+		  }
+		  if ( kCommand.equals("ired") )
+		  {
+			  return 21;
+		  }
+		  if ( kCommand.equals("NIH") )
+		  {
+			  return 22;
+		  }
+		  if ( kCommand.equals("Rainbow") )
+		  {
+			  return 23;
+		  }
+		  if ( kCommand.equals("Rainbow2") )
+		  {
+			  return 24;
+		  }
+		  if ( kCommand.equals("Rainbow3") )
+		  {
+			  return 25;
+		  }
+		  if ( kCommand.equals("Ratio") )
+		  {
+			  return 26;
+		  }
+		  if ( kCommand.equals("Spectrum") )
+		  {
+			  return 27;
+		  }
+		  if ( kCommand.equals("Stern") )
+		  {
+			  return 28;
+		  }
+		  if ( kCommand.equals("UCLA") )
+		  {
+			  return 29;
+		  }
+		  if ( kCommand.equals("VR Bones") )
+		  {
+			  return 30;
+		  }
+		  if ( kCommand.equals("VR Muscles-Bones") )
+		  {
+			  return 31;
+		  }
+		  if ( kCommand.equals("VR Red Vessels") )
+		  {
+			  return 32;
+		  }
+		  
 		  return 0;
 	  }
 	  
@@ -3168,6 +3258,52 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  kLUT.makeStripedLUT();
 		  initLUT(ms_akLUTTexture, kLUT, index++);
 
+		  // ---------------  customized LUTs ------------------------
+		  kLUT.makeCustomizedLUT("BlackBody");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Cardiac");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Flow");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("GEcolor");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("GrayRainbow");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("HotGreen");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("HotIron");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("HotMetal");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Hue1");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Hue2");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("ired");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("NIH");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Rainbow");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Rainbow2");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Rainbow3");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Ratio");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Spectrum");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("Stern");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("UCLA");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("VR Bones");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("VR Muscles-Bones");
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCustomizedLUT("VR Red Vessels");
+		  initLUT(ms_akLUTTexture, kLUT, index++);		  
+		  
 		  for ( int i = 0; i < ms_akLUTTexture.length; i++ )
 		  {
 			  m_pkRenderer.LoadTexture( ms_akLUTTexture[i] );			  
