@@ -17,7 +17,7 @@ import gov.nih.mipav.model.structures.*;
  * @see     FileDicomTag
  * @see     FileInfoDicom
  */
-public class FileDicomKey extends ModelSerialCloneable {
+public class FileDicomKey extends ModelSerialCloneable implements Comparable<FileDicomKey> {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -300,4 +300,17 @@ public class FileDicomKey extends ModelSerialCloneable {
     public String toString() {
         return key;
     }
+
+	@Override
+	public int compareTo(FileDicomKey toCompare) {
+		int groupNum = this.getGroupNumber();
+		int groupNumToCompare = toCompare.getGroupNumber();
+		
+		if(groupNum != groupNumToCompare) {
+			return groupNum - groupNumToCompare;
+		} else {
+			return this.getElementNumber() - toCompare.getElementNumber();
+		}
+		
+	}
 }
