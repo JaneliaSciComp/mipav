@@ -544,11 +544,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 						secondIntersectionPoint.copy(start);
 					}
 
-					parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
+					// parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
 					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
-					System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
-					System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
+					// System.err.println("firstIntersectionPoint = " + firstIntersectionPoint);
+					// System.err.println("secondIntersectionPoint = " + secondIntersectionPoint);
 					
 					detectPoint.copy(secondIntersectionPoint);
 					System.err.println("detectPoint = " + detectPoint);
@@ -568,12 +568,12 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					end = new Vector3f();
 					end = Vector3f.scale(t1, kDir);
 					end.add(kPos);
-					parentScene.updateSceneNodePoint("EndPoint", end);
+					// parentScene.updateSceneNodePoint("EndPoint", end);
 
 					firstIntersectionPoint.copy(kPos);
 					secondIntersectionPoint.copy(end);
 
-					parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
+					// parentScene.updateSceneNodePoint("StartPoint", firstIntersectionPoint);
 					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
 					detectPoint.copy(secondIntersectionPoint);
@@ -934,10 +934,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			trackingForward = Vector3f.sub(pickingPointLocation, cameraLocation);
 			trackingBackward = Vector3f.sub(cameraLocation, pickingPointLocation);
 				
-			deltaForward.scale(0.005f);
-			deltaBackward.scale(0.005f);
-			trackingForward.scale(0.005f);
-		    trackingBackward.scale(0.005f);
+			deltaForward.scale(0.05f);
+			deltaBackward.scale(0.05f);
+			trackingForward.scale(0.05f);
+		    trackingBackward.scale(0.05f);
 
 			Vector3f currentLocation = new Vector3f();
 			
