@@ -367,7 +367,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode1 = new Node();
 		kSphereNode1.AttachChild(kSpherePosition1);
 		kSphereNode1.SetName("StartPoint");
-		AddNode(kSphereNode1);
+		// AddNode(kSphereNode1);
 
 		// end point
 		Attributes kAttr2 = new Attributes();
@@ -401,7 +401,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode3 = new Node();
 		kSphereNode3.AttachChild(kSpherePosition3);
 		kSphereNode3.SetName("Threshold");
-		AddNode(kSphereNode3);
+		// AddNode(kSphereNode3);
 		
 		// tracking point
 		Attributes kAttr4 = new Attributes();
@@ -412,7 +412,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 
 		TriMesh kSpherePosition4 = kSM4.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition4.VBuffer.GetVertexQuantity(); i++) {
-			kSpherePosition4.VBuffer.SetColor3(0, i, 1, 0, 1);
+			kSpherePosition4.VBuffer.SetColor3(0, i, 0, 1, 0);
 		}
 		kSpherePosition4.AttachEffect(new VertexColor3Effect());
 		Node kSphereNode4 = new Node();
@@ -436,7 +436,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Vbl = new Node();
 		kSphereNode_Vbl.AttachChild(kSpherePosition_Vbl);
 		kSphereNode_Vbl.SetName("Vbl");
-		AddNode(kSphereNode_Vbl);
+		// AddNode(kSphereNode_Vbl);
 		
 		
 		// ---------------------------------------------------------------
@@ -454,7 +454,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Vtl = new Node();
 		kSphereNode_Vtl.AttachChild(kSpherePosition_Vtl);
 		kSphereNode_Vtl.SetName("Vtl");
-		AddNode(kSphereNode_Vtl);
+		// AddNode(kSphereNode_Vtl);
 		
 		// -------------------------------------------------------------
 		Attributes kAttr_Vbr = new Attributes();
@@ -471,7 +471,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Vbr = new Node();
 		kSphereNode_Vbr.AttachChild(kSpherePosition_Vbr);
 		kSphereNode_Vbr.SetName("Vbr");
-		AddNode(kSphereNode_Vbr);
+		// AddNode(kSphereNode_Vbr);
 		
 		// --------------------------------------------------------------
 		Attributes kAttr_Vtr = new Attributes();
@@ -488,7 +488,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Vtr = new Node();
 		kSphereNode_Vtr.AttachChild(kSpherePosition_Vtr);
 		kSphereNode_Vtr.SetName("Vtr");
-		AddNode(kSphereNode_Vtr);
+		// AddNode(kSphereNode_Vtr);
 		
 		// --------------------------------  far plane ---------------------
 		Attributes kAttr_Wbl = new Attributes();
@@ -505,7 +505,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Wbl = new Node();
 		kSphereNode_Wbl.AttachChild(kSpherePosition_Wbl);
 		kSphereNode_Wbl.SetName("Wbl");
-		AddNode(kSphereNode_Wbl);
+		// AddNode(kSphereNode_Wbl);
 		
 		// ---------------------------------------------------------------
 		Attributes kAttr_Wtl = new Attributes();
@@ -522,7 +522,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Wtl = new Node();
 		kSphereNode_Wtl.AttachChild(kSpherePosition_Wtl);
 		kSphereNode_Wtl.SetName("Wtl");
-		AddNode(kSphereNode_Wtl);
+		// AddNode(kSphereNode_Wtl);
 		
 		// -----------------------------------------------------------------
 		Attributes kAttr_Wbr = new Attributes();
@@ -539,7 +539,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Wbr = new Node();
 		kSphereNode_Wbr.AttachChild(kSpherePosition_Wbr);
 		kSphereNode_Wbr.SetName("Wbr");
-		AddNode(kSphereNode_Wbr);
+		// AddNode(kSphereNode_Wbr);
 		
 		// ----------------------------------------------------------------
 		Attributes kAttr_Wtr = new Attributes();
@@ -556,7 +556,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode_Wtr = new Node();
 		kSphereNode_Wtr.AttachChild(kSpherePosition_Wtr);
 		kSphereNode_Wtr.SetName("Wtr");
-		AddNode(kSphereNode_Wtr);
+		// AddNode(kSphereNode_Wtr);
 		
 	}
 
@@ -565,14 +565,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	public void viewChanged(NavigationBehavior behavior, int iEvent) {
 
+		Vector3f cameraLocation = behavior.getViewPoint();
+		Vector3f cameraDir = behavior.getViewDirection();
+		Vector3f cameraUp = behavior.getViewUp();
+		Vector3f cameraRight = Vector3f.unitCross(cameraDir, cameraUp);
+		
 		if (isNavigationEnabled) {
 
-			Vector3f cameraLocation = behavior.getViewPoint();
-			Vector3f cameraDir = behavior.getViewDirection();
-			Vector3f cameraUp = behavior.getViewUp();
-			Vector3f cameraRight = Vector3f.unitCross(cameraDir, cameraUp);
+			
 			m_spkCamera.SetFrame(cameraLocation, cameraDir, cameraUp, cameraRight);
 		
+			
 			float fRMin = m_spkCamera.GetRMin(); 
 			float fRMax = m_spkCamera.GetRMax(); 
 			float fUMin = m_spkCamera.GetUMin(); 
@@ -581,7 +584,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			float fDMax = m_spkCamera.GetDMax();
 			
 			m_spkCamera.SetFrustum(fRMin, fRMax, fUMin, fUMax, fDMin, fDMax);
-		    
+		   
 			// **************************  compute frustum points ***********************
 			Vector3f dminD = Vector3f.scale(fDMin, cameraDir);
 			Vector3f uminU = Vector3f.scale(fUMin, cameraUp);
@@ -615,26 +618,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			// System.err.println("Wbr = " + Wbr);
 			// System.err.println("Wtl = " + Wtl);
 			
-			updateSceneNodePoint("Vbl", Vbl);
-			updateSceneNodePoint("Vtl", Vtl);
-			updateSceneNodePoint("Vbr", Vbr);
-			updateSceneNodePoint("Vtr", Vtr);
+			// updateSceneNodePoint("Vbl", Vbl);
+			// updateSceneNodePoint("Vtl", Vtl);
+			// updateSceneNodePoint("Vbr", Vbr);
+			// updateSceneNodePoint("Vtr", Vtr);
 			
-			updateSceneNodePoint("Wbl", Wbl);
-			updateSceneNodePoint("Wtl", Wtl);
-			updateSceneNodePoint("Wbr", Wbr);
-			updateSceneNodePoint("Wtr", Wtr);
+			// updateSceneNodePoint("Wbl", Wbl);
+			// updateSceneNodePoint("Wtl", Wtl);
+			// updateSceneNodePoint("Wbr", Wbr);
+			// updateSceneNodePoint("Wtr", Wtr);
 			
 			if (m_kVolumeRayCast != null) {
-				m_kVolumeRayCast.SetDisplay(m_kParent.getRendererGUI().getVolumeCheck().isSelected());
+				// m_kVolumeRayCast.SetDisplay(m_kParent.getRendererGUI().getVolumeCheck().isSelected());
 			}
 			if (m_kSlices != null) {
-				m_kSlices.SetDisplay(m_kParent.getRendererGUI().getSlicesCheck().isSelected());
+				// m_kSlices.SetDisplay(m_kParent.getRendererGUI().getSlicesCheck().isSelected());
 			}
 			
 
 		}
-		updateFrustumPoints();
+		updateFrustumPoints(cameraLocation);
+		updateSlicesCenter(cameraLocation);
 
 	}
 	
@@ -649,13 +653,29 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 * Update the representation of the current viewpoint in the Volume
 	 * Tri-Planar renderer.
 	 */
-	public void updateFrustumPoints() {
+	public void updateFrustumPoints(Vector3f cameraLocation) {
 
 		Vector3f trackPoint = navigationBehavior.getTrackingPoint();
 		updateSceneNodePoint("TrackPoint", trackPoint);
+		updateSceneNodePoint("Camera", cameraLocation);
+	}
+	
+	/**
+	 * Update the bottom 3 planar view center
+	 * @param cameraLocation  camera location
+	 */
+	public void updateSlicesCenter(Vector3f cameraLocation) {
+
+		Vector3f kVolumePt3 = m_kParent.getTranslateSurface("TrackPoint");
+		kVolumePt3.sub( m_kTranslate );
+        kVolumePt3.X *= 1.0f/m_fX;
+        kVolumePt3.Y *= 1.0f/m_fY;
+        kVolumePt3.Z *= 1.0f/m_fZ;
+        kVolumePt3.X *= (m_kVolumeImageA.GetImage().getExtents()[0]-1);
+        kVolumePt3.Y *= (m_kVolumeImageA.GetImage().getExtents()[1]-1);
+        kVolumePt3.Z *= (m_kVolumeImageA.GetImage().getExtents()[2]-1);
+        m_kParent.setSliceFromPlane(kVolumePt3);
 		
-		Vector3f kPositionScaled = navigationBehavior.getViewPoint();
-		updateSceneNodePoint("Camera", kPositionScaled);
 		
 	}
 	
