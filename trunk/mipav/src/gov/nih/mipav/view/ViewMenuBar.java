@@ -163,6 +163,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Midsagittal line alignment", "Midsagittal", 0, null, false),
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
                 menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
@@ -1103,6 +1104,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Hough transform", false);
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
+            menuBuilder.setMenuItemEnabled("Canny", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1244,6 +1246,7 @@ public class ViewMenuBar {
 
         menuBuilder.setMenuItemEnabled("Density based clustering", true);
         menuBuilder.setMenuItemEnabled("Edge detection", true);
+        menuBuilder.setMenuItemEnabled("Canny", true);
         menuBuilder.setMenuItemEnabled("Evaluate segmentation", true); // vois
         menuBuilder.setMenuItemEnabled("Entropy minimization", true);
         menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
