@@ -679,4 +679,38 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		
 	}
 	
+	/**
+	 * Update the camera in 3D view window.
+	 * @param kCenter   center in image space
+	 */
+	 public void setCameraCenter(Vector3f kCenter) {
+		  if ( isNavigationEnabled ) {
+			  System.err.println("in camera center = " + kCenter);
+			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			  Vector3f tfCenter = new Vector3f( (m_kNewCenter.X / (aiExtents[0] -1)),
+					  (m_kNewCenter.Y / (aiExtents[1] -1)),
+					  (m_kNewCenter.Z / (aiExtents[2] -1))  );
+			  tfCenter.X *= m_fX;
+			  tfCenter.Y *= m_fY;
+			  tfCenter.Z *= m_fZ;
+	
+			  tfCenter.add(m_kTranslate);
+			  
+			  System.err.println("transformed center = " + tfCenter);
+			  navigationBehavior.setViewPoint(tfCenter);
+			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
+			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
+			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
+			  
+			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.01f,10.0f);
+			  
+			  m_spkCamera.SetFrame(tfCenter, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+			  
+			  // m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);			  
+			  
+			  // updateSceneNodePoint("Camera", tfCenter);		  
+		  
+		  }
+		  
+	  }
 }

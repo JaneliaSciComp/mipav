@@ -198,6 +198,18 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	}
 
 	
+	public void setViewPoint(Vector3f in) {
+		m_kViewPoint.copy(in);
+	}
+	
+	public void setDirection(Vector3f in) {
+		m_kViewDirection.copy(in);
+	}
+	
+	public void setUpVector(Vector3f in) {
+		m_kViewUp.copy(in);
+	}
+	
 	public void setNaviMode(boolean isNavigationEnabled) {
 		if (isNavigationEnabled) {
 			// parentScene.GetCanvas().addKeyListener(this);
@@ -409,7 +421,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				// pitch - look down
 				kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
 				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(kRight, (float) Math.toRadians(-1));
+				kRotate.fromAxisAngle(kRight, (float) Math.toRadians(-0.1));
 				kRotate.mult(m_kViewDirection, m_kViewDirection);
 				kRotate.mult(m_kViewUp, m_kViewUp);
 				// Notify listener that we are updated.
@@ -418,7 +430,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			case KeyEvent.VK_F3:
 				// yaw - look left
 				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(1));
+				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(0.1));
 				kRotate.mult(m_kViewDirection, m_kViewDirection);
 				// Notify listener that we are updated.
 				notifyCallback(EVENT_CHANGE_POSITION);
@@ -427,7 +439,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				// case KeyEvent.VK_RIGHT:
 				// yaw - look right
 				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-1));
+				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-0.1));
 				kRotate.mult(m_kViewDirection, m_kViewDirection);
 				// Notify listener that we are updated.
 				notifyCallback(EVENT_CHANGE_POSITION);

@@ -1884,6 +1884,15 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     }
 
     /**
+     * When the mouse move in bottom three planar view, need to update the camera view location to the 
+     * indicated image center.   
+     * @param center  image center
+     */
+    public void setCamera(final Vector3f center) {
+    	raycastRenderWM.setCameraCenter(center);
+    }
+    
+    /**
      * Sets the position of the slices in the PlaneRender. Called from the SurfaceRender class.
      * 
      * @param center the new slice positions in FileCoordinates
