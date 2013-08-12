@@ -589,6 +589,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					parentScene.updateSceneNodePoint("EndPoint", secondIntersectionPoint);
 
 					detectPoint.copy(secondIntersectionPoint);
+					second.copy(secondIntersectionPoint);
 					
 					break;
 
@@ -935,53 +936,39 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			m_kViewUp.copy(camera.GetUVector());
 			m_kViewDirection.copy(camera.GetDVector());
 			
-			if ( findPickingPoint[0] ) {
-				pickingPointLocation.copy(resultPoint);
-			} else {
-				pickingPointLocation.copy(firstPoint);
-			}
-			
+			pickingPointLocation.copy(secondPoint);
+					
 			deltaForward = Vector3f.sub(pickingPointLocation, cameraLocation);
 			deltaBackward = Vector3f.sub(cameraLocation, pickingPointLocation);
 			trackingForward = Vector3f.sub(pickingPointLocation, cameraLocation);
 			trackingBackward = Vector3f.sub(cameraLocation, pickingPointLocation);
 				
-			deltaForward.scale(0.05f);
-			deltaBackward.scale(0.05f);
-			trackingForward.scale(0.05f);
-		    trackingBackward.scale(0.05f);
+			deltaForward.scale(0.01f);
+			deltaBackward.scale(0.01f);
+			trackingForward.scale(0.01f);
+		    trackingBackward.scale(0.01f);
 
 			Vector3f currentLocation = new Vector3f();
 			
 			if (moveForward < 0) {
-				currentLocation.copy(cameraLocation);   // = Vector3f.add(cameraLocation, deltaForward);
-				trackingPointLocation.copy(cameraLocation);  //  = Vector3f.add(cameraLocation, trackingForward);
+				System.err.println("move forward");
+				currentLocation = Vector3f.add(cameraLocation, deltaForward);
+				trackingPointLocation = Vector3f.add(cameraLocation, trackingForward);
 			} else {
-				currentLocation.copy(cameraLocation);   //  = Vector3f.add(cameraLocation, deltaBackward);
-				trackingPointLocation.copy(cameraLocation); //  = Vector3f.add(cameraLocation, trackingBackward);
+				System.err.println("move backward");
+				currentLocation = Vector3f.add(cameraLocation, deltaBackward);
+				trackingPointLocation = Vector3f.add(cameraLocation, trackingBackward);
 			}
-
-			float trackingStep = trackingPointLocation.distance(cameraLocation);
 			
 			while (pressed) {
 
 				parentScene.GetCanvas().dispatchEvent(evt);
-
-				System.err.println(trackingPointLocation.distance(pickingPointLocation));
 				if (moveForward < 0 ) {
-					if (trackingPointLocation.distance(pickingPointLocation) <= trackingStep ) {
-						pressed = false;
-						break;
-					}
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaForward);
 					trackingPointLocation = trackingPointLocation.add(deltaForward);
 					count++;
 				} else {
-					if ( count > 500 ) {
-						pressed = false;
-						break;
-					}
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaBackward);
 					trackingPointLocation = trackingPointLocation.add(deltaBackward);

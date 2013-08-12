@@ -685,7 +685,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	 public void setCameraCenter(Vector3f kCenter) {
 		  if ( isNavigationEnabled ) {
-			  System.err.println("in camera center = " + kCenter);
+			  // System.err.println("in camera center = " + kCenter);
 			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
 			  Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
 					  (kCenter.Y / (aiExtents[1] -1)),
@@ -696,7 +696,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 			  tfCenter.add(m_kTranslate);
 			  
-			  System.err.println("transformed center = " + tfCenter);
+			  // System.err.println("transformed center = " + tfCenter);
 			  navigationBehavior.setViewPoint(tfCenter);
 			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
 			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
@@ -705,8 +705,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.01f,10.0f);
 			  
 			  m_spkCamera.SetFrame(tfCenter, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
-			  
-			  // m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);			  
 			  
 			  // updateSceneNodePoint("Camera", tfCenter);		  
 		  
