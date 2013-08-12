@@ -257,6 +257,9 @@ public class AlgorithmSubset extends AlgorithmBase {
                 fileInfoBuffer.setExtents(destImage.getExtents());
                 fileInfoBuffer.setResolutions(destResolutions);
                 fileInfoBuffer.setUnitsOfMeasure(destUnitsOfMeasure);
+                if ( removeDim == REMOVE_T ) {
+                    fileInfoBuffer.setFileName(srcImage.getImageName() +"_T" + sliceNum);
+                }
                 destImage.setFileInfo(fileInfoBuffer, d);
             }
         }
