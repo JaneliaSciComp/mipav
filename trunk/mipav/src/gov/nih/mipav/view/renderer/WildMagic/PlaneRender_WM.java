@@ -205,7 +205,8 @@ implements GLEventListener, ScreenCoordinateListener
 	protected ZBufferState m_kZState = null;
 	protected Attributes m_kVOIAttr = null;
 
-
+	// If navigation enabled, update the camera location in mouseReleased
+	protected Vector3f latestVolumePt = new Vector3f();
 
 	/**
 	 * @param kParent
@@ -793,6 +794,7 @@ implements GLEventListener, ScreenCoordinateListener
 
 		 if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
 			 processLeftMouseDrag( kEvent );
+			 m_kParent.setCamera(latestVolumePt);
 			 m_bLeftMousePressed = false;
 		 }
 		 m_bFirstDrag = true;
@@ -2052,6 +2054,7 @@ implements GLEventListener, ScreenCoordinateListener
 		 Vector3f volumePt = new Vector3f();
 		 MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kVolumeImageA.GetImage(), m_iPlaneOrientation );
 		 m_kParent.setSliceFromPlane( volumePt );
+		 latestVolumePt.copy(volumePt);
 	 }
 
 

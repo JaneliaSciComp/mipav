@@ -1812,6 +1812,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  {
 			  m_bDisplay = false;
 			  super.reshape( arg0, iX, iY, iWidth, iHeight );     
+			  if ( isNavigationEnabled ) {
+				  // During navigation mode fly-thru, have to update the camera near-plane
+				  // in order to keep the rendering consistent
+				  if ( m_spkCamera.Perspective )
+		            {
+		                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.01f,10.0f);
+		            }
+			  }
 			  if ( m_pkRenderer != null )
 			  {
 				  ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
@@ -2022,6 +2030,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 		  m_kNewCenter = kCenter;
 	  }
 
+	 
 
 	  /**
 	   * Enable clipping for the given surface.
