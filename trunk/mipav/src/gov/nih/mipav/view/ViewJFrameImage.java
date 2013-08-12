@@ -649,11 +649,29 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             saveImageInfo();
             save(new FileWriteOptions(false), -1);
         } else if (command.equals("SaveAllImages")) {
+            int fileFormat;
+            int i;
+            JDialogUnknownIO unknownIODialog = new JDialogUnknownIO(userInterface.getMainFrame(), "Choose File Format");
+            
+            unknownIODialog.setVisible(true);
+
+            if (unknownIODialog.isCancelled()) {
+                fileFormat = FileUtility.ERROR;
+                unknownIODialog.dispose();
+                return;
+            } else {
+                fileFormat = unknownIODialog.getFileType();
+                unknownIODialog.dispose();
+            }
         	
              final Enumeration<ModelImage> names = userInterface.getRegisteredImages();
              
              while (names.hasMoreElements()) {
             	 ModelImage curr = names.nextElement();
+            	 FileInfoBase fBase[] = curr.getFileInfo();
+            	 for (i = 0; i < fBase.length; i++) {
+            	     fBase[i].setFileFormat(fileFormat);
+            	 }
                  saveImageInfo();
                  save(curr, new FileWriteOptions(false), -1);
              }
