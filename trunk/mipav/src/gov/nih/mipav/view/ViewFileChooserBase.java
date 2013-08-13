@@ -519,6 +519,7 @@ public class ViewFileChooserBase {
         multiBox = new JCheckBox("Open as multifile", false);
         multiBox.setEnabled(!saveAs);
         multiBox.setFont(MipavUtil.defaultMenuFont);
+        multiBox.setForeground(Color.red.darker());
         optionsPanelManager.add(multiBox);
 
         accessoryPanel.setBorder(BorderFactory.createLineBorder(Color.black));
