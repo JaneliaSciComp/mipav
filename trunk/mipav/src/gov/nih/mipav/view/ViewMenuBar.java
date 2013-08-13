@@ -273,6 +273,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Open", null, 0, null, false),
                         menuBuilder.buildMenuItem("Particle analysis", null, 0, null, false),
                         menuBuilder.buildMenuItem("Skeletonize", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Thinning", "thin2D", 0, null, false),
                         menuBuilder.buildMenuItem("Top hat", "topHat", 0, null, false),
                         menuBuilder.buildMenuItem("Ultimate erode", null, 0, null, false),}),
 
@@ -1106,6 +1107,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
+            menuBuilder.setMenuItemEnabled("Thinning", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
