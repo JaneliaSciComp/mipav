@@ -176,7 +176,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 	 */
 	private int resolveConflictsUsing = 0;
 
-	private static final String pluginVersion = "0.5";
+	private static final String pluginVersion = "0.6";
 
 	private static final String[] allowedGuidPrefixes = new String[] { "TBI",
 			"PD" };
@@ -950,6 +950,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 				// this means we are working with the image datastructure
 				printlnToLog("Creating submission file for " + name);
+				
+				// TODO: would be best to only open the image once to pull out header info, get file list, and generate thumbnail
 				printlnToLog("Opening: " + imageFile + ", multifile: "
 						+ multifiles.get(i));
 
@@ -3057,6 +3059,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					isMultifile = false;
 				}
 
+				// TODO: would be best to only open the image once to pull out header info, get file list, and generate thumbnail
 				File file = new File(filePath);
 				srcImage = fileIO.readImage(file.getName(), file.getParent()
 						+ File.separator, isMultifile, null);
@@ -3346,6 +3349,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					final JTextField tf = new JTextField(20);
 					tf.setName(n);
 					tf.setFont(MipavUtil.font12);
+					
+					tf.addMouseListener(new ContextMenuMouseListener());
 
 					tooltip = "<html><b>Type:</b> " + t;
 					if (t.equalsIgnoreCase("String")) {
@@ -4502,6 +4507,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						ViewUserInterface.getReference().setDefaultDirectory(
 								file.getParent());
 
+						// TODO: would be best to only open the image once to pull out header info, get file list, and generate thumbnail
 						final FileIO fileIO = new FileIO();
 						fileIO.setQuiet(true);
 						ModelImage srcImage = fileIO.readImage(file.getName(),
