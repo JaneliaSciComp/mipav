@@ -33,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -41,6 +42,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 
 
@@ -51,19 +54,8 @@ import javax.swing.event.ListSelectionListener;
  * @author senseneyj
  *
  */
-public class JDialogDicomTagSelector extends JDialogBase implements ListSelectionListener {
+public class JDialogDicomTagSelector extends JDialogBase implements ListSelectionListener, DicomTagSelectorImpl {
 
-	/**
-	 * Dialogs which implement this interface are eligible to use the JDialogDicomTagSelector for selecting DICOM tags within a given image file.
-	 * This interface gives the parent's tag text field which is changed by the JDialogDicomTagSelector.
-	 * 
-	 * @author senseneyj
-	 *
-	 */
-	public interface DicomTagSelectorImpl {
-		public JTextField getTagListTextField(); 
-	}
-	
 	/**For adding a top level dicom tag*/
 	private static final String ADD_TAG = "Add";
 	
@@ -86,7 +78,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private static final String PRIVATE = "Private tag";
 	
 	/**Min/max size of all text boxes contained in scroll panes.*/
-	private final Dimension SCROLL_PANE_SIZE = new Dimension(200, 20);
+	private final Dimension SCROLL_PANE_SIZE = new Dimension(200, 25);
 
 	/**List of all file's elements for each group of a FileDicomKey set*/
 	private TreeMap<String, ArrayList<String>> groupToElement, groupToElementSeq;
@@ -110,7 +102,9 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private JButton addButton, addButtonSeq, clearButton, closeButton;
 
 	/**Name and property labels that describe a DICOM tag for a particular file*/
-	private JLabel nameValue, nameValueSeq, propertyValue, propertyValueSeq;
+	private JLabel nameValue, nameValueSeq, propertyValueSeq;
+
+	private JTextField propertyValue;
 	
 	/**Original list of available DICOM tags*/
 	private Hashtable<FileDicomKey, FileDicomTag> tagList;
@@ -120,6 +114,9 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 
 	/** When this object exists as an embedded panel, this variable contains all necessary data elements. */
 	private JPanel embeddedPanel;
+	
+	/** Panel contains JTable for storing dicom tags. */
+	private JPanel tablePanel;
 	
 	/**When a tag value exists, this label displays the text "Tag value:" */
 	private JLabel propertyLabel;
@@ -131,9 +128,12 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private JTextField elementSeqText, groupSeqText, elementText, groupText;
 
 	private TagInputListener k1, k2;
-	
+
+	/** Option table where dicom tags are reported to. */
+	private JTable tagsTable = null;
+
 	public JDialogDicomTagSelector(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
-		super(parent, false);
+		super(parent, false, false);
 		
 		this.tagList = tagList;
 		
@@ -172,18 +172,108 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         
         sequenceInformationPanel = buildSequenceInfoPanel();
         
+        if(parentDialog == null || parentDialog == this) {
+        	tablePanel = buildTablePanel();
+        }
+        
         if(isStandalone) {
-	        add(tagSelectorPanel, BorderLayout.NORTH);
-	        add(tagInformationPanel, BorderLayout.CENTER);
+        	GridBagLayout layout = new GridBagLayout();
+        	GridBagConstraints constraints = new GridBagConstraints();
+        	constraints.gridx = 0;
+        	constraints.gridy = 0;
+        	constraints.weightx = 1;
+        	constraints.fill = GridBagConstraints.BOTH;
+        	constraints.weighty = .15;
+        	setLayout(layout);
+	        add(tagSelectorPanel, constraints);
+	        constraints.gridy++;
+	        constraints.weighty = .05;
+	        add(tagInformationPanel, constraints);
+	        constraints.gridy++;
+	        if(tablePanel != null) {
+	        	constraints.weighty = .8;
+	        	add(tablePanel, constraints);
+	        }
 	        
 	        pack();
+	        
         } else {
         	embeddedPanel = new JPanel();
         	embeddedPanel.add(tagSelectorPanel);
         	embeddedPanel.add(tagInformationPanel);
+        	embeddedPanel.add(tablePanel);
         }
 	}
 	
+	public class DicomTableModel extends DefaultTableModel {
+
+		public DicomTableModel(String[] names, int i) {
+			super(names, i);
+		}
+
+		@Override
+		public boolean isCellEditable(int row, int column) {
+			if(column == 2) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
+	}
+	
+	private JPanel buildTablePanel() {
+		GridBagLayout tagTableLayout = new GridBagLayout();
+        GridBagConstraints tagTableConstraints = new GridBagConstraints();
+        tagTableConstraints.anchor = GridBagConstraints.NORTH;
+
+        JPanel tagInformationPanel = new JPanel(tagTableLayout);
+        tagInformationPanel.setBorder(MipavUtil.buildTitledBorder("DICOM tags selected"));
+        
+        //tag name row
+        tagTableConstraints.gridx = 0;
+        tagTableConstraints.gridy = 0;
+        tagTableConstraints.insets = new Insets(5, 10, 5, 10);
+        tagTableConstraints.anchor = GridBagConstraints.NORTHWEST;
+        tagTableConstraints.fill = GridBagConstraints.BOTH;
+        tagTableConstraints.weightx = 1;
+        
+        String[] names = new String[]{"Tag","Name","Value"};
+        DefaultTableModel model = new DicomTableModel(names, 0);
+        
+        tagsTable = new JTable(model);
+        tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        tagsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        tagsTable.getColumn("Tag").setMinWidth(90);
+        tagsTable.getColumn("Tag").setMaxWidth(90);
+        //tagsTable.getColumn("Tag").setCellRenderer(new TagCodeRenderer());
+        tagsTable.getColumn("Name").setMinWidth(160);
+        tagsTable.getColumn("Name").setMaxWidth(500);
+        //tagsTable.getColumn("Name").setCellRenderer(new TagReferenceRenderer());
+        tagsTable.getColumn("Value").setMinWidth(50);
+        tagsTable.getColumn("Value").setMaxWidth(1000);
+        //tagsTable.getColumn("Value").setCellRenderer(new TagReferenceRenderer());
+
+        //tagsTable.getTableHeader().addMouseListener(new HeaderListener());
+        tagsTable.setSelectionBackground(new Color(184, 230, 255));
+        
+        tagsTable.setEditingRow(2);
+        tagsTable.setMinimumSize(new Dimension(90, 488));
+        tagsTable.setPreferredSize(new Dimension(90, 488));
+        
+        JScrollPane scroll = new JScrollPane(tagsTable);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scroll.setMinimumSize(new Dimension(94, 508));
+        scroll.setPreferredSize(new Dimension(94, 508));
+        
+        tagInformationPanel.add(scroll, tagTableConstraints);
+        
+        return tagInformationPanel;
+	}
+
+
 	private JPanel buildTagSelectorPanel() {
 		GridBagLayout tagSelectorGridBagLayout = new GridBagLayout();
         GridBagConstraints selectorPanelConstraints = new GridBagConstraints();
@@ -348,7 +438,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         infoPanelConstraints.gridx = 1;
         infoPanelConstraints.gridy = 1;
         infoPanelConstraints.weightx = 1;
-        propertyValue = new JLabel(keyToValue.get(tagName));
+        propertyValue = new JTextField(keyToValue.get(tagName));
         propPane = new JScrollPane(propertyValue);
         propPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         propPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -562,13 +652,32 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().equals(CLEAR_TAGS)) {
-			parentDialog.getTagListTextField().setText("");
-		} else if(e.getActionCommand().equals(ADD_TAG)) {
-			if(!tagExistsInField(groupList.getSelectedValue()+","+elementList.getSelectedValue())) {
-				String existingText = parentDialog.getTagListTextField().getText();
-				String prefix = existingText.length() == 0 || existingText.charAt(existingText.length()-1) == ';' ? "" : ";";
-				parentDialog.getTagListTextField().setText(existingText+prefix+groupList.getSelectedValue()+","+elementList.getSelectedValue()+";");
+			if(parentDialog.getTagListTextField() != null) {
+				parentDialog.getTagListTextField().setText("");
+			} else {
+				DefaultTableModel model = (DefaultTableModel)parentDialog.getTagTable().getModel();
+				for(int i=1; i<model.getRowCount(); i++) {
+					model.removeRow(1);
+				}
 			}
+			
+		} else if(e.getActionCommand().equals(ADD_TAG)) {
+			String tag = groupList.getSelectedValue()+","+elementList.getSelectedValue();
+			if(!tagExistsInField(tag)) {
+				if(parentDialog.getTagListTextField() != null) {
+					String existingText = parentDialog.getTagListTextField().getText();
+					String prefix = existingText.length() == 0 || existingText.charAt(existingText.length()-1) == ';' ? "" : ";";
+					parentDialog.getTagListTextField().setText(existingText+prefix+tag+";");
+				} else {
+					DefaultTableModel model = (DefaultTableModel)parentDialog.getTagTable().getModel();
+					//FileDicomTag tagValue = tagList.get(new FileDicomKey(tag));
+					model.addRow(new String[]{
+							tag,
+							nameValue.getText(),
+							propertyValue.getText()
+					});
+				}
+			} 
 		} else if(e.getActionCommand().equals(CLOSE)) {
 			this.dispose();
 		} else if(e.getActionCommand().equals(ADD_TAG_SEQ)) {
@@ -602,13 +711,23 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 
 
 	private boolean tagExistsInField(String text) {
-		String[] tagList = parentDialog.getTagListTextField().getText().split(";");
-		for(int i=0; i<tagList.length; i++) {
-			if(tagList[i].equals(text)) {
-				return true;
+		if(parentDialog.getTagListTextField() != null) {
+			String[] tagList = parentDialog.getTagListTextField().getText().split(";");
+			for(int i=0; i<tagList.length; i++) {
+				if(tagList[i].equals(text)) {
+					return true;
+				}
 			}
+			return false;
+		} else {
+			TableModel model = parentDialog.getTagTable().getModel();
+			for(int i=1; i<model.getRowCount(); i++) {
+				if(model.getValueAt(i, 0) != null && model.getValueAt(i, 0).toString().equals(text)) {
+					return true;
+				}
+			}
+			return false;
 		}
-		return false;
 	}
 	
 	public void valueChanged(ListSelectionEvent e) {
@@ -626,27 +745,29 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 			String tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
 			nameValue.setText(keyToName.get(tagName));
 			String keyValue = keyToValue.get(tagName);
-			propPane.setVisible(!keyValue.equals(UNKNOWN));
-        	propertyLabel.setVisible(!keyValue.equals(UNKNOWN));
-			if(!keyValue.equals(UNKNOWN)) {
-				propertyValue.setText(keyValue);
-				if(keyValue.equals(SEQUENCE)) {
-					add(sequenceInformationPanel, BorderLayout.SOUTH);
-					FileDicomSQ sq = (FileDicomSQ)tagList.get(new FileDicomKey(tagName)).getValue(false);
-					FileDicomTagTable item = sq.getItem(0);
-					buildSeqGroupElementMap(item.getTagList());
-					Vector<String> vGroup;
-			        Collections.sort(vGroup = new Vector<String>(groupToElementSeq.keySet()), new NumberComparator());
-					groupCombo.setModel(new DefaultComboBoxModel(vGroup));
-					groupCombo.setSelectedIndex(0);
-					Vector<String> vElement;
-			        Collections.sort(vElement = new Vector<String>(groupToElementSeq.get(vGroup.get(0))), new NumberComparator());
-					elementCombo.setModel(new DefaultComboBoxModel(vElement));
-					elementCombo.setSelectedIndex(0);
-					pack();
-				} else {
-					remove(sequenceInformationPanel);
-					pack();
+			if(keyValue != null) {
+				propPane.setVisible(!keyValue.equals(UNKNOWN));
+	        	propertyLabel.setVisible(!keyValue.equals(UNKNOWN));
+				if(!keyValue.equals(UNKNOWN)) {
+					propertyValue.setText(keyValue);
+					if(keyValue.equals(SEQUENCE)) {
+						add(sequenceInformationPanel, BorderLayout.SOUTH);
+						FileDicomSQ sq = (FileDicomSQ)tagList.get(new FileDicomKey(tagName)).getValue(false);
+						FileDicomTagTable item = sq.getItem(0);
+						buildSeqGroupElementMap(item.getTagList());
+						Vector<String> vGroup;
+				        Collections.sort(vGroup = new Vector<String>(groupToElementSeq.keySet()), new NumberComparator());
+						groupCombo.setModel(new DefaultComboBoxModel(vGroup));
+						groupCombo.setSelectedIndex(0);
+						Vector<String> vElement;
+				        Collections.sort(vElement = new Vector<String>(groupToElementSeq.get(vGroup.get(0))), new NumberComparator());
+						elementCombo.setModel(new DefaultComboBoxModel(vElement));
+						elementCombo.setSelectedIndex(0);
+						pack();
+					} else {
+						remove(sequenceInformationPanel);
+						pack();
+					}
 				}
 			} else {
 				remove(sequenceInformationPanel);
@@ -720,5 +841,27 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 			return Integer.valueOf(o1, 16) - Integer.valueOf(o2, 16);
 		}
 		
+	}
+
+	@Override
+	public JTextField getTagListTextField() {
+		//This class uses the newer table method for selecting dicom tags
+		return null;
+	}
+
+
+	@Override
+	public JTable getTagTable() {
+		return tagsTable;
+	}
+
+
+	public DicomTagSelectorImpl getParentDialog() {
+		return parentDialog;
+	}
+
+
+	public void setParentDialog(DicomTagSelectorImpl parentDialog) {
+		this.parentDialog = parentDialog;
 	}
 }
