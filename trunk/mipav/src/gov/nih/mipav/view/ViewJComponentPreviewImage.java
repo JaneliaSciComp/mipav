@@ -63,7 +63,9 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
 
     /** The model image this preview image is derived from. */
     private ModelImage image;
-
+    
+    /** Overlay text to show on the image. */
+    private String overlayText = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -80,6 +82,12 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
                                       PreviewImageContainer _parent) {
         super( extents[0], extents[1], _image);
         image = _image;
+        overlayText = new String(image.getExtents()[0] + " x " + image.getExtents()[1]);
+        for (int i = 2; i < image.getExtents().length; i++) {
+        	if (image.getExtents()[i] > 0) {
+        		overlayText += " x " + image.getExtents()[i];
+        	}
+        }
         
         imageSize = extents[0] * extents[1];
 
@@ -200,9 +208,16 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * @param  g  Graphics to draw image in.
      */
     public void paintComponent(Graphics g) {
-        
         g.setClip(getVisibleRect());
         g.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, img.getWidth(this), img.getHeight(this), null);
+        if (overlayText != null) {
+        	g.setFont(MipavUtil.font10);
+        	g.setColor(Color.white);
+        	FontMetrics fm = g.getFontMetrics();
+        	int x = imgWidth - fm.stringWidth(overlayText) - 5;
+        	int y = fm.getHeight();
+        	g.drawString(overlayText, x, y);
+        }
     }
 
     /**
