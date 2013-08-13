@@ -264,8 +264,8 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                     processed[x + y * paddedXDim] = paddedBuffer[x + y * paddedXDim];
                                 }
                         } // switch (element)
-                    } // for (x = 1; x <= xDim-2; x++)
-                } // for (y = 1; y <= yDim-2; y++)
+                    } // for (x = 1; x <= xDim; x++)
+                } // for (y = 1; y <= yDim; y++)
                 if ((element < 8) || change) {
                     temp = paddedBuffer;
                     paddedBuffer = processed;
