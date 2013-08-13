@@ -23,7 +23,6 @@ import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector;
-import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector.DicomTagSelectorImpl;
 
 import javax.swing.*;
 
@@ -37,7 +36,7 @@ import java.util.Vector;
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagSelectorImpl {
+public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, gov.nih.mipav.view.dialogs.DicomTagSelectorImpl {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
@@ -463,5 +462,11 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
     		return likelyActionable;
     	}
     }
+
+	@Override
+	public JTable getTagTable() {
+		// This plugin uses the older text field method for selecting dicom tags
+		return null;
+	}
     
 }
