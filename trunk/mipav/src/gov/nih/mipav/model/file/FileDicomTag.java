@@ -26,7 +26,7 @@ import java.util.Vector;
  * @see FileInfoDicom
  * @see FileDicom
  */
-public class FileDicomTag extends ModelSerialCloneable {
+public class FileDicomTag extends ModelSerialCloneable implements Comparable<FileDicomTag> {
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
@@ -1540,6 +1540,17 @@ public class FileDicomTag extends ModelSerialCloneable {
             }
         }
 
-        return doubleArr;
+        return doubleArr;
     }
+    
+    @Override
+	public int compareTo(FileDicomTag toCompare) {
+        int keyCompare = this.getKey().compareTo(toCompare.getKey());
+        if(keyCompare == 0) {
+        	return getValue(true).toString().compareTo(toCompare.getValue(true).toString());
+        } else {
+        	return keyCompare;
+        }
+    }
+
 }
