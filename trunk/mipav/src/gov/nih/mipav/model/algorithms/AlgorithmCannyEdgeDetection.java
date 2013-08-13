@@ -82,6 +82,7 @@ public class AlgorithmCannyEdgeDetection extends AlgorithmBase {
         byte gNL[];
         byte valid[];
         boolean change;
+        AlgorithmThinning2D thinAlgo = null;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -275,6 +276,11 @@ public class AlgorithmCannyEdgeDetection extends AlgorithmBase {
             setCompleted(false);
             return;
         }
+        
+        thinAlgo = new AlgorithmThinning2D(null, destImage);
+        thinAlgo.run();
+        thinAlgo.finalize();
+        thinAlgo = null;
         
         setCompleted(true);
         return;
