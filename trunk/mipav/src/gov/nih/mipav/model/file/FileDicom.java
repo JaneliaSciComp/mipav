@@ -70,6 +70,8 @@ public class FileDicom extends FileDicomBase {
 
     /** The tag marking the end of an undefined length dicom sequence. */
     public static final String SEQ_ITEM_UNDEF_END = "FFFE,E0DD";
+    
+    
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -118,10 +120,10 @@ public class FileDicom extends FileDicomBase {
     /** Reference to the image read into the application. */
     private ModelImage image;
 
-    /** The tag table for the base FileInfoDicom */
+    /** The tag table for the base FileInfoDicom. */
     private FileDicomTagTable tagTable;
 
-    /** Holds sequence of files described in DICOMDIR * */
+    /** Holds sequence of files described in DICOMDIR. */
     private FileDicomSQ dirInfo;
 
     /** Buffer used when reading in encapsulated JPEG images. */
@@ -670,6 +672,8 @@ public class FileDicom extends FileDicomBase {
             int tagElementLength = 0;
             try {
                 key = getNextTag(endianess);
+                
+                System.out.println(key);
                 tagElementLength = elementLength;
             } catch(ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
@@ -680,7 +684,9 @@ public class FileDicom extends FileDicomBase {
                 seek(imageLoc);
             }
             int bPtrOld = getFilePointer();
+
             try {
+            	
             	flag = processNextTag(tagTable, key, endianess, false);
                 if (flag == false && imageLoadReady == false) {
                     Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
@@ -3683,6 +3689,201 @@ public class FileDicom extends FileDicomBase {
     }
     
     /**
+     * Writes selected tag values (location specified by editKeys, value specified by editTags), to existing dicom file
+     * specified by outputFile.
+     */
+    public void writeTags(final RandomAccessFile outputFile, final FileInfoDicom fileInfo, 
+    						final FileDicomKey[] editKeys, final FileDicomTag[] editTags) throws IOException {
+    	
+    	if(editKeys.length != editTags.length) {
+    		System.err.println("Tag and key edit locations do not match");
+    	}
+    	
+    	Arrays.sort(editKeys);
+    	
+    	Arrays.sort(editTags);
+    	
+    	for(int i=0; i<editKeys.length; i++) {
+    		if(!editKeys[i].equals(editTags[i].getKey())) {
+    			System.err.println("Tag and key edit locations do not match for edit key "+editKeys[i]+" at index "+i);
+    		}
+    	}
+    	
+    	raFile = outputFile;
+    	
+    	endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
+        flag = true;
+        int exceptionCount = 0;
+        int maxExceptionCount = 10;
+
+        if (true) {
+            loadTagBuffer();
+        }
+        
+        metaGroupLength = 0;
+        elementLength = 0;
+        fileInfo.setEndianess(endianess);
+
+        skipBytes(ID_OFFSET); // Find "DICM" tag
+
+        // In v. 3.0, within the ID_OFFSET is general header information that
+        // is not encoded into data elements and not present in DICOM v. 2.0.
+        // However, it is optional.
+
+        if ( !getString(4).equals("DICM")) {
+            fileInfo.containsDICM = false;
+            seek(0); // set file pointer to zero
+        }
+
+        fileInfo.setDataType(ModelStorageBase.SHORT); // Default file type
+
+        tagTable = fileInfo.getTagTable();
+
+        int editIndex = 0;
+        FileDicomTag newTag = null;        
+        
+        while (flag == true) {
+            if (fileInfo.containsDICM) {
+                // endianess is defined in a tag and set here, after the transfer
+                // syntax group has been read in
+                if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {
+                    endianess = fileInfo.getEndianess();
+                    Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
+                }
+            } else {
+                if (getFilePointer() >= metaGroupLength) {
+                    endianess = fileInfo.getEndianess();
+                }
+            }
+            FileDicomKey key = null;
+            int tagElementLength = 0;
+            try {
+                key = getNextTag(endianess);
+                
+                if(editIndex <= editKeys.length && key.equals(editKeys[editIndex])) {
+                	newTag = editTags[editIndex];
+                	
+                	editIndex++;
+                }
+                
+                System.out.println(key);
+                tagElementLength = elementLength;
+                
+                replaceTag(raFile, newTag.getKey(), newTag, tagElementLength);
+            } catch(ArrayIndexOutOfBoundsException aie) {
+                aie.printStackTrace();
+                Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
+                key = new FileDicomKey("7FE0,0010"); //process image tag
+                vrBytes = new byte[]{'O','W'};
+                int imageLoc = locateImageTag(0, numEmbeddedImages);
+                seek(imageLoc);
+            }
+            int bPtrOld = getFilePointer();
+
+            try {
+            	
+            	flag = processNextTag(tagTable, key, endianess, false);
+                if (flag == false && imageLoadReady == false) {
+                    Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO); 
+                    break;
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+                Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
+                exceptionCount++;
+                // Prevent infinite looping
+                if (exceptionCount >= maxExceptionCount) {
+                    break;
+                }
+            }
+            if(bPtrOld+tagElementLength != getFilePointer()) {
+                Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
+            }
+            if(tagElementLength != -1 && bPtrOld+tagElementLength > getFilePointer()) {
+                seek(bPtrOld+tagElementLength); //processing tag was likely not successful, report error but continue parsing
+                Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
+            }
+            
+            if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
+                int imageLoc = locateImageTag(0, numEmbeddedImages);
+                if(!notDir) { // Done reading tags, if DICOMDIR then don't do anything else
+                    flag = false;
+                } else if(imageLoc != -1 && !imageLoadReady) {
+                    seek(imageLoc);
+                    flag = true; //image tag exists but has not been processed yet
+                } else {
+                    flag = false;
+                }
+            }
+
+        }
+        
+        if (notDir) {
+            hasHeaderBeenRead = true;
+
+            if ( (true) && (raFile != null)) {
+                raFile.close();
+            }
+
+            return;
+        } else {
+            final JDialogDicomDir dirBrowser = new JDialogDicomDir(null, fileHeader, this); //initializes dicomdir gui
+            return;
+        }
+    }
+    
+    /**
+     * newTag is written to raFile to replace old tag of tagElementLength
+     */
+    private void replaceTag(RandomAccessFile raFile, FileDicomKey key, FileDicomTag newTag, int tagElementLength) throws IOException {
+		long pointerLoc = raFile.getFilePointer();
+		
+		int length = 0;
+        if(newTag.getValueRepresentation().equals(VR.SQ)) {
+        	length = ((FileDicomSQ) newTag.getValue(false)).getWritableLength();
+        } else {
+        	length = newTag.getDataLength();
+        }
+        if(length != -1 && length%2 != 0) {
+        	length++; //an odd length tag is appended
+        }
+        
+        long sizeChange = length - tagElementLength;
+        if(sizeChange > 0) {
+        	raFile.setLength(raFile.length() + length - tagElementLength);
+        }
+        long fileLength = raFile.length();
+        
+		byte[] bufferInNext = null;
+		int bufferSize = 1; //512000
+		byte[] bufferIn = new byte[bufferSize];
+		
+		raFile.seek(pointerLoc + tagElementLength);
+				
+		while(raFile.getFilePointer() < fileLength) {
+			long initPos = raFile.getFilePointer();
+			raFile.read(bufferIn);
+			raFile.seek(initPos);
+			if(bufferInNext != null) {
+				raFile.write(bufferInNext);
+				bufferInNext = null;
+			}
+			long medPos = raFile.getFilePointer();
+			bufferInNext = new byte[bufferSize];
+			raFile.read(bufferInNext, bufferIn.length, bufferInNext.length);
+			raFile.seek(medPos);
+			raFile.write(bufferIn);
+		}
+        
+		raFile.seek(pointerLoc);
+        
+        if(sizeChange < 0) {
+        	raFile.setLength(raFile.length() + length - tagElementLength);
+        }
+		writeNextTag(newTag, raFile);
+	}
+
+	/**
      * Writes the tags of the DICOM header.
      * 
      * @param outputFile Output file to write to.
@@ -3692,7 +3893,7 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see FileInfoDicom
      */
-    private void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo,
+    public void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo,
             final boolean saveAsEncapJP2) throws IOException {
         FileDicomTag element;
         FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
