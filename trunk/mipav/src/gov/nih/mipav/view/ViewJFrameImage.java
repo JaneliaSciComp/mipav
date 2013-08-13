@@ -450,6 +450,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildDICOMFrame();
         } else if (command.equals("BrowseDICOMDIR")) {
             userInterface.buildDICOMDIRFrame();
+        } else if (command.equals("EditDICOM")) {
+            userInterface.buildEditDICOMFrame();
         } else if (command.equals("LoadDWIDIR")) {
             userInterface.buildDICOMDIRFrame();   
         } else if (command.equals("OpenNewGraph")) {
