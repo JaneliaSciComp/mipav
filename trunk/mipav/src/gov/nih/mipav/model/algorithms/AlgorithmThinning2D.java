@@ -44,9 +44,9 @@ public class AlgorithmThinning2D extends AlgorithmBase {
         int yDim;
         int sliceSize;
         double buffer[];
-        double paddedBuffer[];
-        double processed[];
-        double temp[];
+        byte paddedBuffer[];
+        byte processed[];
+        byte temp[];
         boolean change;
         int element;
         int x;
@@ -72,11 +72,11 @@ public class AlgorithmThinning2D extends AlgorithmBase {
             }
             for (y = 1; y < yDim; y++) {
                 for (x = 9; x < xDim; x++) {
-                    buffer[x + y * xDim] = 0.0;
+                    buffer[x + y * xDim] = 0;
                 }
             }
-            buffer[3 + (yDim-1)*xDim] = 0.0;
-            buffer[4 + (yDim-1)*xDim] = 0.0;
+            buffer[3 + (yDim-1)*xDim] = 0;
+            buffer[4 + (yDim-1)*xDim] = 0;
             
             testBuffer = new double[sliceSize];
             testBuffer[0] = 1.0;
@@ -126,11 +126,13 @@ public class AlgorithmThinning2D extends AlgorithmBase {
         paddedXDim = xDim + 2;
         paddedYDim = yDim + 2;
         paddedSliceSize = paddedXDim * paddedYDim;
-        paddedBuffer = new double[paddedSliceSize];
-        processed = new double[paddedSliceSize];
+        paddedBuffer = new byte[paddedSliceSize];
+        processed = new byte[paddedSliceSize];
         for (y = 0; y < yDim; y++) {
             for (x = 0; x < xDim; x++) {
-                paddedBuffer[x + 1 + (y + 1) * paddedXDim] = buffer[x + y * xDim];
+                if (buffer[x + y * xDim] != 0) {
+                    paddedBuffer[x + 1 + (y + 1) * paddedXDim] = 1;
+                }
             }
         }
         
@@ -143,14 +145,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                     for (x = 1; x <= xDim; x++) {
                         switch (element) {
                             case 1:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + y * paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + y * paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -158,14 +160,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 2:
-                                if ((paddedBuffer[x + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -173,14 +175,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 3:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -188,14 +190,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 4:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -203,14 +205,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 5:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] == 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -218,14 +220,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 6:
-                                if ((paddedBuffer[x + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] == 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -233,14 +235,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 7:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y-1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x-1 + (y+1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
@@ -248,14 +250,14 @@ public class AlgorithmThinning2D extends AlgorithmBase {
                                 }
                                 break;
                             case 8:
-                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + (y-1)*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x-1 + y*paddedXDim] == 0.0) &&
-                                    (paddedBuffer[x + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + y*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0.0) &&
-                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0.0)) {
-                                    processed[x + y * paddedXDim] = 0.0;
+                                if ((paddedBuffer[x-1 + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + (y-1)*paddedXDim] == 0) &&
+                                    (paddedBuffer[x-1 + y*paddedXDim] == 0) &&
+                                    (paddedBuffer[x + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + y*paddedXDim] != 0) &&
+                                    (paddedBuffer[x + (y+1)*paddedXDim] != 0) &&
+                                    (paddedBuffer[x+1 + (y+1)*paddedXDim] != 0)) {
+                                    processed[x + y * paddedXDim] = 0;
                                     change = true;
                                 }
                                 else {
