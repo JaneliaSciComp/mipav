@@ -116,7 +116,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private Hashtable<FileDicomKey, FileDicomTag> tagList;
 	
 	/** The parent dialog which receives text from this dicom tag editor */
-	private DicomTagSelectorImpl parentPlugin;
+	private DicomTagSelectorImpl parentDialog;
 
 	/** When this object exists as an embedded panel, this variable contains all necessary data elements. */
 	private JPanel embeddedPanel;
@@ -138,7 +138,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 		this.tagList = tagList;
 		
 		if(parent instanceof DicomTagSelectorImpl) {
-			this.parentPlugin = (DicomTagSelectorImpl)parent;
+			this.parentDialog = (DicomTagSelectorImpl)parent;
 		} else {
 			System.err.println("No valid tag editor parent was found, events from this dicom tag editor will not be received.");
 		}
@@ -147,7 +147,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 		this.groupToElement = new TreeMap<String, ArrayList<String>>();
 		this.keyToName = new TreeMap<String, String>();
 		this.keyToValue = new TreeMap<String, String>();
-		this.setResizable(false);
+		this.setResizable(true);
 		
 		buildGroupElementMap(tagList);
 		
@@ -562,20 +562,20 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	
 	public void actionPerformed(ActionEvent e) {
 		if(e.getActionCommand().equals(CLEAR_TAGS)) {
-			parentPlugin.getTagListTextField().setText("");
+			parentDialog.getTagListTextField().setText("");
 		} else if(e.getActionCommand().equals(ADD_TAG)) {
 			if(!tagExistsInField(groupList.getSelectedValue()+","+elementList.getSelectedValue())) {
-				String existingText = parentPlugin.getTagListTextField().getText();
+				String existingText = parentDialog.getTagListTextField().getText();
 				String prefix = existingText.length() == 0 || existingText.charAt(existingText.length()-1) == ';' ? "" : ";";
-				parentPlugin.getTagListTextField().setText(existingText+prefix+groupList.getSelectedValue()+","+elementList.getSelectedValue()+";");
+				parentDialog.getTagListTextField().setText(existingText+prefix+groupList.getSelectedValue()+","+elementList.getSelectedValue()+";");
 			}
 		} else if(e.getActionCommand().equals(CLOSE)) {
 			this.dispose();
 		} else if(e.getActionCommand().equals(ADD_TAG_SEQ)) {
 			if(!tagExistsInField(groupCombo.getSelectedItem()+","+elementCombo.getSelectedItem())) {
-				String existingText = parentPlugin.getTagListTextField().getText();
+				String existingText = parentDialog.getTagListTextField().getText();
 				String prefix = existingText.length() == 0 || existingText.charAt(existingText.length()-1) == ';' ? "" : ";";
-				parentPlugin.getTagListTextField().setText(existingText+prefix+groupCombo.getSelectedItem()+","+elementCombo.getSelectedItem()+";");
+				parentDialog.getTagListTextField().setText(existingText+prefix+groupCombo.getSelectedItem()+","+elementCombo.getSelectedItem()+";");
 			}
 		} else if(e.getSource() instanceof JComboBox) {
 			if(e.getSource().equals(groupCombo)) {
@@ -602,7 +602,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 
 
 	private boolean tagExistsInField(String text) {
-		String[] tagList = parentPlugin.getTagListTextField().getText().split(";");
+		String[] tagList = parentDialog.getTagListTextField().getText().split(";");
 		for(int i=0; i<tagList.length; i++) {
 			if(tagList[i].equals(text)) {
 				return true;
