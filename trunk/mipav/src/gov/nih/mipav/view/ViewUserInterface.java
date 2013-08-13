@@ -1108,6 +1108,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 		        		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
 		        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
 		        		JDialogDicomTagSelector tagSelector = new JDialogDicomTagSelector(tagList, null, true);
+		        		tagSelector.setParentDialog(tagSelector);
 		        		tagSelector.setVisible(true);
 		        	}
 	        	} catch(IOException e) {
