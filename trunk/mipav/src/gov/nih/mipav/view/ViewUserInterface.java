@@ -516,6 +516,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             buildDICOMFrame();
         } else if (command.equals("BrowseDICOMDIR")) {
             buildDICOMDIRFrame();
+        } else if (command.equals("EditDICOM")) {
+            buildEditDICOMFrame();
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
 
             if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.STOPPED) {
@@ -1078,6 +1080,45 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new ViewJFrameDICOMParser(dir);
         }
     }
+    
+    /**
+     * Builds the edit dicom tag interface. 
+     */
+    public void buildEditDICOMFrame() {
+    	// get the selected directory
+    	
+        final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        
+        fileChooser.setMulti(false);
+
+        final JFileChooser chooser = fileChooser.getFileChooser();
+        
+        chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        
+        int returnVal = chooser.showOpenDialog(null);
+        
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+	        final File file = chooser.getSelectedFile();
+	
+	        if (file != null) {
+	        	try {
+		        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+		        	boolean success = readDicom.readHeader(true);
+		        	if(success) {
+		        		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+		        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
+		        		JDialogDicomTagSelector tagSelector = new JDialogDicomTagSelector(tagList, null, true);
+		        		tagSelector.setVisible(true);
+		        	}
+	        	} catch(IOException e) {
+	        		System.err.println("Unable to read dicom file: "+file);
+	        	}
+	        	
+	            //new JDialogEditDicom(file);
+	        }
+        }
+    }
+    
 
     /**
      * Builds the image tree dialog and displays it.
