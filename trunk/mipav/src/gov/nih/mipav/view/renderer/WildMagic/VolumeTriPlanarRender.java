@@ -737,9 +737,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  
 			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.001f,10.0f);
 			  
-			  m_spkCamera.SetFrame(tfCenter, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+			  Matrix3f currentRotation = getObjectRotation();
+				Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+				Vector3f location = rotationInverse.mult(tfCenter);
 			  
-			  // updateSceneNodePoint("Camera", tfCenter);		  
+			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+			  
+			  updateSceneNodePoint("Camera", tfCenter);		  
 		  
 		  }
 		  
