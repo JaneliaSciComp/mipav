@@ -3142,7 +3142,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				final JLabel l = (JLabel) iter.next();
 				final JComponent t = labelsAndComps.get(l);
 				final String labelName = l.getName();
-
+				
+//				gbc.gridy = 0;
 				for (int k = 0; k < ds2.size(); k++) {
 					final Object o1 = ds2.get(k);
 					if (o1 instanceof DataElement) {
@@ -3150,7 +3151,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						JPanel curPanel = groupPanels.get(de.getGroup());
 
 						if (l.getName().equalsIgnoreCase(de.getName())) {
-							gbc.gridy = de.getPosition() - 1;
+							gbc.gridy ++;
 
 							gbc.insets = new Insets(2, 5, 2, 5);
 							gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -3174,6 +3175,23 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							} else {
 								gbc.gridwidth = 2;
 								curPanel.add(t, gbc);
+								if (t instanceof JComboBox){
+									
+									gbc.gridy ++;
+//									ds2.add(de.getPosition(), "");
+									final JTextField spec = new JTextField();
+									curPanel.add(spec, gbc);
+									spec.setVisible(false);
+									((JComboBox)t).addActionListener(new ActionListener () {
+										public void actionPerformed(ActionEvent e) {
+											if (((JComboBox) t).getSelectedItem().equals("Other, specify")) {
+												spec.setVisible(true);
+												repaint();
+											}
+										}
+									});
+//									specs.put((JComboBox)t, spec);
+								}
 							}
 
 							// gridYCounter = gridYCounter + 1;
@@ -3351,7 +3369,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					tf.setFont(MipavUtil.font12);
 					
 					tf.addMouseListener(new ContextMenuMouseListener());
-
+ 
 					tooltip = "<html><b>Type:</b> " + t;
 					if (t.equalsIgnoreCase("String")) {
 						tooltip += " (" + s + ")";
