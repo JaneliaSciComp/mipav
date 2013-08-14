@@ -3187,6 +3187,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											if (((JComboBox) t).getSelectedItem().equals("Other, specify")) {
 												spec.setVisible(true);
 												repaint();
+											} else {
+												spec.setVisible(false);
+												repaint();
 											}
 										}
 									});
