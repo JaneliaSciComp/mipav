@@ -6,7 +6,7 @@ import gov.nih.mipav.view.renderer.flythroughview.FlyPathGraphCurve;
 
 import java.awt.Toolkit;
 import java.awt.event.*;
-
+import javax.swing.*;
 import javax.swing.SwingUtilities;
 
 import WildMagic.LibFoundation.Curves.Curve3f;
@@ -155,6 +155,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	
 	private boolean isDoPicking = false;
 	
+	private boolean keyPressdown = false;
+	
 	/**
 	 * Setup to fly along the specified path and look around.
 	 * 
@@ -212,13 +214,13 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	
 	public void setNaviMode(boolean isNavigationEnabled) {
 		if (isNavigationEnabled) {
-			// parentScene.GetCanvas().addKeyListener(this);
+			parentScene.GetCanvas().addKeyListener(this);
 			parentScene.GetCanvas().addMouseListener(this);
 			parentScene.GetCanvas().addMouseMotionListener(this);
 			parentScene.GetCanvas().addMouseWheelListener(this);
 		} else {
-			// parentScene.GetCanvas().removeKeyListener(this);
 			pressed = false;
+			parentScene.GetCanvas().removeKeyListener(this);
 			parentScene.GetCanvas().removeMouseListener(this);
 			parentScene.GetCanvas().removeMouseMotionListener(this);
 			parentScene.GetCanvas().removeMouseWheelListener(this);
@@ -342,109 +344,47 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	@Override
 	public void keyPressed(KeyEvent event) {
 
+		/*
 		Matrix3f kRotate = new Matrix3f();
 		Vector3f kRight;
+		
 		if (KeyEvent.KEY_PRESSED == event.getID()) {
 			int iKeyCode = event.getKeyCode();
-			char iKeyChar = event.getKeyChar();
+		
 			switch (iKeyCode) {
 
 			case KeyEvent.VK_ESCAPE:
 				setIdentityViewOrientation();
 				break;
-
 			case KeyEvent.VK_UP:
-
-				// move forward along the path
-				if (!m_bChooseBranch) {
-					// doPathStep(1);
-					moveStepsZ(1);
-
-				} else {
-					beep();
-				}
-
+				// pitch - look up
+				// System.err.println("look up");
+				move("lookup");
 				break;
-
 			case KeyEvent.VK_DOWN:
-
-				// move backward along the path
-				if (!m_bChooseBranch) {
-					// doPathStep(-1);
-					moveStepsZ(-1);
-				} else {
-					beep();
-				}
-
-				break;
-			case KeyEvent.VK_8:
-				moveStepsY(1);
-				break;
-			case KeyEvent.VK_2:
-				moveStepsY(-1);
-				break;
-			case KeyEvent.VK_4:
-				moveStepsX(1);
-				break;
-			case KeyEvent.VK_6:
-				moveStepsX(-1);
+				// pitch - look down
+				// System.err.println("look down");
+				move("lookdown");
 				break;
 			case KeyEvent.VK_LEFT:
-				// case KeyEvent.VK_F3:
-				// roll - counterclockwise
-				kRotate.fromAxisAngle(m_kViewDirection,
-						(float) Math.toRadians(1));
-				kRotate.mult(m_kViewUp, m_kViewUp);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
+				// yaw - look left
+				// System.err.println("look left");
+				move("lookleft");
 				break;
 			case KeyEvent.VK_RIGHT:
-				// roll - clockwise
-				kRotate.fromAxisAngle(m_kViewDirection,
-						(float) Math.toRadians(-1));
-				kRotate.mult(m_kViewUp, m_kViewUp);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
-				break;
-
-			case KeyEvent.VK_F1:
-				// pitch - look up
-				kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
-				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(kRight, (float) Math.toRadians(1));
-				kRotate.mult(m_kViewDirection, m_kViewDirection);
-				kRotate.mult(m_kViewUp, m_kViewUp);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
-				break;
-			case KeyEvent.VK_F2:
-				// pitch - look down
-				kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
-				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(kRight, (float) Math.toRadians(-0.1));
-				kRotate.mult(m_kViewDirection, m_kViewDirection);
-				kRotate.mult(m_kViewUp, m_kViewUp);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
-				break;
-			case KeyEvent.VK_F3:
-				// yaw - look left
-				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(0.1));
-				kRotate.mult(m_kViewDirection, m_kViewDirection);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
-				break;
-			case KeyEvent.VK_F4:
-				// case KeyEvent.VK_RIGHT:
 				// yaw - look right
-				kRotate = new Matrix3f();
-				kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-0.1));
-				kRotate.mult(m_kViewDirection, m_kViewDirection);
-				// Notify listener that we are updated.
-				notifyCallback(EVENT_CHANGE_POSITION);
+				// System.err.println("look right");
+				move("lookright");
 				break;
 			}
+		}
+		*/
+		currEventTime = event.getWhen();
+		if (keyPressdown == false ) {
+			keyPressdown = true;
+			KeyPressedEvent kEvent = new KeyPressedEvent(event);
+			prevEventTime = event.getWhen();
+			kEvent.start();
 		}
 
 	}
@@ -462,11 +402,12 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		} else {
 			if (SwingUtilities.isRightMouseButton(e)) {
 				currEventTime = e.getWhen();
-
-				pressed = true;
-				RightMouse mouse = new RightMouse(e);
-				prevEventTime = e.getWhen();
-				mouse.start();
+				if (pressed == false ) {
+					pressed = true;
+					RightMouse mouse = new RightMouse(e);
+					prevEventTime = e.getWhen();
+					mouse.start();
+				}
 			}
 
 			if (SwingUtilities.isLeftMouseButton(e)) {
@@ -666,26 +607,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	}
 
-	private void moveStepsZ(int stepSize) {
-		m_kViewPoint.Z += stepSize * 0.005;
-		notifyCallback(EVENT_CHANGE_POSITION);
-	}
-
-	private void moveStepsY(int stepSize) {
-		m_kViewPoint.Y += stepSize * 0.005;
-		notifyCallback(EVENT_CHANGE_POSITION);
-	}
-
-	private void moveStepsX(int stepSize) {
-		m_kViewPoint.X += stepSize * 0.005;
-		notifyCallback(EVENT_CHANGE_POSITION);
-	}
+	
 
 	private void makeMove(Vector3f _currentLocation) {
 		m_kViewPoint.copy(_currentLocation);
-		m_kViewRight.copy(camera.GetRVector());
-		m_kViewUp.copy(camera.GetUVector());
-		m_kViewDirection.copy(camera.GetDVector());
 		notifyCallback(EVENT_CHANGE_POSITION);
 	}
 
@@ -696,6 +621,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	 */
 	@Override
 	public void keyReleased(KeyEvent event) {
+		keyPressdown = false;
 	}
 
 	/*
@@ -726,11 +652,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			notifyCallback(EVENT_CHANGE_POSITION);
 		} else if (command.equals("lookdown")) {
 			// pitch - look down
-			Vector3f kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
-			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(kRight, (float) Math.toRadians(-1));
-			kRotate.mult(m_kViewDirection, m_kViewDirection);
-			kRotate.mult(m_kViewUp, m_kViewUp);
+		    Vector3f kRight = Vector3f.unitCross( m_kViewDirection, m_kViewUp );
+            Matrix3f kRotate = new Matrix3f();
+            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-1) );
+            kRotate.mult( m_kViewDirection, m_kViewDirection );
+            kRotate.mult( m_kViewUp, m_kViewUp );
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_POSITION);
 		} else if (command.equals("lookleft")) {
@@ -751,16 +677,16 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		} else if (command.equals("counterclockwise")) {
 			// case KeyEvent.VK_F3:
 			// roll - counterclockwise
-			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewDirection, (float) Math.toRadians(-0.01));
-			kRotate.mult(m_kViewUp, m_kViewUp);
+			 Matrix3f kRotate = new Matrix3f();
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-1) );
+	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_POSITION);
 		} else if (command.equals("clockwise")) {
 			// roll - clockwise
-			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewDirection, (float) Math.toRadians(0.01));
-			kRotate.mult(m_kViewUp, m_kViewUp);
+			   Matrix3f kRotate = new Matrix3f();
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(1) );
+	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_POSITION);
 		} else if (command.equals("escape")) {
@@ -805,6 +731,99 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	private void setIdentityViewOrientation() {
 		notifyCallback(EVENT_RESET_ORIENTATION);
 	}
+	
+	class KeyPressedEvent extends Thread {
+
+		/** DOCUMENT ME! */
+		KeyEvent currentEvent;
+
+		/** int centerX, centerY;. */
+		KeyEvent evt;
+
+		/** DOCUMENT ME! */
+		Object source;
+
+		/** DOCUMENT ME! */
+		long when;
+
+		/** DOCUMENT ME! */
+		int x, y, mod, id;
+
+		JTextField textField = new JTextField(8);
+		
+		/**
+		 * Creates new thread and sets up mouse event variables appropriately.
+		 * 
+		 * @param event
+		 *            Original mouse event, from button.
+		 */
+		public KeyPressedEvent(KeyEvent event) {
+			when = event.getWhen();
+			currentEvent = event;
+			id = KeyEvent.KEY_PRESSED;
+			source = event.getSource();
+			evt = event;
+
+		}
+
+		/**
+		 * Runs the thread. While the button is pressed, dispatches mouse
+		 * dragged events at a rate consistent with the velocity slider. Once
+		 * the mouse is released, <code>pressed</code> will be set to false and
+		 * the loop will stop.
+		 */
+		public synchronized void run() {
+
+			while (keyPressdown) {
+
+				parentScene.GetCanvas().dispatchEvent(evt);
+
+				int iKeyCode = evt.getKeyCode();
+				
+				switch (iKeyCode) {
+
+				case KeyEvent.VK_ESCAPE:
+					setIdentityViewOrientation();
+					break;
+				case KeyEvent.VK_UP:
+					// pitch - look up
+					// System.err.println("look up");
+					move("lookup");
+					break;
+				case KeyEvent.VK_DOWN:
+					// pitch - look down
+					// System.err.println("look down");
+					move("lookdown");
+					break;
+				case KeyEvent.VK_LEFT:
+					// yaw - look left
+					// System.err.println("look left");
+					move("lookleft");
+					break;
+				case KeyEvent.VK_RIGHT:
+					// yaw - look right
+					// System.err.println("look right");
+					move("lookright");
+					break;
+				}
+				
+				
+
+				when += 10;
+
+				try {
+					wait(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				
+				evt = new KeyEvent(textField, KeyEvent.KEY_PRESSED, when, 0,  currentEvent.getKeyCode(), currentEvent.getKeyChar());
+			}
+
+		}
+	}
+
 
 	class RightMouse extends Thread {
 
@@ -975,10 +994,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					count++;
 				}
 
-				when += 50;
+				when += 100;
 
 				try {
-					wait(50);
+					wait(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
