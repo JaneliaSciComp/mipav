@@ -3756,20 +3756,22 @@ public class FileDicom extends FileDicomBase {
                 }
             }
             FileDicomKey key = null;
-            int tagElementLength = 0;
+            int oldTagElementLength = 0;
             try {
                 key = getNextTag(endianess);
                 
                 if(editIndex <= editKeys.length && key.equals(editKeys[editIndex])) {
                 	newTag = editTags[editIndex];
                 	
+                	System.out.println(key);
+                    oldTagElementLength = elementLength;
+                    
+                    replaceTag(raFile, newTag.getKey(), newTag, oldTagElementLength);
                 	editIndex++;
+                	newTag = null;
                 }
                 
-                System.out.println(key);
-                tagElementLength = elementLength;
                 
-                replaceTag(raFile, newTag.getKey(), newTag, tagElementLength);
             } catch(ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
                 Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
@@ -3796,11 +3798,11 @@ public class FileDicom extends FileDicomBase {
                     break;
                 }
             }
-            if(bPtrOld+tagElementLength != getFilePointer()) {
+            if(bPtrOld+oldTagElementLength != getFilePointer()) {
                 Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
             }
-            if(tagElementLength != -1 && bPtrOld+tagElementLength > getFilePointer()) {
-                seek(bPtrOld+tagElementLength); //processing tag was likely not successful, report error but continue parsing
+            if(oldTagElementLength != -1 && bPtrOld+oldTagElementLength > getFilePointer()) {
+                seek(bPtrOld+oldTagElementLength); //processing tag was likely not successful, report error but continue parsing
                 Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
             }
             
@@ -3835,7 +3837,7 @@ public class FileDicom extends FileDicomBase {
     /**
      * newTag is written to raFile to replace old tag of tagElementLength
      */
-    private void replaceTag(RandomAccessFile raFile, FileDicomKey key, FileDicomTag newTag, int tagElementLength) throws IOException {
+    private void replaceTag(RandomAccessFile raFile, FileDicomKey key, FileDicomTag newTag, int oldTagElementLength) throws IOException {
 		long pointerLoc = raFile.getFilePointer();
 		
 		int length = 0;
@@ -3848,9 +3850,9 @@ public class FileDicom extends FileDicomBase {
         	length++; //an odd length tag is appended
         }
         
-        long sizeChange = length - tagElementLength;
+        long sizeChange = length - oldTagElementLength;
         if(sizeChange > 0) {
-        	raFile.setLength(raFile.length() + length - tagElementLength);
+        	raFile.setLength(raFile.length() + length - oldTagElementLength);
         }
         long fileLength = raFile.length();
         
@@ -3858,7 +3860,7 @@ public class FileDicom extends FileDicomBase {
 		int bufferSize = 1; //512000
 		byte[] bufferIn = new byte[bufferSize];
 		
-		raFile.seek(pointerLoc + tagElementLength);
+		raFile.seek(pointerLoc + oldTagElementLength);
 				
 		while(raFile.getFilePointer() < fileLength) {
 			long initPos = raFile.getFilePointer();
@@ -3878,7 +3880,7 @@ public class FileDicom extends FileDicomBase {
 		raFile.seek(pointerLoc);
         
         if(sizeChange < 0) {
-        	raFile.setLength(raFile.length() + length - tagElementLength);
+        	raFile.setLength(raFile.length() + length - oldTagElementLength);
         }
 		writeNextTag(newTag, raFile);
 	}
