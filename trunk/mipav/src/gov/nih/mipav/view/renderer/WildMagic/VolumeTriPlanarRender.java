@@ -572,8 +572,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		
 		if (isNavigationEnabled) {
 
+			   Vector3f kCDir = behavior.getViewDirection();
+		        kCDir.normalize();
+		        Vector3f kCUp = behavior.getViewUp();
+		        kCUp.normalize();
+		        Vector3f kCLoc = behavior.getViewPoint();
+		        Vector3f kCRight = Vector3f.unitCross( kCDir, kCUp );
+		        // Vector3f kPositionScaled = getPositionScaled(kCLoc);
+		        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 			
-			m_spkCamera.SetFrame(cameraLocation, cameraDir, cameraUp, cameraRight);
+			// m_spkCamera.SetFrame(cameraLocation, cameraDir, cameraUp, cameraRight);
 		
 			
 			float fRMin = m_spkCamera.GetRMin(); 
@@ -628,19 +636,44 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			// updateSceneNodePoint("Wbr", Wbr);
 			// updateSceneNodePoint("Wtr", Wtr);
 			
-			if (m_kVolumeRayCast != null) {
-				// m_kVolumeRayCast.SetDisplay(m_kParent.getRendererGUI().getVolumeCheck().isSelected());
-			}
-			if (m_kSlices != null) {
-				// m_kSlices.SetDisplay(m_kParent.getRendererGUI().getSlicesCheck().isSelected());
-			}
 			
+			// updateFrustumPoints(cameraLocation);
+			// updateSlicesCenter(cameraLocation);
+			
+			updateFrustumPoints(kCLoc);
+			updateSlicesCenter(kCLoc);
 
+			m_kParent.displayAll();
 		}
-		updateFrustumPoints(cameraLocation);
-		updateSlicesCenter(cameraLocation);
+	
 
 	}
+	
+	
+	public Vector3f getPositionScaled( Vector3f kPoint) {
+
+        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+        float[] afResolutions = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions();
+        float[] afOrigins = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
+        int[] aiDirections = m_kVolumeImageA.GetImage().getFileInfo(0).getAxisDirection();
+
+        int xDim = aiExtents[0];
+        int yDim = aiExtents[1];
+        int zDim = aiExtents[2];
+
+        float xBox = (xDim - 1) * afResolutions[0];
+        float yBox = (yDim - 1) * afResolutions[1];
+        float zBox = (zDim - 1) * afResolutions[2];
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        Vector3f kPointScaled = new Vector3f();
+        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
+                          xBox) / (2.0f*maxBox);
+        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
+                          yBox) / (2.0f*maxBox);
+        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
+                          zBox) / (2.0f*maxBox);
+        return kPointScaled;
+    }
 	
 	public void updateSceneNodePoint(String name, Vector3f position) {
 		Matrix3f currentRotation = getObjectRotation();
@@ -702,7 +735,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
 			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
 			  
-			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.01f,10.0f);
+			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.001f,10.0f);
 			  
 			  m_spkCamera.SetFrame(tfCenter, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
 			  
