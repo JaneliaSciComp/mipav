@@ -712,18 +712,18 @@ public class FileDicomTag extends ModelSerialCloneable implements Comparable<Fil
      * @return The tag in readable form
      */
     public String toString() {
-        String s = "";
-        s = "Group: " + Integer.toString(this.group, 0x10) + " Element: " + Integer.toString(this.element, 0x10);
+        StringBuffer s = new StringBuffer();
+        s.append("Group: ").append(Integer.toString(this.group, 0x10)).append(" Element: ").append(Integer.toString(this.element, 0x10));
 
-        s += tagInfo.toString();
+        s.append(tagInfo.toString());
 
         if (value != null) {
-            s += " Value: " + this.value;
+            s.append(" Value: ").append(this.value);
         }
 
-        s += " Length: " + Integer.toString(length, 0x10);
+        s.append(" Length: ").append(length);
 
-        return s;
+        return s.toString();
     }
 
     /**
