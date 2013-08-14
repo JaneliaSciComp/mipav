@@ -99,7 +99,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private JComboBox groupCombo, elementCombo;
 
 	/**Buttons used by this dialog*/
-	private JButton addButton, addButtonSeq, clearButton, closeButton;
+	protected JButton addButton, addButtonSeq, clearButton, closeButton;
 
 	/**Name and property labels that describe a DICOM tag for a particular file*/
 	private JLabel nameValue, nameValueSeq, propertyValueSeq;
@@ -107,7 +107,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private JTextField propertyValue;
 	
 	/**Original list of available DICOM tags*/
-	private Hashtable<FileDicomKey, FileDicomTag> tagList;
+	protected Hashtable<FileDicomKey, FileDicomTag> tagList;
 	
 	/** The parent dialog which receives text from this dicom tag editor */
 	private DicomTagSelectorImpl parentDialog;
@@ -130,7 +130,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	private TagInputListener k1, k2;
 
 	/** Option table where dicom tags are reported to. */
-	private JTable tagsTable = null;
+	protected JTable tagsTable = null;
 
 	public JDialogDicomTagSelector(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
 		super(parent, false, false);
