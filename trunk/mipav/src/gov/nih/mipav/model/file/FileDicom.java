@@ -3710,6 +3710,7 @@ public class FileDicom extends FileDicomBase {
     	}
     	
     	raFile = outputFile;
+    	System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
     	
     	endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         flag = true;
@@ -3760,11 +3761,12 @@ public class FileDicom extends FileDicomBase {
             try {
                 key = getNextTag(endianess);
                 
-                if(editIndex <= editKeys.length && key.equals(editKeys[editIndex])) {
+                if(editIndex < editKeys.length && key.equals(editKeys[editIndex])) {
                 	newTag = editTags[editIndex];
                 	
                 	System.out.println(key);
                     oldTagElementLength = elementLength;
+                    System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
                     
                     replaceTag(raFile, newTag.getKey(), newTag, oldTagElementLength);
                 	editIndex++;
@@ -3867,13 +3869,15 @@ public class FileDicom extends FileDicomBase {
 			raFile.read(bufferIn);
 			raFile.seek(initPos);
 			if(bufferInNext != null) {
+				System.out.println("Writing in location: "+initPos);
 				raFile.write(bufferInNext);
 				bufferInNext = null;
 			}
 			long medPos = raFile.getFilePointer();
 			bufferInNext = new byte[bufferSize];
-			raFile.read(bufferInNext, bufferIn.length, bufferInNext.length);
+			raFile.read(bufferInNext, 0, bufferInNext.length);
 			raFile.seek(medPos);
+			System.out.println("Writing in location: "+medPos);
 			raFile.write(bufferIn);
 		}
         
