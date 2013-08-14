@@ -645,50 +645,50 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// pitch - look up
 			Vector3f kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(kRight, (float) Math.toRadians(1));
+			kRotate.fromAxisAngle(kRight, (float) Math.toRadians(3));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			kRotate.mult(m_kViewUp, m_kViewUp);
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("lookdown")) {
 			// pitch - look down
 		    Vector3f kRight = Vector3f.unitCross( m_kViewDirection, m_kViewUp );
             Matrix3f kRotate = new Matrix3f();
-            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-1) );
+            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-3) );
             kRotate.mult( m_kViewDirection, m_kViewDirection );
             kRotate.mult( m_kViewUp, m_kViewUp );
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("lookleft")) {
 			// yaw - look left
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(1));
+			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(3));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("lookright")) {
 			// case KeyEvent.VK_RIGHT:
 			// yaw - look right
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-1));
+			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-3));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("counterclockwise")) {
 			// case KeyEvent.VK_F3:
 			// roll - counterclockwise
 			 Matrix3f kRotate = new Matrix3f();
-	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-1) );
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-3) );
 	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("clockwise")) {
 			// roll - clockwise
 			   Matrix3f kRotate = new Matrix3f();
-	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(1) );
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(3) );
 	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
-			notifyCallback(EVENT_CHANGE_POSITION);
+			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("escape")) {
 			// VK_ESCAPE
 			setIdentityViewOrientation();
