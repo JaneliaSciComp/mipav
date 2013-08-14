@@ -570,7 +570,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Vector3f cameraUp = behavior.getViewUp();
 		Vector3f cameraRight = Vector3f.unitCross(cameraDir, cameraUp);
 		
-		if (isNavigationEnabled) {
+		if (isNavigationEnabled ) {
 
 			   Vector3f kCDir = behavior.getViewDirection();
 		        kCDir.normalize();
@@ -639,9 +639,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			
 			// updateFrustumPoints(cameraLocation);
 			// updateSlicesCenter(cameraLocation);
-			
-			updateFrustumPoints(kCLoc);
-			updateSlicesCenter(kCLoc);
+			if ( iEvent == NavigationBehavior.EVENT_CHANGE_POSITION ) {
+				updateFrustumPoints(kCLoc);
+				updateSlicesCenter(kCLoc);
+			}
 
 			m_kParent.displayAll();
 		}
@@ -738,8 +739,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.001f,10.0f);
 			  
 			  Matrix3f currentRotation = getObjectRotation();
-				Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-				Vector3f location = rotationInverse.mult(tfCenter);
+			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+			  Vector3f location = rotationInverse.mult(tfCenter);
 			  
 			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
 			  
