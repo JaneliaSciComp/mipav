@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.view.MipavUtil;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -22,6 +23,8 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	
 	protected static final String SAVE = "Process";
 	
+	private boolean processed = false;
+	
 	public JDialogDicomTagMultiEditor(Hashtable<FileDicomKey, FileDicomTag> tagList, JDialogBase parent, 
 			boolean isStandalone, File file, FileInfoDicom fileInfo) {
 		super(tagList, parent, isStandalone);
@@ -31,12 +34,11 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		
 		closeButton.setActionCommand(SAVE);
 		closeButton.setText(SAVE);
-		closeButton.addActionListener(this);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource().equals(closeButton)) {
+		if(e.getSource().equals(closeButton) && !processed) {
 			try {
 				FileDicom writeDicom = new FileDicom(file.getAbsolutePath());
 				int length = tagsTable.getRowCount();
@@ -60,7 +62,13 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				
 				RandomAccessFile raFile = new RandomAccessFile(file, "rw");
 				
+				System.out.println("Here again");
 				writeDicom.writeTags(raFile, fileInfo, keyArray, tagArray);
+				
+				this.dispose();
+				
+				processed = true;
+				MipavUtil.displayInfo("Tags processed successfully for image "+file.getAbsolutePath());
 			} catch(IOException ex) {
 				System.err.println("Unable to write to file: "+file.getAbsolutePath());
 			}
