@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.view.MipavUtil;
 
 import java.awt.BorderLayout;
@@ -54,7 +55,7 @@ import javax.swing.table.TableModel;
  * @author senseneyj
  *
  */
-public class JDialogDicomTagSelector extends JDialogBase implements ListSelectionListener, DicomTagSelectorImpl {
+public class JDialogDicomTagSelector extends JDialogScriptableBase implements ListSelectionListener, DicomTagSelectorImpl {
 
 	/**For adding a top level dicom tag*/
 	private static final String ADD_TAG = "Add";
@@ -863,5 +864,23 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 
 	public void setParentDialog(DicomTagSelectorImpl parentDialog) {
 		this.parentDialog = parentDialog;
+	}
+
+
+	@Override
+	protected void callAlgorithm() {
+		return;
+	}
+
+
+	@Override
+	protected void setGUIFromParams() {
+		return;
+	}
+
+
+	@Override
+	protected void storeParamsFromGUI() throws ParserException {
+		return;
 	}
 }
