@@ -83,6 +83,19 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
     public JDialogScriptableBase(final Dialog parent, final boolean modal) {
         super(parent, modal);
     }
+    
+    /**
+     * Passthrough to JDialogBase constructor.
+     * 
+     * @param parent The parent dialog.
+     * @param modal Whether this dialog is modal.
+     * @param menuVisible whether the preference loading menu should be displayed
+     * 
+     * @see JDialogBase
+     */
+    public JDialogScriptableBase(final Dialog parent, final boolean modal, final boolean menuVisible) {
+        super(parent, modal, menuVisible);
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
