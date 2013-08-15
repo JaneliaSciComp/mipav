@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.Preferences;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 
 /**
@@ -457,5 +458,19 @@ public class ParameterTable {
         }
 
         return param;
+    }
+    
+    /**
+     * Returns the set of parameter names.
+     */
+    public Set<String> keySet() {
+    	return paramTable.keySet();
+    }
+    
+    /**
+     * Returns the set of parameter entries.
+     */
+    public Set<Entry<String,Parameter>> entrySet() {
+    	return paramTable.entrySet();
     }
 }
