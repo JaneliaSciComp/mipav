@@ -58,7 +58,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	/** on a viewChanged event change the fly path branch */
 	public static final int EVENT_CHANGE_BRANCH = 0x00000008;
-
+	
 	/**
 	 * Sound a beep.
 	 */
@@ -156,6 +156,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	private boolean isDoPicking = false;
 	
 	private boolean keyPressdown = false;
+	
+	private int cameraViewRotationDegree = 3;
 	
 	/**
 	 * Setup to fly along the specified path and look around.
@@ -607,7 +609,9 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	}
 
-	
+	public void setCamerViewRotationDegree(int degree) {
+		cameraViewRotationDegree = degree;
+	}
 
 	private void makeMove(Vector3f _currentLocation) {
 		m_kViewPoint.copy(_currentLocation);
@@ -645,7 +649,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// pitch - look up
 			Vector3f kRight = Vector3f.unitCross(m_kViewDirection, m_kViewUp);
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(kRight, (float) Math.toRadians(3));
+			kRotate.fromAxisAngle(kRight, (float) Math.toRadians(cameraViewRotationDegree));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			kRotate.mult(m_kViewUp, m_kViewUp);
 			// Notify listener that we are updated.
@@ -654,7 +658,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// pitch - look down
 		    Vector3f kRight = Vector3f.unitCross( m_kViewDirection, m_kViewUp );
             Matrix3f kRotate = new Matrix3f();
-            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-3) );
+            kRotate.fromAxisAngle( kRight, (float)Math.toRadians(-cameraViewRotationDegree) );
             kRotate.mult( m_kViewDirection, m_kViewDirection );
             kRotate.mult( m_kViewUp, m_kViewUp );
 			// Notify listener that we are updated.
@@ -662,7 +666,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		} else if (command.equals("lookleft")) {
 			// yaw - look left
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(3));
+			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(cameraViewRotationDegree));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_VIEW);
@@ -670,7 +674,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// case KeyEvent.VK_RIGHT:
 			// yaw - look right
 			Matrix3f kRotate = new Matrix3f();
-			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-3));
+			kRotate.fromAxisAngle(m_kViewUp, (float) Math.toRadians(-cameraViewRotationDegree));
 			kRotate.mult(m_kViewDirection, m_kViewDirection);
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_VIEW);
@@ -678,14 +682,14 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// case KeyEvent.VK_F3:
 			// roll - counterclockwise
 			 Matrix3f kRotate = new Matrix3f();
-	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-3) );
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(-cameraViewRotationDegree) );
 	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_VIEW);
 		} else if (command.equals("clockwise")) {
 			// roll - clockwise
 			   Matrix3f kRotate = new Matrix3f();
-	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(3) );
+	            kRotate.fromAxisAngle( m_kViewDirection, (float)Math.toRadians(cameraViewRotationDegree) );
 	            kRotate.mult( m_kViewUp,  m_kViewUp );
 			// Notify listener that we are updated.
 			notifyCallback(EVENT_CHANGE_VIEW);

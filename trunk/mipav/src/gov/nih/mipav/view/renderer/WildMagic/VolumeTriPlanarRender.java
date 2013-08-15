@@ -749,4 +749,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		  }
 		  
 	  }
+	 
+	  public void setCameraViewRotationDegree(int degree) {
+		  navigationBehavior.setCamerViewRotationDegree(degree);
+	  }
 }
