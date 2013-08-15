@@ -2503,7 +2503,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 *            mouse rotation speed
 	 */
 	public void setMouseRotationSpeed(float rotationSpeed) {
-		UpdateCameraRotationSpeed(rotationSpeed);
+		UpdateMouseRotationSpeed(rotationSpeed);
 		return;
 	}
 

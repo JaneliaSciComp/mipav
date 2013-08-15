@@ -626,9 +626,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             SaveState();
         } else if (command.equals("LoadState")) {
             LoadState();
-        } else if ( command.equals("Navigation")) {
-		    raycastRenderWM.toggleNavigation(rendererGUI.getNaviCheckBox().isSelected());
-		}
+        } 
 
     }
 
@@ -3499,5 +3497,4 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 			raycastRenderWM.setCameraNearPlane(distance);
 		}
 	}
-
 }

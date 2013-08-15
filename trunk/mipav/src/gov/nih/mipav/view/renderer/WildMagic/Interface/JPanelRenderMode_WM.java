@@ -134,6 +134,12 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     /** Mouse zoom speed slider. */
     private JSlider mouseZoomSpeedSlider;
     
+    /** camera rotation degree slider */
+    private JSlider cameraRotationDegreeSlider;
+
+    /** camera rotation degree label */
+    private JLabel cameraRotationDegreeLabel;
+    
     /**
      * Constructor.
      * @param kVolumeViewer parent frame.
@@ -147,7 +153,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
 	public void actionPerformed(ActionEvent event) {
         String levelStr = m_kIntensityTF.getText();
         rayBasedRenderWM.setIntenstityLevel(Integer.valueOf(levelStr).intValue());
-        if ( event.getActionCommand().equals("ChangeStereoMode") )
+        String command = event.getActionCommand();
+        if ( command.equals("ChangeStereoMode") )
         {
         	switch ( m_kStereoModeCB.getSelectedIndex() )
         	{
@@ -155,7 +162,17 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	case 1: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoRED") );   break;
         	case 2: m_kVolumeViewer.actionPerformed( new ActionEvent(this, 0, "StereoSHUTTER") );   break;
         	}        	
-        }
+        } else if ( command.equals("Navigation")) {
+        	boolean isSelected = navigationCheckBox.isSelected();
+        	rayBasedRenderWM.toggleNavigation(isSelected);
+        	if ( isSelected ) {
+        		cameraRotationDegreeSlider.setEnabled(true);
+        		cameraRotationDegreeLabel.setEnabled(true);
+        	} else {
+        		cameraRotationDegreeSlider.setEnabled(false);
+        		cameraRotationDegreeLabel.setEnabled(false);
+        	}
+		}
         else
         {
         	m_kVolumeViewer.actionPerformed(event);
@@ -426,6 +443,10 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         	rayBasedRenderWM.setMouseZoomSpeed(zoomSpeed);
         }
         
+        if ( source == cameraRotationDegreeSlider) {
+        	int rotationDegree = cameraRotationDegreeSlider.getValue();
+        	rayBasedRenderWM.setCameraViewRotationDegree(rotationDegree);
+        }
     }
     
     /**
@@ -648,7 +669,7 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc);
-         mouseRotationSpeedSlider = new JSlider(0, 40, 20);
+         mouseRotationSpeedSlider = new JSlider(0, 50, 25);
          mouseRotationSpeedSlider.addChangeListener(this);
          gbc.gridx = 1;
          mouseSpeedPanel.add(mouseRotationSpeedSlider, gbc);
@@ -665,19 +686,37 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          extractPanel.add(m_kIntensityTF, gbc);
          
          // add navigation panel
+         JPanel naviPanel = new JPanel(new GridBagLayout());
+         naviPanel.setBorder(buildTitledBorder("Navigation"));
+         
+         // navigation checkbox
          navigationCheckBox = new JCheckBox( "Enable Navigation" );
          navigationCheckBox.setSelected(false);
          navigationCheckBox.setActionCommand( "Navigation");
-         navigationCheckBox.addActionListener(this);
-         
+         navigationCheckBox.addActionListener(this);        
          gbc.gridx = 0;
          gbc.gridy = 0;
-         
-         JPanel naviPanel = new JPanel(new GridBagLayout());
-         naviPanel.setBorder(buildTitledBorder("Navigation"));
          naviPanel.add(navigationCheckBox, gbc);
- 
- 
+         
+         // camera rotation sliders
+         cameraRotationDegreeLabel = new JLabel("Camera Rotation");
+         cameraRotationDegreeLabel.setEnabled(false);
+         gbc.gridx = 0;
+         gbc.gridy = 1;
+         naviPanel.add(cameraRotationDegreeLabel, gbc);
+         cameraRotationDegreeSlider = new JSlider( 0, 60, 3 );
+         cameraRotationDegreeSlider.setMajorTickSpacing(30);
+         cameraRotationDegreeSlider.setMinorTickSpacing(3);
+         cameraRotationDegreeSlider.addChangeListener(this);
+         cameraRotationDegreeSlider.setPaintTicks(true);
+         cameraRotationDegreeSlider.setPaintLabels(true);
+         Font cFont = new Font("Serif", Font.ITALIC, 10);
+         cameraRotationDegreeSlider.setFont(cFont);
+         cameraRotationDegreeSlider.setEnabled(false);
+         gbc.gridx = 1;
+         naviPanel.add(cameraRotationDegreeSlider, gbc);         
+         
+         
          // the main panel
          Box contentBox = new Box(BoxLayout.Y_AXIS);
 
