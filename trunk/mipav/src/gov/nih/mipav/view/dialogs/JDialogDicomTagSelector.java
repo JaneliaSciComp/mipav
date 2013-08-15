@@ -133,10 +133,14 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 	/** Option table where dicom tags are reported to. */
 	protected JTable tagsTable = null;
 
-	public JDialogDicomTagSelector(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
-		super(parent, false, false);
+	protected boolean isStandalone = true;
+	
+	/** Blank constructor needed for scripting */
+	public JDialogDicomTagSelector() {
 		
-		this.tagList = tagList;
+	}
+	
+	public JDialogDicomTagSelector(JDialogBase parent, boolean isStandalone) {
 		
 		if(parent instanceof DicomTagSelectorImpl) {
 			this.parentDialog = (DicomTagSelectorImpl)parent;
@@ -149,6 +153,13 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 		this.keyToName = new TreeMap<String, String>();
 		this.keyToValue = new TreeMap<String, String>();
 		this.setResizable(true);
+		
+		this.isStandalone = isStandalone;
+		
+	}
+	
+	public void setTagList(Hashtable<FileDicomKey,FileDicomTag> tagList) {
+		this.tagList = tagList;
 		
 		buildGroupElementMap(tagList);
 		

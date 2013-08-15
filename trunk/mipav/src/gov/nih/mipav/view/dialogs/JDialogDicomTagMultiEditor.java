@@ -33,15 +33,43 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	private FileDicomTag[] tagArray;
 	
+	/** Blank constructor needed for scripting */
+	public JDialogDicomTagMultiEditor() {
+		closeButton.setActionCommand(SAVE);
+		closeButton.setText(SAVE);
+	}
+	
 	public JDialogDicomTagMultiEditor(Hashtable<FileDicomKey, FileDicomTag> tagList, JDialogBase parent, 
 			boolean isStandalone, File file, FileInfoDicom fileInfo) {
-		super(tagList, parent, isStandalone);
+		super(parent, isStandalone);
 		
 		this.file = file;
 		this.fileInfo = fileInfo;
 		
 		closeButton.setActionCommand(SAVE);
 		closeButton.setText(SAVE);
+	}
+	
+	private FileInfoDicom createFileInfo() {
+		FileInfoDicom fileInfo = null;
+		try {
+        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+        	boolean success = readDicom.readHeader(true);
+        	if(success) {
+        		fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
+        		JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true, file, fileInfo);
+        		tagSelector.setParentDialog(tagSelector);
+        		tagSelector.setVisible(true);
+        		
+        		this.fileInfo = fileInfo;
+        	}
+    	} catch(IOException e) {
+    		System.err.println("Unable to read dicom file: "+file.getAbsolutePath());
+    	}
+		
+		return fileInfo;
+		
 	}
 
 	@Override
@@ -55,6 +83,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	@Override
 	protected void callAlgorithm() {
+		System.out.println("Processing file: "+file.getAbsolutePath());
 		try {
 			FileDicom writeDicom = new FileDicom(file.getAbsolutePath());
 			int length = tagsTable.getRowCount();
@@ -120,6 +149,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	@Override
 	protected void storeParamsFromGUI() throws ParserException {
 		super.setGUIFromParams();
+
 		scriptParameters.getParams().put(ParameterFactory.newParameter("DicomFile", file.getAbsolutePath()));
 		for(int i=0; i<keyArray.length; i++) {
 			scriptParameters.getParams().put(ParameterFactory.newParameter("TagKey"+i, keyArray[i].toString()));

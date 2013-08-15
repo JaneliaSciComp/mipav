@@ -439,7 +439,8 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
             		}
             	}
             	System.out.println("Constructed tag selector in: "+(System.currentTimeMillis()-time));
-            	currentTagEditor = new JDialogDicomTagSelector(tagHash, parent, true);
+            	currentTagEditor = new JDialogDicomTagSelector(parent, true);
+            	currentTagEditor.setTagList(tagHash);
             }
 		}
     	
