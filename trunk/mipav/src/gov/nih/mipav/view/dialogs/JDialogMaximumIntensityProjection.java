@@ -200,6 +200,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		} else if (command.equals(PREVIEW)) {
 			if(helpButton.getText().equals(PREV_OFF)) {
 				helpButton.setText(PREV_ON);
+				
 				doPreview = true;
 				int i = tabbedPane.getSelectedIndex();
 				boolean doPopulate = false;
@@ -460,30 +461,44 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		int initLoc = 0;
 		
 		switch(dim) {
-		case 2: //z projection
+		case 2: //z projection, tested
 			initLoc = index*cFactor + sliceSize*sliceLoc*cFactor;
 			//currentVal = buffer[index + sliceSize*sliceLoc];
 			break;
 			
 		case 1: //y projection
-			//currentVal = buffer[i*sliceSize + index + extents[0]*i];
+//			System.out.print("Z: "+(((int)(index / (double)extents[0]))+", "+
+//								"Y: "+sliceLoc+", X: "+(index % extents[0])));
+//			System.out.println();
+			
+			currentVal = buffer[(int)(((int)(index / (double)extents[0])) * (extents[0]*extents[1])) + 
+			                    	(sliceLoc*extents[0]) + (index % extents[0])];
+//			System.out.println((((int)(((int)(index / (double)extents[0])) * (extents[0]*extents[1])) + 
+//			                    	(sliceLoc*extents[0]) + (index % extents[0]))));
+			if(currentVal != 0) {
+//				System.out.println(currentVal);
+//				System.out.print("Z: "+(((int)(index / (double)extents[0]))+", "+
+//						"Y: "+sliceLoc+", X: "+(index % extents[0])));
+//				System.out.println();
+			}
 			break;
 			
 		case 0: //x projection
-			//currentVal = buffer[i*extents[0] + i + (index*extents[2])];
+			currentVal = buffer[(int)((index / (double)extents[0]) * (extents[0]*extents[1])) + 
+		                    	(sliceLoc*extents[0]) + (index % extents[0])];
 			break;
 		}
 		
 		switch(cFactor) {
-		case 1: //real-valued image
+		case 1: //real-valued image, tested
 			currentVal = buffer[initLoc];
 			break;
 		
-		case 2: //complex-valued image
+		case 2: //complex-valued image, tested
 			currentVal = Math.pow(buffer[initLoc], 2) + Math.pow(buffer[initLoc+1], 2);
 			break;
 			
-		case 4: //color image
+		case 4: //color image, UNTESTED
 			currentVal = Math.max(
 							Math.max(
 									Math.max(buffer[initLoc], buffer[initLoc+1]), 
