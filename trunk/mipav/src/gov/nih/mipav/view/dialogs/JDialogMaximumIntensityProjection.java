@@ -286,14 +286,32 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		return extents;
 	}
 	
+	private int getPreviewImageType() {
+		int type = image.getType();
+		switch(type) {
+		case ModelStorageBase.DCOMPLEX:
+			return ModelStorageBase.DOUBLE;
+		case ModelStorageBase.COMPLEX:
+			return ModelStorageBase.FLOAT;
+		case ModelStorageBase.ARGB:
+			return ModelStorageBase.UBYTE;
+		case ModelStorageBase.ARGB_USHORT:
+			return ModelStorageBase.USHORT;
+		case ModelStorageBase.ARGB_FLOAT:
+			return ModelStorageBase.FLOAT;
+		default:
+			return type;
+		}
+	}
+	
 	private void initMinPreview() {
-		minSlicePreview = new ModelImage(image.getType(), getPreviewExtents(), "MinPreview_"+image.getImageName());
+		minSlicePreview = new ModelImage(getPreviewImageType(), getPreviewExtents(), "MinPreview_"+image.getImageName());
 		minSliceWindow = new ViewJFrameImage(minSlicePreview);
 		minSliceWindow.setVisible(false);
 	}
 	
 	private void initMaxPreview() {
-		maxSlicePreview = new ModelImage(image.getType(), getPreviewExtents(), "MaxPreview_"+image.getImageName());
+		maxSlicePreview = new ModelImage(getPreviewImageType(), getPreviewExtents(), "MaxPreview_"+image.getImageName());
 		maxSliceWindow = new ViewJFrameImage(maxSlicePreview);
 		maxSliceWindow.setVisible(false);
 	}
@@ -380,6 +398,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 							smallestVal = currentVal;
 						}
 					}
+					
 					sliceBuffer[index] = smallestVal;
 				}
 				try {
