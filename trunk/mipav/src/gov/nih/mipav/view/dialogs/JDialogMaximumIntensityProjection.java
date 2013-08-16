@@ -270,7 +270,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 
 	private int[] getPreviewExtents() {
 		int dim = tabbedPane.getSelectedIndex();
-		int[] extents = new int[2];
+		int[] extents = new int[3];
 		if(dim == 0) { //x project
 			extents[0] = image.getExtents()[1];
 			extents[1] = image.getExtents()[2];
@@ -281,6 +281,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			extents[0] = image.getExtents()[0];
 			extents[1] = image.getExtents()[1];
 		}
+		extents[2] = 2;
 		
 		return extents;
 	}
