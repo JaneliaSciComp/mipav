@@ -362,7 +362,23 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 					smallestVal = upperBound;
 					currentVal = 0.0;
 					for(int i=beginSlice; i<=endSlice; i++) {
-						currentVal = buffer[index + sliceSize*i];
+						switch(dim) {
+						case 2: //z projection
+							currentVal = buffer[index + sliceSize*i];
+							break;
+							
+						case 1: //y projection
+							int location = (i*extents[0] + i*extents[1]*extents[2] + index);
+							System.out.println("Index: "+location);
+							System.out.println("z,y,x: "+(location / (extents[1]*extents[2])));
+							currentVal = buffer[i*extents[0] + i*extents[1]*extents[2] + index];
+							break;
+							
+						case 0: //x projection
+							
+							break;
+						}
+						
 						if(currentVal < smallestVal && currentVal > lowerBound) {
 							smallestVal = currentVal;
 						}
@@ -383,6 +399,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 					currentVal = 0.0;
 					for(int i=beginSlice; i<=endSlice; i++) {
 						currentVal = buffer[index + sliceSize*i];
+						
 						if(currentVal > largestVal && currentVal < upperBound) {
 							largestVal = currentVal;
 						}
