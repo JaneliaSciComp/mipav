@@ -143,6 +143,8 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	private int slice = 0;
 	/** Whether preview mode is turned on. */
 	private boolean doPreview = false;
+	/** Used for construction of the preview. */
+	private int dim, sliceSize, index, sliceLoc;
 	
 	/**
 	 * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -301,11 +303,13 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	 */
 	private void populatePreview() {
 		
-		int dim = tabbedPane.getSelectedIndex();
+		dim = tabbedPane.getSelectedIndex();
 		boolean doMin = minimumCheck[dim].isSelected();
 		boolean doMax = maximumCheck[dim].isSelected();
 		int window = windowSlider[dim].getValue();
-		int sliceSize = minSlicePreview != null ? minSlicePreview.getSliceSize() : maxSlicePreview.getSliceSize();
+		index = 0;
+		sliceSize = minSlicePreview != null ? minSlicePreview.getSliceSize() : maxSlicePreview.getSliceSize();
+		sliceLoc = 0;
 		
 		if(doMin || doMax) {
 			double[] buffer;
@@ -361,23 +365,8 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 				for(int index=0; index<sliceSize; index++) {
 					smallestVal = upperBound;
 					currentVal = 0.0;
-					for(int i=beginSlice; i<=endSlice; i++) {
-						switch(dim) {
-						case 2: //z projection
-							currentVal = buffer[index + sliceSize*i];
-							break;
-							
-						case 1: //y projection
-							int location = (i*extents[0] + i*extents[1]*extents[2] + index);
-							System.out.println("Index: "+location);
-							System.out.println("z,y,x: "+(location / (extents[1]*extents[2])));
-							currentVal = buffer[i*extents[0] + i*extents[1]*extents[2] + index];
-							break;
-							
-						case 0: //x projection
-							
-							break;
-						}
+					for(sliceLoc=beginSlice; sliceLoc<=endSlice; sliceLoc++) {
+						currentVal = getCurrentVal(buffer);
 						
 						if(currentVal < smallestVal && currentVal > lowerBound) {
 							smallestVal = currentVal;
@@ -394,11 +383,12 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			
 			if(doMax) {
 				double largestVal, currentVal;
-				for(int index=0; index<sliceSize; index++) {
+				for(index=0; index<sliceSize; index++) {
 					largestVal = lowerBound;
 					currentVal = 0.0;
-					for(int i=beginSlice; i<=endSlice; i++) {
-						currentVal = buffer[index + sliceSize*i];
+					
+					for(sliceLoc=beginSlice; sliceLoc<=endSlice; sliceLoc++) {
+						currentVal = getCurrentVal(buffer);
 						
 						if(currentVal > largestVal && currentVal < upperBound) {
 							largestVal = currentVal;
@@ -432,6 +422,35 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	// ************************************************************************
 	// ************************** Algorithm Events ****************************
 	// ************************************************************************
+
+	/**
+	 * 
+	 * @param buffer image buffer
+	 * @return map of location in image buffer to resulting location in MIP.
+	 */
+	private double getCurrentVal(double[] buffer) {
+		double currentVal = 0;
+		
+		if(image.isComplexImage()) {
+			
+		} else {
+			switch(dim) {
+			case 2: //z projection
+				currentVal = buffer[index + sliceSize*sliceLoc];
+				break;
+				
+			case 1: //y projection
+				//currentVal = buffer[i*sliceSize + index + extents[0]*i];
+				break;
+				
+			case 0: //x projection
+				//currentVal = buffer[i*extents[0] + i + (index*extents[2])];
+				break;
+			}
+		}
+		
+		return currentVal;
+	}
 
 	/**
 	 * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
