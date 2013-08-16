@@ -165,6 +165,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 				this.slice = frame.getComponentImage().getSlice();
 			}
 		}
+		image.addImageDisplayListener(this);
 		nDims = image.getNDims();
 		if ( nDims != 3 )
 		{
@@ -267,14 +268,14 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		int dim = tabbedPane.getSelectedIndex();
 		int[] extents = new int[2];
 		if(dim == 0) { //x project
-			extents[0] = image.getExtents()[0];
-			extents[1] = image.getExtents()[1];
+			extents[0] = image.getExtents()[1];
+			extents[1] = image.getExtents()[2];
 		} else if(dim == 1) { //y project
 			extents[0] = image.getExtents()[0];
 			extents[1] = image.getExtents()[2];
 		} else if(dim == 2) { //z project
-			extents[0] = image.getExtents()[1];
-			extents[1] = image.getExtents()[2];
+			extents[0] = image.getExtents()[0];
+			extents[1] = image.getExtents()[1];
 		}
 		
 		return extents;
@@ -302,6 +303,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		boolean doMin = minimumCheck[dim].isSelected();
 		boolean doMax = maximumCheck[dim].isSelected();
 		int window = windowSlider[dim].getValue();
+		int sliceSize = minSlicePreview != null ? minSlicePreview.getSliceSize() : maxSlicePreview.getSliceSize();
 		
 		if(doMin || doMax) {
 			double[] buffer;
@@ -309,7 +311,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			try {
 				int length = image.getSize();
 				buffer = new double[length];
-				sliceBuffer = new double[minSlicePreview.getSliceSize()];
+				sliceBuffer = new double[sliceSize];
 				image.exportData(0, length, buffer);
 			} catch (IOException error) {
 				buffer = null;
@@ -350,7 +352,6 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			} else {} //no offsets need to be applied in this case
 		
 			if(doMin) { //TODO: add support for complex, color images, and non-z projections
-				int sliceSize = minSlicePreview.getDataSize();
 				double smallestVal, currentVal;
 				for(int index=0; index<sliceSize; index++) {
 					smallestVal = Double.MAX_VALUE;
@@ -371,12 +372,11 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			}
 			
 			if(doMax) {
-				int sliceSize = maxSlicePreview.getDataSize();
 				double largestVal, currentVal;
 				for(int index=0; index<sliceSize; index++) {
 					largestVal = -Double.MAX_VALUE;
 					currentVal = 0.0;
-					for(int i=beginSlice; i<endSlice; i++) {
+					for(int i=beginSlice; i<=endSlice; i++) {
 						currentVal = buffer[index + sliceSize*i];
 						if(currentVal > largestVal) {
 							largestVal = currentVal;
@@ -385,15 +385,23 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 					sliceBuffer[index] = largestVal;
 				}
 				try {
-					minSlicePreview.importData(0, sliceBuffer, false);
+					maxSlicePreview.importData(0, sliceBuffer, false);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
 		
-		minSliceWindow.setVisible(doMin);
-		maxSliceWindow.setVisible(doMax);
+		if(minSliceWindow != null) {
+			minSlicePreview.calcMinMax();
+			minSliceWindow.setVisible(doMin);
+		}
+		
+		if(maxSliceWindow != null) {
+			maxSlicePreview.calcMinMax();
+			maxSliceWindow.setVisible(doMax);
+			maxSliceWindow.updateImages();
+		}
 	}
 
 	// ************************************************************************
@@ -1360,7 +1368,9 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			{
 				windowLabel[i].setText("# slices in bracket: " + windowSlider[i].getValue() );
 				sourceSlider = windowSlider[i];
-				populatePreview();
+				if(helpButton.getText().equals(PREV_ON)) {
+					populatePreview();
+				}
 				break;
 			}
 		}
@@ -1385,10 +1395,25 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	}
 	
 	private void destroyPreview() {
-		minSlicePreview.disposeLocal(false);
-		minSliceWindow.dispose();
-		maxSlicePreview.disposeLocal(false);
-		maxSliceWindow.dispose();
+		if(minSlicePreview != null) {
+			minSlicePreview.disposeLocal(false);
+			minSlicePreview = null;
+		}
+		
+		if(minSliceWindow != null) {
+			minSliceWindow.dispose();
+			minSliceWindow = null;
+		}
+		
+		if(maxSlicePreview != null) {
+			maxSlicePreview.disposeLocal(false);
+			maxSlicePreview = null;
+		}
+		
+		if(maxSliceWindow != null) {
+			maxSliceWindow.dispose();
+			maxSliceWindow = null;
+		}
 	}
 
 	@Override
