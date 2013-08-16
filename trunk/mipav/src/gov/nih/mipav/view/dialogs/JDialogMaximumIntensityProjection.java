@@ -13,12 +13,11 @@ import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
 import gov.nih.mipav.model.scripting.parameters.ParameterFloat;
 import gov.nih.mipav.model.scripting.parameters.ParameterInt;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.event.ChangeEvent;
@@ -45,12 +44,18 @@ import javax.swing.JTextField;
  * @author  joshim2
  */
 public class JDialogMaximumIntensityProjection extends JDialogScriptableBase 
-implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
+		implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener, ViewImageUpdateInterface {
 
 	//~ Static fields/initializers -------------------------------------------------------------------------------------
 
 	/** Use serialVersionUID for interoperability. */
 	private static final long serialVersionUID = -586175799570928868L;
+
+	private static final String PREVIEW = "PREVIEW";
+
+	private static final String PREV_ON = "On Prev";
+	
+	private static final String PREV_OFF = "Off Prev";
 
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -127,6 +132,16 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	private int nDims = 3;
 	/** Image extents. */
 	private int[] extents;
+	/** Single slice preview images */
+	private ModelImage minSlicePreview, maxSlicePreview;
+	/** The tabbed pane that holds each dimension */
+	private JTabbedPane tabbedPane;
+	/** Windows containing preview images */
+	private ViewJFrameImage minSliceWindow, maxSliceWindow;
+	/** Cached value of selected tab */
+	private int cachedTab = 2;
+	/** Current slice of image */
+	private int slice = 0;
 
 
 	/**
@@ -143,6 +158,13 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	public JDialogMaximumIntensityProjection(Frame theParentFrame, ModelImage im) {
 		super(theParentFrame, false);
 		image = im;
+		Vector<ViewImageUpdateInterface> updateList = image.getImageFrameVector();
+		for(ViewImageUpdateInterface inter : updateList) {
+			if(inter instanceof ViewJFrameImage) {
+				ViewJFrameImage frame = (ViewJFrameImage)inter;
+				this.slice = frame.getComponentImage().getSlice();
+			}
+		}
 		nDims = image.getNDims();
 		if ( nDims != 3 )
 		{
@@ -172,9 +194,206 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			dispose();
 		} else if (command.equals("Help")) {
 
+		} else if (command.equals(PREVIEW)) {
+			if(helpButton.getText().equals(PREV_OFF)) {
+				helpButton.setText(PREV_ON);
+				int i = tabbedPane.getSelectedIndex();
+				boolean doPopulate = false;
+				if(minimumCheck[i].isSelected()) {
+					initMinPreview();
+					doPopulate = true;
+				} else {
+					if(minSliceWindow != null) {
+						minSliceWindow.setVisible(false);
+					}
+				}
+				if(maximumCheck[i].isSelected()) {
+					initMaxPreview();
+					doPopulate = true;
+				} else {
+					if(maxSliceWindow != null) {
+						maxSliceWindow.setVisible(false);
+					}
+				}
+				if(doPopulate) {
+					populatePreview();
+				}
+			} else {
+				helpButton.setText(PREV_OFF);
+				destroyPreview();
+			}
+			
+		} else if(event.getSource() instanceof JCheckBox) { 
+			boolean sourceFound = false;
+			for(int i=0; i<minimumCheck.length; i++) {
+				if(event.getSource() == minimumCheck[i]) {
+					sourceFound = true;
+					if(minimumCheck[i].isSelected()) {
+						initMinPreview();
+						populatePreview();
+					} else {
+						minSliceWindow.setVisible(false);
+					}
+					
+					break;
+				}
+			}
+			
+			if(!sourceFound) {
+				for(int i=0; i<maximumCheck.length; i++) {
+					if(event.getSource() == maximumCheck[i]) {
+						sourceFound = true;
+						if(maximumCheck[i].isSelected()) {
+							initMaxPreview();
+							populatePreview();
+						} else {
+							maxSliceWindow.setVisible(false);
+						}
+						
+						break;
+					}
+				}
+			}
+			
+			if(!sourceFound) {
+				System.err.println("Unable to determine if checkbox should be instantiated");
+			}
 		} else {
             super.actionPerformed(event);
         }
+	} 
+
+	private int[] getPreviewExtents() {
+		int dim = tabbedPane.getSelectedIndex();
+		int[] extents = new int[2];
+		if(dim == 0) { //x project
+			extents[0] = image.getExtents()[0];
+			extents[1] = image.getExtents()[1];
+		} else if(dim == 1) { //y project
+			extents[0] = image.getExtents()[0];
+			extents[1] = image.getExtents()[2];
+		} else if(dim == 2) { //z project
+			extents[0] = image.getExtents()[1];
+			extents[1] = image.getExtents()[2];
+		}
+		
+		return extents;
+	}
+	
+	private void initMinPreview() {
+		minSlicePreview = new ModelImage(image.getType(), getPreviewExtents(), "MinPreview_"+image.getImageName());
+		minSliceWindow = new ViewJFrameImage(minSlicePreview);
+		minSliceWindow.setVisible(false);
+	}
+	
+	private void initMaxPreview() {
+		maxSlicePreview = new ModelImage(image.getType(), getPreviewExtents(), "MaxPreview_"+image.getImageName());
+		maxSliceWindow = new ViewJFrameImage(maxSlicePreview);
+		maxSliceWindow.setVisible(false);
+	}
+	
+	/**
+	 * Previews the currently active slice would loosely go with either min or max sliding window.
+	 * Current slice is <code>this.slice</code>
+	 */
+	private void populatePreview() {
+		
+		int dim = tabbedPane.getSelectedIndex();
+		boolean doMin = minimumCheck[dim].isSelected();
+		boolean doMax = maximumCheck[dim].isSelected();
+		int window = windowSlider[dim].getValue();
+		
+		if(doMin || doMax) {
+			double[] buffer;
+			double[] sliceBuffer;
+			try {
+				int length = image.getSize();
+				buffer = new double[length];
+				sliceBuffer = new double[minSlicePreview.getSliceSize()];
+				image.exportData(0, length, buffer);
+			} catch (IOException error) {
+				buffer = null;
+				System.err.println("Algorithm Maximum Intensity Projection: Image(s) Locked");
+				return;
+			} catch (OutOfMemoryError e) {
+				buffer = null;
+				System.err.println("Algorithm Maximum Intensity Projection: Out of Memory");
+				return;
+			}
+			
+			int subWindow = window;
+			if(window % 2 == 0) {
+				subWindow--;
+			}
+			int offsetBegin = 0, offsetEnd = 0;
+			int beginSlice = slice - ((subWindow)/2);
+			int minSlice = Integer.valueOf(minInput[dim].getText());
+			if(beginSlice < minSlice) {
+				offsetBegin = minSlice - beginSlice;
+			}
+			int endSlice = slice + (window/2); 
+			int maxSlice = Integer.valueOf(maxInput[dim].getText());
+			if(endSlice > maxSlice) {
+				offsetEnd = endSlice - maxSlice;
+			}
+			
+			if(offsetBegin > 0 && offsetBegin > 0) {
+				System.err.println("Sliding window exceeds available images, change min/max slices to use entire sliding window.");
+				beginSlice = minSlice;
+				endSlice = maxSlice;
+			} else if(offsetBegin > 0) {
+				beginSlice += offsetBegin;
+				endSlice += offsetBegin;
+			} else if(offsetEnd > 0) {
+				beginSlice -= offsetEnd;
+				endSlice -= offsetEnd;
+			} else {} //no offsets need to be applied in this case
+		
+			if(doMin) { //TODO: add support for complex, color images, and non-z projections
+				int sliceSize = minSlicePreview.getDataSize();
+				double smallestVal, currentVal;
+				for(int index=0; index<sliceSize; index++) {
+					smallestVal = Double.MAX_VALUE;
+					currentVal = 0.0;
+					for(int i=beginSlice; i<endSlice; i++) {
+						currentVal = buffer[index + sliceSize*i];
+						if(currentVal < smallestVal) {
+							smallestVal = currentVal;
+						}
+					}
+					sliceBuffer[index] = smallestVal;
+				}
+				try {
+					minSlicePreview.importData(0, sliceBuffer, false);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			if(doMax) {
+				int sliceSize = maxSlicePreview.getDataSize();
+				double largestVal, currentVal;
+				for(int index=0; index<sliceSize; index++) {
+					largestVal = -Double.MAX_VALUE;
+					currentVal = 0.0;
+					for(int i=beginSlice; i<endSlice; i++) {
+						currentVal = buffer[index + sliceSize*i];
+						if(currentVal > largestVal) {
+							largestVal = currentVal;
+						}
+					}
+					sliceBuffer[index] = largestVal;
+				}
+				try {
+					minSlicePreview.importData(0, sliceBuffer, false);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		minSliceWindow.setVisible(doMin);
+		maxSliceWindow.setVisible(doMax);
 	}
 
 	// ************************************************************************
@@ -614,7 +833,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 
 		String[] projectionLables = new String[]{ "X Projection", "Y Projection", "Z Projection" };
 
-		JTabbedPane tabbedPane = new JTabbedPane();
+		tabbedPane = new JTabbedPane();
+		
 		mainDialogPanel.add(tabbedPane, gbcPanel);
 		for ( int i = 0; i < nDims; i++ )
 		{
@@ -817,6 +1037,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 				gbl.setConstraints(maxInput[i], gbcField);
 				thresholdPanel.add(maxInput[i]);
 			}
+			
+			
 
 
 
@@ -882,6 +1104,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
         gbcPanel.gridy = 1;
         gbcPanel.fill = GridBagConstraints.HORIZONTAL;
 		mainDialogPanel.add(buildButtons(), gbcPanel);
+		helpButton.setText(PREV_OFF);
+		helpButton.setActionCommand(PREVIEW);
 		getContentPane().add(mainDialogPanel);
 
 		pack();
@@ -1129,13 +1353,42 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
+		ViewJSlider sourceSlider = null;
 		for ( int i = 0; i < nDims; i++ )
 		{
 			if ( source == windowSlider[i] )
 			{
 				windowLabel[i].setText("# slices in bracket: " + windowSlider[i].getValue() );
+				sourceSlider = windowSlider[i];
+				populatePreview();
+				break;
 			}
 		}
+		
+		if(source == tabbedPane) {
+			int i = tabbedPane.getSelectedIndex();
+			if(i != cachedTab) {
+				if(helpButton.getText().equals(PREV_ON)) {
+			
+					if(minimumCheck[i].isSelected()) {
+						initMinPreview();
+					}
+					if(maximumCheck[i].isSelected()) {
+						initMaxPreview();
+					}
+					populatePreview();
+				} else {
+					destroyPreview();
+				}
+			}
+		}
+	}
+	
+	private void destroyPreview() {
+		minSlicePreview.disposeLocal(false);
+		minSliceWindow.dispose();
+		maxSlicePreview.disposeLocal(false);
+		maxSliceWindow.dispose();
 	}
 
 	@Override
@@ -1158,6 +1411,8 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 					{
 						windowSlider[i].setValue(range);
 					}
+					helpButton.setText(PREV_OFF);
+					destroyPreview();
 				}
 			}
 		}
@@ -1274,6 +1529,42 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 	@Override
 	public boolean isActionComplete() {
 		return isComplete();
+	}
+
+	@Override
+	public void setSlice(int slice) {
+		this.slice = slice;
+		populatePreview();
+	}
+
+	@Override
+	public void setTimeSlice(int tSlice) {
+		return; //algorithm not implemented for 4D images
+	}
+
+	@Override
+	public boolean updateImageExtents() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean updateImages() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean updateImages(boolean flag) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean flag,
+			int interpMode) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }
