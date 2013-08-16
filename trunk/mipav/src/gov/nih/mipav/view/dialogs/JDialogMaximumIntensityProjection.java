@@ -144,7 +144,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	/** Whether preview mode is turned on. */
 	private boolean doPreview = false;
 	/** Used for construction of the preview. */
-	private int dim, sliceSize, index, sliceLoc;
+	private int dim, sliceSize, index, sliceLoc, cFactor = 0;
 	
 	/**
 	 * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -310,6 +310,13 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		index = 0;
 		sliceSize = minSlicePreview != null ? minSlicePreview.getSliceSize() : maxSlicePreview.getSliceSize();
 		sliceLoc = 0;
+		if(image.isColorImage()) {
+			cFactor = 4;
+		} else if(image.isComplexImage()) {
+			cFactor = 2;
+		} else {
+			cFactor = 1;
+		}
 		
 		if(doMin || doMax) {
 			double[] buffer;
@@ -362,7 +369,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			
 			if(doMin) { //TODO: add support for complex, color images, and non-z projections
 				double smallestVal, currentVal;
-				for(int index=0; index<sliceSize; index++) {
+				for(index=0; index<sliceSize; index++) {
 					smallestVal = upperBound;
 					currentVal = 0.0;
 					for(sliceLoc=beginSlice; sliceLoc<=endSlice; sliceLoc++) {
@@ -430,24 +437,40 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	 */
 	private double getCurrentVal(double[] buffer) {
 		double currentVal = 0;
+		int initLoc = 0;
 		
-		if(image.isComplexImage()) {
+		switch(dim) {
+		case 2: //z projection
+			initLoc = index*cFactor + sliceSize*sliceLoc*cFactor;
+			//currentVal = buffer[index + sliceSize*sliceLoc];
+			break;
 			
-		} else {
-			switch(dim) {
-			case 2: //z projection
-				currentVal = buffer[index + sliceSize*sliceLoc];
-				break;
-				
-			case 1: //y projection
-				//currentVal = buffer[i*sliceSize + index + extents[0]*i];
-				break;
-				
-			case 0: //x projection
-				//currentVal = buffer[i*extents[0] + i + (index*extents[2])];
-				break;
-			}
+		case 1: //y projection
+			//currentVal = buffer[i*sliceSize + index + extents[0]*i];
+			break;
+			
+		case 0: //x projection
+			//currentVal = buffer[i*extents[0] + i + (index*extents[2])];
+			break;
 		}
+		
+		switch(cFactor) {
+		case 1: //real-valued image
+			currentVal = buffer[initLoc];
+			break;
+		
+		case 2: //complex-valued image
+			currentVal = Math.pow(buffer[initLoc], 2) + Math.pow(buffer[initLoc+1], 2);
+			break;
+			
+		case 4: //color image
+			currentVal = Math.max(
+							Math.max(
+									Math.max(buffer[initLoc], buffer[initLoc+1]), 
+																	buffer[initLoc+2]), 
+																		buffer[initLoc+3]);
+			break;
+		}	
 		
 		return currentVal;
 	}
