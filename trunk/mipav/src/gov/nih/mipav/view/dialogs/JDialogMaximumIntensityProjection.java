@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.dialogs;
 
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
@@ -142,8 +141,9 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	private int cachedTab = 2;
 	/** Current slice of image */
 	private int slice = 0;
-
-
+	/** Whether preview mode is turned on. */
+	private boolean doPreview = false;
+	
 	/**
 	 * Empty constructor needed for dynamic instantiation (used during scripting).
 	 */
@@ -198,6 +198,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		} else if (command.equals(PREVIEW)) {
 			if(helpButton.getText().equals(PREV_OFF)) {
 				helpButton.setText(PREV_ON);
+				doPreview = true;
 				int i = tabbedPane.getSelectedIndex();
 				boolean doPopulate = false;
 				if(minimumCheck[i].isSelected()) {
@@ -221,6 +222,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 				}
 			} else {
 				helpButton.setText(PREV_OFF);
+				doPreview = false;
 				destroyPreview();
 			}
 			
@@ -229,10 +231,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			for(int i=0; i<minimumCheck.length; i++) {
 				if(event.getSource() == minimumCheck[i]) {
 					sourceFound = true;
-					if(minimumCheck[i].isSelected()) {
+					if(doPreview && minimumCheck[i].isSelected()) {
 						initMinPreview();
 						populatePreview();
-					} else {
+					} else if(minSliceWindow != null) {
 						minSliceWindow.setVisible(false);
 					}
 					
@@ -244,10 +246,10 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 				for(int i=0; i<maximumCheck.length; i++) {
 					if(event.getSource() == maximumCheck[i]) {
 						sourceFound = true;
-						if(maximumCheck[i].isSelected()) {
+						if(doPreview && maximumCheck[i].isSelected()) {
 							initMaxPreview();
 							populatePreview();
-						} else {
+						} else if(minSliceWindow != null) {
 							maxSliceWindow.setVisible(false);
 						}
 						
@@ -329,17 +331,17 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			}
 			int offsetBegin = 0, offsetEnd = 0;
 			int beginSlice = slice - ((subWindow)/2);
-			int minSlice = Integer.valueOf(minInput[dim].getText());
+			int minSlice = Integer.valueOf(startInput[dim].getText());
 			if(beginSlice < minSlice) {
 				offsetBegin = minSlice - beginSlice;
 			}
 			int endSlice = slice + (window/2); 
-			int maxSlice = Integer.valueOf(maxInput[dim].getText());
+			int maxSlice = Integer.valueOf(stopInput[dim].getText());
 			if(endSlice > maxSlice) {
 				offsetEnd = endSlice - maxSlice;
 			}
 			
-			if(offsetBegin > 0 && offsetBegin > 0) {
+			if(offsetBegin > 0 && offsetEnd > 0) {
 				System.err.println("Sliding window exceeds available images, change min/max slices to use entire sliding window.");
 				beginSlice = minSlice;
 				endSlice = maxSlice;
@@ -351,14 +353,17 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 				endSlice -= offsetEnd;
 			} else {} //no offsets need to be applied in this case
 		
+			double lowerBound = Double.valueOf(minInput[dim].getText()) - Double.MIN_NORMAL;
+			double upperBound = Double.valueOf(maxInput[dim].getText()) + Double.MIN_NORMAL;
+			
 			if(doMin) { //TODO: add support for complex, color images, and non-z projections
 				double smallestVal, currentVal;
 				for(int index=0; index<sliceSize; index++) {
-					smallestVal = Double.MAX_VALUE;
+					smallestVal = upperBound;
 					currentVal = 0.0;
-					for(int i=beginSlice; i<endSlice; i++) {
+					for(int i=beginSlice; i<=endSlice; i++) {
 						currentVal = buffer[index + sliceSize*i];
-						if(currentVal < smallestVal) {
+						if(currentVal < smallestVal && currentVal > lowerBound) {
 							smallestVal = currentVal;
 						}
 					}
@@ -374,11 +379,11 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			if(doMax) {
 				double largestVal, currentVal;
 				for(int index=0; index<sliceSize; index++) {
-					largestVal = -Double.MAX_VALUE;
+					largestVal = lowerBound;
 					currentVal = 0.0;
 					for(int i=beginSlice; i<=endSlice; i++) {
 						currentVal = buffer[index + sliceSize*i];
-						if(currentVal > largestVal) {
+						if(currentVal > largestVal && currentVal < upperBound) {
 							largestVal = currentVal;
 						}
 					}
@@ -394,14 +399,17 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		
 		if(minSliceWindow != null) {
 			minSlicePreview.calcMinMax();
+			minSliceWindow.updateImages(true);
 			minSliceWindow.setVisible(doMin);
 		}
 		
 		if(maxSliceWindow != null) {
 			maxSlicePreview.calcMinMax();
+			maxSliceWindow.updateImages(true);
 			maxSliceWindow.setVisible(doMax);
-			maxSliceWindow.updateImages();
 		}
+		
+		image.getParentFrame().setVisible(true);
 	}
 
 	// ************************************************************************
@@ -1368,7 +1376,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 			{
 				windowLabel[i].setText("# slices in bracket: " + windowSlider[i].getValue() );
 				sourceSlider = windowSlider[i];
-				if(helpButton.getText().equals(PREV_ON)) {
+				if(doPreview) {
 					populatePreview();
 				}
 				break;
@@ -1378,7 +1386,7 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 		if(source == tabbedPane) {
 			int i = tabbedPane.getSelectedIndex();
 			if(i != cachedTab) {
-				if(helpButton.getText().equals(PREV_ON)) {
+				if(doPreview) {
 			
 					if(minimumCheck[i].isSelected()) {
 						initMinPreview();
@@ -1559,7 +1567,9 @@ public class JDialogMaximumIntensityProjection extends JDialogScriptableBase
 	@Override
 	public void setSlice(int slice) {
 		this.slice = slice;
-		populatePreview();
+		if(doPreview) {
+			populatePreview();
+		}
 	}
 
 	@Override
