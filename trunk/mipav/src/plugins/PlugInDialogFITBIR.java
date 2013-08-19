@@ -5122,7 +5122,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					value = (String) (((JComboBox) comp).getSelectedItem());
 					if (value.equalsIgnoreCase("Other, specify")) {
 						value = value + ": " + ((JTextField) focus.getComponentAfter(this, comp)).getText().trim();
-						System.out.println(value);
 					}
 				}
 				/*
