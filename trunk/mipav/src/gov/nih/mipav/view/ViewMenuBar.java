@@ -164,6 +164,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
+                        menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
                 menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
@@ -1173,6 +1174,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Histogram slice matching", false);
             menuBuilder.setMenuItemEnabled("Tilt correction", false);
             menuBuilder.setMenuItemEnabled("Inverse gradient", false);
+            menuBuilder.setMenuItemEnabled("Brejl-Sonka 3D", false);
         }
 
         if (ModelImage.isColorImage(type)) {
