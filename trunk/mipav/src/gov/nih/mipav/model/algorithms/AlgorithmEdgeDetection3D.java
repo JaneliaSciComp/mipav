@@ -31,9 +31,9 @@ public class AlgorithmEdgeDetection3D extends AlgorithmBase {
 
     // Best,
     // Milan
-    private double dx = 7.0;
-    private double dy = 7.0;
-    private double dz = 7.0;
+    private double dx = 7.0 * srcImage.getFileInfo(0).getResolutions()[0];
+    private double dy = 7.0 * srcImage.getFileInfo(0).getResolutions()[1];
+    private double dz = 7.0 * srcImage.getFileInfo(0).getResolutions()[2];
     // Mask size
     private int nx = 5;
     private int ny = 5;
