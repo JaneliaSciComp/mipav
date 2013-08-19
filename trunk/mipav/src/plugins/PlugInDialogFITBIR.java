@@ -2576,6 +2576,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 		
 		private ContainerOrderFocusTraversalPolicy focus = new ContainerOrderFocusTraversalPolicy();
 
+		private String specify;
+
 		/**
 		 * constructor
 		 * 
@@ -3188,6 +3190,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 										public void actionPerformed(ActionEvent e) {
 											if (((JComboBox) t).getSelectedItem().equals("Other, specify")) {
 												spec.setVisible(true);
+												spec.setText(specify);
+												specify = "";
 												repaint();
 											} else {
 												spec.setVisible(false);
@@ -3460,6 +3464,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 							} else if (comp instanceof JComboBox) {
 								final JComboBox c = (JComboBox) comp;
+								
+								if (value.contains("Other, specify: ")) {
+									specify = value.substring(16);
+									value = "Other, specify";
+								}
 
 								for (int k = 0; k < c.getItemCount(); k++) {
 									final String item = (String) c.getItemAt(k);
