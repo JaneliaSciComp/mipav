@@ -2573,6 +2573,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 		private String currFile;
 
 		private boolean validFile;
+		
+		private ContainerOrderFocusTraversalPolicy focus = new ContainerOrderFocusTraversalPolicy();
 
 		/**
 		 * constructor
@@ -5118,6 +5120,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 				} else if (comp instanceof JComboBox) {
 					value = (String) (((JComboBox) comp).getSelectedItem());
+					if (value.equalsIgnoreCase("Other, specify")) {
+						value = value + ": " + ((JTextField) focus.getComponentAfter(this, comp)).getText().trim();
+						System.out.println(value);
+					}
 				}
 				/*
 				 * if(!value.equals("")) { System.out.println("the key is " +
