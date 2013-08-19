@@ -1,9 +1,12 @@
 package gov.nih.mipav.view.dialogs;
 
+import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagInfo;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.PrivateDicomDictionary;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.view.MipavUtil;
@@ -35,6 +38,10 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	
 	/** Blank constructor needed for scripting */
 	public JDialogDicomTagMultiEditor() {
+		super(null, true);
+		
+		createFileInfo();
+		
 		closeButton.setActionCommand(SAVE);
 		closeButton.setText(SAVE);
 	}
@@ -46,6 +53,8 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		this.file = file;
 		this.fileInfo = fileInfo;
 		
+		this.setTagList(tagList);
+		
 		closeButton.setActionCommand(SAVE);
 		closeButton.setText(SAVE);
 	}
@@ -53,17 +62,20 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	private FileInfoDicom createFileInfo() {
 		FileInfoDicom fileInfo = null;
 		try {
-        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
-        	boolean success = readDicom.readHeader(true);
-        	if(success) {
-        		fileInfo = (FileInfoDicom)readDicom.getFileInfo();
-        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
-        		JDialogDicomTagSelector tagSelector = new JDialogDicomTagMultiEditor(tagList, null, true, file, fileInfo);
-        		tagSelector.setParentDialog(tagSelector);
-        		tagSelector.setVisible(true);
-        		
-        		this.fileInfo = fileInfo;
-        	}
+			if(file != null) {
+	        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+	        	boolean success = readDicom.readHeader(true);
+	        	if(success) {
+	        		fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+	        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
+	        		setTagList(tagList);
+	        		
+	        		this.fileInfo = fileInfo;
+	        	}
+			} else {
+				tagList = new Hashtable<FileDicomKey, FileDicomTag>();
+				setTagList(tagList);
+			}
     	} catch(IOException e) {
     		System.err.println("Unable to read dicom file: "+file.getAbsolutePath());
     	}
@@ -94,15 +106,28 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				FileDicomKey key = new FileDicomKey(tagsTable.getValueAt(i, 0).toString());
 				Iterator<Entry<FileDicomKey, FileDicomTag>> keyItr = entrySet.iterator();
 				Entry<FileDicomKey, FileDicomTag> entry = null;
+				keyArray[i] = key;
+				
+	
 	keySearch:	while(keyItr.hasNext()) {
 					entry = keyItr.next();
 					if(entry.getKey().equals(key)) {
-						keyArray[i] = key;
+						
 						tagArray[i] = entry.getValue();
-						tagArray[i].setValue(tagsTable.getValueAt(i, 2));
+						
 						break keySearch;
 					}
 				}
+				
+				if(tagArray[i] == null) {
+					FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(keyArray[i]);
+					if(tagInfo == null) {
+						//TODO: Implement method for getting unknown dicom tag info
+					}
+					tagArray[i] = new FileDicomTag(tagInfo);
+				}
+				
+				tagArray[i].setValue(tagsTable.getValueAt(i, 2));
 			}
 			
 			RandomAccessFile raFile = new RandomAccessFile(file, "rw");
@@ -136,6 +161,18 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		}
 		
 		file = new File(scriptParameters.getParams().getString("DicomFile"));
+		try {
+			FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+	    	boolean success = readDicom.readHeader(true);
+	    	if(success) {
+	    		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+	    		
+	    		this.fileInfo = fileInfo;
+	    	}
+		} catch(IOException io) {
+			System.err.println("Unable to read file: "+file.getAbsolutePath());
+		}
+		
 		DefaultTableModel model = ((DefaultTableModel)tagsTable.getModel());
 		for(int i=0; i<numKey; i++) {
 			model.addRow(new String[]{

@@ -137,10 +137,11 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 	
 	/** Blank constructor needed for scripting */
 	public JDialogDicomTagSelector() {
-		
+		super(null, false, false);
 	}
 	
 	public JDialogDicomTagSelector(JDialogBase parent, boolean isStandalone) {
+		super(parent, false, false);		
 		
 		if(parent instanceof DicomTagSelectorImpl) {
 			this.parentDialog = (DicomTagSelectorImpl)parent;
@@ -159,6 +160,7 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 	}
 	
 	public void setTagList(Hashtable<FileDicomKey,FileDicomTag> tagList) {
+		
 		this.tagList = tagList;
 		
 		buildGroupElementMap(tagList);
@@ -339,7 +341,9 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         scrollPaneGroup.setPreferredSize(new Dimension(150, 94));
         tagSelectorPanel.add(scrollPaneGroup, selectorPanelConstraints);
         k1 = new TagInputListener(groupText, groupList, this);
-        groupText.setText(groupList.getModel().getElementAt(0).toString());
+        if(groupList.getModel().getSize() > 0) {
+        	groupText.setText(groupList.getModel().getElementAt(0).toString());
+        }
         
         // Element Column
         selectorPanelConstraints.gridx = 3;
@@ -361,10 +365,14 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         selectorPanelConstraints.gridwidth = 2;
         selectorPanelConstraints.gridheight = 3;
         selectorPanelConstraints.anchor = GridBagConstraints.CENTER;
-        Vector<String> vElement;
-        Collections.sort(vElement = new Vector<String>(groupToElement.get(vGroup.get(0))), new NumberComparator());
+        Vector<String> vElement = new Vector<String>();
+        if(vGroup.size() > 0) {
+        	Collections.sort(vElement = new Vector<String>(groupToElement.get(vGroup.get(0))), new NumberComparator());
+        }
         elementList = new JList(vElement);
-        elementList.setSelectedIndex(0);
+        if(elementList.getModel().getSize() > 0) {
+        	elementList.setSelectedIndex(0);
+        }
         elementList.setVisibleRowCount(4);
         elementList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         elementList.setMinimumSize(new Dimension(150, 94));
@@ -377,7 +385,9 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         scrollPaneElement.setPreferredSize(new Dimension(150, 94));
         tagSelectorPanel.add(scrollPaneElement, selectorPanelConstraints);
         k2 = new TagInputListener(elementText, elementList, this);
-        elementText.setText(elementList.getModel().getElementAt(0).toString());
+        if(elementList.getModel().getSize() > 0) {
+        	elementText.setText(elementList.getModel().getElementAt(0).toString());
+        }
         
         //Buttons Column
         selectorPanelConstraints.gridx = 5;
@@ -429,7 +439,10 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         infoPanelConstraints.gridx = 1;
         infoPanelConstraints.gridy = 0;
         infoPanelConstraints.weightx = 1;
-        String tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
+        String tagName = new String();
+        if(groupList.getSelectedValue() != null && elementList.getSelectedValue() != null) {
+        	tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
+        }
         nameValue = new JLabel(keyToName.get(tagName));
         JScrollPane namePane = new JScrollPane(nameValue);
         namePane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -460,7 +473,7 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         propPane.setBorder(null);
         tagInformationPanel.add(propPane, infoPanelConstraints);
         
-        if(keyToValue.get(tagName).equals(UNKNOWN)) {
+        if(keyToValue.get(tagName) == null || keyToValue.get(tagName).equals(UNKNOWN)) {
         	propPane.setVisible(false);
         	propertyLabel.setVisible(false);
         }
