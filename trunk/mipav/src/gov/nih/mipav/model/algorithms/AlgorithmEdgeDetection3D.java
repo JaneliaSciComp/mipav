@@ -40,7 +40,16 @@ public class AlgorithmEdgeDetection3D extends AlgorithmBase {
     private int nz = 5;
     // Neighborhood size for the directional gradient averaging L (recommended empirically derived value
     // for the mask size of 5 x 5 x 5 = 2.1)
-    private double L = 2.1;
+    // Y0 and Z0 have no units
+    // X2 has units of x**2
+    // A2 has units of x**-2
+    // K2 has units of x**-1
+    // FX has units of x**-1
+    // L*L*K11 has units of x**-1
+    // K11 has units of x**5/U2 = x**5/x**8 = x**-3
+    // L*L has units of x**2
+    // L has units of x
+    private double L = 2.1 * srcImage.getFileInfo(0).getResolutions()[0];
     double threshold = 0.12;
     private boolean componentsRequired = false;
     private boolean anglesRequired = false;
