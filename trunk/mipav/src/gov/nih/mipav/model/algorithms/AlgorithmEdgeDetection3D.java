@@ -12,9 +12,28 @@ public class AlgorithmEdgeDetection3D extends AlgorithmBase {
     // by Marek Brejl and Milan Sonka
     
     // Size of the prism over which the data are integrated during the acquisition process
-    private double dx;
-    private double dy;
-    private double dz;
+    // Dear Professor Milan Sonka:
+
+    // I am a Java programmer at the National Institutes of Health who is implementing your 3d edge detector as 
+    // specified in "Directional 3D Edge Detection in Anisotropic Data: Detector Design and Performance Assessment" 
+    // for the MIPAV image processing package.  How long in terms of voxel lengths were the typical values of dx, 
+    // dy, and dz, the sizes of the prism over which the data were integrated?
+
+              // Sincerely,
+
+           //  William Gandler
+    
+    // William,
+    // I would think that all these should be parameters of your implementation.
+    // And perhaps allow different values for each direction to support anisotropic data.
+
+    // As I recall, the best sizes were about 5-9 for isotropic data.
+
+    // Best,
+    // Milan
+    private double dx = 7.0;
+    private double dy = 7.0;
+    private double dz = 7.0;
     // Mask size
     private int nx = 5;
     private int ny = 5;
@@ -45,19 +64,19 @@ public class AlgorithmEdgeDetection3D extends AlgorithmBase {
     /**
      * AlgorithmEdgeDetection3D.
      *
-     * @param  destImg  DOCUMENT ME!
-     * @param  srcImg   DOCUMENT ME!
-     * @param  dx
-     * @param  dy
-     * @param  dz
-     * @param  nx
-     * @param  ny
-     * @param  nz
-     * @param  L
-     * @param  threshold
-     * @param  componentsRequired;
-     * @param  anglesRequired;
-     * @param  magnitudeRequired
+     * @param  destImg  destination image
+     * @param  srcImg   source image
+     * @param  dx x length of the prism over which the data is integrated
+     * @param  dy y length of the prism over which the data is integrated
+     * @param  dz z length of the prism over which the data is integrated
+     * @param  nx mask x dimension
+     * @param  ny mask y dimension
+     * @param  nz mask z dimension
+     * @param  L Neighborhood size for the directional gradient averaging
+     * @param  threshold (FMAX/largestFMAX) must be >= threshold to be made an edge
+     * @param  componentsRequired If true, keep FX, FY, and FZ arrays.
+     * @param  anglesRequired If true, keep thetaMAX and phiMAX arrays.
+     * @param  magnitudeRequired  If true, keep FMAX array.
      */
     public AlgorithmEdgeDetection3D(ModelImage destImg, ModelImage srcImg, double dx, double dy, double dz,
             int nx, int ny, int nz, double L, double threshold, boolean componentsRequired, boolean anglesRequired,
