@@ -134,7 +134,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	/** Picking support: */
 	protected int m_iXPick = -1, m_iYPick = -1;
 
-	private boolean pressed;
+	private volatile boolean pressed;
 	private Vector3f deltaForward = new Vector3f();
 	private Vector3f deltaBackward = new Vector3f();
 	private Vector3f trackingForward = new Vector3f();
@@ -158,6 +158,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	private boolean keyPressdown = false;
 	
 	private int cameraViewRotationDegree = 3;
+	
+	private MouseWheel mouse;
 	
 	/**
 	 * Setup to fly along the specified path and look around.
@@ -414,6 +416,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 			if (SwingUtilities.isLeftMouseButton(e)) {
 				pressed = false;
+				if ( mouse != null ) { 
+					mouse.terminate();
+					mouse = null;
+				}
 				if ( e.isControlDown() ) {
 					int x = e.getX();
 					int y = e.getY();
@@ -547,7 +553,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
         isDoPicking = false;
 	}
 
-	
+	 
 	public void mouseReleased(MouseEvent e) {
 		pressed = false;
 		m_kViewPoint.copy(camera.GetLocation());
@@ -602,7 +608,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			// cameraUpInverse, cameraRightInverse);
 
 			pressed = true;
-			MouseWheel mouse = new MouseWheel(e);
+			mouse = new MouseWheel(e);
 			prevEventTime = e.getWhen();
 			mouse.start();
 		}
@@ -941,6 +947,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					MouseEvent.MOUSE_PRESSED, when, mod, x, y, 1, false);
 		}
 
+		public void terminate() {
+			pressed = false;
+		}
+		
 		/**
 		 * Runs the thread. While the button is pressed, dispatches mouse
 		 * dragged events at a rate consistent with the velocity slider. Once
@@ -949,12 +959,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		 */
 		public synchronized void run() {
 
-			int count = 0;
-
 			Vector3f cameraLocation = new Vector3f();
 			Vector3f pickingPointLocation = new Vector3f();
 		
-			cameraLocation.copy(m_kViewPoint);
+			cameraLocation.copy(camera.GetLocation());
 			m_kViewRight.copy(camera.GetRVector());
 			m_kViewUp.copy(camera.GetUVector());
 			m_kViewDirection.copy(camera.GetDVector());
@@ -966,46 +974,45 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			trackingForward = Vector3f.sub(pickingPointLocation, cameraLocation);
 			trackingBackward = Vector3f.sub(cameraLocation, pickingPointLocation);
 				
-			deltaForward.scale(0.01f);
-			deltaBackward.scale(0.01f);
-			trackingForward.scale(0.01f);
-		    trackingBackward.scale(0.01f);
+			deltaForward.scale(0.005f);
+			deltaBackward.scale(0.005f);
+			trackingForward.scale(0.005f);
+		    trackingBackward.scale(0.005f);
 
 			Vector3f currentLocation = new Vector3f();
 			
+			currentLocation.copy(cameraLocation);
+			trackingPointLocation.copy(cameraLocation);
+			
 			if (moveForward < 0) {
 				System.err.println("move forward");
-				currentLocation = Vector3f.add(cameraLocation, deltaForward);
-				trackingPointLocation = Vector3f.add(cameraLocation, trackingForward);
 			} else {
 				System.err.println("move backward");
-				currentLocation = Vector3f.add(cameraLocation, deltaBackward);
-				trackingPointLocation = Vector3f.add(cameraLocation, trackingBackward);
 			}
 			
 			while (pressed) {
 
 				parentScene.GetCanvas().dispatchEvent(evt);
+				
 				if (moveForward < 0 ) {
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaForward);
 					trackingPointLocation = trackingPointLocation.add(deltaForward);
-					count++;
 				} else {
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaBackward);
 					trackingPointLocation = trackingPointLocation.add(deltaBackward);
-					count++;
 				}
 
-				when += 100;
-
+				
+				when += 1;
+                
 				try {
-					wait(100);
+					wait(1);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-
+                
 				evt = new MouseEvent(parentScene.GetCanvas(), id, when, mod, x,
 						y, 0, false);
 
