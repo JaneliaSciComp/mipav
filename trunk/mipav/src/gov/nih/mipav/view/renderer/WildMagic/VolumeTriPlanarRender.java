@@ -575,9 +575,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			Vector3f kCRight = Vector3f.unitCross(kCDir, kCUp);
 			m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
-			if (iEvent == NavigationBehavior.EVENT_CHANGE_POSITION) {
-				updateSlicesCenter();
-			}
+			// if (iEvent == NavigationBehavior.EVENT_CHANGE_POSITION) {
+				// updateSlicesCenter();
+			// }
 		}
 
 	}
@@ -631,16 +631,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 			  tfCenter.add(m_kTranslate);
 			  
-			  navigationBehavior.setViewPoint(tfCenter);
-			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
-			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
-			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
-			  navigationBehavior.setRightVector(cameraRight);
 			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.001f,10.0f);
 			  
 			  Matrix3f currentRotation = getObjectRotation();
 			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
 			  Vector3f location = rotationInverse.multLeft(tfCenter);
+			  
+			  navigationBehavior.setViewPoint(location);
+			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
+			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
+			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
 			  
 			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
 		  

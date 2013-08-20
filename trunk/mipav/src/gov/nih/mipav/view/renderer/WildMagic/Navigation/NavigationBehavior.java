@@ -628,6 +628,9 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		notifyCallback(EVENT_CHANGE_POSITION);
 	}
 
+	private void updateSliceCenter() {
+		parentScene.updateSlicesCenter();
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -965,6 +968,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 			Vector3f cameraLocation = new Vector3f();
 			Vector3f pickingPointLocation = new Vector3f();
+			long updateCenterTime = 0;
 		
 			cameraLocation.copy(camera.GetLocation());
 			m_kViewRight.copy(camera.GetRVector());
@@ -999,20 +1003,29 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				parentScene.GetCanvas().dispatchEvent(evt);
 				
 				if (moveForward < 0 ) {
+					if ( updateCenterTime == 3000 ) {
+						updateSliceCenter();
+						updateCenterTime = 0;
+					}
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaForward);
 					trackingPointLocation = trackingPointLocation.add(deltaForward);
 				} else {
+					if ( updateCenterTime == 3000 ) {
+						updateSliceCenter();
+						updateCenterTime = 0;
+					}
 					makeMove(currentLocation);
 					currentLocation = currentLocation.add(deltaBackward);
 					trackingPointLocation = trackingPointLocation.add(deltaBackward);
 				}
 
 				
-				when += 100;
+				when += 200;
+				updateCenterTime += 200;
                 
 				try {
-					wait(100);
+					wait(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -1021,6 +1034,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 						y, 0, false);
 
 			}
+			
+			updateSliceCenter();
 
 		}
 	}
