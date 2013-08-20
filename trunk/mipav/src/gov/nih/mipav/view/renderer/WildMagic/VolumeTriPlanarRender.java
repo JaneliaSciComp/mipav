@@ -740,7 +740,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  
 			  Matrix3f currentRotation = getObjectRotation();
 			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-			  Vector3f location = rotationInverse.mult(tfCenter);
+			  Vector3f location = rotationInverse.multLeft(tfCenter);
 			  
 			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
 			  
