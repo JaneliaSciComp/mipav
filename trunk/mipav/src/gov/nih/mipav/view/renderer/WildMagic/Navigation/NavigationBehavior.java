@@ -216,6 +216,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		m_kViewUp.copy(in);
 	}
 	
+	public void setRightVector(Vector3f in) {
+		m_kViewRight.copy(in);
+	}
+	
 	public void setNaviMode(boolean isNavigationEnabled) {
 		if (isNavigationEnabled) {
 			parentScene.GetCanvas().addKeyListener(this);
@@ -1005,10 +1009,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				}
 
 				
-				when += 1;
+				when += 100;
                 
 				try {
-					wait(1);
+					wait(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
