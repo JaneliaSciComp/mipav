@@ -1243,6 +1243,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogEdgeNMSuppression(this, getActiveImage());
         } else if (command.equals("CANNY")) {
             new JDialogCannyEdgeDetection(this, getActiveImage());
+        } else if (command.equals("ENTROPIC")) {
+            new JDialogEntropicEdgeDetection(this, getActiveImage());
         } else if (command.equals("edge3D")) {
             new JDialogEdgeDetection3D(this, getActiveImage());
         } else if (command.equals("thin2D")) {
