@@ -351,7 +351,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode = new Node();
 		kSphereNode.AttachChild(kSpherePosition);
 		kSphereNode.SetName("Camera");
-		AddNode(kSphereNode);
+		// AddNode(kSphereNode);
 
 		Attributes kAttr1 = new Attributes();
 		kAttr1.SetPChannels(3);
@@ -418,7 +418,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		Node kSphereNode4 = new Node();
 		kSphereNode4.AttachChild(kSpherePosition4);
 		kSphereNode4.SetName("TrackPoint");
-		AddNode(kSphereNode4);
+		// AddNode(kSphereNode4);
 
 		//******************************   View Frustum Points *******************************
 		// --------------------------------- near plane ------------------------------------
@@ -565,152 +565,52 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	public void viewChanged(NavigationBehavior behavior, int iEvent) {
 
-		Vector3f cameraLocation = behavior.getViewPoint();
-		Vector3f cameraDir = behavior.getViewDirection();
-		Vector3f cameraUp = behavior.getViewUp();
-		Vector3f cameraRight = Vector3f.unitCross(cameraDir, cameraUp);
-		
-		if (isNavigationEnabled ) {
+		if (isNavigationEnabled) {
 
-			   Vector3f kCDir = behavior.getViewDirection();
-		        kCDir.normalize();
-		        Vector3f kCUp = behavior.getViewUp();
-		        kCUp.normalize();
-		        Vector3f kCLoc = behavior.getViewPoint();
-		        Vector3f kCRight = Vector3f.unitCross( kCDir, kCUp );
-		        // Vector3f kPositionScaled = getPositionScaled(kCLoc);
-		        m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
-			
-			// m_spkCamera.SetFrame(cameraLocation, cameraDir, cameraUp, cameraRight);
-		
-			
-			float fRMin = m_spkCamera.GetRMin(); 
-			float fRMax = m_spkCamera.GetRMax(); 
-			float fUMin = m_spkCamera.GetUMin(); 
-			float fUMax = m_spkCamera.GetUMax(); 
-			float fDMin = m_spkCamera.GetDMin();
-			float fDMax = m_spkCamera.GetDMax();
-			
-			m_spkCamera.SetFrustum(fRMin, fRMax, fUMin, fUMax, fDMin, fDMax);
-		   
-			// **************************  compute frustum points ***********************
-			Vector3f dminD = Vector3f.scale(fDMin, cameraDir);
-			Vector3f uminU = Vector3f.scale(fUMin, cameraUp);
-			Vector3f umaxU = Vector3f.scale(fUMax, cameraUp);
-			Vector3f rminR = Vector3f.scale(fRMin, cameraRight);
-			Vector3f rmaxR = Vector3f.scale(fRMax, cameraRight);
-			
-			// near plane
-			Vector3f Vbl = Vector3f.add(cameraLocation, Vector3f.add(dminD, Vector3f.add(uminU, rminR)));
-			Vector3f Vtl = Vector3f.add(cameraLocation, Vector3f.add(dminD, Vector3f.add(umaxU, rminR)));
-			Vector3f Vbr = Vector3f.add(cameraLocation, Vector3f.add(dminD, Vector3f.add(uminU, rmaxR)));
-			Vector3f Vtr = Vector3f.add(cameraLocation, Vector3f.add(dminD, Vector3f.add(umaxU, rmaxR)));
-			
-			// far plane
-			Vector3f temp = Vector3f.scale(fDMax/fDMin, Vector3f.add(dminD, Vector3f.add(uminU, rminR)));
-			Vector3f Wbl = Vector3f.add(cameraLocation, temp);
-			temp = Vector3f.scale(fDMax/fDMin, Vector3f.add(dminD, Vector3f.add(umaxU, rminR)));
-			Vector3f Wtl = Vector3f.add(cameraLocation, temp);
-			temp = Vector3f.scale(fDMax/fDMin, Vector3f.add(dminD, Vector3f.add(uminU, rmaxR)));
-			Vector3f Wbr = Vector3f.add(cameraLocation, temp);
-			temp = Vector3f.scale(fDMax/fDMin, Vector3f.add(dminD, Vector3f.add(umaxU, rmaxR)));
-			Vector3f Wtr = Vector3f.add(cameraLocation, temp);
-		    
-			// System.err.println("Vbl = " + Vbl);
-			// System.err.println("Vtl = " + Vtl);
-			// System.err.println("Vbr = " + Vbr);
-			// System.err.println("Vtl = " + Vtl);
-			
-			// System.err.println("Wbl = " + Wbl);
-			// System.err.println("Wtl = " + Wtl);
-			// System.err.println("Wbr = " + Wbr);
-			// System.err.println("Wtl = " + Wtl);
-			
-			// updateSceneNodePoint("Vbl", Vbl);
-			// updateSceneNodePoint("Vtl", Vtl);
-			// updateSceneNodePoint("Vbr", Vbr);
-			// updateSceneNodePoint("Vtr", Vtr);
-			
-			// updateSceneNodePoint("Wbl", Wbl);
-			// updateSceneNodePoint("Wtl", Wtl);
-			// updateSceneNodePoint("Wbr", Wbr);
-			// updateSceneNodePoint("Wtr", Wtr);
-			
-			
-			// updateFrustumPoints(cameraLocation);
-			// updateSlicesCenter(cameraLocation);
-			if ( iEvent == NavigationBehavior.EVENT_CHANGE_POSITION ) {
-				updateFrustumPoints(kCLoc);
-				updateSlicesCenter(kCLoc);
+			Vector3f kCDir = behavior.getViewDirection();
+			kCDir.normalize();
+			Vector3f kCUp = behavior.getViewUp();
+			kCUp.normalize();
+			Vector3f kCLoc = behavior.getViewPoint();
+			Vector3f kCRight = Vector3f.unitCross(kCDir, kCUp);
+			m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
+
+			if (iEvent == NavigationBehavior.EVENT_CHANGE_POSITION) {
+				updateSlicesCenter();
 			}
-
-			m_kParent.displayAll();
 		}
-	
 
 	}
 	
-	
-	public Vector3f getPositionScaled( Vector3f kPoint) {
-
-        int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
-        float[] afResolutions = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions();
-        float[] afOrigins = m_kVolumeImageA.GetImage().getFileInfo(0).getOrigin();
-        int[] aiDirections = m_kVolumeImageA.GetImage().getFileInfo(0).getAxisDirection();
-
-        int xDim = aiExtents[0];
-        int yDim = aiExtents[1];
-        int zDim = aiExtents[2];
-
-        float xBox = (xDim - 1) * afResolutions[0];
-        float yBox = (yDim - 1) * afResolutions[1];
-        float zBox = (zDim - 1) * afResolutions[2];
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        Vector3f kPointScaled = new Vector3f();
-        kPointScaled.X = ((2.0f * (kPoint.X - afOrigins[0]) / aiDirections[0]) -
-                          xBox) / (2.0f*maxBox);
-        kPointScaled.Y = ((2.0f * (kPoint.Y - afOrigins[1]) / aiDirections[1]) -
-                          yBox) / (2.0f*maxBox);
-        kPointScaled.Z = ((2.0f * (kPoint.Z - afOrigins[2]) / aiDirections[2]) -
-                          zBox) / (2.0f*maxBox);
-        return kPointScaled;
-    }
-	
+    /**
+     * Currently only being used to update the picking point
+     * @param name   surface name
+     * @param position  surface location
+     */
 	public void updateSceneNodePoint(String name, Vector3f position) {
 		Matrix3f currentRotation = getObjectRotation();
 		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
 		Vector3f location = rotationInverse.mult(position);
 		m_kParent.translateSurface(name, location);
 	}
-
-	/**
-	 * Update the representation of the current viewpoint in the Volume
-	 * Tri-Planar renderer.
-	 */
-	public void updateFrustumPoints(Vector3f cameraLocation) {
-
-		Vector3f trackPoint = navigationBehavior.getTrackingPoint();
-		updateSceneNodePoint("TrackPoint", trackPoint);
-		updateSceneNodePoint("Camera", cameraLocation);
-	}
+	
 	
 	/**
 	 * Update the bottom 3 planar view center
-	 * @param cameraLocation  camera location
 	 */
-	public void updateSlicesCenter(Vector3f cameraLocation) {
-
-		Vector3f kVolumePt3 = m_kParent.getTranslateSurface("TrackPoint");
-		kVolumePt3.sub( m_kTranslate );
-        kVolumePt3.X *= 1.0f/m_fX;
-        kVolumePt3.Y *= 1.0f/m_fY;
-        kVolumePt3.Z *= 1.0f/m_fZ;
-        kVolumePt3.X *= (m_kVolumeImageA.GetImage().getExtents()[0]-1);
-        kVolumePt3.Y *= (m_kVolumeImageA.GetImage().getExtents()[1]-1);
-        kVolumePt3.Z *= (m_kVolumeImageA.GetImage().getExtents()[2]-1);
-        m_kParent.setSliceFromPlane(kVolumePt3);
-		
-		
+	public void updateSlicesCenter() {
+		Vector3f trackPoint = navigationBehavior.getTrackingPoint();
+		Matrix3f currentRotation = getObjectRotation();
+		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+		Vector3f location = rotationInverse.mult(trackPoint);
+		location.sub( m_kTranslate );
+		location.X *= 1.0f/m_fX;
+		location.Y *= 1.0f/m_fY;
+		location.Z *= 1.0f/m_fZ;
+		location.X *= (m_kVolumeImageA.GetImage().getExtents()[0]-1);
+		location.Y *= (m_kVolumeImageA.GetImage().getExtents()[1]-1);
+		location.Z *= (m_kVolumeImageA.GetImage().getExtents()[2]-1);
+        m_kParent.setSliceFromPlane(location);
 	}
 	
 	/**
@@ -718,8 +618,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 * @param kCenter   center in image space
 	 */
 	 public void setCameraCenter(Vector3f kCenter) {
-		  if ( isNavigationEnabled ) {
-			  // System.err.println("in camera center = " + kCenter);
+		  
+		 if ( isNavigationEnabled ) {
+	
 			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
 			  Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
 					  (kCenter.Y / (aiExtents[1] -1)),
@@ -730,12 +631,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 			  tfCenter.add(m_kTranslate);
 			  
-			  // System.err.println("transformed center = " + tfCenter);
 			  navigationBehavior.setViewPoint(tfCenter);
 			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
 			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
 			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
-			  
+			  navigationBehavior.setRightVector(cameraRight);
 			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.001f,10.0f);
 			  
 			  Matrix3f currentRotation = getObjectRotation();
@@ -743,8 +643,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			  Vector3f location = rotationInverse.multLeft(tfCenter);
 			  
 			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
-			  
-			  updateSceneNodePoint("Camera", tfCenter);		  
 		  
 		  }
 		  
