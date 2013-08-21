@@ -282,7 +282,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         for (int i = 0; i < voiList.size(); i++) {
 
-            if (voiList.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+            if ((voiList.VOIAt(i).getCurveType() == VOI.CONTOUR) || (voiList.VOIAt(i).getCurveType() == VOI.LINE) || 
+                (voiList.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 volumesVector.add(voiList.elementAt(i));
             }
         }
@@ -378,7 +379,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         for (int i = 0; i < VOIlist.size(); i++) {
 
-            if (VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+            if ((VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIlist.VOIAt(i).getCurveType() == VOI.LINE) || 
+                    (VOIlist.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 volumesVector.add(VOIlist.elementAt(i));
 
                 // add a listener to each VOI so we know about selection.
@@ -401,7 +403,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         for (int i = 0; i < voiList.size(); i++) {
 
-            if (voiList.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+            if ((voiList.VOIAt(i).getCurveType() == VOI.CONTOUR) || (voiList.VOIAt(i).getCurveType() == VOI.LINE) || 
+                    (voiList.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 volumesVector.add(voiList.elementAt(i));
             }
         }
@@ -418,7 +421,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             return;
         }
 
-        if (voiEvent.getVOI().getCurveType() == VOI.CONTOUR) {
+        if ((voiEvent.getVOI().getCurveType() == VOI.CONTOUR) || (voiEvent.getVOI().getCurveType() == VOI.LINE) ||
+            (voiEvent.getVOI().getCurveType() == VOI.POLYLINE)) {
             voiEvent.getVOI().removeVOIListener(highlighter);
 
             // ensuring that the selected VOI is not in
@@ -730,7 +734,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         	image = ViewUserInterface.getReference().getActiveImageFrame().getComponentImage().getActiveImage();
         }
         
-        // need to take out line VOIs, polyline VOIs, point VOIs
+        // need to take out point VOIs
+        // Allow line and polyline VOIs for perimeter measurement
 
         everything = new JTabbedPane(SwingConstants.TOP);
         everything.setFont(MipavUtil.font12B);
@@ -914,7 +919,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         for (int i = 0; i < VOIlist.size(); i++) {
 
-            if (VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+            if ((VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIlist.VOIAt(i).getCurveType() == VOI.LINE) || 
+                    (VOIlist.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 volumesVector.add(VOIlist.elementAt(i));
 
                 // add a listener to each VOI so we know about selection.
