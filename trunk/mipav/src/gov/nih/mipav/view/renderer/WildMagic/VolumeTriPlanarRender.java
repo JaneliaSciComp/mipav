@@ -598,11 +598,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	/**
 	 * Update the bottom 3 planar view center
 	 */
-	public void updateSlicesCenter() {
-		Vector3f trackPoint = navigationBehavior.getTrackingPoint();
+	public void updateSlicesCenter(Vector3f loc) {
 		Matrix3f currentRotation = getObjectRotation();
 		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-		Vector3f location = rotationInverse.mult(trackPoint);
+		Vector3f location = rotationInverse.mult(loc);
 		location.sub( m_kTranslate );
 		location.X *= 1.0f/m_fX;
 		location.Y *= 1.0f/m_fY;
