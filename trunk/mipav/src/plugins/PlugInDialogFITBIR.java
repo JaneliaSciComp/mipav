@@ -2573,10 +2573,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 		private String currFile;
 
 		private boolean validFile;
-		
-		private ContainerOrderFocusTraversalPolicy focus = new ContainerOrderFocusTraversalPolicy();
 
 		private String specify;
+
+		private HashMap<JComboBox, JTextField> specs = new HashMap<JComboBox, JTextField>();
 
 		/**
 		 * constructor
@@ -2758,6 +2758,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 			if (setInitialVisible) {
 				setVisible(true);
 			}
+	
 		}
 
 		private void populateFieldsFromCSV(
@@ -2814,7 +2815,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						// header....if there are, then prompt a warning
 
 						int response = determineImageHeaderDescrepencies(srcImage);
-
+						
+						
 						if (response == 1) {
 							populateFields(labelsAndComps, srcImage);
 
@@ -2845,7 +2847,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 											} else if (comp instanceof JComboBox) {
 												final JComboBox c = (JComboBox) comp;
-
+												
+												boolean isOther = true;
+												
 												for (int k = 0; k < c
 														.getItemCount(); k++) {
 													final String item = (String) c
@@ -2853,7 +2857,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 													if (value
 															.equalsIgnoreCase(item)) {
 														c.setSelectedIndex(k);
+														isOther = false;
 													}
+												}
+												
+												if (isOther) {
+													specify = value;
+													c.setSelectedItem("Other, specify");
 												}
 											}
 											// break;
@@ -2888,7 +2898,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 											} else if (comp instanceof JComboBox) {
 												final JComboBox c = (JComboBox) comp;
-
+												
+												boolean isOther = true;
 												for (int k = 0; k < c
 														.getItemCount(); k++) {
 													final String item = (String) c
@@ -2896,7 +2907,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 													if (value
 															.equalsIgnoreCase(item)) {
 														c.setSelectedIndex(k);
+														isOther = false;
 													}
+												}
+												
+												if (isOther) {
+													specify = value;
+													c.setSelectedItem("Other, specify");
 												}
 											}
 											// break;
@@ -2937,12 +2954,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 							} else if (comp instanceof JComboBox) {
 								final JComboBox c = (JComboBox) comp;
-
+								boolean isOther = true;
 								for (int k = 0; k < c.getItemCount(); k++) {
 									final String item = (String) c.getItemAt(k);
 									if (value.equalsIgnoreCase(item)) {
 										c.setSelectedIndex(k);
+										isOther = false;
 									}
+								}
+								if (isOther) {
+									specify = value;
+									c.setSelectedItem("Other, specify");
 								}
 							}
 							break;
@@ -3199,7 +3221,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											}
 										}
 									});
-//									specs.put((JComboBox)t, spec);
+									specs.put((JComboBox)t, spec);
 								}
 							}
 
@@ -3464,17 +3486,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 							} else if (comp instanceof JComboBox) {
 								final JComboBox c = (JComboBox) comp;
-								
-								if (value.contains("Other, specify: ")) {
-									specify = value.substring(16);
-									value = "Other, specify";
-								}
+								boolean isOther = true;
 
 								for (int k = 0; k < c.getItemCount(); k++) {
 									final String item = (String) c.getItemAt(k);
 									if (value.equalsIgnoreCase(item)) {
 										c.setSelectedIndex(k);
+										isOther = false;
 									}
+								}
+								
+								if (isOther) {
+									specify = value;
+									c.setSelectedItem("Other, specify");
 								}
 							}
 							break;
@@ -5130,7 +5154,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				} else if (comp instanceof JComboBox) {
 					value = (String) (((JComboBox) comp).getSelectedItem());
 					if (value.equalsIgnoreCase("Other, specify")) {
-						value = value + ": " + ((JTextField) focus.getComponentAfter(this, comp)).getText().trim();
+						value = specs.get((JComboBox)comp).getText().trim();
 					}
 				}
 				/*
