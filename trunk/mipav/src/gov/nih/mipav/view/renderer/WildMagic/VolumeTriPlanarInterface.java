@@ -3497,4 +3497,12 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 			raycastRenderWM.setCameraNearPlane(distance);
 		}
 	}
+	
+	public void setPlaneConstant( float distance )
+	{
+		if ( raycastRenderWM != null )
+		{
+			raycastRenderWM.setPlaneConstant(distance);
+		}
+	}
 }

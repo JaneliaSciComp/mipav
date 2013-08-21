@@ -95,6 +95,9 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
     /** Slider for moving the camera near-plane in/out from the eye position. */
     private JSlider cameraNearPlane;
     
+    /** Slider to adjust the front clipping plane constant. */
+    private JSlider planeConstantSlider;
+    
     /** Camera move parameter labels */
     private JLabel cameraXLabel, cameraYLabel, cameraZLabel;
     
@@ -479,11 +482,18 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
         gbc.gridy = 0;
 
         cameraMovePanel.add( new JLabel( "Near-Plane"), gbc);
-        gbc.gridy = 1;
+        gbc.gridx = 1;
         cameraNearPlane = new JSlider(1, 100, 50);
         cameraNearPlane.addChangeListener(this);
-        cameraMovePanel.add( cameraNearPlane );
+        cameraMovePanel.add( cameraNearPlane, gbc);
         
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        cameraMovePanel.add(new JLabel("Plane-Constant"), gbc);
+        gbc.gridx = 1;
+        planeConstantSlider = new JSlider( 1, 10, 5 );
+        planeConstantSlider.addChangeListener(this);
+        cameraMovePanel.add(planeConstantSlider, gbc);      
         
         
         cameraXLabel = new JLabel("X ( Move left or Right ) ");
@@ -491,7 +501,7 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
         cameraXLabel.setForeground(Color.black);
         cameraXLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         cameraMovePanel.add(cameraXLabel, gbc);
         xCameraMoveText = new JTextField(8);
        
@@ -505,7 +515,7 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
         cameraYLabel.setForeground(Color.black);
         cameraYLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         cameraMovePanel.add(cameraYLabel, gbc);
         yCameraMoveText = new JTextField(8);
        
@@ -519,7 +529,7 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
         cameraZLabel.setForeground(Color.black);
         cameraZLabel.setRequestFocusEnabled(false);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         cameraMovePanel.add(cameraZLabel, gbc);
         zCameraMoveText = new JTextField(8);
        
@@ -642,6 +652,10 @@ public class JPanelDisplay_WM extends JInterfaceBase implements ChangeListener {
         {
         	float distance = cameraNearPlane.getValue()/100.0f;
         	m_kVolumeViewer.setCameraNearPlane(distance);
+        } else if ( (source == planeConstantSlider) && (m_kVolumeViewer != null) )
+        {
+        	float distance = planeConstantSlider.getValue()/1000.0f;
+        	m_kVolumeViewer.setPlaneConstant(distance);
         }		
 	}
 }

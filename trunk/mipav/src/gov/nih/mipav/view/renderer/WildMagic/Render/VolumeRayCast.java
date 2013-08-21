@@ -112,6 +112,7 @@ public class VolumeRayCast extends VolumeObject
     private Vector3f backTopLeft;
 
     private Plane3f m_kCullPlane;
+    private float planeConstant = 0.005f;
     private Renderer m_kRenderer;
 
     private Matrix4f kWorldInv;
@@ -158,7 +159,7 @@ public class VolumeRayCast extends VolumeObject
     	m_kRenderer = kRenderer;
     	/** Default clip plane */
     	m_kCullPlane = new Plane3f(kCuller.GetPlanes()[0]);
-    	m_kCullPlane.Constant += .005f;
+    	m_kCullPlane.Constant += planeConstant;
     	m_kCullPlane.Normal = new Vector3f(0,0,1);
     	    	
     	// Get the camera view-transformation -- only use the rotation.
@@ -229,6 +230,22 @@ public class VolumeRayCast extends VolumeObject
     	m_kRenderer = null;
     }
 
+    /**
+     * Set the front the clipping plane constant
+     * @param _constant  contant between 0 to 0.01;
+     */
+    public void setPlaneConstant(float _constant) {
+    	planeConstant = _constant;
+    }
+    
+    /**
+     * Get the plane constant 
+     * @return  front clipping plane constant
+     */
+    public float getPlaneConstant() {
+    	return planeConstant;
+    }
+    
     /**
      * Display the volume in Composite mode.
      */
