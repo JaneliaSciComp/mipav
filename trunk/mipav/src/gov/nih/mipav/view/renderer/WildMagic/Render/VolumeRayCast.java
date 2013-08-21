@@ -158,7 +158,7 @@ public class VolumeRayCast extends VolumeObject
     	m_kRenderer = kRenderer;
     	/** Default clip plane */
     	m_kCullPlane = new Plane3f(kCuller.GetPlanes()[0]);
-    	m_kCullPlane.Constant += .001f;
+    	m_kCullPlane.Constant += .005f;
     	m_kCullPlane.Normal = new Vector3f(0,0,1);
     	    	
     	// Get the camera view-transformation -- only use the rotation.
