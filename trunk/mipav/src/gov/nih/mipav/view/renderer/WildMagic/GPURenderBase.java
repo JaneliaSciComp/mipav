@@ -117,6 +117,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
 	protected boolean updateBoundingCube = false;
     
+	protected float nearPlane = 0.01f;
+	
     /**
      * Default GPURenderBase constructor.
      */
@@ -561,9 +563,17 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		{
 			return;
 		}
-		m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,distance,10.0f);
+		nearPlane = distance;
+		m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,nearPlane,10.0f);
 		m_pkRenderer.OnFrustumChange();
         updateBoundingCube = true;
+	}
+	
+	/**
+	 * Get the near plane
+	 */
+	public float getNearPlane() {
+		return nearPlane;
 	}
 	
     /** 
