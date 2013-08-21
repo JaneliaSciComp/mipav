@@ -750,7 +750,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 		/** DOCUMENT ME! */
 		int x, y, mod, id;
-		int moveForward;
+		boolean moveForward = true;
 
 		/**
 		 * Creates new thread and sets up mouse event variables appropriately.
@@ -763,7 +763,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			currentEvent = event;
 			id = MouseEvent.MOUSE_DRAGGED;
 			source = event.getSource();
-			moveForward = event.getWheelRotation();
+			moveForward = event.getWheelRotation() < 0 ? true : false;
 			x = event.getX();
 			y = event.getY();
 			evt = new MouseEvent(parentScene.GetCanvas(),
@@ -808,7 +808,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			currentLocation.copy(cameraLocation);
 			trackingPointLocation.copy(cameraLocation);
 			
-			if (moveForward < 0) {
+			if (moveForward) {
 				System.err.println("move forward");
 			} else {
 				System.err.println("move backward");
@@ -818,7 +818,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 				parentScene.GetCanvas().dispatchEvent(evt);
 				
-				if (moveForward < 0 ) {
+				if (moveForward) {
 					makeMove(currentLocation);
 					if ( updateCenterTime == 3000 ) {
 					 updateSliceCenter(currentLocation);
