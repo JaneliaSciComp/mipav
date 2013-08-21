@@ -269,11 +269,13 @@ public class AlgorithmEntropicEdgeDetection extends AlgorithmBase {
             }
             PB = 1.0 - PA;
             p1 = new double[t+1];
+            sum1 = 0.0;
             for (i = 0; i <= t; i++) {
                 p1[i] = p[i][2]/PA;
                 sum1 += Math.sqrt(p1[i]);
             }
             p2 = new double[p.length - t - 1];
+            sum2 = 0.0;
             for (i = t + 1; i < p.length; i++) {
                 p2[i-t-1] = p[i][2]/PB;
                 sum2 += Math.sqrt(p2[i-t-1]);
