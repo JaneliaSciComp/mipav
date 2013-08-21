@@ -70,49 +70,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	long currEventTime, prevEventTime;
 
 	/**
-	 * How far ahead down the path should the view be aimed. If zero, then the
-	 * view direction is the tangent to the curve. If positive, the the view
-	 * direction is to look at that point along the path.
-	 */
-	public float m_fGazeDist;
-
-	/**
-	 * What is the increment in distance along the path that each step takes.
-	 * Increment may be negative indicating that the path is being followed in
-	 * the opposite direction.
-	 */
-	public float m_fPathStep;
-
-	/**
-	 * When a branch point along the current branch is reached, this flag is set
-	 * until the user selects a branch to follow.
-	 */
-	private boolean m_bChooseBranch = false;
-
-	/** Current annotation in the list. */
-	private int m_iAnnotateListItemSelected = -1;
-
-	/** Index of the closest branch at a fork in the path. */
-	private int m_iBranchChoiceIndex = -1;
-
-	/**
 	 * Instance which implements the Callback interface whose viewChanged method
 	 * is to be called whenever anything about this behavior changes.
 	 */
 	private Callback m_kCallback = null;
-
-	/** Keep reference to instance which describes the path. */
-	private FlyPathGraphCurve m_kFlyPathGraph;
-	/**
-	 * The desired view up vector is a normalized average of these two
-	 * orthogonal axes vectors. The problem is that if just one desired view up
-	 * vector is chosen, then when the view direction vector is "aligned" with
-	 * that vector, some other view up vector would have to be chosen and some
-	 * rule would have to be defined for that.
-	 */
-	private Vector3f m_kViewup1 = new Vector3f(0.0f, 1.0f, 0.0f);
-	/** For calculating the view up vector. */
-	private Vector3f m_kViewup2 = new Vector3f(0.0f, 0.0f, 1.0f);
 
 	/** Parent frame references. */
 	private VolumeTriPlanarRender parentScene;
@@ -127,7 +88,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	private Vector3f m_kViewUp = new Vector3f(0f, 0f, 0f);
 
 	private boolean m_bMoveForward = true;
-	public float m_fNormalizedPathDist;
 
 	private Camera camera;
 
@@ -151,8 +111,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 	private Vector3f trackingPointLocation = new Vector3f();
 	
-	// private VolumeShaderEffectMultiPassDynamicCPU shaderEffectCPU;
-	
 	private boolean isDoPicking = false;
 	
 	private boolean keyPressdown = false;
@@ -161,40 +119,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	
 	private MouseWheel mouse;
 	
-	/**
-	 * Setup to fly along the specified path and look around.
-	 * 
-	 * @param kFlyPathGraph
-	 *            FlyPathGraphCurve contains the information regarding the graph
-	 *            representation of 3D path segments represented by Curve3
-	 *            instances
-	 * @param kAnnotateList
-	 *            FlyPathAnnotateList contains the list of annotation points.
-	 * @param kTransformPosition
-	 *            TransformGroup contains the Transform3D for the current
-	 *            viewing position.
-	 * @param kTransformDirection
-	 *            TransformGroup contains the Transform3D for the current
-	 *            viewing direction.
-	 * @param kTransformOrientation
-	 *            TransformGroup contains the Transform3D for the current
-	 *            viewing orientation.
-	 * @param _parentScene
-	 *            the parent frame which hold Canvas3D.
-	 */
 	public NavigationBehavior(VolumeTriPlanarRender _parentScene,
 			Camera _m_spkCamera) {
 
-		// Keep references to these.
 		parentScene = _parentScene;
-
-		// thresholdTracing = new DetectThreshold(_parentScene);
-		// Set initial branch, position, and step.
-		// Compute the distance increment along the path that each
-		// step will take.
-		m_fPathStep = 1.0f;
-		m_fGazeDist = 10.0f;
-
 		camera = _m_spkCamera;
 
 		m_kViewPoint = camera.GetLocation();
@@ -233,64 +161,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			parentScene.GetCanvas().removeMouseMotionListener(this);
 			parentScene.GetCanvas().removeMouseWheelListener(this);
 		}
-	}
-
-	/**
-	 * Get the current distance ahead for looking down the path. If this
-	 * distance is zero, then the view direction is the tangent to the path
-	 * curve at the current position.
-	 * 
-	 * @return float Distance ahead for looking down the path.
-	 */
-	public float getGazeDistance() {
-		return m_fGazeDist;
-	}
-
-	/**
-	 * Get the normalized distance along the current path.
-	 * 
-	 * @return float Value in the range [0,1].
-	 */
-	public float getNormalizedPathDistance() {
-		return m_fNormalizedPathDist;
-	}
-
-	/**
-	 * Get the current position distance along the path.
-	 * 
-	 * @return float path distance.
-	 */
-	public float getPathDist() {
-		return m_fNormalizedPathDist;
-	}
-
-	/**
-	 * Get the current distance along the path.
-	 * 
-	 * @return distance along the path.
-	 */
-	public float getPathDistance() {
-		return getNormalizedPathDistance() * getPathLength();
-	}
-
-	/**
-	 * Get the total length of the current path.
-	 * 
-	 * @return float Length of the path.
-	 */
-	public float getPathLength() {
-		// return m_kBranchCurve.GetTotalLength();
-		return 100;
-	}
-
-	/**
-	 * Get the current distance increment for moving along the path.
-	 * 
-	 * @return distance increment for moving along path. Always positive
-	 *         regardless of which direction moving along the path.
-	 */
-	public float getPathStep() {
-		return m_fPathStep;
 	}
 
 	/**
@@ -351,42 +221,6 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	 */
 	@Override
 	public void keyPressed(KeyEvent event) {
-
-		/*
-		Matrix3f kRotate = new Matrix3f();
-		Vector3f kRight;
-		
-		if (KeyEvent.KEY_PRESSED == event.getID()) {
-			int iKeyCode = event.getKeyCode();
-		
-			switch (iKeyCode) {
-
-			case KeyEvent.VK_ESCAPE:
-				setIdentityViewOrientation();
-				break;
-			case KeyEvent.VK_UP:
-				// pitch - look up
-				// System.err.println("look up");
-				move("lookup");
-				break;
-			case KeyEvent.VK_DOWN:
-				// pitch - look down
-				// System.err.println("look down");
-				move("lookdown");
-				break;
-			case KeyEvent.VK_LEFT:
-				// yaw - look left
-				// System.err.println("look left");
-				move("lookleft");
-				break;
-			case KeyEvent.VK_RIGHT:
-				// yaw - look right
-				// System.err.println("look right");
-				move("lookright");
-				break;
-			}
-		}
-		*/
 		currEventTime = event.getWhen();
 		if (keyPressdown == false ) {
 			keyPressdown = true;
@@ -561,6 +395,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	public void mouseReleased(MouseEvent e) {
 		pressed = false;
 		m_kViewPoint.copy(camera.GetLocation());
+		updateSliceCenter(camera.GetLocation());
 		m_kViewRight.copy(camera.GetRVector());
 		m_kViewUp.copy(camera.GetUVector());
 		m_kViewDirection.copy(camera.GetDVector());
@@ -586,31 +421,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 
 		currEventTime = e.getWhen();
 
-		/*
-		if ((currEventTime - prevEventTime) < 200) {
-			pressed = false;
-			return;
-		}
-          */
 		if (pressed == false && isDoPicking == false) {
-
-			/*
-			 * Matrix3f currentRotation = parentScene.getObjectRotation();
-			 * 
-			 * Vector3f kCDir = camera.GetDVector(); Vector3f kCUp =
-			 * camera.GetUVector(); Vector3f kCRight = camera.GetRVector();
-			 * Vector3f kCLoc = camera.GetLocation();
-			 * 
-			 * Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-			 * 
-			 * Vector3f cameraLocationInverse = rotationInverse.mult(kCLoc);
-			 * Vector3f cameraDirInverse = rotationInverse.mult(kCDir); Vector3f
-			 * cameraUpInverse = rotationInverse.mult(kCUp); Vector3f
-			 * cameraRightInverse = rotationInverse.mult(kCRight);
-			 */
-			// camera.SetFrame(cameraLocationInverse, cameraDirInverse,
-			// cameraUpInverse, cameraRightInverse);
-
 			pressed = true;
 			mouse = new MouseWheel(e);
 			prevEventTime = e.getWhen();
@@ -628,8 +439,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 		notifyCallback(EVENT_CHANGE_POSITION);
 	}
 
-	private void updateSliceCenter() {
-		parentScene.updateSlicesCenter();
+	private void updateSliceCenter(Vector3f location) {
+		parentScene.updateSlicesCenter(location);
 	}
 	/*
 	 * (non-Javadoc)
@@ -639,6 +450,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 	@Override
 	public void keyReleased(KeyEvent event) {
 		keyPressdown = false;
+		m_kViewPoint.copy(camera.GetLocation());
+		updateSliceCenter(camera.GetLocation());
+		m_kViewRight.copy(camera.GetRVector());
+		m_kViewUp.copy(camera.GetUVector());
+		m_kViewDirection.copy(camera.GetDVector());
 	}
 
 	/*
@@ -970,7 +786,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 			Vector3f pickingPointLocation = new Vector3f();
 			long updateCenterTime = 0;
 		
-			cameraLocation.copy(camera.GetLocation());
+			cameraLocation.copy(m_kViewPoint);
 			m_kViewRight.copy(camera.GetRVector());
 			m_kViewUp.copy(camera.GetUVector());
 			m_kViewDirection.copy(camera.GetDVector());
@@ -1003,19 +819,20 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				parentScene.GetCanvas().dispatchEvent(evt);
 				
 				if (moveForward < 0 ) {
-					if ( updateCenterTime == 3000 ) {
-						updateSliceCenter();
-						updateCenterTime = 0;
-					}
 					makeMove(currentLocation);
+					if ( updateCenterTime == 3000 ) {
+					 updateSliceCenter(currentLocation);
+					 updateCenterTime = 0;
+				    }
 					currentLocation = currentLocation.add(deltaForward);
 					trackingPointLocation = trackingPointLocation.add(deltaForward);
 				} else {
-					if ( updateCenterTime == 3000 ) {
-						updateSliceCenter();
-						updateCenterTime = 0;
-					}
 					makeMove(currentLocation);
+					if ( updateCenterTime == 3000 ) {
+					  updateSliceCenter(currentLocation);
+					  updateCenterTime = 0;
+				    }
+				
 					currentLocation = currentLocation.add(deltaBackward);
 					trackingPointLocation = trackingPointLocation.add(deltaBackward);
 				}
@@ -1034,8 +851,8 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 						y, 0, false);
 
 			}
-			
-			updateSliceCenter();
+			makeMove(currentLocation);
+			updateSliceCenter(currentLocation);
 
 		}
 	}
