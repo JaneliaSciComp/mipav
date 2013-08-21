@@ -826,10 +826,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				
 				
 
-				when += 10;
+				when += 500;
 
 				try {
-					wait(10);
+					wait(500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -902,10 +902,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					move("counterclockwise");
 				}
 
-				when += 10;
+				when += 500;
 
 				try {
-					wait(10);
+					wait(500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
