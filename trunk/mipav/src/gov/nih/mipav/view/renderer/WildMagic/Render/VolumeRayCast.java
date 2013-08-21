@@ -239,14 +239,6 @@ public class VolumeRayCast extends VolumeObject
     }
     
     /**
-     * Get the plane constant 
-     * @return  front clipping plane constant
-     */
-    public float getPlaneConstant() {
-    	return planeConstant;
-    }
-    
-    /**
      * Display the volume in Composite mode.
      */
     public void CMPMode()

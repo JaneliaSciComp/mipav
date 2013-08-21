@@ -1327,7 +1327,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 
 		// m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
-		m_spkCamera.SetFrustum(30.0f, m_iWidth / (float) m_iHeight, .5f, 10.0f);
+		m_spkCamera.SetFrustum(30.0f, m_iWidth / (float) m_iHeight, getNearPlane(), 10.0f);
 		Vector3f kCDir = new Vector3f(0.0f, 0.0f, 1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, -1.0f, 0.0f);
 		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
@@ -1367,7 +1367,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 */
 	public void rollbackToCenter() {
 
-		m_spkCamera.SetFrustum(30.0f, m_iWidth / (float) m_iHeight, .5f, 10.0f);
+		m_spkCamera.SetFrustum(30.0f, m_iWidth / (float) m_iHeight, getNearPlane(), 10.0f);
 		Vector3f kCDir = new Vector3f(0.0f, 0.0f, 1.0f);
 		Vector3f kCUp = new Vector3f(0.0f, -1.0f, 0.0f);
 		Vector3f kCRight = Vector3f.cross(kCDir, kCUp);
@@ -1728,7 +1728,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 				// in order to keep the rendering consistent
 				if (m_spkCamera.Perspective) {
 					m_spkCamera.SetFrustum(30.0f, m_iWidth / (float) m_iHeight,
-							.001f, 10.0f);
+							getNearPlane(), 10.0f);
 				}
 			}
 			if (m_pkRenderer != null) {
@@ -3647,11 +3647,4 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kVolumeRayCast.setPlaneConstant(constant);
 	}
 	
-	/**
-	 * Get teh VolumeRayCast front clipping plane constant
-	 * @return  clipping plane constant
-	 */
-	public float getPlaneConstant() {
-		return m_kVolumeRayCast.getPlaneConstant();
-	}
 }
