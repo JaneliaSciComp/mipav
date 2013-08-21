@@ -10,6 +10,8 @@ import java.io.*;
     // by Mohamed A. El-Sayed, International Journal of Computer Science Issues, Vol. 8,
     // Issue 5, No. 1, Spetember, 2011
 
+    // Java code ported from MATLAB routines given in article.
+
 public class AlgorithmEntropicEdgeDetection extends AlgorithmBase {
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
