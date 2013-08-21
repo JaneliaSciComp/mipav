@@ -630,7 +630,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	
 			  tfCenter.add(m_kTranslate);
 			  
-			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,.005f,10.0f);
+			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,getPlaneConstant(),10.0f);
 			  
 			  Matrix3f currentRotation = getObjectRotation();
 			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);

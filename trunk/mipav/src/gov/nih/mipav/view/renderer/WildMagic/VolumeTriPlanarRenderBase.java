@@ -3639,4 +3639,19 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		
 	}
 
+	/**
+	 * Set the VolumeRayCast front clipping plane constant
+	 * @param constant  front clipping plane constant
+	 */
+	public void setPlaneConstant(float constant) {
+		m_kVolumeRayCast.setPlaneConstant(constant);
+	}
+	
+	/**
+	 * Get teh VolumeRayCast front clipping plane constant
+	 * @return  clipping plane constant
+	 */
+	public float getPlaneConstant() {
+		return m_kVolumeRayCast.getPlaneConstant();
+	}
 }
