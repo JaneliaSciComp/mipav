@@ -3281,7 +3281,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
         bf_flyPanel = new JPanel(new BorderLayout());
         bf_flyPanel.setBorder(compound);
-
+        bf_flyPanel.setMinimumSize(new Dimension(0, 250));
+        
         dualPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, gpuPanel, bf_flyPanel);
         dualPane.setOneTouchExpandable(true);
         dualPane.setDividerSize(6);
@@ -3292,7 +3293,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         rightPane.setOneTouchExpandable(true);
         rightPane.setDividerSize(6);
         rightPane.setContinuousLayout(true);
-        rightPane.setResizeWeight(1.0);
+        rightPane.setResizeWeight(1);
 
         tabbedPane.setPreferredSize(new Dimension(maxPanelWidth, tabbedPane.getPreferredSize().height));
 
