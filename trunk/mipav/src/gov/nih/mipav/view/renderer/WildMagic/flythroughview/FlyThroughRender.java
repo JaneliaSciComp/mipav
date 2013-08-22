@@ -134,14 +134,8 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
     /** Original surface color for undoing the pseudo-color curvature map. */
     private ColorRGB[] m_akColorBackup;
 
-    /** Current mouse press event time stamp. */
-    long currEventTime;
-    /** Previous mouse press event time stamp. */
-    long prevEventTime;
     /** If any of the mouse move button pressed. */
-    private boolean pressed;
-    /** Time to wait for the next mouse event. */
-    private long time = 10;
+    private volatile boolean pressed;
   
     /* camera viewing direction from the right mouse drag control. */
     public static int lookup = 0;
@@ -592,12 +586,6 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 		    
 		    if ( SwingUtilities.isRightMouseButton(event) && event.isControlDown() ) {
 	    		
-		    	   currEventTime = event.getWhen();
-				  
-			         if ((currEventTime - prevEventTime) < 100) {
-			             pressed = false;
-			             return;
-			         }
 			      
 			         verticalDistance = Math.abs(currY - centerY);
 			         horizontalDistance = Math.abs(currX - centerX);
@@ -612,11 +600,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 			        	 viewDirection = lookleft;
 			         }
 			         
-			         
-			         pressed = true;
-			         RightMouseDragged mouse = new RightMouseDragged(event, viewDirection);
-			         prevEventTime = event.getWhen();
-			         mouse.start();
+			         if ( pressed == false ) {
+				         pressed = true;
+				         RightMouseDragged mouse = new RightMouseDragged(event, viewDirection);
+				         mouse.start();
+			         }
 	    	}
 		
     }
@@ -646,12 +634,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
         }
         
         if (SwingUtilities.isRightMouseButton(e) && !e.isControlDown()) {
-			currEventTime = e.getWhen();
-
-			pressed = true;
-			RightMouse mouse = new RightMouse(e);
-			prevEventTime = e.getWhen();
-			mouse.start();
+			if (pressed == false) {
+				pressed = true;
+				RightMouse mouse = new RightMouse(e);
+				mouse.start();
+			}
 		}
 
     } 
@@ -670,19 +657,11 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
      * @param event mouse middle mouse roller event.    
      */
     public void mouseWheelMoved(MouseWheelEvent event) {
-    	
-    	  currEventTime = event.getWhen();
-
-    	  if ((currEventTime - prevEventTime) < 200) {
-              pressed = false;
-              return;
-          }
-         
-          pressed = true;
-          MouseWheel mouse = new MouseWheel(event);
-          prevEventTime = event.getWhen();
-          mouse.start();
-    	
+    	if (pressed == false) {
+			pressed = true;
+			MouseWheel mouse = new MouseWheel(event);
+			mouse.start();
+		}
     	
     }
     
@@ -1424,10 +1403,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             		makeMove("counterclockwise");
             	}
             	
-                when += time;
+                when += 200;
                 
                 try {
-                	wait(time);
+                	wait(200);
                 } catch ( InterruptedException e ) {
                     e.printStackTrace();
                 }
@@ -1462,7 +1441,7 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
         /** DOCUMENT ME! */
         int x, y, mod, id;
-        int moveForward;
+        boolean  moveForward = true;
     
         /**
          * Creates new thread and sets up mouse event variables appropriately.
@@ -1474,11 +1453,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             currentEvent = event;
             id = MouseEvent.MOUSE_DRAGGED;
             source = event.getSource();
-            moveForward = event.getWheelRotation(); 
+            moveForward = event.getWheelRotation() < 0 ? true : false; 
             evt = new MouseEvent(getCanvas(), MouseEvent.MOUSE_PRESSED, when, mod, Math.round(x),
                                  Math.round(y), 1, false);
         }
 
+        
+        public void terminate() {
+			pressed = false;
+		}
+        
         /**
          * Runs the thread. While the button is pressed, dispatches mouse dragged events at a rate consistent with the
          * velocity slider. Once the mouse is released, <code>pressed</code> will be set to false and the loop will
@@ -1491,16 +1475,16 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             	getCanvas().dispatchEvent(evt);
 
             
-            	if ( moveForward < 0 ) {
+            	if ( moveForward ) {
             		makeMove("forward");
             	} else {
             		makeMove("backward");
             	}
         	
-                when += 50;
+                when += 100;
                 
                 try {
-                	wait(50);
+                	wait(100);
                 } catch ( InterruptedException e ) {
                     e.printStackTrace();
                 }
@@ -1574,10 +1558,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
             		makeMove("lookright");
             	}
             	
-                when += time;
+                when += 200;
                 
                 try {
-                	wait(time);
+                	wait(200);
                 } catch ( InterruptedException e ) {
                     e.printStackTrace();
                 }
