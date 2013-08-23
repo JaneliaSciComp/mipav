@@ -272,10 +272,31 @@ public class TransferFunction extends ModelSerialCloneable {
      *
      * @return  boolean
      */
+    
     public  synchronized boolean isEndpoint(int index) {
         return (index == 0) || (index == (endPtr - 1));
     }
 
+    /**
+     * returns -1 if not an endpoint
+     * returns 0 if starting point
+     * returns 1 if end point
+     * 
+     * @param index  The index to test
+     * @return int
+     */
+    //currently unimplemented. Could be used to resolve endpoint focus problems in LUT histograms
+    public synchronized int whichEnd(int index) {
+    	if (isEndpoint(index)){
+    		if (index == 0)
+    			return 0;
+    		else
+    			return 1;
+    	}
+    	return -1;
+    }
+    
+    
     /**
      * Removes all points from the funcitons.
      */
