@@ -24,20 +24,22 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
+	/** name of the directory containing images to be edited * */
     private String inputDir;
     
+    /** vector of all image files being edited * */
     private Vector<File> inputFiles = new Vector<File>();
     
+    /** textfield that shows the currently selected directory * */
     private JTextField dirChooserText;
     
+    /** browse button * */
     private JButton dirChooserButton;
 
-	private ViewTableModel galleryModel;
-	
-	private JTable galleryTable;
-
+    /** load button for loading images to edit * */
 	private JButton loadButton;
 	
+	/** button leading to MIPAV wiki * */
 	private JButton helpButton;
 
 	private ModelImage[] srcImages;
@@ -45,8 +47,6 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
 	private JDialogWinLevel[] srcInfo;
 
 	private float minImage, maxImage, winMax;
-
-	private JPanel previewPanel;
 
 	private ViewUserInterface userInterface = ViewUserInterface.getReference();
     
@@ -69,7 +69,7 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
     /** Reference to the LUT used to display the image. */
     private ModelLUT[] LUT;
 
-    /** DOCUMENT ME! */
+    /** panels containing sliders */
     private JPanel windowLevelPanel;
 
 	private JPanel minMaxPanel;
@@ -126,7 +126,7 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
     public PlugInDialogApplyTransferFunction() { }
 
     /**
-     * Creates new dialog for distances within a cell from the geometric center using a plugin.
+     * Creates new dialog that allows the user to select files to edit
      *
      * @param  modal	Whether the dialog should be made modal.
      */
@@ -143,7 +143,11 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
     // ************************************************************************
 
     /**
-     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     * Load images to process when the Load button is pressed
+     * Close plugin when OK button is pressed
+     * Open a directory browser if the user chooses to open images
+     * Launches window/level help page on the MIPAV wiki if help button is pressed
+     * Changes which fields are enabled depending on which mode the user chooses
      *
      * @param  event  Event that triggers function.
      */
@@ -193,6 +197,10 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
         }
     }
     
+    /**
+	 * validates and sets the directory to use for processing if the user chooses to open new images
+	 * 
+	 */
     public void setInputDir(String dir) {
     	inputDir = dir;
     	
@@ -289,16 +297,6 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
         mainPanel.add(buttonPanel, gbc);
         workPanel = new JPanel(new GridBagLayout());
 //        workPanel.setPreferredSize(new Dimension(300, 400));
-        
-        galleryModel = new ViewTableModel();
-        galleryTable = new JTable(galleryModel);
-        
-        JScrollPane gallery = new JScrollPane(galleryTable, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        gallery.setBorder(buildTitledBorder("Image previews"));
-        
-        previewPanel = new JPanel();
-        previewPanel.setBorder(buildTitledBorder("Current Image"));
-        previewPanel.setPreferredSize(new Dimension(300, 300));
 
 //        previewPanel.add(previewImage);
 
@@ -312,9 +310,10 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
     }
 
 	/**
-     * Use the GUI results to set up the variables needed to run the algorithm.
+     * Sets up the overall min/max and window/level of all images
+     * Opens all images in the directory selected
+     * Returns true if this can be done for all files that have been selected for processing, false otherwise
      *
-     * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables(boolean mode) {
         if (!mode) {
@@ -461,7 +460,10 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
         }
     }
     
-    
+    /**
+	 * Changes min/max boundaries for all images selected to the global min/max acquired from setVariables()
+	 * 
+	 */
     private void changeBounds(float min, float max, float winMax) {   
     	float minTemp = (min - minMaxBInt) / minMaxSlope;
     	for (int count = 0; count < srcImages.length; count++){
@@ -1413,8 +1415,7 @@ public class PlugInDialogApplyTransferFunction extends JDialogStandaloneScriptab
 	@Override
 	public Dimension getPanelSize() {
 		// TODO Auto-generated method stub
-		return new Dimension(previewPanel.getBounds().width,
-				previewPanel.getBounds().height);
+		return null;
 	}
 
 	@Override
