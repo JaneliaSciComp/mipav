@@ -56,6 +56,8 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
     /** DOCUMENT ME! */
     ModelLUT lut;
 
+//	private int end;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -200,6 +202,9 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
             yN = (int) (y[i] + 0.5);
 
             if (MipavMath.distance(mx, xN, my, yN) < 5) { // Are we close to a point ??
+            	
+            	
+            	
 
                 if (remove) { // are we in going to remove this point
 
@@ -211,6 +216,13 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
                     setCursor(resizeCursor);
                     addPointFlag = false;
                     index = i; // save index to point
+                    //Should include a check for whether or not the point we're close to is an endpoint.
+                    //code removed. Causes infinite loop, so have to find a way to iterate to the next
+                    //closest point next to the end point
+//                    end = lut.getTransferFunction().whichEnd(index);
+//                    if (end == 1 || end  == 0) {
+//                    	checkProximityToTransferFunction(px, py, remove);
+//                    }
 
                     return;
                 } else {
@@ -326,6 +338,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
      * @param  mouseEvent  the mouse dragged event (passed on from the containing panel)
      */
     public void dragPoint(MouseEvent mouseEvent) {
+    	
         int nPts;
         float mx = mouseEvent.getX() - offsetX;
         float my = mouseEvent.getY() - offsetY;

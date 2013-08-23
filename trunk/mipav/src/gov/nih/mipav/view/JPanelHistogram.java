@@ -268,6 +268,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 			selectedLUT.makeGrayTransferFunctions();
 			makeLUT(selectedLUT, nColors);
 		} else if (event.getActionCommand().equals("redLUT")) {
+			System.out.println("test");
 			selectedLUT.makeRedTransferFunctions();
 			makeLUT(selectedLUT, nColors);
 		} else if (event.getActionCommand().equals("greenLUT")) {
