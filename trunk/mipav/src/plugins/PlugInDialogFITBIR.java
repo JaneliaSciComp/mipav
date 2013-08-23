@@ -2791,7 +2791,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					String imageFile = csvparams[imageFileIndex];
 					ModelImage srcImage = null;
 
-					srcImage = readImgFromCSV(imageFile);
+					srcImage = readImgFromCSV(csvFile.getParentFile().getAbsolutePath(), imageFile);
 
 					if (srcImage != null) {
 
@@ -3012,7 +3012,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 		}
 
-		private ModelImage readImgFromCSV(String imageFile) {
+		private ModelImage readImgFromCSV(String parentDir, String imageFile) {
 			String filePath;
 			boolean isMultifile;
 			FileIO fileIO = new FileIO();
@@ -3030,12 +3030,11 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							destName.lastIndexOf(File.separator) + 1,
 							destName.lastIndexOf("."));
 					// String destDirName =
-					String tempDir = csvFile.getParentFile().getAbsolutePath()
+					String tempDir = parentDir
 							+ File.separator + destName + "_temp_"
 							+ System.currentTimeMillis();
 					tempDirs.add(tempDir);
-					File imageZipFile = new File(csvFile.getParentFile()
-							.getAbsolutePath() + File.separator + imageFile);
+					File imageZipFile = new File(parentDir + File.separator + imageFile);
 					String fileName = "";
 					// try {
 					FileInputStream fis = new FileInputStream(imageZipFile);
@@ -3084,8 +3083,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					isMultifile = true;
 				} else {
 					// try to only open as a single file, since it wasn't zipped
-					filePath = csvFile.getParentFile().getAbsolutePath()
-							+ File.separator + imageFile;
+					filePath = parentDir + File.separator + imageFile;
 					isMultifile = false;
 				}
 
@@ -3137,7 +3135,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				validFile = false;
 			} catch (NullPointerException e) {
 				MipavUtil
-						.displayError("The system cannot find the file specified");
+ 						.displayError("The system cannot find the file specified");
 				validFile = false;
 			} catch (final Exception e) {
 				e.printStackTrace();
@@ -4082,33 +4080,33 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					if (jc.getSelectedIndex() == 0)
 						jc.setSelectedIndex(jc.getItemCount() - 1);
 					label.setForeground(Color.red);
-				} else if (l.equalsIgnoreCase("ImgDim1Extent")) {
+				} else if (l.equalsIgnoreCase("ImgDim1ExtentVal")) {
 					if (String.valueOf(exts[0]) != null
 							&& !String.valueOf(exts[0]).equals("")) {
 						((JTextField) comp).setText(String.valueOf(exts[0]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim2Extent")) {
+				} else if (l.equalsIgnoreCase("ImgDim2ExtentVal")) {
 					if (String.valueOf(exts[1]) != null
 							&& !String.valueOf(exts[1]).equals("")) {
 						((JTextField) comp).setText(String.valueOf(exts[1]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim3Extent")) {
+				} else if (l.equalsIgnoreCase("ImgDim3ExtentVal")) {
 					if (img.getNDims() > 2
 							&& (String.valueOf(exts[2]) != null && !String
 									.valueOf(exts[2]).equals(""))) {
 						((JTextField) comp).setText(String.valueOf(exts[2]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim4Extent")) {
+				} else if (l.equalsIgnoreCase("ImgDim4ExtentVal")) {
 					if (img.getNDims() > 3
 							&& (String.valueOf(exts[3]) != null && !String
 									.valueOf(exts[3]).equals(""))) {
 						((JTextField) comp).setText(String.valueOf(exts[3]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim5Extent")) {
+				} else if (l.equalsIgnoreCase("ImgDim5ExtentVal")) {
 					// for now...nothing
 				} else if (l.equalsIgnoreCase("ImgDim1UoM")) {
 					final JComboBox jc = (JComboBox) comp;
@@ -4172,19 +4170,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					}
 				} else if (l.equalsIgnoreCase("ImgDim5UoM")) {
 					// for now...nothing
-				} else if (l.equalsIgnoreCase("ImgDim1Resol")) {
+				} else if (l.equalsIgnoreCase("ImgDim1ResolVal")) {
 					if (String.valueOf(res[0]) != null
 							&& !String.valueOf(res[0]).equals("")) {
 						((JTextField) comp).setText(String.valueOf(res[0]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim2Resol")) {
+				} else if (l.equalsIgnoreCase("ImgDim2ResolVal")) {
 					if (String.valueOf(res[1]) != null
 							&& !String.valueOf(res[1]).equals("")) {
 						((JTextField) comp).setText(String.valueOf(res[1]));
 						label.setForeground(Color.red);
 					}
-				} else if (l.equalsIgnoreCase("ImgDim3Resol")) {
+				} else if (l.equalsIgnoreCase("ImgDim3ResolVal")) {
 					if (img.getNDims() > 2) {
 						if (String.valueOf(res[2]) != null
 								&& !String.valueOf(res[2]).equals("")) {
@@ -4192,7 +4190,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							label.setForeground(Color.red);
 						}
 					}
-				} else if (l.equalsIgnoreCase("ImgDim4Resol")) {
+				} else if (l.equalsIgnoreCase("ImgDim4ResolVal")) {
 					if (img.getNDims() > 3) {
 						if (String.valueOf(res[3]) != null
 								&& !String.valueOf(res[3]).equals("")) {
@@ -4200,7 +4198,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							label.setForeground(Color.red);
 						}
 					}
-				} else if (l.equalsIgnoreCase("ImgDim5Resol")) {
+				} else if (l.equalsIgnoreCase("ImgDim5ResolVal")) {
 					// for now...nothing
 				} else if (l.equalsIgnoreCase("ImgModltyTyp")) {
 					final JComboBox jc = (JComboBox) comp;
@@ -4209,7 +4207,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						jc.setSelectedItem(bricsMod);
 					}
 					label.setForeground(Color.red);
-				} else if (l.equalsIgnoreCase("ImgFileFormat")
+				} else if (l.equalsIgnoreCase("ImgFileFormatTyp")
 						&& fileFormatString != null
 						&& !fileFormatString.equals("")) {
 					final JComboBox jc = (JComboBox) comp;
@@ -4569,44 +4567,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						isMultiFile = fileChooser.isMulti();
 
 						final File file = chooser.getSelectedFile();
-						ViewUserInterface.getReference().setDefaultDirectory(
-								file.getParent());
-
+						ViewUserInterface.getReference().setDefaultDirectory(file.getParent());
+						
 						// TODO: would be best to only open the image once to pull out header info, get file list, and generate thumbnail
-						final FileIO fileIO = new FileIO();
-						fileIO.setQuiet(true);
-						ModelImage srcImage = fileIO.readImage(file.getName(),
-								file.getParent() + File.separator, isMultiFile,
-								null);
-
-						if (srcImage != null) {
-
-							final String labelName = command.substring(
-									command.indexOf("_") + 1, command.length());
-
-							String tempName = currFile;
-							final Set<JLabel> keySet = labelsAndComps.keySet();
-							final Iterator<JLabel> iter = keySet.iterator();
-							while (iter.hasNext()) {
-								final JLabel l = (JLabel) iter.next();
-								// TODO: hardcoded element handling
-								if (l.getName().equalsIgnoreCase(
-										IMG_PREVIEW_ELEMENT_NAME)) {
-									final JTextField tf = (JTextField) labelsAndComps
-											.get(l);
-									final String n = file.getName();
-									tf.setText("Automatically generated from selected image files.");
-								} else if (l.getName().equalsIgnoreCase(
-										labelName)) {
-									final JTextField tf = (JTextField) labelsAndComps
-											.get(l);
-									tf.setText(file.getName());
-									tempName = file.getName();
-									tf.setEnabled(false);
-								}
-
-							}
-
+						ModelImage srcImage = null;
+						if (file.getName().endsWith(".zip")) {
+							// TODO: if the user selects a zip file containing a dataset, try to open it as if pointed to from CSV
+							srcImage = readImgFromCSV(file.getParent(), file.getName());
+						} else {
+							final FileIO fileIO = new FileIO();
+							fileIO.setQuiet(true);
+							srcImage = fileIO.readImage(file.getName(),
+									file.getParent() + File.separator, isMultiFile,
+									null);
+							
 							final int[] extents = new int[] {
 									srcImage.getExtents()[0],
 									srcImage.getExtents()[1] };
@@ -4649,6 +4623,30 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 							previewPanel.validate();
 							previewPanel.repaint();
+						}
+						
+						if (srcImage != null) {
+							
+							final String labelName = command.substring(command.indexOf("_") + 1, command.length());
+
+							String tempName = currFile;
+							final Set<JLabel> keySet = labelsAndComps.keySet();
+							final Iterator<JLabel> iter = keySet.iterator();
+							while (iter.hasNext()) {
+								final JLabel l = (JLabel) iter.next();
+								// TODO: hardcoded element handling
+								if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
+									final JTextField tf = (JTextField) labelsAndComps.get(l);
+									final String n = file.getName();
+									tf.setText("Automatically generated from selected image files.");
+								} else if (l.getName().equalsIgnoreCase(labelName)) {
+									final JTextField tf = (JTextField) labelsAndComps.get(l);
+									tf.setText(file.getName());
+									tempName = file.getName();
+									tf.setEnabled(false);
+								}
+
+							}
 
 							if (!currFile.equals(tempName)
 									&& !currFile.equals(""))
@@ -4659,7 +4657,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							srcImage = null;
 
 						}
-
 					}
 				} else {
 					final JFileChooser chooser = new JFileChooser();
