@@ -96,6 +96,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 	private final ArrayList<TreeMap<JLabel, JComponent>> labelsAndCompsList = new ArrayList<TreeMap<JLabel, JComponent>>();
 
+	private ArrayList<JLabel> errors;
+	
+	private int fix = 1;
+
 	/** DOCUMENT ME! */
 	private final int origBrightness = 0;
 
@@ -3170,66 +3174,68 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				final String labelName = l.getName();
 				
 //				gbc.gridy = 0;
-				for (int k = 0; k < ds2.size(); k++) {
-					final Object o1 = ds2.get(k);
-					if (o1 instanceof DataElement) {
-						DataElement de = (DataElement) o1;
-						JPanel curPanel = groupPanels.get(de.getGroup());
-
-						if (l.getName().equalsIgnoreCase(de.getName())) {
-							gbc.gridy ++;
-
-							gbc.insets = new Insets(2, 5, 2, 5);
-							gbc.fill = GridBagConstraints.HORIZONTAL;
-							gbc.anchor = GridBagConstraints.EAST;
-							gbc.weightx = 0;
-							curPanel.add(l, gbc);
-							gbc.weightx = 1;
-							gbc.gridx = 1;
-							gbc.anchor = GridBagConstraints.WEST;
-							if (de.getType()
-									.equalsIgnoreCase(FILE_ELEMENT_TYPE)) {
-								curPanel.add(t, gbc);
-								gbc.gridx = 2;
-								final JButton browseButton = new JButton(
-										"Browse");
-								browseButton.addActionListener(this);
-								browseButton.setActionCommand("browse_"
-										+ labelName);
-								curPanel.add(browseButton, gbc);
-
-							} else {
-								gbc.gridwidth = 2;
-								curPanel.add(t, gbc);
-								if (t instanceof JComboBox){
-									
-									gbc.gridy ++;
-//									ds2.add(de.getPosition(), "");
-									final JTextField spec = new JTextField();
-									curPanel.add(spec, gbc);
-									spec.setVisible(false);
-									((JComboBox)t).addActionListener(new ActionListener () {
-										public void actionPerformed(ActionEvent e) {
-											if (((JComboBox) t).getSelectedItem().equals("Other, specify")) {
-												spec.setVisible(true);
-												spec.setText(specify);
-												specify = "";
-												repaint();
-											} else {
-												spec.setVisible(false);
-												repaint();
+				if ((fix == 0 && errors.contains(l)) || fix == 1){
+					for (int k = 0; k < ds2.size(); k++) {
+						final Object o1 = ds2.get(k);
+						if (o1 instanceof DataElement) {
+							DataElement de = (DataElement) o1;
+							JPanel curPanel = groupPanels.get(de.getGroup());
+	
+							if (l.getName().equalsIgnoreCase(de.getName())) {
+								gbc.gridy ++;
+	
+								gbc.insets = new Insets(2, 5, 2, 5);
+								gbc.fill = GridBagConstraints.HORIZONTAL;
+								gbc.anchor = GridBagConstraints.EAST;
+								gbc.weightx = 0;
+								curPanel.add(l, gbc);
+								gbc.weightx = 1;
+								gbc.gridx = 1;
+								gbc.anchor = GridBagConstraints.WEST;
+								if (de.getType()
+										.equalsIgnoreCase(FILE_ELEMENT_TYPE)) {
+									curPanel.add(t, gbc);
+									gbc.gridx = 2;
+									final JButton browseButton = new JButton(
+											"Browse");
+									browseButton.addActionListener(this);
+									browseButton.setActionCommand("browse_"
+											+ labelName);
+									curPanel.add(browseButton, gbc);
+	
+								} else {
+									gbc.gridwidth = 2;
+									curPanel.add(t, gbc);
+									if (t instanceof JComboBox){
+										
+										gbc.gridy ++;
+	//									ds2.add(de.getPosition(), "");
+										final JTextField spec = new JTextField();
+										curPanel.add(spec, gbc);
+										spec.setVisible(false);
+										((JComboBox)t).addActionListener(new ActionListener () {
+											public void actionPerformed(ActionEvent e) {
+												if (((JComboBox) t).getSelectedItem().equals("Other, specify")) {
+													spec.setVisible(true);
+													spec.setText(specify);
+													specify = "";
+													repaint();
+												} else {
+													spec.setVisible(false);
+													repaint();
+												}
 											}
-										}
-									});
-									specs.put((JComboBox)t, spec);
+										});
+										specs.put((JComboBox)t, spec);
+									}
 								}
+	
+								// gridYCounter = gridYCounter + 1;
+								// gbc.gridy = gridYCounter;
+								gbc.gridx = 0;
+								gbc.gridwidth = 1;
+								break;
 							}
-
-							// gridYCounter = gridYCounter + 1;
-							// gbc.gridy = gridYCounter;
-							gbc.gridx = 0;
-							gbc.gridwidth = 1;
-							break;
 						}
 					}
 				}
@@ -3268,7 +3274,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				groups = ds.getRepeatableGroups();
 			}
 			Iterator<MapElement> iter = dataElements.iterator();
-
 			while (iter.hasNext()) {
 				MapElement dataElement = iter.next();
 
@@ -3392,8 +3397,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					}
 					tooltip += "</html>";
 					cb.setToolTipText(tooltip);
-
-					labelsAndComps.put(l, cb);
+					labelsAndComps.put(l,  cb);
 				} else {
 					final JTextField tf = new JTextField(20);
 					tf.setName(n);
@@ -4468,20 +4472,25 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 			;
 			if (command.equalsIgnoreCase("ok3")) {
 				errs = validateFields();
-
 				boolean isComplete = true;
 				if (errs.size() != 0) {
 					for (int i = 0; i < errs.size(); i++) {
 						errors.append(" - " + errs.get(i) + "\n");
 					}
-					MipavUtil.displayWarning(errors.toString());
+					Object[] options = {"Fix now", "Fix later"};
+					fix = JOptionPane.showOptionDialog(null, errors.toString(), "Warning", JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+//					MipavUtil.displayWarning(errors.toString());
 					isComplete = false;
 				}
-
+				
 				complete(labelsAndComps, dataStructureName, isComplete);
-
 				enableDisableFinishButton();
 				dispose();
+				
+				if (fix == 0){
+					fixErrors();
+				}
 
 			} else if (command.equalsIgnoreCase("cancel3")) {
 				if (!launchedFromInProcessState) {
@@ -4684,6 +4693,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 		}
 
 		/**
+		 * Creates new dialog containing only fields that contained errors
+		 */
+		private void fixErrors() {
+			final String dsName = (String) sourceTableModel.getValueAt(
+					sourceTable.getSelectedRow(), 0);
+			new InfoDialog(owner, dsName, true, true, null);
+			fix = 1;
+		}
+
+		/**
 		 * validates fields
 		 * 
 		 * @return
@@ -4882,6 +4901,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				final ArrayList<String> errs,
 				final TreeMap<JLabel, JComponent> labelsAndComps) {
 
+			errors = new ArrayList<JLabel>();
 			String value = "";
 			String key = "";
 			String labelText = "";
@@ -4930,11 +4950,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						if (required.equalsIgnoreCase("Required")) {
 							if (value.trim().equalsIgnoreCase("")) {
 								errs.add(labelText + " is a required field");
+								errors.add(label);
 							} else {
 								if (key.equalsIgnoreCase(GUID_ELEMENT_NAME)) {
 									if (!isGuid(value.trim())) {
 										errs.add(labelText
 												+ " must begin with a valid GUID prefix");
+										errors.add(label);
 									}
 								}
 							}
@@ -4973,6 +4995,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 							}
 							if (test == true && value.trim().equals("")) {
 								errs.add(labelText + " is a required field");
+								errors.add(label);
 							}
 
 						}
@@ -5006,6 +5029,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											errs.add(labelText
 													+ " must be greater than or equal to "
 													+ min);
+											errors.add(label);
 										}
 										// }
 
@@ -5034,10 +5058,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											errs.add(labelText
 													+ " must be in the range of "
 													+ min + " to " + max);
+											errors.add(label);
 										}
 									}
 								} catch (final NumberFormatException e) {
 									errs.add(labelText + " must be an Integer");
+									errors.add(label);
 								}
 							}
 						}
@@ -5070,6 +5096,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											errs.add(labelText
 													+ " must be greater than or equal to "
 													+ min);
+											errors.add(label);
 										}
 										// }
 									} else if (valuerange != null
@@ -5098,11 +5125,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 											errs.add(labelText
 													+ " must be in the range of "
 													+ min + " to " + max);
+											errors.add(label);
 										}
 									}
 
 								} catch (final NumberFormatException e) {
 									errs.add(labelText + " must be an Float");
+									errors.add(label);
 								}
 							}
 						}
@@ -5114,6 +5143,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 								if (value.length() > intValue) {
 									errs.add(labelText + " must not exceed "
 											+ intValue + " in length");
+									errors.add(label);
 								}
 							}
 
