@@ -738,11 +738,11 @@ implements GLEventListener, ScreenCoordinateListener
 		 {
 			 if ( kEvent.getY() < m_fMouseY )
 			 {
-				 m_fZoomScale += 0.05;
+				 m_fZoomScale += 0.001;
 			 }
 			 else if ( kEvent.getY() > m_fMouseY )
 			 {
-				 m_fZoomScale -= 0.05;
+				 m_fZoomScale -= 0.001;
 			 }
 			 zoom( );            
 		 }
@@ -809,11 +809,11 @@ implements GLEventListener, ScreenCoordinateListener
 	 {
 		 if ( e.getWheelRotation() > 0 )
 		 {
-			 m_fZoomScale -= 0.05;
+			 m_fZoomScale -= 0.001;
 		 }
 		 else 
 		 {
-			 m_fZoomScale += 0.05; 
+			 m_fZoomScale += 0.001; 
 		 }
 		 zoom( );    
 	 }
