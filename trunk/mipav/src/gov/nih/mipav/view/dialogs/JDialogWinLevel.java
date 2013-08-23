@@ -90,8 +90,6 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     /** Stores the minimum slider value. */
     private int windowSliderMax;
 
-    /** DOCUMENT ME! */
-
     /** textfield inputs for window and level * */
     private JTextField winValTextField, levelValTextField, minValTextField, maxValTextField;
 
@@ -118,10 +116,13 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
     public boolean keyTyped = false;
 
+    /** allow changes to the window and level boundaries * */
 	private int allowChangesWin;
 
+	/** allow changes to the min and max boundaries * */
 	private int allowChangesMinMax;
 
+	/** labels at top and bottom of sliders indicating slider bounds * */
 	private JLabel sliderMinMax, sliderMinMin, sliderMaxMax, sliderMaxMin;
 	
 	private JLabel sliderWinMin, sliderWinMax, sliderLevMin, sliderLevMax;
@@ -350,9 +351,9 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                         levelSlider.setValue((int) val);
                         windowSlider.setValue((int) val2);
                     } else {
-//                    	if(num1 == -1){
-//                    		MipavUtil.displayError("Level preference values are not valid with this dataset");
-//                    	} else {
+//                    	Asks user to confirm if they want to change the boundaries of the image to force
+//                    	application of a transfer function that contains values not contained
+//                    	within the images' bounds.
 	                    	if (allowChangesWin == 1){
 	                    		changeBounds(Float.parseFloat(lev), Float.parseFloat(win), true);
 	                    	} else if (allowChangesWin == 0){
@@ -400,9 +401,11 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
 
                         maxSlider.setValue((int) val2);
                     } else {
+//                    	Asks user to confirm if they want to change the boundaries of the image to force
+//                    	application of a transfer function that contains values not contained
+//                    	within the images' bounds.
                     	float val1 = Float.parseFloat(minString);
                     	float val2 = Float.parseFloat(maxString);
-//                        MipavUtil.displayError("Min and max preference values are not valid with this dataset");
                     	if (allowChangesMinMax == 1) {
                     		changeBounds(val1, val2, false);
                     	} else if (allowChangesMinMax == 0){
@@ -459,6 +462,12 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
     // levelValLabel.setText(Float.toString(Math.round(level)));
     // }
 
+    
+    /**
+	 * overrides and expands the min/max and or the window/level boundaries of an image based
+	 * on the transfer function being applied
+	 * 
+	 */
     private void changeBounds(float left, float right, boolean levWin) {   
     	if (levWin) {
     		String levString = Float.toString(left);
