@@ -1022,8 +1022,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 					hashCode = computeFileHash(zipFilePath);
 				} catch (IOException e) {
 					e.printStackTrace();
-					MipavUtil
-							.displayError("Unable calculate hash code of ZIP file:\n"
+					MipavUtil.displayError("Unable calculate hash code of ZIP file:\n"
 									+ e.getMessage());
 					continue;
 				}
@@ -3056,20 +3055,30 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						if (!f.exists()) {
 							f.mkdir();
 						}
-						if (fileName.equals("")) {
-							if (!entry.getName().endsWith(".raw")) {
-								fileName = entry.getName();
+						
+						if (entry.isDirectory()) {
+							// if a directory, create it instead of trying to write it to disk
+							f = new File(tempDir + File.separator + entry.getName());
+							if (!f.exists()) {
+								f.mkdirs();
 							}
-						}
-						fout = new FileOutputStream(tempDir + File.separator
-								+ entry.getName());
-						dest = new BufferedOutputStream(fout, BUFFER);
-						while ((count = zin.read(data, 0, BUFFER)) != -1) {
-							dest.write(data, 0, count);
+						} else {
+							// not a directory, so write out the file contents to disk from the zip and remember the first non-raw file name we find
+							if (fileName.equals("")) {
+								if (!entry.getName().endsWith(".raw")) {
+									fileName = entry.getName();
+								} 
+							}
+							
+							fout = new FileOutputStream(tempDir + File.separator + entry.getName());
+							dest = new BufferedOutputStream(fout, BUFFER);
+							while ((count = zin.read(data, 0, BUFFER)) != -1) {
+								dest.write(data, 0, count);
+							}
+							dest.flush();
+							dest.close();
 						}
 					}
-					dest.flush();
-					dest.close();
 					zin.close();
 					// } catch (FileNotFoundException f) {
 					// MipavUtil.displayError("The system cannot find the file specified");
