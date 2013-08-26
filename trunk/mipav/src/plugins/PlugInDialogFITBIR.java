@@ -184,6 +184,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 	private static final String[] allowedGuidPrefixes = new String[] { "TBI",
 			"PD" };
+	
+	private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
+	
+	private static final String STRUCT_STATUS_PUBLISHED = "PUBLISHED";
+	
+	private static final String STRUCT_TYPE_IMAGING = "Imaging";
 
 	private static final String MAIN_GROUP_NAME = "Main";
 
@@ -266,11 +272,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 	}
 
 	public void actionPerformed(final ActionEvent e) {
-
-		/*
-		 * @todo Implement this java.awt.event.ActionListener abstract method
-		 */
-
 		final String command = e.getActionCommand();
 
 		// System.err.println("size : " + this.getSize());
@@ -2369,9 +2370,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 				String status = ds.getStatus().toString();
 				String type = ds.getFileType().getType();
 
-				if (type.equalsIgnoreCase("imaging")) {
+				if (type.equalsIgnoreCase(STRUCT_TYPE_IMAGING)) {
 					// only include non-archived structures
-					if (!status.equalsIgnoreCase("archived")) {
+					if (!status.equalsIgnoreCase(STRUCT_STATUS_ARCHIVED)) {
 						descAL.add(desc);
 						shortNameAL.add(shortname);
 						versionAL.add(version);
@@ -2382,8 +2383,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 
 			// make sure we found a structure for imaging
 			if (shortNameAL.size() == 0) {
-				MipavUtil
-						.displayWarning("No Imaging structures were found in the data dictionary.");
+				MipavUtil.displayWarning("No Imaging structures were found in the data dictionary.");
 				return;
 			}
 
@@ -2406,42 +2406,61 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 			 * descAL.add(desc); shortNameAL.add(shortname);
 			 * versionAL.add(version); statusAL.add(status); } } }
 			 */
+			
+			// before sorting, remove structs that are not the most current
+			for (int i = 0; i < shortNameAL.size(); i++) {
+				for (int j = i + 1; j < shortNameAL.size(); j++) {
+					// check for multiple versions of the same struct
+					if (shortNameAL.get(i).equalsIgnoreCase(shortNameAL.get(j))) {
+						// remove any later struct with a lower version number
+						if (Integer.parseInt(versionAL.get(i)) > Integer.parseInt(versionAL.get(j))) {
+							shortNameAL.remove(j);
+							descAL.remove(j);
+							versionAL.remove(j);
+							statusAL.remove(j);
+						} else {
+							shortNameAL.remove(i);
+							descAL.remove(i);
+							versionAL.remove(i);
+							statusAL.remove(i);
+						}
+					}
+				}
+			}
 
-			TreeSet<String> sortedNamesSet = new TreeSet<String>(
-					new AlphabeticalComparator());
+			TreeSet<String> sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
 			for (int i = 0; i < shortNameAL.size(); i++) {
 				sortedNamesSet.add(shortNameAL.get(i));
 			}
 
 			// we only want to list the most recent versions
 			// so remove the less recent versions from this list
-			String[] sortedNamesArray = (String[]) (sortedNamesSet
-					.toArray(new String[0]));
-			for (int i = sortedNamesArray.length - 1; i > 0; i--) {
-				String name = sortedNamesArray[i];
-				if (!name.equals("")) {
-					// BRICS short name doesn't appear to have version number
-					// included
-					// String nameWithoutVersion = name.substring(0,
-					// name.length() - 2);
-					for (int k = i - 1; k >= 0; k--) {
-						String checkName = sortedNamesArray[k];
-						// BRICS short name doesn't appear to have version
-						// number included
-						// String checkNameWithoutVersion =
-						// checkName.substring(0, checkName.length() - 2);
-						if (name.equals(checkName)) {
-							sortedNamesArray[k] = "";
-						}
-					}
-				}
-			}
-			sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
-			for (int i = 0; i < sortedNamesArray.length; i++) {
-				if (!sortedNamesArray[i].equals("")) {
-					sortedNamesSet.add(sortedNamesArray[i]);
-				}
-			}
+//			String[] sortedNamesArray = (String[]) (sortedNamesSet.toArray(new String[0]));
+//			for (int i = sortedNamesArray.length - 1; i > 0; i--) {
+//				String name = sortedNamesArray[i];
+//				if (!name.equals("")) {
+//					// BRICS short name doesn't appear to have version number
+//					// included
+//					// String nameWithoutVersion = name.substring(0,
+//					// name.length() - 2);
+//					for (int k = i - 1; k >= 0; k--) {
+//						String checkName = sortedNamesArray[k];
+//						// BRICS short name doesn't appear to have version
+//						// number included
+//						// String checkNameWithoutVersion =
+//						// checkName.substring(0, checkName.length() - 2);
+//						if (name.equals(checkName)) {
+//							sortedNamesArray[k] = "";
+//						}
+//					}
+//				}
+//			}
+//			sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
+//			for (int i = 0; i < sortedNamesArray.length; i++) {
+//				if (!sortedNamesArray[i].equals("")) {
+//					sortedNamesSet.add(sortedNamesArray[i]);
+//				}
+//			}
 			// now we only have the most recent versions
 
 			final Object[] rowData = new Object[numColumns];
@@ -4581,7 +4600,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements
 						// TODO: would be best to only open the image once to pull out header info, get file list, and generate thumbnail
 						ModelImage srcImage = null;
 						if (file.getName().endsWith(".zip")) {
-							// TODO: if the user selects a zip file containing a dataset, try to open it as if pointed to from CSV
+							// if the user selects a zip file containing a dataset, try to open it as if pointed to from CSV
 							srcImage = readImgFromCSV(file.getParent(), file.getName());
 						} else {
 							final FileIO fileIO = new FileIO();
