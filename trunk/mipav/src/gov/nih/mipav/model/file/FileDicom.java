@@ -673,7 +673,7 @@ public class FileDicom extends FileDicomBase {
             try {
                 key = getNextTag(endianess);
                 
-                System.out.println(key);
+                //System.out.println(key);
                 tagElementLength = elementLength;
             } catch(ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
@@ -1147,7 +1147,7 @@ public class FileDicom extends FileDicomBase {
         }
         if (currNum > numSlices) {
             numSlices = currNum;
-            System.out.println("Found slice "+numSlices);
+            //System.out.println("Found slice "+numSlices);
         }
         return numSlices;
     }
@@ -1742,11 +1742,11 @@ public class FileDicom extends FileDicomBase {
 
             if (jpegData == null) {
                 if (encapsulatedJP2) {
-                    System.out.println("calling encapsulatedJP2ImageData");
+                    //System.out.println("calling encapsulatedJP2ImageData");
                     jpegData = encapsulatedJP2ImageData(imageType);
 
                 } else {
-                    System.out.println("Calling encapsulatedImageData");
+                    //System.out.println("Calling encapsulatedImageData");
                     jpegData = encapsulatedImageData();
                 }
             }
@@ -3521,7 +3521,7 @@ public class FileDicom extends FileDicomBase {
             }
         }
         
-        System.out.println("Location of tag write: "+raFile.getFilePointer());
+        //System.out.println("Location of tag write: "+raFile.getFilePointer());
 
         writeShort((short) gr, endianess); // write group
         writeShort((short) el, endianess); // write element
@@ -3769,9 +3769,9 @@ public class FileDicom extends FileDicomBase {
                 	
                 	newTag = editTags[editIndex];
                 	
-                	System.out.println(key);
+                	//System.out.println(key);
                     oldTagElementLength = elementLength;
-                    System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
+                    //System.out.println(raFile.getFilePointer()+" vs "+raFile.length());
                     
                     replaceTag(raFile, newTag.getKey(), newTag, oldTagElementLength);
                 	editIndex++;
@@ -3792,7 +3792,7 @@ public class FileDicom extends FileDicomBase {
             }
             if(bufferLoc != -1) {
             	seek(bufferLoc);
-            	System.err.println("Continuing processing: "+getFilePointer());
+            	//System.err.println("Continuing processing: "+getFilePointer());
             }
             int bPtrOld = getFilePointer();
             
@@ -3856,7 +3856,7 @@ public class FileDicom extends FileDicomBase {
 		long raFilePointer = raFile.getFilePointer();
     	long pointerLoc = getFilePointer(); //points to location in tag buffer
     	raFile.seek(pointerLoc);
-		System.out.println("Location: "+pointerLoc);
+		//System.out.println("Location: "+pointerLoc);
 		
 		int length = 0;
         if(newTag.getValueRepresentation().equals(VR.SQ)) {
@@ -3886,7 +3886,7 @@ public class FileDicom extends FileDicomBase {
 //        if(sizeChange < 0) {
 //        	raFile.setLength(raFile.length() + length - oldTagElementLength);
 //        }
-        System.out.println("Location before write: "+pointerLoc);
+        //System.out.println("Location before write: "+pointerLoc);
 		writeNextTag(newTag, raFile);
 		
 		raFile.seek(0); 
@@ -3913,7 +3913,7 @@ public class FileDicom extends FileDicomBase {
 			raFile.readFully(bufferIn);
 			raFile.seek(initPos);
 			if(bufferInNext != null) {
-				System.out.println("Initpos: Writing in location: "+initPos);
+				//System.out.println("Initpos: Writing in location: "+initPos);
 				raFile.write(bufferInNext);
 				bufferInNext = null;
 			}
@@ -3921,7 +3921,7 @@ public class FileDicom extends FileDicomBase {
 			bufferInNext = new byte[bufferSize];
 			raFile.readFully(bufferInNext, 0, bufferInNext.length);
 			raFile.seek(medPos);
-			System.out.println("Medpos: Writing in location: "+medPos);
+			//System.out.println("Medpos: Writing in location: "+medPos);
 			raFile.write(bufferIn);
 		}
 	}
