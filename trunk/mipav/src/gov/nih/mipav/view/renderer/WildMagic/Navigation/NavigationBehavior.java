@@ -718,10 +718,10 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					move("counterclockwise");
 				}
 
-				when += 500;
+				when += 200;
 
 				try {
-					wait(500);
+					wait(200);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -820,7 +820,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				
 				if (moveForward) {
 					makeMove(currentLocation);
-					if ( updateCenterTime == 3000 ) {
+					if ( updateCenterTime == 1000 ) {
 					 updateSliceCenter(currentLocation);
 					 updateCenterTime = 0;
 				    }
@@ -828,7 +828,7 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 					trackingPointLocation = trackingPointLocation.add(deltaForward);
 				} else {
 					makeMove(currentLocation);
-					if ( updateCenterTime == 3000 ) {
+					if ( updateCenterTime == 1000 ) {
 					  updateSliceCenter(currentLocation);
 					  updateCenterTime = 0;
 				    }
@@ -838,11 +838,11 @@ public class NavigationBehavior implements KeyListener, MouseListener,
 				}
 
 				
-				when += 200;
-				updateCenterTime += 200;
+				when += 100;
+				updateCenterTime += 100;
                 
 				try {
-					wait(200);
+					wait(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
