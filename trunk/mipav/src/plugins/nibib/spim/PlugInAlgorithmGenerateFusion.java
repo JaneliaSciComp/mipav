@@ -922,6 +922,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             transform.setDimAndResXYZ();
             transform.setUnits(baseImage.getUnitsOfMeasure());
             transform.setQuietRunning(!doInterImages);
+            transform.setFileXDim(0);
             
             int[] dim = new int[transformImage.getExtents().length];
             float[] res = new float[transformImage.getResolutions(0).length];
@@ -985,6 +986,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
             
             transformImage = transform.getResultImage();
+            
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
