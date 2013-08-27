@@ -1374,6 +1374,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     }
 
     /**
+     * 
+     * @param xDim
+     * By setting fileXdim[0] to zero can change path selected in callAlgorithm
+     */
+    public void setFileXDim(int xDim) {
+        if (fileXdim != null) {
+            fileXdim[0] = xDim;
+        }
+        
+    }
+    
+    /**
      * Calls the algorithm with the set variables.
      */
     protected void callAlgorithm() {
