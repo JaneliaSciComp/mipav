@@ -93,7 +93,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     /** This is your algorithm */
     private PlugInAlgorithmGenerateFusion generateFusionAlgo = null;
 
-    private JTextField mtxFileLocText, transformFileLocText, baseFileLocText;
+    private JTextField mtxFileLocText, mtxFileDirectoryText, transformFileLocText, baseFileLocText;
 
     private JCheckBox geometricMeanShowBox, arithmeticMeanShowBox, interImagesBox;
 
@@ -104,6 +104,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private JCheckBox doShowPrefusionBox;
 
     private String mtxFileLoc;
+    
+    private String mtxFileDirectory;
 
     private File[] baseImageAr, transformImageAr;
 
@@ -226,6 +228,11 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private File deconvDir;
 	/** The text field for setting the directory to save deconvolved files to. */
 	private JTextField saveDeconvFolderText;
+	private JCheckBox registrationCheckbox;
+	private boolean register = true;
+	private JTextField textTimeExt;
+	private int timeNum; // The extension number in the file name
+	private int timeIndex; // The index of the file in the array with the desired timeNum
 	
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -315,9 +322,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(register, doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
-                                                                                mtxFileLoc, baseImageAr, transformImageAr, 
+                                                                                mtxFileLoc, mtxFileDirectory, timeIndex, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
                                                                                 saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
@@ -362,13 +369,20 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
      */
     protected void setGUIFromParams() {
 
-    	showAriMean = scriptParameters.getParams().getBoolean("show_arithmetic");
+    	register = scriptParameters.getParams().getBoolean("reg");
+        showAriMean = scriptParameters.getParams().getBoolean("show_arithmetic");
     	showGeoMean = scriptParameters.getParams().getBoolean("show_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
     	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
-    	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
+    	if (register) {
+    	    mtxFileDirectory = scriptParameters.getParams().getFile("mtxFileDirectory");
+    	    timeNum = scriptParameters.getParams().getInt("time_num");
+    	}
+    	else {
+    	    mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
+    	}
     	transformFileDir = scriptParameters.getParams().getFile("spimAFileDir");
     	baseFileDir = scriptParameters.getParams().getFile("spimBFileDir");
     	
@@ -383,13 +397,20 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
      */
     protected void storeParamsFromGUI() throws ParserException {
    
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reg", register));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_arithmetic", showAriMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
+        if (register) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileDirectory", mtxFileDirectory));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("time_num", timeNum));
+        }
+        else {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
+        }
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", transformFileDir));
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", baseFileDir));
         
@@ -414,7 +435,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544c");
+        setTitle("Generate fusion 544d");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -440,9 +461,66 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         mtxPanel.setForeground(Color.black);
         mtxPanel.setBorder(buildTitledBorder("File information"));
         
-        mtxFileLocText = gui.buildFileField("Matrix file location: ", "", false, JFileChooser.FILES_ONLY);
-        mtxPanel.add(mtxFileLocText.getParent(), gbc);
+        registrationCheckbox = gui.buildCheckBox("Run registration", true);
+        mtxPanel.add(registrationCheckbox.getParent(), gbc);
         gbc.gridy++;
+        
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.weightx = 1;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0; 
+        gbc2.insets = new Insets(3, 3, 3, 3);
+        final JPanel timeNumberPanel = new JPanel(new GridBagLayout());
+        timeNumberPanel.setForeground(Color.black);
+        
+        JLabel labelTimeExt = new JLabel("Image number to register :");
+        labelTimeExt.setForeground(Color.black);
+        labelTimeExt.setFont(serif12);
+        timeNumberPanel.add(labelTimeExt, gbc2);
+        
+        textTimeExt = new JTextField(20);
+        textTimeExt.setForeground(Color.black);
+        textTimeExt.setFont(serif12);
+        gbc2.gridx = 1;
+        timeNumberPanel.add(textTimeExt, gbc2);
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        
+        gbc2.gridwidth = 2;
+        mtxFileDirectoryText = gui.buildFileField("Directory containing matrix file: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
+        timeNumberPanel.add(mtxFileDirectoryText.getParent(), gbc2);
+        
+        mtxPanel.add(timeNumberPanel, gbc);
+        gbc.gridy++;
+        
+        GridBagConstraints gbc3 = new GridBagConstraints();
+        gbc3.gridwidth = 1;
+        gbc3.gridheight = 1;
+        gbc3.anchor = GridBagConstraints.WEST;
+        gbc3.weightx = 1;
+        gbc3.fill = GridBagConstraints.HORIZONTAL;
+        gbc3.gridx = 0;
+        gbc3.gridy = 0; 
+        final JPanel matrixFilePanel = new JPanel(new GridBagLayout());
+        matrixFilePanel.setForeground(Color.black);
+        
+        mtxFileLocText = gui.buildFileField("Matrix file: ", "", false, JFileChooser.FILES_ONLY);
+        matrixFilePanel.add(mtxFileLocText.getParent(), gbc3);
+        matrixFilePanel.setVisible(false);
+        
+        mtxPanel.add(matrixFilePanel, gbc);
+        gbc.gridy++;
+        
+        registrationCheckbox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                timeNumberPanel.setVisible(registrationCheckbox.isSelected());  
+                matrixFilePanel.setVisible(!registrationCheckbox.isSelected());
+            }
+        });
         
         FolderSaveActionListener folderSave = new FolderSaveActionListener(this);
         
@@ -656,7 +734,13 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         mtxFileLocText.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    File f = new File(mtxFileLocText.getText()).getParentFile().getParentFile().getParentFile();
+                    File f;
+                    if (registrationCheckbox.isSelected()) {
+                        f = new File(mtxFileLocText.getText()).getParentFile().getParentFile();
+                    }
+                    else {
+                        f = new File(mtxFileLocText.getText()).getParentFile().getParentFile().getParentFile();    
+                    }
                     Preferences.setImageDirectory(f);
                 } catch(Exception ex) {}
             }
@@ -1055,6 +1139,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
      * @return
      */
 	private boolean setVariables() {
+	    register = registrationCheckbox.isSelected();
 	    showGeoMean = geometricMeanShowBox.isSelected();
         showAriMean = arithmeticMeanShowBox.isSelected();
         saveGeoMean = geometricMeanSaveBox.isSelected();
@@ -1127,6 +1212,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
 		    resZ = Double.valueOf(resZText.getText()).doubleValue();
 		    
+		    if (register) {
+                timeNum = Integer.valueOf(textTimeExt.getText()).intValue();
+            }
+		    
 		    if(showAriMean || saveAriMean) {
     		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
     		    transformAriWeight = Double.valueOf(transformAriWeightText.getText()).doubleValue();
@@ -1174,17 +1263,22 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             return false;
         }
 	      
-	    try {
-	        mtxFileLoc = mtxFileLocText.getText();
-	        File f = new File(mtxFileLoc);
-	        if(!f.exists()) {
-	            MipavUtil.displayError("Matrix file could not be found.");
-	            return false;
-	        }
-	    } catch(Exception e) {
-	        
-	        MipavUtil.displayError("Invalid matrix file.");
-	        return false;
+	    if (!register) {
+    	    try {
+    	        mtxFileLoc = mtxFileLocText.getText();
+    	        File f = new File(mtxFileLoc);
+    	        if(!f.exists()) {
+    	            MipavUtil.displayError("Matrix file could not be found.");
+    	            return false;
+    	        }
+    	    } catch(Exception e) {
+    	        
+    	        MipavUtil.displayError("Invalid matrix file.");
+    	        return false;
+    	    }
+	    } // if (!register)
+	    else {
+	        mtxFileDirectory = mtxFileDirectoryText.getText();
 	    }
 	    
 	    transformFileDir = transformFileLocText.getText();
@@ -1442,6 +1536,21 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
                 }
             }
         }
+        
+        if (register) {
+           timeIndex = -1;
+           for (int i = 0; i < baseImageList.size(); i++) {
+               int index = getIndex(baseImageList.get(i));
+               if (index == timeNum) {
+                   timeIndex = i;
+                   break;
+               }
+           }
+           if (timeIndex == -1) {
+               MipavUtil.displayError("Error in image number to register");
+               return false;
+           }
+        } // if (register)
         
         FileCompare f = new FileCompare();
         Collections.sort(baseImageList, f);
