@@ -414,13 +414,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     public class MeasureAlg implements Runnable {
 
         private ModelImage baseImage, transformImage;
-        
-        private Object parentObject;
 
         private int xExtents, yExtents, zExtents;
         
-        public MeasureAlg(Object parentObject, ModelImage baseImage, ModelImage transformImage) {
-            this.parentObject = parentObject;
+        public MeasureAlg(ModelImage baseImage, ModelImage transformImage) {
             this.baseImage = baseImage;
             this.transformImage = transformImage;
         }
@@ -436,8 +433,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             yExtents = baseImage.getExtents()[1] < transformImage.getExtents()[1] ? baseImage.getExtents()[1] : transformImage.getExtents()[1];
             zExtents = baseImage.getExtents()[2] < transformImage.getExtents()[2] ? baseImage.getExtents()[2] : transformImage.getExtents()[2];
             
-            double sumAmountOld = Double.MAX_VALUE, sumAmount = 0;
-            
             ArrayList<GenerateSum> sumList = new ArrayList<GenerateSum>();
             ArrayList<Future<Double>> futureList = new ArrayList<Future<Double>>();
             
@@ -452,7 +447,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             exec.shutdown();
             
-            double firstMinValue = Double.MAX_VALUE, secondMinValue = Double.MAX_VALUE, thirdMinValue = Double.MAX_VALUE;
+            double firstMinValue = Double.MAX_VALUE;
             
             int firstMinX = minX, firstMinY = minY, firstMinZ = minZ,
                 secondMinX = minX, secondMinY = minY, secondMinZ = minZ,
@@ -463,12 +458,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     //fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 1 fitting");
                     System.out.println(i);
                     if(futureList.get(i).get() < firstMinValue) {
-                        thirdMinValue = secondMinValue;
                         thirdMinX = secondMinX;
                         thirdMinY = secondMinY;
                         thirdMinZ = secondMinZ;
                         
-                        secondMinValue = firstMinValue;
                         secondMinX = firstMinX;
                         secondMinY = firstMinY;
                         secondMinZ = firstMinZ;
@@ -518,13 +511,11 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             exec.shutdown();
             
-            double minValue = 0;
             try {
                 for(int i=0; i<futureList.size(); i++) {
                     //fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 2 fitting");
                     System.out.println(i);
                     if(futureList.get(i).get() < firstMinValue) {
-                        minValue = futureList.get(i).get();
                         minX = sumList.get(i).getXMeasure();
                         minY = sumList.get(i).getYMeasure();
                         minZ = sumList.get(i).getZMeasure();
@@ -709,7 +700,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                         exec = Executors.newFixedThreadPool(1);
                         System.out.println("Print once");
                         //fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                        MeasureAlg alg = new MeasureAlg(parentObject, baseImage, transformImage);
+                        MeasureAlg alg = new MeasureAlg(baseImage, transformImage);
                         exec.submit(alg);
                         exec.shutdown();
                     }
@@ -1151,7 +1142,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             image.disposeLocal();
             image = rotate.getDestImage();
             if(doInterImages) {
-                ViewJFrameImage test = new ViewJFrameImage(image);
+                new ViewJFrameImage(image);
             }
             
             return image;
@@ -1278,10 +1269,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         /**
          * Discards extraneous slices from transform image.
          */
-        private void discardSlices(int middleSlice) {
+        /*private void discardSlices(int middleSlice) {
             // TODO Auto-generated method stub
             
-        }
+        }*/
 
         public ModelImage getSubGeoImage() {
             return subGeoImage;
