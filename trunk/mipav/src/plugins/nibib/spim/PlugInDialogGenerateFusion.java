@@ -653,7 +653,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         resYText = gui.buildDecimalField("Y: ", .1625);
         resPanel.add(resYText.getParent());
         
-        resZText = gui.buildDecimalField("Z: ", .5);
+        resZText = gui.buildDecimalField("Z: ", 1.0);
         resPanel.add(resZText.getParent());
         
         algOptionPanel.add(resPanel, gbc);
@@ -783,7 +783,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         maxProjPanel.add(doShowMaxProjBox.getParent(), gbc);
         gbc.gridx++;
         
-        doSaveMaxProjBox = gui.buildCheckBox("Save max projection images", false);
+        doSaveMaxProjBox = gui.buildCheckBox("Save max projection images", true);
         doSaveMaxProjBox.addActionListener(folderSave);
         maxProjPanel.add(doSaveMaxProjBox.getParent(), gbc);
         
@@ -870,7 +870,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         JPanel arithmeticPanel = new JPanel(new GridBagLayout());
         arithmeticPanel.setForeground(Color.black);
         arithmeticPanel.setBorder(MipavUtil.buildTitledBorder("Arithmetic options"));
-        arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
+        arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", false);
         arithmeticPanel.add(arithmeticMeanShowBox.getParent(), gbc);
         gbc.gridx++;
         
@@ -963,7 +963,12 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         deconvPanel.setForeground(Color.black);
         deconvPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
-        deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", false);
+        if (OpenCLAlgorithmBase.isOCLAvailable() ) {
+            deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", true);
+        }
+        else {
+            deconvPerformCheckbox = gui.buildCheckBox("Perform deconvolution", false);    
+        }
         deconvPerformCheckbox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
             	deconvParamPanel.setVisible(deconvPerformCheckbox.isSelected());
