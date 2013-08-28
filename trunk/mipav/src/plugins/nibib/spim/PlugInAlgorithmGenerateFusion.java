@@ -82,8 +82,8 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
     public enum SampleMode {
-        DownsampleToBase("Downsample transformed image to base"),
         UpsampleToTransform("Upsample base image to transformed"),
+        DownsampleToBase("Downsample transformed image to base"),
         DownsampleUpsampleCombined("Do both sampling mechanisms");
         
         private String str;
