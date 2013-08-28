@@ -178,6 +178,7 @@ public class AlgorithmEvaluateMaskSegmentation extends AlgorithmBase {
             return;
         }
 
+        
         for (i = 0; i < length; i++) {
 
             if (testArray[i] != 0) {
