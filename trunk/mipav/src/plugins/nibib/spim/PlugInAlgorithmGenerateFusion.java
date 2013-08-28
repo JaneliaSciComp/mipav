@@ -23,6 +23,8 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import gov.nih.mipav.util.ThreadUtil;
+
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -43,8 +45,11 @@ import java.util.concurrent.TimeUnit;
 import javax.imageio.stream.FileImageOutputStream;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmDeconvolution;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
@@ -92,6 +97,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
     }
     
+    private boolean register = true;
     private boolean showAriMean = true; 
     private boolean doShowPrefusion = false;
     private boolean doInterImages = false;
@@ -104,6 +110,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private double resZ = 1;
     private double thresholdIntensity;
     private String mtxFileLoc;
+    private String mtxFileDirectory;
+    private int timeIndex;
     private int concurrentNum;
     private Integer xMovement;
     private Integer yMovement;
@@ -140,6 +148,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
     /**
      * Constructor.
+     * @param register
      * @param doGeoMean 
      * @param doInterImages 
      * @param doShowPrefusion 
@@ -157,6 +166,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param doThreshold 
      * @param doThreshold 
      * @param mtxFileLoc 
+     * @param mtxFileDirectory
+     * @param timeIndex
      * @param zMovement 
      * @param yMovement 
      * @param xMovement 
@@ -182,14 +193,17 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param deconvDir
      * @param deconvShowResults
      */
-    public PlugInAlgorithmGenerateFusion(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
+    public PlugInAlgorithmGenerateFusion(boolean register, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, 
+                                                    boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
-                                                    File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
+                                                    String mtxFileDirectory, int timeIndex, File[] baseImageAr, File[] transformImageAr, 
+                                                    Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType,
                                                     boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor, File deconvDir, boolean deconvShowResults) {
+        this.register = register;
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -217,6 +231,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         this.stepSize = stepSize;
         
         this.mtxFileLoc = mtxFileLoc;
+        this.mtxFileDirectory = mtxFileDirectory;
+        this.timeIndex = timeIndex;
         this.baseImageAr = baseImageAr;
         this.transformImageAr = transformImageAr;
         
@@ -271,8 +287,81 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
+        
     	boolean appFrameFlag = ViewUserInterface.getReference().isAppFrameVisible();
     	ViewUserInterface.getReference().setAppFrameVisible(false);
+    	
+    	if (register) {
+            AlgorithmRegOAR3D regAlgo3D = null;
+            FileIO io = new FileIO();
+            ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
+            ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+            int DOF = 12;
+            int interp = AlgorithmTransform.TRILINEAR;
+            float rotateBeginX = -5.0f;
+            float rotateEndX = 5.0f;
+            float coarseRateX = 3.0f;
+            float fineRateX = 1.0f;
+            float rotateBeginY = -5.0f;
+            float rotateEndY = 5.0f;
+            float coarseRateY = 3.0f;
+            float fineRateY = 1.0f;
+            float rotateBeginZ = -5.0f;
+            float rotateEndZ = 5.0f;
+            float coarseRateZ = 3.0f;
+            float fineRateZ = 1.0f;
+            boolean maxResol = true;
+            boolean doSubsample = true;
+            boolean doMultiThread = Preferences.isMultiThreadingEnabled()  &&
+                    (ThreadUtil.getAvailableCores() > 1);
+            boolean fastMode = false;
+            int maxIterations = 2;
+            int numMinima = 3;
+            regAlgo3D = new AlgorithmRegOAR3D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                    coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+                    rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, doMultiThread, fastMode,
+                    maxIterations, numMinima);
+            regAlgo3D.run();
+            if (regAlgo3D.isCompleted()) {
+                int xdimA = baseImage.getExtents()[0];
+                int ydimA = baseImage.getExtents()[1];
+                int zdimA = baseImage.getExtents()[2];
+                float xresA = baseImage.getFileInfo(0).getResolutions()[0];
+                float yresA = baseImage.getFileInfo(0).getResolutions()[1];
+                float zresA = baseImage.getFileInfo(0).getResolutions()[2];
+                TransMatrix finalMatrix = regAlgo3D.getTransform();
+                finalMatrix.Inverse();
+                finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                String costName = "CORRELATION_RATIO_SMOOTHED";
+                String message = "Using cost function, " + costName;
+                message += ", the cost is " + Double.toString(regAlgo3D.getAnswer()) + ".\n";
+                message += "Some registration settings: \n";
+                message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                message += "with a X coarse rate of " + coarseRateX + " and X fine rate of " + fineRateX + ".\n";
+                message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
+                message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
+                message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
+                message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
+                mtxFileLoc = mtxFileDirectory + File.separator + transformImage.getImageName() + "_To_"
+                        + baseImage.getImageName() + ".mtx";
+                int interp2 = AlgorithmTransform.TRILINEAR;
+                boolean pad = false;
+                finalMatrix.saveMatrix(mtxFileLoc, interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad, message);
+                Preferences.debug("Saved " + mtxFileLoc + "\n",Preferences.DEBUG_FILEIO);
+                regAlgo3D.disposeLocal();
+                regAlgo3D = null;
+                baseImage.disposeLocal();
+                baseImage = null;
+                transformImage.disposeLocal();
+                transformImage = null;
+            } // if (regAlgo3D.isCompleted())
+            else {
+                MipavUtil.displayError("AlgorithmRegOAR3D did not complete successfully");
+                setCompleted(false);
+                return;
+            }
+        } // if (register)
     	
     	ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         
