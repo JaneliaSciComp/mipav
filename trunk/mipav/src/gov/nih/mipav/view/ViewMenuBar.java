@@ -164,7 +164,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
-                        //menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
+                        menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
                         menuBuilder.buildMenuItem("Brejl-Sonka 3D", "edge3D", 0, null, false),
                         menuBuilder.buildMenuItem("Zero X laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Zero X non-maximum suppression", "zxsuppression", 0, null, false)}),
@@ -1109,7 +1109,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
-            //menuBuilder.setMenuItemEnabled("Entropic", false);
+            menuBuilder.setMenuItemEnabled("Entropic", false);
             menuBuilder.setMenuItemEnabled("Thinning", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
