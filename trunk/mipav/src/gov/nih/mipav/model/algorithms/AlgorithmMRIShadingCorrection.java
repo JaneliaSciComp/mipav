@@ -549,6 +549,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                     }
 
                     gaussAlgo.run();
+                    image2.importData(0, gaussAlgo.getResultBuffer(), true);
                     gaussAlgo.finalize();
                     gaussAlgo = null;
 
