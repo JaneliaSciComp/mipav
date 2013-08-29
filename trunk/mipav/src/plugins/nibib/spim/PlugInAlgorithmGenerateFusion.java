@@ -25,16 +25,13 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.util.ThreadUtil;
 
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Vector;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -42,33 +39,24 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.stream.FileImageOutputStream;
-
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmDeconvolution;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogImageMath;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
@@ -296,6 +284,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             FileIO io = new FileIO();
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
+            rotate.run(); //transform image replaced
+            ViewUserInterface.getReference().unRegisterImage(transformImage);
+            transformImage.disposeLocal();
+            transformImage = rotate.getDestImage();
+            rotate.finalize();
             int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
             int DOF = 12;
             int interp = AlgorithmTransform.TRILINEAR;
