@@ -1374,26 +1374,13 @@ public abstract class VOIBase extends Vector<Vector3f> {
 
             findPositionAndIntensity( kStart, kEnd, kImage, positions, colors );
 
-            if( (i < size() - 2) && (positions.size() > 0) )
-            {
-                positions.remove(positions.size()-1);
-                colors.remove(colors.size()-1);
-            }
         }
         if ( closed )
         {
-            positions.remove(positions.size()-1);
-            colors.remove(colors.size()-1);
-
+            
             Vector3f kStart = lastElement();
             Vector3f kEnd = firstElement();
             findPositionAndIntensity( kStart, kEnd, kImage, positions, colors );       
-
-            if ( positions.size() > 0 )
-            {
-                positions.remove(positions.size()-1);
-                colors.remove(colors.size()-1);
-            }
         }
 
         return positions.size();
