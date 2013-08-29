@@ -296,9 +296,9 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             smoothSigmas[1] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
             gaussAlgo.run();
+            featureSpace = gaussAlgo.getResultBuffer();
             gaussAlgo.finalize();
             gaussAlgo = null;
-            smoothImage.exportData(0, nBins, featureSpace);
             smoothImage.disposeLocal();
             smoothImage = null;
 
@@ -759,9 +759,9 @@ loop1:
             smoothSigmas[2] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
             gaussAlgo.run();
+            featureSpace = gaussAlgo.getResultBuffer();
             gaussAlgo.finalize();
             gaussAlgo = null;
-            smoothImage.exportData(0, nBins, featureSpace);
             smoothImage.disposeLocal();
             smoothImage = null;
 
@@ -1254,9 +1254,9 @@ loop1:
             smoothSigmas[1] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
             gaussAlgo.run();
+            featureSpace = gaussAlgo.getResultBuffer();
             gaussAlgo.finalize();
             gaussAlgo = null;
-            smoothImage.exportData(0, nBins, featureSpace);
             smoothImage.disposeLocal();
             smoothImage = null;
 
