@@ -196,21 +196,11 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
             return;
         }
-
         
-        fireProgressStateChanged((70), srcImage.getImageName(), "Attenuating image ...");
-
-        // combine attenuation buffer with srcImage and put into destImage
-        try {
-            tmpImg.exportData(0, attenuationBuffer.length, attenuationBuffer);
-        } catch (IOException ioe) {
-            MipavUtil.displayError("Error exporting blurred attenuation buffer");
-
-            return;
-        }
-
         tmpImg.disposeLocal();
 
+        attenuationBuffer = blurAlgo.getResultBuffer();
+        
         if (threadStopped) {
             setCompleted(false);
             finalize();
