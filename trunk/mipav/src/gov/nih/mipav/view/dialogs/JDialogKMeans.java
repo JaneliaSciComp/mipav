@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.swing.ButtonGroup;
@@ -133,6 +134,18 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private boolean havePoints = false;
     
     private String resultsFileName = null;
+    
+    private ButtonGroup bwImageGroup;
+    
+    private JRadioButton clusterImage;
+    
+    private JRadioButton segmentedImage;
+    
+    private boolean bwSegmentedImage = false;
+    
+    private boolean showSegmentedImage = true;
+    
+    private double doubleBuffer[] = null;
     
     private ButtonGroup algorithmGroup;
     
@@ -660,7 +673,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		
 
-		if (((nDims >= 2) && (nDims <= 3)  && (image == null)) || ((image != null) && (image.isColorImage()))) {
+		if (((nDims >= 2) && (nDims <= 3)  && (image == null)) || ((image != null) && (image.isColorImage())) ||
+		        ((image != null) && (segmentedImage.isSelected()))) {
 			if ((image != null) && (image.isColorImage())) {
 				scaleMax = Math.max(scaleMax, image.getMax());
 				image = new ModelImage(ModelStorageBase.BYTE, extents, 
@@ -675,6 +689,20 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 			    }
 			    
 			    centroidPos = new double[2][numberClusters];
+			}
+			else if ((image != null) && (segmentedImage.isSelected())) {
+			    image = new ModelImage(ModelStorageBase.BYTE, extents,
+			            makeImageName(image.getImageFileName(), "_kmeans")); 
+			    
+			    length = 1;
+                for (i = 2; i < nDims; i++) {
+                    length = length * extents[i];
+                }
+                for (i = 0; i < length; i++) {
+                    image.getFileInfo()[i].setResolutions(image.getFileInfo()[0].getResolutions());
+                }
+                
+                centroidPos = new double[1][numberClusters];
 			}
 			else {
 				i = fileNamePoints.indexOf(".");
@@ -710,7 +738,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
-					                   useColorHistogram, scaleVariablesToUnitVariance, axesRatio);
+					                   useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
+					                   bwSegmentedImage, doubleBuffer, showSegmentedImage);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -848,23 +877,32 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         choiceLabel.setFont(serif12);
         mainPanel.add(choiceLabel, gbc);
         
-        JLabel choiceLabel2 = new JLabel("A black and white image with only points generates centroids");
+        bwImageGroup = new ButtonGroup();
+        clusterImage = new JRadioButton("A black and white image with only points generates centroids", true);
+        clusterImage.setFont(serif12);
+        clusterImage.setForeground(Color.black);
+        bwImageGroup.add(clusterImage);
+        gbc.gridy++;
+        mainPanel.add(clusterImage, gbc);
+        
+        JLabel choiceLabel2 = new JLabel("Point value gives weighing");
         choiceLabel2.setForeground(Color.black);
         choiceLabel2.setFont(serif12);
         gbc.gridy++;
         mainPanel.add(choiceLabel2, gbc);
         
-        JLabel choiceLabel3 = new JLabel("Point value gives weighing");
+        segmentedImage = new JRadioButton("A black and white image is segmented in 1 dimension", false);
+        segmentedImage.setFont(serif12);
+        segmentedImage.setForeground(Color.black);
+        bwImageGroup.add(segmentedImage);
+        gbc.gridy++;
+        mainPanel.add(segmentedImage, gbc);
+        
+        JLabel choiceLabel3 = new JLabel("A color or multispectral image is segmented");
         choiceLabel3.setForeground(Color.black);
         choiceLabel3.setFont(serif12);
         gbc.gridy++;
         mainPanel.add(choiceLabel3, gbc);
-        
-        JLabel choiceLabel4 = new JLabel("A color or multispectral image is segmented");
-        choiceLabel4.setForeground(Color.black);
-        choiceLabel4.setFont(serif12);
-        gbc.gridy++;
-        mainPanel.add(choiceLabel4, gbc);
         
         buttonImage = new JButton("Choose an image");
         buttonImage.setForeground(Color.black);
@@ -906,7 +944,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         colorHistogramBox.setForeground(Color.black);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy++;
         mainPanel.add(colorHistogramBox, gbc);
         
         buttonPointsFile = new JButton("Open a file of point locations");
@@ -917,7 +955,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy++;
         mainPanel.add(buttonPointsFile, gbc);
         
         textPointsFile = new JTextField();
@@ -931,7 +969,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         unitVarianceCheckBox.setForeground(Color.black);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy++;
         mainPanel.add(unitVarianceCheckBox, gbc);
         
         
@@ -940,7 +978,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy++;
         mainPanel.add(algorithmLabel, gbc);
         
         algorithmGroup = new ButtonGroup();
@@ -951,7 +989,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(kMeansAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy++;
         mainPanel.add(kMeansAlgo, gbc);
         
         globalAlgo = new JRadioButton("Global k-means", false);
@@ -961,7 +999,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(globalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy++;
         mainPanel.add(globalAlgo, gbc);
         
         fastGlobalAlgo = new JRadioButton("Fast global k-means", false);
@@ -971,7 +1009,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(fastGlobalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy++;
         mainPanel.add(fastGlobalAlgo, gbc);
         
         JLabel distanceLabel = new JLabel("Choose an distance measure");
@@ -979,7 +1017,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy++;
         mainPanel.add(distanceLabel, gbc);
         
         distanceGroup = new ButtonGroup();
@@ -991,7 +1029,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(euclideanSquared);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy++;
         mainPanel.add(euclideanSquared, gbc);
         
         cityBlock = new JRadioButton("City block distance with median centroids", false);
@@ -1001,7 +1039,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(cityBlock);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy++;
         mainPanel.add(cityBlock, gbc);
         
         mahalanobis = new JRadioButton("Mahalanobis squared distance with mean centroids works"+
@@ -1012,7 +1050,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(mahalanobis);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy++;
         mainPanel.add(mahalanobis, gbc);
         
         SButton = new JRadioButton("S metric with mean centroids works"+
@@ -1023,7 +1061,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(SButton);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy++;
         mainPanel.add(SButton, gbc);
         
         differentSpheresButton = new JRadioButton("nk*log tr(Wk/nk) metric with mean centroids works on different size spheres",false);
@@ -1033,7 +1071,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(differentSpheresButton);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy++;
         mainPanel.add(differentSpheresButton, gbc); 
         
         /*SStarButton = new JRadioButton("S* metric with mean centroids works"+
@@ -1044,7 +1082,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(SStarButton);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy++;
         mainPanel.add(SStarButton, gbc);*/
         
         axesRatioLabel = new JLabel("Ratio of other axes in decreasing size order to first separated by commas:");
@@ -1053,7 +1091,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         axesRatioLabel.setEnabled(false);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy++;
         mainPanel.add(axesRatioLabel, gbc);
         
         axesRatioText = new JTextField("");
@@ -1062,7 +1100,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         axesRatioText.setEnabled(false);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 2;
-        gbc.gridy = 19;
+        gbc.gridy++;
         mainPanel.add(axesRatioText, gbc);
         
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
@@ -1071,7 +1109,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy++;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -1086,7 +1124,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy++;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -1096,7 +1134,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 22;
+        gbc.gridy++;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -1105,7 +1143,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 23;
+        gbc.gridy++;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -1114,7 +1152,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 24;
+        gbc.gridy++;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -1123,7 +1161,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 25;
+        gbc.gridy++;
         mainPanel.add(maxMinInit, gbc);
         
         resultsFileNameLabel = new JLabel("Results file name:");
@@ -1132,7 +1170,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         resultsFileNameLabel.setEnabled(false);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 26;
+        gbc.gridy++;
         mainPanel.add(resultsFileNameLabel, gbc);
         
         resultsFileNameText = new JTextField(40);
@@ -1235,8 +1273,56 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
            	 textImage.setText(image.getImageFileName());
            	 nPoints = length;
             } // if (image.isColorImage())
-            else { // black and white point image
-           	 scale = new double[nDims];
+            else if (segmentedImage.isSelected()) { // black and white image undergoes one dimensional kmeans to produce segmented image
+                bwSegmentedImage = true;
+                scale = new double[1];
+                scale[0] = 1.0;
+                nDims = 1;
+                doubleBuffer = new double[length];
+                try {
+                    image.exportData(0, length, doubleBuffer);
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, doubleBuffer)");
+                    image.disposeLocal();
+                    image = null;
+                    return false;  
+                }
+                Arrays.sort(doubleBuffer);
+                nPoints = 1;
+                for (i = 1; i < length; i++) {
+                    if (doubleBuffer[i] > doubleBuffer[i-1]) {
+                        nPoints++;
+                    }
+                }
+                groupNum = new int[nPoints];
+                weight = new double[nPoints];
+                pos = new double[1][nPoints];
+                nval = 0;
+                weight[nval] = 1.0;
+                pos[0][nval] = doubleBuffer[0];
+                for (i = 1; i < length; i++) {
+                    if (doubleBuffer[i] == doubleBuffer[i-1]) {
+                        weight[nval] += 1.0;
+                    }
+                    else {
+                        nval++;
+                        weight[nval] = 1.0;
+                        pos[0][nval] = doubleBuffer[i];
+                    }
+                }
+                try {
+                    image.exportData(0, length, doubleBuffer);
+                }
+                catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, doubleBuffer)");
+                    image.disposeLocal();
+                    image = null;
+                    return false;  
+                }
+            } // black and white image undergoes one dimensional kmeans to produce segmented image
+            else { // black and white point image undergoes 2D or 3D cluster analysis
+           	    scale = new double[nDims];
     	         for (i = 0; i < nDims; i++) {
     	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
     	         }
@@ -1312,7 +1398,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	        	 }
     	         } // for (t = 0; t < tDim; t++)
     	         buffer = null;
-            } // else black and white point image
+            } // else black and white point image undergoes 2D or 3D cluster analysis
             havePoints = true;
     	} // if (!havePoints)
     	
