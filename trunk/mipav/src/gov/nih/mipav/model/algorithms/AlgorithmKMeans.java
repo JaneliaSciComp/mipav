@@ -20,7 +20,10 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 
 /**
  * This program can be run on data of any dimensionality.  However, VOIs will only be placed in images
- * for 2D and 3D data. 
+ * for 2D and 3D data.
+ * 
+ * This program can be used for one dimensional segmenting of black and white images or two dimensional
+ * segmenting of color images.
  * 
  * The data file format is as follows:
  * # is used to start any comment line
@@ -266,6 +269,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
     
     private double axesRatio[];
     
+    // If true, segment a black and white image using one dimensional kmeans
+    private boolean bwSegmentedImage = false;
+    
+    // Buffer containing original values of black and white image
+    private double doubleBuffer[] = null;
+    
     private double scale2[] = null;
     private boolean equalScale;
     private int nDims;
@@ -275,6 +284,14 @@ public class AlgorithmKMeans extends AlgorithmBase {
     
     // Actually square of distances divided by 4
     private double centroidDistances[][] = null;
+    
+    // groupMean[nDims][numberClusters]
+    private double groupMean[][];
+    
+    // groupStdDev[nDims][numberClusters]
+    private double groupStdDev[][];
+    
+    private boolean showSegmentedImage = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -285,7 +302,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		               double[][] pos, double[] scale, int groupNum[], double weight[],
     		               double[][] centroidPos, String resultsFileName, int initSelection, float[] redBuffer,
     		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram,
-    		               boolean scaleVariablesToUnitVariance, double[] axesRatio) {
+    		               boolean scaleVariablesToUnitVariance, double[] axesRatio, boolean bwSegmentedImage,
+    		               double[] doubleBuffer, boolean showSegmentedImage) {
 
         this.image = image;
         this.algoSelection = algoSelection;
@@ -304,6 +322,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.useColorHistogram = useColorHistogram;
         this.scaleVariablesToUnitVariance = scaleVariablesToUnitVariance;
         this.axesRatio = axesRatio;
+        this.bwSegmentedImage = bwSegmentedImage;
+        this.doubleBuffer = doubleBuffer;
+        this.showSegmentedImage = showSegmentedImage;
     }
 
     
@@ -349,7 +370,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         byte buffer[];
         int instances[] = null;
         int numTimes;
-        double groupMean[][];
         double totalMean[];
         double totalGroupWeight[];
         double completeWeight;
@@ -365,6 +385,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         Matrix totalSquaresMatrix;
         double totalSquaresDeterminant;
         double MarriottFigureOfMerit;
+        boolean found;
+        int newGroupNum[];
+        int currentGroup;
         
         scale2 = new double[scale.length];
         for (i = 0; i < scale.length; i++) {
@@ -580,6 +603,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    } // for (i = 0; i < colorsFound; i++)	
 		    colors = null;
         } // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
+        
+        if (bwSegmentedImage) {
+            length = image.getSliceSize();
+            for (i = 2; i <= image.getNDims()-1; i++) {
+                length *= image.getExtents()[i];
+            }
+            indexTable = new int[length];
+            for (i = 0; i < length; i++) {
+                indexTable[i] = -1;
+                found = false;
+                for (j = 0; j < pos[0].length && (!found); j++) {
+                    if (doubleBuffer[i] == pos[0][j]) {
+                        indexTable[i] = j;
+                        found = true;
+                    }
+                }
+            }
+        } // if (bwSegmentedImage)
     	
     	nDims = pos.length;
     	nPoints = pos[0].length;
@@ -605,7 +646,25 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	break;
     	} // switch(distanceMeasure)
     	
+    	if (bwSegmentedImage) {
+    	    // Only 1 dimension with pos[0] values in ascending order so put group numbers in ascending order
+    	    newGroupNum = new int[nPoints];
+    	    currentGroup = 0;
+    	    newGroupNum[0] = 0;
+    	    for (i = 1; i < nPoints; i++) {
+    	        if (groupNum[i] != groupNum[i-1]) {
+    	            currentGroup++;
+    	        }
+    	        newGroupNum[i] = currentGroup;
+    	    }
+    	    for (i = 0; i < nPoints; i++) {
+    	        groupNum[i] = newGroupNum[i];
+    	    }
+    	    newGroupNum = null;
+    	} // if (bwSegmentedImage)
+    	
     	groupMean = new double[nDims][numberClusters];
+    	groupStdDev = new double[nDims][numberClusters];
     	totalMean = new double[nDims];
     	totalGroupWeight = new double[numberClusters];
     	completeWeight = 0.0;
@@ -622,6 +681,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			groupMean[j][i] = groupMean[j][i]/totalGroupWeight[i];
     		}
     	}
+    	
+    	for (i = 0; i < nPoints; i++) {
+    	    for (j = 0; j < nDims; j++) {
+    	        groupStdDev[j][groupNum[i]] += weight[i]*(pos[j][i] - groupMean[j][groupNum[i]])*
+                        (pos[j][i] - groupMean[j][groupNum[i]]);
+    	    }
+    	}
+    	
+    	for (i = 0; i < numberClusters; i++) {
+    	    for (j = 0; j < nDims; j++) {
+    	        groupStdDev[j][i] = Math.sqrt(groupStdDev[j][i]/(totalGroupWeight[i] - 1.0));
+    	    }
+    	}
+    	
     	for (j = 0; j < nDims; j++) {
     		totalMean[j] = totalMean[j]/completeWeight;
     	}
@@ -629,21 +702,21 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	betweenGroupsSumOfSquares = new double[nDims];
     	for (i = 0; i < nPoints; i++) {
     		for (j = 0; j < nDims; j++) {
-    			withinGroupSumOfSquares[j] += weight[i]*scale2[j]*(pos[j][i] - groupMean[j][groupNum[i]])*
+    			withinGroupSumOfSquares[j] += weight[i]*(pos[j][i] - groupMean[j][groupNum[i]])*
     			                                                  (pos[j][i] - groupMean[j][groupNum[i]]);
     		}
     	}
     	for (i = 0; i < numberClusters; i++) {
     		for (j = 0; j < nDims; j++) {
-    			betweenGroupsSumOfSquares[j] += totalGroupWeight[i]*scale2[j]*
+    			betweenGroupsSumOfSquares[j] += totalGroupWeight[i]*
     			(groupMean[j][i] - totalMean[j])*(groupMean[j][i] - totalMean[j]);
     		}
     	}
     	betweenTrace = 0.0;
     	sumOfSquaredDeviationsFromClusterCentroids = 0.0;
     	for (j = 0; j < nDims; j++) {
-    		betweenTrace += betweenGroupsSumOfSquares[j];
-    		sumOfSquaredDeviationsFromClusterCentroids += withinGroupSumOfSquares[j];
+    		betweenTrace += scale2[j]*betweenGroupsSumOfSquares[j];
+    		sumOfSquaredDeviationsFromClusterCentroids += scale2[j]*withinGroupSumOfSquares[j];
     	}
     	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/
     	                                   (sumOfSquaredDeviationsFromClusterCentroids/(completeWeight - numberClusters));
@@ -672,10 +745,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	totalSquaresMatrix = new Matrix(totalSumArray);
     	totalSquaresDeterminant = totalSquaresMatrix.det();
     	
-    	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
+    	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null) || bwSegmentedImage) {
     		buffer = new byte[length];
-    		for(i = 0; i < length; i++) {
-    		    buffer[i] = (byte)groupNum[indexTable[i]];	
+    		for (i = 0; i < length; i++) {
+    		    buffer[i] = (byte)groupNum[indexTable[i]];
     		}
     		try {
     			image.importData(0, buffer, true);
@@ -685,7 +758,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     			setCompleted(false);
     			return;
     		}
-    	    new ViewJFrameImage(image);
+    		
+    		if (showSegmentedImage) {
+    	        new ViewJFrameImage(image);
+    		}
     	    
     	    Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
         	System.out.println("Putting results in " + resultsFileName);
@@ -741,7 +817,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	
     	    setCompleted(true);
     	    return;
-    	} // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null))
+    	} // if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null) || bwSegmentedImage)
  
     	if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)) {
     		color = new Color[numberClusters];
@@ -7283,5 +7359,23 @@ public class AlgorithmKMeans extends AlgorithmBase {
         }
 
     }
+	
+	/**
+	 * 
+	 * @return groupMean[nDims][numberClusters]
+	 */
+	@SuppressWarnings("unused")
+    private double[][] getGroupMean() {
+	    return groupMean;
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+    private double[][] getGroupStdDev() {
+	    return groupStdDev;
+	}
 	
 }
