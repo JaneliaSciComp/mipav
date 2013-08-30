@@ -189,31 +189,31 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
-	private static final int RANDOM_INIT = 0;
+	public static final int RANDOM_INIT = 0;
 	
-	private static final int BRADLEY_FAYYAD_INIT = 1;
+	public static final int BRADLEY_FAYYAD_INIT = 1;
 	
-	private static final int HIERARCHICAL_GROUPING_INIT = 2;
+	public static final int HIERARCHICAL_GROUPING_INIT = 2;
 	
-	private static final int MAXMIN_INIT = 3;
+	public static final int MAXMIN_INIT = 3;
 	
-    private static final int K_MEANS = 0;
+    public static final int K_MEANS = 0;
 	
-	private static final int GLOBAL_K_MEANS = 1;
+	public static final int GLOBAL_K_MEANS = 1;
 	
-	private static final int FAST_GLOBAL_K_MEANS = 2;
+	public static final int FAST_GLOBAL_K_MEANS = 2;
 	
-	private static final int EUCLIDEAN_SQUARED = 0;
+	public static final int EUCLIDEAN_SQUARED = 0;
 	
-	private static final int CITY_BLOCK = 1;
+	public static final int CITY_BLOCK = 1;
 	
-	private static final int MAHALANOBIS_SQUARED = 2;
+	public static final int MAHALANOBIS_SQUARED = 2;
 	
-	private static final int S_METRIC = 3;
+	public static final int S_METRIC = 3;
 	
-	private static final int SPHERES_DIFFERENT_SIZES = 4;
+	public static final int SPHERES_DIFFERENT_SIZES = 4;
 	
-	private static final int S_STAR_METRIC = 5;
+	public static final int S_STAR_METRIC = 5;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 	
