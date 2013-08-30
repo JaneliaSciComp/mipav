@@ -1,16 +1,12 @@
 package gov.nih.mipav.view;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
-
 import gov.nih.mipav.util.MipavMath;
-
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
 import java.io.*;
-
 import java.util.*;
 
 
@@ -459,7 +455,7 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
 	            
             lut.getTransferFunction().importArrays(x, y, nPts);
             histogramParent.setRangeText(newMx, my, index);
-
+   
             if (histogramParent.isImageUpdate() == true) {
                 histogramParent.updateFrames(false);
             }
@@ -555,13 +551,15 @@ public class ViewJComponentHistoLUT extends ViewJComponentHLUTBase {
      * @return the resulting x[index] based on boundary checks
      */
     private float setLinearIndex(float mx, float my) {
-    	if ((index != (lut.getTransferFunction().size() - 1)) && (mx > x[index + 1])) {
-            x[index] = x[index + 1];
-        } else if ((index != 0) && (mx < x[index - 1])) {
+    	
+    	if ((index == (lut.getTransferFunction().size() - 1)) || (index == 0));
+        //do not set x[index] point since it should already be a boundary value 
+    	else if ((index != 0) && (mx < x[index - 1])) {
         	x[index] = x[index - 1];
-        } else if ((index == (lut.getTransferFunction().size() - 1)) || (index == 0)) {
-        	//do not set x[index] point since it should already be a boundary value
-        } else {
+        } 
+        else if ((index != (lut.getTransferFunction().size() - 1)) && (mx > x[index + 1])) {
+            x[index] = x[index + 1];
+        }else {
         	x[index] = mx;
         }
         
