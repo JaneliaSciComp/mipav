@@ -7365,7 +7365,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	 * @return groupMean[nDims][numberClusters]
 	 */
 	@SuppressWarnings("unused")
-    private double[][] getGroupMean() {
+    public double[][] getGroupMean() {
 	    return groupMean;
 	}
 	
@@ -7374,7 +7374,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	 * @return
 	 */
 	@SuppressWarnings("unused")
-    private double[][] getGroupStdDev() {
+    public double[][] getGroupStdDev() {
 	    return groupStdDev;
 	}
 	
