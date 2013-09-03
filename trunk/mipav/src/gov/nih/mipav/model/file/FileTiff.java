@@ -1024,6 +1024,7 @@ public class FileTiff extends FileBase {
         int totalSize;
         int i;
         int k;
+        String originalName;
 
         try {
             file = new File(fileDir + fileName);
@@ -1365,6 +1366,7 @@ public class FileTiff extends FileBase {
             fileInfo.setExtents(imgExtents);
             raFile.close();
             
+            originalName = image.getImageFileName();
             if (flipHorizontal) {
                 flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
                 flipAlgo.run();
@@ -1374,9 +1376,11 @@ public class FileTiff extends FileBase {
             else if (rotate180) {
                 rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_180);
                 rotateAlgo.run();
+                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
                 image = null;
                 image = rotateAlgo.returnImage();
+                image.setImageName(originalName, true);
                 rotateAlgo.finalize();
                 rotateAlgo = null;
             }
@@ -1394,18 +1398,22 @@ public class FileTiff extends FileBase {
                 flipAlgo = null;
                 rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
                 rotateAlgo.run();
+                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
                 image = null;
                 image = rotateAlgo.returnImage();
+                image.setImageName(originalName, true);
                 rotateAlgo.finalize();
                 rotateAlgo = null;
             }
             else if (rotatePlus90) {
                 rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
                 rotateAlgo.run();
+                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
                 image = null;
                 image = rotateAlgo.returnImage();
+                image.setImageName(originalName, true);
                 rotateAlgo.finalize();
                 rotateAlgo = null;
             }
@@ -1413,9 +1421,11 @@ public class FileTiff extends FileBase {
                 // +90 degrees rotation followed by vertical flip
                 rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
                 rotateAlgo.run();
+                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
                 image = null;
                 image = rotateAlgo.returnImage();
+                image.setImageName(originalName, true);
                 rotateAlgo.finalize();
                 rotateAlgo = null; 
                 flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
@@ -1426,9 +1436,11 @@ public class FileTiff extends FileBase {
             else if (rotateMinus90) {
                 rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_MINUS);
                 rotateAlgo.run();
+                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
                 image = null;
                 image = rotateAlgo.returnImage();
+                image.setImageName(originalName, true);
                 rotateAlgo.finalize();
                 rotateAlgo = null;    
             }
