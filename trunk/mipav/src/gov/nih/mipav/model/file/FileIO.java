@@ -98,6 +98,8 @@ public class FileIO {
 
     private boolean isDTISort = false;
     
+    private boolean doTIFFOrientation = true;
+    
     
 
     // ~ Constructors
@@ -12997,6 +12999,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
         return image;
     }
 
+    public void setTIFFOrientation(boolean doTIFFOrientation) {
+        this.doTIFFOrientation = doTIFFOrientation;
+    }
+    
     /**
      * Reads a TIFF file by calling the read method of the file.
      * 
@@ -13014,6 +13020,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         try {
             imageFile = new FileTiff(fileName, fileDir);
+            imageFile.setTIFFOrientation(doTIFFOrientation);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
@@ -13085,6 +13092,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
             if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
                 // directory with the prefix name so read and return image as a single file.
+                imageFile.setTIFFOrientation(doTIFFOrientation);
                 image = imageFile.readImage(false, false);
                 LUT = imageFile.getModelLUT();
                 imageFile.finalize();
@@ -13092,6 +13100,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                 return image;
             } else {
+                imageFile.setTIFFOrientation(doTIFFOrientation);
                 imageFile.readImage(true, false);
             }
         } catch (final IOException error) {
@@ -13194,6 +13203,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 (imageFile).setFileName(fileList[i]);
 
                 // fileTIFF.testme(i);
+                (imageFile).setTIFFOrientation(doTIFFOrientation);
                 (imageFile).readImage(true, false);
                 myFileInfo = (imageFile).getFileInfo();
                 myFileInfo.setExtents(extents);
