@@ -282,6 +282,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     	if (register) {
             AlgorithmRegOAR3D regAlgo3D = null;
             FileIO io = new FileIO();
+            io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
             AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
@@ -362,6 +363,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
         for(int i=0; i<transformImageAr.length; i++) {
             FileIO io = new FileIO();
+            io.setTIFFOrientation(false);
             
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
