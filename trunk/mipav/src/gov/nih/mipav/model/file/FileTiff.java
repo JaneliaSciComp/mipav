@@ -856,6 +856,8 @@ public class FileTiff extends FileBase {
    
     private VOIVector VOIs = new VOIVector();
     private ViewUserInterface UI = ViewUserInterface.getReference();
+    
+    private boolean doTIFFOrientation = true;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -977,6 +979,10 @@ public class FileTiff extends FileBase {
         try {
             super.finalize();
         } catch (Throwable er) { }
+    }
+    
+    public void setTIFFOrientation(boolean doTIFFOrientation) {
+        this.doTIFFOrientation = doTIFFOrientation;
     }
 
     /**
@@ -1366,84 +1372,86 @@ public class FileTiff extends FileBase {
             fileInfo.setExtents(imgExtents);
             raFile.close();
             
-            originalName = image.getImageFileName();
-            if (flipHorizontal) {
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
-                flipAlgo.run();
-                flipAlgo.finalize();
-                flipAlgo = null;
-            }
-            else if (rotate180) {
-                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_180);
-                rotateAlgo.run();
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-                image = null;
-                image = rotateAlgo.returnImage();
-                image.setImageName(originalName, true);
-                rotateAlgo.finalize();
-                rotateAlgo = null;
-            }
-            else if (flipVertical) {
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
-                flipAlgo.run();
-                flipAlgo.finalize();
-                flipAlgo = null;    
-            }
-            else if (interchangeXY) {
-                // Vertical flip followed by +90 degrees rotation
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
-                flipAlgo.run();
-                flipAlgo.finalize();
-                flipAlgo = null;
-                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
-                rotateAlgo.run();
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-                image = null;
-                image = rotateAlgo.returnImage();
-                image.setImageName(originalName, true);
-                rotateAlgo.finalize();
-                rotateAlgo = null;
-            }
-            else if (rotatePlus90) {
-                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
-                rotateAlgo.run();
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-                image = null;
-                image = rotateAlgo.returnImage();
-                image.setImageName(originalName, true);
-                rotateAlgo.finalize();
-                rotateAlgo = null;
-            }
-            else if (negInterchangeXY) {
-                // +90 degrees rotation followed by vertical flip
-                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
-                rotateAlgo.run();
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-                image = null;
-                image = rotateAlgo.returnImage();
-                image.setImageName(originalName, true);
-                rotateAlgo.finalize();
-                rotateAlgo = null; 
-                flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
-                flipAlgo.run();
-                flipAlgo.finalize();
-                flipAlgo = null;
-            }
-            else if (rotateMinus90) {
-                rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_MINUS);
-                rotateAlgo.run();
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-                image = null;
-                image = rotateAlgo.returnImage();
-                image.setImageName(originalName, true);
-                rotateAlgo.finalize();
-                rotateAlgo = null;    
-            }
+            if (doTIFFOrientation) {
+                originalName = image.getImageFileName();
+                if (flipHorizontal) {
+                    flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
+                    flipAlgo.run();
+                    flipAlgo.finalize();
+                    flipAlgo = null;
+                }
+                else if (rotate180) {
+                    rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_180);
+                    rotateAlgo.run();
+                    ViewUserInterface.getReference().unRegisterImage(image);
+                    image.disposeLocal();
+                    image = null;
+                    image = rotateAlgo.returnImage();
+                    image.setImageName(originalName, true);
+                    rotateAlgo.finalize();
+                    rotateAlgo = null;
+                }
+                else if (flipVertical) {
+                    flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
+                    flipAlgo.run();
+                    flipAlgo.finalize();
+                    flipAlgo = null;    
+                }
+                else if (interchangeXY) {
+                    // Vertical flip followed by +90 degrees rotation
+                    flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
+                    flipAlgo.run();
+                    flipAlgo.finalize();
+                    flipAlgo = null;
+                    rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                    rotateAlgo.run();
+                    ViewUserInterface.getReference().unRegisterImage(image);
+                    image.disposeLocal();
+                    image = null;
+                    image = rotateAlgo.returnImage();
+                    image.setImageName(originalName, true);
+                    rotateAlgo.finalize();
+                    rotateAlgo = null;
+                }
+                else if (rotatePlus90) {
+                    rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                    rotateAlgo.run();
+                    ViewUserInterface.getReference().unRegisterImage(image);
+                    image.disposeLocal();
+                    image = null;
+                    image = rotateAlgo.returnImage();
+                    image.setImageName(originalName, true);
+                    rotateAlgo.finalize();
+                    rotateAlgo = null;
+                }
+                else if (negInterchangeXY) {
+                    // +90 degrees rotation followed by vertical flip
+                    rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_PLUS);
+                    rotateAlgo.run();
+                    ViewUserInterface.getReference().unRegisterImage(image);
+                    image.disposeLocal();
+                    image = null;
+                    image = rotateAlgo.returnImage();
+                    image.setImageName(originalName, true);
+                    rotateAlgo.finalize();
+                    rotateAlgo = null; 
+                    flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
+                    flipAlgo.run();
+                    flipAlgo.finalize();
+                    flipAlgo = null;
+                }
+                else if (rotateMinus90) {
+                    rotateAlgo = new AlgorithmRotate(image, AlgorithmRotate.Z_AXIS_MINUS);
+                    rotateAlgo.run();
+                    ViewUserInterface.getReference().unRegisterImage(image);
+                    image.disposeLocal();
+                    image = null;
+                    image = rotateAlgo.returnImage();
+                    image.setImageName(originalName, true);
+                    rotateAlgo.finalize();
+                    rotateAlgo = null;    
+                }
+            } // if (doTIFFOrientation)
 
         } catch (OutOfMemoryError error) {
 
