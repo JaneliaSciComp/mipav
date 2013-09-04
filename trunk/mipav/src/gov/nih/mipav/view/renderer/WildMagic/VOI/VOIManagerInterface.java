@@ -104,6 +104,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.BitSet;
@@ -2208,6 +2209,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      */
     public void pasteVOI(VOIBase kNew)
     {
+    	PrintStream out = System.out;
         if ( kNew.getGroup() == null )
         {
             if ( m_kCurrentVOIGroup == null )
@@ -2227,7 +2229,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             setCenter(kNew.getGeometricCenter(), true );
         }
+        out.println("Interface");
         updateDisplay();
+
     }
 
     /* (non-Javadoc)
@@ -4126,6 +4130,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
     private void paste()
     {
+    	//PrintStream out = System.out;
         // Get the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
         // Return if no contours to paste:
@@ -4137,6 +4142,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         // If the copy list is from another image:
         if ( copyList.elementAt(0).getGroup() != null && !copyList.elementAt(0).getGroup().hasListener(this) )
         {
+        	//out.println("broken");
             pasteFromViewUserInterface();
             return;
         }
@@ -4400,6 +4406,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private void pasteFromViewUserInterface()
     {
         ModelImage kActive = getActiveImage();
+        //PrintStream out = System.out;
+        
         int xDim = kActive.getExtents().length > 0 ? kActive.getExtents()[0] : 1;
         int yDim = kActive.getExtents().length > 1 ? kActive.getExtents()[1] : 1;
         int zDim = kActive.getExtents().length > 2 ? kActive.getExtents()[2] : 1;
@@ -4451,17 +4459,30 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         }
         // At this point the contours are grouped together and ready to be copied...
-        // Paste new VOI groups:               
+        // Paste new VOI groups:
+        
+        //New additions to adjust position of pasted VOIs
+        ViewJFrameImage fActive = kActive.getParentFrame();
+        int currentSlice = fActive.getViewableSlice();
+        int minSlice = 9999;
+        for ( int i = 0; i < newVOIs.size(); i++ ){
+        	for( int j = 0; j< newVOIs.VOIAt(i).getCurves().size(); j++) {
+        		int slice = newVOIs.VOIAt(i).getCurves().elementAt(j).slice(4);
+        		if (slice < minSlice) minSlice = slice;
+        	}
+        }
+        
         for ( int i = 0; i < newVOIs.size(); i++ )
         {
             VOI currentVOI = newVOIs.get(i);
             currentVOI.getBounds( xBounds, yBounds, zBounds );
             if ( (xBounds[1] < xDim) && (yBounds[1] < yDim) && (zBounds[1] < zDim) )
             {
+            	//out.println("Registers");
                 kActive.registerVOI(currentVOI);
                 currentVOI.addVOIListener(this);
             }
-            else
+            else //This case for when VOIs go out of bounds on a new image set
             {
                 // Copy the VOI and contents so we can modify it for this image.
                 // May want to paste again into another image, so don't modify the original from the copy list.
@@ -4470,12 +4491,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 {
                     VOIBase kCurrentVOI = currentVOI.getCurves().get(j);
                     Vector3f[] kBounds = kCurrentVOI.getImageBoundingBox();
+                    int newSlice = kCurrentVOI.slice(4) - minSlice + currentSlice;
+                    kBounds[1].Z -= minSlice - currentSlice;
+                    kBounds[0].Z -= minSlice - currentSlice ;
                     if ( (kBounds[1].X - kBounds[0].X < xDim) && 
                          (kBounds[1].Y - kBounds[0].Y < yDim) && 
                          (kBounds[1].Z - kBounds[0].Z < zDim) )
                     {
                         for ( int k = 0; k < kCurrentVOI.size(); k++ )
                         {
+                        	kCurrentVOI.elementAt(k).Z = newSlice;
                             if ( kBounds[1].X >= xDim )
                             {
                                 kCurrentVOI.elementAt(k).X -= (kBounds[1].X - (xDim-1));
