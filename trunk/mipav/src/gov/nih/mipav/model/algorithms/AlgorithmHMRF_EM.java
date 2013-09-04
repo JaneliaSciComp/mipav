@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.Arrays;
 
@@ -51,11 +52,17 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
     
     private int colorWeighting = 1;
     
+    private int numberClusters = 2;
+    
     private float gaussianSigma = 3.0f;
     
     private int maxEMIterations = 10;
     
     private int maxMAPIterations = 10;
+    
+    private boolean show_plot  = false;
+    
+    private String resultsFileName;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -70,17 +77,23 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
      * @param  destImg  DOCUMENT ME!
      * @param  srcImg   DOCUMENT ME!
      * @param colorWeighting
+     * @param numberClusters
      * @param gaussianSigma
      * @param maxEMIterations
      * @param maxMAPIterations
+     * @param show_plot
+     * @param resultsFileName
      */
-    public AlgorithmHMRF_EM(ModelImage destImg, ModelImage srcImg, int colorWeighting, float gaussianSigma,
-                            int maxEMIterations, int maxMAPIterations) {
+    public AlgorithmHMRF_EM(ModelImage destImg, ModelImage srcImg, int colorWeighting, int numberClusters, float gaussianSigma,
+                            int maxEMIterations, int maxMAPIterations, boolean show_plot, String resultsFileName) {
         super(destImg, srcImg);
         this.colorWeighting = colorWeighting;
+        this.numberClusters = numberClusters;
         this.gaussianSigma = gaussianSigma;
         this.maxEMIterations = maxEMIterations;
         this.maxMAPIterations = maxMAPIterations;
+        this.show_plot = show_plot;
+        this.resultsFileName = resultsFileName;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -106,26 +119,23 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         AlgorithmEntropicEdgeDetection entropicAlgo;
         ModelImage grayImage;
         AlgorithmGaussianBlurSep gaussAlgo;
-        ModelImage blurredImage;
         boolean wholeImage = true;
         boolean image25D = false;
         float sigmas[] = new float[]{gaussianSigma, gaussianSigma};
         float blurredBuffer[];
-        int numberClusters = 2;
         boolean bwSegmentedImage = true;
         double scale[];
-        double doubleBuffer[];
+        double y[];
         int nPoints;
         int groupNum[];
         double weight[];
         double pos[][];
         int nval;
-        ModelImage segmentedImage;
         double centroidPos[][];
         AlgorithmKMeans kMeansAlgo;
         int algoSelection = AlgorithmKMeans.K_MEANS;
         int distanceMeasure = AlgorithmKMeans.EUCLIDEAN_SQUARED;
-        String resultsFileName = srcImage.getImageFileName() +  "_kmeans.txt";
+        String kMeansFileName = srcImage.getImageFileName() +  "_kmeans.txt";
         int initSelection = AlgorithmKMeans.BRADLEY_FAYYAD_INIT;
         float redBuffer[] = null;
         float greenBuffer[] = null;
@@ -135,11 +145,48 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         boolean useColorHistogram = false;
         boolean scaleVariablesToUnitVariance = false;
         double axesRatio[] = null;
-        boolean showSegmentedImage = true;
+        boolean showKMeansSegmentedImage = false;
         // groupMean[kMeansNDims][numberClusters] = groupMean[1][2]
         double groupMean[][];
         // groupStdDev[kMeansNDims][numberClusters] = groupStdDev[1][2]
         double groupStdDev[][];
+        double P_lyi[][];
+        double sum_U[];
+        int it;
+        byte X[];
+        double U[][];
+        double sum_U_MAP[];
+        int it2;
+        double U1[][];
+        double U2[][];
+        int L;
+        double yi[];
+        double mu[];
+        double sigma[];
+        double temp1[];
+        double temp2[];
+        double temp3[];
+        int j;
+        int ind;
+        int xpos;
+        int ypos;
+        double u;
+        double u2;
+        byte Z[];
+        double temp[];
+        double latest3Sum;
+        double latest3Mean;
+        double latest3SumOfSquares;
+        double diff;
+        double latest3StdDev;
+        float xInit[];
+        float yInit[];
+        double a;
+        double b;
+        double sumP;
+        File file;
+        RandomAccessFile raFile;
+        String dataString;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -212,45 +259,33 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         entropicAlgo.run();
         entropicAlgo.finalize();
         entropicAlgo = null;
-        
-        blurredImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_blurred");
+        Z = new byte[sliceSize];
         try {
-            blurredImage.importData(0, srcBuffer, true);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on blurredImage.importData");
-            
-            setCompleted(false);
-
-            return;    
+            entropicEdgeImage.exportData(0, sliceSize, Z);
         }
-        gaussAlgo = new AlgorithmGaussianBlurSep(blurredImage, sigmas, wholeImage, image25D);
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on entropicEdgeImage.exportData(0, sliceSize, Z)");
+            setCompleted(false);
+            return;
+        }
+        
+        gaussAlgo = new AlgorithmGaussianBlurSep(grayImage, sigmas, wholeImage, image25D);
         gaussAlgo.run();
         blurredBuffer = gaussAlgo.getResultBuffer();
         gaussAlgo.finalize();
         gaussAlgo = null;
         
-        try {
-            blurredImage.importData(0, blurredBuffer, true);
-        }
-        catch (IOException e) {
-            MipavUtil.displayError("IOException " + e + " on blurredImage.importData");
-            
-            setCompleted(false);
-
-            return;       
-        }
-        
         bwSegmentedImage = true;
         scale = new double[1];
         scale[0] = 1.0;
-        doubleBuffer = new double[sliceSize];
+        y = new double[sliceSize];
         for (i = 0; i < sliceSize; i++) {
-            doubleBuffer[i] = blurredBuffer[i];
+            y[i] = blurredBuffer[i];
         }
-        Arrays.sort(doubleBuffer);
+        Arrays.sort(y);
         nPoints = 1;
         for (i = 1; i < sliceSize; i++) {
-            if (doubleBuffer[i] > doubleBuffer[i-1]) {
+            if (y[i] > y[i-1]) {
                 nPoints++;
             }
         }
@@ -259,34 +294,312 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         pos = new double[1][nPoints];
         nval = 0;
         weight[nval] = 1.0;
-        pos[0][nval] = doubleBuffer[0];
+        pos[0][nval] = y[0];
         for (i = 1; i < sliceSize; i++) {
-            if (doubleBuffer[i] == doubleBuffer[i-1]) {
+            if (y[i] == y[i-1]) {
                 weight[nval] += 1.0;
             }
             else {
                 nval++;
                 weight[nval] = 1.0;
-                pos[0][nval] = doubleBuffer[i];
+                pos[0][nval] = y[i];
             }
         }
         for (i = 0; i < sliceSize; i++) {
-            doubleBuffer[i] = blurredBuffer[i];
+            y[i] = blurredBuffer[i];
         }
         
-        segmentedImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
-                srcImage.getImageFileName() +  "_kmeans"); 
-        segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+        /*segmentedImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
+                srcImage.getImageFileName() +  "_segmented"); 
+        segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());*/
         centroidPos = new double[1][numberClusters];
         
-        kMeansAlgo = new AlgorithmKMeans(segmentedImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
+        kMeansAlgo = new AlgorithmKMeans(destImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
                 initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
                 useColorHistogram, scaleVariablesToUnitVariance, axesRatio,
-                bwSegmentedImage, doubleBuffer, showSegmentedImage);
+                bwSegmentedImage, y, showKMeansSegmentedImage);
         kMeansAlgo.run();
         groupMean = kMeansAlgo.getGroupMean();
+        mu = groupMean[0];
         groupStdDev = kMeansAlgo.getGroupStdDev();
+        sigma = groupStdDev[0];
         kMeansAlgo.finalize();
         kMeansAlgo = null;
+        X = new byte[sliceSize];
+        try {
+            destImage.exportData(0, sliceSize, X);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.exportData(0, sliceSize, X)");
+            setCompleted(false);
+            return;
+        }
+        
+        P_lyi = new double[numberClusters][sliceSize];
+        sum_U = new double[maxEMIterations];
+        sum_U_MAP = new double[maxMAPIterations];
+        yi = new double[sliceSize];
+        temp1 = new double[sliceSize];
+        temp2 = new double[sliceSize];
+        U = new double[sliceSize][numberClusters];
+        U1 = new double[sliceSize][numberClusters];
+        U2 = new double[sliceSize][numberClusters];
+        temp = new double[sliceSize];
+        temp3 = new double[sliceSize];
+        
+        for (it = 1; it <= maxEMIterations; it++) {
+            Preferences.debug("EM iteraton = " + it + "\n", Preferences.DEBUG_ALGORITHM); 
+            // Update X
+            for (i = 0; i < sliceSize; i++) {
+                for (j = 0; j < numberClusters; j++) {
+                    U[i][j] = 0.0;
+                }
+            }
+            for (i = 0; i < maxMAPIterations; i++) {
+                sum_U_MAP[i] = 0.0;
+            }
+            for (it2 = 1; it2 <= maxMAPIterations; it2++) {
+                Preferences.debug("Inner MAP iteration = " + it2 + "\n", Preferences.DEBUG_ALGORITHM);
+                for (i = 0; i < sliceSize; i++) {
+                    for (j = 0; j < numberClusters; j++) {
+                        U1[i][j] = U[i][j];
+                        U2[i][j] = U[i][j];
+                    }
+                }
+                
+                for (L = 0; L < numberClusters; L++) {
+                    for (i = 0; i < sliceSize; i++) {
+                        yi[i] = y[i] - mu[L];
+                        temp1[i] = (yi[i] * yi[i])/(2.0 * sigma[L] * sigma[L]);
+                        temp1[i] = temp1[i] + Math.log(sigma[L]);
+                        U1[i][L] = U1[i][L] + temp1[i];
+                    }
+                    
+                    for (ind = 0; ind < sliceSize; ind++) {
+                        xpos = ind % xDim;
+                        ypos = ind / xDim;
+                        u2 = 0.0;
+                        if ((xpos > 0) && (Z[xpos - 1 + xDim*ypos] == 0)) {
+                            if (L != X[xpos - 1 + xDim*ypos]) {
+                                u2 = u2 + 0.5;
+                            }
+                        }
+                        if ((xpos < xDim - 1) && (Z[xpos + 1 + xDim*ypos] == 0)) {
+                            if (L != X[xpos + 1 + xDim*ypos]) {
+                                u2 = u2 + 0.5;
+                            }
+                        }
+                        if ((ypos > 0) && (Z[xpos + xDim*(ypos-1)] == 0)) {
+                            if (L != X[xpos + xDim*(ypos-1)]) {
+                                u2 = u2 + 0.5;
+                            }
+                        }
+                        if ((ypos < yDim - 1) && (Z[xpos + xDim*(ypos+1)] == 0)) {
+                            if (L != X[xpos + xDim*(ypos+1)]) {
+                                u2 = u2 + 0.5;
+                            }
+                        }
+                        U2[ind][L] = u2;
+                    } // for (ind = 0; ind < sliceSize; ind++)
+                } // for (L = 0; L < numberClusters; L++)
+                for (i = 0; i < sliceSize; i++) {
+                    temp[i] = Double.MAX_VALUE;
+                    X[i] = -1;
+                    for (j = 0; j < numberClusters; j++) {
+                        U[i][j] = U1[i][j] + U2[i][j];
+                        if (U[i][j] < temp[i]) {
+                            temp[i] = U[i][j];
+                            X[i] = (byte)j;
+                        }
+                    }
+                    sum_U_MAP[it2-1] += temp[i];
+                } // for (i = 0; i < sliceSize; i++)
+                
+                if (it2 >= 3) {
+                    latest3Sum = sum_U_MAP[it2-1] + sum_U_MAP[it2-2] + sum_U_MAP[it2-3];
+                    latest3Mean = latest3Sum/3.0;
+                    latest3SumOfSquares = 0.0;
+                    for (i = 1; i <= 3; i++) {
+                        diff = sum_U_MAP[it2-i] - latest3Mean;
+                        latest3SumOfSquares += (diff * diff);
+                    }
+                    latest3StdDev = Math.sqrt(latest3SumOfSquares/2.0);
+                    if ((latest3StdDev/sum_U_MAP[it2-1]) < 0.0001) {
+                        break;
+                    }
+                } // if (it2 >= 3)
+            } // for (it2 = 1; it2 <= maxMAPIterations; it2++)
+            sum_U[it-1] = 0.0;
+            for (ind = 0; ind < sliceSize; ind++) {
+                sum_U[it-1] = sum_U[it-1] + U[ind][X[ind]];
+            }
+            if (show_plot) {
+                xInit = new float[it2];
+                for (i = 1; i <= it2; i++) {
+                    xInit[i-1] = (float)i;
+                }
+                yInit = new float[it2];
+                for (i = 0; i < it2; i++) {
+                    yInit[i] = (float)sum_U_MAP[i];
+                }
+                new ViewJFrameGraph(xInit, yInit, "sum U MAP", "MAP iteration", "sum U MAP", Color.red);
+            } // if (show_plot)
+            
+            // Update mu and sigma
+            // Get P_lyi
+            for (L = 0; L < numberClusters; L++) {
+                a = 2.0 * sigma[L] * sigma[L];
+                b = 1.0/Math.sqrt(a * Math.PI);
+                for (i = 0; i < sliceSize; i++) {
+                    diff = y[i] - mu[L];
+                    temp1[i] = b * Math.exp(-diff * diff/a);
+                    temp2[i] = 0;
+                } // for (i = 0; i < sliceSize; i++)
+                
+                for (ind = 0; ind < sliceSize; ind++) {
+                    xpos = ind % xDim;
+                    ypos = ind / xDim;
+                    u = 0.0;
+                    if ((xpos > 0) && (Z[xpos - 1 + xDim*ypos] == 0)) {
+                        if (L != X[xpos - 1 + xDim*ypos]) {
+                            u = u + 0.5;
+                        }
+                    }
+                    if ((xpos < xDim - 1) && (Z[xpos + 1 + xDim*ypos] == 0)) {
+                        if (L != X[xpos + 1 + xDim*ypos]) {
+                            u = u + 0.5;
+                        }
+                    }
+                    if ((ypos > 0) && (Z[xpos + xDim*(ypos-1)] == 0)) {
+                        if (L != X[xpos + xDim*(ypos-1)]) {
+                            u = u + 0.5;
+                        }
+                    }
+                    if ((ypos < yDim - 1) && (Z[xpos + xDim*(ypos+1)] == 0)) {
+                        if (L != X[xpos + xDim*(ypos+1)]) {
+                            u = u + 0.5;
+                        }
+                    }
+                    temp2[ind] = u;
+                } // for (ind = 0; ind < sliceSize; ind++)
+                for (i = 0; i < sliceSize; i++) {
+                    P_lyi[L][i] = temp1[i] * Math.exp(-temp2[i]);
+                }
+            } // for (L = 0; L < numberClusters; L++)
+            for (i = 0; i < sliceSize; i++) {
+                temp3[i] = P_lyi[0][i];
+                for (j = 1; j < numberClusters; j++) {
+                    temp3[i] += P_lyi[j][i];
+                }
+            } // for (i = 0; i < sliceSize; i++)
+            for (i = 0; i < sliceSize; i++) {
+                for (j = 0; j < numberClusters; j++) {
+                    P_lyi[j][i] = P_lyi[j][i]/temp3[i];
+                }
+            } // for (i = 0; i < sliceSize; i++)
+            
+            // get mu and sigma
+            for (L = 0; L < numberClusters; L++) {
+                mu[L] = 0.0;
+                sumP = 0.0;
+                for (i = 0; i < sliceSize; i++) {
+                    mu[L] += P_lyi[L][i] * y[i];
+                    sumP += P_lyi[L][i];
+                }
+                mu[L] = mu[L]/sumP;
+                sigma[L] = 0.0;
+                for (i = 0; i < sliceSize; i++) {
+                    diff = y[i] - mu[L];
+                    sigma[L] += P_lyi[L][i] * diff * diff;
+                }
+                sigma[L] = sigma[L]/sumP;
+                sigma[L] = Math.sqrt(sigma[L]);
+            } // for (L = 0; L < numberClusters; L++)
+            if (it >= 3) {
+                latest3Sum = sum_U[it-1] + sum_U[it-2] + sum_U[it-3];
+                latest3Mean = latest3Sum/3.0;
+                latest3SumOfSquares = 0.0;
+                for (i = 1; i <= 3; i++) {
+                    diff = sum_U[it-i] - latest3Mean;
+                    latest3SumOfSquares += (diff * diff);
+                }
+                latest3StdDev = Math.sqrt(latest3SumOfSquares/2.0);
+                if ((latest3StdDev/sum_U[it-1]) < 0.0001) {
+                    break;
+                }
+            } // if (it >= 3)
+        } // for (it = 1; it <= maxEMIterations; it++)
+        
+        xInit = new float[it];
+        for (i = 1; i <= it; i++) {
+            xInit[i-1] = (float)i;
+        }
+        yInit = new float[it];
+        for (i = 0; i < it; i++) {
+            yInit[i] = (float)sum_U[i];
+        }
+        new ViewJFrameGraph(xInit, yInit, "sum of U in each EM iteration", "EM iteration", "sum of U");
+        
+        try {
+            destImage.importData(0, X, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData(0, X, true)");
+            setCompleted(false);
+            return;
+        }
+        
+        dataString = "Source image = " + srcImage.getImageFileName() + "\n";
+        
+        dataString += "Number of Clusters = " + numberClusters + "\n";
+        
+        for (L = 0; L < numberClusters; L++) {
+            dataString += "Cluster number = " + (L+1) + " mean = " + mu[L] + " standard deviation " + sigma[L] + "\n";
+            Preferences.debug("Cluster number = " + (L+1) + " mean = " + mu[L] + " standard deviation " + sigma[L] + "\n",
+                    Preferences.DEBUG_ALGORITHM);
+            System.out.println("Cluster number = " + (L+1) + " mean = " + mu[L] + " standard deviation " + sigma[L]);
+        }
+        
+        Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
+        System.out.println("Putting results in " + resultsFileName);
+        file = new File(resultsFileName);
+        try {
+        raFile = new RandomAccessFile( file, "rw" );
+        }
+        catch(FileNotFoundException e) {
+            MipavUtil.displayError("new RandomAccessFile gave FileNotFoundException " + e);
+            setCompleted(false);
+            return;
+        }
+        
+        // Necessary so that if this is an overwritten file there isn't any junk at the end
+        try {
+            raFile.setLength( 0 );
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("raFile.setLength(0) gave IOException " + e);
+            setCompleted(false);
+            return; 
+        }
+        
+        try {
+            raFile.write(dataString.getBytes());
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("raFile.write gave IOException " + e);
+            setCompleted(false);
+            return;     
+        }
+        try {
+            raFile.close();
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("raFile.close gave IOException " + e);
+            setCompleted(false);
+            return;     
+        }
+        
+        setCompleted(true);
+        return;
     }
 }
