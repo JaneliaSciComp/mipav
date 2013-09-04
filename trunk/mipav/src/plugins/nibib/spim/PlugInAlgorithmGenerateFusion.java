@@ -834,7 +834,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 	ModelImage deconvImg = deconvolve(prefusionBaseImage, prefusionTransformImage);
                 	
                 	options.setFileDirectory(deconvDir.getAbsolutePath()+File.separator);
-                    options.setFileName(deconvImg.getImageFileName());
+                    options.setFileName(deconvImg.getImageName());
                     options.setBeginSlice(0);
                     options.setEndSlice(deconvImg.getExtents()[2]-1);
                     io.writeImage(deconvImg, options, false);
@@ -1242,7 +1242,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
          * @return The deconvolved image.
          */
         private ModelImage deconvolve(ModelImage imageA, ModelImage imageB) {
-        	final String name = JDialogBase.makeImageName(imageA.getImageName(), "_deconvolution");
+        	final String name = baseImageName + "_deconvolution";
         	ModelImage resultImage = (ModelImage) imageA.clone(name);
         	
         	OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA, imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
