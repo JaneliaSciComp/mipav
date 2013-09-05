@@ -1791,6 +1791,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogLevelSet(this, getActiveImage());
         } else if (command.equals("LevelsetDiffusion")) {
             new JDialogLevelSetDiffusion(this, getActiveImage());
+        } else if (command.equals("HMRF_EM")) {
+            new JDialogHMRF_EM(this, getActiveImage());
         } else if (command.equals("Barrel")) {
             new JDialogBarrelDistortion(this, getActiveImage());
         } else if (command.equals("CirToRec")) {
