@@ -2476,7 +2476,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			Preferences.debug("Iteration = " + iteration + "\n", Preferences.DEBUG_ALGORITHM);
 			iteration++;
 			changeOccurred = false;
-			
 	        for (pointNum = 0; pointNum < nPoints; pointNum++) {
 	        	distSquaredReduced = 0.0;
 	            bestGroup = groupNum[pointNum];
