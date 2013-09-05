@@ -285,6 +285,16 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            
+            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
+            }
+            
+            for(int i=0; i<transformImage.getFileInfo().length; i++) {
+                transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
+            }
             AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
             rotate.run(); //transform image replaced
             ViewUserInterface.getReference().unRegisterImage(transformImage);
