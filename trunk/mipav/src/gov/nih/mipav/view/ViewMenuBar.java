@@ -325,6 +325,7 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem("Single channel", null, 0, null, false),}),
                         menuBuilder.buildMenuItem("Levelset", "Levelset", 0, null, false),
                         menuBuilder.buildMenuItem("Levelset diffusion", "LevelsetDiffusion", 0, null, false),
+                        menuBuilder.buildMenuItem("Markov random field", "HMRF_EM", 0, null, false),
                         menuBuilder.buildMenuItem("Spatial color compactness", "SCD", 0, null, false),
 
                         menuBuilder.makeMenu("Threshold", false, new JMenuItem[] {
@@ -1023,6 +1024,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
+            menuBuilder.setMenuItemEnabled("Markov random field", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
@@ -1111,6 +1113,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
             menuBuilder.setMenuItemEnabled("Thinning", false);
+            menuBuilder.setMenuItemEnabled("Markov random field", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
