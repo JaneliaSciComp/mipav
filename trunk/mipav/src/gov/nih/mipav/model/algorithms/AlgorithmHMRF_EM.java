@@ -48,9 +48,10 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
     
     private final static int EQUAL_WEIGHTS = 1;
     
+    @SuppressWarnings("unused")
     private final static int GRAPHIC_WEIGHTS = 2;
     
-    private int colorWeighting = 1;
+    private int colorWeighting = EQUAL_WEIGHTS;
     
     private int numberClusters = 2;
     
@@ -60,7 +61,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
     
     private int maxMAPIterations = 10;
     
-    private boolean show_plot  = false;
+    private boolean showMAPplot  = false;
     
     private String resultsFileName;
     
@@ -81,18 +82,18 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
      * @param gaussianSigma
      * @param maxEMIterations
      * @param maxMAPIterations
-     * @param show_plot
+     * @param showMAPplot
      * @param resultsFileName
      */
     public AlgorithmHMRF_EM(ModelImage destImg, ModelImage srcImg, int colorWeighting, int numberClusters, float gaussianSigma,
-                            int maxEMIterations, int maxMAPIterations, boolean show_plot, String resultsFileName) {
+                            int maxEMIterations, int maxMAPIterations, boolean showMAPplot, String resultsFileName) {
         super(destImg, srcImg);
         this.colorWeighting = colorWeighting;
         this.numberClusters = numberClusters;
         this.gaussianSigma = gaussianSigma;
         this.maxEMIterations = maxEMIterations;
         this.maxMAPIterations = maxMAPIterations;
-        this.show_plot = show_plot;
+        this.showMAPplot = showMAPplot;
         this.resultsFileName = resultsFileName;
     }
 
@@ -153,10 +154,12 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         double P_lyi[][];
         double sum_U[];
         int it;
+        int itDone = 1;
         byte X[];
         double U[][];
         double sum_U_MAP[];
         int it2;
+        int it2Done = 1;
         double U1[][];
         double U2[][];
         int L;
@@ -167,7 +170,6 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         double temp2[];
         double temp3[];
         int j;
-        int ind;
         int xpos;
         int ypos;
         double u;
@@ -268,19 +270,27 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
             setCompleted(false);
             return;
         }
+        entropicEdgeImage.disposeLocal();
+        entropicEdgeImage = null;
         
         gaussAlgo = new AlgorithmGaussianBlurSep(grayImage, sigmas, wholeImage, image25D);
         gaussAlgo.run();
         blurredBuffer = gaussAlgo.getResultBuffer();
         gaussAlgo.finalize();
         gaussAlgo = null;
+        if (srcImage.isColorImage()) {
+            grayImage.disposeLocal();
+            grayImage = null;
+        }
         
         bwSegmentedImage = true;
         scale = new double[1];
         scale[0] = 1.0;
         y = new double[sliceSize];
+        // Without rounding in one image 256 unique values become 65458 unique values
+        // This is too many for kmeans to handle in any reasonable so round to integers
         for (i = 0; i < sliceSize; i++) {
-            y[i] = blurredBuffer[i];
+            y[i] = Math.round(blurredBuffer[i]);
         }
         Arrays.sort(y);
         nPoints = 1;
@@ -289,6 +299,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                 nPoints++;
             }
         }
+        System.out.println("nPoints = " + nPoints);
         groupNum = new int[nPoints];
         weight = new double[nPoints];
         pos = new double[1][nPoints];
@@ -306,12 +317,9 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
             }
         }
         for (i = 0; i < sliceSize; i++) {
-            y[i] = blurredBuffer[i];
+            y[i] = Math.round(blurredBuffer[i]);
         }
         
-        /*segmentedImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
-                srcImage.getImageFileName() +  "_segmented"); 
-        segmentedImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());*/
         centroidPos = new double[1][numberClusters];
         
         kMeansAlgo = new AlgorithmKMeans(destImage,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,kMeansFileName,
@@ -348,6 +356,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
         temp3 = new double[sliceSize];
         
         for (it = 1; it <= maxEMIterations; it++) {
+            itDone = it;
             Preferences.debug("EM iteraton = " + it + "\n", Preferences.DEBUG_ALGORITHM); 
             // Update X
             for (i = 0; i < sliceSize; i++) {
@@ -359,6 +368,7 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                 sum_U_MAP[i] = 0.0;
             }
             for (it2 = 1; it2 <= maxMAPIterations; it2++) {
+                it2Done = it2;
                 Preferences.debug("Inner MAP iteration = " + it2 + "\n", Preferences.DEBUG_ALGORITHM);
                 for (i = 0; i < sliceSize; i++) {
                     for (j = 0; j < numberClusters; j++) {
@@ -373,11 +383,9 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                         temp1[i] = (yi[i] * yi[i])/(2.0 * sigma[L] * sigma[L]);
                         temp1[i] = temp1[i] + Math.log(sigma[L]);
                         U1[i][L] = U1[i][L] + temp1[i];
-                    }
-                    
-                    for (ind = 0; ind < sliceSize; ind++) {
-                        xpos = ind % xDim;
-                        ypos = ind / xDim;
+     
+                        xpos = i % xDim;
+                        ypos = i / xDim;
                         u2 = 0.0;
                         if ((xpos > 0) && (Z[xpos - 1 + xDim*ypos] == 0)) {
                             if (L != X[xpos - 1 + xDim*ypos]) {
@@ -399,8 +407,8 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                                 u2 = u2 + 0.5;
                             }
                         }
-                        U2[ind][L] = u2;
-                    } // for (ind = 0; ind < sliceSize; ind++)
+                        U2[i][L] = u2;
+                    } // for (i = 0; i < sliceSize; i++)
                 } // for (L = 0; L < numberClusters; L++)
                 for (i = 0; i < sliceSize; i++) {
                     temp[i] = Double.MAX_VALUE;
@@ -430,16 +438,16 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                 } // if (it2 >= 3)
             } // for (it2 = 1; it2 <= maxMAPIterations; it2++)
             sum_U[it-1] = 0.0;
-            for (ind = 0; ind < sliceSize; ind++) {
-                sum_U[it-1] = sum_U[it-1] + U[ind][X[ind]];
+            for (i = 0; i < sliceSize; i++) {
+                sum_U[it-1] = sum_U[it-1] + U[i][X[i]];
             }
-            if (show_plot) {
-                xInit = new float[it2];
-                for (i = 1; i <= it2; i++) {
+            if (showMAPplot) {
+                xInit = new float[it2Done];
+                for (i = 1; i <= it2Done; i++) {
                     xInit[i-1] = (float)i;
                 }
-                yInit = new float[it2];
-                for (i = 0; i < it2; i++) {
+                yInit = new float[it2Done];
+                for (i = 0; i < it2Done; i++) {
                     yInit[i] = (float)sum_U_MAP[i];
                 }
                 new ViewJFrameGraph(xInit, yInit, "sum U MAP", "MAP iteration", "sum U MAP", Color.red);
@@ -452,13 +460,11 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                 b = 1.0/Math.sqrt(a * Math.PI);
                 for (i = 0; i < sliceSize; i++) {
                     diff = y[i] - mu[L];
-                    temp1[i] = b * Math.exp(-diff * diff/a);
+                    temp1[i] = b * Math.exp(-(diff * diff)/a);
                     temp2[i] = 0;
-                } // for (i = 0; i < sliceSize; i++)
                 
-                for (ind = 0; ind < sliceSize; ind++) {
-                    xpos = ind % xDim;
-                    ypos = ind / xDim;
+                    xpos = i % xDim;
+                    ypos = i / xDim;
                     u = 0.0;
                     if ((xpos > 0) && (Z[xpos - 1 + xDim*ypos] == 0)) {
                         if (L != X[xpos - 1 + xDim*ypos]) {
@@ -480,11 +486,10 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
                             u = u + 0.5;
                         }
                     }
-                    temp2[ind] = u;
-                } // for (ind = 0; ind < sliceSize; ind++)
-                for (i = 0; i < sliceSize; i++) {
+                    temp2[i] = u;
                     P_lyi[L][i] = temp1[i] * Math.exp(-temp2[i]);
-                }
+                } // for (i = 0; i < sliceSize; i++)
+               
             } // for (L = 0; L < numberClusters; L++)
             for (i = 0; i < sliceSize; i++) {
                 temp3[i] = P_lyi[0][i];
@@ -530,12 +535,12 @@ public class AlgorithmHMRF_EM extends AlgorithmBase {
             } // if (it >= 3)
         } // for (it = 1; it <= maxEMIterations; it++)
         
-        xInit = new float[it];
-        for (i = 1; i <= it; i++) {
+        xInit = new float[itDone];
+        for (i = 1; i <= itDone; i++) {
             xInit[i-1] = (float)i;
         }
-        yInit = new float[it];
-        for (i = 0; i < it; i++) {
+        yInit = new float[itDone];
+        for (i = 0; i < itDone; i++) {
             yInit[i] = (float)sum_U[i];
         }
         new ViewJFrameGraph(xInit, yInit, "sum of U in each EM iteration", "EM iteration", "sum of U");
