@@ -295,7 +295,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             if ((xCur >= 0) && (xCur < xDim) && (yCur >= 0) && (yCur < yDim) && (image.get(index))) {
                 resultGon.addPoint(xCur + xInc, yCur + yInc);
-
+                
                 if (dir == N) {
                     xCur--;
                     dir = W;
@@ -365,6 +365,141 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         return resultGon;
     }
+    
+    /**
+     * Static method that generates a boundary of a binary object. (aka. turtle algorithm: if 1 turn left, step if 0
+     * turn right, step)
+     * Work in progress
+     *
+     * @param   image    input image where binary object is located.
+     * @param   xDim     the x dimension of the image
+     * @param   yDim     the y dimension of the image
+     * @param   startPt  starting point
+     *
+     * @return  returns boundary of the object as Polygon
+     */
+    public static final Polygon genContour2(BitSet image, int xDim, int yDim, Point startPt) {
+
+        int N = 0, E = 1, S = 2, W = 3;
+        int dir = E;
+        int index = (startPt.y * xDim) + startPt.x;
+        int xCur = startPt.x;
+        int yCur = startPt.y;
+        int xCurLast = startPt.x;
+        int yCurLast = startPt.y;
+
+        // Without xInc and yInc the lower and right boundaries are 1 pixel too far inside
+        // the region.
+        int xInc = 0;
+        int yInc = 0;
+        int xIncLast = 0;
+        int yIncLast = 0;
+        int startIndex = index;
+        int xPts[] = new int[10000];
+        int yPts[] = new int[10000];
+        int nPts = 0;
+        Polygon resultGon = new Polygon();
+
+        do {
+
+            if ((xCur >= 0) && (xCur < xDim) && (yCur >= 0) && (yCur < yDim) && (image.get(index))) {
+                if ((xInc == 1) && (yInc == 0) && (xIncLast == 0) && (yIncLast == 0) && (xCurLast < xDim - 1)) {
+                    nPts--;
+                    xPts[nPts] = xCurLast + 1;
+                    yPts[nPts++] = yCurLast;
+                }
+                else if ((xInc == 0) && (yInc == 1) && (xIncLast == 1) && (yIncLast == 1) && (yCurLast < yDim - 1)){
+                    nPts--;
+                    xPts[nPts] = xCurLast;
+                    yPts[nPts++] = yCurLast + 1;
+                }
+                else if ((xInc == 0) && (yInc == 0) && (xIncLast == 1) && (yIncLast == 0) && (xCurLast < xDim - 1) && (yCurLast > 0)) {
+                    nPts--;
+                    xPts[nPts] = xCurLast + 1;
+                    yPts[nPts++] = yCurLast - 1;
+                }
+                xPts[nPts] = xCur + xInc;
+                yPts[nPts++] = yCur + yInc;
+                xIncLast = xInc;
+                yIncLast = yInc;
+                xCurLast = xCur;
+                yCurLast = yCur;
+                
+                if (dir == N) {
+                    xCur--;
+                    dir = W;
+
+                    if ((xCur - 1) < xDim) {
+                        xInc = 1;
+                    } else {
+                        xInc = 0;
+                    }
+                } else if (dir == E) {
+                    yCur--;
+                    dir = N;
+
+                    if ((yCur - 1) < yDim) {
+                        yInc = 1;
+                    } else {
+                        yInc = 0;
+                    }
+                } else if (dir == S) {
+                    xCur++;
+                    ;
+                    dir = E;
+                    xInc = 0;
+                } else {
+                    yCur++;
+                    dir = S;
+                    yInc = 0;
+                }
+            } else {
+
+                if (dir == N) {
+                    xCur++;
+                    dir = E;
+                    xInc = 0;
+                } else if (dir == E) {
+                    yCur++;
+                    dir = S;
+                    yInc = 0;
+                } else if (dir == S) {
+                    xCur--;
+                    dir = W;
+
+                    if ((xCur - 1) < xDim) {
+                        xInc = 1;
+                    } else {
+                        xInc = 0;
+                    }
+                } else {
+                    yCur--;
+                    dir = N;
+
+                    if ((yCur - 1) < yDim) {
+                        yInc = 1;
+                    } else {
+                        yInc = 0;
+                    }
+                }
+            }
+
+            index = xCur + (yCur * xDim);
+        } while (((index != startIndex) || (nPts < 4)) && (nPts < 10000));
+
+        if (nPts == 10000) {
+            Preferences.debug("Error - genContour2 has not completed at resultGon.npoints = 10,000\n", 
+                    Preferences.DEBUG_ALGORITHM);
+        }
+        
+        for (int i = 0; i < nPts; i++) {
+            resultGon.addPoint(xPts[i], yPts[i]);
+        }
+
+        return resultGon;
+    }
+    
+    
 
     /**
      * Static method that generates a boundary of a binary object. (aka. turtle algorithm: if 1 turn left, step if 0
