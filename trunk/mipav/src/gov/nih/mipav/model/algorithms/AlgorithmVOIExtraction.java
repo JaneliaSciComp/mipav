@@ -733,7 +733,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                 // Return polygon of contour
                 Point startPt = new Point(x, y);
 
-                contourPolygon = AlgorithmMorphology2D.genContour(mask, xDim, yDim, startPt);
+                contourPolygon = AlgorithmMorphology2D.genContour2(mask, xDim, yDim, startPt);
                 
                 newGrayScale = true;
 
