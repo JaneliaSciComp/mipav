@@ -28,7 +28,10 @@ import java.util.*;
  * When adaptiveSize is true, the Adaptive median filter discussed in Digital Image Processing Second Edition
  * by Rafael C. Gonzalez and Richard E. Woods in Chapter 5.3 pages 241-243 is implemented.  It has 3 main purposes: 1. remove salt and pepper (impulse) noise 2. provide smoothening of other noise that may
  * not be impulsive 3. reduce distortion such as excessive thinning or thickening of object bounderies. Depending on 
- * certain conditions, the kernel size can incresase during the filtering operation. 
+ * certain conditions, the kernel size can incresase during the filtering operation.
+ * 
+ * The truncated median filter estimates the mode. See Feature Extraction and Image Processing for Computer Vision Third Edition
+ * by Mark S. Nixon and Alberto S. Aguado, Section 3.5.2 Model filter, pp. 112 - 114.
  * 
  *
  * @version  1.0; 17 February 2000
@@ -127,6 +130,9 @@ public class AlgorithmMedian extends AlgorithmBase {
     /** dimension of the kernel (ie., 5 = 5x5, 7 = 7x7, 9 = 9x9, etc.). */
     private int kernelSize[];
     
+    /** If true, the truncated median estimates the mode */
+    private boolean truncatedMedian = false;
+    
     /** If true adaptively changes the size of the kernel mask */
     private boolean adaptiveSize = false;
     
@@ -173,12 +179,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
      * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  truncatedMedian If true, the truncated median filter estimates the mode
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
-                           boolean adaptiveSize, int maximumSize, boolean maskFlag) {
+                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean maskFlag) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
@@ -193,6 +200,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value to adjust
         this.adaptiveSize = adaptiveSize;
+        this.truncatedMedian = truncatedMedian;
         this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--though a different value doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
@@ -226,12 +234,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
      * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  truncatedMedian If true, the truncated median filter estimates the mode
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean adaptiveSize, int maximumSize, boolean maskFlag) {
+                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -247,6 +256,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
         this.adaptiveSize = adaptiveSize;
+        this.truncatedMedian = truncatedMedian;
         this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--this doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
@@ -277,6 +287,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
      * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  truncatedMedian If true, the truncated median filter estimates the mode
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is to be filtered separately (when true), else the volume will
      *                       use a kernel with 3 dimensions.
@@ -284,7 +295,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
-                           boolean adaptiveSize, int maximumSize, boolean sliceBySlice,
+                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean sliceBySlice,
                            boolean maskFlag) {
         super(null, srcImg);
 
@@ -300,6 +311,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
         this.adaptiveSize = adaptiveSize;
+        this.truncatedMedian = truncatedMedian;
         this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
@@ -340,6 +352,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
      * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  truncatedMedian If true, the truncated median filter estimates the mode
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is filtered separately (when true), else the volume will use a
      *                       kernel with 3 dimensions.
@@ -347,7 +360,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean  adaptiveSize, int maximumSize, boolean sliceBySlice, boolean maskFlag) {
+                           boolean  adaptiveSize, boolean truncatedMedian, int maximumSize, boolean sliceBySlice, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -363,6 +376,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
         this.adaptiveSize = adaptiveSize;
+        this.truncatedMedian = truncatedMedian;
         this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
@@ -2039,8 +2053,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         
         float a1, a2, b1, b2;
         int kn;
-        float zmin, zmed, zmax;
+        float zmin, zmed, zmax, zupper, zlower;
+        int cc;
+        int j;
         boolean loop;
+        float trunc[] = null;
 
         if (isColorImage) {
             upperBound = halfK[kernelNumber-1];
@@ -2259,7 +2276,56 @@ public class AlgorithmMedian extends AlgorithmBase {
                                      }
                                 } // while (loop)     
                             } // if (adaptiveSize)
-                            else { // not adaptiveSize
+                            else if (truncatedMedian) {
+                                maskedList = getNeighborList(0, a, srcBuffer, true);
+                                Arrays.sort(maskedList);
+                                zmed = median(maskedList);
+                                zmin = maskedList[0];
+                                zmax = maskedList[maskedList.length-1];
+                                average = mean(maskedList);
+                                zupper = 2*zmed - zmin;
+                                zlower = 2*zmed - zmax;
+                                cc = 0;
+                                if (zmed < average) {
+                                    for (j = 0; j < maskedList.length; j++) {
+                                        if (maskedList[j] < zupper) {
+                                            cc++;
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    } // for (j = 0; j < maskList.length; j++)
+                                    if (cc >= 1) {
+                                        trunc = new float[cc];
+                                        for (j = 0; j < cc; j++) {
+                                            trunc[j] = maskedList[j];
+                                        }
+                                    }
+                                } // if (zmed < average)
+                                else if (zmed > average) {
+                                    for (j = maskedList.length-1; j >=0; j--) {
+                                        if (maskedList[j] > zlower) {
+                                            cc++;
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    } // for (j = maskedList.length-1; j >= 0; j--)
+                                    if (cc >= 1) {
+                                        trunc = new float[cc];
+                                        for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
+                                            trunc[j] = maskedList[j];    
+                                        }
+                                    }
+                                } // else if (zmed > average)
+                                if (cc > 0) {
+                                    destBuffer[a] = median(trunc);
+                                }
+                                else {
+                                    destBuffer[a] = zmed;
+                                }
+                            } // else if (truncatedMedian)
+                            else { // not adaptiveSize or truncatedMedian
                                 maskedList = getNeighborList(0, a, srcBuffer, true);
     
                                 // verify that this element is an outlier
@@ -2556,7 +2622,10 @@ public class AlgorithmMedian extends AlgorithmBase {
         int kn;
         boolean loop;
         float a1, a2, b1, b2;
-        float zmin, zmed, zmax;
+        float zmin, zmed, zmax, zupper, zlower;
+        int j;
+        int cc;
+        float trunc[] = null;
         int x, y;
 
         // space allocated for extra rows used by the kernel
@@ -2612,7 +2681,56 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                             }
 	                        } // while (loop)         
 	                    } // if (adaptiveSize)
-	                    else { // not adaptiveSize
+	                    else if (truncatedMedian) {
+                            maskedList = getNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
+                            Arrays.sort(maskedList);
+                            zmed = median(maskedList);
+                            zmin = maskedList[0];
+                            zmax = maskedList[maskedList.length-1];
+                            average = mean(maskedList);
+                            zupper = 2*zmed - zmin;
+                            zlower = 2*zmed - zmax;
+                            cc = 0;
+                            if (zmed < average) {
+                                for (j = 0; j < maskedList.length; j++) {
+                                    if (maskedList[j] < zupper) {
+                                        cc++;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                } // for (j = 0; j < maskList.length; j++)
+                                if (cc >= 1) {
+                                    trunc = new float[cc];
+                                    for (j = 0; j < cc; j++) {
+                                        trunc[j] = maskedList[j];
+                                    }
+                                }
+                            } // if (zmed < average)
+                            else if (zmed > average) {
+                                for (j = maskedList.length-1; j >=0; j--) {
+                                    if (maskedList[j] > zlower) {
+                                        cc++;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                } // for (j = maskedList.length-1; j >= 0; j--)
+                                if (cc >= 1) {
+                                    trunc = new float[cc];
+                                    for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
+                                        trunc[j] = maskedList[j];    
+                                    }
+                                }
+                            } // else if (zmed > average)
+                            if (cc > 0) {
+                                destBuffer[destBufferIdx] = median(trunc);
+                            }
+                            else {
+                                destBuffer[destBufferIdx] = zmed;
+                            }    
+                        } // else if (truncatedMedian)
+	                    else { // not adaptiveSize or truncatedMedian
 	                    	
 	                        maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
 	                        
@@ -3188,8 +3306,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         
         int kn;
         boolean loop;
+        int cc;
+        int j;
+        float trunc[] = null;
         float a1, a2, b1, b2;
-        float zmin, zmed, zmax;
+        float zmin, zmed, zmax, zupper, zlower;
 
         // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
         // image outside the frame may not
@@ -3267,7 +3388,56 @@ public class AlgorithmMedian extends AlgorithmBase {
                                  }
                             } // while (loop)                 
                         } // if (adaptiveSize)
-                        else { // not adaptiveSize
+                        else if (truncatedMedian) {
+                            maskedList = getNeighborList(0, i, srcBuffer, false);
+                            Arrays.sort(maskedList);
+                            zmed = median(maskedList);
+                            zmin = maskedList[0];
+                            zmax = maskedList[maskedList.length-1];
+                            average = mean(maskedList);
+                            zupper = 2*zmed - zmin;
+                            zlower = 2*zmed - zmax;
+                            cc = 0;
+                            if (zmed < average) {
+                                for (j = 0; j < maskedList.length; j++) {
+                                    if (maskedList[j] < zupper) {
+                                        cc++;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                } // for (j = 0; j < maskList.length; j++)
+                                if (cc >= 1) {
+                                    trunc = new float[cc];
+                                    for (j = 0; j < cc; j++) {
+                                        trunc[j] = maskedList[j];
+                                    }
+                                }
+                            } // if (zmed < average)
+                            else if (zmed > average) {
+                                for (j = maskedList.length-1; j >=0; j--) {
+                                    if (maskedList[j] > zlower) {
+                                        cc++;
+                                    }
+                                    else {
+                                        break;
+                                    }
+                                } // for (j = maskedList.length-1; j >= 0; j--)
+                                if (cc >= 1) {
+                                    trunc = new float[cc];
+                                    for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
+                                        trunc[j] = maskedList[j];    
+                                    }
+                                }
+                            } // else if (zmed > average)
+                            if (cc > 0) {
+                                destBuffer[i] = median(trunc);
+                            }
+                            else {
+                                destBuffer[i] = zmed;
+                            }
+                        } // else if truncatedMedian
+                        else { // not adaptiveSize or truncatedMedian
                             maskedList = getNeighborList(0, i, srcBuffer, false);
     
                             // verify that this element is an outlier
@@ -3324,7 +3494,10 @@ public class AlgorithmMedian extends AlgorithmBase {
         int kn;
         boolean loop;
         float a1, a2, b1, b2;
-        float zmin, zmed, zmax;
+        float zmin, zmed, zmax, zupper, zlower, average;
+        int cc;
+        int j;
+        float trunc[] = null;
 
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int srcBdrBufferSliceLength = bdrBufferWidth * bdrBufferHeight;
@@ -3372,7 +3545,56 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                                 }
 	                            } // while (loop)             
 	                        } // if (adaptiveSize)
-	                        else { // not adaptiveSize
+	                        else if (truncatedMedian) {
+	                            maskedList = getNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
+	                            Arrays.sort(maskedList);
+	                            zmed = median(maskedList);
+	                            zmin = maskedList[0];
+	                            zmax = maskedList[maskedList.length-1];
+	                            average = mean(maskedList);
+	                            zupper = 2*zmed - zmin;
+	                            zlower = 2*zmed - zmax;
+	                            cc = 0;
+	                            if (zmed < average) {
+	                                for (j = 0; j < maskedList.length; j++) {
+	                                    if (maskedList[j] < zupper) {
+	                                        cc++;
+	                                    }
+	                                    else {
+	                                        break;
+	                                    }
+	                                } // for (j = 0; j < maskList.length; j++)
+	                                if (cc >= 1) {
+	                                    trunc = new float[cc];
+	                                    for (j = 0; j < cc; j++) {
+	                                        trunc[j] = maskedList[j];
+	                                    }
+	                                }
+	                            } // if (zmed < average)
+	                            else if (zmed > average) {
+	                                for (j = maskedList.length-1; j >=0; j--) {
+	                                    if (maskedList[j] > zlower) {
+	                                        cc++;
+	                                    }
+	                                    else {
+	                                        break;
+	                                    }
+	                                } // for (j = maskedList.length-1; j >= 0; j--)
+	                                if (cc >= 1) {
+	                                    trunc = new float[cc];
+	                                    for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
+	                                        trunc[j] = maskedList[j];    
+	                                    }
+	                                }
+	                            } // else if (zmed > average)
+	                            if (cc > 0) {
+	                                destBuffer[destBufferIdx] = median(trunc);
+	                            }
+	                            else {
+	                                destBuffer[destBufferIdx] = zmed;
+	                            }    
+	                        } // else if (truncatedMedian)
+	                        else { // not adaptiveSize or truncatedBuffer
 	                            maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
 	                            Arrays.sort(maskedList);
 	                            destBuffer[destBufferIdx] = median(maskedList);
