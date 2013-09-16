@@ -43,12 +43,19 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public static final int VECTOR_DIRECTION_FILTER = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+    private ButtonGroup typeGroup;
+    
+    private JRadioButton standardButton;
+    
+    private JRadioButton adaptiveButton;
+    
+    private JRadioButton truncatedButton;
 
     /** DOCUMENT ME! */
     private boolean adaptiveSize = false;
-
-    /** DOCUMENT ME! */
-    private JCheckBox adaptiveSizeBox;
+    
+    private boolean truncatedMedian = false;
 
     /** DOCUMENT ME! */
     private boolean blue;
@@ -210,9 +217,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelSTDDeviation.setEnabled(true);
                 textSTDDeviation.setEnabled(true);
             }
-        } else if (source == adaptiveSizeBox) {
+        } else if ((source == adaptiveButton) || (source == standardButton) || (source == truncatedButton)) {
 
-            if (adaptiveSizeBox.isSelected()) {
+            if (adaptiveButton.isSelected()) {
                 labelMaximumSize.setEnabled(true);
                 comboBoxMaximumSize.setEnabled(true);
                 labelSTDDeviation.setEnabled(false);
@@ -226,6 +233,14 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     vectorDirectionButton.setSelected(false);
                     componentButton.setSelected(true);
                 }
+                else if (truncatedButton.isSelected()) {
+                    
+                }
+            } else if (truncatedButton.isSelected()) {
+                labelMaximumSize.setEnabled(false);
+                comboBoxMaximumSize.setEnabled(false);
+                labelSTDDeviation.setEnabled(true);
+                textSTDDeviation.setEnabled(true);    
             } else {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
@@ -372,6 +387,10 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public void setAdaptiveSize(boolean adaptiveSize) {
         this.adaptiveSize = adaptiveSize;
     }
+    
+    public void setTruncatedMedian(boolean truncatedMedian) {
+        this.truncatedMedian = truncatedMedian;
+    }
 
     /**
      * Accessor that sets the color flag.
@@ -488,7 +507,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, maximumSize, outputPanel.isProcessWholeImageSet());
+                                                     adaptiveSize, truncatedMedian, maximumSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -529,7 +548,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                     maximumSize, outputPanel.isProcessWholeImageSet());
+                                                     truncatedMedian, maximumSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -593,7 +612,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, maximumSize, image25D,
+                                                     adaptiveSize, truncatedMedian, maximumSize, image25D,
                                                      outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
@@ -634,7 +653,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                     maximumSize, image25D, outputPanel.isProcessWholeImageSet());
+                                                     truncatedMedian, maximumSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -715,6 +734,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
         setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
         setAdaptiveSize(scriptParameters.getParams().getBoolean("adaptive_size"));
+        setTruncatedMedian(scriptParameters.getParams().getBoolean("truncated_median"));
         setMaximumSize(scriptParameters.getParams().getInt("maximum_size"));
         setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
 
@@ -738,6 +758,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
         scriptParameters.getParams().put(ParameterFactory.newParameter("adaptive_size", adaptiveSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("truncated_medain", truncatedMedian));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
         scriptParameters.storeColorOptions(red, green, blue);
@@ -955,14 +976,36 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         }
 
         maskPanel.add(comboBoxKernelShape); // add the combo box to the panel
+        
+        typeGroup = new ButtonGroup();
+        standardButton = new JRadioButton("Not adaptive or truncated median", true);
+        standardButton.setFont(serif12);
+        typeGroup.add(standardButton);
+        standardButton.addActionListener(this);
+        gbl.setConstraints(standardButton, gbc);
+        maskPanel.add(standardButton);
 
-        adaptiveSizeBox = new JCheckBox("Kernel size adaptively changes", false);
-        adaptiveSizeBox.setEnabled(true);
-        adaptiveSizeBox.setFont(serif12);
-        adaptiveSizeBox.addActionListener(this);
+        adaptiveButton = new JRadioButton("Kernel size adaptively changes", false);
+        adaptiveButton.setEnabled(true);
+        adaptiveButton.setFont(serif12);
+        typeGroup.add(adaptiveButton);
+        adaptiveButton.addActionListener(this);
         gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(adaptiveSizeBox, gbc);
-        maskPanel.add(adaptiveSizeBox);
+        gbl.setConstraints(adaptiveButton, gbc);
+        maskPanel.add(adaptiveButton);
+        
+        truncatedButton = new JRadioButton("Truncated median, false");
+        if (image.isColorImage()) {
+            truncatedButton.setEnabled(false);
+        }
+        else {
+            truncatedButton.setEnabled(true);
+        }
+        truncatedButton.setFont(serif12);
+        typeGroup.add(truncatedButton);
+        truncatedButton.addActionListener(this);
+        gbl.setConstraints(truncatedButton, gbc);
+        maskPanel.add(truncatedButton);
 
         labelMaximumSize = createLabel("Maximum kernel size:"); // make & set a label
         gbc.gridwidth = 2;
@@ -1140,7 +1183,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             return false;
         }
 
-        adaptiveSize = adaptiveSizeBox.isSelected();
+        adaptiveSize = adaptiveButton.isSelected();
+        
+        truncatedMedian = truncatedButton.isSelected();
 
         if (adaptiveSize) {
             this.determineMaximumSize();
@@ -1225,6 +1270,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             table.put(new ParameterInt("kernel_size", 3));
             table.put(new ParameterInt("kernel_shape", 1));
             table.put(new ParameterBoolean("adaptive_size", false));
+            table.put(new ParameterBoolean("truncated_median", false));
             table.put(new ParameterInt("maximum_size", 5));
             table.put(new ParameterInt("rgb_filter_type", 1));
             } catch (final ParserException e) {
