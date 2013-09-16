@@ -239,8 +239,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             } else if (truncatedButton.isSelected()) {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
-                labelSTDDeviation.setEnabled(true);
-                textSTDDeviation.setEnabled(true);    
+                labelSTDDeviation.setEnabled(false);
+                textSTDDeviation.setEnabled(false);    
             } else {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
