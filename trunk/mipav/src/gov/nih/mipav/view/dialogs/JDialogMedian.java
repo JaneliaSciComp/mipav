@@ -982,6 +982,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         standardButton.setFont(serif12);
         typeGroup.add(standardButton);
         standardButton.addActionListener(this);
+        gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(standardButton, gbc);
         maskPanel.add(standardButton);
 
@@ -990,11 +991,10 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         adaptiveButton.setFont(serif12);
         typeGroup.add(adaptiveButton);
         adaptiveButton.addActionListener(this);
-        gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(adaptiveButton, gbc);
         maskPanel.add(adaptiveButton);
         
-        truncatedButton = new JRadioButton("Truncated median, false");
+        truncatedButton = new JRadioButton("Truncated median", false);
         if (image.isColorImage()) {
             truncatedButton.setEnabled(false);
         }
