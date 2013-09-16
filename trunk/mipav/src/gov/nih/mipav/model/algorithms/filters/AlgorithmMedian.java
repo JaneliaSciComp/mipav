@@ -2314,7 +2314,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     if (cc >= 1) {
                                         trunc = new float[cc];
                                         for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
-                                            trunc[j] = maskedList[j];    
+                                            trunc[j-(maskedList.length-cc)] = maskedList[j];        
                                         }
                                     }
                                 } // else if (zmed > average)
@@ -2719,7 +2719,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 if (cc >= 1) {
                                     trunc = new float[cc];
                                     for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
-                                        trunc[j] = maskedList[j];    
+                                        trunc[j-(maskedList.length-cc)] = maskedList[j];    
                                     }
                                 }
                             } // else if (zmed > average)
@@ -3426,7 +3426,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 if (cc >= 1) {
                                     trunc = new float[cc];
                                     for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
-                                        trunc[j] = maskedList[j];    
+                                        trunc[j-(maskedList.length-cc)] = maskedList[j];        
                                     }
                                 }
                             } // else if (zmed > average)
@@ -3583,7 +3583,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                                if (cc >= 1) {
 	                                    trunc = new float[cc];
 	                                    for (j = maskedList.length-cc; j <= maskedList.length - 1; j++) {
-	                                        trunc[j] = maskedList[j];    
+	                                        trunc[j-(maskedList.length-cc)] = maskedList[j];      
 	                                    }
 	                                }
 	                            } // else if (zmed > average)
