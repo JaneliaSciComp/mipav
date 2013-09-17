@@ -673,7 +673,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	seedPoints.setColor( Color.red );
     	
     	wmThreshold = (float) sortedIntensities[minIndex].X;
-    	gmThreshold = 0.8f * wmThreshold;
+    	gmThreshold = 0.9f * wmThreshold;
     	brainThreshold = 0.36f * wmThreshold;
 
     	Preferences.debug( "White matter threshold = " + wmThreshold + " variance = " + sortedIntensities[minIndex].Y + "\n", Preferences.DEBUG_ALGORITHM );
