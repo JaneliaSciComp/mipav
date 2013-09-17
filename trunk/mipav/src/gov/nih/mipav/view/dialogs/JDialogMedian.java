@@ -994,7 +994,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         gbl.setConstraints(adaptiveButton, gbc);
         maskPanel.add(adaptiveButton);
         
-        truncatedButton = new JRadioButton("Truncated median", false);
+        truncatedButton = new JRadioButton("Truncated median estimating the mode", false);
         if (image.isColorImage()) {
             truncatedButton.setEnabled(false);
         }
