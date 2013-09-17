@@ -155,6 +155,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Autocorrelation coefficients", "ACC", 0, null, false),
                 menuBuilder.buildMenuItem("Autocovariance coefficients", "ACCOV", 0, null, false),
                 menuBuilder.makeMenu("Brain tools", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("Anonymize (beta)", "Anonymize face", 0, null, false),
                         menuBuilder.buildMenuItem("Face de-identification", "Anonymize face (BET)", 0, null, false),
                         menuBuilder.buildMenuItem("Extract brain surface (BET)", "extractBrainSurfaceBET", 0, null,
                                 false),

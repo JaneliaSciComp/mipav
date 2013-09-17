@@ -1184,7 +1184,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
-        } else if (command.equals("Anonymize face (BET)")) {
+        } else if (command.equals("Anonymize face")) {
+            new JDialogFaceAnonymize(this, getActiveImage());
+        }  else if (command.equals("Anonymize face (BET)")) {
             new JDialogFaceAnonymizerBET(this, getActiveImage());
         } else if (command.equals("Image math")) {
 

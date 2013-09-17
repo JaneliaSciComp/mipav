@@ -45,6 +45,11 @@ public interface ScreenCoordinateListener
      */
     public int getSlice();
     /**
+     * Sets the currently displayed image slice.
+     * @param the new image slice.
+     */
+    public void setCenter(Vector3f center);
+    /**
      * Returns the width of the display canvas.
      * @return width of the display canvas.
      */
