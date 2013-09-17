@@ -1314,7 +1314,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * This function is called from VOIManager.
      * @param kOld the VOIBase to remove.
      */
-    public void deleteVOI(VOIBase kOld) {
+    public void deleteVOI(VOIBase kOld, boolean update) {
         m_kCurrentVOIGroup = null;
         if ( kOld == null )
         {
@@ -1331,7 +1331,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if ( m_kImageB != null ) { m_kImageB.unregisterVOI(kGroup); }
             }
         }
-        updateDisplay();
+        if ( update )
+        {
+        	updateDisplay();
+        }
     }
 
 
@@ -1456,6 +1459,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             {
                 saveVOIs(kCommand);
                 pasteAll();
+            }
+            setDefaultCursor();
+        }
+        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_PROPAGATE_3D_LEVELSET.getActionCommand()) ) {
+            if ( copy() > 0 )
+            {
+                saveVOIs(kCommand);
+                levelSet3D();
             }
             setDefaultCursor();
         }
@@ -2286,7 +2297,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         Vector3f[] kBounds = kLUT.getImageBoundingBox();
         m_akBounds[0].copy(kBounds[0]);
         m_akBounds[1].copy(kBounds[1]);        
-        deleteVOI( kLUT );
+        deleteVOI( kLUT, true );
         if (getActiveImage().isColorImage() == false) {
             quickLUT( m_akBounds, getActiveImage(), m_kParent.getActiveLUT() );           
         } else { // RGB image
@@ -3177,8 +3188,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
         while ( deleteList.size() > 0 )
         {
-            deleteVOI( deleteList.remove(0) );
+            deleteVOI( deleteList.remove(0), false );
         }
+    	updateDisplay();
     }
 
     private void deleteAllVOI()
@@ -3235,7 +3247,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         while ( deleteList.size() > 0 )
         {
-            deleteVOI( deleteList.remove(0) );
+            deleteVOI( deleteList.remove(0), false );
         }
         updateDisplay();
     }
@@ -4165,6 +4177,32 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
     }
 
+    private void levelSet3D()
+    {
+        // Get the Global copy list:
+        Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        for (int i = 0; i < copyList.size(); i++ )
+        {
+            VOIBase kCurrentVOI = copyList.get(i);
+            
+            for (int j = 0; j < m_kVOIManagers.size(); j++ )
+            {
+            	int iPlane = m_kVOIManagers.elementAt(j).getPlane();
+                if ( iPlane != (iPlane & kCurrentVOI.getPlane()) )
+                {
+                    VOIManager kManager = m_kVOIManagers.elementAt(j);
+
+                    for ( int pt = 0; pt < kCurrentVOI.size(); pt++ )
+                    {
+                    	kManager.doLevelset(kCurrentVOI.elementAt(pt));
+                    }
+                }
+            }
+        }
+    	
+    }
+    
+    
     private void pasteAll()
     {
         int i;

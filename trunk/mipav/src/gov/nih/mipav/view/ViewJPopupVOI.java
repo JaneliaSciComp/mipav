@@ -124,6 +124,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_UP, this, true));
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_DOWN, this, true));
         propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_ALL, this, true));
+//        propSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPAGATE_3D_LEVELSET, this, true));
 
         flipSubMenu = ViewMenuBuilder.buildMenu("Flip VOI", 0, false);
         flipSubMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_FLIPX, this, true));

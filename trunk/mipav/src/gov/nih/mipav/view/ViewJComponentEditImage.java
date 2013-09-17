@@ -7099,4 +7099,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         MipavCoordinateSystems.patientToFile( patientPt, kFile, imageA, orientation );
         return bClipped;
     }
+
+    @Override
+    public void setCenter(Vector3f center) {
+    	Vector3f patientPt = new Vector3f();
+    	MipavCoordinateSystems.fileToPatient( center, patientPt, imageA, orientation );
+    	setSlice( (int) patientPt.Z );
+	}
 }

@@ -510,7 +510,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 		if (command.equals(DELETE_INTENSITY_LINE)) // handling the popup menu for the VOI intensity line
 		{
-			m_kParent.deleteVOI( m_kCurrentVOI );
+			m_kParent.deleteVOI( m_kCurrentVOI, true );
 			m_kParent.setDefaultCursor();
 		}
 		else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
@@ -539,7 +539,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 */
 	public void deleteVOI( VOIBase kVOI )
 	{
-		m_kParent.deleteVOI( kVOI );
+		m_kParent.deleteVOI( kVOI, true );
 	}
 
 	/**
@@ -1254,7 +1254,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			if ( m_kCurrentVOI != null )
 			{
-				m_kParent.deleteVOI(m_kCurrentVOI);
+				m_kParent.deleteVOI(m_kCurrentVOI, true);
 			}
 		} 
 	}
@@ -2472,7 +2472,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			if ( kOld != null )
 			{
 				kOld.setActive(false);
-				m_kParent.deleteVOI(kOld);
+				m_kParent.deleteVOI(kOld, true);
 			}
 		}
 		else
@@ -5656,6 +5656,21 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kParent.setCursor(MipavUtil.defaultCursor);
 		// not: m_kParent.setDefaultCursor() which changes the cursorMode...
 	}
+	
+	public void doLevelset( Vector3f point )
+	{
+		m_kDrawingContext.setCenter(point);
+		Vector3f screenPt = m_kDrawingContext.fileToScreenVOI( point );
+
+		initLevelSet( m_kDrawingContext.getSlice() );
+		VOIBase kTemp = singleLevelSet2(screenPt.X, screenPt.Y);
+		if ( kTemp == null )
+		{
+			return;
+		}
+		m_kCurrentVOI = kTemp;
+		m_kParent.addVOI( m_kCurrentVOI, false, true, true );
+	}
 
 
 	/**
@@ -6035,7 +6050,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				} 
 			}
 		}
-		m_kParent.deleteVOI( kSplitVOI );  
+		m_kParent.deleteVOI( kSplitVOI, true );  
 		kSplitVOI.dispose();
 		kSplitVOI = null;
 	}

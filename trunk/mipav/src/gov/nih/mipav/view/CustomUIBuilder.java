@@ -62,6 +62,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_PROPAGATE_DOWN = new UIParams("PropVOIDown", "To previous slice", "voipropd");
     public static final UIParams PARAM_VOI_PROPAGATE_UP = new UIParams("PropVOIUp", "To next slice", "voipropu");
     public static final UIParams PARAM_VOI_PROPAGATE_ALL = new UIParams("PropVOIAll", "To all slices", "voipropall");
+    public static final UIParams PARAM_VOI_PROPAGATE_3D_LEVELSET = new UIParams("3DLevelset", "3D Levelset", "contour");
     public static final UIParams PARAM_VOI_QUICK_AND_OP = new UIParams("QuickMask", "<html>" + "Quick AND VOI mask operation." +
                                                                        "<br>" + "[right-click for options]" + "</html>", "quickvoimask");
     public static final UIParams PARAM_VOI_QUICK_NOT_OP = new UIParams("QuickMaskReverse", "<html>" + "Fill VOI mask operation." +
