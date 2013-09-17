@@ -336,7 +336,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 float yresA = baseImage.getFileInfo(0).getResolutions()[1];
                 float zresA = baseImage.getFileInfo(0).getResolutions()[2];
                 TransMatrix finalMatrix = regAlgo3D.getTransform();
-                finalMatrix.Inverse();
+                // Do not do finalMatrix.Inverse()
                 finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 String costName = "CORRELATION_RATIO_SMOOTHED";
                 String message = "Using cost function, " + costName;
@@ -352,6 +352,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                         + baseImage.getImageName() + ".mtx";
                 int interp2 = AlgorithmTransform.TRILINEAR;
                 boolean pad = false;
+                System.out.println("finalMatrix = " + finalMatrix);
                 finalMatrix.saveMatrix(mtxFileLoc, interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + mtxFileLoc + "\n",Preferences.DEBUG_FILEIO);
                 regAlgo3D.disposeLocal();
