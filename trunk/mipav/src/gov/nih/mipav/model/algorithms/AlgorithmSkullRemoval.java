@@ -123,7 +123,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         fireProgressStateChanged(30);
         
         maskBrain();       
-        new ViewJFrameImage((ModelImage) destImage.clone());
+//        new ViewJFrameImage((ModelImage) destImage.clone());
         
         fireProgressStateChanged(60);
 
