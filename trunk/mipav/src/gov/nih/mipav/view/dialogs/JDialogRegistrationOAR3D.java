@@ -519,14 +519,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             final float zresA = refImage.getFileInfo(0).getResolutions()[2];
             if (reg3.isCompleted()) {
                 final TransMatrix finalMatrix = reg3.getTransform();
-                System.err.println(finalMatrix);
+                //System.err.println(finalMatrix);
 
                 if (doLS) {
                     // System.err.println("OAR3D Matrix: " + finalMatrix);
-                    // System.err.println("LS Matrix: " + lsMatrix);
+                    //System.err.println("LS Matrix: " + lsMatrix);
 
                     finalMatrix.mult(lsMatrix);
-                    // System.err.println("OAR3D x LS: " + finalMatrix);
+                    //System.err.println("OAR3D x LS: " + finalMatrix);
                 }
 
                 if (displayTransform) {
@@ -572,7 +572,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
-                finalMatrix.Inverse();
                 xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
                         + finalMatrix.get(0, 3);
                 yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
