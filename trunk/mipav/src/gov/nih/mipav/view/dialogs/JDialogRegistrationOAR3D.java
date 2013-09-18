@@ -701,7 +701,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
-                finalMatrix.Inverse();
                 xCenNew = xCen * finalMatrix.get(0, 0) + yCen * finalMatrix.get(0, 1) + zCen * finalMatrix.get(0, 2)
                         + finalMatrix.get(0, 3);
                 yCenNew = xCen * finalMatrix.get(1, 0) + yCen * finalMatrix.get(1, 1) + zCen * finalMatrix.get(1, 2)
