@@ -155,6 +155,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private String matrixFile;
+    
+    private String matrixDirectory = null;
 
     /** DOCUMENT ME! */
     private JTextField matrixFName;
@@ -1045,7 +1047,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      * @return fileName
      */
     public String matrixFileMenu() {
-        String fileName, directory;
+        String fileName;
         JFileChooser chooser;
         fileName = null;
 
@@ -1065,8 +1067,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                ViewUserInterface.getReference().setDefaultDirectory(directory);
+                matrixDirectory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                ViewUserInterface.getReference().setDefaultDirectory(matrixDirectory);
                 matrixFName.setText(fileName);
                 
                 //TODO: Fill in user defined fields from here
@@ -1103,8 +1105,13 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         try {
             // search for file name relative to image first, then relative to MIPAV default, then absolute path
-            File file;
-            file = new File(image.getImageDirectory() + fileName);
+            File file = null;
+            if (matrixDirectory != null) {
+                file = new File(matrixDirectory + fileName);
+            }
+            if ((matrixDirectory == null) || (!file.exists())) {
+                file = new File(image.getImageDirectory() + fileName);
+            }
             if ( !file.exists()) {
                 file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             }
