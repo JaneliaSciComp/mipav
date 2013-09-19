@@ -1015,6 +1015,9 @@ public class TransMatrix extends Matrix4f
         if (raFile == null) return;
 
         try {
+            // Necessary so that if this is an overwritten file there isn't any
+            // junk at the end
+            raFile.setLength(0);
             raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of rows
             raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of columns
             int dim = getDim();
