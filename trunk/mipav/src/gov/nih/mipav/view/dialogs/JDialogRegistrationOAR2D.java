@@ -685,7 +685,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 resY = matchImage.getFileInfo()[0].getResolutions()[1];
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
-                xfrm.Inverse();
                 xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
                 yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
@@ -791,7 +790,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 resY = matchImage.getFileInfo()[0].getResolutions()[1];
                 xCen = xOrig * resX;
                 yCen = yOrig * resY;
-                xfrm.Inverse();
                 xCenNew = xCen*xfrm.get(0, 0) + yCen*xfrm.get(0, 1) + xfrm.get(0, 2);
                 yCenNew = xCen*xfrm.get(1, 0) + yCen*xfrm.get(1, 1) + xfrm.get(1, 2);
                 Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
