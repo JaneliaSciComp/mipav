@@ -348,7 +348,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         } // end of else for srcImage.getNDims() == 4
 
-        transMatrix = xfrm;
+        transMatrix = xfrm.clone();
         iXres = srcImage.getFileInfo(0).getResolutions()[0];
         iYres = srcImage.getFileInfo(0).getResolutions()[1];
         iXdim = srcImage.getExtents()[0];
@@ -519,7 +519,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         } // end of else for srcImage.getNDims() == 4
 
-        transMatrix = xfrm;
+        transMatrix = xfrm.clone();
         iXres = srcImage.getFileInfo(0).getResolutions()[0];
         iYres = srcImage.getFileInfo(0).getResolutions()[1];
         iXdim = srcImage.getExtents()[0];
@@ -581,7 +581,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         super(null, _srcImage);
         this.interp = interp;
         this.srcImage = _srcImage;
-        this.transMatrix = xfrm;
+        this.transMatrix = xfrm.clone();
         transformVOI = tVOI;
         this.clip = clip;
         this.pad = pad;
@@ -736,7 +736,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         super(null, _srcImage);
         this.interp = interp;
         this.srcImage = _srcImage;
-        this.transMatrix = xfrm;
+        this.transMatrix = xfrm.clone();
         transformVOI = tVOI;
         this.clip = clip;
         this.pad = pad;
