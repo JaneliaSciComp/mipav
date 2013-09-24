@@ -30,6 +30,10 @@ import java.util.*;
  * not be impulsive 3. reduce distortion such as excessive thinning or thickening of object bounderies. Depending on 
  * certain conditions, the kernel size can incresase during the filtering operation.
  * 
+ * For Adaptive Truncated Vector Median Filter for color images see "Adaptive Truncated Vector Median Filter" by
+ * Bogdan Smolka, 2011 IEEE International Conference on Computer Science and Automation Engineering, June, 2011, 
+ * pp. 261-266.
+ * 
  * The truncated median filter estimates the mode. See Feature Extraction and Image Processing for Computer Vision Third Edition
  * by Mark S. Nixon and Alberto S. Aguado, Section 3.5.2 Model filter, pp. 112 - 114.
  * 
@@ -69,6 +73,8 @@ public class AlgorithmMedian extends AlgorithmBase {
     public static final int VECTOR_MAGNITUDE_FILTER = 2;
     
     public static final int VECTOR_DIRECTION_FILTER = 3;
+    
+    public static final int ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -135,6 +141,13 @@ public class AlgorithmMedian extends AlgorithmBase {
     
     /** If true adaptively changes the size of the kernel mask */
     private boolean adaptiveSize = false;
+    
+    /** Used in adaptive truncated vector median filter used on color images
+     *  If the changes in the RGB components are all less than a threshold
+     *  delta then the color image pixels are not changed, otherwise they are
+     *  replaced by the ATVMF.
+     */
+    private float delta = 30.0f;
     
    /** When adaptiveSize is true, the maximum size the kernel mask can be increased to. */
     private int maximumSize;
@@ -360,7 +373,8 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean  adaptiveSize, boolean truncatedMedian, int maximumSize, boolean sliceBySlice, boolean maskFlag) {
+                           boolean  adaptiveSize, boolean truncatedMedian, int maximumSize, 
+                           boolean sliceBySlice, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -461,14 +475,16 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  r  Filter red channel.
      * @param  g  Filter green channel.
      * @param  b  Filter blue channel.
+     * @param  delta
      */
-    public void setRGBChannelFilter(int filterType, boolean r, boolean g, boolean b) {
+    public void setRGBChannelFilter(int filterType, boolean r, boolean g, boolean b, float delta) {
 
         if (isColorImage) { // just in case somebody called for a mono image
             this.filterType = filterType;
             rChannel = r;
             gChannel = g;
             bChannel = b;
+            this.delta = delta;
         }
     }
 
@@ -516,6 +532,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
         else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
             this.sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
+        }
+        else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+            this.sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, 0, "image");
         }
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
@@ -591,6 +610,10 @@ public class AlgorithmMedian extends AlgorithmBase {
                     sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
+                else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+                    sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));
+                }
                 else {
                     sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
@@ -603,6 +626,9 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
             else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
                 volumeVectorDirectionColorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+                volumeAdaptiveTruncatedVectorMedianColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) {
                 volumeColorFilter(buffer, resultBuffer);
@@ -870,6 +896,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
             sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
         }
+        else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+            sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, 0, "image");
+        }
         else {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
         }
@@ -964,6 +993,10 @@ public class AlgorithmMedian extends AlgorithmBase {
                     sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
+                else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+                    sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));
+                }
                 else {
                     sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
@@ -976,6 +1009,9 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
             else if ((filterType == VECTOR_DIRECTION_FILTER) && isColorImage) {
                 volumeVectorDirectionColorFilter(buffer, resultBuffer);
+            }
+            else if ((filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER) && isColorImage) {
+                volumeAdaptiveTruncatedVectorMedianColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
@@ -1840,6 +1876,92 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
         return index;
     }
+    
+    /**
+     * Only used with color images in vector filtering.  Returns red, green, blue in float array
+     * for adaptive truncated vector median filtering
+     * @param r
+     * @param g
+     * @param b
+     * @param list
+     * @return
+     */
+    private float[] adaptiveTruncatedVectorMedian(float r, float g, float b, float[] list){
+        int i, j;
+        int index = 0;
+        double largestDistanceSquared = -1.0f;
+        double distanceSquared;
+        double largestDistance;
+        double radius;
+        double radiusSquared;
+        int count = 0;
+        int alpha = 0;
+        double trimmedSumOfDistances = 0.0;
+        double minimumTrimmedSumOfDistances = Double.MAX_VALUE;
+        float redTotal = 0.0f;
+        float greenTotal = 0.0f;
+        float blueTotal = 0.0f;
+        float atvmfRed;
+        float atvmfGreen;
+        float atvmfBlue;
+        float filterColor[] = new float[3];
+        
+        for (i = 0; i < list.length; i +=3) {
+            distanceSquared = (list[i] - r)*(list[i] - r) + (list[i+1] - g)*(list[i+1] - g) + (list[i+2] - b)*(list[i+2] - b);
+            if (distanceSquared > largestDistanceSquared) {
+                largestDistanceSquared = distanceSquared;
+            }
+        } // for (i = 0; i < list.length; i += 3)
+        largestDistance = Math.sqrt(largestDistanceSquared);
+        radius = 0.5 * largestDistance;
+        radiusSquared = radius * radius;
+        for (i = 0; i < list.length; i += 3) {
+            count = 0;
+            trimmedSumOfDistances = 0.0;
+            for (j = 0; j < list.length; j += 3) {
+                distanceSquared = (list[i] - list[j])*(list[i] - list[j]) + (list[i+1] - list[j+1])*(list[i+1] - list[j+1]) +
+                                  (list[i+2] - list[j+2])*(list[i+2] - list[j+2]);
+                if (distanceSquared <= radiusSquared) {
+                    count++;
+                    trimmedSumOfDistances += Math.sqrt(distanceSquared);
+                }
+            } // for j = 0; j < list.length; j += 3)
+            if (count > alpha) {
+                alpha = count;
+                minimumTrimmedSumOfDistances = trimmedSumOfDistances;
+                index = i;
+            }
+            else if (count == alpha) {
+                if (trimmedSumOfDistances < minimumTrimmedSumOfDistances) {
+                    minimumTrimmedSumOfDistances = trimmedSumOfDistances;
+                    index = i;
+                }
+            }
+        } // for (i = 0; i < list.length; i += 3)
+        for (i = 0; i < list.length; i+= 3) {
+            distanceSquared = (list[i] - list[index])*(list[i] - list[index]) + (list[i+1] - list[index+1])*(list[i+1] - list[index+1]) +
+                    (list[i+2] - list[index+2])*(list[i+2] - list[index+2]);
+            if (distanceSquared <= radiusSquared) {
+                redTotal += list[i];
+                greenTotal += list[i+1];
+                blueTotal += list[i+2];
+            }
+        } // for (i = 0; i < list.length; i += 3)
+        atvmfRed = redTotal/alpha;
+        atvmfGreen = greenTotal/alpha;
+        atvmfBlue = blueTotal/alpha;
+        if ((Math.abs(atvmfRed - r) < delta) && (Math.abs(atvmfGreen - g) < delta) && (Math.abs(atvmfBlue - b) < delta)) {
+            filterColor[0] = r;
+            filterColor[1] = g;
+            filterColor[2] = b;
+        }
+        else {
+            filterColor[0] = atvmfRed;
+            filterColor[1] = atvmfGreen;
+            filterColor[2] = atvmfBlue;
+        }
+        return filterColor;
+    }
 
     /**
      * If the progress bar is visible, sets the text to:<br>
@@ -2185,7 +2307,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                                  destBuffer[a] = zmed;
                                              }
                                         } // while (loop) 
-                                    } // if (adaptiveSize)
+                                    } // if (adaptiveSize)   
                                     else { // not adaptiveSize
                                         maskedList = getNeighborList(0, a, srcBuffer, true);
     
@@ -2587,6 +2709,129 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     destBuffer[a+1] = maskedList[index];
                                     destBuffer[a+2] = maskedList[index+1];
                                     destBuffer[a+3] = maskedList[index+2];
+                                }
+                            } else { // not part of the VOI so just copy this into the destination buffer.
+                                destBuffer[a+1] = srcBuffer[a+1];
+                                destBuffer[a+2] = srcBuffer[a+2];
+                                destBuffer[a+3] = srcBuffer[a+3];
+                            }
+                        }
+
+                    
+            // now set up for the repeat for multiple iterations.
+            // But only bother with copying over if there are more iterations.
+            if (pass < (iterations - 1)) {
+                tempBuffer = destBuffer; // swap dest & src buffers
+                destBuffer = srcBuffer;
+                srcBuffer = tempBuffer;
+            }
+        }
+        // destBuffer should now be copied over for the size of imageSliceLength.  You may return....
+
+    }
+    
+    /**
+     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Only used on color with adaptive truncated vector median filtering.
+     * Red, green, and blue are all filtered together; that is, the
+     * new red, green, and blue will all come from the same pixel.
+     *
+     * @param  srcBuffer            float [] Source buffer.
+     * @param  destBuffer           float[] Destination Buffer.
+     * @param  bufferStartingPoint  Starting point for the buffer.
+     * @param  msgString            A text message that can be displayed as a message text in the progressBar.
+     */
+    private void sliceAdaptiveTruncatedVectorMedianFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+        int i, a, pass; // counting....   i is the offset from the bufferStartingPoint
+
+        // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
+        int buffStart = bufferStartingPoint; // data element at the buffer. a = bufferStartingPoint+i
+        int sliceLength = srcImage.getSliceSize();
+        int imageSliceLength = sliceLength * valuesPerPixel; // since there are 4 values for every color pixel
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels (
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceWidth = width * valuesPerPixel; // width of slice, which, in color images is (4*width)
+        int sliceHeight = height; // height of image, which, actually doesn't change
+        int index = 0; 
+
+        float[] tempBuffer;
+
+        float[] maskedList; // list of buffer-values that were showing inside the mask
+        float[] filterColor;
+
+        int row, col; // row and column vars for easier reading [(0,0) is in the top-left corner]
+        int mod; // 1% length of slice for percent complete
+
+        // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
+        // image outside the frame may not
+        int upperBound, lowerBound, // bounds on the row
+            leftBound, rightBound; // bounds on the column
+        
+        upperBound = halfK[0];
+        leftBound = halfK[0] * 4;
+        lowerBound = sliceHeight - halfK[0] - 1;
+        rightBound = sliceWidth - (halfK[0] * 4) - 1;
+
+        // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
+        buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
+                                                                     // !!!
+
+        // copy all alpha values in this slice
+        setCopyColorText("alpha");
+
+        for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
+            destBuffer[a] = srcBuffer[a]; // copy alpha;
+        }
+        
+        mod = (imageSliceLength * numberOfSlices) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+            
+            if ((numberOfSlices > 1)) { // 3D image     update progressBar
+
+                fireProgressStateChanged( (((float) (currentSlice + (pass * numberOfSlices)) /
+                        (iterations * numberOfSlices))), null, null);
+             
+            }
+            a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
+
+
+                
+            fireProgressStateChanged(-1, null, "Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
+                    " of " + iterations + ") ...");
+
+                        // if we needed to filter the image, we dropped through the selection to filter the
+                        // color given by int initialIndex
+                        for (i = 0; (i < imageSliceLength) && !threadStopped; a += 4, i += 4) {
+
+                            if (numberOfSlices == 1) { // 2D image     update progressBar
+
+                                if (((i % mod) == 0)) {
+                                    fireProgressStateChanged( ((float) ((pass * sliceLength) +
+                                            (i / 4)) /
+                                            (iterations * sliceLength)), null, null);
+                                    
+                                }
+                            }
+
+                            if ((entireImage == true) || mask.get(a / 4)) { // may have problems in masking .....
+                                row = i / sliceWidth;
+                                col = i % sliceWidth;
+
+                                if ((row < upperBound) || (row > lowerBound)) {
+                                    destBuffer[a+1] = srcBuffer[a+1]; // row too far up or down--out of bounds
+                                    destBuffer[a+2] = srcBuffer[a+2];
+                                    destBuffer[a+3] = srcBuffer[a+3];
+                                } else if ((col < leftBound) || (col > rightBound)) {
+                                    destBuffer[a+1] = srcBuffer[a+1]; // column too far left or right--out of bounds
+                                    destBuffer[a+2] = srcBuffer[a+2];
+                                    destBuffer[a+3] = srcBuffer[a+3];
+                                } else { // in bounds
+                                    maskedList = getVectorNeighborList(0, a, srcBuffer, true);
+                                    filterColor = adaptiveTruncatedVectorMedian(srcBuffer[a+1], srcBuffer[a+2], srcBuffer[a+3], maskedList);
+                                    destBuffer[a+1] = filterColor[0];
+                                    destBuffer[a+2] = filterColor[1];
+                                    destBuffer[a+3] = filterColor[2];
                                 }
                             } else { // not part of the VOI so just copy this into the destination buffer.
                                 destBuffer[a+1] = srcBuffer[a+1];
@@ -3245,6 +3490,136 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 destBuffer[i+1] = maskedList[index];
                                 destBuffer[i+2] = maskedList[index+1];
                                 destBuffer[i+3] = maskedList[index+2];
+                            }
+                        } else { // not part of the VOI so just copy this into the destination buffer.
+                            destBuffer[i+1] = srcBuffer[i+1];
+                            destBuffer[i+2] = srcBuffer[i+2];
+                            destBuffer[i+3] = srcBuffer[i+3];
+                        }
+                    }
+
+                    // now set up for the repeat for multiple iterations.
+                    // But only bother with copying over if there are more iterations.
+                    if (pass < (iterations - 1)) {
+                        tempBuffer = destBuffer; // swap src & dest buffer
+                        destBuffer = srcBuffer;
+                        srcBuffer = tempBuffer;
+                    }
+                }
+
+                if ((iterations % 2) == 0) { // if even number of iterations, then
+                    tempBuffer = destBuffer; // swap src & dest buffer is necessary
+                    destBuffer = srcBuffer; // to keep other colours not-yet-filtered from
+                    srcBuffer = tempBuffer; // filtering from the wrong buffer, overwriting the real src
+                }
+    }
+    
+    /**
+     * Filter a Color 3D image with a 3D kernel with adaptive truncated vector median filtering.
+     * Allows median filtering to include the picture elements at greater
+     * depths than only the current slice. This method does not filter the alpha band.  Red,
+     * green, and blue are all filtered together; that is, the new red, green, and blue will
+     * all come from the same pixel.
+     *
+     * @param  srcBuffer   float [] Source image.
+     * @param  destBuffer  float [] Destination image.
+     *
+     * @see    volumeFilter
+     */
+    private void volumeAdaptiveTruncatedVectorMedianColorFilter(float[] srcBuffer, float[] destBuffer) {
+        int i, pass; // counting the current element
+        int index;
+
+        // it is an offset to the identified pixel, or column, of the slice
+        int row, // ease of reading to find the row, column and slice
+            column, // (all starting at 0) associated with the current element
+            slice; // [(0,0,0) starts at the closest upper-left corner]
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceWidth = width * valuesPerPixel; // width of slice in number of intensity values
+
+        // (as in colors per pixel (1 for mono, 4 for color))
+        int sliceSize = width * height; // in pixels (or elements)
+        int imageSliceLength = width * height * valuesPerPixel; // in values-pixels
+        int imageSize = sliceSize * numberOfSlices; // in pixels (or elements)
+        int imageLength = imageSliceLength * numberOfSlices; // in (values-pixels)
+        float[] tempBuffer;
+
+        float[] maskedList; // list of buffer-values that were showing inside the mask
+        float[] filterColor;
+
+        // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
+        // image outside the frame may not
+        int leftBound, rightBound, // bounds on the column
+            upperBound, lowerBound, // bounds on the row
+            aheadBound, behindBound; // bounds on the slice
+
+        // (a note on orientation: object front is facing in the same direction as
+        // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
+        // a more positive number of slices is farther forward.)
+        upperBound = halfK[0];
+        lowerBound = height - halfK[0] - 1;
+        behindBound = halfK[0];
+        aheadBound = numberOfSlices - halfK[0] - 1;
+
+        // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
+        // these calculations are done seperately for color & mono images in sliceFilter().
+        leftBound = halfK[0] * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK[0]) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+                                                                // halfK - 1)
+
+        int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        // copy all alpha values in the image
+        setCopyColorText("alpha");
+
+        for (i = 0; i < imageLength; i += 4) {
+            destBuffer[i] = srcBuffer[i]; // copy alpha;
+        }
+
+        // choose i so the proper colors go alongside the initial index
+        // so we get the right output statements in the progress bar
+        // copy only needed RGB values   
+
+                for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+
+                    fireProgressStateChanged(-1, null, "Filtering pass " + String.valueOf(pass + 1) + " of " +
+                            iterations + ") ...");
+
+                    // if we needed to filter the image, we dropped through the selection to filter the
+                    // color given by int initialIndex
+                    for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
+
+                        if (((i % mod) == 0)) {
+                            fireProgressStateChanged( ((float) ((imageSize * pass) + (i / 4)) /
+                                    (iterations * imageSize)), null, null);
+                        }
+
+                        if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
+
+                            // Median stuff here
+                            slice = i / imageSliceLength;
+                            row = (i % imageSliceLength) / sliceWidth;
+                            column = i % sliceWidth;
+
+                            if ((row < upperBound) || (row > lowerBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // row too far up or down--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else if ((column < leftBound) || (column > rightBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // column too far left or right--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else if ((slice < behindBound) || (slice > aheadBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // slice too far ahead or behind--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else { // in bounds
+                                maskedList = getVectorNeighborList(0, i, srcBuffer, false);
+                                filterColor = adaptiveTruncatedVectorMedian(srcBuffer[i+1], srcBuffer[i+2], srcBuffer[i+3], maskedList);
+                                destBuffer[i+1] = filterColor[0];
+                                destBuffer[i+2] = filterColor[1];
+                                destBuffer[i+3] = filterColor[2];
                             }
                         } else { // not part of the VOI so just copy this into the destination buffer.
                             destBuffer[i+1] = srcBuffer[i+1];
