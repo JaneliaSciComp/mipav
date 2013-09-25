@@ -43,6 +43,14 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public static final int VECTOR_DIRECTION_FILTER = 3;
     
     public static final int ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER = 4;
+    
+    public static final int STANDARD = 1;
+    
+    public static final int ADAPTIVE_SIZE = 2;
+    
+    public static final int TRUNCATED_MEDIAN = 3;
+    
+    public static final int SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -53,11 +61,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     private JRadioButton adaptiveButton;
     
     private JRadioButton truncatedButton;
-
-    /** DOCUMENT ME! */
-    private boolean adaptiveSize = false;
     
-    private boolean truncatedMedian = false;
+    private JRadioButton fuzzyTruncatedButton;
     
     private JLabel labelDelta;
     
@@ -85,9 +90,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private JRadioButton componentButton;
+    
+    private int filterType = STANDARD;
 
     /** DOCUMENT ME! */
-    private int filterType = COMPONENT_FILTER;
+    private int colorFilterType = COMPONENT_FILTER;
 
     /** DOCUMENT ME! */
     private boolean green;
@@ -243,7 +250,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelDelta.setEnabled(false);
                 textDelta.setEnabled(false);
             }
-        } else if ((source == adaptiveButton) || (source == standardButton) || (source == truncatedButton)) {
+        } else if ((source == adaptiveButton) || (source == standardButton) || (source == truncatedButton) ||
+                   (source == fuzzyTruncatedButton)) {
 
             if (adaptiveButton.isSelected()) {
                 labelMaximumSize.setEnabled(true);
@@ -257,12 +265,18 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     vectorMagnitudeButton.setSelected(false);
                     vectorDirectionButton.setEnabled(false);
                     vectorDirectionButton.setSelected(false);
+                    ATVMFButton.setEnabled(false);
+                    ATVMFButton.setSelected(false);
+                    labelDelta.setEnabled(false);
+                    textDelta.setEnabled(false);
                     componentButton.setSelected(true);
                 }
-                else if (truncatedButton.isSelected()) {
-                    
-                }
             } else if (truncatedButton.isSelected()) {
+                labelMaximumSize.setEnabled(false);
+                comboBoxMaximumSize.setEnabled(false);
+                labelSTDDeviation.setEnabled(false);
+                textSTDDeviation.setEnabled(false); 
+            } else if (fuzzyTruncatedButton.isSelected()) {
                 labelMaximumSize.setEnabled(false);
                 comboBoxMaximumSize.setEnabled(false);
                 labelSTDDeviation.setEnabled(false);
@@ -276,6 +290,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 if (image.isColorImage()) {
                     vectorMagnitudeButton.setEnabled(true);
                     vectorDirectionButton.setEnabled(true);
+                    ATVMFButton.setEnabled(true);
                 }
             }
         } else if (command.equals("Volume")) {
@@ -404,18 +419,13 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-    /**
-     * Accessor that sets if adaptive median filtering is being performed.
-     *
-     * @param  adaptiveSize  DOCUMENT ME!
-     */
-    public void setAdaptiveSize(boolean adaptiveSize) {
-        this.adaptiveSize = adaptiveSize;
-    }
     
-    public void setTruncatedMedian(boolean truncatedMedian) {
-        this.truncatedMedian = truncatedMedian;
+    /**
+     * 
+     * @param filterType
+     */
+    public void setFilterType(int filterType) {
+        this.filterType = filterType;
     }
 
     /**
@@ -428,12 +438,13 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     }
 
     /**
-     * Accessor that sets if all colors are component filtered, vector magnitude filtered, or vector direction filtered.
+     * Accessor that sets if all colors are component filtered, vector magnitude filtered, vector direction filtered,
+     * or adaptive truncated vector median filtered.
      *
-     * @param  filterType  DOCUMENT ME!
+     * @param  colorFilterType  DOCUMENT ME!
      */
-    public void setFilterType(int filterType) {
-        this.filterType = filterType;
+    public void setColorFilterType(int colorFilterType) {
+        this.colorFilterType = colorFilterType;
     }
 
     /**
@@ -541,11 +552,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, truncatedMedian, maximumSize, 
+                                                     filterType, maximumSize, 
                                                      outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue, delta);
+                    medianAlgo.setRGBChannelFilter(colorFilterType, red, green, blue, delta);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -582,11 +593,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                     truncatedMedian, maximumSize, outputPanel.isProcessWholeImageSet());
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, filterType,
+                                                     maximumSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue, delta);
+                    medianAlgo.setRGBChannelFilter(colorFilterType, red, green, blue, delta);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -647,11 +658,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     adaptiveSize, truncatedMedian, maximumSize, image25D,
+                                                     filterType, maximumSize, image25D,
                                                      outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue, delta);
+                    medianAlgo.setRGBChannelFilter(colorFilterType, red, green, blue, delta);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -687,11 +698,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // Make algorithm
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                     truncatedMedian, maximumSize, image25D, outputPanel.isProcessWholeImageSet());
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, filterType,
+                                                     maximumSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue, delta);
+                    medianAlgo.setRGBChannelFilter(colorFilterType, red, green, blue, delta);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -768,10 +779,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         setStdDev(scriptParameters.getParams().getFloat("std_dev"));
         setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
         setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
-        setAdaptiveSize(scriptParameters.getParams().getBoolean("adaptive_size"));
-        setTruncatedMedian(scriptParameters.getParams().getBoolean("truncated_median"));
+        setFilterType(scriptParameters.getParams().getInt("filter_type"));
         setMaximumSize(scriptParameters.getParams().getInt("maximum_size"));
-        setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
+        setColorFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
 
         boolean[] rgb = scriptParameters.doProcessRGB();
         setRed(rgb[0]);
@@ -793,10 +803,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("adaptive_size", adaptiveSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("truncated_medain", truncatedMedian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", colorFilterType));
         scriptParameters.storeColorOptions(red, green, blue);
         scriptParameters.getParams().put(ParameterFactory.newParameter("del", delta));
     }
@@ -1024,31 +1033,13 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         maskPanel.add(standardButton);
 
         adaptiveButton = new JRadioButton("Kernel size adaptively changes", false);
-        if (image.isColorImage()) {
-            adaptiveButton.setEnabled(false);
-        }
-        else {
-            adaptiveButton.setEnabled(true);
-        }
+        adaptiveButton.setEnabled(true);
         adaptiveButton.setFont(serif12);
         typeGroup.add(adaptiveButton);
         adaptiveButton.addActionListener(this);
         gbl.setConstraints(adaptiveButton, gbc);
         maskPanel.add(adaptiveButton);
         
-        truncatedButton = new JRadioButton("Truncated median estimating the mode", false);
-        if (image.isColorImage()) {
-            truncatedButton.setEnabled(false);
-        }
-        else {
-            truncatedButton.setEnabled(true);
-        }
-        truncatedButton.setFont(serif12);
-        typeGroup.add(truncatedButton);
-        truncatedButton.addActionListener(this);
-        gbl.setConstraints(truncatedButton, gbc);
-        maskPanel.add(truncatedButton);
-
         labelMaximumSize = createLabel("Maximum kernel size:"); // make & set a label
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
@@ -1071,6 +1062,34 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         }
 
         maskPanel.add(comboBoxMaximumSize); // add the comboboxt to the panel
+        
+        truncatedButton = new JRadioButton("Truncated median estimating the mode", false);
+        if (image.isColorImage()) {
+            truncatedButton.setEnabled(false);
+        }
+        else {
+            truncatedButton.setEnabled(true);
+        }
+        truncatedButton.setFont(serif12);
+        typeGroup.add(truncatedButton);
+        truncatedButton.addActionListener(this);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(truncatedButton, gbc);
+        maskPanel.add(truncatedButton);
+
+        fuzzyTruncatedButton = new JRadioButton("Symmetrical triangular fuzzy filter with a truncated median", false);
+        if (image.isColorImage()) {
+            fuzzyTruncatedButton.setEnabled(false);
+        }
+        else {
+            fuzzyTruncatedButton.setEnabled(true);
+        }
+        fuzzyTruncatedButton.setFont(serif12);
+        typeGroup.add(fuzzyTruncatedButton);
+        fuzzyTruncatedButton.addActionListener(this);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(fuzzyTruncatedButton, gbc);
+        maskPanel.add(fuzzyTruncatedButton);
         setupBox.add(maskPanel); // the parameters-panel is at the top of the box
 
         JPanel colourPanel = new JPanel();
@@ -1261,11 +1280,20 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             return false;
         }
 
-        adaptiveSize = adaptiveButton.isSelected();
-        
-        truncatedMedian = truncatedButton.isSelected();
+        if (standardButton.isSelected()) {
+            filterType = STANDARD;
+        }
+        else if (adaptiveButton.isSelected()) {
+            filterType = ADAPTIVE_SIZE;
+        }
+        else if (truncatedButton.isSelected()) {
+            filterType = TRUNCATED_MEDIAN;
+        }
+        else {
+            filterType = SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN;
+        }
 
-        if (adaptiveSize) {
+        if (filterType == ADAPTIVE_SIZE) {
             this.determineMaximumSize();
 
             if (maximumSize <= kernelSize) {
@@ -1276,16 +1304,16 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         } // if (adaptiveSize)
 
         if (componentButton.isSelected()) {
-            filterType = COMPONENT_FILTER;
+            colorFilterType = COMPONENT_FILTER;
         } else if (vectorMagnitudeButton.isSelected()) {
-            filterType = VECTOR_MAGNITUDE_FILTER;
+            colorFilterType = VECTOR_MAGNITUDE_FILTER;
         } else if (vectorDirectionButton.isSelected()) {
-            filterType = VECTOR_DIRECTION_FILTER;
+            colorFilterType = VECTOR_DIRECTION_FILTER;
         } else {
-            filterType = ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER;
+            colorFilterType = ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER;
         }
         
-        if (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER) {
+        if (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER) {
              // verify delta is within bounds
             tmpStr = textDelta.getText();
 
@@ -1363,8 +1391,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             table.put(new ParameterFloat("std_dev", 0f));
             table.put(new ParameterInt("kernel_size", 3));
             table.put(new ParameterInt("kernel_shape", 1));
-            table.put(new ParameterBoolean("adaptive_size", false));
-            table.put(new ParameterBoolean("truncated_median", false));
+            table.put(new ParameterInt("filter_type", STANDARD));
             table.put(new ParameterInt("maximum_size", 5));
             table.put(new ParameterInt("rgb_filter_type", 1));
             table.put(new ParameterFloat("del", 30.0f));
