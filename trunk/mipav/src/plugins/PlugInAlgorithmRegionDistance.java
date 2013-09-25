@@ -404,8 +404,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int totalCount;
         int countsToRetain;
         int countsFound;
-        boolean adaptiveSize = false;
-        boolean truncatedMedian = false;
+        int filterType = AlgorithmMedian.STANDARD;
         int maximumSize = 0;
         boolean initiallyOneObject;
         int response;
@@ -804,8 +803,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
                 stdDev = 0.0f;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                 truncatedMedian, maximumSize, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, filterType,
+                                                 maximumSize, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -1094,8 +1093,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
                 stdDev = 0.0f;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                 truncatedMedian, maximumSize, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, filterType,
+                                                 maximumSize, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -2466,8 +2465,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int offset;
         int idm1;
         int[] volume;
-        boolean adaptiveSize = false;
-        boolean truncatedMedian = false;
+        int filterType = AlgorithmMedian.STANDARD;
         int maximumSize = 0;
 
         // centroids
@@ -3022,8 +3020,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 sliceBySlice = false;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                 truncatedMedian, maximumSize, sliceBySlice, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, filterType,
+                                                 maximumSize, sliceBySlice, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -3334,8 +3332,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 sliceBySlice = false;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
-                                                 truncatedMedian, maximumSize, sliceBySlice, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, filterType,
+                                                 maximumSize, sliceBySlice, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
