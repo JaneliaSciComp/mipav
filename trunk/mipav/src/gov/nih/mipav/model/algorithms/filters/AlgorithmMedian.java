@@ -37,6 +37,11 @@ import java.util.*;
  * The truncated median filter estimates the mode. See Feature Extraction and Image Processing for Computer Vision Third Edition
  * by Mark S. Nixon and Alberto S. Aguado, Section 3.5.2 Model filter, pp. 112 - 114.
  * 
+ * The symmetrical triangular fuzzy filter with a truncated median is used to suppress the type of noise found in historical photographs.
+ * This is characterized by fine fractures or threads in the image and by dirt that leads to a grainy appearance.
+ * See "Suppression of Noise in Historical Photographs Using a Fuzzy Truncated-Median Filter" by Michael Wirth and
+ * Bruce Bobier, Image Analysis and Recognition, Lecture Notes in Computer Science, Volume 4633, 2007, pp. 1206-1216.
+ * 
  *
  * @version  1.0; 17 February 2000
  * @author   David Parsons (parsonsd)
@@ -75,6 +80,14 @@ public class AlgorithmMedian extends AlgorithmBase {
     public static final int VECTOR_DIRECTION_FILTER = 3;
     
     public static final int ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER = 4;
+    
+    public static final int STANDARD = 1;
+    
+    public static final int ADAPTIVE_SIZE = 2;
+    
+    public static final int TRUNCATED_MEDIAN = 3;
+    
+    public static final int SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -136,11 +149,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     /** dimension of the kernel (ie., 5 = 5x5, 7 = 7x7, 9 = 9x9, etc.). */
     private int kernelSize[];
     
-    /** If true, the truncated median estimates the mode */
-    private boolean truncatedMedian = false;
-    
-    /** If true adaptively changes the size of the kernel mask */
-    private boolean adaptiveSize = false;
+    private int filterType = STANDARD;
     
     /** Used in adaptive truncated vector median filter used on color images
      *  If the changes in the RGB components are all less than a threshold
@@ -176,9 +185,9 @@ public class AlgorithmMedian extends AlgorithmBase {
     /** number of elements in a pixel. Monochrome = 1, Color = 4. (a, R, G, B) */
     private int valuesPerPixel = 1;
     
-    /** Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, or VECTOR_DIRECTION_FILTER
+    /** Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, VECTOR_DIRECTION_FILTER, or ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER
      *  For a vector filter the new red, green, and blue will all come from the same pixel. */
-    private int filterType = COMPONENT_FILTER;
+    private int colorFilterType = COMPONENT_FILTER;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -191,14 +200,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape    Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
-     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
-     * @param  truncatedMedian If true, the truncated median filter estimates the mode
+     * @param  filterType STANDARD, ADAPTIVE_SIZE, or TRUNCATED_MEDIAN
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
-                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean maskFlag) {
+                           int filterType, int maximumSize, boolean maskFlag) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
@@ -212,8 +220,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value to adjust
-        this.adaptiveSize = adaptiveSize;
-        this.truncatedMedian = truncatedMedian;
+        this.filterType = filterType;
         this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--though a different value doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
@@ -246,14 +253,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape    Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
-     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
-     * @param  truncatedMedian If true, the truncated median filter estimates the mode
+     * @param  filterType STANDARD, ADAPTIVE_SIZE, or TRUNCATED_MEDIAN.
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean maskFlag) {
+                           int filterType, int maximumSize, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -268,8 +274,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
-        this.adaptiveSize = adaptiveSize;
-        this.truncatedMedian = truncatedMedian;
+        this.filterType = filterType;
         this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--this doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
@@ -299,8 +304,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape        Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
-     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
-     * @param  truncatedMedian If true, the truncated median filter estimates the mode
+     * @param  filterType    STANDARD, ADAPTIVE_SIZE, or TRUNCATED_MEDIAN
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is to be filtered separately (when true), else the volume will
      *                       use a kernel with 3 dimensions.
@@ -308,7 +312,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
-                           boolean adaptiveSize, boolean truncatedMedian, int maximumSize, boolean sliceBySlice,
+                           int filterType, int maximumSize, boolean sliceBySlice,
                            boolean maskFlag) {
         super(null, srcImg);
 
@@ -323,8 +327,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
-        this.adaptiveSize = adaptiveSize;
-        this.truncatedMedian = truncatedMedian;
+        this.filterType = filterType;
         this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
@@ -364,8 +367,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape        Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
-     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
-     * @param  truncatedMedian If true, the truncated median filter estimates the mode
+     * @param  filterType    STANDARD, ADAPTIVE_SIZE, or TRUNCATED_MEDIAN
      * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is filtered separately (when true), else the volume will use a
      *                       kernel with 3 dimensions.
@@ -373,7 +375,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean  adaptiveSize, boolean truncatedMedian, int maximumSize, 
+                           int filterType, int maximumSize, 
                            boolean sliceBySlice, boolean maskFlag) {
 
         super(destImg, srcImg);
@@ -389,8 +391,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
-        this.adaptiveSize = adaptiveSize;
-        this.truncatedMedian = truncatedMedian;
+        this.filterType = filterType;
         this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
@@ -471,16 +472,16 @@ public class AlgorithmMedian extends AlgorithmBase {
      * of the other two colors. This median filter permits selectively filtering any combination of the three channels
      * instead of simply filtering all three.
      *
-     * @param  filterType Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, or VECTOR_DIRECTION_FILTER
+     * @param  colorFilterType Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, or VECTOR_DIRECTION_FILTER
      * @param  r  Filter red channel.
      * @param  g  Filter green channel.
      * @param  b  Filter blue channel.
      * @param  delta
      */
-    public void setRGBChannelFilter(int filterType, boolean r, boolean g, boolean b, float delta) {
+    public void setRGBChannelFilter(int colorFilterType, boolean r, boolean g, boolean b, float delta) {
 
         if (isColorImage) { // just in case somebody called for a mono image
-            this.filterType = filterType;
+            this.colorFilterType = colorFilterType;
             rChannel = r;
             gChannel = g;
             bChannel = b;
@@ -527,13 +528,13 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+        if (isColorImage && (colorFilterType == VECTOR_MAGNITUDE_FILTER)) {
             this.sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
-        else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+        else if (isColorImage && (colorFilterType == VECTOR_DIRECTION_FILTER)) {
             this.sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
         }
-        else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+        else if (isColorImage && (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
             this.sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, 0, "image");
         }
         else {
@@ -602,15 +603,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+                if (isColorImage && (colorFilterType == VECTOR_MAGNITUDE_FILTER)) {
                     sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
-                else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+                else if (isColorImage && (colorFilterType == VECTOR_DIRECTION_FILTER)) {
                     sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
-                else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+                else if (isColorImage && (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
                     sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
@@ -621,13 +622,13 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
         } else { // volume kernel requested
 
-            if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+            if (isColorImage && (colorFilterType == VECTOR_MAGNITUDE_FILTER)) {
                 volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
             }
-            else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+            else if (isColorImage && (colorFilterType == VECTOR_DIRECTION_FILTER)) {
                 volumeVectorDirectionColorFilter(buffer, resultBuffer);
             }
-            else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+            else if (isColorImage && (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
                 volumeAdaptiveTruncatedVectorMedianColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) {
@@ -890,13 +891,13 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
 
 
-        if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+        if (isColorImage && (colorFilterType == VECTOR_MAGNITUDE_FILTER)) {
             sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
-        else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+        else if (isColorImage && (colorFilterType == VECTOR_DIRECTION_FILTER)) {
             sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
         }
-        else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+        else if (isColorImage && (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
             sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, 0, "image");
         }
         else {
@@ -985,15 +986,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+                if (isColorImage && (colorFilterType == VECTOR_MAGNITUDE_FILTER)) {
                     sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
-                else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+                else if (isColorImage && (colorFilterType == VECTOR_DIRECTION_FILTER)) {
                     sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
-                else if (isColorImage && (filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
+                else if (isColorImage && (colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER)) {
                     sliceAdaptiveTruncatedVectorMedianFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
@@ -1004,13 +1005,13 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
         } else { // requested volume filter
 
-            if ((filterType == VECTOR_MAGNITUDE_FILTER) && isColorImage) {
+            if ((colorFilterType == VECTOR_MAGNITUDE_FILTER) && isColorImage) {
                 volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
             }
-            else if ((filterType == VECTOR_DIRECTION_FILTER) && isColorImage) {
+            else if ((colorFilterType == VECTOR_DIRECTION_FILTER) && isColorImage) {
                 volumeVectorDirectionColorFilter(buffer, resultBuffer);
             }
-            else if ((filterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER) && isColorImage) {
+            else if ((colorFilterType == ADAPTIVE_TRUNCATED_VECTOR_MEDIAN_FILTER) && isColorImage) {
                 volumeAdaptiveTruncatedVectorMedianColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
@@ -1671,7 +1672,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         int i;
 
         try {
-            if (adaptiveSize) {
+            if (filterType == ADAPTIVE_SIZE) {
                 kernelNumber = (maximumSize - minimumSize)/2 + 1;
                 kernelSize = new int[kernelNumber];
                 for (i = 0; i < kernelNumber; i++) {
@@ -2162,6 +2163,9 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         float average; // arithmetic mean
         float sigma; // standard deviation
+        float wtmed;
+        float wmm;
+        double weight;
 
         float[] maskedList; // list of buffer-values that were showing inside the mask
 
@@ -2176,6 +2180,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         float a1, a2, b1, b2;
         int kn;
         float zmin, zmed, zmax, zupper, zlower;
+        double numeratorSum;
+        double denominatorSum;
         int cc;
         int j;
         boolean loop;
@@ -2280,7 +2286,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 } else if ((col < leftBound) || (col > rightBound)) {
                                     destBuffer[a] = srcBuffer[a]; // column too far left or right--out of bounds
                                 } else { // in bounds
-                                    if (adaptiveSize) {
+                                    if (filterType == ADAPTIVE_SIZE) {
                                         kn = 0;
                                         loop = true;
                                         while (loop) {
@@ -2370,7 +2376,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         } else if ((col < leftBound) || (col > rightBound)) {
                             destBuffer[a] = srcBuffer[a]; // column too far left or right--out of bounds
                         } else { // in bounds
-                            if (adaptiveSize) {
+                            if (filterType == ADAPTIVE_SIZE) {
                                 kn = 0;
                                 loop = true;
                                 while (loop) {
@@ -2397,8 +2403,8 @@ public class AlgorithmMedian extends AlgorithmBase {
                                          destBuffer[a] = zmed;
                                      }
                                 } // while (loop)     
-                            } // if (adaptiveSize)
-                            else if (truncatedMedian) {
+                            } // if (filterType == ADAPTIVE_SIZE)
+                            else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN)) {
                                 maskedList = getNeighborList(0, a, srcBuffer, true);
                                 Arrays.sort(maskedList);
                                 zmed = median(maskedList);
@@ -2440,14 +2446,41 @@ public class AlgorithmMedian extends AlgorithmBase {
                                         }
                                     }
                                 } // else if (zmed > average)
-                                if (cc > 0) {
-                                    destBuffer[a] = median(trunc);
-                                }
+                                if (filterType == TRUNCATED_MEDIAN) {
+                                    if (cc > 0) {
+                                        destBuffer[a] = median(trunc);
+                                    }
+                                    else {
+                                        destBuffer[a] = zmed;
+                                    }
+                                } // if (filterType == TRUNCATED_MEDIAN)
                                 else {
-                                    destBuffer[a] = zmed;
-                                }
-                            } // else if (truncatedMedian)
-                            else { // not adaptiveSize or truncatedMedian
+                                    if (cc > 0) {
+                                        wtmed = median(trunc);
+                                    }
+                                    else {
+                                        wtmed = zmed;
+                                    }
+                                    wmm = Math.max(zmax - wtmed, wtmed - zmin);
+                                    numeratorSum = 0.0;
+                                    if (wmm == 0) {
+                                        for (j = 0; j < maskedList.length; j++) {
+                                            numeratorSum += maskedList[j];
+                                        }
+                                        destBuffer[a] = (float)(numeratorSum/maskedList.length);
+                                    } // if (wmm == 0)
+                                    else { // wmm != 0
+                                        denominatorSum = 0.0;
+                                        for (j = 0; j < maskedList.length; j++) {
+                                            weight = 1.0 - Math.abs(maskedList[j] - wtmed)/wmm;
+                                            numeratorSum += weight * maskedList[j];
+                                            denominatorSum += weight;
+                                        }
+                                        destBuffer[a] = (float)(numeratorSum/denominatorSum);
+                                    } // else wmm != 0
+                                } // else filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN
+                            } // else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN))
+                            else { // STANDARD
                                 maskedList = getNeighborList(0, a, srcBuffer, true);
     
                                 // verify that this element is an outlier
@@ -2752,7 +2785,6 @@ public class AlgorithmMedian extends AlgorithmBase {
         int height = srcImage.getExtents()[1]; // height of slice in number of pixels
         int sliceWidth = width * valuesPerPixel; // width of slice, which, in color images is (4*width)
         int sliceHeight = height; // height of image, which, actually doesn't change
-        int index = 0; 
 
         float[] tempBuffer;
 
@@ -2872,6 +2904,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         int cc;
         float trunc[] = null;
         int x, y;
+        float wtmed;
+        float wmm;
+        double weight;
+        double numeratorSum;
+        double denominatorSum;
 
         // space allocated for extra rows used by the kernel
         int srcBrdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
@@ -2898,7 +2935,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 	            for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
 	
 	                if (entireImage || mask.get(destBufferIdx)) {
-	                    if (adaptiveSize) {
+	                    if (filterType == ADAPTIVE_SIZE) {
 	                        kn = 0;
 	                        loop = true;
 	                        while (loop) {
@@ -2925,8 +2962,8 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                                 destBuffer[destBufferIdx] = zmed;
 	                             }
 	                        } // while (loop)         
-	                    } // if (adaptiveSize)
-	                    else if (truncatedMedian) {
+	                    } // if (filterType == ADAPTIVE_SIZE)
+	                    else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN)) {
                             maskedList = getNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
                             Arrays.sort(maskedList);
                             zmed = median(maskedList);
@@ -2968,14 +3005,41 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     }
                                 }
                             } // else if (zmed > average)
-                            if (cc > 0) {
-                                destBuffer[destBufferIdx] = median(trunc);
-                            }
+                            if (filterType == TRUNCATED_MEDIAN) {
+                                if (cc > 0) {
+                                    destBuffer[destBufferIdx] = median(trunc);
+                                }
+                                else {
+                                    destBuffer[destBufferIdx] = zmed;
+                                }
+                            } // if (filterType == TRUNCATED_MEDIAN)
                             else {
-                                destBuffer[destBufferIdx] = zmed;
-                            }    
-                        } // else if (truncatedMedian)
-	                    else { // not adaptiveSize or truncatedMedian
+                                if (cc > 0) {
+                                    wtmed = median(trunc);
+                                }
+                                else {
+                                    wtmed = zmed;
+                                }
+                                wmm = Math.max(zmax - wtmed, wtmed - zmin);
+                                numeratorSum = 0.0;
+                                if (wmm == 0) {
+                                    for (j = 0; j < maskedList.length; j++) {
+                                        numeratorSum += maskedList[j];
+                                    }
+                                    destBuffer[destBufferIdx] = (float)(numeratorSum/maskedList.length);
+                                } // if (wmm == 0)
+                                else { // wmm != 0
+                                    denominatorSum = 0.0;
+                                    for (j = 0; j < maskedList.length; j++) {
+                                        weight = 1.0 - Math.abs(maskedList[j] - wtmed)/wmm;
+                                        numeratorSum += weight * maskedList[j];
+                                        denominatorSum += weight;
+                                    }
+                                    destBuffer[destBufferIdx] = (float)(numeratorSum/denominatorSum);
+                                } // else wmm != 0
+                            } // else filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN
+                        } // else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN))
+	                    else { // filterType == STANDARD
 	                    	
 	                        maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
 	                        
@@ -3182,7 +3246,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                             } else if ((slice < behindBound) || (slice > aheadBound)) {
                                 destBuffer[i] = srcBuffer[i]; // slice too far ahead or behind--out of bounds
                             } else { // in bounds
-                                if (adaptiveSize) {
+                                if (filterType == ADAPTIVE_SIZE) {
                                     kn = 0;
                                     loop = true;
                                     while (loop) {
@@ -3209,8 +3273,8 @@ public class AlgorithmMedian extends AlgorithmBase {
                                              destBuffer[i] = zmed;
                                          }
                                     } // while (loop)             
-                                } // if (adaptiveSize)
-                                else { // not adaptiveSize
+                                } // if (filterType == ADAPTIVE_SIZE)
+                                else { // filterType == STANDARD
                                     maskedList = getNeighborList(0, i, srcBuffer, false);
     
                                     // verify that this element is an outlier
@@ -3528,7 +3592,6 @@ public class AlgorithmMedian extends AlgorithmBase {
      */
     private void volumeAdaptiveTruncatedVectorMedianColorFilter(float[] srcBuffer, float[] destBuffer) {
         int i, pass; // counting the current element
-        int index;
 
         // it is an offset to the identified pixel, or column, of the slice
         int row, // ease of reading to find the row, column and slice
@@ -3686,6 +3749,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         float trunc[] = null;
         float a1, a2, b1, b2;
         float zmin, zmed, zmax, zupper, zlower;
+        float wtmed;
+        float wmm;
+        double weight;
+        double numeratorSum;
+        double denominatorSum;
 
         // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
         // image outside the frame may not
@@ -3735,7 +3803,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     } else if ((slice < behindBound) || (slice > aheadBound)) {
                         destBuffer[i] = srcBuffer[i]; // slice too far ahead or behind--out of bounds
                     } else { // in bounds
-                        if (adaptiveSize) {
+                        if (filterType == ADAPTIVE_SIZE) {
                             kn = 0;
                             loop = true;
                             while (loop) {
@@ -3762,8 +3830,8 @@ public class AlgorithmMedian extends AlgorithmBase {
                                      destBuffer[i] = zmed;
                                  }
                             } // while (loop)                 
-                        } // if (adaptiveSize)
-                        else if (truncatedMedian) {
+                        } // if (filterType == ADAPTIVE_SIZE)
+                        else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN)) {
                             maskedList = getNeighborList(0, i, srcBuffer, false);
                             Arrays.sort(maskedList);
                             zmed = median(maskedList);
@@ -3805,14 +3873,41 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     }
                                 }
                             } // else if (zmed > average)
-                            if (cc > 0) {
-                                destBuffer[i] = median(trunc);
-                            }
+                            if (filterType == TRUNCATED_MEDIAN) {
+                                if (cc > 0) {
+                                    destBuffer[i] = median(trunc);
+                                }
+                                else {
+                                    destBuffer[i] = zmed;
+                                }
+                            } // if (filterType == TRUNCATED_MEDIAN)
                             else {
-                                destBuffer[i] = zmed;
-                            }
-                        } // else if truncatedMedian
-                        else { // not adaptiveSize or truncatedMedian
+                                if (cc > 0) {
+                                    wtmed = median(trunc);
+                                }
+                                else {
+                                    wtmed = zmed;
+                                }
+                                wmm = Math.max(zmax - wtmed, wtmed - zmin);
+                                numeratorSum = 0.0;
+                                if (wmm == 0) {
+                                    for (j = 0; j < maskedList.length; j++) {
+                                        numeratorSum += maskedList[j];
+                                    }
+                                    destBuffer[i] = (float)(numeratorSum/maskedList.length);
+                                } // if (wmm == 0)
+                                else { // wmm != 0
+                                    denominatorSum = 0.0;
+                                    for (j = 0; j < maskedList.length; j++) {
+                                        weight = 1.0 - Math.abs(maskedList[j] - wtmed)/wmm;
+                                        numeratorSum += weight * maskedList[j];
+                                        denominatorSum += weight;
+                                    }
+                                    destBuffer[i] = (float)(numeratorSum/denominatorSum);
+                                } // else wmm != 0
+                            } // else filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN
+                        } // else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN))
+                        else { // filterType == STANDARD
                             maskedList = getNeighborList(0, i, srcBuffer, false);
     
                             // verify that this element is an outlier
@@ -3873,6 +3968,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         int cc;
         int j;
         float trunc[] = null;
+        float wtmed;
+        float wmm;
+        double weight;
+        double numeratorSum;
+        double denominatorSum;
 
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int srcBdrBufferSliceLength = bdrBufferWidth * bdrBufferHeight;
@@ -3892,7 +3992,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 	
 	                for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
 	                    if (entireImage || mask.get(destBufferIdx)) {
-	                        if (adaptiveSize) {
+	                        if (filterType == ADAPTIVE_SIZE) {
 	                            kn = 0;
 	                            loop = true;
 	                            while (loop) {
@@ -3919,8 +4019,8 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                                     destBuffer[destBufferIdx] = zmed;
 	                                 }
 	                            } // while (loop)             
-	                        } // if (adaptiveSize)
-	                        else if (truncatedMedian) {
+	                        } // if (filterType == ADAPTIVE_SIZE)
+	                        else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN)) {
 	                            maskedList = getNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
 	                            Arrays.sort(maskedList);
 	                            zmed = median(maskedList);
@@ -3962,14 +4062,41 @@ public class AlgorithmMedian extends AlgorithmBase {
 	                                    }
 	                                }
 	                            } // else if (zmed > average)
-	                            if (cc > 0) {
-	                                destBuffer[destBufferIdx] = median(trunc);
-	                            }
+	                            if (filterType == TRUNCATED_MEDIAN) {
+	                                if (cc > 0) {
+	                                    destBuffer[destBufferIdx] = median(trunc);
+	                                }
+	                                else {
+	                                    destBuffer[destBufferIdx] = zmed;
+	                                }
+	                            } // if (filterType == TRUNCATED_MEDIAN)
 	                            else {
-	                                destBuffer[destBufferIdx] = zmed;
-	                            }    
-	                        } // else if (truncatedMedian)
-	                        else { // not adaptiveSize or truncatedBuffer
+	                                if (cc > 0) {
+	                                    wtmed = median(trunc);
+	                                }
+	                                else {
+	                                    wtmed = zmed;
+	                                }
+	                                wmm = Math.max(zmax - wtmed, wtmed - zmin);
+	                                numeratorSum = 0.0;
+	                                if (wmm == 0) {
+	                                    for (j = 0; j < maskedList.length; j++) {
+	                                        numeratorSum += maskedList[j];
+	                                    }
+	                                    destBuffer[destBufferIdx] = (float)(numeratorSum/maskedList.length);
+	                                } // if (wmm == 0)
+	                                else { // wmm != 0
+	                                    denominatorSum = 0.0;
+	                                    for (j = 0; j < maskedList.length; j++) {
+	                                        weight = 1.0 - Math.abs(maskedList[j] - wtmed)/wmm;
+	                                        numeratorSum += weight * maskedList[j];
+	                                        denominatorSum += weight;
+	                                    }
+	                                    destBuffer[destBufferIdx] = (float)(numeratorSum/denominatorSum);
+	                                } // else wmm != 0
+	                            } // else filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN
+	                        } // else if ((filterType == TRUNCATED_MEDIAN) || (filterType == SYMMETRICAL_TRIANGULAR_FUZZY_TRUNCATED_MEDIAN))
+	                        else { // filterType == STANDARD
 	                            maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
 	                            Arrays.sort(maskedList);
 	                            destBuffer[destBufferIdx] = median(maskedList);
