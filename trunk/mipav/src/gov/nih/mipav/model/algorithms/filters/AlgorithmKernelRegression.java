@@ -319,8 +319,7 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
         int kernelSize;
         int kernelShape;
         float stdDev;
-        boolean adaptiveSize;
-        boolean truncatedMedian;
+        int filterType;
         int maximumSize;
         boolean wholeImage;
         boolean sliceBySlice;
@@ -702,18 +701,17 @@ public class AlgorithmKernelRegression extends AlgorithmBase {
             kernelShape = AlgorithmMedian.SQUARE_KERNEL;
             stdDev = 0.0f; // Inner-bounds by which to process pixels (pixel values outside this bound will be median
             // filtered).
-            adaptiveSize = false; // do not adaptively change size of the kernel mask
-            truncatedMedian = false; // do not use truncated median to approximate mode
+            filterType = AlgorithmMedian.STANDARD;
             maximumSize = 0; // If adaptiveSize is true, the maximum size the kernel mask can be increased to.
             wholeImage = true; // Median filtering will be performed on the whole image
             Preferences.debug("\nEntering AlgorithmMedian\n", Preferences.DEBUG_ALGORITHM);
             if (nDims == 2) {
                 algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev,
-                        adaptiveSize, truncatedMedian, maximumSize, wholeImage);
+                        filterType, maximumSize, wholeImage);
             } else {
                 sliceBySlice = true;
                 algoMedian = new AlgorithmMedian(medianImage, srcImage, medianIters, kernelSize, kernelShape, stdDev,
-                        adaptiveSize, truncatedMedian, maximumSize, sliceBySlice, wholeImage);
+                        filterType, maximumSize, sliceBySlice, wholeImage);
             }
             algoMedian.run();
             algoMedian.finalize();
