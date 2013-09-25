@@ -69,11 +69,10 @@ public class PlugInAlgorithmOCT extends AlgorithmBase {
 
         // call algorithm median filter
         // call algorithm histogram and get threshold
-        boolean adaptiveSize = false;
-        boolean truncatedMedian = false;
+        int filterType = AlgorithmMedian.STANDARD;
         int maximumSize = 0;
-        AlgorithmMedian algoMedian = new AlgorithmMedian(srcImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL, 0, adaptiveSize,
-                                                         truncatedMedian, maximumSize, true);
+        AlgorithmMedian algoMedian = new AlgorithmMedian(srcImage, 1, 3, AlgorithmMedian.SQUARE_KERNEL, 0, filterType,
+                                                         maximumSize, true);
         algoMedian.run();
 
         int[] dimExtent = new int[1];
