@@ -1262,6 +1262,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 name = "Decon_" + baseImageName;
             }
         	ModelImage resultImage = (ModelImage) imageA.clone(name);
+        	resultImage.setImageName(name);
         	
         	OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA, imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
         	deconvAlgo.setRed(true);
