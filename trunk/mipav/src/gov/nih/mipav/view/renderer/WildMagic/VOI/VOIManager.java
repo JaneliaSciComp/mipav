@@ -20,10 +20,12 @@ import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.RubberbandLivewire;
+import gov.nih.mipav.view.ViewJComponentEditImage;
 import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
@@ -3592,6 +3594,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 		Vector3f kStart = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
 		Vector3f kEnd = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
+		if (m_kImageActive.getParentFrame().getComponentImage().getInMouseReleased()) {
+		    ViewUserInterface UI = ViewUserInterface.getReference();
+		    final String[] LPS0 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(0));
+		    UI.setDataText("Line Position 0: " + LPS0[0] + " " + LPS0[1] + " " + LPS0[2] + "\n");
+		    final String[] LPS1 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(1));
+		    UI.setDataText("Line Position 1: " + LPS1[0] + " " + LPS1[1] + " " + LPS1[2] + "\n");
+		}
 		float[] x = new float[2];
 		x[0] = kStart.X;
 		x[1] = kEnd.X;
