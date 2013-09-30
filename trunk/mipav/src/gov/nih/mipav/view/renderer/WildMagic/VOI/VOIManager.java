@@ -365,6 +365,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public static final String DELETE_INTENSITY_LINE = "delete_inensity_line";
 	/** used in the popup menu when the user right-clicks over a voi intensity line. */
 	public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
+	/** used in the popup menu when the user right-clicks over a voi intensity line. */
+	public static final String SHOW_LINE_ENDPOINTS = "show_line_endpoints";
 
 	/** Used for angle searches in line VOI creation */
     private static final double[] PI_SEARCH = {Math.tan(Math.PI/24), Math.tan((3*Math.PI)/24), Math.tan((5*Math.PI)/24), Math.tan((7*Math.PI)/24), Math.tan((9*Math.PI)/24), Math.tan((11*Math.PI)/24)};
@@ -518,7 +520,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
 		{
 			m_kParent.showIntensityInfo( m_kCurrentVOI, m_iPlane, true );
-		}else if(command.equals("VOIProperties")) {
+		}
+	    else if (command.equals(SHOW_LINE_ENDPOINTS)) {
+	        showLineEndPoints(m_kCurrentVOI, m_kImageActive.getParentFrame().getComponentImage().getGraphics());
+	    }
+		else if(command.equals("VOIProperties")) {
 			m_kParent.showVOIProperties();
 		}
 	}
@@ -3591,16 +3597,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param thickness line thickness.
 	 */
 	private void drawVOILine( VOIBase kVOI, float[] resols, int[] unitsOfMeasure, Graphics g, int thickness  ) {
-
-		Vector3f kStart = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
-		Vector3f kEnd = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
-		if (m_kImageActive.getParentFrame().getComponentImage().getInMouseReleased()) {
-		    ViewUserInterface UI = ViewUserInterface.getReference();
-		    final String[] LPS0 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(0));
-		    UI.setDataText("Line Position 0: " + LPS0[0] + " " + LPS0[1] + " " + LPS0[2] + "\n");
-		    final String[] LPS1 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(1));
-		    UI.setDataText("Line Position 1: " + LPS1[0] + " " + LPS1[1] + " " + LPS1[2] + "\n");
-		}
+       
+	    Vector3f kStart = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
+        Vector3f kEnd = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
 		float[] x = new float[2];
 		x[0] = kStart.X;
 		x[1] = kEnd.X;
@@ -3654,6 +3653,18 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				drawTickMarks( kVOI, g, currentColor, unitsOfMeasure, m_kDrawingContext.getWidth(), m_kDrawingContext.getHeight(), resols);
 			}
 		}
+	}
+	
+	private void showLineEndPoints(VOIBase kVOI, Graphics g) {
+        if (m_kImageActive.getParentFrame() != null) {
+            if (m_kImageActive.getParentFrame().getComponentImage() != null) {
+                ViewUserInterface UI = ViewUserInterface.getReference();
+                final String[] LPS0 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(0));
+                UI.setDataText("Line Position 0: " + LPS0[0] + " " + LPS0[1] + " " + LPS0[2] + "\n");
+                final String[] LPS1 = ViewJComponentEditImage.getScannerPositionLabels(m_kImageActive, kVOI.get(1));
+                UI.setDataText("Line Position 1: " + LPS1[0] + " " + LPS1[1] + " " + LPS1[2] + "\n");
+            }
+        }    
 	}
 
 	/**
@@ -4372,6 +4383,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
 		menuItem.setActionCommand(SHOW_INTENSITY_GRAPH);
+		menuItem = new JMenuItem("Show line endpoints");
+        popupMenu.add(menuItem);
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand(SHOW_LINE_ENDPOINTS);
 		menuItem = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
 		popupMenu.add(menuItem);
 		int x = mouseEvent.getX();
