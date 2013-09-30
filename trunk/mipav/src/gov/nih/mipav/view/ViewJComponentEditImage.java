@@ -443,7 +443,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     int[] yStart;
 	private boolean makingCheckerboard = false;
 	private int[] bandSpacing;
-	private boolean inMouseReleased = false;
 	
 	
 	
@@ -2049,14 +2048,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public ViewJFrameBase getFrame() {
         return frame;
     }
-    
-    /**
-     * 
-     * @return
-     */
-    public boolean getInMouseReleased() {
-        return inMouseReleased;
-    }
 
     /**
      * Returns the imageA.
@@ -2779,7 +2770,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * @param mouseEvent event that triggered function
      */
     public void mouseReleased(final MouseEvent mouseEvent) {
-        inMouseReleased = true;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
         
@@ -2860,7 +2850,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         // reset mousePressIsShiftDown for next mouse click
         mousePressIsShiftDown = false;
-        inMouseReleased = false;
 
     } // end mouseReleased()
 
