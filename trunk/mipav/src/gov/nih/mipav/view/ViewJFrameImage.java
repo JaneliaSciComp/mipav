@@ -31,6 +31,8 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 import javax.media.opengl.GLException;
@@ -2355,8 +2357,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.debug("\nplugInName = " + plugInName + "\n");
 
             try {
-
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
 
                 if (thePlugIn instanceof PlugInAlgorithm) {
                     ((PlugInAlgorithm) thePlugIn).run(this, getActiveImage());
@@ -2371,6 +2387,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (Instatiation)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (Access)");
+            } catch(Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.startsWith("PlugInFileRead")) {
 

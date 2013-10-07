@@ -35,12 +35,15 @@ import java.io.*;
 import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
-import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicMenuItemUI;
 
@@ -1195,7 +1198,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 allFiles = pluginsDir.listFiles(new FileFilter() {
                     public boolean accept(final File f) {
 
-                        if (f.getPath().endsWith(".class")) {
+                        if (f.getPath().endsWith(".class") || f.getPath().endsWith(".jar")) {
                             return true;
                         }
                         return false;
@@ -1207,7 +1210,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
                     public boolean accept(final File f) {
 
-                        if (f.getPath().endsWith(".class")) {
+                        if (f.getPath().endsWith(".class") || f.getPath().endsWith(".jar")) {
                             return true;
                         }
                         return false;
@@ -1226,120 +1229,77 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
 
             String name, pluginName;
-            Field catField = null, scriptField = null;
-            Class<?> plugin;
-            final String catName = "CATEGORY";
-            final String scriptName = "SCRIPT_PREFIX";
-
+            
+            final String JAR_EXT = ".jar";
+            final String CLASS_EXT = ".class";
+            
+            JMenu currentMenu = menu;
             for (final File allFile : allFiles) {
-                JMenu currentMenu = menu;
+                
                 name = allFile.getName();
-
-                try {
-                    name = name.substring(0, name.indexOf(".class"));
-                    if (name.startsWith("PlugIn")) {
-                        pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
-                    } else {
-                        pluginName = name;
-                    }
-
-                } catch (final Exception e) {
-                    pluginName = name;
-                }
-                try {
-
-                    plugin = Class.forName(name);
-
-                    // plugin.newInstance();
-                    // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
-                    try {
-                        scriptField = plugin.getField(scriptName);
-
-                    } catch (final NoSuchFieldException e1) {
-                        // The scriptname field is optional.
-                    }
-
-                    if (scriptField != null) {
-                        final String scriptLoc = (String) scriptField.get(plugin);
-                        if (scriptLoc != null) {
-                            // the value of SCRIPT_NAME is now the short name for this plugin
-                            ScriptableActionLoader.addScriptActionLocation(scriptLoc);
-                        }
-                    }
-                    String[] hier = null;
-                    boolean isImageJPlugin = false;
-                    try {
-                        catField = plugin.getField(catName);
-                        hier = (String[]) catField.get(plugin);
-                    } catch (NoSuchFieldException e1) {
-                        if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
-                            isImageJPlugin = true;
-                            hier = new String[] {"ImageJ"};
-                        }
-                    }
-
-                    for (final String element : hier) {
-                        final Component[] subComp = currentMenu.getMenuComponents();
-                        boolean subExists = false;
-                        for (final Component element2 : subComp) {
-                            if (element2 instanceof JMenu && ((JMenu) element2).getText().equals(element)) {
-                                currentMenu = (JMenu) element2;
-                                subExists = true;
-                                break;
-                            }
-                        }
-                        if ( !subExists) {
-                            final JMenu newMenu = ViewMenuBuilder.buildMenu(element, 0, false);
-                            currentMenu.add(newMenu);
-                            currentMenu = newMenu;
-                        }
-                    }
-                    String interName = "";
-                    if ( !isImageJPlugin) {
-                        final Class<?>[] interList = plugin.getInterfaces();
-
-                        // find the interface name that determines the type of plugin
-                        for (final Class<?> element : interList) {
-                            if (element.getName().contains("PlugIn")
-                                    && !element.getName().contains("BundledPlugInInfo")) {
-                                interName = element.getName().substring(element.getName().indexOf("PlugIn"));
-                            }
-                        }
-
-                        if (interName.length() == 0 && plugin.getSuperclass() != null) {
-                            interName = getSuperInterfaces(plugin.getSuperclass());
-                        }
-
-                    } else {
-                        interName = "PlugInImageJ";
-                    }
-
-                    //if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-                        final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
-                                + pluginName, 0, al, null, false);
-                        pluginMenuItem.setName(pluginName);
-                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
-                        if((al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-                        	// have to iterate through the menu item, since it is a panel with a label and possible icon image
-                        	Component[] comps = pluginMenuItem.getComponents();
-                        	for (Component c : comps) {
-                        		c.setEnabled(false);
-                        	}
-                        	pluginMenuItem.setToolTipText("Plugin disabled: open an image to enable this plugin.");
-                        }
-                        currentMenu.add(pluginMenuItem);
-                    //}
-
-                } catch (final ClassNotFoundException e) {
-
-                    // e.printStackTrace();
-                } catch (final Exception e) {
-                    // usually this means other files/folders exist in the installed plugins directory besides plugin
-                    // files
-                    // e.printStackTrace();
-                } catch (final NoClassDefFoundError e) {
-                    // components of some classes may no longer exist in the classpath.
-
+                String quickExtSub = name.substring(name.lastIndexOf('.'));
+                
+                if(quickExtSub.contains(CLASS_EXT)) {
+	                try {
+	                    name = name.substring(0, name.indexOf(".class"));
+	                    if (name.startsWith("PlugIn")) {
+	                        pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+	                    } else {
+	                        pluginName = name;
+	                    }
+	
+	                } catch (final Exception e) {
+	                    pluginName = name;
+	                }
+	                
+	                Class plugin = null;
+					try {
+						plugin = Class.forName(name);
+					} catch (ClassNotFoundException e1) {
+						e1.printStackTrace();
+					} catch (Exception e2) {
+						e2.printStackTrace();
+					} catch(Error e3) {
+						e3.printStackTrace();
+					}
+	                
+	                addPluginToMenu(plugin, pluginName, name, currentMenu, al, null);
+                } else if(quickExtSub.contains(JAR_EXT)) {
+                	try {
+						JarFile jar = new JarFile(allFile.getAbsolutePath());
+						Enumeration<JarEntry> e = jar.entries();
+						URL[] url = new URL[]{new URL("jar:file:" + allFile.getAbsolutePath() + "!/")};
+						URLClassLoader classLoader = URLClassLoader.newInstance(url);
+						
+						while(e.hasMoreElements()) {
+							JarEntry entry = e.nextElement();
+							String entryName = entry.getName();
+							if(entryName.indexOf('.') != -1) {
+								String quickEntrySub = entryName.substring(entryName.lastIndexOf('.'));
+								if(!entry.isDirectory() && quickEntrySub.equals(CLASS_EXT)) {
+									String className = entryName.substring(0, entryName.length() - 6).replace(File.separatorChar, '.');
+									pluginName = className.substring(6);
+									
+									if(entryName.startsWith("PlugIn") && entryName.contains(".class")) {
+										Class<?> plugin = null;
+										try {
+											plugin = classLoader.loadClass(className);
+										} catch (ClassNotFoundException e1) {
+											e1.printStackTrace();
+										} catch (Exception e2) {
+											e2.printStackTrace();
+										} catch(Error e3) {
+											e3.printStackTrace();
+										}
+										
+										addPluginToMenu(plugin, pluginName, className, currentMenu, al, allFile.getAbsolutePath());
+									}
+								}
+							}
+						}
+					} catch (IOException e) {
+						System.err.println("Jar file not readable: " + allFile.getAbsolutePath());
+					}
                 }
             }
         }
@@ -1370,6 +1330,106 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         menu.add(menuBuilder.buildMenuItem("Compile and run...", "CompileAndRun", 0, null, false));
 
         return menu;
+    }
+    
+    private void addPluginToMenu(Class<?> plugin, String pluginName, String name, JMenu currentMenu, ActionListener al, String jarContainer) {
+    	Field catField = null, scriptField = null;
+        final String catName = "CATEGORY";
+        final String scriptName = "SCRIPT_PREFIX";
+
+        if(plugin == null) {
+        	return;
+        }
+        
+        try {
+            // plugin.newInstance();
+            // rather than instantiating to allow loading into SCRIPT_ACTION_LOCATIONS, see below
+            try {
+                scriptField = plugin.getField(scriptName);
+
+            } catch (final NoSuchFieldException e1) {
+                // The scriptname field is optional.
+            }
+
+            if (scriptField != null) {
+                final String scriptLoc = (String) scriptField.get(plugin);
+                if (scriptLoc != null) {
+                    // the value of SCRIPT_NAME is now the short name for this plugin
+                    ScriptableActionLoader.addScriptActionLocation(scriptLoc);
+                }
+            }
+            String[] hier = null;
+            boolean isImageJPlugin = false;
+            try {
+                catField = plugin.getField(catName);
+                hier = (String[]) catField.get(plugin);
+            } catch (NoSuchFieldException e1) {
+                if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
+                    isImageJPlugin = true;
+                    hier = new String[] {"ImageJ"};
+                }
+            }
+            
+            if(jarContainer != null) {
+            	hier = new String[]{jarContainer.substring(jarContainer.lastIndexOf(File.separatorChar) + 1)};
+            }
+
+            for (final String element : hier) {
+                final Component[] subComp = currentMenu.getMenuComponents();
+                boolean subExists = false;
+                for (final Component element2 : subComp) {
+                    if (element2 instanceof JMenu && ((JMenu) element2).getText().equals(element)) {
+                        currentMenu = (JMenu) element2;
+                        subExists = true;
+                        break;
+                    }
+                }
+                if ( !subExists) {
+                    final JMenu newMenu = ViewMenuBuilder.buildMenu(element, 0, false);
+                    currentMenu.add(newMenu);
+                    currentMenu = newMenu;
+                }
+            }
+            String interName = "";
+            if ( !isImageJPlugin) {
+                final Class<?>[] interList = plugin.getInterfaces();
+
+                // find the interface name that determines the type of plugin
+                for (final Class<?> element : interList) {
+                    if (element.getName().contains("PlugIn")
+                            && !element.getName().contains("BundledPlugInInfo")) {
+                        interName = element.getName().substring(element.getName().indexOf("PlugIn"));
+                    }
+                }
+
+                if (interName.length() == 0 && plugin.getSuperclass() != null) {
+                    interName = getSuperInterfaces(plugin.getSuperclass());
+                }
+
+            } else {
+                interName = "PlugInImageJ";
+            }
+
+            final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
+                    + pluginName, 0, al, null, false);
+            pluginMenuItem.setName(pluginName);
+            pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+            if((al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+            	// have to iterate through the menu item, since it is a panel with a label and possible icon image
+            	Component[] comps = pluginMenuItem.getComponents();
+            	for (Component c : comps) {
+            		c.setEnabled(false);
+            	}
+            	pluginMenuItem.setToolTipText("Plugin disabled: open an image to enable this plugin.");
+            }
+            if(jarContainer != null) {
+            	pluginMenuItem.setToolTipText(jarContainer);
+            }
+            currentMenu.add(pluginMenuItem);
+        } catch(Exception e) {
+        	return;
+        }
+        
     }
 
     private String getSuperInterfaces(final Class<?> plugin) {
