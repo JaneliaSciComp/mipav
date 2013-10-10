@@ -1865,7 +1865,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public ViewMenuBuilder getMenuBuilder() {
         return menuBuilder;
     }
-
+    
     /**
      * Accessor that returns the message frame.
      * 
@@ -1873,6 +1873,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public ViewJFrameMessage getMessageFrame() {
         return (messageFrame);
+    }
+    
+    /**
+     * Accessor to get text of message field.
+     * 
+     */
+    public String getMessageText() {
+
+        if (messageField != null) {
+            return messageField.getText();
+        }
+        
+        return null;
     }
 
     /**
