@@ -185,6 +185,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_IMAGE_CAPTURE = new UIParams("CaptureTiff", "Capture image to TIFF(RGB)", "camera");
     public static final UIParams PARAM_IMAGE_HEADER = new UIParams("AboutImage", "View Header", "header");
     public static final UIParams PARAM_IMAGE_ATTRIBUTES = new UIParams("EditImageInfo", "Edit attributes", "attributes");
+    public static final UIParams PARAM_IMAGE_INTENSITY = new UIParams("RecordIntensity", "Record intensity", "intensity");
 	
     /** LUT buttons*/
     public static final UIParams PARAM_LUT = new UIParams("DisplayLUT", "Displays Lookup Table (LUT)", "histolut");
