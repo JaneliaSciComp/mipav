@@ -458,7 +458,45 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildDICOMDIRFrame();   
         } else if (command.equals("OpenNewGraph")) {
             new ViewJFrameGraph("Graph", true);
-        } else if (command.equals("QueryDatabase")) {
+        } else if (command.equals("RecordIntensity")) {
+        	if(!Preferences.getData().contains("Position")) {
+        		StringBuffer imageBuffer = new StringBuffer().append("Position\t");
+        		Enumeration<ModelImage> imageEnum = ViewUserInterface.getReference().getRegisteredImages();
+        		while(imageEnum.hasMoreElements()) {
+        			imageBuffer.append(imageEnum.nextElement().getImageName()).append("\t");
+        		}
+        		imageBuffer.append("\n");
+        		Preferences.data(imageBuffer.toString());
+        	}
+        	String intenStr = userInterface.getMessageText();
+        	int xBegin = intenStr.indexOf("X:");
+        	int yBegin = intenStr.indexOf("Y:");
+        	int end = intenStr.indexOf("Intensity");
+        	int xVal = Integer.valueOf(intenStr.substring(xBegin+2, yBegin).trim());
+        	int yVal = Integer.valueOf(intenStr.substring(yBegin+2, end).trim());
+        	int zVal = this.getComponentImage().getSlice();
+        	StringBuffer floatBuffer = new StringBuffer().append(xVal).append(",").append(yVal).append(",").append(zVal).append("\t");
+        	if(linkedScrolling || isShiftDown) {
+        		Enumeration<ModelImage> imageEnum = ViewUserInterface.getReference().getRegisteredImages();
+        		while(imageEnum.hasMoreElements()) {
+        			ModelImage image = imageEnum.nextElement();
+        			float f = image.getFloat(xVal, yVal, zVal);
+        			floatBuffer.append(f).append("\t");
+        		}
+        	} else {
+        		ModelImage imageA = getImageA();
+        		float f = imageA.getFloat(xVal, yVal, zVal);
+        		floatBuffer.append(f).append("\t");
+        		ModelImage imageB = getImageB();
+        		
+        		if(imageB != null) {
+        			f = imageB.getFloat(xVal, yVal, zVal);
+        			floatBuffer.append(f);
+        		}
+        	}
+        	floatBuffer.append("\n");
+        	Preferences.data(floatBuffer.toString());       
+    	} else if (command.equals("QueryDatabase")) {
 
             if (userInterface.getDICOMQueryFrame() == null) {
                 userInterface.setDICOMQueryFrame(new ViewJFrameDICOMQuery());
