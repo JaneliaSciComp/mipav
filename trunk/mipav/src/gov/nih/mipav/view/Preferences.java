@@ -2954,7 +2954,11 @@ public class Preferences {
      * @param mFrame Message frame to set.
      */
     public static final void setMessageFrame(final ViewJFrameMessage mFrame) {
-        Preferences.messageFrame = mFrame;
+        if(Preferences.messageFrame != null) {
+        	Preferences.messageFrame.dispose();
+        }
+    	
+    	Preferences.messageFrame = mFrame;
     }
 
     /**
