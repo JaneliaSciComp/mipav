@@ -1073,15 +1073,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Builds the image tree dialog and displays it.
      */
-    public void buildDICOMFrame() {
+    public ViewJFrameDICOMParser buildDICOMFrame() {
 
         // get the selected directory
         final ViewDirectoryChooser chooser = new ViewDirectoryChooser();
         final String dir = chooser.getImageDirectory();
 
         if (dir != null) {
-            new ViewJFrameDICOMParser(dir);
+            return new ViewJFrameDICOMParser(dir);
         }
+        
+        return null;
     }
     
     /**
@@ -1127,15 +1129,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Builds the image tree dialog and displays it.
      */
-    public void buildDICOMDIRFrame() {
+    public JDialogDicomDir buildDICOMDIRFrame() {
 
-        new JDialogDicomDir(this.getMainFrame());
+        return new JDialogDicomDir(this.getMainFrame());
     }
 
     /**
      * Builds menus for the User Interface.
      */
-    public void buildMenu() {
+    public JMenuBar buildMenu() {
         menuBuilder = new ViewMenuBuilder(this);
 
         final ViewMenuBar menuBar = new ViewMenuBar(menuBuilder);
@@ -1154,12 +1156,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
        
+        return openingMenuBar;
     }
 
     /**
      * Builds the message frame where user/program data can be displayed.
      */
-    public void buildMessageFrame() {
+    public ViewJFrameMessage buildMessageFrame() {
 
         messageFrame = new ViewJFrameMessage("Output");
         messageFrame.setSize(550, 300);
@@ -1175,6 +1178,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
         final int taskbarHeight = Toolkit.getDefaultToolkit().getScreenInsets(messageFrame.getGraphicsConfiguration()).bottom;
         messageFrame.setLocation(0, screenHeight - frameHeight - taskbarHeight);
+        
+        return messageFrame;
     }
 
     /**
