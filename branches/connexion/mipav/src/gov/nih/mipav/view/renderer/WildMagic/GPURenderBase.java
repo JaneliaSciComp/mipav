@@ -953,10 +953,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     @Override
 	public void processSpaceNavEvent()
     {
+    	System.out.println("tx: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
+    			"\trx: "+SpaceNavigatorController.getRX()+"\try: "+SpaceNavigatorController.getTX()+"\trz: "+SpaceNavigatorController.getRZ());
     	Vector3f oldLoc, newLoc, kLoc;
     	isSpaceNavCodeRunning = true;
     	double scaleValue;
-    	
     	if(m_spkMotionObject == null)
     		return;
 
@@ -1038,6 +1039,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     			scaleValue = 0;
     		}
     	}
+
         oldLoc = new Vector3f();
     	newLoc = new Vector3f();
         kLoc = new Vector3f(m_akWorldAxis[0]); 
@@ -1112,7 +1114,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //    	printSpaceNavData();
 		isSpaceNavCodeRunning = false;
 		
-//		System.out.println("tX: " + tX + ", scaleValue: " + scaleValue + ", tCutoff: " + translationCutoff + ", rCutoff: " + rotationCutoff);
+	//	System.out.println("tX: " + tX + ", scaleValue: " + scaleValue + ", tCutoff: " + translationCutoff + ", rCutoff: " + rotationCutoff);
 	    
 	}
     

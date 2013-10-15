@@ -162,7 +162,7 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          gbc_4.gridx = 1;
          gbc_4.gridy = 1;
          mouseSpeedPanel.add(mouseRotationSpeedLabel, gbc_4);
-         mouseRotationSpeedSlider = new JSlider(0, 100, GPURenderBase.getRotationScaleFactor());
+         mouseRotationSpeedSlider = new JSlider(0, 100);
          mouseRotationSpeedSlider.setPaintTicks(true);
          mouseRotationSpeedSlider.setPaintLabels(true);
          mouseRotationSpeedSlider.setMinorTickSpacing(10);
