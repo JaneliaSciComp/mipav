@@ -46,7 +46,7 @@ public class SpaceNavigatorPoller {
 		}
 		
 		if(listeners.length == 0 && pollTimer != null) {
-			pollTimer.stop();
+			pollTimer.stop();                                               
 		}
 	}
 	

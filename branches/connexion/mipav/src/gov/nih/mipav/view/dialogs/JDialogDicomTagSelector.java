@@ -358,10 +358,10 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         propPane.setBorder(null);
         tagInformationPanel.add(propPane, infoPanelConstraints);
         
-        if(keyToValue.get(tagName).equals(UNKNOWN)) {
-        	propPane.setVisible(false);
-        	propertyLabel.setVisible(false);
-        }
+//        if(keyToValue.get(tagName).equals(UNKNOWN)) {
+//        	propPane.setVisible(false);
+//        	propertyLabel.setVisible(false);
+//        }
         
         return tagInformationPanel;
 	}
