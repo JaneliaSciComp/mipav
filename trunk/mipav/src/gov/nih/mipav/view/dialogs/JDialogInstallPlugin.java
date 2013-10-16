@@ -67,7 +67,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     private ClassSelectorPanel selectorPanel;
 
     /** Check box for whether to display files that are not likely sources of MIPAV plugins.* */
-    private JCheckBox check;
+    private JCheckBox checkShow;
+    
+    /** Check box for unpacking container files */
+    private JCheckBox checkUnpack;
 
     /**
      * Creates new dialog.
@@ -183,35 +186,41 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         ArrayList<String> installSimpleName = new ArrayList<String>();
         for (int i = 0; i < files.size(); i++) {
             String name = files.get(i).getName();
-            name = name.substring(0, name.indexOf(".class"));
-            try {
-                Class c = Class.forName(name);
-                boolean isPlugin = isPluginClass(c);
-
-                if (isPlugin) {
-                    Class[] dep = null;
-                    try {
-                        dep = gatherDependents(c);
-                    } catch (NoClassDefFoundError e) {
-                        removeFiles(files);
-                        MipavUtil.displayInfo("Unable to install plugin " + name + ". " + e.getLocalizedMessage()
-                                + " could not be found.");
-                        e.printStackTrace();
-                    } catch (Throwable e) {
-                        removeFiles(files);
-                        MipavUtil.displayInfo("Unable to install plugin " + name
-                                + ".  Make sure you have included all needed class files.");
-                        e.printStackTrace();
-                    }
-                    if (dep != null) {
-                        installSimpleName.add(name);
-                        ManifestFile mf = ManifestFile.getReference();
-                        mf.addEntry(c, dep); // if exists will only modi
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                System.out.println(name + " plugin file was not found.");
-                // name could not likely be resolved given the current classpath
+            if(name.contains(".class")) {
+	            name = name.substring(0, name.indexOf(".class"));
+	            try {
+	                Class c = Class.forName(name);
+	                boolean isPlugin = isPluginClass(c);
+	
+	                if (isPlugin) {
+	                    Class[] dep = null;
+	                    try {
+	                        dep = gatherDependents(c);
+	                    } catch (NoClassDefFoundError e) {
+	                        removeFiles(files);
+	                        MipavUtil.displayInfo("Unable to install plugin " + name + ". " + e.getLocalizedMessage()
+	                                + " could not be found.");
+	                        e.printStackTrace();
+	                    } catch (Throwable e) {
+	                        removeFiles(files);
+	                        MipavUtil.displayInfo("Unable to install plugin " + name
+	                                + ".  Make sure you have included all needed class files.");
+	                        e.printStackTrace();
+	                    }
+	                    if (dep != null) {
+	                        installSimpleName.add(name);
+	                        ManifestFile mf = ManifestFile.getReference();
+	                        mf.addEntry(c, dep); // if exists will only modi
+	                    }
+	                }
+	            } catch (ClassNotFoundException e) {
+	                System.out.println(name + " plugin file was not found.");
+	                // name could not likely be resolved given the current classpath
+	            } catch (NoClassDefFoundError e) {
+	            	System.err.println(name + "plugin could not be loaded.");
+	            }
+            } else if(name.contains(".jar") && !checkUnpack.isSelected()) {
+            	installSimpleName.add(name);
             }
         }
 
@@ -553,12 +562,12 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
             JPanel checkPanel = new JPanel();
             checkPanel.setLayout(new BorderLayout());
-            check = new JCheckBox("Show only *.class, *.tar.gz, *.zip, and *.jar files.");
-            check.setSelected(true);
-            check.addActionListener(this);
-            check.setActionCommand(CHECK);
-            check.setBorder(new EmptyBorder(3, 10, 0, 10));
-            checkPanel.add(check, BorderLayout.WEST);
+            checkShow = new JCheckBox("Show only *.class, *.tar.gz, *.zip, and *.jar files.");
+            checkShow.setSelected(true);
+            checkShow.addActionListener(this);
+            checkShow.setActionCommand(CHECK);
+            checkShow.setBorder(new EmptyBorder(3, 10, 0, 10));
+            checkPanel.add(checkShow, BorderLayout.WEST);
 
             gbc.fill = GridBagConstraints.BOTH;
             gbc.weighty = 0;
@@ -566,8 +575,24 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             gbc.gridx = 0;
             gbc.gridy = 2;
             gbc.weightx = 1;
-
+            
             add(checkPanel, gbc);
+            
+            JPanel checkUnpackPanel = new JPanel();
+            checkUnpackPanel.setLayout(new BorderLayout());
+            checkUnpack = new JCheckBox("Unpack *.jar files.");
+            checkUnpack.setSelected(true);
+            checkUnpack.setBorder(new EmptyBorder(3, 10, 0, 10));
+            checkUnpackPanel.add(checkUnpack, BorderLayout.WEST);
+
+            gbc.fill = GridBagConstraints.BOTH;
+            gbc.weighty = 0;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.weightx = 1;
+
+            add(checkUnpackPanel, gbc);
 
             validate();
             pack();
@@ -737,7 +762,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         for (i = 0; i < files.size(); i++) {
             File currentFile = (File) files.elementAt(i);
 
-            if (currentFile.getName().endsWith(".class")) {
+            if (currentFile.getName().endsWith(".class")  || (currentFile.getName().endsWith(".jar") && !checkUnpack.isSelected())) {
                 int readStatus = -1;
                 byte[] byteBuff = null;
                 int fileLength = 0;
@@ -809,7 +834,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                 }
             }
             // must be a .jar or .zip so extract files
-            else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
+            else if (currentFile.getName().endsWith(".zip") || (currentFile.getName().endsWith(".jar") && checkUnpack.isSelected())) {
 
                 try {
                     zIn = new ZipInputStream(new FileInputStream(currentFile));
@@ -844,7 +869,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
                             try {
                                 // Transfer bytes from the ZIP file to the output file
-                                buf = new byte[1024];
+                                buf = new byte[4096];
 
                                 while ( (len = zIn.read(buf)) > 0) {
                                     fw.write(buf, 0, len);
@@ -1281,7 +1306,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         /** Whether root of file system */
         boolean isRoot;
 
-        private boolean displayAll = ! (check == null || check.isSelected());
+        private boolean displayAll = ! (checkShow == null || checkShow.isSelected());
 
         /**
          * Creates a new file tree node.
