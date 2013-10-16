@@ -447,7 +447,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void actionPerformed(final ActionEvent event) {
         final Object source = event.getSource();
         final String command = event.getActionCommand();
-
+        
         // System.err.println("COMMAND: " + command);
         if ( (command != null) && isShorcutRecording()) {
             setShortcutRecording(false);
@@ -563,7 +563,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	thePlugIn = generatePlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -584,13 +584,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                                 Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
-            } catch (final ClassNotFoundException e) {
-                MipavUtil.displayError("PlugIn not found: " + plugInName);
-            } catch (final InstantiationException e) {
-                MipavUtil.displayError("Unable to load plugin (ins)");
-            } catch (final IllegalAccessException e) {
-                MipavUtil.displayError("Unable to load plugin (acc)");
-            }
+            } 
         } else if (command.startsWith("PlugInFileWrite")) {
 
             Object thePlugIn = null;
@@ -598,7 +592,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	thePlugIn = generatePlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -619,20 +613,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                                 Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
-            } catch (final ClassNotFoundException e) {
-                MipavUtil.displayError("PlugIn not found: " + plugInName);
-            } catch (final InstantiationException e) {
-                MipavUtil.displayError("Unable to load plugin (ins)");
-            } catch (final IllegalAccessException e) {
-                MipavUtil.displayError("Unable to load plugin (acc)");
-            }
+            } 
         } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
             final String plugInName = "PlugIn" + command.substring(18);
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	thePlugIn = generatePlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFileTransfer) {
                     ((PlugInFileTransfer) thePlugIn).transferFiles();
@@ -648,13 +636,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                                 Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
-            } catch (final ClassNotFoundException e) {
-                MipavUtil.displayError("PlugIn not found: " + plugInName);
-            } catch (final InstantiationException e) {
-                MipavUtil.displayError("Unable to load plugin (ins)");
-            } catch (final IllegalAccessException e) {
-                MipavUtil.displayError("Unable to load plugin (acc)");
-            }
+            } 
         } else if (command.startsWith("PlugInFile")) {
             Object thePlugIn = null;
             final String plugInName = "PlugIn" + command.substring(10);
@@ -662,7 +644,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	thePlugIn = generatePlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInFile) {
 
@@ -709,13 +691,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                                 Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
-            } catch (final ClassNotFoundException e) {
-                MipavUtil.displayError("PlugIn not found: " + plugInName);
-            } catch (final InstantiationException e) {
-                MipavUtil.displayError("Unable to load plugin (ins)");
-            } catch (final IllegalAccessException e) {
-                MipavUtil.displayError("Unable to load plugin (acc)");
-            }
+            } 
         } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
 
@@ -723,7 +699,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	thePlugIn = generatePlugin(plugInName, source, command);
 
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
@@ -738,13 +714,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         + " -- The plugin is probably compiled for an older version of Java than MIPAV currently supports.\n",
                                 Preferences.DEBUG_MINOR);
                 ucve.printStackTrace();
-            } catch (final ClassNotFoundException e) {
-                MipavUtil.displayError("PlugIn not found: " + plugInName);
-            } catch (final InstantiationException e) {
-                MipavUtil.displayError("Unable to load plugin (ins)");
-            } catch (final IllegalAccessException e) {
-                MipavUtil.displayError("Unable to load plugin (acc)");
-            }
+            } 
         } else if (command.startsWith("PlugInImageJ")) {
             // System.out.println(command);
             Class<?> thePlugInClass = null;
@@ -758,7 +728,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 for (Class c : thePlugInClass.getInterfaces()) {
                     if ( (c.equals(ij.plugin.PlugIn.class))
                             || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
-                        thePlugInInstance = Class.forName(plugInName).newInstance();
+                    	thePlugInInstance = generatePlugin(plugInName, source, command);
                         String args = "";
                         ((ij.plugin.PlugIn) thePlugInInstance).run(args);
                         break;
@@ -770,7 +740,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             if (img.is2DImage()) {
 
                                 ImageProcessor ip = ModelImageToImageJConversion.convert2D(img);
-                                thePlugInInstance = Class.forName(plugInName).newInstance();
+                                thePlugInInstance = generatePlugin(plugInName, source, command);
                                 ((ij.plugin.filter.PlugInFilter) thePlugInInstance).run(ip);
 
                             } else {
@@ -1283,9 +1253,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 								String quickEntrySub = entryName.substring(entryName.lastIndexOf('.'));
 								if(!entry.isDirectory() && quickEntrySub.equals(CLASS_EXT)) {
 									String className = entryName.substring(0, entryName.length() - 6).replace(File.separatorChar, '.');
-									pluginName = className.substring(6);
 									
 									if(entryName.startsWith("PlugIn") && entryName.contains(".class")) {
+										pluginName = className.substring(6);
 										Class<?> plugin = null;
 										try {
 											plugin = classLoader.loadClass(className);
@@ -1437,7 +1407,35 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         
     }
 
-    private String getSuperInterfaces(final Class<?> plugin) {
+    private Object generatePlugin(String plugInName, Object source, String command) {
+    	Object thePlugIn = null;
+    	
+    	try {
+        	ClassLoader cl = null;
+        	
+        	if(source instanceof JMenuItem) {
+        		Container parent = ((JMenuItem) source).getParent();
+        		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+        			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+    				cl = URLClassLoader.newInstance(url);
+        		}
+        	}
+        	
+        	if(cl == null) {
+        		thePlugIn = Class.forName(plugInName).newInstance();
+        	} else {
+        		Class<?> plugin = cl.loadClass(plugInName);
+        		thePlugIn = plugin.newInstance();
+        	}
+        	
+        	return thePlugIn;
+    	} catch(Exception e) {
+    		MipavUtil.displayError("Unable to execute plugin: "+command);
+    		return null;
+    	}
+	}
+
+	private String getSuperInterfaces(final Class<?> plugin) {
         String interName = new String();
         final Class<?>[] interList = plugin.getInterfaces();
         for (final Class<?> element : interList) {

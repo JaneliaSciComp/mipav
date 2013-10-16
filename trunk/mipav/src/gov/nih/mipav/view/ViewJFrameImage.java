@@ -2399,7 +2399,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	
             	if(source instanceof JMenuItem) {
             		Container parent = ((JMenuItem) source).getParent();
-            		if(((JMenuItem)source).getToolTipText().contains(".jar")) {
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
         				cl = URLClassLoader.newInstance(url);
             		}
@@ -2436,8 +2436,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
-
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
+            	
                 if (thePlugIn instanceof PlugInFile) {
 
                     if ( ((PlugInFile) thePlugIn).canReadImages()) {
@@ -2455,6 +2470,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (ins)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
+            } catch(Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.startsWith("PlugInFileWrite")) {
             Object thePlugIn = null;
@@ -2463,8 +2480,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
-
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
+            	
                 if (thePlugIn instanceof PlugInFile) {
 
                     if ( ((PlugInFile) thePlugIn).canWriteImages()) {
@@ -2482,6 +2514,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (ins)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
+            } catch (final Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
@@ -2490,7 +2524,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
 
                 if (thePlugIn instanceof PlugInFileTransfer) {
                     ((PlugInFileTransfer) thePlugIn).transferFiles();
@@ -2504,6 +2553,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (ins)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
+            } catch(final Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
@@ -2512,8 +2563,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
-
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
+            	
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
                 } else {
@@ -2525,6 +2591,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (ins)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
+            } catch (final Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.startsWith("PluginView")) {
             Object thePlugIn = null;
@@ -2533,7 +2601,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
-                thePlugIn = Class.forName(plugInName).newInstance();
+            	ClassLoader cl = null;
+            	
+            	if(source instanceof JMenuItem) {
+            		Container parent = ((JMenuItem) source).getParent();
+            		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
+            			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
+        				cl = URLClassLoader.newInstance(url);
+            		}
+            	}
+            	
+            	if(cl == null) {
+            		thePlugIn = Class.forName(plugInName).newInstance();
+            	} else {
+            		Class<?> plugin = cl.loadClass(plugInName);
+            		thePlugIn = plugin.newInstance();
+            	}
 
                 if (thePlugIn instanceof PlugInView) {
                     ((PlugInView) thePlugIn).run(this, getActiveImage());
@@ -2547,6 +2630,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("Unable to load plugin (ins)");
             } catch (final IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
+            } catch(final Exception e) {
+            	MipavUtil.displayError("Unable to execute plugin: "+command);
             }
         } else if (command.equals("InstallPlugin")) {
             final JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(this);
