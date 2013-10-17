@@ -581,7 +581,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             JPanel checkUnpackPanel = new JPanel();
             checkUnpackPanel.setLayout(new BorderLayout());
             checkUnpack = new JCheckBox("Unpack *.jar files.");
-            checkUnpack.setSelected(false);
+            checkUnpack.setSelected(true);
             checkUnpack.setBorder(new EmptyBorder(3, 10, 0, 10));
             checkUnpackPanel.add(checkUnpack, BorderLayout.WEST);
 
