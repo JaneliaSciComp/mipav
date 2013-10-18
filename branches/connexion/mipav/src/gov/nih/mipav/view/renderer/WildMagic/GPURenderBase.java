@@ -953,7 +953,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     @Override
 	public void processSpaceNavEvent()
     {
-    	System.out.println("tx: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
+    	System.out.println("t: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
     			"\trx: "+SpaceNavigatorController.getRX()+"\try: "+SpaceNavigatorController.getTX()+"\trz: "+SpaceNavigatorController.getRZ());
     	Vector3f oldLoc, newLoc, kLoc;
     	isSpaceNavCodeRunning = true;
