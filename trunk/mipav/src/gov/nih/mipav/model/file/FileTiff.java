@@ -1188,7 +1188,6 @@ public class FileTiff extends FileBase {
             fileInfo.setExtents(imgExtents);
 
             if (multiFile == false) {
-
                 if (one) {
                     image = new ModelImage(fileInfo.getDataType(), new int[] { imgExtents[0], imgExtents[1] },
                                            fileInfo.getFileName());
@@ -1372,7 +1371,7 @@ public class FileTiff extends FileBase {
             fileInfo.setExtents(imgExtents);
             raFile.close();
             
-            if (doTIFFOrientation) {
+            if (doTIFFOrientation && image != null) {
                 originalName = image.getImageFileName();
                 if (flipHorizontal) {
                     flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
