@@ -367,10 +367,10 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
 
         removeFaceRadio = new JRadioButton("Remove face and skull regions.");
         removeFaceRadio.setFont(MipavUtil.font12);
-        removeFaceRadio.setSelected(true);
 
         showSegmentationRadio = new JRadioButton("Show segmentation results.");
         showSegmentationRadio.setFont(MipavUtil.font12);
+        showSegmentationRadio.setSelected(true);
 
         ButtonGroup group = new ButtonGroup();
         group.add(blurFaceRadio);
