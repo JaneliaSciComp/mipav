@@ -163,6 +163,7 @@ public class ViewMenuBar {
                                 false),
                         menuBuilder.buildMenuItem("Midsagittal line alignment", "Midsagittal", 0, null, false),
                         menuBuilder.buildMenuItem("Talairach transform", "talairachTransform", 0, null, false),}),
+                menuBuilder.buildMenuItem("Convergence field", "CONVERGENCE", 0, null, false),
                 menuBuilder.makeMenu("Edge detection", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Canny", "CANNY", 0, null, false),
                         menuBuilder.buildMenuItem("Entropic", "ENTROPIC", 0, null, false),
@@ -1086,6 +1087,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
             menuBuilder.setMenuItemEnabled("Isophote curvature", false);
             menuBuilder.setMenuItemEnabled("Box counting", false);
+            menuBuilder.setMenuItemEnabled("Convergence field", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to Single 3D", false);
@@ -1113,8 +1115,10 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Spatial color compactness", false);
             menuBuilder.setMenuItemEnabled("Canny", false);
             menuBuilder.setMenuItemEnabled("Entropic", false);
+            
             menuBuilder.setMenuItemEnabled("Thinning", false);
             menuBuilder.setMenuItemEnabled("Markov random field", false);
+            menuBuilder.setMenuItemEnabled("Convergence field", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("Align patient position", false);
             menuBuilder.setMenuItemEnabled("Draw 3D rectangle VOI", false);
@@ -1229,6 +1233,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Sobel gradient components", false);
             menuBuilder.setMenuItemEnabled("Isophote curvature", false);
             menuBuilder.setMenuItemEnabled("Box counting", false);
+            menuBuilder.setMenuItemEnabled("Convergence field", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
