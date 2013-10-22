@@ -6,6 +6,10 @@ import gov.nih.mipav.model.structures.ModelImage;
 import java.io.IOException;
 
 public class AlgorithmSobel extends AlgorithmBase {
+    /**
+     * 5 x 5 Sobel template found in Feature Extraction & Image Processing for Computer Vision Third Edition
+     * by Mark S. Nixon and Alberto S. Aguado Section 4.2.1.4. Sobel edge-detection operator pp. 146-153.
+     */
     
     private int kernelSize = 3;
     
