@@ -7,9 +7,12 @@ import java.io.IOException;
 
 public class AlgorithmSobel extends AlgorithmBase {
     
-    public AlgorithmSobel(ModelImage destImg, ModelImage srcImg, boolean image25D) {
+    private int kernelSize = 3;
+    
+    public AlgorithmSobel(ModelImage destImg, ModelImage srcImg, boolean image25D, int kernelSize) {
         super(destImg, srcImg);
         this.image25D = image25D;
+        this.kernelSize = kernelSize;
     }
     
     public void runAlgorithm() {
@@ -25,8 +28,8 @@ public class AlgorithmSobel extends AlgorithmBase {
     public void run2D() {
         int origXDim = srcImage.getExtents()[0];
         int origYDim = srcImage.getExtents()[1];
-        int xDim = origXDim - 2;
-        int yDim = origYDim - 2;
+        int xDim = origXDim - (kernelSize - 1);
+        int yDim = origYDim - (kernelSize - 1);
         int zDim;
         int origSliceSize = origXDim * origYDim;
         double buffer[] = new double[origSliceSize];
@@ -58,16 +61,44 @@ public class AlgorithmSobel extends AlgorithmBase {
                     return;
             }
             
-            for (y = 1; y < origYDim - 1; y++) {
-                for (x = 1; x < origXDim - 1; x++) {
-                    gx[x - 1 + (y - 1)*xDim] = buffer[x+1 + (y-1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
-                                                  + 2.0 * buffer[x+1 + y*origXDim] - 2.0*buffer[x-1 + y*origXDim]
-                                                  + buffer[x+1 + (y+1)*origXDim] - buffer[x-1 + (y+1)*origXDim];
-                    gy[x - 1 + (y - 1)*xDim] = buffer[x-1 + (y+1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
-                                                  + 2.0*buffer[x + (y+1)*origXDim] - 2.0*buffer[x + (y-1)*origXDim]
-                                                  + buffer[x+1 + (y+1)*origXDim] - buffer[x+1 + (y-1)*origXDim];
-                } // for (x = 1; x < origXDim - 1; x++)
-            } // for (y = 1; y < origYDim - 1; y++)
+            if (kernelSize == 3) {
+                for (y = 1; y < origYDim - 1; y++) {
+                    for (x = 1; x < origXDim - 1; x++) {
+                        gx[x - 1 + (y - 1)*xDim] = buffer[x+1 + (y-1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
+                                                      + 2.0 * buffer[x+1 + y*origXDim] - 2.0*buffer[x-1 + y*origXDim]
+                                                      + buffer[x+1 + (y+1)*origXDim] - buffer[x-1 + (y+1)*origXDim];
+                        gy[x - 1 + (y - 1)*xDim] = buffer[x-1 + (y+1)*origXDim] - buffer[x-1 + (y-1)*origXDim]
+                                                      + 2.0*buffer[x + (y+1)*origXDim] - 2.0*buffer[x + (y-1)*origXDim]
+                                                      + buffer[x+1 + (y+1)*origXDim] - buffer[x+1 + (y-1)*origXDim];
+                    } // for (x = 1; x < origXDim - 1; x++)
+                } // for (y = 1; y < origYDim - 1; y++)
+            } // if (kernelSize == 3)
+            else if (kernelSize == 5) {
+                for (y = 2; y < origYDim - 2; y++) {
+                    for (x = 2; x < origXDim - 2; x++) {
+                        gx[x - 2 + (y - 2)*xDim] = buffer[x+2 + (y-2)*origXDim] + 2.0 * buffer[x+1 + (y-2)*origXDim]
+                                                   - 2.0 * buffer[x-1 + (y-2)*origXDim] - buffer[x-2 + (y-2)*origXDim]
+                                                   + 4.0 * buffer[x+2 + (y-1)*origXDim] + 8.0 * buffer[x+1 + (y-1)*origXDim]
+                                                   - 8.0 * buffer[x-1 + (y-1)*origXDim] - 4.0 * buffer[x-2 + (y-1)*origXDim]
+                                                   + 6.0 * buffer[x+2 + y*origXDim] + 12.0 * buffer[x+1 + y*origXDim]
+                                                   - 12.0 * buffer[x-1 + y*origXDim] - 6.0 * buffer[x-2 + y*origXDim]
+                                                   + 4.0 * buffer[x+2 + (y+1)*origXDim] + 8.0 * buffer[x+1 + (y+1)*origXDim]
+                                                   - 8.0 * buffer[x-1 + (y+1)*origXDim] - 4.0 * buffer[x-2 + (y+1)*origXDim]
+                                                   + buffer[x+2 + (y+2)*origXDim] + 2.0 * buffer[x+1 + (y+2)*origXDim]
+                                                   - 2.0 * buffer[x-1 + (y+2)*origXDim] - buffer[x-2 + (y+2)*origXDim];
+                        gy[x - 2 + (y - 2)*xDim] = buffer[x-2 + (y+2)*origXDim] + 2.0 * buffer[x-2 + (y+1)*origXDim]
+                                - 2.0 * buffer[x-2 + (y-1)*origXDim] - buffer[x-2 + (y-2)*origXDim]
+                                + 4.0 * buffer[x-1 + (y+2)*origXDim] + 8.0 * buffer[x-1 + (y+1)*origXDim]
+                                - 8.0 * buffer[x-1 + (y-1)*origXDim] - 4.0 * buffer[x-1 + (y-2)*origXDim]
+                                + 6.0 * buffer[x + (y+2)*origXDim] + 12.0 * buffer[x + (y+1)*origXDim]
+                                - 12.0 * buffer[x + (y-1)*origXDim] - 6.0 * buffer[x + (y-2)*origXDim]
+                                + 4.0 * buffer[x+1 + (y+2)*origXDim] + 8.0 * buffer[x+1 + (y+1)*origXDim]
+                                - 8.0 * buffer[x+1 + (y-1)*origXDim] - 4.0 * buffer[x+1 + (y-2)*origXDim]
+                                + buffer[x+2 + (y+2)*origXDim] + 2.0 * buffer[x+2 + (y+1)*origXDim]
+                                - 2.0 * buffer[x+2 + (y-1)*origXDim] - buffer[x+2 + (y-2)*origXDim];
+                    } // for (x = 2; x < origXDim - 2; x++)
+                } // // for (y = 2; y < origYDim - 2; y++)
+            } // else if (kernelSize == 5)
             
             try {
                 destImage.importData(z*sliceSize, gx, false);
@@ -102,9 +133,9 @@ public class AlgorithmSobel extends AlgorithmBase {
         int origXDim = srcImage.getExtents()[0];
         int origYDim = srcImage.getExtents()[1];
         int origZDim = srcImage.getExtents()[2];
-        int xDim = origXDim - 2;
-        int yDim = origYDim - 2;
-        int zDim = origZDim - 2;
+        int xDim = origXDim - (kernelSize - 1);
+        int yDim = origYDim - (kernelSize - 1);
+        int zDim = origZDim - (kernelSize - 1);
         int origSliceSize = origXDim * origYDim;
         int origVolume = origSliceSize * origZDim;
         double buffer[] = new double[origVolume];
