@@ -50,6 +50,10 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
+    
+    private JComboBox comboBoxKernelSize;
+    
+    private int kernelSize;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -87,11 +91,28 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 callAlgorithm();
+            }
+        } else if (source == image25DCheckbox) {
+            if (image25DCheckbox.isSelected()) {
+                // kernel size
+                int indx = comboBoxKernelSize.getSelectedIndex(); // get the current combo-box selection
+                comboBoxKernelSize.removeAllItems();
+                buildKernelSizeComboBox(true);
+                comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection    
+            }
+            else {
+                // kernel Size
+                int indx = comboBoxKernelSize.getSelectedIndex(); // get the current combo-box selection
+                comboBoxKernelSize.removeAllItems();
+                buildKernelSizeComboBox(false);
+                // comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
+                comboBoxKernelSize.setSelectedIndex(0);
             }
         } else if (command.equals("Cancel")) {
             dispose();
@@ -173,27 +194,27 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         int destExtents[] = null;
         if (image.getNDims() == 2) {
             destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0] - 2;
-            destExtents[1] = image.getExtents()[1] - 2;
+            destExtents[0] = image.getExtents()[0] - (kernelSize - 1);
+            destExtents[1] = image.getExtents()[1] - (kernelSize - 1);
             destExtents[2] = 2;
         }
         else if ((image.getNDims() == 3) && image25D) {
             destExtents = new int[4];
-            destExtents[0] = image.getExtents()[0] - 2;
-            destExtents[1] = image.getExtents()[1] - 2;
+            destExtents[0] = image.getExtents()[0] - (kernelSize - 1);
+            destExtents[1] = image.getExtents()[1] - (kernelSize - 1);
             destExtents[2] = image.getExtents()[2];
             destExtents[3] = 2;
         }
         else if (image.getNDims() == 3) {
             destExtents = new int[4];
-            destExtents[0] = image.getExtents()[0] - 2;
-            destExtents[1] = image.getExtents()[1] - 2;
-            destExtents[2] = image.getExtents()[2] - 2;
+            destExtents[0] = image.getExtents()[0] - (kernelSize - 1);
+            destExtents[1] = image.getExtents()[1] - (kernelSize - 1);
+            destExtents[2] = image.getExtents()[2] - (kernelSize - 1);
             destExtents[3] = 3;    
         }
         resultImage = new ModelImage(ModelStorageBase.DOUBLE, destExtents, name);
         try {
-            sobelAlgo = new AlgorithmSobel(resultImage, image, image25D);
+            sobelAlgo = new AlgorithmSobel(resultImage, image, image25D, kernelSize);
             
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -234,6 +255,15 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
+    
+    /**
+     * Accessor that sets the kernel size.
+     *
+     * @param  size  Value to set size to (3 == 3x3, 5 == 5x5, etc.)
+     */
+    public void setKernelSize(int size) {
+        kernelSize = size;
+    }
 
     /**
      * {@inheritDoc}
@@ -250,6 +280,7 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         }
         
         image25D = scriptParameters.doProcess3DAs25D();
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
     }
 
     /**
@@ -261,6 +292,7 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.storeOutputImageParams(getResultImage(), true);
         
         scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         
     }
 
@@ -285,26 +317,48 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
         maskPanel.setLayout(gbl);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
 
         maskPanel.setForeground(Color.black);
         maskPanel.setBorder(buildTitledBorder("Options")); // set the border ... "Options"
         
-        image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
-        image25DCheckbox.setFont(serif12);
-        image25DCheckbox.setForeground(Color.black);
-        image25DCheckbox.setSelected(false);
-        if (image.getNDims() == 2) {
-            image25DCheckbox.setEnabled(false);
+        if (image.getNDims() == 3) {
+            image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
+            image25DCheckbox.setFont(serif12);
+            image25DCheckbox.setForeground(Color.black);
+            image25DCheckbox.addActionListener(this);
+            image25DCheckbox.setSelected(false);
+            
+            gbc.gridwidth = 2;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbl.setConstraints(image25DCheckbox, gbc);
+            maskPanel.add(image25DCheckbox);
+            gbc.gridy++;
         }
-        else {
-            image25DCheckbox.setEnabled(true);
+        
+        gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        JLabel labelKernelSize = createLabel("Kernel size:"); // make & set a label
+        gbl.setConstraints(labelKernelSize, gbc);
+        maskPanel.add(labelKernelSize); // add kernel label
+
+        gbc.gridx = 1;
+        comboBoxKernelSize = new JComboBox();
+        comboBoxKernelSize.setFont(serif12);
+        comboBoxKernelSize.setBackground(Color.white);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbl.setConstraints(comboBoxKernelSize, gbc);
+
+        if (image.getNDims() == 2) {
+            this.buildKernelSizeComboBox(true); // 2D images MUST be slice filtered
+        } else {
+            this.buildKernelSizeComboBox(false); // default setting for 3D+ images is volume filtering
         }
 
-        
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(image25DCheckbox, gbc);
-        maskPanel.add(image25DCheckbox);
+        maskPanel.add(comboBoxKernelSize); // add the comboboxt to the panel
 
         setupBox.add(maskPanel); // the parameters-panel is at the top of the box
 
@@ -317,6 +371,28 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         System.gc();
 
     }
+    
+    /**
+     * Creates the combo-box that allows user to select the size of the kernel (mask).
+     *
+     * @param  singleSlices  DOCUMENT ME!
+     */
+    private void buildKernelSizeComboBox(boolean singleSlices) {
+
+        if (singleSlices) {
+            comboBoxKernelSize.addItem("3x3");
+            comboBoxKernelSize.addItem("5x5");
+            //comboBoxKernelSize.addItem("7x7");
+            //comboBoxKernelSize.addItem("9x9");
+            //comboBoxKernelSize.addItem("11x11");
+        } else {
+            comboBoxKernelSize.addItem("3x3x3");
+            //comboBoxKernelSize.addItem("5x5x5");
+            //comboBoxKernelSize.addItem("7x7x7");
+            //comboBoxKernelSize.addItem("9x9x9");
+            //comboBoxKernelSize.addItem("11x11x11");
+        }
+    }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
@@ -325,9 +401,35 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
      */
     private boolean setVariables() {
         
-        image25D = image25DCheckbox.isSelected();
+        if (image25DCheckbox != null) {
+            image25D = image25DCheckbox.isSelected();
+        }
+        else {
+            image25D = true;
+        }
+        
+        // associate kernel size with selectBox choice.
+        this.determineKernelSize();
 
         return true;
+    }
+    
+    /**
+     * Associate one side of the kernel size with selectBox choice.
+     */
+    private void determineKernelSize() {
+
+        if (comboBoxKernelSize.getSelectedIndex() == 0) {
+            kernelSize = 3;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 1) {
+            kernelSize = 5;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 2) {
+            kernelSize = 7;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 3) {
+            kernelSize = 9;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 4) {
+            kernelSize = 11;
+        }
     }
 
     /**
@@ -338,27 +440,27 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
     public ActionMetadata getActionMetadata() {
         return new MipavActionMetadata() {
             public String getCategory() {
-                return new String("Algorithms Inverse gradient");
+                return new String("Algorithms Filters (spatial) Sobel gradient components");
             }
 
             public String getDescription() {
-                return new String("Finds inverse gradient.");
+                return new String("Finds Sobel gradient components.");
             }
 
             public String getDescriptionLong() {
-                return new String("Finds inverse gradient.");
+                return new String("Finds Sobel gradient components.");
             }
 
             public String getShortLabel() {
-                return new String("Inverse gradient");
+                return new String("Sobel gradient");
             }
 
             public String getLabel() {
-                return new String("Inverse gradient");
+                return new String("Sobel gradient components");
             }
 
             public String getName() {
-                return new String("Inveerse gradient");
+                return new String("Sobel gradient components");
             }
         };
     }
@@ -377,6 +479,7 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
+            table.put(new ParameterInt("kernel_size", 3));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
