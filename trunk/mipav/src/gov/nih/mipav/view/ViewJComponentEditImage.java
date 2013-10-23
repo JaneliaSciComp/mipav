@@ -4668,6 +4668,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             str.append("  X: ").append(xS).append(" Y: ").append(yS);
             
+            if(imageActive.getExtents().length > 2) {
+            	str.append(" Z: ").append(getSlice());
+            	if(imageActive.getExtents().length > 3) {
+            		str.append(" T: ").append(getTimeSlice());
+            	}
+            }
+            
             if (imageActive.isColorImage()) {
                 str.append(
                         "  R:  ").append(imageBufferActive[ (4 * ( (yS * imageActive.getExtents()[0]) + xS)) + 1]).append(
