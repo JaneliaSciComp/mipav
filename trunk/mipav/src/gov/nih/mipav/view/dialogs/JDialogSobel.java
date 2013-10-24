@@ -382,7 +382,7 @@ public class JDialogSobel extends JDialogScriptableBase implements AlgorithmInte
         if (singleSlices) {
             comboBoxKernelSize.addItem("3x3");
             comboBoxKernelSize.addItem("5x5");
-            //comboBoxKernelSize.addItem("7x7");
+            comboBoxKernelSize.addItem("7x7");
             //comboBoxKernelSize.addItem("9x9");
             //comboBoxKernelSize.addItem("11x11");
         } else {
