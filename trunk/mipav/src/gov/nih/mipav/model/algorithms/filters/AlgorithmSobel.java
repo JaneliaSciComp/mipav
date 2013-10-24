@@ -9,6 +9,13 @@ public class AlgorithmSobel extends AlgorithmBase {
     /**
      * 5 x 5 Sobel template found in Feature Extraction & Image Processing for Computer Vision Third Edition
      * by Mark S. Nixon and Alberto S. Aguado Section 4.2.1.4. Sobel edge-detection operator pp. 146-153.
+     * Formulas for deriving 7 x 7 Sobel template also found there.
+     * smoothx_win = (winsize - 1)!/((winsize - 1 - x_win)! * x_win!)
+     * Pascal(k, n) = n!/((n-k)! * k!) if ((k >= 0) && (k <= n))
+     *                0 otherwise
+     * diffx_win = Pascal(x_win, winsize-2) - Pascal(x_win - 1, winsize-2)
+     * Sobel x template = sum from xwin = 0 to winsize-1 sum from ywin = 0 to winsize-1 of smoothy_win * diffx_win
+     * Sobel y template = sum from xwin = 0 to winsize-1 sum from ywin = 0 to winsize-1 of smoothx_win * diffy_win
      */
     
     private int kernelSize = 3;
@@ -103,6 +110,54 @@ public class AlgorithmSobel extends AlgorithmBase {
                     } // for (x = 2; x < origXDim - 2; x++)
                 } // // for (y = 2; y < origYDim - 2; y++)
             } // else if (kernelSize == 5)
+            else if (kernelSize == 7) {
+                for (y = 3; y < origYDim - 3; y++) {
+                    for (x = 3; x < origXDim - 3; x++) {
+                        gx[x - 3 + (y - 3)*xDim] = buffer[x+3 + (y-3)*origXDim] + 4.0 * buffer[x+2 + (y-3)*origXDim]
+                                                   + 5.0 * buffer[x+1 + (y-3)*origXDim] - 5.0 * buffer[x-1 + (y-3)*origXDim]
+                                                   - 4.0 * buffer[x-2 + (y-3)*origXDim] - buffer[x-3 + (y-3)*origXDim]
+                                                   + 6.0 * buffer[x+3 + (y-2)*origXDim] + 24.0 * buffer[x+2 + (y-2)*origXDim]
+                                                   + 30.0 * buffer[x+1 + (y-2)*origXDim] - 30.0 * buffer[x-1 + (y-2)*origXDim]
+                                                   - 24.0 * buffer[x-2 + (y-2)*origXDim] - 6.0 * buffer[x-3 + (y-2)*origXDim]
+                                                   + 15.0 * buffer[x+3 + (y-1)*origXDim] + 60.0 * buffer[x+2 + (y-1)*origXDim]
+                                                   + 75.0 * buffer[x+1 + (y-1)*origXDim] - 75.0 * buffer[x-1 + (y-1)*origXDim]
+                                                   - 60.0 * buffer[x-2 + (y-1)*origXDim] - 15.0 * buffer[x-3 + (y-1)*origXDim]
+                                                   + 20.0 * buffer[x+3 + y*origXDim] + 80.0 * buffer[x+2 + y*origXDim]
+                                                   + 100.0 * buffer[x+1 + y*origXDim] - 100.0 * buffer[x-1 + y*origXDim]
+                                                   - 80.0 * buffer[x-2 + y*origXDim] - 20.0 * buffer[x-3 + y*origXDim]
+                                                   + 15.0 * buffer[x+3 + (y+1)*origXDim] + 60.0 * buffer[x+2 + (y+1)*origXDim]
+                                                   + 75.0 * buffer[x+1 + (y+1)*origXDim] - 75.0 * buffer[x-1 + (y+1)*origXDim]
+                                                   - 60.0 * buffer[x-2 + (y+1)*origXDim] - 15.0 * buffer[x-3 + (y+1)*origXDim]
+                                                   + 6.0 * buffer[x+3 + (y+2)*origXDim] + 24.0 * buffer[x+2 + (y+2)*origXDim]
+                                                   + 30.0 * buffer[x+1 + (y+2)*origXDim] - 30.0 * buffer[x-1 + (y+2)*origXDim]
+                                                   - 24.0 * buffer[x-2 + (y+2)*origXDim] - 6.0 * buffer[x-3 + (y+2)*origXDim]
+                                                   + buffer[x+3 + (y+3)*origXDim] + 4.0 * buffer[x+2 + (y+3)*origXDim]
+                                                   + 5.0 * buffer[x+1 + (y+3)*origXDim] - 5.0 * buffer[x-1 + (y+3)*origXDim]
+                                                   - 4.0 * buffer[x-2 + (y+3)*origXDim] - buffer[x-3 + (y+3)*origXDim];
+                        gy[x - 3 + (y - 3)*xDim] = buffer[x-3 + (y+3)*origXDim] + 4.0 * buffer[x-3 + (y+2)*origXDim]
+                                                   + 5.0 * buffer[x-3 + (y+1)*origXDim] - 5.0 * buffer[x-3 + (y-1)*origXDim]
+                                                    - 4.0 * buffer[x-3 + (y-2)*origXDim] - buffer[x-3 + (y-3)*origXDim]
+                                                    + 6.0 * buffer[x-2 + (y+3)*origXDim] + 24.0 * buffer[x-2 + (y+2)*origXDim]
+                                                    + 30.0 * buffer[x-2 + (y+1)*origXDim] - 30.0 * buffer[x-2 + (y-1)*origXDim]
+                                                    - 24.0 * buffer[x-2 + (y-2)*origXDim] - 6.0 * buffer[x-2 + (y-3)*origXDim]
+                                                    + 15.0 * buffer[x-1 + (y+3)*origXDim] + 60.0 * buffer[x-1 + (y+2)*origXDim]
+                                                    + 75.0 * buffer[x-1 + (y+1)*origXDim] - 75.0 * buffer[x-1 + (y-1)*origXDim]
+                                                    - 60.0 * buffer[x-1 + (y-2)*origXDim] - 15.0 * buffer[x-1 + (y-3)*origXDim]
+                                                    + 20.0 * buffer[x + (y+3)*origXDim] + 80.0 * buffer[x + (y+2)*origXDim]
+                                                    + 100.0 * buffer[x + (y+1)*origXDim] - 100.0 * buffer[x + (y-1)*origXDim]
+                                                    - 80.0 * buffer[x + (y-2)*origXDim] - 20.0 * buffer[x + (y-3)*origXDim]
+                                                    + 15.0 * buffer[x+1 + (y+3)*origXDim] + 60.0 * buffer[x+1 + (y+2)*origXDim]
+                                                    + 75.0 * buffer[x+1 + (y+1)*origXDim] - 75.0 * buffer[x+1 + (y-1)*origXDim]
+                                                    - 60.0 * buffer[x+1 + (y-2)*origXDim] - 15.0 * buffer[x+1 + (y-3)*origXDim]
+                                                    + 6.0 * buffer[x+2 + (y+3)*origXDim] + 24.0 * buffer[x+2 + (y+2)*origXDim]
+                                                    + 30.0 * buffer[x+2 + (y+1)*origXDim] - 30.0 * buffer[x+2 + (y-1)*origXDim]
+                                                    - 24.0 * buffer[x+2 + (y-2)*origXDim] - 6.0 * buffer[x+2 + (y-3)*origXDim]
+                                                    + buffer[x+3 + (y+3)*origXDim] + 4.0 * buffer[x+3 + (y+2)*origXDim]
+                                                    + 5.0 * buffer[x+3 + (y+1)*origXDim] - 5.0 * buffer[x+3 + (y-1)*origXDim]
+                                                    - 4.0 * buffer[x+3 + (y-2)*origXDim] - buffer[x+3 + (y-3)*origXDim];
+                    } // for (x = 3; x < origXDim - 3; x++)
+                } // for (y = 3; y < origYDim - 3; y++)
+            } // else if (kernelSize == 7)
             
             try {
                 destImage.importData(z*sliceSize, gx, false);
