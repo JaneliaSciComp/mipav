@@ -702,7 +702,10 @@ public class FileDicom extends FileDicomBase {
                 }
             }
             if(bPtrOld+tagElementLength != getFilePointer()) {
-                Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
+                Preferences.debug("bPtrOld = " + bPtrOld + "\n");
+                Preferences.debug("tagElementLength = " + tagElementLength + "\n");
+                Preferences.debug("getFilePointer() = " + getFilePointer() + "\n");
+                Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.\n");
             }
             if(tagElementLength != -1 && bPtrOld+tagElementLength > getFilePointer()) {
                 seek(bPtrOld+tagElementLength); //processing tag was likely not successful, report error but continue parsing
@@ -759,10 +762,12 @@ public class FileDicom extends FileDicomBase {
                 }
 			}
 		}
+		FileDicomKey origKey = key;
 		key = new PrivateFileDicomKey(privatePublisher.getPublisher(), key.toString());
 		FileDicomTagInfo tagInfo = PrivateDicomDictionary.getInfo((PrivateFileDicomKey)key);    
 		FileDicomTagInfo tagInfoInstance = null;
-		if(tagInfo != null) {
+		if((tagInfo != null) && (!origKey.toString().equalsIgnoreCase("2005,140B"))) {
+		    // 2005, 140B must be specially excluded, otherwise it becomes an incorrect float instead of the correct string
 			tagInfoInstance = new FileDicomTagInfo(key, tagInfo.getType(), tagInfo.getValueMultiplicity(), tagInfo.getKeyword(), tagInfo.getName());
 		} else {
 			tagInfoInstance = new FileDicomTagInfo(key, VR.SH, 1, "Private tag", "Private tag");
@@ -994,7 +999,7 @@ public class FileDicom extends FileDicomBase {
             if (nImages > 1) {
                 enhancedTagTables = new FileDicomTagTable[nImages - 1];
             }
-        }
+        } 
         
         return true;
     }
