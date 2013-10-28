@@ -133,10 +133,34 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 	private float[] deconvSigmaA, deconvSigmaB;
 	private boolean useDeconvSigmaConversionFactor;
 	private File deconvDir;
+	private float rotateBeginX = -5.0f;
+    private float rotateEndX = 5.0f;
+    private float coarseRateX = 3.0f;
+    private float fineRateX = 1.0f;
+    private float rotateBeginY = -5.0f;
+    private float rotateEndY = 5.0f;
+    private float coarseRateY = 3.0f;
+    private float fineRateY = 1.0f;
+    private float rotateBeginZ = -5.0f;
+    private float rotateEndZ = 5.0f;
+    private float coarseRateZ = 3.0f;
+    private float fineRateZ = 1.0f;
 
     /**
      * Constructor.
      * @param register
+     * @param rotateBeginX
+     * @param rotateEndX
+     * @param coarseRateX
+     * @param fineRateX
+     * @param rotateBeginY
+     * @param rotateEndY
+     * @param coarseRateY
+     * @param fineRateY
+     * @param rotateBeginZ
+     * @param rotateEndZ
+     * @param coarseRateZ
+     * @param fineRateZ
      * @param doGeoMean 
      * @param doInterImages 
      * @param doShowPrefusion 
@@ -181,7 +205,10 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param deconvDir
      * @param deconvShowResults
      */
-    public PlugInAlgorithmGenerateFusion(boolean register, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, 
+    public PlugInAlgorithmGenerateFusion(boolean register, float rotateBeginX, float rotateEndX, float coarseRateX, float fineRateX, 
+                                         float rotateBeginY,  float rotateEndY, float coarseRateY, float fineRateY, float rotateBeginZ, 
+                                         float rotateEndZ, float coarseRateZ, float fineRateZ,
+                                                    boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, 
                                                     boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     String mtxFileDirectory, int timeIndex, File[] baseImageAr, File[] transformImageAr, 
@@ -192,6 +219,18 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo, String saveType,
                                                     boolean doDeconv, int deconvIterations, float[] deconvSigmaA, float[] deconvSigmaB, boolean useDeconvSigmaConversionFactor, File deconvDir, boolean deconvShowResults) {
         this.register = register;
+        this.rotateBeginX = rotateBeginX;
+        this.rotateEndX = rotateEndX;
+        this.coarseRateX = coarseRateX;
+        this.fineRateX = fineRateX;
+        this.rotateBeginY = rotateBeginY;
+        this.rotateEndY = rotateEndY;
+        this.coarseRateY = coarseRateY;
+        this.fineRateY = fineRateY;
+        this.rotateBeginZ = rotateBeginZ;
+        this.rotateEndZ = rotateEndZ;
+        this.coarseRateZ = coarseRateZ;
+        this.fineRateZ = fineRateZ;
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -284,7 +323,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             FileIO io = new FileIO();
             io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
+            String baseImageName = baseImage.getImageName();
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            String transformImageName = transformImage.getImageName();
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             
@@ -304,18 +345,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
             int DOF = 12;
             int interp = AlgorithmTransform.TRILINEAR;
-            float rotateBeginX = -5.0f;
-            float rotateEndX = 5.0f;
-            float coarseRateX = 3.0f;
-            float fineRateX = 1.0f;
-            float rotateBeginY = -5.0f;
-            float rotateEndY = 5.0f;
-            float coarseRateY = 3.0f;
-            float fineRateY = 1.0f;
-            float rotateBeginZ = -5.0f;
-            float rotateEndZ = 5.0f;
-            float coarseRateZ = 3.0f;
-            float fineRateZ = 1.0f;
             boolean maxResol = true;
             boolean doSubsample = true;
             boolean doMultiThread = Preferences.isMultiThreadingEnabled()  &&
@@ -348,8 +377,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
-                mtxFileLoc = mtxFileDirectory + File.separator + transformImage.getImageName() + "_To_"
-                        + baseImage.getImageName() + ".mtx";
+                mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_"
+                        + baseImageName + ".mtx";
                 int interp2 = AlgorithmTransform.TRILINEAR;
                 boolean pad = false;
                 System.out.println("finalMatrix = " + finalMatrix);
