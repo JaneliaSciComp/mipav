@@ -892,6 +892,16 @@ public class TransMatrix extends Matrix4f
      * Saves transformation matrix to a text file MIPAV format 
      * @see saveMatrix(RandomAccessFile raFile, String message)
      * @param  fileName  - file name, including the path
+     * @param  interp
+     * @param  oXres
+     * @param  oYres
+     * @param  oZres
+     * @param  oXdim
+     * @param  oYdim
+     * @param  oZdim
+     * @param  tVOI
+     * @param  clip
+     * @param  pad
      * @param  message   String, may be null for no message.
      */
     public void saveMatrix(String fileName, int interp, float oXres, float oYres, float oZres, int oXdim, 
