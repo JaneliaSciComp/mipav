@@ -38,6 +38,7 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
@@ -52,6 +53,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
 import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
@@ -60,7 +62,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion.SampleMode;
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
- * @version  June 4, 2010
+ * @version  October 29, 2013
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -92,6 +94,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     
     /** This is your algorithm */
     private PlugInAlgorithmGenerateFusion generateFusionAlgo = null;
+    
+    private GridBagConstraints gbc;
 
     private JTextField mtxFileLocText, mtxFileDirectoryText, transformFileLocText, baseFileLocText;
 
@@ -234,6 +238,43 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	private int timeNum; // The extension number in the file name
 	private int timeIndex; // The index of the file in the array with the desired timeNum
 	
+	private JPanel coarsePanelX, coarsePanelY, coarsePanelZ;
+
+    /** DOCUMENT ME! */
+    private JTextField coarseRateTextX, coarseRateTextY, coarseRateTextZ;
+	
+    private JPanel finePanelX, finePanelY, finePanelZ;
+
+	    /** DOCUMENT ME! */
+	private JTextField fineRateTextX, fineRateTextY, fineRateTextZ;
+	
+	private JTextField rotateBeginTextX, rotateBeginTextY, rotateBeginTextZ;
+
+    /** DOCUMENT ME! */
+    private float rotateBeginX, rotateEndX, coarseRateX, fineRateX;
+
+    /** DOCUMENT ME! */
+    private float rotateBeginY, rotateEndY, coarseRateY, fineRateY;
+
+    /** DOCUMENT ME! */
+    private float rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
+
+    /** DOCUMENT ME! */
+    private JTextField rotateEndTextX, rotateEndTextY, rotateEndTextZ;
+
+    /** DOCUMENT ME! */
+    private JPanel rotatePanel;
+
+    /** DOCUMENT ME! */
+    private JPanel rotateRangePanelX, rotateRangePanelY, rotateRangePanelZ;
+    private JCheckBox universalCheckbox;
+    private boolean xSelected = true;
+    private boolean ySelected = false;
+    private JRadioButton xRadio;
+    private JRadioButton yRadio;
+    private JRadioButton zRadio;
+    private JTabbedPane tabbedPane;
+	
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -322,8 +363,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(register, doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
-                                                                         resX, resY, resZ, concurrentNum, thresholdIntensity,
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion(register, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, 
+                                                                   rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ,
+                                                                   fineRateZ,doShowPreFusion, doInterImages, showGeoMean, showAriMean, 
+                                                                   showMaxProj, doThreshold, resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, mtxFileDirectory, timeIndex, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
@@ -365,11 +408,138 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     } // end callAlgorithm()
 
     /**
+     * Accessor to set the coarse sample beginX.
+     * 
+     * @param x Coarse beginX
+     */
+    public void setCoarseBeginX(final float x) {
+        rotateBeginX = x;
+    }
+
+    /**
+     * Accessor to set the coarse sample beginY.
+     * 
+     * @param y Coarse beginY
+     */
+    public void setCoarseBeginY(final float y) {
+        rotateBeginY = y;
+    }
+
+    /**
+     * Accessor to set the coarse sample beginZ.
+     * 
+     * @param z Coarse beginZ
+     */
+    public void setCoarseBeginZ(final float z) {
+        rotateBeginZ = z;
+    }
+
+    /**
+     * Accessor to set the coarse sample endX.
+     * 
+     * @param x Coarse endX
+     */
+    public void setCoarseEndX(final float x) {
+        rotateEndX = x;
+    }
+
+    /**
+     * Accessor to set the coarse sample endY.
+     * 
+     * @param y Coarse endY
+     */
+    public void setCoarseEndY(final float y) {
+        rotateEndY = y;
+    }
+
+    /**
+     * Accessor to set the coarse sample endZ.
+     * 
+     * @param z Coarse endZ
+     */
+    public void setCoarseEndZ(final float z) {
+        rotateEndZ = z;
+    }
+
+    /**
+     * Accessor to set the coarse sample rateX.
+     * 
+     * @param x Coarse rateX
+     */
+    public void setCoarseRateX(final float x) {
+        coarseRateX = x;
+    }
+
+    /**
+     * Accessor to set the coarse sample rateY.
+     * 
+     * @param y Coarse rateY
+     */
+    public void setCoarseRateY(final float y) {
+        coarseRateY = y;
+    }
+
+    /**
+     * Accessor to set the coarse sample rateZ.
+     * 
+     * @param z Coarse rateZ
+     */
+    public void setCoarseRateZ(final float z) {
+        coarseRateZ = z;
+    }
+    
+    /**
+     * Accessor to set the fine sample rateX.
+     * 
+     * @param x Fine rateX
+     */
+    public void setFineRateX(final float x) {
+        fineRateX = x;
+    }
+
+    /**
+     * Accessor to set the fine sample rateY.
+     * 
+     * @param y Fine rateY
+     */
+    public void setFineRateY(final float y) {
+        fineRateY = y;
+    }
+
+    /**
+     * Accessor to set the fine sample rateZ.
+     * 
+     * @param z Fine rateZ
+     */
+    public void setFineRateZ(final float z) {
+        fineRateZ = z;
+    }
+    
+    /**
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
 
     	register = scriptParameters.getParams().getBoolean("reg");
+    	final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
+        final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
+        final float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
+        final float[] fineRates = scriptParameters.getParams().getList("fine_rate").getAsFloatArray();
+
+        setCoarseBeginX(rotBegin[0]);
+        setCoarseEndX(rotEnd[0]);
+        setCoarseRateX(coarseRates[0]);
+        setFineRateX(fineRates[0]);
+
+        setCoarseBeginY(rotBegin[1]);
+        setCoarseEndY(rotEnd[1]);
+        setCoarseRateY(coarseRates[1]);
+        setFineRateY(fineRates[1]);
+
+        setCoarseBeginZ(rotBegin[2]);
+        setCoarseEndZ(rotEnd[2]);
+        setCoarseRateZ(coarseRates[2]);
+        setFineRateZ(fineRates[2]);
         showAriMean = scriptParameters.getParams().getBoolean("show_arithmetic");
     	showGeoMean = scriptParameters.getParams().getBoolean("show_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
@@ -398,6 +568,14 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     protected void storeParamsFromGUI() throws ParserException {
    
         scriptParameters.getParams().put(ParameterFactory.newParameter("reg", register));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("rotate_end", new float[] {rotateEndX, rotateEndY, rotateEndZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("coarse_rate", new float[] {coarseRateX, coarseRateY, coarseRateZ}));
+        scriptParameters.getParams().put(
+                ParameterFactory.newParameter("fine_rate", new float[] {fineRateX, fineRateY, fineRateZ}));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_arithmetic", showAriMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("show_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
@@ -435,7 +613,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544d");
+        setTitle("Generate fusion 544e");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -444,7 +622,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         GuiBuilder gui = new GuiBuilder(this);
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -454,8 +632,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setForeground(Color.black);
+        JPanel leftPanel = new JPanel(new GridBagLayout());
+        leftPanel.setForeground(Color.black);
 
         JPanel mtxPanel = new JPanel(new GridBagLayout());
         mtxPanel.setForeground(Color.black);
@@ -493,6 +671,262 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         gbc2.gridwidth = 2;
         mtxFileDirectoryText = gui.buildFileField("Directory containing matrix file: ", " ", false, JFileChooser.DIRECTORIES_ONLY);
         timeNumberPanel.add(mtxFileDirectoryText.getParent(), gbc2);
+        gbc2.gridx = 0;
+        gbc2.gridy++;
+        
+        universalCheckbox = new JCheckBox("Apply same rotation limits to all dimensions.");
+        universalCheckbox.setFont(serif12);
+        universalCheckbox.setForeground(Color.black);
+        universalCheckbox.setSelected(true);
+        universalCheckbox.addItemListener(this);
+
+        final ButtonGroup dimensionGroup = new ButtonGroup();
+
+        xRadio = new JRadioButton("X");
+        xRadio.setFont(serif12);
+        xRadio.setForeground(Color.black);
+        xRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
+        xRadio.setSelected(true);
+        xRadio.setEnabled(false);
+        xRadio.addItemListener(this);
+        dimensionGroup.add(xRadio);
+
+        yRadio = new JRadioButton("Y");
+        yRadio.setFont(serif12);
+        yRadio.setForeground(Color.black);
+        yRadio.setSelected(false);
+        yRadio.setEnabled(false);
+        yRadio.addItemListener(this);
+        dimensionGroup.add(yRadio);
+
+        zRadio = new JRadioButton("Z");
+        zRadio.setFont(serif12);
+        zRadio.setForeground(Color.black);
+        zRadio.setSelected(false);
+        zRadio.setEnabled(false);
+        zRadio.addItemListener(this);
+        dimensionGroup.add(zRadio);
+
+        final JPanel xyzPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        xyzPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        xyzPanel.add(xRadio);
+        xyzPanel.add(yRadio);
+        xyzPanel.add(zRadio);
+
+        // Rotation Range Panel
+        rotateRangePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rotateRangePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelRotateRangeX = new JLabel("Rotation angle sampling range:");
+        labelRotateRangeX.setForeground(Color.black);
+        labelRotateRangeX.setFont(serif12);
+
+        final JLabel labelRotateRangeToX = new JLabel("to");
+        labelRotateRangeToX.setForeground(Color.black);
+        labelRotateRangeToX.setFont(serif12);
+
+        final JLabel labelRotateDegreesX = new JLabel("degrees");
+        labelRotateDegreesX.setFont(serif12);
+
+        rotateBeginTextX = new JTextField("-30", 3);
+        rotateEndTextX = new JTextField("30", 3);
+
+        rotateRangePanelX.add(labelRotateRangeX);
+        rotateRangePanelX.add(rotateBeginTextX);
+        rotateRangePanelX.add(labelRotateRangeToX);
+        rotateRangePanelX.add(rotateEndTextX);
+        rotateRangePanelX.add(labelRotateDegreesX);
+
+        // Coarse sampling rate panel
+        coarsePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        coarsePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseX = new JLabel("Coarse angle increment: ");
+        labelCoarseX.setForeground(Color.black);
+        labelCoarseX.setFont(serif12);
+        labelCoarseX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseDegreesX = new JLabel("degrees");
+        labelCoarseDegreesX.setFont(serif12);
+        coarseRateTextX = new JTextField("15", 3);
+
+        coarsePanelX.add(labelCoarseX);
+        coarsePanelX.add(coarseRateTextX);
+        coarsePanelX.add(labelCoarseDegreesX);
+        coarsePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Fine sampling rate panel
+        finePanelX = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        final JLabel labelFineX = new JLabel("Fine angle increment:");
+        labelFineX.setForeground(Color.black);
+        labelFineX.setFont(serif12);
+        labelFineX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelFineDegreesX = new JLabel("degrees");
+        labelFineDegreesX.setFont(serif12);
+        fineRateTextX = new JTextField("6", 3);
+
+        finePanelX.add(labelFineX);
+        finePanelX.add(fineRateTextX);
+        finePanelX.add(labelFineDegreesX);
+        finePanelX.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        rotatePanel = new JPanel();
+        rotatePanel.setLayout(new GridBagLayout());
+        rotatePanel.setBorder(buildTitledBorder("Rotations"));
+
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        rotatePanel.add(universalCheckbox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(xyzPanel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(rotateRangePanelX, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(coarsePanelX, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(finePanelX, gbc);
+
+        rotateRangePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rotateRangePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelRotateRangeY = new JLabel("Rotation angle sampling range:");
+        labelRotateRangeY.setForeground(Color.black);
+        labelRotateRangeY.setFont(serif12);
+
+        final JLabel labelRotateRangeToY = new JLabel("to");
+        labelRotateRangeToY.setForeground(Color.black);
+        labelRotateRangeToY.setFont(serif12);
+
+        final JLabel labelRotateDegreesY = new JLabel("degrees");
+        labelRotateDegreesY.setFont(serif12);
+
+        rotateBeginTextY = new JTextField("-30", 3);
+        rotateEndTextY = new JTextField("30", 3);
+
+        rotateRangePanelY.add(labelRotateRangeY);
+        rotateRangePanelY.add(rotateBeginTextY);
+        rotateRangePanelY.add(labelRotateRangeToY);
+        rotateRangePanelY.add(rotateEndTextY);
+        rotateRangePanelY.add(labelRotateDegreesY);
+
+        // Coarse sampling rate panel
+        coarsePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        coarsePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseY = new JLabel("Coarse angle increment: ");
+        labelCoarseY.setForeground(Color.black);
+        labelCoarseY.setFont(serif12);
+        labelCoarseY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseDegreesY = new JLabel("degrees");
+        labelCoarseDegreesY.setFont(serif12);
+
+        coarseRateTextY = new JTextField("15", 3);
+
+        coarsePanelY.add(labelCoarseY);
+        coarsePanelY.add(coarseRateTextY);
+        coarsePanelY.add(labelCoarseDegreesY);
+        coarsePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Fine sampling rate panel
+        finePanelY = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        final JLabel labelFineY = new JLabel("Fine angle increment:");
+        labelFineY.setForeground(Color.black);
+        labelFineY.setFont(serif12);
+        labelFineY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelFineDegreesY = new JLabel("degrees");
+        labelFineDegreesY.setFont(serif12);
+
+        fineRateTextY = new JTextField("6", 3);
+
+        finePanelY.add(labelFineY);
+        finePanelY.add(fineRateTextY);
+        finePanelY.add(labelFineDegreesY);
+        finePanelY.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        rotateRangePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        rotateRangePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelRotateRangeZ = new JLabel("Rotation angle sampling range:");
+        labelRotateRangeZ.setForeground(Color.black);
+        labelRotateRangeZ.setFont(serif12);
+
+        final JLabel labelRotateRangeToZ = new JLabel("to");
+        labelRotateRangeToZ.setForeground(Color.black);
+        labelRotateRangeToZ.setFont(serif12);
+
+        final JLabel labelRotateDegreesZ = new JLabel("degrees");
+        labelRotateDegreesZ.setFont(serif12);
+
+        rotateBeginTextZ = new JTextField("-30", 3);
+        rotateEndTextZ = new JTextField("30", 3);
+
+        rotateRangePanelZ.add(labelRotateRangeZ);
+        rotateRangePanelZ.add(rotateBeginTextZ);
+        rotateRangePanelZ.add(labelRotateRangeToZ);
+        rotateRangePanelZ.add(rotateEndTextZ);
+        rotateRangePanelZ.add(labelRotateDegreesZ);
+
+        // Coarse sampling rate panel
+        coarsePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        coarsePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseZ = new JLabel("Coarse angle increment: ");
+        labelCoarseZ.setForeground(Color.black);
+        labelCoarseZ.setFont(serif12);
+        labelCoarseZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelCoarseDegreesZ = new JLabel("degrees");
+        labelCoarseDegreesZ.setFont(serif12);
+
+        coarseRateTextZ = new JTextField("15", 3);
+
+        coarsePanelZ.add(labelCoarseZ);
+        coarsePanelZ.add(coarseRateTextZ);
+        coarsePanelZ.add(labelCoarseDegreesZ);
+        coarsePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Fine sampling rate panel
+        finePanelZ = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        final JLabel labelFineZ = new JLabel("Fine angle increment:");
+        labelFineZ.setForeground(Color.black);
+        labelFineZ.setFont(serif12);
+        labelFineZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        final JLabel labelFineDegreesZ = new JLabel("degrees");
+        labelFineDegreesZ.setFont(serif12);
+
+        fineRateTextZ = new JTextField("6", 3);
+
+        finePanelZ.add(labelFineZ);
+        finePanelZ.add(fineRateTextZ);
+        finePanelZ.add(labelFineDegreesZ);
+        finePanelZ.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        timeNumberPanel.add(rotatePanel, gbc2);
         
         mtxPanel.add(timeNumberPanel, gbc);
         gbc.gridy++;
@@ -632,7 +1066,10 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         gbc.gridx = 0;
         gbc.gridy = 0;
         
-        mainPanel.add(mtxPanel, gbc);
+        leftPanel.add(mtxPanel, gbc);
+        
+        JPanel rightPanel = new JPanel(new GridBagLayout());
+        rightPanel.setForeground(Color.black);
         
         JPanel algOptionPanel = new JPanel(new GridBagLayout());
         algOptionPanel.setForeground(Color.black);
@@ -694,9 +1131,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         thresholdPanel.setVisible(doThresholdBox.isSelected());
         
-        gbc.gridy = 1;
+        gbc.gridy = 0;
         gbc.gridx = 0;
-        mainPanel.add(algOptionPanel, gbc);
+        rightPanel.add(algOptionPanel, gbc);
         
         
         
@@ -746,16 +1183,20 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
             }
         });
         
-        gbc.gridy = 2;
-        mainPanel.add(outputPanel, gbc);
+        gbc.gridy = 1;
+        rightPanel.add(outputPanel, gbc);
         
         gbc.gridy++;
         okCancelPanel = gui.buildOKCancelPanel();
-        mainPanel.add(okCancelPanel, gbc);
+        rightPanel.add(okCancelPanel, gbc);
         
-        JScrollPane scroll = new JScrollPane(mainPanel);
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(MipavUtil.font12B);
+        tabbedPane.addTab("File", leftPanel);
 
-        getContentPane().add(scroll, BorderLayout.CENTER);
+        tabbedPane.addTab("Options", rightPanel);
+
+        getContentPane().add(tabbedPane, BorderLayout.CENTER);
         
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         if(dim.getHeight() < 950) {
@@ -772,6 +1213,160 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         System.gc();
         
     } // end init()
+    
+    public void itemStateChanged(final ItemEvent event) {
+    
+        if (event.getSource() == universalCheckbox) {
+    
+            if (universalCheckbox.isSelected()) {
+                xRadio.setEnabled(false);
+                yRadio.setEnabled(false);
+                zRadio.setEnabled(false);
+                xRadio.setSelected(true);
+                yRadio.setSelected(false);
+                zRadio.setSelected(false);
+    
+                if (xSelected) {
+                    return;
+                } else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } else { // if (zSelected)
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                } // else if zSelected
+    
+                xSelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelX, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelX, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelX, gbc);
+            } else {
+                xRadio.setEnabled(true);
+                yRadio.setEnabled(true);
+                zRadio.setEnabled(true);
+            }
+        } // else if (event.getSource() == universalCheckbox)
+        else if ( (event.getSource() == xRadio) || (event.getSource() == yRadio) || (event.getSource() == zRadio)) {
+    
+            if (xRadio.isSelected()) {
+    
+                if (xSelected) {
+                    return;
+                } else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } else { // if (zSelected)
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                } // else if zSelected
+    
+                xSelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelX, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelX, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelX, gbc);
+            } // if (xRadio.isSelected)
+            else if (yRadio.isSelected()) {
+    
+                if (xSelected) {
+                    rotatePanel.remove(rotateRangePanelX);
+                    rotatePanel.remove(coarsePanelX);
+                    rotatePanel.remove(finePanelX);
+                    xSelected = false;
+                } // if (xSelected)
+                else if (ySelected) {
+                    return;
+                } else { // zSelected
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                } // else zSelected
+    
+                ySelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelY, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelY, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelY, gbc);
+            } // else if (yRadio.isSelected())
+            else if (zRadio.isSelected()) {
+    
+                if (xSelected) {
+                    rotatePanel.remove(rotateRangePanelX);
+                    rotatePanel.remove(coarsePanelX);
+                    rotatePanel.remove(finePanelX);
+                    xSelected = false;
+                } // if (xSelcted)
+                else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } // else if (ySelected)
+                else { // zSelected
+                    return;
+                } // else zSelected
+    
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelZ, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelZ, gbc);
+    
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelZ, gbc);
+            } // else if (zRadio.isSelected())
+    
+            rotatePanel.validate();
+            repaint();
+        }
+    }
     
     
     private JPanel buildMaxProjPanel(GuiBuilder gui, ActionListener folderSave) {
@@ -1219,7 +1814,249 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 		    
 		    if (register) {
                 timeNum = Integer.valueOf(textTimeExt.getText()).intValue();
-            }
+                if ( !JDialogBase.testParameter(rotateBeginTextX.getText(), -360, 360)) {
+                    showX();
+                    rotateBeginTextX.requestFocus();
+                    rotateBeginTextX.selectAll();
+
+                    return false;
+                } else {
+                    rotateBeginX = Float.valueOf(rotateBeginTextX.getText()).floatValue();
+                }
+
+                if ( !JDialogBase.testParameter(rotateEndTextX.getText(), -360, 360)) {
+                    showX();
+                    rotateEndTextX.requestFocus();
+                    rotateEndTextX.selectAll();
+
+                    return false;
+                } else {
+                    rotateEndX = Float.valueOf(rotateEndTextX.getText()).floatValue();
+                }
+
+                if ( !JDialogBase.testParameter(coarseRateTextX.getText(), 0.01, 360)) {
+                    showX();
+                    coarseRateTextX.requestFocus();
+                    coarseRateTextX.selectAll();
+
+                    return false;
+                } else {
+                    coarseRateX = Float.valueOf(coarseRateTextX.getText()).floatValue();
+                }
+
+                if (rotateBeginX > rotateEndX) {
+                    MipavUtil.displayError("Beginning of rangeX must be less than end of range.");
+                    showX();
+                    rotateBeginTextX.requestFocus();
+                    rotateBeginTextX.selectAll();
+
+                    return false;
+                }
+
+                if ( ( (rotateEndX - rotateBeginX) / coarseRateX) < 1) {
+                    final int response = JOptionPane.showConfirmDialog(this,
+                            "Warning: with such a large rateX, there will only be 1 sampling.  Continue?", "Sampling warning",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                    if (response == JOptionPane.NO_OPTION) {
+                        showX();
+                        coarseRateTextX.requestFocus();
+                        coarseRateTextX.selectAll();
+
+                        return false;
+                    }
+                }
+
+                if ( !JDialogBase.testParameter(fineRateTextX.getText(), 0.01, 360)) {
+                    showX();
+                    fineRateTextX.requestFocus();
+                    fineRateTextX.selectAll();
+
+                    return false;
+                } else {
+                    fineRateX = Float.valueOf(fineRateTextX.getText()).floatValue();
+                }
+
+                if ( ( (rotateEndX - rotateBeginX) / fineRateX) < 1) {
+                    final int response = JOptionPane.showConfirmDialog(this,
+                            "Warning: with such a large rateX, there will only be 1 sampling.  Continue?", "Sampling warning",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                    if (response == JOptionPane.NO_OPTION) {
+                        showX();
+                        coarseRateTextX.requestFocus();
+                        coarseRateTextX.selectAll();
+
+                        return false;
+                    }
+                }
+
+                if (universalCheckbox.isSelected()) {
+                    rotateBeginY = rotateBeginX;
+                    rotateBeginZ = rotateBeginX;
+                    rotateEndY = rotateEndX;
+                    rotateEndZ = rotateEndX;
+                    coarseRateY = coarseRateX;
+                    coarseRateZ = coarseRateX;
+                    fineRateY = fineRateX;
+                    fineRateZ = fineRateX;
+                } else { // universalCheckbox not selected
+
+                    if ( !JDialogBase.testParameter(rotateBeginTextY.getText(), -360, 360)) {
+                        showY();
+                        rotateBeginTextY.requestFocus();
+                        rotateBeginTextY.selectAll();
+
+                        return false;
+                    } else {
+                        rotateBeginY = Float.valueOf(rotateBeginTextY.getText()).floatValue();
+                    }
+
+                    if ( !JDialogBase.testParameter(rotateEndTextY.getText(), -360, 360)) {
+                        showY();
+                        rotateEndTextY.requestFocus();
+                        rotateEndTextY.selectAll();
+
+                        return false;
+                    } else {
+                        rotateEndY = Float.valueOf(rotateEndTextY.getText()).floatValue();
+                    }
+
+                    if ( !JDialogBase.testParameter(coarseRateTextY.getText(), 0.01, 360)) {
+                        showY();
+                        coarseRateTextY.requestFocus();
+                        coarseRateTextY.selectAll();
+
+                        return false;
+                    } else {
+                        coarseRateY = Float.valueOf(coarseRateTextY.getText()).floatValue();
+                    }
+
+                    if (rotateBeginY > rotateEndY) {
+                        MipavUtil.displayError("Beginning of rangeY must be less than end of range.");
+                        showY();
+                        rotateBeginTextY.requestFocus();
+                        rotateBeginTextY.selectAll();
+
+                        return false;
+                    }
+
+                    if ( ( (rotateEndY - rotateBeginY) / coarseRateY) < 1) {
+                        final int response = JOptionPane.showConfirmDialog(this,
+                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (response == JOptionPane.NO_OPTION) {
+                            showY();
+                            coarseRateTextY.requestFocus();
+                            coarseRateTextY.selectAll();
+
+                            return false;
+                        }
+                    }
+
+                    if ( !JDialogBase.testParameter(fineRateTextY.getText(), 0.01, 360)) {
+                        showY();
+                        fineRateTextY.requestFocus();
+                        fineRateTextY.selectAll();
+
+                        return false;
+                    } else {
+                        fineRateY = Float.valueOf(fineRateTextY.getText()).floatValue();
+                    }
+
+                    if ( ( (rotateEndY - rotateBeginY) / fineRateY) < 1) {
+                        final int response = JOptionPane.showConfirmDialog(this,
+                                "Warning: with such a large rateY, there will only be 1 sampling.  Continue?",
+                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (response == JOptionPane.NO_OPTION) {
+                            showY();
+                            coarseRateTextY.requestFocus();
+                            coarseRateTextY.selectAll();
+
+                            return false;
+                        }
+                    }
+
+                    if ( !JDialogBase.testParameter(rotateBeginTextZ.getText(), -360, 360)) {
+                        showZ();
+                        rotateBeginTextZ.requestFocus();
+                        rotateBeginTextZ.selectAll();
+
+                        return false;
+                    } else {
+                        rotateBeginZ = Float.valueOf(rotateBeginTextZ.getText()).floatValue();
+                    }
+
+                    if ( !JDialogBase.testParameter(rotateEndTextZ.getText(), -360, 360)) {
+                        showZ();
+                        rotateEndTextZ.requestFocus();
+                        rotateEndTextZ.selectAll();
+
+                        return false;
+                    } else {
+                        rotateEndZ = Float.valueOf(rotateEndTextZ.getText()).floatValue();
+                    }
+
+                    if ( !JDialogBase.testParameter(coarseRateTextZ.getText(), 0.01, 360)) {
+                        showZ();
+                        coarseRateTextZ.requestFocus();
+                        coarseRateTextZ.selectAll();
+
+                        return false;
+                    } else {
+                        coarseRateZ = Float.valueOf(coarseRateTextZ.getText()).floatValue();
+                    }
+
+                    if (rotateBeginZ > rotateEndZ) {
+                        MipavUtil.displayError("Beginning of rangeZ must be less than end of range.");
+                        showZ();
+                        rotateBeginTextZ.requestFocus();
+                        rotateBeginTextZ.selectAll();
+
+                        return false;
+                    }
+
+                    if ( ( (rotateEndZ - rotateBeginZ) / coarseRateZ) < 1) {
+                        final int response = JOptionPane.showConfirmDialog(this,
+                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (response == JOptionPane.NO_OPTION) {
+                            showZ();
+                            coarseRateTextZ.requestFocus();
+                            coarseRateTextZ.selectAll();
+
+                            return false;
+                        }
+                    }
+
+                    if ( !JDialogBase.testParameter(fineRateTextZ.getText(), 0.01, 360)) {
+                        showZ();
+                        fineRateTextZ.requestFocus();
+                        fineRateTextZ.selectAll();
+
+                        return false;
+                    } else {
+                        fineRateZ = Float.valueOf(fineRateTextZ.getText()).floatValue();
+                    }
+
+                    if ( ( (rotateEndZ - rotateBeginZ) / fineRateZ) < 1) {
+                        final int response = JOptionPane.showConfirmDialog(this,
+                                "Warning: with such a large rateZ, there will only be 1 sampling.  Continue?",
+                                "Sampling warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        if (response == JOptionPane.NO_OPTION) {
+                            showZ();
+                            coarseRateTextZ.requestFocus();
+                            coarseRateTextZ.selectAll();
+
+                            return false;
+                        }
+                    }
+                } // else universalCheckbox not selected
+            } // if (register)
 		    
 		    if(showAriMean || saveAriMean) {
     		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
@@ -1420,6 +2257,135 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 	    
 		return true;
 	} //end setVariables()
+	
+	private void showX() {
+
+        if (xSelected) {
+            return;
+        } else if (ySelected) {
+            rotatePanel.remove(rotateRangePanelY);
+            rotatePanel.remove(coarsePanelY);
+            rotatePanel.remove(finePanelY);
+            ySelected = false;
+        } else { // if (zSelected)
+            rotatePanel.remove(rotateRangePanelZ);
+            rotatePanel.remove(coarsePanelZ);
+            rotatePanel.remove(finePanelZ);
+        } // else if zSelected
+
+        xSelected = true;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(rotateRangePanelX, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(coarsePanelX, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(finePanelX, gbc);
+        xRadio.setEnabled(false);
+        yRadio.setEnabled(false);
+        zRadio.setEnabled(false);
+        xRadio.setSelected(true);
+        yRadio.setSelected(false);
+        zRadio.setSelected(false);
+        xRadio.setEnabled(true);
+        yRadio.setEnabled(true);
+        zRadio.setEnabled(true);
+    }
+	
+	private void showY() {
+
+        if (xSelected) {
+            rotatePanel.remove(rotateRangePanelX);
+            rotatePanel.remove(coarsePanelX);
+            rotatePanel.remove(finePanelX);
+            xSelected = false;
+        } // if (xSelected)
+        else if (ySelected) {
+            return;
+        } else { // zSelected
+            rotatePanel.remove(rotateRangePanelZ);
+            rotatePanel.remove(coarsePanelZ);
+            rotatePanel.remove(finePanelZ);
+        } // else zSelected
+
+        ySelected = true;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(rotateRangePanelY, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(coarsePanelY, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(finePanelY, gbc);
+        xRadio.setEnabled(false);
+        yRadio.setEnabled(false);
+        zRadio.setEnabled(false);
+        xRadio.setSelected(false);
+        yRadio.setSelected(true);
+        zRadio.setSelected(false);
+        xRadio.setEnabled(true);
+        yRadio.setEnabled(true);
+        zRadio.setEnabled(true);
+    }
+	
+	private void showZ() {
+
+        if (xSelected) {
+            rotatePanel.remove(rotateRangePanelX);
+            rotatePanel.remove(coarsePanelX);
+            rotatePanel.remove(finePanelX);
+            xSelected = false;
+        } // if (xSelcted)
+        else if (ySelected) {
+            rotatePanel.remove(rotateRangePanelY);
+            rotatePanel.remove(coarsePanelY);
+            rotatePanel.remove(finePanelY);
+            ySelected = false;
+        } // else if (ySelected)
+        else { // zSelected
+            return;
+        } // else zSelected
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        rotatePanel.add(rotateRangePanelZ, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(coarsePanelZ, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        rotatePanel.add(finePanelZ, gbc);
+        xRadio.setEnabled(false);
+        yRadio.setEnabled(false);
+        zRadio.setEnabled(false);
+        xRadio.setSelected(false);
+        yRadio.setSelected(false);
+        zRadio.setSelected(true);
+        xRadio.setEnabled(true);
+        yRadio.setEnabled(true);
+        zRadio.setEnabled(true);
+    }
 
 	private boolean setMaxProjVariables() {
 	    
