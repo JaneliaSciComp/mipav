@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagInfo;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.PrivateDicomDictionary;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -96,6 +97,12 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	@Override
 	protected void callAlgorithm() {
 		processFile(file);
+		
+		if(!isScriptRunning()) {
+			MipavUtil.displayInfo("Tags processed successfully for image/directory "+file.getAbsolutePath());
+			insertScriptLine();
+		}
+
 	}
 	
 	private void processFile(File f) {
@@ -153,10 +160,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			this.dispose();
 			
 			processed = true;
-			if(!isScriptRunning()) {
-				MipavUtil.displayInfo("Tags processed successfully for image "+f.getAbsolutePath());
-				insertScriptLine();
-			}
+			
 		} catch(IOException ex) {
 			System.err.println("Unable to write to file: "+f.getAbsolutePath());
 		}
@@ -176,16 +180,24 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		}
 		
 		file = new File(scriptParameters.getParams().getString("DicomFile"));
-		try {
-			FileDicom readDicom = new FileDicom(file.getAbsolutePath());
-	    	boolean success = readDicom.readHeader(true);
-	    	if(success) {
-	    		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
-	    		
-	    		this.fileInfo = fileInfo;
-	    	}
-		} catch(IOException io) {
-			System.err.println("Unable to read file: "+file.getAbsolutePath());
+		
+		if(!file.isDirectory()) {
+			FileDicom readDicom = null;
+			try {
+        		if(file.isDirectory()) {
+	        		readDicom = searchForDicom(file);
+	        	} else {
+	        		readDicom = new FileDicom(file.getAbsolutePath());
+	        	}
+		    	boolean success = readDicom.readHeader(true);
+		    	if(success) {
+		    		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
+		    		
+		    		this.fileInfo = fileInfo;
+		    	}
+			} catch(IOException io) {
+				System.err.println("Unable to read file: "+file.getAbsolutePath());
+			}
 		}
 		
 		DefaultTableModel model = ((DefaultTableModel)tagsTable.getModel());
@@ -197,6 +209,20 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			});
 		}
 	}
+	
+	public static FileDicom searchForDicom(File file) throws IOException {
+    	FileDicom readDicom = null;
+    	for(File f : file.listFiles()) {
+			if(!f.isDirectory() && FileUtility.getExtension(f.getAbsolutePath()).toLowerCase().equals(".dcm")) {
+				readDicom = new FileDicom(f.getAbsolutePath());
+				break;
+			} else if(f.isDirectory()) {
+				searchForDicom(f);
+			}
+		}
+    	
+    	return readDicom;
+    }
 
 	@Override
 	protected void storeParamsFromGUI() throws ParserException {
