@@ -40,7 +40,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	public JDialogDicomTagMultiEditor() {
 		super(null, true);
 		
-		createFileInfo();
+		createFileInfo(null);
 		
 		closeButton.setActionCommand(SAVE);
 		closeButton.setText(SAVE);
@@ -59,16 +59,16 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		closeButton.setText(SAVE);
 	}
 	
-	private FileInfoDicom createFileInfo() {
+	private FileInfoDicom createFileInfo(File f) {
 		FileInfoDicom fileInfo = null;
 		try {
-			if(file != null) {
-	        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+			if(f != null) {
+	        	FileDicom readDicom = new FileDicom(f.getAbsolutePath());
 	        	boolean success = readDicom.readHeader(true);
 	        	if(success) {
 	        		fileInfo = (FileInfoDicom)readDicom.getFileInfo();
 	        		Hashtable<FileDicomKey, FileDicomTag> tagList = fileInfo.getTagTable().getTagList();
-	        		setTagList(tagList);
+	        		this.tagList = tagList;
 	        		
 	        		this.fileInfo = fileInfo;
 	        	}
@@ -77,7 +77,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				setTagList(tagList);
 			}
     	} catch(IOException e) {
-    		System.err.println("Unable to read dicom file: "+file.getAbsolutePath());
+    		System.err.println("Unable to read dicom file: "+f.getAbsolutePath());
     	}
 		
 		return fileInfo;
@@ -95,9 +95,24 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	@Override
 	protected void callAlgorithm() {
-		System.out.println("Processing file: "+file.getAbsolutePath());
+		processFile(file);
+	}
+	
+	private void processFile(File f) {
+		if(f.isDirectory()) {
+			for(File fSub : f.listFiles()) {
+				processFile(fSub);
+			}
+		} else {
+			processSlice(f);
+		}
+	}
+	
+	private void processSlice(File f) {
+		System.out.println("Processing file: "+f.getAbsolutePath());
+		createFileInfo(f);
 		try {
-			FileDicom writeDicom = new FileDicom(file.getAbsolutePath());
+			FileDicom writeDicom = new FileDicom(f.getAbsolutePath());
 			int length = tagsTable.getRowCount();
 			keyArray = new FileDicomKey[length];
 			tagArray = new FileDicomTag[length];
@@ -122,7 +137,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				if(tagArray[i] == null) {
 					FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(keyArray[i]);
 					if(tagInfo == null) {
-						//TODO: Implement method for getting unknown dicom tag info
+						//TODO: Implement method for getting unknown dicom tag info, VR: UN?
 					}
 					tagArray[i] = new FileDicomTag(tagInfo);
 				}
@@ -130,7 +145,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				tagArray[i].setValue(tagsTable.getValueAt(i, 2));
 			}
 			
-			RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+			RandomAccessFile raFile = new RandomAccessFile(f, "rw");
 			
 			System.out.println("Here again");
 			writeDicom.writeTags(raFile, fileInfo, keyArray, tagArray);
@@ -139,11 +154,11 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			
 			processed = true;
 			if(!isScriptRunning()) {
-				MipavUtil.displayInfo("Tags processed successfully for image "+file.getAbsolutePath());
+				MipavUtil.displayInfo("Tags processed successfully for image "+f.getAbsolutePath());
 				insertScriptLine();
 			}
 		} catch(IOException ex) {
-			System.err.println("Unable to write to file: "+file.getAbsolutePath());
+			System.err.println("Unable to write to file: "+f.getAbsolutePath());
 		}
 	}
 
@@ -197,3 +212,4 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	}
 
 }
+
