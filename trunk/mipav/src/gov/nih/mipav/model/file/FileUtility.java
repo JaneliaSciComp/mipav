@@ -462,7 +462,7 @@ public class FileUtility {
     }
 
     /**
-     * Returns the extension of the file name, if file name does not have extension, then return empty string.
+     * Returns the extension of the file name (including the dot), if file name does not have extension, then return empty string.
      * 
      * @param absolutePath the file name.
      * 
