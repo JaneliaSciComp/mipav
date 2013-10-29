@@ -42,11 +42,7 @@ import java.util.*;
 
 
 public class AlgorithmSkullRemoval extends AlgorithmBase
-{
-    /** Destination image. */
-    protected ModelImage destImageMin;
-    protected ModelImage destImageMax;
-    
+{    
     private int faceOrientation;
 	private float min_2P = -1;
 	private float max_98P = -1;
@@ -79,10 +75,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     public AlgorithmSkullRemoval(ModelImage srcImg, int faceDirection)
     {
     	super( null, srcImg );
-    	destImageMin = (ModelImage) srcImg.clone();
-    	destImageMax = (ModelImage) srcImg.clone();
-    	destImageMin.setImageName( srcImage.getImageName() + "_deskull_Min" );
-    	destImageMax.setImageName( srcImage.getImageName() + "_deskull_Max" );
+    	destImage = (ModelImage) srcImg.clone();
+    	destImage.setImageName( srcImage.getImageName() + "_deskull" );
         faceOrientation = faceDirection;
         
     	dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
@@ -150,7 +144,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
         useCSFMin = true;
         maskBrain(useCSFMin, brainMaskMin);       
-        destImageMin.setMask(brainMaskMin);
+        destImage.setMask(brainMaskMin);
 //        if ( showSegmentation )
 //        {
 //        	ModelImage csfMinImage = (ModelImage)destImageMin.clone();
@@ -160,11 +154,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
         useCSFMin = false;
         maskBrain(useCSFMin, brainMaskMax);       
-        destImageMax.setMask(brainMaskMax);
 //        if ( showSegmentation )
 //        {
-//        	ModelImage csfMaxImage = (ModelImage)destImageMax.clone();
+//        	ModelImage csfMaxImage = (ModelImage)destImageMin.clone();
 //        	csfMaxImage.setImageName( srcImage.getImageName() + "_csfMax" );
+//        csfMaxImage.setMask(brainMaskMax);
 //        	new ViewJFrameImage(csfMaxImage);
 //        }
         BitSet newMask = fillCSFMax( brainMaskMax );
@@ -172,13 +166,12 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         if ( newMask.cardinality() != 0 )
         {     
         	brainMaskMax = newMask;
-        	destImageMax.clearMask();
-            destImageMax.setMask(brainMaskMax);
             
 //            if ( showSegmentation )
 //            {
 //            	ModelImage csfMaxImage = (ModelImage)destImageMax.clone();
 //            	csfMaxImage.setImageName( srcImage.getImageName() + "_csfMax_New" );
+//            csfMaxImage.setMask(brainMaskMax);
 //            	new ViewJFrameImage(csfMaxImage);
 //            }
             filledCSFMask = outlineMask(brainMaskMax);
@@ -197,7 +190,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //            	new ViewJFrameImage(csfMaxImage);
 //            }
         }
-    	seedPoints = estimateWhiteMatter(destImageMin, brainMaskMin); 
+    	seedPoints = estimateWhiteMatter(destImage, brainMaskMin); 
     	
 
     	boolean noMax = false;
@@ -218,13 +211,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	{
     		gmThresholdMax = max_98P;
             Preferences.debug( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n", Preferences.DEBUG_ALGORITHM );
-            fillWhiteMatter(destImageMin, brainMaskMin, seedPoints);
+            fillWhiteMatter(destImage, brainMaskMin, seedPoints);
     	}
     	else
     	{
     		gmThresholdMin = min_2P;
     		Preferences.debug( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n", Preferences.DEBUG_ALGORITHM );
-            fillWhiteMatter(destImageMin, brainMaskMin, seedPoints);
+            fillWhiteMatter(destImage, brainMaskMin, seedPoints);
     	}
         
 //        if ( showSegmentation )
@@ -237,9 +230,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         fireProgressStateChanged(60);                
         
         
-        calculateRadius(destImageMin);
+        calculateRadius(destImage);
         
-        initSphere(destImageMin, noMax);
+        initSphere(destImage, noMax);
         
         
         fireProgressStateChanged(90);
@@ -249,11 +242,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	if ( blurFace || removeFace )
     	{
     		subtractMask( destImage );
+        	destImage.setImageName( srcImage.getImageName() + "_deskull" );
 				
 			if ( blurFace )
 			{
-				// Blur face and add it back to the image:
-				
+				// Blur face and add it back to the image:				
 		        int index = srcImage.getExtents()[2] / 2;
 		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
 		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
@@ -268,24 +261,28 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	            gaussianBlurSepAlgo.run();
 
                 try {
-                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
+                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);    	            
+    	            addBlur( blurOutside, destImage );
+    	        	destImage.setImageName( srcImage.getImageName() + "_deskull_blur" );
+                	blurOutside.disposeLocal();
                 } catch (final IOException e) {
                 	blurOutside.disposeLocal();
                     MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
                     return;
                 }
-	            
-	            addBlur( blurOutside, destImage );
 			}
     	}
     	
     	if ( showSegmentation )
     	{
-        	short id = (short) srcImage.getVOIs().getUniqueID();
+        	short id = (short) destImage.getVOIs().getUniqueID();
         	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
         	centerGravity.importPoint(cog);
-        	srcImage.registerVOI(centerGravity);
+        	destImage.registerVOI(centerGravity);
         	centerGravity.setColor( Color.green );    	
+
+        	destImage.setImageName( srcImage.getImageName() + "_outsideMask" );
+        	new ViewJFrameImage(destImage);
     	}
     	if ( !showSegmentation )
     	{
@@ -391,15 +388,12 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         if ( showSegmentation )
         {
     		floodFill(meshWMMask, cog);
-        	ModelImage outlineMaskImage = (ModelImage)srcImage.clone();
+        	ModelImage outlineMaskImage = (ModelImage)destImage.clone();
         	outlineMaskImage.setMask((BitSet) meshWMMask.clone());
-        	outlineMaskImage.setImageName( srcImage.getImageName() + "_whiteMatterMask" );
-
+        	outlineMaskImage.setImageName( destImage.getImageName() + "_whiteMatterMask" );        	
+        	new ViewJFrameImage(outlineMaskImage);
         	
-//        	ViewJFrameImage whiteMatterFrame = new ViewJFrameImage(outlineMaskImage);
-//        	ModelImage whiteMatterShortImage = whiteMatterFrame.paintToShortMask();
         	ModelImage whiteMatterShortImageBlur = blur(meshWMMask);
-//        	new ViewJFrameImage(whiteMatterShortImageBlur);
         	
 
         	int length = dimX * dimY * dimZ;
@@ -420,15 +414,22 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         			Preferences.debug( "Saving white matter mesh as " + kName + "\n", Preferences.DEBUG_ALGORITHM );
         			saveMesh( new TriMesh(new VertexBuffer(kMesh.VBuffer), new IndexBuffer( kMesh.IBuffer)), true, kName );
 
-        			AlgorithmBrainExtractor betAlg = new AlgorithmBrainExtractor( destImageMin, faceOrientation, kMesh, 
-        					(int)getMedianIntensity( destImageMin, meshWMMask ), cog);
-        			betAlg.extractBrain();
+//        			AlgorithmBrainExtractor betAlg = new AlgorithmBrainExtractor( destImage, faceOrientation, kMesh, 
+//        					(int)getMedianIntensity( destImage, meshWMMask ), cog);
+//        			betAlg.setExtractPaint(true);
+//        			betAlg.extractBrain();
+//        			betAlg = null;
         		}
         	} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+        	whiteMatterShortImageBlur.disposeLocal();
         }
+        
+        
+        
+        
 //		MjCorticalMesh_WM corticalMesh = new MjCorticalMesh_WM( sphere, cog );
 //		if ( corticalMesh.CheckManifold() )
 //		{
@@ -455,13 +456,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //		smoothMesh( sphere, 50, .05f, false, 2f );			
 //		BitSet meshSurfaceMask = computeSurfaceMask(sphere );
 		
-        if ( showSegmentation )
-        {
-        	ModelImage outlineMaskImage = (ModelImage)srcImage.clone();
-        	outlineMaskImage.setMask((BitSet) meshSurfaceMask.clone());
-        	outlineMaskImage.setImageName( srcImage.getImageName() + "_surfaceMask" );
-        	new ViewJFrameImage(outlineMaskImage);
-        }
+//        if ( showSegmentation )
+//        {
+//        	ModelImage outlineMaskImage = (ModelImage)srcImage.clone();
+//        	outlineMaskImage.setMask((BitSet) meshSurfaceMask.clone());
+//        	outlineMaskImage.setImageName( srcImage.getImageName() + "_surfaceMask" );
+//        	new ViewJFrameImage(outlineMaskImage);
+//        }
 		floodFill(meshSurfaceMask, cog);
 
 
@@ -472,14 +473,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		
 		meshSurfaceMask.flip(0, dimX*dimY*dimZ);
 //		System.err.println( "Surface mask " +  meshSurfaceMask.cardinality() );
-		destImage = (ModelImage)srcImage.clone();
 		destImage.setMask(meshSurfaceMask);
-        if ( showSegmentation )
-        {
-        	ModelImage outsideMaskImage = (ModelImage)destImage.clone();
-        	outsideMaskImage.setImageName( srcImage.getImageName() + "_outsideMask" );
-        	new ViewJFrameImage(outsideMaskImage);
-        }
 		
 		try {
 	        String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_white_matter.sur";
@@ -1196,7 +1190,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     		{
     			for ( int x = 0; x < dimX; x++ )
     			{
-    				float value = destImageMin.getFloat(x,y,z);
+    				float value = destImage.getFloat(x,y,z);
     				if ( useMin && (value <= csfThresholdMin) )
     				{
     					mask.set( z * dimX*dimY + y * dimX + x );
@@ -2032,8 +2026,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     						weightSumMax += value;
     					}
     				}
-    				destImageMin.set(x, y, z, value );
-    				destImageMax.set(x, y, z, value );
+    				destImage.set(x, y, z, value );
     			}
     		}
     	}
@@ -2043,17 +2036,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	posMin.X = Math.round(posMin.X);
     	posMin.Y = Math.round(posMin.Y);
     	posMin.Z = Math.round(posMin.Z);
-    	short id = (short) destImageMin.getVOIs().getUniqueID();
+    	short id = (short) destImage.getVOIs().getUniqueID();
     	VOI centerMin = new VOI(id, "centerMin", VOI.POINT, 1f );
     	centerMin.importPoint(posMin);
-    	destImageMin.registerVOI(centerMin);
-    	centerMin.setColor( Color.green );
-    	
-
-    	id = (short) destImageMax.getVOIs().getUniqueID();
-    	centerMin = new VOI(id, "centerMin", VOI.POINT, 1f );
-    	centerMin.importPoint(posMin);
-    	destImageMax.registerVOI(centerMin);
+    	destImage.registerVOI(centerMin);
     	centerMin.setColor( Color.green );
 
     	float scaleMax = (float) (1f/weightSumMax);
@@ -2061,23 +2047,17 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	posMax.X = Math.round(posMax.X);
     	posMax.Y = Math.round(posMax.Y);
     	posMax.Z = Math.round(posMax.Z);
-    	id = (short) destImageMin.getVOIs().getUniqueID();
+    	id = (short) destImage.getVOIs().getUniqueID();
     	VOI centerMax = new VOI(id, "centerMax", VOI.POINT, 1f );
     	centerMax.importPoint(posMax);
-    	destImageMin.registerVOI(centerMax);
+    	destImage.registerVOI(centerMax);
     	centerMax.setColor( Color.magenta );
     	
 
-    	id = (short) destImageMax.getVOIs().getUniqueID();
-    	centerMax = new VOI(id, "centerMax", VOI.POINT, 1f );
-    	centerMax.importPoint(posMax);
-    	destImageMax.registerVOI(centerMax);
-    	centerMax.setColor( Color.magenta );
 
-
-		float value = destImageMin.getFloat((int)posMin.X, (int)posMin.Y, (int)posMin.Z);
+		float value = destImage.getFloat((int)posMin.X, (int)posMin.Y, (int)posMin.Z);
         Preferences.debug( "CSF min = " + posMin + "   value = " + value + "\n", Preferences.DEBUG_ALGORITHM );
-    	value = destImageMin.getFloat((int)posMax.X, (int)posMax.Y, (int)posMax.Z);
+    	value = destImage.getFloat((int)posMax.X, (int)posMax.Y, (int)posMax.Z);
         Preferences.debug( "CSF max = " + posMax + "   value = " + value + "\n", Preferences.DEBUG_ALGORITHM );
 
     	cog = new Vector3f(posMin);
@@ -3255,6 +3235,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		blurAlgo.setGreen(true);
 		blurAlgo.setBlue(true);
 		blurAlgo.run();
+		
+		image.disposeLocal();
 
 		return blurAlgo.getDestImage();
 	}
