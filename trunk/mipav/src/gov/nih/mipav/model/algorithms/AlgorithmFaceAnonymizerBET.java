@@ -235,7 +235,9 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
 
         fireProgressStateChanged(3);
         boolean showInitialEstimation = false;
-        Vector3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, betOrientation, estimateWithSphereBET);
+        // JDialogExtractBrain always calls computeCenter with the orientation = 0.
+        // If not the center is computed incorrectly.
+        Vector3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, 0, estimateWithSphereBET);
         int iterations = 500;
         int maxDepth = 5;
         boolean extractBrainToPaint = true;
