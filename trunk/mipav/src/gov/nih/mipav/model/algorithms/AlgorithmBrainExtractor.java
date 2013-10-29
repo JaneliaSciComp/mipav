@@ -189,6 +189,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /** If true initialize surface as a sphere. */
     private boolean useSphere = false;
+    
+    private TriMesh initialMesh = null;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -285,7 +287,163 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         generateEllipsoidMesh(iSubdivisions);
 
         // Compute the median intensity for voxels inside the initial ellipsoid.
-        computeMedianIntensity(true);
+        computeMedianIntensityInitial();
+
+        // Supporting quantities for update of mesh. VMean[i] stores the
+        // average of the immediate vertex neighbors of vertex V[i].
+        // VNormal[i] is the vertex normal at V[i] computed as the average
+        // of the non-unit normals for all triangles sharing V[i]. Define
+        // S = VMean[i] - V[i]. SNormal[i] is the component of S in the
+        // VNormal[i] direction and STangent[i] = S - SNormal[i]. The value
+        // Curvature[i] is an estimate of the surface curvature at V[i].
+        m_akVMean = new Vector3f[m_iVQuantity];
+        m_akVNormal = new Vector3f[m_iVQuantity];
+        m_akSNormal = new Vector3f[m_iVQuantity];
+        m_akSTangent = new Vector3f[m_iVQuantity];
+        m_afCurvature = new float[m_iVQuantity];
+
+        for (i = 0; i < m_iVQuantity; i++) {
+            m_akVMean[i] = new Vector3f();
+            m_akVNormal[i] = new Vector3f();
+            m_akSNormal[i] = new Vector3f();
+            m_akSTangent[i] = new Vector3f();
+        }
+
+        // the binary mask for voxels inside the brain surface
+        m_aiMask = new byte[m_iQuantity];
+    }
+    
+    
+    /**
+     * Create an extractor for segmenting the brain from a 3D magnetic resonance image.
+     * 
+     * @param srcImg The source image. Should be MR image of the brain
+     * @param orientation Image orienation
+     * @param runOneIteration Run one iteration so that one can observe initial surface location.
+     * @param estimateSphere Use sphere as the initial surface to be evolved.
+     * @param centerPoint The center of the initial ellipsoid or sphere.
+     */
+    public AlgorithmBrainExtractor(final ModelImage srcImg, final int orientation, final TriMesh initialMesh, 
+    		final int medianIntensity, final Vector3f centerPoint) {
+        int i;
+        float fMax, fMin;
+        orientationFlag = orientation;
+        runOneIter = false;
+        useSphere = false;
+        m_kCenter.X = centerPoint.X;
+        m_kCenter.Y = centerPoint.Y;
+        m_kCenter.Z = centerPoint.Z;
+        this.initialMesh = initialMesh;
+
+        /*
+         * The number of levels to subdivide the initial ellipsoid into a mesh that approximates the brain surface. The
+         * number of triangles in the mesh is 8*pow(4,S) where S is the subdivision parameter. A reasonable choice is 5,
+         * leading to a mesh with 8192 triangle.
+         */
+        final int iSubdivisions = 5; // 6 = 32K triangles
+
+        // iSubdivisions = 6; // 6 = 32K triangles
+        // image bounds and voxel sizes
+        m_iXBound = srcImg.getExtents()[0];
+        m_iYBound = srcImg.getExtents()[1];
+        m_iZBound = srcImg.getExtents()[2];
+        m_iQuantity = m_iXBound * m_iYBound * m_iZBound;
+        m_fXDelta = srcImg.getFileInfo()[0].getResolutions()[0];
+        m_fYDelta = srcImg.getFileInfo()[0].getResolutions()[1];
+        m_fZDelta = srcImg.getFileInfo()[0].getResolutions()[2];
+
+        box = new float[3];
+        box[0] = (m_iXBound - 1) * m_fXDelta;
+        box[1] = (m_iYBound - 1) * m_fYDelta;
+        box[2] = (m_iZBound - 1) * m_fZDelta;
+
+        srcImage = srcImg;
+
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direction = MipavCoordinateSystems.getModelDirections(srcImg);
+
+        startLocation = srcImg.getFileInfo()[0].getOrigin();
+
+        // The histogram analysis is best performed by binning into 8-bit
+        // data. The image term in the evolution scheme depends only on a
+        // few intensity threshold values, so the method appears not to be
+        // sensitive to number of bits in the image data.
+        m_aiImage = new int[m_iQuantity];
+
+        fMin = (float) srcImg.getMin();
+        fMax = (float) srcImg.getMax();
+
+        // Remap image data to 0 - 1023
+        final float fMult = 1023.0f / (fMax - fMin);
+
+        for (i = 0; i < m_iQuantity; i++) {
+            m_aiImage[i] = (int) (fMult * (srcImg.getFloat(i) - fMin));
+        }
+
+        // Based on empirical studies, these parameters seem to work well.
+        m_fBrainSelection = 0.5f;
+        m_iMaxDepth = 7;
+        m_fRayDelta = 1.0f;
+        m_fStiffness = 0.1f;
+        m_iDMax = 0;
+
+        // Compute various intensity values needed for the image term in the
+        // evolution method.
+        histogramAnalysis();
+
+        // Construct the initial ellipsoid and corresponding mesh that
+        // approximate the brain surface.
+
+//        if (useSphere == false) {
+//
+//            // if estimate ellipsoid is false set use estimate sphere!
+//            useSphere = !estimateEllipsoid();
+//        }
+//
+//        if (useSphere == true) {
+//            estimateSphere();
+//        }
+//
+//        generateEllipsoidMesh(iSubdivisions);
+        m_iVQuantity = initialMesh.VBuffer.GetVertexQuantity();
+        m_akVertex = initialMesh.VBuffer.GetPositionArray();
+        m_iTQuantity = initialMesh.GetTriangleQuantity();
+        m_aiConnect = initialMesh.IBuffer.GetData();
+        m_kEMap = new HashMap<Edge,Integer>();
+        final Integer kInvalid = new Integer( -1);
+        for (int iT = 0; iT < m_iTQuantity; iT++) {
+        	int i0 = 3 * iT;
+        	int i1 = i0 + 1;
+        	int i2 = i1 + 1;
+        	int iP0 = m_aiConnect[i0];
+        	int iP1 = m_aiConnect[i1];
+        	int iP2 = m_aiConnect[i2];
+            m_kEMap.put(new Edge(iP0, iP1), kInvalid);
+            m_kEMap.put(new Edge(iP1, iP2), kInvalid);
+            m_kEMap.put(new Edge(iP2, iP0), kInvalid);
+        }
+        m_akAdjacent = new UnorderedSetInt[m_iVQuantity];
+        // generate vertex adjacency
+        for (i = 0; i < m_iVQuantity; i++) {
+            m_akAdjacent[i] = new UnorderedSetInt(6, 1);
+        }
+        for (int iT = 0; iT < m_iTQuantity; iT++) {
+        	int iP0 = m_aiConnect[3 * iT];
+        	int iP1 = m_aiConnect[ (3 * iT) + 1];
+        	int iP2 = m_aiConnect[ (3 * iT) + 2];
+
+            m_akAdjacent[iP0].insert(iP1);
+            m_akAdjacent[iP0].insert(iP2);
+            m_akAdjacent[iP1].insert(iP0);
+            m_akAdjacent[iP1].insert(iP2);
+            m_akAdjacent[iP2].insert(iP0);
+            m_akAdjacent[iP2].insert(iP1);
+        }
+
+
+        // Compute the median intensity for voxels inside the initial ellipsoid.
+//        computeMedianIntensity(true);
+        m_iMedianIntensity = medianIntensity;
 
         // Supporting quantities for update of mesh. VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
@@ -394,7 +552,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_kCenter = centerPt;
             // estimateEllipsoid();
             // generateEllipsoidMesh(5);
-            computeMedianIntensity(false);
+            computeMedianIntensity();
 
             Preferences.debug("New Center of Mass = " + m_kCenter + "\n", Preferences.DEBUG_ALGORITHM);
 
@@ -465,7 +623,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         } // if (secondStageErosion)
 
         try {
-
+        	if ( initialMesh != null )
+        	{
+        		initialMesh.VBuffer = new VertexBuffer(m_akVertex);
+        	}
             if (saveBrainMesh) {
                 saveMesh(true);
             }
@@ -769,7 +930,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         generateEllipsoidMesh(iSubdivisions);
 
         // Compute the median intensity for voxels inside the initial ellipsoid.
-        computeMedianIntensity(true);
+        computeMedianIntensityInitial();
 
         // Supporting quantities for update of mesh. VMean[i] stores the
         // average of the immediate vertex neighbors of vertex V[i].
@@ -1011,6 +1172,12 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             kVertex.scaleAdd(fUpdate2, m_akSNormal[i], kVertex);
             kVertex.scaleAdd(fUpdate3, m_akVNormal[i], kVertex);
 
+            if ( Float.isNaN(kVertex.X) || Float.isNaN(kVertex.Y) || Float.isNaN(kVertex.Z) )
+            {
+            	System.err.println( kVertex );
+            }
+            
+            
             if (kVertex.X < 0) {
                 kVertex.X = 0;
             }
@@ -1065,7 +1232,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * Compute the median intensity of those voxels inside the initial ellipsoid. This intensity is used in the image
      * term of the surface evolution.
      */
-    protected void computeMedianIntensity(final boolean initial) {
+    protected void computeMedianIntensityInitial() {
 
         // compute median intensity of voxels inside initial ellipsoid
         final float fInvLength0 = 1.0f / m_afLength[0];
@@ -1074,77 +1241,41 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int iIQuantity = 0;
         int[] aiIntensity;
 
-        if (initial) {
-            aiIntensity = new int[m_iQuantity];
-        } else {
-            aiIntensity = new int[m_aiMask.length];
-        }
+        aiIntensity = new int[m_iQuantity];
 
         final Vector3f kP = new Vector3f();
 
         for (int iZ = 0, i = 0; iZ < m_iZBound; iZ++) {
 
-            for (int iY = 0; iY < m_iYBound; iY++) {
+        	for (int iY = 0; iY < m_iYBound; iY++) {
 
-                for (int iX = 0; iX < m_iXBound; iX++) {
+        		for (int iX = 0; iX < m_iXBound; iX++) {
 
-                    if (initial) {
+        			final int iIntensity = m_aiImage[i++];
 
-                        final int iIntensity = m_aiImage[i++];
+        			if (iIntensity > m_iBackThreshold) {
 
-                        if (iIntensity > m_iBackThreshold) {
+        				// transform to ellipsoid coordinates
+        				final float fX = ( (iX)) - m_kCenter.X;
+        				final float fY = ( (iY)) - m_kCenter.Y;
+        				final float fZ = ( (iZ)) - m_kCenter.Z;
+        				kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
+        				kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
+        				kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
 
-                            // transform to ellipsoid coordinates
-                            final float fX = ( (iX)) - m_kCenter.X;
-                            final float fY = ( (iY)) - m_kCenter.Y;
-                            final float fZ = ( (iZ)) - m_kCenter.Z;
-                            kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
-                            kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
-                            kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
+        				kP.X *= fInvLength0;
+        				kP.Y *= fInvLength1;
+        				kP.Z *= fInvLength2;
 
-                            kP.X *= fInvLength0;
-                            kP.Y *= fInvLength1;
-                            kP.Z *= fInvLength2;
+        				if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
 
-                            if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
+        					// voxel is inside ellipsoid
+        					aiIntensity[iIQuantity++] = iIntensity;
+        				}
+        			}
+        		}
 
-                                // voxel is inside ellipsoid
-                                aiIntensity[iIQuantity++] = iIntensity;
-                            }
-                        }
-
-                    } else {
-
-                        if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
-
-                            final int iIntensity = m_aiImage[getIndex(iX, iY, iZ)];
-
-                            if (iIntensity > m_iBackThreshold) {
-
-                                // transform to ellipsoid coordinates
-                                final float fX = ( (iX)) - m_kCenter.X;
-                                final float fY = ( (iY)) - m_kCenter.Y;
-                                final float fZ = ( (iZ)) - m_kCenter.Z;
-                                kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
-                                kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
-                                kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
-
-                                kP.X *= fInvLength0;
-                                kP.Y *= fInvLength1;
-                                kP.Z *= fInvLength2;
-
-                                if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
-
-                                    // voxel is inside ellipsoid
-                                    aiIntensity[iIQuantity++] = iIntensity;
-                                }
-                            }
-                        }
-
-                    }
-
-                }
-            }
+        	}
         }
 
         if (iIQuantity != 0) {
@@ -1157,6 +1288,99 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n", 
         		Preferences.DEBUG_ALGORITHM);
     }
+
+    /**
+     * Compute the median intensity of those voxels inside the initial ellipsoid. This intensity is used in the image
+     * term of the surface evolution.
+     */
+    protected void computeMedianIntensity() {
+        int iIQuantity = 0;
+        int[] aiIntensity = new int[m_aiMask.length];
+
+        for ( int i = 0; i < m_aiMask.length; i++ )
+        {
+        	if ( m_aiMask[i] > 0 )
+        	{
+				final int iIntensity = m_aiImage[i];
+
+				if (iIntensity > m_iBackThreshold) {
+					aiIntensity[iIQuantity++] = iIntensity;
+				}        
+        	}
+        }
+
+        if (iIQuantity != 0) {
+            Arrays.sort(aiIntensity, 0, iIQuantity - 1);
+        }
+
+        m_iMedianIntensity = aiIntensity[iIQuantity / 2];
+        Preferences.debug("Brain extractor: computeMedianIntensity: m_iMedianIntensity = " + m_iMedianIntensity + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        
+        
+        
+        
+        
+        // compute median intensity of voxels inside initial ellipsoid
+//        final float fInvLength0 = 1.0f / m_afLength[0];
+//        final float fInvLength1 = 1.0f / m_afLength[1];
+//        final float fInvLength2 = 1.0f / m_afLength[2];
+//        int iIQuantity = 0;
+//        int[] aiIntensity;
+//
+//        aiIntensity = new int[m_aiMask.length];
+//
+//        final Vector3f kP = new Vector3f();
+//
+//        for (int iZ = 0, i = 0; iZ < m_iZBound; iZ++) {
+//
+//        	for (int iY = 0; iY < m_iYBound; iY++) {
+//
+//        		for (int iX = 0; iX < m_iXBound; iX++) {
+//
+//        			if (m_aiMask[getIndex(iX, iY, iZ)] > 0) {
+//
+//        				final int iIntensity = m_aiImage[getIndex(iX, iY, iZ)];
+//
+//        				if (iIntensity > m_iBackThreshold) {
+//
+//        					// transform to ellipsoid coordinates
+//        					final float fX = ( (iX)) - m_kCenter.X;
+//        					final float fY = ( (iY)) - m_kCenter.Y;
+//        					final float fZ = ( (iZ)) - m_kCenter.Z;
+//        					kP.X = (fX * m_kRotate.M00) + (fY * m_kRotate.M10) + (fZ * m_kRotate.M20);
+//        					kP.Y = (fX * m_kRotate.M01) + (fY * m_kRotate.M11) + (fZ * m_kRotate.M21);
+//        					kP.Z = (fX * m_kRotate.M02) + (fY * m_kRotate.M12) + (fZ * m_kRotate.M22);
+//
+//        					kP.X *= fInvLength0;
+//        					kP.Y *= fInvLength1;
+//        					kP.Z *= fInvLength2;
+//
+//        					if ( ( (kP.X * kP.X) + (kP.Y * kP.Y) + (kP.Z * kP.Z)) <= 1.0f) {
+//
+//        						// voxel is inside ellipsoid
+//        						aiIntensity[iIQuantity++] = iIntensity;
+//        					}
+//        				}
+//        			}
+//
+//        		}
+//            }
+//        }
+//
+//        if (iIQuantity != 0) {
+//            Arrays.sort(aiIntensity, 0, iIQuantity - 1);
+//        }
+//
+//        m_iMedianIntensity = aiIntensity[iIQuantity / 2];
+//        Preferences.debug("Brain extractor: computeMedianIntensity: m_iMedianIntensity = " + m_iMedianIntensity + "\n", 
+//        		Preferences.DEBUG_ALGORITHM);
+//        Preferences.debug("Brain extractor: computeMedianIntensity: iIQuantity = " + iIQuantity + "\n", 
+//        		Preferences.DEBUG_ALGORITHM);
+    }
+    
 
     /**
      * Let V[i] be a vertex in the triangle mesh. This function computes VMean[i], the average of the immediate
@@ -1192,7 +1416,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             // compute the normal and tangential components of mean-vertex
             kS.copy(m_akVMean[i]).sub(m_akVertex[i]);
             m_akSNormal[i].copy(m_akVNormal[i]).scale(kS.dot(m_akVNormal[i]));
-            m_akSTangent[i].copy(kS).sub(kS);
+            m_akSTangent[i].copy(kS).sub(m_akSNormal[i]);
 
             // compute the curvature
             final float fLength = m_akSNormal[i].length();
@@ -1210,6 +1434,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // compute the fractional function parameters for update2()
         m_fEParam = 0.5f * (fMinCurvature + fMaxCurvature);
         m_fFParam = 6.0f / (fMaxCurvature - fMinCurvature);
+        if ( Float.isInfinite(m_fFParam) )
+        {
+        	System.err.println ( fMinCurvature + " " + fMaxCurvature );
+        }
     }
 
     /**
@@ -1244,10 +1472,27 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akVNormal[iP0].add(kNormal);
             m_akVNormal[iP1].add(kNormal);
             m_akVNormal[iP2].add(kNormal);
+
+//            if ( m_akVNormal[iP0].X == 0 && m_akVNormal[iP0].Y == 0 && m_akVNormal[iP0].Z == 0 )
+//            {
+//            	System.err.println( "computeVertexNormals" );
+//            }
+//            if ( m_akVNormal[iP1].X == 0 && m_akVNormal[iP1].Y == 0 && m_akVNormal[iP1].Z == 0 )
+//            {
+//            	System.err.println( "computeVertexNormals" );
+//            }
+//            if ( m_akVNormal[iP2].X == 0 && m_akVNormal[iP2].Y == 0 && m_akVNormal[iP2].Z == 0 )
+//            {
+//            	System.err.println( "computeVertexNormals" );
+//            }
         }
 
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVNormal[i].normalize();
+//            if ( m_akVNormal[i].X == 0 && m_akVNormal[i].Y == 0 && m_akVNormal[i].Z == 0 )
+//            {
+//            	System.err.println( "computeVertexNormals " + i );
+//            }
         }
     }
 
