@@ -1067,7 +1067,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         fileChooser.setMulti(false);
 
         final JFileChooser chooser = fileChooser.getFileChooser();
-        
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES); //selecting directory applies changes to all 
+        																  //dicoms with the specified tags
         chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
         
         int returnVal = chooser.showOpenDialog(null);
@@ -1076,8 +1077,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 	        final File file = chooser.getSelectedFile();
 	
 	        if (file != null) {
+	        	FileDicom readDicom = null;
 	        	try {
-		        	FileDicom readDicom = new FileDicom(file.getAbsolutePath());
+	        		if(file.isDirectory()) {
+		        		readDicom = searchForDicom(file);
+		        	} else {
+		        		readDicom = new FileDicom(file.getAbsolutePath());
+		        	}
+	        		
 		        	boolean success = readDicom.readHeader(true);
 		        	if(success) {
 		        		FileInfoDicom fileInfo = (FileInfoDicom)readDicom.getFileInfo();
@@ -1093,6 +1100,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 	            //new JDialogEditDicom(file);
 	        }
         }
+    }
+    
+    private FileDicom searchForDicom(File file) throws IOException {
+    	FileDicom readDicom = null;
+    	for(File f : file.listFiles()) {
+			if(!f.isDirectory() && FileUtility.getExtension(f.getAbsolutePath()).toLowerCase().equals(".dcm")) {
+				readDicom = new FileDicom(f.getAbsolutePath());
+				break;
+			} else if(f.isDirectory()) {
+				readDicom = searchForDicom(f);
+			}
+		}
+    	
+    	return readDicom;
     }
     
 
