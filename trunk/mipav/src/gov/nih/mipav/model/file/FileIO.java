@@ -16389,6 +16389,15 @@ nList:      for (int i = 0; i < nListImages; i++) {
      */
 
     private boolean writePARREC(final ModelImage image, final FileWriteOptions options) {
+        // Changing files whose current data type is float and whose original data type
+        // is unsigned byte or unsigned short back to the original data type must only
+        // be done if none of the data values have changed as in rotate, flip, crop,
+        // or delete slices or if the changes have been only a purely linear transformation
+        // of the type y = a * x + b.  If a mask is used to limit changes to a particular
+        // area or if spatial filtering, frequency filtering, nose filtering, log, reciprocal,
+        // interactions with another image have been performed, or any other nonlinear changes
+        // have taken place, then the image must be saved with float data.
+        boolean changeToUnsignedInts = false;
 
         try { // Construct new file info and file objects
 
@@ -16397,26 +16406,128 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 MipavUtil.displayError("MIPAV only supports Par/Rec to Par/Rec");
                 return false;
             }
+            int numSlices = 1;
+            if (image.getNDims() > 2) {
+                numSlices = numSlices * image.getExtents()[2];
+                if (image.getNDims() > 3) {
+                    numSlices = numSlices * image.getExtents()[3];
+                }
+            }
+            
+            FileInfoPARREC[] fileInfoArray = new FileInfoPARREC[numSlices];
+            for (int i = 0; i < numSlices; i++) {
+                fileInfoArray[i] = (FileInfoPARREC)image.getFileInfo()[i];
+            }
             if (fileBase.getDataType() != ModelStorageBase.FLOAT && fileBase.getDataType() != ModelStorageBase.USHORT
                     && fileBase.getDataType() != ModelStorageBase.UBYTE) {
                 throw new IOException("Format PAR/REC does not support this data type.");
             }
 
             if (FilePARREC.isImageFile(options.getFileName())) {
-                if (fileBase.getDataType() == ModelStorageBase.FLOAT) {
-                    if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".rec")) {
-                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                if (fileInfoArray[0].getDataType() == ModelStorageBase.FLOAT) {
+                    if (FileUtility.getExtension(options.getFileName()).equals(".rec")) {
+                        if (fileInfoArray[0].getOriginalDataType() == ModelStorageBase.FLOAT) {
+                            options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
                                 + ".frec");
+                        }
+                        else {
+                            int intWrite = JOptionPane.showConfirmDialog(null, "Do you wish to save data as unsigned integers?"
+                                    , "PARREC file writing", JOptionPane.YES_NO_OPTION);
+                            if(intWrite == JOptionPane.NO_OPTION) {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".frec");
+                            } 
+                            else {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".rec");
+                                changeToUnsignedInts = true;
+                            }
+                        }
                     }
-                } else {
-                    if (FileUtility.getExtension(options.getFileName()).equalsIgnoreCase(".frec")) {
+                    else if (FileUtility.getExtension(options.getFileName()).equals(".REC")) {
+                        if (fileInfoArray[0].getOriginalDataType() == ModelStorageBase.FLOAT) {
+                            options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                + ".fREC");
+                        }
+                        else {
+                            int intWrite = JOptionPane.showConfirmDialog(null, "Do you wish to save data as unsigned integers?"
+                                    , "PARREC file writing", JOptionPane.YES_NO_OPTION);
+                            if(intWrite == JOptionPane.NO_OPTION) {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".fREC");
+                            } 
+                            else {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".REC");
+                                changeToUnsignedInts = true;
+                            }
+                        }
+                    }
+                } else { // fileInfoArray[0].getDataType() != ModelStorageBase.FLOAT
+                    if (FileUtility.getExtension(options.getFileName()).equals(".frec")) {
                         options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 5)
                                 + ".rec");
+                    }
+                    else if (FileUtility.getExtension(options.getFileName()).equals(".fREC")) {
+                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 5)
+                                + ".REC");
+                    }
+                }
+            }
+            
+            if (FilePARREC.isHeaderFile(options.getFileName())) {
+                if (fileInfoArray[0].getDataType() == ModelStorageBase.FLOAT) {
+                    if (FileUtility.getExtension(options.getFileName()).equals(".par")) {
+                        if (fileInfoArray[0].getOriginalDataType() == ModelStorageBase.FLOAT) {
+                            options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                + ".parv2");
+                        }
+                        else {
+                            int intWrite = JOptionPane.showConfirmDialog(null, "Do you wish to save data as unsigned integers?"
+                                    , "PARREC file writing", JOptionPane.YES_NO_OPTION);
+                            if(intWrite == JOptionPane.NO_OPTION) {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".parv2");
+                            } 
+                            else {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".par"); 
+                                changeToUnsignedInts = true;
+                            }
+                        }
+                    }
+                    else if (FileUtility.getExtension(options.getFileName()).equals(".PAR")) {
+                        if (fileInfoArray[0].getOriginalDataType() == ModelStorageBase.FLOAT) {
+                            options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                + ".PARv2");
+                        }
+                        else {
+                            int intWrite = JOptionPane.showConfirmDialog(null, "Do you wish to save data as unsigned integers?"
+                                    , "PARREC file writing", JOptionPane.YES_NO_OPTION);
+                            if(intWrite == JOptionPane.NO_OPTION) {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".PARv2");
+                            } 
+                            else {
+                                options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 4)
+                                        + ".PAR"); 
+                                changeToUnsignedInts = true;
+                            }
+                        }
+                    }
+                } else { // fileInfoArray[0].getDataType() != ModelStorageBase.FLOAT
+                    if (FileUtility.getExtension(options.getFileName()).equals(".parv2")) {
+                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 6)
+                                + ".par");
+                    }
+                    else if (FileUtility.getExtension(options.getFileName()).equals(".PARv2")) {
+                        options.setFileName(options.getFileName().substring(0, options.getFileName().length() - 6)
+                                + ".PAR");
                     }
                 }
             }
 
-            FilePARREC pr = new FilePARREC(options.getFileName(), options.getFileDirectory(), fileBase);
+            FilePARREC pr = new FilePARREC(options.getFileName(), options.getFileDirectory(), fileInfoArray, changeToUnsignedInts);
 
             createProgressBar(pr, options.getFileName(), FileIO.FILE_WRITE);
             pr.writeImage(image, options);
