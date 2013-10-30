@@ -69,6 +69,10 @@ public class FileInfoPARREC extends FileInfoBase {
     private ArrayList<String> generalInfoList = new ArrayList<String>();
 
     private ArrayList<String> imageInfoList = new ArrayList<String>();
+    
+    private int originalDataType = ModelStorageBase.FLOAT;
+    
+    private float scaleSlope = 1.0f;
 
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
@@ -300,6 +304,22 @@ public class FileInfoPARREC extends FileInfoBase {
 
     public void setImageInfoList(String info) {
         imageInfoList.add(info);
+    }
+    
+    public void setOriginalDataType(int originalDataType) {
+        this.originalDataType = originalDataType;
+    }
+    
+    public int getOriginalDataType() {
+        return originalDataType;
+    }
+    
+    public void setScaleSlope(float scaleSlope) {
+        this.scaleSlope = scaleSlope;
+    }
+    
+    public float getScaleSlope() {
+        return scaleSlope;
     }
 
     /*
