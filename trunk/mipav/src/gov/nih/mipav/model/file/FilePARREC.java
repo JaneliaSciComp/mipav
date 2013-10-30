@@ -7,6 +7,8 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
@@ -54,6 +56,8 @@ public class FilePARREC extends FileBase {
 
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
+    
+    private FileInfoPARREC[] fileInfoArray;
 
     /** file info **/
     private FileInfoPARREC outInfo;
@@ -124,6 +128,8 @@ public class FilePARREC extends FileBase {
     
     /** num vols in 4d dataset **/
     private int numVolumes;
+    
+    boolean changeToUnsignedInts = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -148,6 +154,22 @@ public class FilePARREC extends FileBase {
 
         fileNames = getCompleteFileNameList(fileDir+fileName);
     }
+    
+    /**
+     * Constructor used by FileIO to write an image
+     * @param fileName
+     * @param fileDirectory
+     * @param fileInfoPARREC[]
+     * @param changeToUnsignedInts
+     */
+     public FilePARREC(String fileName, String fileDirectory, FileInfoPARREC[] fileInfoArray, boolean changeToUnsignedInts) {
+         this.fileInfoArray = fileInfoArray;
+         outInfo = fileInfoArray[0];
+         this.fileName = fileName;
+         this.fileDir = fileDirectory;
+         fileNames =getCompleteFileNameListDefault(fileDirectory+fileName);
+         this.changeToUnsignedInts = changeToUnsignedInts;
+     }
 
    /**
     * Constructor used by FileIO to write an image
@@ -192,6 +214,12 @@ public class FilePARREC extends FileBase {
         fileName = null;
         fileDir = null;
         fileInfo = null;
+        if (fileInfoArray != null) {
+            for (int i = 0; i < fileInfoArray.length; i++) {
+                fileInfoArray[i] = null;
+            }
+            fileInfoArray = null;
+        }
         image = null;
         outInfo = null;
         try {
@@ -331,7 +359,7 @@ public class FilePARREC extends FileBase {
     }
 
     /**
-     * Return true if the file specified by absolutePath is header file of ANALYZE.
+     * Return true if the file specified by absolutePath is header file of PARREC.
      *
      * @param   absolutePath  the file name including path information.
      *
@@ -351,7 +379,7 @@ public class FilePARREC extends FileBase {
     }
 
     /**
-     * Return true if the file specified by absolutePath is image file of ANALYZE.
+     * Return true if the file specified by absolutePath is image file of PARREC.
      *
      * @param   absolutePath  the file name including path information.
      *
@@ -1140,11 +1168,13 @@ public class FilePARREC extends FileBase {
         //Format of the "rec" file
         if(FileUtility.getExtension(getImageFiles()[0]).startsWith(".f")) {
             originalDataType = ModelStorageBase.FLOAT;
+            fileInfo.setOriginalDataType(ModelStorageBase.FLOAT);
             fileInfo.setDataType(ModelStorageBase.FLOAT);
             Preferences.debug("FilePARREC:readHeader. Floating Point" + "\n", Preferences.DEBUG_FILEIO);
         } else {
             if(Integer.valueOf(bpp)==16) {
                 originalDataType = ModelStorageBase.USHORT;
+                fileInfo.setOriginalDataType(ModelStorageBase.USHORT);
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
                     fileInfo.setDataType(ModelStorageBase.USHORT);
                     Preferences.debug("FilePARREC:readHeader. Unsigned Short" + "\n", Preferences.DEBUG_FILEIO);
@@ -1155,6 +1185,7 @@ public class FilePARREC extends FileBase {
                 }
             } else if(Integer.valueOf(bpp)==8) {
                 originalDataType = ModelStorageBase.UBYTE;
+                fileInfo.setOriginalDataType(ModelStorageBase.UBYTE);
                 if ((scaleSlope[0] == 1.0f) && (rescaleIntercept[0] == 0.0f) && sameSliceScalings) {
                     fileInfo.setDataType(ModelStorageBase.UBYTE);
                     Preferences.debug("FilePARREC:readHeader. Unsigned BYTE" + "\n", Preferences.DEBUG_FILEIO);
@@ -1420,7 +1451,7 @@ public class FilePARREC extends FileBase {
                 fileInfo.setExtents(extents);
             }
         } catch (IOException error) {
-            throw new IOException("FileAnalyze: " + error);
+            throw new IOException("FilePARREC: " + error);
         } catch (OutOfMemoryError e) {
             throw (e);
         }
@@ -1447,6 +1478,10 @@ public class FilePARREC extends FileBase {
         	long[] newLongData = null;
         	int st = 0;
         	int newDataStart = 0;
+        	float scaleSlope2[] = new float[Slices.size()];
+        	float rescaleIntercept2[] = new float[Slices.size()];
+        	float rescaleSlope2[] = new float[Slices.size()];
+        	int newIndex = 0;
         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE || type == ModelStorageBase.ARGB) {
         		sliceByteData = new byte[sliceLength];
         		newByteData = new byte[dataSizeLength];
@@ -1476,7 +1511,11 @@ public class FilePARREC extends FileBase {
    	       	         if(counter%numVolumes == 0 && start != 0) {
    	       	        	 st = st + sliceLength;
    	       	        	newDataStart = st;
+   	       	        	newIndex = newDataStart/sliceLength;
    	       	         }
+   	       	         scaleSlope2[newIndex] = scaleSlope[counter];
+   	       	         rescaleIntercept2[newIndex] = rescaleIntercept[counter];
+   	       	         rescaleSlope2[newIndex] = rescaleSlope[counter];
    	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
    	       	        	 newByteData[i] = sliceByteData[m];
    	       	         }
@@ -1491,8 +1530,12 @@ public class FilePARREC extends FileBase {
           	         	}
    	       	         if(counter%numVolumes == 0 && start != 0) {
    	       	        	 st = st + sliceLength;
-   	       	        	newDataStart = st;
+   	       	        	 newDataStart = st;
+   	       	             newIndex = newDataStart/sliceLength;
    	       	         }
+   	       	         scaleSlope2[newIndex] = scaleSlope[counter];
+                     rescaleIntercept2[newIndex] = rescaleIntercept[counter];
+                     rescaleSlope2[newIndex] = rescaleSlope[counter];
    	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
    	       	        	 newShortData[i] = sliceShortData[m];
    	       	         }
@@ -1506,8 +1549,12 @@ public class FilePARREC extends FileBase {
           	         	}
    	       	         if(counter%numVolumes == 0 && start != 0) {
    	       	        	 st = st + sliceLength;
-   	       	        	newDataStart = st;
+   	       	        	 newDataStart = st;
+   	       	             newIndex = newDataStart/sliceLength;
    	       	         }
+   	       	         scaleSlope2[newIndex] = scaleSlope[counter];
+                     rescaleIntercept2[newIndex] = rescaleIntercept[counter];
+                     rescaleSlope2[newIndex] = rescaleSlope[counter];
    	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
    	       	        	 newIntData[i] = sliceIntData[m];
    	       	         }
@@ -1521,8 +1568,12 @@ public class FilePARREC extends FileBase {
           	         	}
    	       	         if(counter%numVolumes == 0 && start != 0) {
    	       	        	 st = st + sliceLength;
-   	       	        	newDataStart = st;
+   	       	        	 newDataStart = st;
+   	       	             newIndex = newDataStart/sliceLength;
    	       	         }
+   	       	         scaleSlope2[newIndex] = scaleSlope[counter];
+                     rescaleIntercept2[newIndex] = rescaleIntercept[counter];
+                     rescaleSlope2[newIndex] = rescaleSlope[counter];
    	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
    	       	        	 newLongData[i] = sliceLongData[m];
    	       	         }
@@ -1536,8 +1587,12 @@ public class FilePARREC extends FileBase {
        	         	}
 	       	         if(counter%numVolumes == 0 && start != 0) {
 	       	        	 st = st + sliceLength;
-	       	        	newDataStart = st;
+	       	        	 newDataStart = st;
+	       	        	 newIndex = newDataStart/sliceLength;
 	       	         }
+	       	         scaleSlope2[newIndex] = scaleSlope[counter];
+                     rescaleIntercept2[newIndex] = rescaleIntercept[counter];
+                     rescaleSlope2[newIndex] = rescaleSlope[counter];
 	       	         for(int i=newDataStart,m=0;i<newDataStart+sliceLength;i++,m++) {
 	       	        	 newFloatData[i] = sliceFloatData[m];
 	       	         }
@@ -1545,6 +1600,14 @@ public class FilePARREC extends FileBase {
             	}
         	}
         	
+        	for (int i = 0; i < Slices.size(); i++) {
+        	    scaleSlope[i] = scaleSlope2[i];
+        	    rescaleIntercept[i] = rescaleIntercept2[i];
+        	    rescaleSlope[i] = rescaleSlope2[i];
+        	}
+        	scaleSlope2 = null;
+        	rescaleIntercept2 = null;
+        	rescaleSlope2 = null;
         	
         	if(type == ModelStorageBase.BYTE || type == ModelStorageBase.UBYTE) {
         		try {
@@ -1594,6 +1657,22 @@ public class FilePARREC extends FileBase {
         
         if (image != null) {
             image.calcMinMax();
+            if (one) {
+                fileInfo.setRescaleIntercept((double)rescaleIntercept[0]);
+                fileInfo.setRescaleSlope((double)rescaleSlope[0]);
+                fileInfo.setScaleSlope(scaleSlope[0]);
+            }
+            else {
+                if (image.getFileInfo()[0] instanceof FileInfoPARREC) {
+                    FileInfoPARREC[] fileInfoP = new FileInfoPARREC[Slices.size()];
+                    for (int i = 0; i < Slices.size(); i++) {
+                        fileInfoP[i] = (FileInfoPARREC)image.getFileInfo()[i];
+                        fileInfoP[i].setRescaleIntercept((double)rescaleIntercept[i]);
+                        fileInfoP[i].setRescaleSlope((double)rescaleSlope[i]);
+                        fileInfoP[i].setScaleSlope(scaleSlope[i]);
+                    }
+                }
+            }
         }
         
         
@@ -1648,6 +1727,15 @@ public class FilePARREC extends FileBase {
         if (image != null) {
             updateTransformMatrix(fileInfo, image);
         }
+        
+        if (image != null) {
+            FileInfoPARREC[] fileInfoP = (FileInfoPARREC[])image.getFileInfo();
+            for (i = 0; i < Slices.size(); i++) {
+                fileInfoP[i].setRescaleIntercept((double)rescaleIntercept[i]);
+                fileInfoP[i].setRescaleSlope((double)rescaleSlope[i]);
+                fileInfoP[i].setScaleSlope(scaleSlope[i]);
+            }
+        }
 
 
         try { // Construct a FileRaw to actually read the image.
@@ -1688,7 +1776,7 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileRaw
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        int k, seq;
+        int i, k, seq;
         int beginSlice = options.getBeginSlice();
         int endSlice = options.getEndSlice();
         int beginTime = options.getBeginTime();
@@ -1703,6 +1791,72 @@ public class FilePARREC extends FileBase {
         String dataSuffix = fileNames[1].substring(dataIndex);
         int optionsFileNameIndex;
         String optionsFileName;
+        ModelImage image2;
+        boolean rescale;
+        
+        if (changeToUnsignedInts) {
+            int numSlices = 1;
+            if (image.getNDims() > 2) {
+                numSlices = numSlices * image.getExtents()[2];
+                if (image.getNDims() > 3) {
+                    numSlices = numSlices * image.getExtents()[3];
+                }
+            }
+            int sliceSize = image.getExtents()[0] * image.getExtents()[1];
+            float rescaleIntercept[] = new float[numSlices];
+            float rescaleSlope[] = new float[numSlices];
+            float scaleSlope[] = new float[numSlices];
+            for (i = 0; i < numSlices; i++) {
+                rescaleIntercept[i] = (float)fileInfoArray[i].getRescaleIntercept();
+                rescaleSlope[i] = (float)fileInfoArray[i].getRescaleSlope();
+                scaleSlope[i] = fileInfoArray[i].getScaleSlope();
+            }
+            float scaleFactor[] = new float[numSlices];  
+            float offsetAdd[] = new float[numSlices];
+            for (i = 0; i < numSlices; i++) {
+                scaleFactor[i] = 1.0f/scaleSlope[i];
+                offsetAdd[i] = rescaleIntercept[i]/(scaleSlope[i] * rescaleSlope[i]);
+            }
+            float floatBuffer[] = new float[sliceSize];
+            int intBuffer[] = new int[sliceSize];
+            image2 = new ModelImage(fileInfoArray[0].getOriginalDataType(), image.getExtents(), image.getImageName() + "_uint");
+            for (i = 0; i < numSlices; i++) {
+                fileInfoArray[i].setDataType(fileInfoArray[0].getOriginalDataType());
+                image2.setFileInfo((FileInfoPARREC)fileInfoArray[i].clone(), i);
+            }
+            for (i = 0; i < numSlices; i++) {
+                image.exportData(i * sliceSize, sliceSize, floatBuffer);
+                for (k = 0; k < sliceSize; k++) {
+                    intBuffer[k] = Math.round((floatBuffer[k] - offsetAdd[i])/scaleFactor[i]);
+                }
+                image2.importData(i * sliceSize, intBuffer, false);
+            } // for (i = 0; i < numSlices; i++)
+            image2.calcMinMax();
+            rescale = true;
+        } // if (changeToUnsignedInts)
+        else if ((fileInfoArray[0].getOriginalDataType() != ModelStorageBase.FLOAT) && 
+                (fileInfoArray[0].getDataType() == ModelStorageBase.FLOAT)) {
+            int numSlices = 1;
+            if (image.getNDims() > 2) {
+                numSlices = numSlices * image.getExtents()[2];
+                if (image.getNDims() > 3) {
+                    numSlices = numSlices * image.getExtents()[3];
+                }
+            }
+            image2 = (ModelImage)image.clone();
+            for (i = 0; i < numSlices; i++) {
+                fileInfoArray[i].setRescaleIntercept(0.0);
+                fileInfoArray[i].setRescaleSlope(1.0);
+                fileInfoArray[i].setScaleSlope(1.0f);
+                image2.setFileInfo((FileInfoPARREC)fileInfoArray[i].clone(), i);
+            } 
+            rescale = false;
+        }
+        else {
+            rescale = true;
+            image2 = image;
+        }
+        
         if (options.isMultiFile() && image.getNDims() == 4) {
             for (k = beginTime, seq = options.getStartNumber(); k <= endTime; k++, seq++) {
 
@@ -1748,28 +1902,32 @@ public class FilePARREC extends FileBase {
                 }
                 // write header with image, # of images per, and 1 time slice
 
-                writeHeader(image, headerFileName, beginSlice, endSlice, k, k);
+                writeHeader(image2, headerFileName, beginSlice, endSlice, k, k, rescale);
                 optionsFileNameIndex = dataFileName.lastIndexOf("\\");
                 optionsFileName = dataFileName.substring(optionsFileNameIndex+1);
                 FileInfoXML tempInfo = new FileInfoImageXML(optionsFileName, options.getFileDirectory(), FileUtility.RAW);
                 tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
                 FileRaw rawFile = new FileRaw(dataFileName, "", tempInfo, FileBase.READ_WRITE);
                 linkProgress(rawFile);
-                rawFile.writeImage(image, beginSlice, endSlice, k, k);
+                rawFile.writeImage(image2, beginSlice, endSlice, k, k);
 
             } // end for loop
 
             
         }
         else {
-    	    writeHeader(image, fileNames[0], beginSlice, endSlice, beginTime, endTime);
+    	    writeHeader(image2, fileNames[0], beginSlice, endSlice, beginTime, endTime, rescale);
     	    FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
             tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
             FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
             linkProgress(rawFile);
-            rawFile.writeImage(image, options);
+            rawFile.writeImage(image2, options);
         }
     	
+        if (changeToUnsignedInts) {
+            image2.disposeLocal();
+            image2 = null;
+        }
     	
     }
 
@@ -1954,33 +2112,17 @@ public class FilePARREC extends FileBase {
             completeFileNameList[0] = absolutePath;
 
             String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-
-            if(ext.equals(hdrEXTENSIONS[0]) || ext.equals(hdrEXTENSIONS[2])) { //lower case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=0;
-                    k0=2;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=1;
-                    k0=3;
+            int k = 0;
+            
+            for (int i = 0; i < 4; i++) {
+                if (ext.equals(hdrEXTENSIONS[i])) {
+                    k = i;
                 }
             }
+
             if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
             	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k];
-                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k0];
+                completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
             }
             
             
@@ -1991,32 +2133,18 @@ public class FilePARREC extends FileBase {
             //public static final String[] imgEXTENSIONS = { ".rec", ".REC", ".frec", ".fREC" };
 
             String ext = FileUtility.getExtension((absolutePath));
-            int k,k0;
-            if(ext.equals(imgEXTENSIONS[0]) || ext.equals(imgEXTENSIONS[2])) {
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // frec, lower case
-                    k=2;
-                    k0=2;
-                } else {
-                    // rec, lower case
-                    k=2;
-                    k0=0;
-                }
-
-            } else {//upper case
-                if(outInfo.getDataType()==ModelStorageBase.FLOAT) {
-                    // fREC, upper case
-                    k=3;
-                    k0=3;
-                } else {
-                    // REC, upper case
-                    k=3;
-                    k0=1;
+            
+            int k = 0;
+            
+            for (int i = 0; i < 4; i++) {
+                if (ext.equals(imgEXTENSIONS[i])) {
+                    k = i;
                 }
             }
+            
             if (absolutePath.endsWith(FileUtility.getExtension((absolutePath)))) {
             	completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.hdrEXTENSIONS[k];
-            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k0];
+            	completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(FileUtility.getExtension((absolutePath)))) + FilePARREC.imgEXTENSIONS[k];
             }
         } else {
             completeFileNameList = null;
@@ -2036,10 +2164,11 @@ public class FilePARREC extends FileBase {
      * @param endSlice
      * @param beginTime
      * @param endTime
+     * @param rescale
      * @throws IOException
      */
     public void writeHeader(ModelImage writeImage, String headerFileName, int beginSlice, int endSlice,
-                            int beginTime, int endTime) throws IOException {
+                            int beginTime, int endTime, boolean rescale) throws IOException {
         int loc;
     	@SuppressWarnings("unused")
         int bpp=0;
@@ -2591,6 +2720,9 @@ public class FilePARREC extends FileBase {
         int idx = 0;
         int xyIndex = -1;
         int orIndex = -1;
+        int riIndex = -1;
+        int rsIndex = -1;
+        int ssIndex = -1;
         for(int i=0;i<imageInfoList.size();i++) {
         	String info = imageInfoList.get(i);
         	if(info.compareToIgnoreCase("#  recon resolution (x y)                   (2*integer)")==0) {
@@ -2598,6 +2730,15 @@ public class FilePARREC extends FileBase {
         	}
         	else if(info.indexOf("#  slice orientation ( TRA/SAG/COR )        (integer)")>=0) {
         		orIndex = idx;
+        	}
+        	else if (info.compareToIgnoreCase("#  rescale intercept                        (float)") == 0) {
+        	    riIndex = idx;
+        	}
+        	else if (info.compareToIgnoreCase("#  rescale slope                            (float)") == 0) {
+        	    rsIndex = idx;
+        	}
+        	else if (info.compareToIgnoreCase("#  scale slope                              (float)") == 0) {
+        	    ssIndex = idx;
         	}
         	Integer I = (Integer)SliceMap.get(info);
             if(I==null) {
@@ -2681,7 +2822,7 @@ public class FilePARREC extends FileBase {
                 loc = j + i*extents[2];
                 FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(loc);
                 String tag = fileInfoPR.getSliceInfo();
-                if ((xyIndex >= 0) || (orIndex >= 0)) {
+                if ((xyIndex >= 0) || (orIndex >= 0) || ((!rescale) && ((riIndex >= 0) || (rsIndex >= 0) || (ssIndex >= 0)))) {
                 	String[] values = tag.split("\\s+");
                 	if (xyIndex >= 0) {
                 	    values[xyIndex] = String.valueOf(extents[0]);
@@ -2698,6 +2839,17 @@ public class FilePARREC extends FileBase {
                 			values[orIndex] = String.valueOf(3);
                 		}
                 	}
+                	if (!rescale) {
+                	    if (riIndex >= 0) {
+                	        values[riIndex] = String.valueOf(0.0);
+                	    }
+                	    if (rsIndex >= 0) {
+                	        values[rsIndex] = String.valueOf(1.0);
+                	    }
+                	    if (ssIndex >= 0) {
+                	        values[ssIndex] = String.valueOf(1.0);
+                	    }
+                	} // if (!rescale)
                 	tag = values[0] + "  ";
                 	for (int k = 1; k < values.length-1; k++) {
                 	    tag += values[k] + "  ";	
