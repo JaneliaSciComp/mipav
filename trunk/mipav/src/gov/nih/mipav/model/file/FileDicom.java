@@ -19,6 +19,7 @@ import gov.nih.mipav.view.dialogs.JDialogDicomDir;
 
 import java.awt.image.*;
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -3783,7 +3784,7 @@ public class FileDicom extends FileDicomBase {
                 	if(editIndex == editKeys.length) {
                 		flag = false;
                 	}
-                	newTag = null;
+                	//newTag = null;
                 }
                 
                 
@@ -3796,7 +3797,7 @@ public class FileDicom extends FileDicomBase {
                 seek(imageLoc);
             }
             if(bufferLoc != -1) {
-            	seek(bufferLoc);
+            	seek(bufferLoc + newTag.getLength() - oldTagElementLength);
             	//System.err.println("Continuing processing: "+getFilePointer());
             }
             int bPtrOld = getFilePointer();
@@ -3874,9 +3875,9 @@ public class FileDicom extends FileDicomBase {
         }
         
         long sizeChange = length - oldTagElementLength;
-        if(sizeChange > 0) {
+        if(sizeChange != 0) {
         	System.err.println("Changing size of dicom file not yet tested");
-        	//changeDicomFileSize(raFile, sizeChange, pointerLoc, oldTagElementLength);
+        	changeDicomFileSize(raFile, sizeChange, pointerLoc, oldTagElementLength);
         }
         
         
@@ -3902,33 +3903,64 @@ public class FileDicom extends FileDicomBase {
 	}
 
 	private void changeDicomFileSize(RandomAccessFile raFile, long sizeChange, long pointerLoc, int oldTagElementLength) throws IOException {
-		if(sizeChange > 0) {
-        	raFile.setLength(raFile.length() + sizeChange);
-        }
-        long fileLength = raFile.length();
-        
-		byte[] bufferInNext = null;
-		int bufferSize = 512000;
-		byte[] bufferIn = new byte[bufferSize];
+		RandomAccessFile rTemp = new RandomAccessFile(getFileInfo().getFileDirectory()+getFileInfo().getFileName()+"~", "rw");
+		long fileSize = raFile.length();
+		FileChannel sourceChannel = raFile.getChannel();
+		FileChannel targetChannel = rTemp.getChannel();
+		sourceChannel.transferTo(pointerLoc, fileSize - pointerLoc, targetChannel);
+		sourceChannel.truncate(fileSize + sizeChange);
+		raFile.seek(pointerLoc);
+		System.out.println("writing to: "+pointerLoc);
 		
-		raFile.seek(pointerLoc + oldTagElementLength);
-				
-		while(raFile.getFilePointer() < fileLength) {
-			long initPos = raFile.getFilePointer();
-			raFile.readFully(bufferIn);
-			raFile.seek(initPos);
-			if(bufferInNext != null) {
-				//System.out.println("Initpos: Writing in location: "+initPos);
-				raFile.write(bufferInNext);
-				bufferInNext = null;
+		if(sizeChange > 0) {
+			byte[] content = new byte[(int)sizeChange];
+			for(int i=0; i<content.length; i++) {
+				content[i] = 0;
 			}
-			long medPos = raFile.getFilePointer();
-			bufferInNext = new byte[bufferSize];
-			raFile.readFully(bufferInNext, 0, bufferInNext.length);
-			raFile.seek(medPos);
-			//System.out.println("Medpos: Writing in location: "+medPos);
-			raFile.write(bufferIn);
+			
+			raFile.write(content);
 		}
+		long newOffset = raFile.getFilePointer() + sizeChange;
+		System.out.println("Appending at: "+newOffset);
+		targetChannel.position(0L);
+		System.out.println("Old position: "+sourceChannel.position());
+		sourceChannel.position(pointerLoc+sizeChange);
+		System.out.println("New position: "+sourceChannel.position());
+		sourceChannel.transferFrom(targetChannel, newOffset, fileSize - pointerLoc);
+		
+		//sourceChannel.close();
+		targetChannel.close();
+//		File f = new File(getFileInfo().getFileDirectory()+getFileInfo().getFileName()+"~");
+//		boolean doDelete = f.delete();
+//		System.out.println("Do delete: "+doDelete);
+//		
+//		if(sizeChange > 0) {
+//        	raFile.setLength(raFile.length() + sizeChange);
+//        }
+//        long fileLength = raFile.length();
+//        
+//		byte[] bufferInNext = null;
+//		int bufferSize = 512000;
+//		byte[] bufferIn = new byte[bufferSize];
+//		
+//		raFile.seek(pointerLoc + oldTagElementLength);
+//				
+//		while(raFile.getFilePointer() < fileLength) {
+//			long initPos = raFile.getFilePointer();
+//			raFile.readFully(bufferIn);
+//			raFile.seek(initPos);
+//			if(bufferInNext != null) {
+//				//System.out.println("Initpos: Writing in location: "+initPos);
+//				raFile.write(bufferInNext);
+//				bufferInNext = null;
+//			}
+//			long medPos = raFile.getFilePointer();
+//			bufferInNext = new byte[bufferSize];
+//			raFile.readFully(bufferInNext, 0, bufferInNext.length);
+//			raFile.seek(medPos);
+//			//System.out.println("Medpos: Writing in location: "+medPos);
+//			raFile.write(bufferIn);
+//		}
 	}
 
 	/**
