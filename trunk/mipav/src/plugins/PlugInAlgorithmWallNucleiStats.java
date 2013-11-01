@@ -6,12 +6,21 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.ViewJFrameImage;
-//import gov.nih.mipav.view.MipavUtil;
-//import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
+/**
+ * Plugin for the Collins' Lab to calculate statistics for histology slides. 
+ * This is the first iteration of the plugin. In this, the user is required 
+ * to manually segment the wall from the histology slide, and pass that in 
+ * to the plugin, which will calculate statistics for both the wall section 
+ * and the nuclei in the wall. There is minimal error checking at the current 
+ * juncture, and the progress bar is not updating smoothly. Further iterations 
+ * will contain more error checking, while the progress bar is a lower priority 
+ * issue. 
+ * 
+ * @author wangvg
+ *
+ */
 
 
 public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
@@ -28,10 +37,11 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 	/** Green Channel extracted from the Wall Image*/
 	private ModelImage gImage;
 	
-	/** Used to exclude pixels in the second pass of the midline finding step*/
+	/** Used to exclude pixels in the second pass of the midline finding step
+	 *  and obtain the midline without branches */
 	private ModelImage tempImage;
 	
-	private int[] extents;
+	private int area;
 	
 	private int imageWidth;
 	
@@ -39,9 +49,9 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 	
 	private int length;
 	
-	private int area;
-	
 	private int maxIndex;
+	
+	private int[] extents;
 	
 	private float[] stats;
 	
@@ -56,7 +66,7 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
         imageWidth = extents[0];
         imageHeight = extents[1];
         length = extents[0]*extents[1];
-        tempImage = new ModelImage(ModelImage.UBYTE, extents, "temp");
+        tempImage = new ModelImage(ModelImage.UBYTE, extents, "Midline Mask");
         stats = new float[4];
         nStats = new float[6];
 
@@ -74,6 +84,10 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
     
     public int getArea(){
     	return this.area;
+    }
+    
+    public int getMaxIndex(){
+    	return this.maxIndex;
     }
     
     public float[] getNucleiStats(){
@@ -101,34 +115,48 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
         
         segNuclei();
         
+        //Extract statistics from nuclei: (#, area, average size, std. dev, min, max)
+        
+        int[] gBuffer = new int[length];
+        try{
+        	gImage.exportData(0, length, gBuffer);
+        	Arrays.sort(gBuffer);
+            nucleiStatistics(gBuffer);
+        } catch(IOException x){//Maybe error handle this as well
+        	displayError("Could not export data for nuclei calculations");
+        	return;
+        }
         
         processMask();
         
         //Find midline from thresholded laplacian image
 		//Visited buffer, initially all 0
-		int[] maskBuffer = new int[length];
-		
-		//First pass
-		midline(maskBuffer, maxIndex, 0);
-
-		//Second pass
-		midline(maskBuffer, maxIndex, 1);
-
-		maskBuffer = null;
-		
-		//Mask the foreground distance image so only the midline is left
-		AlgorithmImageCalculator combine = new AlgorithmImageCalculator(dImage, boolImage,
-				AlgorithmImageCalculator.MULTIPLY, AlgorithmImageCalculator.CLIP, true, "");
-		combine.run();
-		
-		//Calculate statistics for the wall thickness
-		try{
-			float[] dBuffer = new float[length];
-			dImage.exportData(0, length, dBuffer);
-			statistics(dBuffer);
-		} catch(IOException x){
-			displayError("Could not find image");
-		}
+        if (maxIndex != -1){
+			int[] maskBuffer = new int[length];
+			
+			//First pass
+			midline(maskBuffer, maxIndex, 0);
+	
+			//Second pass
+			midline(maskBuffer, maxIndex, 1);
+	
+			maskBuffer = null;
+			
+			//Mask the foreground distance image so only the midline is left
+			AlgorithmImageCalculator combine = new AlgorithmImageCalculator(dImage, tempImage,
+					AlgorithmImageCalculator.MULTIPLY, AlgorithmImageCalculator.CLIP, true, "");
+			combine.run();
+			
+			//Calculate statistics for the wall thickness
+			try{
+				float[] dBuffer = new float[length];
+				dImage.exportData(0, length, dBuffer);
+				statistics(dBuffer);
+			} catch(IOException x){ //Maybe error handle this?
+				displayError("Could not export data for wall thickness calculations");
+				return;
+			}
+        }
 		
 		dImage = null;
 		gImage = null;
@@ -197,7 +225,7 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 		ArrayDeque<Integer> pool = new ArrayDeque<Integer>(MAXNUM);
 		Vector<Integer> prevPool = new Vector<Integer>(MAXNUM);
 		Integer index = new Integer(seed);
-		buffer[index.intValue()] = 1+pass;
+		buffer[seed] = 1+pass;
 		pool.addFirst(index);
 		int poolSize = 1;
 		int x,y;
@@ -298,10 +326,10 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 	private void statistics(float[] imBuffer){
 		float eSquare = 0f;
 		float num = 0f;
-		stats[0] = 9999f;
-		stats[1] = -9999f;
-		stats[2] = 0;
-		stats[3] = 0;
+		stats[0] = 9999f; //Minimum wall thickness
+		stats[1] = -9999f; //Maximum wall thickness
+		stats[2] = 0; //Average wall thickness
+		stats[3] = 0; //Standard deviation
 		
 		for(int i=0; i<length; i++){
 			if (imBuffer[i] !=0){
@@ -320,12 +348,12 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 	/**
 	 * Method for calculating the statistics involving the nuclei. The order of statistics
 	 * in the output array is:
-	 * 1) Number 2) Total Area 3) Average Size 4) Standard Deviation
+	 * 1) Number 2) Total Area 3) Average Size 4) Standard Deviation 5) Minimum Size 6) Maximum Size
 	 * @param imBuffer : image buffer resulting from ID objects, should be sorted already
 	 */
 	private void nucleiStatistics(int[] imBuffer){
 		
-		int squared = 0;
+		int squared = 0; //Keep track of a nucleus size to calculate std. dev
 		int prev = 1;
 		int num = 0;
 		int squaredSum = 0;
@@ -350,19 +378,14 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
 		
 		squaredSum += (squared*squared);
 		
-		nStats[0] = (float) imBuffer[length-1];
-		nStats[1] = (float) num;
-		nStats[2] = ((float)num) / nStats[0];
-		//nStats[3] = (float) squaredSum;
+		nStats[0] = (float) imBuffer[length-1]; //Number of nuclei
+		nStats[1] = (float) num; //Total area of nuclei
+		nStats[2] = nStats[1] / nStats[0]; //Average size of nuclei
+		//Standard deviation
 		nStats[3] = (float) Math.sqrt(((float)squaredSum)/nStats[0] - nStats[2]*nStats[2]);
 		
 		nStats[4] = min;
 		nStats[5] = max;
-		
-		/*nStats[3] += (float)(squared*squared);
-		
-		nStats[2] = nStats[1]/nStats[0];
-		nStats[3] = (float) Math.sqrt(nStats[3]/nStats[0] - nStats[2]*nStats[2]);*/
 		
 	}
 	
@@ -396,12 +419,7 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
        
         //Find the largest distance. This SHOULD lie along the midline
         maxIndex();
-        
-        if (maxIndex == -1){
-        	displayError("Could not find max");
-        	return;
-        }
-        
+ 
         fireProgressStateChanged("Calculating Wall Thickness Statistics: \n Applying Laplace filter");
         
         //Separate out the midline from the rest of the distance image via a thresholded laplacian
@@ -475,22 +493,5 @@ public class PlugInAlgorithmWallNucleiStats extends AlgorithmBase{
         nObj.setMinMax(3, 5000);
         nObj.run();
         
-        new ViewJFrameImage(gImage);
-        
-        //Extract statistics from nuclei: (#, area, average size, std. dev)
-        
-        int[] gBuffer = new int[length];
-        try{
-        	gImage.exportData(0, length, gBuffer);
-        	Arrays.sort(gBuffer);
-            nucleiStatistics(gBuffer);
-        } catch(IOException x){
-        	displayError("Could not export nuclei data");
-        }
-        
 	}
-	
-	
-	
-	
 }

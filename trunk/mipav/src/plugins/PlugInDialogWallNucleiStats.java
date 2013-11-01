@@ -15,6 +15,26 @@ import gov.nih.mipav.model.structures.*;
 
 import javax.swing.*;
 
+/**
+ * Plugin for the Collins' Lab to calculate statistics for histology slides. 
+ * This is the first iteration of the plugin. In this, the user is required 
+ * to manually segment the wall from the histology slide, and pass that in 
+ * to the plugin, which will calculate statistics for both the wall section 
+ * and the nuclei in the wall. There is minimal error checking at the current 
+ * juncture, and the progress bar is not updating smoothly. Further iterations 
+ * will contain more error checking, while the progress bar is a lower priority 
+ * issue. 
+ * 
+ * @author wangvg
+ *
+ *
+ * PLUGIN INPUT REQUIREMENTS:
+ * RGB Image : An image containing the wall/nuclei 
+ * Mask Image: A boolean image masking the wall/nuclei. The user must segment this manually. 
+ * Resolution Info: Default is 1 um, should be changed by the user depending on imaging parameters
+ *
+ */
+
 public class PlugInDialogWallNucleiStats extends JDialogBase implements AlgorithmInterface {
 
 	/**
@@ -38,19 +58,19 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 	
 	private ViewUserInterface UI;
 	
-	private boolean go = true;
-	
 	public PlugInDialogWallNucleiStats() {
         super();
 
         UI = ViewUserInterface.getReference();
-        init();
+        
+		if(buildImageBox()) init();
+		else dispose();
     }
 	
 	public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if(!go || command.equals("Cancel")) dispose();
+        if(command.equals("Cancel")) dispose();
         else if (command.equals("OK")) callAlgorithm();
         else super.actionPerformed(event);
 
@@ -73,20 +93,25 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 				float[] stats = midAlg.getWallStats();
 				float[] nStats = midAlg.getNucleiStats();
 				area = midAlg.getArea();
-
-				UI.setGlobalDataText(
-						"\nWall thickness Statistics (" + unitAbbr + "): \n\n");
-				UI.setGlobalDataText(
-						"    Minimum Thickness  = " + String.valueOf(stats[0]*xRes)+ " " + unitAbbr +"\n");
-				UI.setGlobalDataText(
-						"    Maximum Thickness  = " + String.valueOf(stats[1]*xRes)+ " " + unitAbbr+"\n");
-				UI.setGlobalDataText(
-						"    Average Thickness  = " + String.valueOf(stats[2]*xRes)+ " " + unitAbbr+"\n");
-				UI.setGlobalDataText(
-						"    Std. Deviation  = " + String.valueOf(stats[3]*xRes)+ " " + unitAbbr+"\n");
-				UI.setGlobalDataText(
-						"    Area  = " + String.valueOf(area*xRes*xRes) + " " + unitAbbr +"^2\n");
 				
+				if(midAlg.getMaxIndex() == -1) {
+					UI.setGlobalDataText(
+							"\nWall thickness Statistics unavailable. Could not find suitable seed point. \n\n");
+				}
+				else {
+					UI.setGlobalDataText(
+							"\nWall thickness Statistics (" + unitAbbr + "): \n\n");
+					UI.setGlobalDataText(
+							"    Minimum Thickness  = " + String.valueOf(stats[0]*xRes)+ " " + unitAbbr +"\n");
+					UI.setGlobalDataText(
+							"    Maximum Thickness  = " + String.valueOf(stats[1]*xRes)+ " " + unitAbbr+"\n");
+					UI.setGlobalDataText(
+							"    Average Thickness  = " + String.valueOf(stats[2]*xRes)+ " " + unitAbbr+"\n");
+					UI.setGlobalDataText(
+							"    Std. Deviation  = " + String.valueOf(stats[3]*xRes)+ " " + unitAbbr+"\n");
+					UI.setGlobalDataText(
+							"    Area  = " + String.valueOf(area*xRes*xRes) + " " + unitAbbr +"^2\n");
+				}
 				UI.setGlobalDataText(
 						"\nNuclei Statistics (" + unitAbbr + "): \n\n");
 				UI.setGlobalDataText(
@@ -104,6 +129,7 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 				
 					
 			}
+			else UI.setGlobalDataText("Unable to complete the algorithm");
 		}
 		dispose();
 	}
@@ -155,11 +181,11 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 	 * In this iteration: a wall image is (hopefully) and RGB image, while the
 	 * mask image should be a boolean image. 
 	**/
-	private void buildImageBox(){
+	private boolean buildImageBox(){
 
 		Enumeration<String> names = UI.getRegisteredImageNames();
 		
-		rgbImages = new JComboBox<String>();
+        rgbImages = new JComboBox<String>();
 		boolImages = new JComboBox<String>();
 
 		while (names.hasMoreElements()){
@@ -180,25 +206,22 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 		
 		if((rgbImages.getModel().getSize() == 0) && (boolImages.getModel().getSize() == 0)) {
             MipavUtil.displayWarning("Requires an RGB and a boolean mask image to begin");
-            go = false;
-            return;
+            return false;
         }
 		else if(rgbImages.getModel().getSize() == 0) {
             MipavUtil.displayWarning("Requires an RGB image to begin");
-            go = false;
-            return;
+            return false;
         }
 		else if(boolImages.getModel().getSize() == 0) {
             MipavUtil.displayWarning("Requires a boolean mask image to begin");
-            go = false;
-            return;
+            return false;
         }
+		
+		return true;
 
 	}
 	
 	private void init(){
-		
-		buildImageBox();
 		
 		setForeground(Color.black);
         setTitle("Wall/Nuclei Statistics");
@@ -228,7 +251,7 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
         resPanel.setForeground(Color.black);
         resPanel.setBorder(buildTitledBorder("Image Resolutions"));
         
-        JLabel xRes = new JLabel("X Resolution: ");
+        JLabel xRes = new JLabel("Resolution: ");
         xRes.setForeground(Color.black);
         xRes.setFont(serif12);
         resPanel.add(xRes);
