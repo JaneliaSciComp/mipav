@@ -15,6 +15,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.Serializable;
@@ -30,6 +32,7 @@ import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -134,6 +137,10 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 	protected JTable tagsTable = null;
 
 	protected boolean isStandalone = true;
+
+	private FocusListener addListener;
+	
+	private JComponent elementFocus;
 	
 	/** Blank constructor needed for scripting */
 	public JDialogDicomTagSelector() {
@@ -217,6 +224,25 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         	embeddedPanel.add(tagInformationPanel);
         	embeddedPanel.add(tablePanel);
         }
+        
+        addListener = new FocusListener() {
+        	public void focusGained(FocusEvent event) {
+        		if(event.getSource() == elementText) {
+        			elementFocus = elementText;
+        			System.out.println("Focus gained: A");
+        		} else {
+        			elementFocus = elementList;
+        			System.out.println("Focus gained: B");
+        		}
+        	}
+        	
+        	public void focusLost(FocusEvent event) {
+        	}
+        };
+        
+        elementText.addFocusListener(addListener);
+        elementList.addFocusListener(addListener);
+        elementFocus = elementList;
 	}
 	
 	public class DicomTableModel extends DefaultTableModel {
@@ -687,7 +713,13 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 			}
 			
 		} else if(e.getActionCommand().equals(ADD_TAG)) {
-			String tag = groupList.getSelectedValue()+","+elementList.getSelectedValue();
+			
+			String tag = new String();
+			if(elementFocus == elementList) {
+				tag = groupList.getSelectedValue()+","+elementList.getSelectedValue();
+			} else {
+				tag = groupText.getText()+","+elementText.getText();
+			}
 			if(!tagExistsInField(tag)) {
 				if(parentDialog.getTagListTextField() != null) {
 					String existingText = parentDialog.getTagListTextField().getText();
