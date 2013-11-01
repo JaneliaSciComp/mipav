@@ -3785,6 +3785,22 @@ public class FileDicom extends FileDicomBase {
                 		flag = false;
                 	}
                 	//newTag = null;
+                } else if(editIndex < editKeys.length && key.compareTo(editKeys[editIndex]) > 0) {
+                	System.out.println("Inserting "+editKeys[editIndex]+" before key "+key);
+                	int backup = 6;
+                	if(fileInfo.getVr_type() == VRtype.EXPLICIT) {
+                		backup = backup + 2;
+                	}
+                	raFile.seek(getFilePointer() - backup);
+                	int length = editTags[editIndex].getDataLength()+backup;
+                	changeDicomFileSize(raFile, length, getFilePointer()-backup, 0);
+                	raFile.seek(getFilePointer()-backup);  //gets raFile to current tag
+                	//key = getNextTag(endianess);
+                	writeNextTag(editTags[editIndex], raFile);
+                	editIndex++;
+                	if(editIndex == editKeys.length) {
+                		flag = false;
+                	}
                 }
                 
                 
