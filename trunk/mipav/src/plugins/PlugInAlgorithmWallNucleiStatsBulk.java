@@ -644,7 +644,5 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		} catch (IOException x){
 			MipavUtil.displayError("Could not write to csv file");
 		}
-		
-		System.out.println(outStr);
 	}
 }
