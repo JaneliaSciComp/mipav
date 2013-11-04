@@ -18,6 +18,8 @@ public class FileInfoSPAR extends FileInfoBase {
     /** Mask extents **/
     private int[] maskExtents;
     
+    private TransMatrix PARRECMatrix = null;
+    
     // default constructor
     public FileInfoSPAR(String name, String directory, int format) {
         super(name, directory, format);
@@ -110,6 +112,14 @@ public class FileInfoSPAR extends FileInfoBase {
      */
     public void setMaskExtents(int[] maskExtents) {
         this.maskExtents = maskExtents;
+    }
+    
+    public void setPARRECMatrix(TransMatrix PARRECMatrix) {
+        this.PARRECMatrix = PARRECMatrix;
+    }
+    
+    public TransMatrix getPARRECMatrix() {
+        return PARRECMatrix;
     }
 
 }
