@@ -42,6 +42,8 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	 */
 	private static final long serialVersionUID = 2021668025631889124L;
 	
+	private JTextField dirText;
+	
 	private JFileChooser fileChooser;
 	
 	/**Contains the wall images for batch processing	 */
@@ -64,19 +66,26 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         UI = ViewUserInterface.getReference();
         imageList = new Vector<File>();
         maskList = new Vector<File>();
-        
-        
+
         init();
     }
 	
 	public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        boolean changed = !dirText.getText().equals("Path to Directory with Slices");
 
         if(command.equals("Cancel")) dispose();
-        else if (command.equals("OK")){
-        	if(fileFilter()) callAlgorithm();
-        	else 
-        		MipavUtil.displayError("This folder does not contain any mask images");
+        else if (command.equals("Choose")) openDir();
+        else if (command.equals("ApproveSelection")){
+        	dirText.setText(fileChooser.getSelectedFile().toString());
+        }
+        else if  (command.equals("OK")){
+        	if (changed){
+	        	if(fileFilter()) callAlgorithm();
+	        	else 
+	        		MipavUtil.displayError("This folder does not contain any mask images");
+	        	}
+        	else MipavUtil.displayError("Please select a directory.");
         }
         else super.actionPerformed(event);
 
@@ -86,44 +95,6 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		if (algorithm instanceof PlugInAlgorithmWallNucleiStats){
 			if (midAlg.isCompleted() == true ){
-
-				/*float[] stats = midAlg.getWallStats();
-				float[] nStats = midAlg.getNucleiStats();
-				area = midAlg.getArea();
-				
-				if(midAlg.getMaxIndex() == -1) {
-					UI.setGlobalDataText(
-							"\nWall thickness Statistics unavailable. Could not find suitable seed point. \n\n");
-				}
-				else {
-					UI.setGlobalDataText(
-							"\nWall thickness Statistics (" + unitAbbr + "): \n\n");
-					UI.setGlobalDataText(
-							"    Minimum Thickness  = " + String.valueOf(stats[0]*xRes)+ " " + unitAbbr +"\n");
-					UI.setGlobalDataText(
-							"    Maximum Thickness  = " + String.valueOf(stats[1]*xRes)+ " " + unitAbbr+"\n");
-					UI.setGlobalDataText(
-							"    Average Thickness  = " + String.valueOf(stats[2]*xRes)+ " " + unitAbbr+"\n");
-					UI.setGlobalDataText(
-							"    Std. Deviation  = " + String.valueOf(stats[3]*xRes)+ " " + unitAbbr+"\n");
-					UI.setGlobalDataText(
-							"    Area  = " + String.valueOf(area*xRes*xRes) + " " + unitAbbr +"^2\n");
-				}
-				UI.setGlobalDataText(
-						"\nNuclei Statistics (" + unitAbbr + "): \n\n");
-				UI.setGlobalDataText(
-						"    Number of Nuclei  = " + String.valueOf(nStats[0])+ "\n");
-				UI.setGlobalDataText(
-						"    Minimum Size  = " + String.valueOf(nStats[4]*xRes*xRes)+ " " + unitAbbr+"^2\n");
-				UI.setGlobalDataText(
-						"    Maximum Size  = " + String.valueOf(nStats[5]*xRes*xRes)+ " " + unitAbbr+"^2\n");
-				UI.setGlobalDataText(
-						"    Average Size  = " + String.valueOf(nStats[2]*xRes*xRes)+ " " + unitAbbr+"^2\n");
-				UI.setGlobalDataText(
-						"    Std. Deviation  = " + String.valueOf(nStats[3]*xRes*xRes)+ " " + unitAbbr+"^2\n");
-				UI.setGlobalDataText(
-						"    Total Area  = " + String.valueOf(nStats[1]*xRes*xRes)+ " " + unitAbbr+"^2\n");*/
-				
 					
 			}
 			else UI.setGlobalDataText("Unable to complete the algorithm");
@@ -204,16 +175,36 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		
 		setForeground(Color.black);
         setTitle("Wall/Nuclei Statistics");
+
         
-        JPanel dirPanel = new JPanel();
+        JPanel dirPanel = new JPanel(new BorderLayout());
         dirPanel.setForeground(Color.black);
         dirPanel.setBorder(buildTitledBorder("Choose Image Directory"));
         
-        fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        dirPanel.add(fileChooser);
-        getContentPane().add(dirPanel, BorderLayout.NORTH);
+        String desc = "<html> Please choose a folder that contains wall sections as well as binary masks<br>"
+        		+ "for each slice. Masks should be binary images saved as XML files, with<br>"
+        		+ "pattern IMAGENAME_mask.xml. Wall images should have extension .jpg. <br></html>";
         
+        JLabel dirLabel = new JLabel(desc);
+        dirLabel.setForeground(Color.black);
+        dirLabel.setFont(serif12);
+        dirPanel.add(dirLabel, BorderLayout.NORTH);
+        
+        JPanel choosePanel = new JPanel();
+        
+        dirText = new JTextField(30);
+        dirText.setText("Path to Directory with Slices");
+        dirText.setFont(serif12);
+        choosePanel.add(dirText);
+        
+        JButton dirButton = new JButton("Choose");
+        dirButton.setFont(serif12);
+        dirButton.addActionListener(this);
+        choosePanel.add(dirButton);
+
+        dirPanel.add(choosePanel, BorderLayout.SOUTH);
+        
+        getContentPane().add(dirPanel, BorderLayout.NORTH);
         
         JPanel resPanel = new JPanel();
         resPanel.setForeground(Color.black);
@@ -226,6 +217,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         
         xResField = new JTextField(5);
         xResField.setText("1");
+        xResField.setHorizontalAlignment(JTextField.RIGHT);
         xResField.setFont(serif12);
         resPanel.add(xResField);
 
@@ -261,6 +253,15 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         setResizable(false);
         System.gc();
 		
+	}
+	
+	private void openDir(){
+		
+		 	fileChooser = new JFileChooser();
+	        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+	        fileChooser.addActionListener(this);
+	        fileChooser.showOpenDialog(this);
+	        
 	}
 	
 	
