@@ -2525,8 +2525,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private final String[] csvParams;
 
-        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensNum",
-                "ImgDim1Extent", "ImgDim2Extent", "ImgDim3Extent", "ImgDim4Extent", "ImgDim5Extent",
+        private final String[] unchangableElements = new String[] {IMG_HASH_CODE_ELEMENT_NAME, "ImgDimensionTyp",
+                "ImgDim1ExtentVal", "ImgDim2ExtentVal", "ImgDim3ExtentVal", "ImgDim4ExtentVal", "ImgDim5ExtentVal",
                 IMG_FILE_ELEMENT_NAME, IMG_PREVIEW_ELEMENT_NAME};
 
         private String currFile;
@@ -3454,13 +3454,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 if ( !csvParams[i].trim().equals("")) {
 
-                    if (csvFieldNames[i].equalsIgnoreCase("ImgDimensNum")) {
+                    if (csvFieldNames[i].equalsIgnoreCase("ImgDimensionTyp")) {
                         if ( !csvParams[i].trim().equals(String.valueOf(nDims) + "D") && String.valueOf(nDims) != null) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(nDims));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1Extent") && String.valueOf(exts[0]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1ExtentVal") && String.valueOf(exts[0]) != null) {
 
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == exts[0])) {
 
@@ -3468,94 +3468,94 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2Extent") && String.valueOf(exts[1]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2ExtentVal") && String.valueOf(exts[1]) != null) {
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == exts[1])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3Extent") && String.valueOf(exts[2]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3ExtentVal") && String.valueOf(exts[2]) != null) {
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == exts[2])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4Extent") && String.valueOf(exts[3]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4ExtentVal") && String.valueOf(exts[3]) != null) {
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == exts[3])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5Extent") && String.valueOf(exts[4]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5ExtentVal") && String.valueOf(exts[4]) != null) {
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == exts[4])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(exts[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1UoM")
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1UoMVal")
                             && FileInfoBase.getUnitsOfMeasureStr(units[0]) != null) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[0]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2UoM")
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2UoMVal")
                             && FileInfoBase.getUnitsOfMeasureStr(units[1]) != null) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[1]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3UoM")
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3UoMVal")
                             && FileInfoBase.getUnitsOfMeasureStr(units[2]) != null) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[2]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4UoM")
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4UoMVal")
                             && FileInfoBase.getUnitsOfMeasureStr(units[3]) != null) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[3]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5UoM")
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5UoMVal")
                             && FileInfoBase.getUnitsOfMeasureStr(units[4]) != null) {
                         if ( !csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[4]))) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1Resol") && String.valueOf(res[0]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim1ResolVal") && String.valueOf(res[0]) != null) {
                         // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[0])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[0]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2Resol") && String.valueOf(res[1]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim2ResolVal") && String.valueOf(res[1]) != null) {
                         // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[1])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[1]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3Resol") && String.valueOf(res[2]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim3ResolVal") && String.valueOf(res[2]) != null) {
                         // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[2])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[2]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4Resol") && String.valueOf(res[3]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim4ResolVal") && String.valueOf(res[3]) != null) {
                         // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[3])) {
                             csvFList.add(csvFieldNames[i]);
                             csvPList.add(csvParams[i]);
                             headerList.add(String.valueOf(res[3]));
                         }
-                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5Resol") && String.valueOf(res[4]) != null) {
+                    } else if (csvFieldNames[i].equalsIgnoreCase("ImgDim5ResolVal") && String.valueOf(res[4]) != null) {
                         // TODO: does not handle differences like 1.0 vs 1 well
                         if ( ! (Float.parseFloat(csvParams[i].trim()) == res[4])) {
                             csvFList.add(csvFieldNames[i]);
@@ -3639,14 +3639,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 csvPList.add(csvParams[i]);
                                 headerList.add(visitDate + " " + visitTime);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOversampleVal")
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgSliceOverSampVal")
                                 && !sliceOversample.equals("")) {
                             if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(sliceOversample)))) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(sliceOversample);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgGapBtwnSlicesMeasr") && !gap.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgGapBetwnSlicesMeasr") && !gap.equals("")) {
                             if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(gap)))) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -3658,32 +3658,32 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 csvPList.add(csvParams[i]);
                                 headerList.add(bodyPart);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgFoVMeasr") && !fieldOfView.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgFOVMeasrDescTxt") && !fieldOfView.equals("")) {
                             if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(fieldOfView)))) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(fieldOfView);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanManufName") && !manufacturer.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerManufName") && !manufacturer.equals("")) {
                             if ( !manufacturer.contains(csvParams[i].trim())) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(manufacturer);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanSftwrVerNum") && softwareVersion != null) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerSftwrVrsnNum")
+                                && softwareVersion != null) {
                             if ( !csvParams[i].trim().equals(softwareVersion)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(softwareVersion);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgHeadPositionTxt")
-                                && !patientPosition.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgHeadPostnTxt") && !patientPosition.equals("")) {
                             if ( !csvParams[i].trim().equals(patientPosition)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(patientPosition);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanModelName") && !scannerModel.equals("")) {
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerModelName") && !scannerModel.equals("")) {
                             if ( !csvParams[i].trim().equals(scannerModel)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -3717,13 +3717,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                         if ( !csvParams[i].trim().equals("")) {
 
-                            if (csvFieldNames[i].equalsIgnoreCase("ImgEchoTime")) {
+                            if (csvFieldNames[i].equalsIgnoreCase("ImgEchoDur")) {
                                 if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(echoTime)))) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
                                     headerList.add(echoTime);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgReptitnTime")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgRepetitionGapVal")) {
 
                                 if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(repetitionTime)))) {
 
@@ -3731,7 +3731,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     csvPList.add(csvParams[i]);
                                     headerList.add(repetitionTime);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgScanStrgthVal")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgScannerStrgthVal")) {
                                 if ( !csvParams[i].trim().equals(convertMagFieldStrengthToBRICS(magnaticFieldStrength))) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
@@ -3743,7 +3743,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     csvPList.add(csvParams[i]);
                                     headerList.add(flipAngle);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgMRIT1T2Name")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgMRIT1T2SeqName")) {
                                 if ( !csvParams[i].trim().equals(mriT1T2Name)) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
@@ -3755,13 +3755,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     csvPList.add(csvParams[i]);
                                     headerList.add(inversionTime);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgEchoTrainLengthMeasr")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
                                 if ( ! (Float.parseFloat(csvParams[i].trim()) == (Float.parseFloat(echoTrainMeas)))) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
                                     headerList.add(echoTrainMeas);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgPhaseEncodeDirTxt")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
                                 if ( !csvParams[i].trim().equals(phaseEncode)) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
@@ -3773,7 +3773,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     csvPList.add(csvParams[i]);
                                     headerList.add(numAverages);
                                 }
-                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgRFReceivCoilName")) {
+                            } else if (csvFieldNames[i].equalsIgnoreCase("ImgRFCoilName")) {
                                 if ( !csvParams[i].trim().equals(receiveCoilName)) {
                                     csvFList.add(csvFieldNames[i]);
                                     csvPList.add(csvParams[i]);
@@ -3868,7 +3868,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
 
-                if (l.equalsIgnoreCase("ImgDimensNum")) {
+                if (l.equalsIgnoreCase("ImgDimensionTyp")) {
                     final JComboBox jc = (JComboBox) comp;
                     final String item = exts.length + "D";
                     if (item != null && !item.equals("")) {
@@ -3904,7 +3904,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 } else if (l.equalsIgnoreCase("ImgDim5ExtentVal")) {
                     // for now...nothing
-                } else if (l.equalsIgnoreCase("ImgDim1UoM")) {
+                } else if (l.equalsIgnoreCase("ImgDim1UoMVal")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3916,7 +3916,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("ImgDim2UoM")) {
+                } else if (l.equalsIgnoreCase("ImgDim2UoMVal")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
                         final String item = (String) jc.getItemAt(k);
@@ -3928,7 +3928,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                     label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("ImgDim3UoM")) {
+                } else if (l.equalsIgnoreCase("ImgDim3UoMVal")) {
                     if (img.getNDims() > 2) {
                         final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3942,7 +3942,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("ImgDim4UoM")) {
+                } else if (l.equalsIgnoreCase("ImgDim4UoMVal")) {
                     if (img.getNDims() > 3) {
                         final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3956,7 +3956,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                         label.setForeground(Color.red);
                     }
-                } else if (l.equalsIgnoreCase("ImgDim5UoM")) {
+                } else if (l.equalsIgnoreCase("ImgDim5UoMVal")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgDim1ResolVal")) {
                     if (String.valueOf(res[0]) != null && !String.valueOf(res[0]).equals("")) {
@@ -4074,14 +4074,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                     && !visitTime.equals(""))) {
                         ((JTextField) comp).setText(visitDate + " " + visitTime);
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgSliceOversampleVal") && sliceOversample != null
+                    } else if (l.equalsIgnoreCase("ImgSliceOverSampVal") && sliceOversample != null
                             && !sliceOversample.equals("")) {
                         ((JTextField) comp).setText(sliceOversample);
-                    } else if (l.equalsIgnoreCase("ImgGapBtwnSlicesMeasr") && gap != null && !gap.equals("")) {
+                    } else if (l.equalsIgnoreCase("ImgGapBetwnSlicesMeasr") && gap != null && !gap.equals("")) {
                         ((JTextField) comp).setText(gap);
-                    } else if (l.equalsIgnoreCase("ImgFoVMeasr") && fieldOfView != null && !fieldOfView.equals("")) {
+                    } else if (l.equalsIgnoreCase("ImgFOVMeasrDescTxt") && fieldOfView != null
+                            && !fieldOfView.equals("")) {
                         ((JTextField) comp).setText(fieldOfView);
-                    } else if (l.equalsIgnoreCase("ImgScanManufName") && manufacturer != null
+                    } else if (l.equalsIgnoreCase("ImgScannerManufName") && manufacturer != null
                             && !manufacturer.equals("")) {
                         final JComboBox jc = (JComboBox) comp;
                         for (int k = 0; k < jc.getItemCount(); k++) {
@@ -4091,13 +4092,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             }
                         }
                         label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgScanSftwrVerNum") && softwareVersion != null
+                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum") && softwareVersion != null
                             && !softwareVersion.equals("")) {
                         ((JTextField) comp).setText(softwareVersion);
-                    } else if (l.equalsIgnoreCase("ImgHeadPositionTxt") && patientPosition != null
+                    } else if (l.equalsIgnoreCase("ImgHeadPostnTxt") && patientPosition != null
                             && !patientPosition.equals("")) {
                         ((JTextField) comp).setText(patientPosition);
-                    } else if (l.equalsIgnoreCase("ImgScanModelName") && scannerModel != null
+                    } else if (l.equalsIgnoreCase("ImgScannerModelName") && scannerModel != null
                             && !scannerModel.equals("")) {
                         ((JTextField) comp).setText(scannerModel);
                     } else if (l.equalsIgnoreCase("ImgBandwidthVal") && bandwidth != null && !bandwidth.equals("")) {
@@ -4125,13 +4126,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final JLabel label = iter.next();
                         final String l = label.getName();
                         final JComponent comp = labelsAndComps.get(label);
-                        if (l.equalsIgnoreCase("ImgEchoTime") && echoTime != null && !echoTime.equals("")) {
+                        if (l.equalsIgnoreCase("ImgEchoDur") && echoTime != null && !echoTime.equals("")) {
                             ((JTextField) comp).setText(echoTime);
                             label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgRepetitnTime") && repetitionTime != null
+                        } else if (l.equalsIgnoreCase("ImgRepetitionGapVal") && repetitionTime != null
                                 && !repetitionTime.equals("")) {
                             ((JTextField) comp).setText(repetitionTime);
-                        } else if (l.equalsIgnoreCase("ImgScanStrgthVal") && magnaticFieldStrength != null
+                        } else if (l.equalsIgnoreCase("ImgScannerStrgthVal") && magnaticFieldStrength != null
                                 && !magnaticFieldStrength.equals("")) {
                             final JComboBox jc = (JComboBox) comp;
                             for (int k = 0; k < jc.getItemCount(); k++) {
@@ -4141,7 +4142,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 }
                             }
                             label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgMRIT1T2Name") && mriT1T2Name != null
+                        } else if (l.equalsIgnoreCase("ImgMRIT1T2SeqName") && mriT1T2Name != null
                                 && !mriT1T2Name.equals("")) {
                             ((JTextField) comp).setText(mriT1T2Name);
                         } else if (l.equalsIgnoreCase("ImgSignalAvgNum") && numAverages != null
@@ -4150,16 +4151,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr") && flipAngle != null
                                 && !flipAngle.equals("")) {
                             ((JTextField) comp).setText(flipAngle);
-                        } else if (l.equalsIgnoreCase("ImgEchoTrainLengthMeasr") && echoTrainMeas != null
+                        } else if (l.equalsIgnoreCase("ImgEchoTrainLngthMeasr") && echoTrainMeas != null
                                 && !echoTrainMeas.equals("")) {
                             ((JTextField) comp).setText(echoTrainMeas);
                         } else if (l.equalsIgnoreCase("ImgInversionTime") && inversionTime != null
                                 && !inversionTime.equals("")) {
                             ((JTextField) comp).setText(inversionTime);
-                        } else if (l.equalsIgnoreCase("ImgRFReceivCoilName") && receiveCoilName != null
+                        } else if (l.equalsIgnoreCase("ImgRFCoilName") && receiveCoilName != null
                                 && !receiveCoilName.equals("")) {
                             ((JTextField) comp).setText(receiveCoilName);
-                        } else if (l.equalsIgnoreCase("ImgPhaseEncodeDirTxt") && phaseEncode != null
+                        } else if (l.equalsIgnoreCase("ImgPhasEncdeDirctTxt") && phaseEncode != null
                                 && !phaseEncode.equals("")) {
                             ((JTextField) comp).setText(phaseEncode);
                         }
