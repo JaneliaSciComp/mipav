@@ -211,7 +211,6 @@ public class FileSpar extends FileBase {
                 imageAngulation[0] = angulation[0];
                 imageAngulation[1] = -angulation[2];
                 imageAngulation[2] = -angulation[1];
-                System.out.println("Test2");
                 break;
             case FileInfoBase.CORONAL: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
@@ -328,22 +327,25 @@ public class FileSpar extends FileBase {
 	}
 
 	private ModelImage updateTransformMatrix(ModelImage image) {
-        TransMatrix toScanner = new TransMatrix(4);
         
         double[] sliceAng = fileInfo.getSliceAngulation();
         double[] offCentre = fileInfo.getOffCentre();
         TransMatrix trans = FilePARREC.makeTranslationMatrix(offCentre);
         TransMatrix rot = FilePARREC.makeRotationMatrix(image.getExtents(), sliceAng);
         rot.mult(trans);
+        fileInfo.setPARRECMatrix(rot);
         
         TransMatrix imageBMat = rot;
+        
+        if (imageAInfo == null) {
+            return image;
+        }
         
         ModelImage imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
         
         if(image != imageA) {
-            TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
-            //imageBMat.Inverse();
-            aTrans.Inverse();
+            TransMatrix aTrans = new TransMatrix(((FileInfoSPAR)imageA.getFileInfo()[0]).getPARRECMatrix());
+            imageBMat.Inverse();
             aTrans.mult(imageBMat);
             aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
@@ -364,7 +366,7 @@ public class FileSpar extends FileBase {
             //view.setVisible(true);
             
             ModelImage resultImage = transform.getResultImage();
-            //resultImage.setMatrix(imageBMat);
+            resultImage.setMatrix(aTrans);
            
             return resultImage;
         }
