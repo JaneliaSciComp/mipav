@@ -57,11 +57,11 @@ public class FileSpar extends FileBase {
     public FileSpar(FileInfoBase imageAInfo, String fileName, String fileDir) {
         
         if(!isHeaderFile(fileDir + fileName)) {
-            String[] list = getCompleteFileNameList(fileName + fileDir);
+            String[] list = getCompleteFileNameList(fileDir + fileName);
             String match = fileName.substring(0, fileName.lastIndexOf("."));
             for(String str : list) {
                 if(str.toLowerCase().contains(".spar") && str.contains(match)) {
-                    fileName = str;
+                    fileName = match + ".spar";
                     break;
                 }
             }
