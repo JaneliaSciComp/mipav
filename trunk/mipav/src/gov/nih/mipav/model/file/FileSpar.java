@@ -333,21 +333,119 @@ public class FileSpar extends FileBase {
         TransMatrix trans = FilePARREC.makeTranslationMatrix(offCentre);
         TransMatrix rot = FilePARREC.makeRotationMatrix(image.getExtents(), sliceAng);
         rot.mult(trans);
-        fileInfo.setPARRECMatrix(rot);
+        rot = FilePARREC.ConvertToMIPAVConvention(rot);
         
         TransMatrix imageBMat = rot;
         
+       
+            /*double Mx[][] = new double[3][3];
+
+            double Sx    = Math.sin(-8.700447 * Math.PI/180.0);
+            double Sy    = Math.sin(-4.8654304 * Math.PI/180.0);
+            double Sz    = Math.sin(3.3639414 * Math.PI/180.0);
+            double Cx    = Math.cos(-8.700447 * Math.PI/180.0);
+            double Cy    = Math.cos(-4.8654304 * Math.PI/180.0);
+            double Cz    = Math.cos(3.3639414 * Math.PI/180.0);
+            
+            final int ORDER_XYZ = 1;
+            final int ORDER_YZX = 2;
+            final int ORDER_ZXY = 3;
+            final int ORDER_ZYX = 4;
+            final int ORDER_YXZ = 5;
+            final int ORDER_XZY = 6;
+            int EulerOrder = ORDER_XYZ;
+            switch(EulerOrder)
+            {
+            case ORDER_XYZ:
+                Mx[0][0]=Cy*Cz;
+                Mx[0][1]=-Cy*Sz;
+                Mx[0][2]=Sy;
+                Mx[1][0]=Cz*Sx*Sy+Cx*Sz;
+                Mx[1][1]=Cx*Cz-Sx*Sy*Sz;
+                Mx[1][2]=-Cy*Sx;
+                Mx[2][0]=-Cx*Cz*Sy+Sx*Sz;
+                Mx[2][1]=Cz*Sx+Cx*Sy*Sz;
+                Mx[2][2]=Cx*Cy;
+                break;
+
+            case ORDER_YZX:
+                Mx[0][0]=Cy*Cz;
+                Mx[0][1]=Sx*Sy-Cx*Cy*Sz;
+                Mx[0][2]=Cx*Sy+Cy*Sx*Sz;
+                Mx[1][0]=Sz;
+                Mx[1][1]=Cx*Cz;
+                Mx[1][2]=-Cz*Sx;
+                Mx[2][0]=-Cz*Sy;
+                Mx[2][1]=Cy*Sx+Cx*Sy*Sz;
+                Mx[2][2]=Cx*Cy-Sx*Sy*Sz;
+                break;
+
+            case ORDER_ZXY:
+                Mx[0][0]=Cy*Cz-Sx*Sy*Sz;
+                Mx[0][1]=-Cx*Sz;
+                Mx[0][2]=Cz*Sy+Cy*Sx*Sz;
+                Mx[1][0]=Cz*Sx*Sy+Cy*Sz;
+                Mx[1][1]=Cx*Cz;
+                Mx[1][2]=-Cy*Cz*Sx+Sy*Sz;
+                Mx[2][0]=-Cx*Sy;
+                Mx[2][1]=Sx;
+                Mx[2][2]=Cx*Cy;
+                break;
+
+            case ORDER_ZYX:
+                Mx[0][0]=Cy*Cz;
+                Mx[0][1]=Cz*Sx*Sy-Cx*Sz;
+                Mx[0][2]=Cx*Cz*Sy+Sx*Sz;
+                Mx[1][0]=Cy*Sz;
+                Mx[1][1]=Cx*Cz+Sx*Sy*Sz;
+                Mx[1][2]=-Cz*Sx+Cx*Sy*Sz;
+                Mx[2][0]=-Sy;
+                Mx[2][1]=Cy*Sx;
+                Mx[2][2]=Cx*Cy;
+                break;
+
+            case ORDER_YXZ:
+                Mx[0][0]=Cy*Cz+Sx*Sy*Sz;
+                Mx[0][1]=Cz*Sx*Sy-Cy*Sz;
+                Mx[0][2]=Cx*Sy;
+                Mx[1][0]=Cx*Sz;
+                Mx[1][1]=Cx*Cz;
+                Mx[1][2]=-Sx;
+                Mx[2][0]=-Cz*Sy+Cy*Sx*Sz;
+                Mx[2][1]=Cy*Cz*Sx+Sy*Sz;
+                Mx[2][2]=Cx*Cy;
+                break;
+
+            case ORDER_XZY:
+                Mx[0][0]=Cy*Cz;
+                Mx[0][1]=-Sz;
+                Mx[0][2]=Cz*Sy;
+                Mx[1][0]=Sx*Sy+Cx*Cy*Sz;
+                Mx[1][1]=Cx*Cz;
+                Mx[1][2]=-Cy*Sx+Cx*Sy*Sz;
+                Mx[2][0]=-Cx*Sy+Cy*Sx*Sz;
+                Mx[2][1]=Cz*Sx;
+                Mx[2][2]=Cx*Cy+Sx*Sy*Sz;
+                break;
+            }
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    System.out.println("Mx[" + i + "][" + j + "] = " + Mx[i][j]);
+                }
+            }*/
+        
         if (imageAInfo == null) {
+            image.setMatrix(rot);
             return image;
         }
         
         ModelImage imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
         
         if(image != imageA) {
-            TransMatrix aTrans = new TransMatrix(((FileInfoSPAR)imageA.getFileInfo()[0]).getPARRECMatrix());
+            TransMatrix aTransOriginal = new TransMatrix(imageA.getMatrix());
+            TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
             imageBMat.Inverse();
             aTrans.mult(imageBMat);
-            aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
             transform.setPadFlag(false);
@@ -366,7 +464,7 @@ public class FileSpar extends FileBase {
             //view.setVisible(true);
             
             ModelImage resultImage = transform.getResultImage();
-            resultImage.setMatrix(aTrans);
+            resultImage.setMatrix(aTransOriginal);
            
             return resultImage;
         }
