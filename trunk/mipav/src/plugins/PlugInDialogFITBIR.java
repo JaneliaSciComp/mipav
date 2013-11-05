@@ -285,9 +285,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String GUID_ELEMENT_NAME = "GUID";
 
-    private static final String IMG_FILE_ELEMENT_NAME = "ImgFileName";
+    private static final String IMG_FILE_ELEMENT_NAME = "ImgFile";
 
-    private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFileName";
+    private static final String IMG_PREVIEW_ELEMENT_NAME = "ImgPreviewFile";
 
     private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
 
@@ -4181,7 +4181,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final JLabel label = iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
-                if ( !l.equalsIgnoreCase("ImgFileName")) {
+                if ( !l.equalsIgnoreCase(IMG_FILE_ELEMENT_NAME)) {
                     try {
                         ((JTextField) comp).setText(null);
                     } catch (final ClassCastException e) {
