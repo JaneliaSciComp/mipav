@@ -1472,27 +1472,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             m_akVNormal[iP0].add(kNormal);
             m_akVNormal[iP1].add(kNormal);
             m_akVNormal[iP2].add(kNormal);
-
-//            if ( m_akVNormal[iP0].X == 0 && m_akVNormal[iP0].Y == 0 && m_akVNormal[iP0].Z == 0 )
-//            {
-//            	System.err.println( "computeVertexNormals" );
-//            }
-//            if ( m_akVNormal[iP1].X == 0 && m_akVNormal[iP1].Y == 0 && m_akVNormal[iP1].Z == 0 )
-//            {
-//            	System.err.println( "computeVertexNormals" );
-//            }
-//            if ( m_akVNormal[iP2].X == 0 && m_akVNormal[iP2].Y == 0 && m_akVNormal[iP2].Z == 0 )
-//            {
-//            	System.err.println( "computeVertexNormals" );
-//            }
         }
 
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVNormal[i].normalize();
-//            if ( m_akVNormal[i].X == 0 && m_akVNormal[i].Y == 0 && m_akVNormal[i].Z == 0 )
-//            {
-//            	System.err.println( "computeVertexNormals " + i );
-//            }
         }
     }
 

@@ -6,6 +6,7 @@ import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Meshes.ConvexHull3f;
 import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
@@ -222,8 +223,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         
 //        if ( showSegmentation )
 //        {
-//    		destImageMin.calcMinMax();
-//        	ModelImage whiteMatterImage = (ModelImage)destImageMin.clone();
+//    		destImage.calcMinMax();
+//        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
 //        	whiteMatterImage.setImageName( srcImage.getImageName() + "_whiteMatter" );
 //        	new ViewJFrameImage(whiteMatterImage);
 //        }
@@ -233,7 +234,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         calculateRadius(destImage);
         
         initSphere(destImage, noMax);
-        
+        destImage.getMask().flip(0, dimX*dimY*dimZ);
         
         fireProgressStateChanged(90);
         
@@ -349,86 +350,45 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	/**
 	 * Initialize the scale factors. Based on the ModelImage Volume.
 	 */
-	private void initSphere(ModelImage image, boolean noMax) {
-		
-    	float[] res = srcImage.getResolutions(0);		
-		final float fMaxX = (dimX - 1) * res[0];
-		final float fMaxY = (dimY - 1) * res[1];
-		final float fMaxZ = (dimZ - 1) * res[2];
+	private void initSphere(ModelImage image, boolean noMax) 
+	{			
+		TriMesh sphere = createMesh( image.getMask() );
+		if ( sphere != null )
+		{
 
-		float fMax = fMaxX;
-		if (fMaxY > fMax) {
-			fMax = fMaxY;
-		}
-		if (fMaxZ > fMax) {
-			fMax = fMaxZ;
-		}
-		float scaleX = fMaxX / fMax;
-		float scaleY = fMaxY / fMax;
-		float scaleZ = fMaxZ / fMax;
+			ConvexHull3f convexHull = new ConvexHull3f( sphere.VBuffer.GetVertexQuantity(), sphere.VBuffer.GetPositionArray(), 0.00001f, true );
+			IndexBuffer iBuffer = new IndexBuffer(convexHull.GetIndices());
+			VertexBuffer vBuffer = new VertexBuffer( sphere.VBuffer );
+			TriMesh convexHullMesh = new TriMesh( vBuffer, iBuffer );
 
-//		System.err.println( scaleX * maxRadius + " " + scaleY * maxRadius + " " + scaleZ * maxRadius );
-		
-		Attributes kAttr = new Attributes();
-		kAttr.SetPChannels(3);
-		kAttr.SetNChannels(3);
-		kAttr.SetCChannels(0,3);
-		StandardMesh kSM = new StandardMesh(kAttr);
-		TriMesh sphere = kSM.Sphere(6);
-		sphere = removeUnusedVertices(sphere);
-		sphere.AttachGlobalState(new MaterialState());
-		
-		Transformation scaleToVolume = new Transformation();
-		scaleToVolume.SetScale( scaleX * maxRadius, scaleY * maxRadius, scaleZ * maxRadius );
-		scaleToVolume.SetTranslate( cog );
-		StandardMesh.TransformData( scaleToVolume, sphere.VBuffer );
+//			System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
+			convexHullMesh = removeUnusedVertices(convexHullMesh);
+//			System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
+			BitSet meshCHMask = computeSurfaceMask(convexHullMesh);	
+			floodFill(meshCHMask, cog);
+//			ModelImage outlineMaskImage = (ModelImage)destImage.clone();
+//			outlineMaskImage.setMask(meshCHMask);
+//			outlineMaskImage.setImageName( destImage.getImageName() + "_CH_Mask" );        	
+//			new ViewJFrameImage(outlineMaskImage);		
 
-		createWhiteMatterMesh( image, sphere );	
-		BitSet meshWMMask = computeSurfaceMask(sphere);			
-        if ( showSegmentation )
-        {
-    		floodFill(meshWMMask, cog);
-        	ModelImage outlineMaskImage = (ModelImage)destImage.clone();
-        	outlineMaskImage.setMask((BitSet) meshWMMask.clone());
-        	outlineMaskImage.setImageName( destImage.getImageName() + "_whiteMatterMask" );        	
-        	new ViewJFrameImage(outlineMaskImage);
-        	
-        	ModelImage whiteMatterShortImageBlur = blur(meshWMMask);
-        	
+			TriMesh kMesh = createMesh( meshCHMask );
+			if ( kMesh != null )
+			{
+				AlgorithmBrainExtractor betAlg = new AlgorithmBrainExtractor( destImage, faceOrientation, kMesh, 
+						(int)getMedianIntensity( destImage, meshCHMask ), cog);
+				betAlg.setExtractPaint(true);
+				betAlg.extractBrain();
+				betAlg = null;
 
-        	int length = dimX * dimY * dimZ;
-        	int[] buffer = new int[length];
-        	try {
-        		whiteMatterShortImageBlur.exportData(0, length, buffer);
-        		final SurfaceExtractorCubes kExtractor = new SurfaceExtractorCubes(dimX, dimY, dimZ, buffer,
-        				1, 1, 1, null, null, null);
-        		final TriMesh kMesh = kExtractor.getLevelSurface(0);
-        		if ( kMesh != null )
-        		{
-        			// Get the adjacent triangles:
-        			VETMesh kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f, 2 * kMesh.IBuffer
-        					.GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer.GetData());
-        			kMesh.IBuffer = new IndexBuffer(kVETMesh.GetTriangles());
-
-        			String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_white_matter_init.sur";
-        			Preferences.debug( "Saving white matter mesh as " + kName + "\n", Preferences.DEBUG_ALGORITHM );
-        			saveMesh( new TriMesh(new VertexBuffer(kMesh.VBuffer), new IndexBuffer( kMesh.IBuffer)), true, kName );
-
-//        			AlgorithmBrainExtractor betAlg = new AlgorithmBrainExtractor( destImage, faceOrientation, kMesh, 
-//        					(int)getMedianIntensity( destImage, meshWMMask ), cog);
-//        			betAlg.setExtractPaint(true);
-//        			betAlg.extractBrain();
-//        			betAlg = null;
-        		}
-        	} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+//				BitSet meshMask = computeSurfaceMask(kMesh);			
+//				floodFill(meshMask, cog);
+//				ModelImage betMaskImage = (ModelImage)destImage.clone();
+//				betMaskImage.setMask((BitSet) meshMask.clone());
+//				betMaskImage.setImageName( destImage.getImageName() + "_BETMask" );        	
+//				new ViewJFrameImage(betMaskImage);
 			}
-        	whiteMatterShortImageBlur.disposeLocal();
-        }
-        
-        
-        
+		}
+                
         
 //		MjCorticalMesh_WM corticalMesh = new MjCorticalMesh_WM( sphere, cog );
 //		if ( corticalMesh.CheckManifold() )
@@ -449,41 +409,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //			}
 //		}
 		
-		
-		TriMesh skull = createSkullMesh( image, sphere, noMax );	
-		smoothMesh( skull, 50, .05f, false, 2f );			
-		BitSet meshSurfaceMask = computeSurfaceMask(skull );
-//		smoothMesh( sphere, 50, .05f, false, 2f );			
-//		BitSet meshSurfaceMask = computeSurfaceMask(sphere );
-		
-//        if ( showSegmentation )
-//        {
-//        	ModelImage outlineMaskImage = (ModelImage)srcImage.clone();
-//        	outlineMaskImage.setMask((BitSet) meshSurfaceMask.clone());
-//        	outlineMaskImage.setImageName( srcImage.getImageName() + "_surfaceMask" );
-//        	new ViewJFrameImage(outlineMaskImage);
-//        }
-		floodFill(meshSurfaceMask, cog);
-
-
-//		AlgorithmBrainExtractor betAlg = new AlgorithmBrainExtractor( destImageMax, faceOrientation, skull, 
-//				(int)getMedianIntensity( destImageMin, meshSurfaceMask ), cog);
-//		betAlg.extractBrain();
-		
-		
-		meshSurfaceMask.flip(0, dimX*dimY*dimZ);
-//		System.err.println( "Surface mask " +  meshSurfaceMask.cardinality() );
-		destImage.setMask(meshSurfaceMask);
-		
-		try {
-	        String kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_white_matter.sur";
-	        Preferences.debug( "Saving white matter mesh as " + kName + "\n", Preferences.DEBUG_ALGORITHM );
-			saveMesh( sphere, true, kName );
-	        kName = ViewUserInterface.getReference().getDefaultDirectory() + srcImage.getImageName() + "_skull.sur";
-	        Preferences.debug( "Saving skull mesh as " + kName + "\n", Preferences.DEBUG_ALGORITHM );
-			saveMesh( skull, true, kName );
-		} catch (IOException e) {
-		}
 	}
 	
     
@@ -655,7 +580,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		for ( int i = 0; i < numVertices; i++ )
 		{
 			Vector3f pt = sphere.VBuffer.GetPosition3(i);
-			Vector3f dir = Vector3f.sub( pt, cog );
+//			Vector3f dir = Vector3f.sub( pt, cog );
+			Vector3f dir = sphere.VBuffer.GetNormal3(i);
 			dir.normalize();
 
 			Vector3f startPt = new Vector3f(pt);
@@ -3187,26 +3113,56 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	return newMask;
     }
     
+    
+    private TriMesh createMesh( BitSet mask )
+    {
+    	int length = dimX * dimY * dimZ;
+    	int[] buffer = new int[length];
+    	for ( int z = 0; z < dimZ; z++ )
+    	{
+    		for ( int y = 0; y < dimY; y++ )
+    		{
+    			for ( int x = 0; x < dimX; x++ )
+    			{
+    				int index = z*dimY*dimX + y*dimX + x;
+    				if ( !mask.get(index) )
+    				{
+    					buffer[index] = 0;
+    				}
+    				else
+    				{
+    					buffer[index] = 1;
+    				}
+    				if ( (z == 0) || (z == dimZ -1) )
+    				{
+    					buffer[index] = 0;
+    				}						
+    			}
+    		}
+    	}
 
+    	final SurfaceExtractorCubes kExtractor = new SurfaceExtractorCubes(dimX, dimY, dimZ, buffer,
+    			1, 1, 1, null, null, null);
+    	final TriMesh kMesh = kExtractor.getLevelSurface(0);
+    	if ( kMesh == null )
+    	{
+    		System.err.println( "surface extration failed" );
+    	}
+    	if ( kMesh != null )
+    	{
+    		// Get the adjacent triangles:
+    		VETMesh kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f, 2 * kMesh.IBuffer
+    				.GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer.GetData());
+    		kMesh.IBuffer = new IndexBuffer(kVETMesh.GetTriangles());
+    	}
+    	return kMesh;
 
-	/**
-	 * Returns the amount of correction which should be applied to the z-direction sigma (assuming that correction is
-	 * requested).
-	 *
-	 * @return  the amount to multiply the z-sigma by to correct for resolution differences
-	 */
-	private float getCorrectionFactor(ModelImage image) {
-		int index = image.getExtents()[2] / 2;
-		float xRes = image.getFileInfo(index).getResolutions()[0];
-		float zRes = image.getFileInfo(index).getResolutions()[2];
+    }
 
-		return xRes / zRes;
-	}
 
 	private ModelImage blur( BitSet mask )
 	{
 		ModelImage image = (ModelImage)srcImage.clone();
-		float min = (float) srcImage.getMin();
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
@@ -3216,29 +3172,20 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					int index = z*dimY*dimX + y*dimX + x;
 					if ( !mask.get(index) )
 					{
-						image.set(index, min);
+						image.set(index, 0);
 					}
+					else
+					{
+						image.set(index, 1);
+					}
+					if ( (z == 0) || (z == dimZ -1) )
+					{
+						image.set(index, 0);
+					}						
 				}
 			}
 		}
-		final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
-
-		float[] sigmas = new float[] { 3, 3,3 * getCorrectionFactor(image) };
-		OpenCLAlgorithmGaussianBlur blurAlgo;
-
-		ModelImage resultImage = new ModelImage( image.getType(), image.getExtents(), name );
-		JDialogBase.updateFileInfo( image, resultImage );
-		blurAlgo = new OpenCLAlgorithmGaussianBlur(resultImage, image, 
-				sigmas, true, true, false);   
-
-		blurAlgo.setRed(true);
-		blurAlgo.setGreen(true);
-		blurAlgo.setBlue(true);
-		blurAlgo.run();
-		
-		image.disposeLocal();
-
-		return blurAlgo.getDestImage();
+		return image;
 	}
     
 }
