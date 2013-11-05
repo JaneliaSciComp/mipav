@@ -37,6 +37,9 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	 */
 	private static final long serialVersionUID = 6523705694712956431L;
 
+	private int counter = 0;
+	
+	/** File of current image open*/
 	private File current;
 	
 	private JTextField dirText;
@@ -45,10 +48,8 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	
 	private JFileChooser fileChooser;
 	
-	/**Contains the wall images for batch processing	 */
+	/**Contains the wall images that require masks	 */
 	private Vector<File> imageList;
-	
-	private int counter = 0;
 	
 	private int listLength;
 	
@@ -134,10 +135,12 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	 */
 	
 	protected void callAlgorithm() {
+		
 		FileIO imLoader = new FileIO();
 		
 		current = imageList.get(counter);
 		rgbImage = imLoader.readImage(current.toString());
+		rgbImage.setImageName(current.getName(),false);
 		display = new ViewJFrameImage(rgbImage, null, new Dimension(0,300));
 	}
 	
@@ -153,6 +156,7 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		Path dir = Paths.get(dirText.getText());
 		File mask;
 		String stripped;
+		
 		//Populate the mask images first, then use that to get the wall images
 		//so that only masked images are processed
 		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.{jpg,jpeg}")) {
@@ -230,7 +234,6 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
-	        
 	}
 	
 	/**
@@ -298,21 +301,28 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	
 	private void saveMask(){
 		
+		FileIO imWriter; //Used to write the binary mask to disk
+		FileWriteOptions opt; //Points to the place to save the masks
+		ModelImage outImage; //Mask image resulting from the XOR operation
+		ModelImage cloned; //Cloned version of the wall image for the XOR operation
+		String destPath, destName; //Directory and file paths
+		
 		VOIVector vois = rgbImage.getVOIs();
 		if(vois == null){
 			MipavUtil.displayError("No VOI was drawn. Please draw the wall boundaries.");
 			return;
 		}
-		ModelImage cloned = (ModelImage) rgbImage.clone();
+		//Requires clone, or else errors occur
+		cloned = (ModelImage) rgbImage.clone();
 		AlgorithmVOILogicalOperations xor = 
 				new AlgorithmVOILogicalOperations(cloned, vois, AlgorithmVOILogicalOperations.XOR, false);
 		xor.run();
-		ModelImage outImage = xor.getFinalMaskImage();
-		String destPath = current.getParent().concat("\\");
-		String destName = current.getName();
+		outImage = xor.getFinalMaskImage();
+		destPath = current.getParent().concat("\\");
+		destName = current.getName();
 		destName = destName.substring(0, destName.indexOf(".")).concat("_mask.xml");
-		FileWriteOptions opt = new FileWriteOptions(destName, destPath, true);
-		FileIO imWriter = new FileIO();
+		opt = new FileWriteOptions(destName, destPath, true);
+		imWriter = new FileIO();
 		imWriter.writeImage(outImage, opt, false);
 	}
 }
