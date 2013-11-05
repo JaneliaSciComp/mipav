@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -30,7 +31,7 @@ import javax.swing.*;
  * vectors that contain the image paths for processing, which are then sent to the
  * batch processing algorithm
  * 
- * @author wangvg
+ * @author Victor Wang
  *
  *
  */
@@ -61,7 +62,8 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	private JTextField xResField;
 	
 	public PlugInDialogWallNucleiStatsBulk() {
-        super();
+       
+		super();
 
         UI = ViewUserInterface.getReference();
         imageList = new Vector<File>();
@@ -71,12 +73,14 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
     }
 	
 	public void actionPerformed(ActionEvent event) {
+		
         String command = event.getActionCommand();
         boolean changed = !dirText.getText().equals("Path to Directory with Slices");
 
         if(command.equals("Cancel")) dispose();
         else if (command.equals("Choose")) openDir();
         else if (command.equals("ApproveSelection")){
+        	Preferences.setImageDirectory(fileChooser.getSelectedFile());
         	dirText.setText(fileChooser.getSelectedFile().toString());
         }
         else if  (command.equals("OK")){
@@ -88,14 +92,14 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         	else MipavUtil.displayError("Please select a directory.");
         }
         else super.actionPerformed(event);
-
     }
 
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
+		
 		if (algorithm instanceof PlugInAlgorithmWallNucleiStats){
 			if (midAlg.isCompleted() == true ){
-					
+				MipavUtil.displayInfo("Batch processing has completed");	
 			}
 			else UI.setGlobalDataText("Unable to complete the algorithm");
 		}
@@ -105,7 +109,6 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	protected void callAlgorithm() {
 		
 		try{
-			
 			int xRes;
 			String units;
 			
@@ -138,37 +141,41 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		}
 		catch (OutOfMemoryError x){
 			MipavUtil.displayError("Unable to allocate enough memory");
-
             return;
 		}
 	}
 	
 	/**
 	 * Method used to populate a vector of wall images that will be used for the algorithm.
+	 * Images without masks are not included in the list. The user should run the accompanying
+	 * plugin to create the masks. 
 	 * 
 	 * @return returns false if there are no images to populate the vectors
 	 */
 	
 	private boolean fileFilter(){
 		
-		Path dir = fileChooser.getSelectedFile().toPath();
+		Path dir = Paths.get(dirText.getText());
+		File mask;
 		String stripped;
 		//Populate the mask images first, then use that to get the wall images
 		//so that only masked images are processed
-		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*_mask.xml")) {
+		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, ".{jpg,jpeg}")) {
 		    for (Path file: stream) {
-		        maskList.add(file.toFile());
 		        stripped = file.toString();
-		        stripped = stripped.substring(0, stripped.length()-9);
-		        stripped = stripped.concat(".jpg");
-		        imageList.add(new File(stripped));
+		        stripped = stripped.substring(0, stripped.indexOf("."));
+		        stripped = stripped.concat("_mask.xml");
+		        mask = new File(stripped);
+		        if (!mask.exists()){
+		        	imageList.add(file.toFile());
+		        	maskList.add(new File(stripped));
+		        }
 		    }
 		} catch (IOException | DirectoryIteratorException x) {
 		    MipavUtil.displayError("Directory Iterator not available");
 		}
 		
 		return !imageList.isEmpty();
-		
 	}
 	
 	private void init(){
@@ -181,9 +188,10 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         dirPanel.setForeground(Color.black);
         dirPanel.setBorder(buildTitledBorder("Choose Image Directory"));
         
-        String desc = "<html> Please choose a folder that contains wall sections as well as binary masks<br>"
+        String desc = "<html><b>Directions: </b><br>"
+        		+ "Please choose a folder that contains wall sections as well as binary masks<br>"
         		+ "for each slice. Masks should be binary images saved as XML files, with<br>"
-        		+ "pattern IMAGENAME_mask.xml. Wall images should have extension .jpg. <br></html>";
+        		+ "pattern IMAGENAME_mask.xml. Wall images should have extension .jpg or .jpeg. <br></html>";
         
         JLabel dirLabel = new JLabel(desc);
         dirLabel.setForeground(Color.black);
@@ -193,7 +201,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         JPanel choosePanel = new JPanel();
         
         dirText = new JTextField(30);
-        dirText.setText("Path to Directory with Slices");
+        dirText.setText(Preferences.getImageDirectory());
         dirText.setFont(serif12);
         choosePanel.add(dirText);
         
@@ -239,11 +247,9 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         
         JPanel OKCancelPanel = new JPanel();
 
-        // size and place the OK button
         buildOKButton();
         OKCancelPanel.add(OKButton, BorderLayout.WEST);
 
-        // size and place the CANCEL button
         buildCancelButton();
         OKCancelPanel.add(cancelButton, BorderLayout.EAST);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
@@ -252,8 +258,13 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         setVisible(true);
         setResizable(false);
         System.gc();
-		
 	}
+	
+	/**
+	 * Used for setting up and displaying the File Manager for the plugin. Since
+	 * we are only interested in multiple files at a time, the user can only choose
+	 * directories to open.
+	 */
 	
 	private void openDir(){
 		
@@ -261,8 +272,5 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        fileChooser.addActionListener(this);
 	        fileChooser.showOpenDialog(this);
-	        
 	}
-	
-	
 }
