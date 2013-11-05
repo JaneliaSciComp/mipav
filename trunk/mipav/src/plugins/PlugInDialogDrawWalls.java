@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream;
@@ -87,8 +88,8 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
         else if (command.equals("Next")){
         	//Close the previous image and open the next one
         	counter++;
-        	display.close();
         	if(counter < listLength){
+        		display.close();
         		callAlgorithm();
         		String title = "Wall Drawing " + String.valueOf(counter+1) + " of "
         				+ String.valueOf(listLength);
@@ -114,7 +115,7 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
         //This is at the end so that if "Next" is pushed when there are no images
         //left, it falls to this case
         if(command.equals("Cancel")||command.equals("End")) {
-        	display.close();
+        	if (display != null) display.close();
         	imageList.clear();
         	rgbImage = null;
         	dispose();
@@ -153,7 +154,32 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	
 	private boolean fileFilter(){
 		
-		Path dir = Paths.get(dirText.getText());
+		File dir = new File(dirText.getText());
+		File mask;
+		String stripped;
+		//Populate the mask images first, then use that to get the wall images
+		//so that only masked images are processed
+		
+		File[] files = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg"));
+			}
+		});
+		
+		for(File im : files){
+			stripped = im.toString();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+	        stripped = stripped.concat("_mask.xml");
+	        mask = new File(stripped);
+	        if (!mask.exists()){
+	        	imageList.add(im);
+	        }
+		}
+		
+		listLength = imageList.size();
+		return !imageList.isEmpty();
+		
+		/*Path dir = Paths.get(dirText.getText());
 		File mask;
 		String stripped;
 		
@@ -172,7 +198,7 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		}
 		
 		listLength = imageList.size();
-		return !imageList.isEmpty();
+		return !imageList.isEmpty();*/
 	}
 	
 	private void init(){

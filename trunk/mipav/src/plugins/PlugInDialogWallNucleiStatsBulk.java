@@ -2,7 +2,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.nio.file.*;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -155,12 +154,30 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	
 	private boolean fileFilter(){
 		
-		Path dir = Paths.get(dirText.getText());
+		File dir = new File(dirText.getText());
 		File mask;
 		String stripped;
 		//Populate the mask images first, then use that to get the wall images
 		//so that only masked images are processed
-		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, ".{jpg,jpeg}")) {
+		
+		File[] files = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg"));
+			}
+		});
+		
+		for(File im : files){
+			stripped = im.toString();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+	        stripped = stripped.concat("_mask.xml");
+	        mask = new File(stripped);
+	        if (mask.exists()){
+	        	imageList.add(im);
+	        	maskList.add(new File(stripped));
+	        }
+		}
+		
+		/*try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, ".{jpg,jpeg}")) {
 		    for (Path file: stream) {
 		        stripped = file.toString();
 		        stripped = stripped.substring(0, stripped.indexOf("."));
@@ -173,7 +190,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		    }
 		} catch (IOException | DirectoryIteratorException x) {
 		    MipavUtil.displayError("Directory Iterator not available");
-		}
+		}*/
 		
 		return !imageList.isEmpty();
 	}
