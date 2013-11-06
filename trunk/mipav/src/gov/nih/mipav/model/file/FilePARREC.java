@@ -27,6 +27,74 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
  * and (Right/Left)R->L.
  * 
  * * Updated September 16, 2011 by Beth Tyrie
+ * 
+ *          // This explains the derivation of the dicom transformation matrix and origin from the PARREC parameters.
+            // The PAR file is KKZ_130213_4_1.PAR
+            // The first slice of the dicom file is 20131023203338769.MR.dcm
+            // The angles are the same for the header volume parameters and for every slice
+            double angulation_rl = -8.700;
+            double angulation_ap = -4.865;
+            double angulation_fh = 3.364;
+            
+            double angX = angulation_rl;
+            double angY = angulation_ap;
+            double angZ = angulation_fh;
+
+            double Sx    = Math.sin(angX * Math.PI/180.0);
+            double Sy    = Math.sin(angY * Math.PI/180.0);
+            double Sz    = Math.sin(angZ * Math.PI/180.0);
+            double Cx    = Math.cos(angX * Math.PI/180.0);
+            double Cy    = Math.cos(angY * Math.PI/180.0);
+            double Cz    = Math.cos(angZ * Math.PI/180.0);    
+            
+            // EulerOrder = ORDER_XYZ;
+            // This is the Transformation matrix shown in the dicom header
+            double m00=Cy*Cz;
+            double m01=-Cy*Sz;
+            double m02=Sy;
+            double m10=Cz*Sx*Sy+Cx*Sz;
+            double m11=Cx*Cz-Sx*Sy*Sz;
+            double m12=-Cy*Sx;
+            double m20=-Cx*Cz*Sy+Sx*Sz;
+            double m21=Cz*Sx+Cx*Sy*Sz;
+            double m22=Cx*Cy;
+            
+            System.out.println("m00 = " + m00);
+            System.out.println("m01 = " + m01);
+            System.out.println("m02 = " + m02);
+            System.out.println("m10 = " + m10);
+            System.out.println("m11 = " + m11);
+            System.out.println("m12 = " + m12);
+            System.out.println("m20 = " + m20);
+            System.out.println("m21 = " + m21);
+            System.out.println("m22 = " + m22);
+            
+            double resX = 0.859375;
+            double resY = 0.859375;
+            double resZ = 1.0;
+            
+            // The header volume offsets and the individual slice offsets are all different
+            // The header volume offsets correspond to (xDim - 1)/2, (yDim - 1)/2, (zDim - 1)/2
+            // The slice offsets correspond to (xDim - 1)/2, (yDim - 1)/2, zSlice.
+            double rl_offset_center = 6.655;
+            double ap_offset_center = 3.537;
+            double fh_offset_center = 22.171;
+            
+            double offsetX = rl_offset_center;
+            double offsetY = ap_offset_center;
+            double offsetZ = fh_offset_center;
+            
+            double dimX = 256;
+            double dimY = 256;
+            double dimZ = 140;
+            
+            double originX = offsetX - m00 * resX * (dimX-1)/2 - m01 * resY * (dimY-1)/2- m02 * resZ * (dimZ-1)/2;
+            double originY = offsetY - m10 * resX * (dimX-1)/2 - m11 * resY * (dimY-1)/2 - m12 * resZ * (dimZ-1)/2;
+            double originZ = offsetZ - m20 * resX * (dimX-1)/2 - m21 * resY * (dimY-1)/2 - m22 * resZ * (dimZ-1)/2;
+            // These are the origins shown for dicom slice 0
+            System.out.println("originX = " + originX);
+            System.out.println("originY = " + originY);
+            System.out.println("originZ = " + originZ);
  */
 
 public class FilePARREC extends FileBase {
