@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -201,11 +203,37 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		}
 		
 		DefaultTableModel model = ((DefaultTableModel)tagsTable.getModel());
+		final FileDicomKey[] tagKeys = new FileDicomKey[numKey];
+		FileDicomKey[] tagKeysBuffer = new FileDicomKey[numKey];
+		String[] tagValue = new String[numKey];
+		String[] tagValueBuffer = new String[numKey];
+		Integer[] indexArray = new Integer[numKey];
+		
+		for(int i=0; i<numKey; i++) {
+			tagKeys[i] = new FileDicomKey(scriptParameters.getParams().getString("TagKey"+i));
+			tagKeysBuffer[i] = tagKeys[i];
+			tagValue[i] = scriptParameters.getParams().getString("TagValue"+i);
+			tagValueBuffer[i] = tagValue[i];
+			indexArray[i] = i;
+		}
+		
+		Arrays.sort(indexArray, new Comparator<Integer>() {
+			@Override
+			public int compare(Integer arg0, Integer arg1) {
+				return tagKeys[arg0].compareTo(tagKeys[arg1]);
+			}
+		});
+		
+		for(int i=0; i<numKey; i++) {
+			tagKeys[i] = tagKeysBuffer[indexArray[i]];
+			tagValue[i] = tagValueBuffer[indexArray[i]];
+		}
+		
 		for(int i=0; i<numKey; i++) {
 			model.addRow(new String[]{
-				scriptParameters.getParams().getString("TagKey"+i),
+				tagKeys[i].toString(),
 				" ",
-				scriptParameters.getParams().getString("TagValue"+i)
+				tagValue[i]
 			});
 		}
 	}
