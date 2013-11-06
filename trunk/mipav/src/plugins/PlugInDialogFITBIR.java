@@ -2574,7 +2574,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final JPanel panel = new JPanel(new GridBagLayout());
             tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            tabScrollPane.setPreferredSize(new Dimension(600, 500));
+            tabScrollPane.setPreferredSize(new Dimension(650, 500));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
             for (final BasicDataStructure ds : dataStructureList) {
@@ -3120,7 +3120,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             final JPanel curPanel = groupPanels.get(de.getGroup());
 
                             if (l.getName().equalsIgnoreCase(de.getName())) {
-                                gbc.gridy++;
+                                // gbc.gridy++;
+                                gbc.gridy = de.getPosition() - 1;
 
                                 gbc.insets = new Insets(2, 5, 2, 5);
                                 gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -3313,10 +3314,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     // }
 
                     tooltip = "<html>";
-                    if (guide != null) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false)
-                                + "</p>";
-                    }
+                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
+                    // field (which made them not very useful)
+                    // if (guide != null) {
+                    // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false)
+                    // + "</p>";
+                    // }
                     if (notes != null) {
                         tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
                     }
@@ -3337,10 +3340,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     if (v != null && !v.trim().equalsIgnoreCase("")) {
                         tooltip += ".  Value range: " + v;
                     }
-                    if (guide != null) {
-                        tooltip += "<p><b>Guidelines & Instructions:</b><br/>"
-                                + WordUtils.wrap(guide, 80, "<br/>", false) + "</p>";
-                    }
+                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
+                    // field (which made them not very useful)
+                    // if (guide != null) {
+                    // tooltip += "<p><b>Guidelines & Instructions:</b><br/>"
+                    // + WordUtils.wrap(guide, 80, "<br/>", false) + "</p>";
+                    // }
                     if (notes != null) {
                         tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
                     }
@@ -3632,7 +3637,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 csvPList.add(csvParams[i]);
                                 headerList.add(siteName);
                             }
-                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgStdyDateTimet")
+                        } else if (csvFieldNames[i].equalsIgnoreCase("ImgStdyDateTime")
                                 && ( !visitDate.equals("") || !visitTime.equals(""))) {
                             if ( !csvParams[i].trim().equals(visitDate + " " + visitTime)) {
                                 csvFList.add(csvFieldNames[i]);
@@ -4100,7 +4105,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         ((JTextField) comp).setText(patientPosition);
                     } else if (l.equalsIgnoreCase("ImgScannerModelName") && scannerModel != null
                             && !scannerModel.equals("")) {
-                        ((JTextField) comp).setText(scannerModel);
+                        // ((JTextField) comp).setText(scannerModel);
+                        final JComboBox jc = (JComboBox) comp;
+                        for (int k = 0; k < jc.getItemCount(); k++) {
+                            final String item = (String) jc.getItemAt(k);
+                            if (scannerModel.contains(item)) {
+                                jc.setSelectedIndex(k);
+                            }
+                        }
                     } else if (l.equalsIgnoreCase("ImgBandwidthVal") && bandwidth != null && !bandwidth.equals("")) {
                         ((JTextField) comp).setText(bandwidth);
                     }
@@ -4203,7 +4215,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final String command = e.getActionCommand();
             ArrayList<String> errs;
             final StringBuffer errors = new StringBuffer();
-            ;
             if (command.equalsIgnoreCase("ok3")) {
                 errs = validateFields();
                 boolean isComplete = true;
@@ -4222,7 +4233,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 enableDisableFinishButton();
                 dispose();
 
-                if (fix == 0) {
+                if (fix == 0 && errs.size() != 0) {
                     fixErrors();
                 }
 
