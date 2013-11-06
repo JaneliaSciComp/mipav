@@ -238,6 +238,29 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 		}
 	}
 	
+	private void sortTags(final FileDicomKey[] keyArray, Object[] tagArray) {
+		Integer[] indexArray = new Integer[keyArray.length];
+		FileDicomKey[] keyArrayBuffer = new FileDicomKey[keyArray.length];
+		Object[] tagArrayBuffer = new Object[tagArray.length];
+		for(int i=0; i<keyArray.length; i++) {
+			indexArray[i] = i;
+			keyArrayBuffer[i] = keyArray[i];
+			tagArrayBuffer[i] = tagArray[i];
+		}
+		
+		Arrays.sort(indexArray, new Comparator<Integer>() {
+			@Override
+			public int compare(Integer arg0, Integer arg1) {
+				return keyArray[arg0].compareTo(keyArray[arg1]);
+			}
+		});
+		
+		for(int i=0; i<keyArray.length; i++) {
+			keyArray[i] = keyArrayBuffer[indexArray[i]];
+			tagArray[i] = tagArrayBuffer[indexArray[i]];
+		}
+	}
+	
 	public static FileDicom searchForDicom(File file) throws IOException {
     	FileDicom readDicom = null;
     	for(File f : file.listFiles()) {
