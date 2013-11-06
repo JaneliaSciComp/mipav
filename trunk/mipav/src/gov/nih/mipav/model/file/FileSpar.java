@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Mathematics.Matrix4d;
+
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -148,11 +150,7 @@ public class FileSpar extends FileBase {
                 extents[1] = parseInt(nextLine);
             } else if(nextLine.contains("cc_size")) {
                 extents[2] = parseInt(nextLine);
-            } else if (nextLine.contains("patient_orientation")) {
-                if (nextLine.contains("supine")) {
-                    ori = FileInfoBase.AXIAL;
-                }
-            }
+            } 
 
             nextLine = raFile.readLine();
         }
@@ -164,6 +162,8 @@ public class FileSpar extends FileBase {
             Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.close()");
         }
+        
+        ori = FileInfoBase.AXIAL;
         
         if(imageAInfo != null) {
             ori = imageAInfo.getImageOrientation();
@@ -328,7 +328,8 @@ public class FileSpar extends FileBase {
 		return outInfo;
 	}
 
-	private ModelImage updateTransformMatrix(ModelImage image) {
+
+    private ModelImage updateTransformMatrix(ModelImage image) {
         
         double[] sliceAng = fileInfo.getSliceAngulation();
         double[] offCentre = fileInfo.getOffCentre();
@@ -338,103 +339,6 @@ public class FileSpar extends FileBase {
         rot = FilePARREC.ConvertToMIPAVConvention(rot);
         
         TransMatrix imageBMat = rot;
-        
-       
-            /*double Mx[][] = new double[3][3];
-
-            double Sx    = Math.sin(-8.700447 * Math.PI/180.0);
-            double Sy    = Math.sin(-4.8654304 * Math.PI/180.0);
-            double Sz    = Math.sin(3.3639414 * Math.PI/180.0);
-            double Cx    = Math.cos(-8.700447 * Math.PI/180.0);
-            double Cy    = Math.cos(-4.8654304 * Math.PI/180.0);
-            double Cz    = Math.cos(3.3639414 * Math.PI/180.0);
-            
-            final int ORDER_XYZ = 1;
-            final int ORDER_YZX = 2;
-            final int ORDER_ZXY = 3;
-            final int ORDER_ZYX = 4;
-            final int ORDER_YXZ = 5;
-            final int ORDER_XZY = 6;
-            int EulerOrder = ORDER_XYZ;
-            switch(EulerOrder)
-            {
-            case ORDER_XYZ:
-                Mx[0][0]=Cy*Cz;
-                Mx[0][1]=-Cy*Sz;
-                Mx[0][2]=Sy;
-                Mx[1][0]=Cz*Sx*Sy+Cx*Sz;
-                Mx[1][1]=Cx*Cz-Sx*Sy*Sz;
-                Mx[1][2]=-Cy*Sx;
-                Mx[2][0]=-Cx*Cz*Sy+Sx*Sz;
-                Mx[2][1]=Cz*Sx+Cx*Sy*Sz;
-                Mx[2][2]=Cx*Cy;
-                break;
-
-            case ORDER_YZX:
-                Mx[0][0]=Cy*Cz;
-                Mx[0][1]=Sx*Sy-Cx*Cy*Sz;
-                Mx[0][2]=Cx*Sy+Cy*Sx*Sz;
-                Mx[1][0]=Sz;
-                Mx[1][1]=Cx*Cz;
-                Mx[1][2]=-Cz*Sx;
-                Mx[2][0]=-Cz*Sy;
-                Mx[2][1]=Cy*Sx+Cx*Sy*Sz;
-                Mx[2][2]=Cx*Cy-Sx*Sy*Sz;
-                break;
-
-            case ORDER_ZXY:
-                Mx[0][0]=Cy*Cz-Sx*Sy*Sz;
-                Mx[0][1]=-Cx*Sz;
-                Mx[0][2]=Cz*Sy+Cy*Sx*Sz;
-                Mx[1][0]=Cz*Sx*Sy+Cy*Sz;
-                Mx[1][1]=Cx*Cz;
-                Mx[1][2]=-Cy*Cz*Sx+Sy*Sz;
-                Mx[2][0]=-Cx*Sy;
-                Mx[2][1]=Sx;
-                Mx[2][2]=Cx*Cy;
-                break;
-
-            case ORDER_ZYX:
-                Mx[0][0]=Cy*Cz;
-                Mx[0][1]=Cz*Sx*Sy-Cx*Sz;
-                Mx[0][2]=Cx*Cz*Sy+Sx*Sz;
-                Mx[1][0]=Cy*Sz;
-                Mx[1][1]=Cx*Cz+Sx*Sy*Sz;
-                Mx[1][2]=-Cz*Sx+Cx*Sy*Sz;
-                Mx[2][0]=-Sy;
-                Mx[2][1]=Cy*Sx;
-                Mx[2][2]=Cx*Cy;
-                break;
-
-            case ORDER_YXZ:
-                Mx[0][0]=Cy*Cz+Sx*Sy*Sz;
-                Mx[0][1]=Cz*Sx*Sy-Cy*Sz;
-                Mx[0][2]=Cx*Sy;
-                Mx[1][0]=Cx*Sz;
-                Mx[1][1]=Cx*Cz;
-                Mx[1][2]=-Sx;
-                Mx[2][0]=-Cz*Sy+Cy*Sx*Sz;
-                Mx[2][1]=Cy*Cz*Sx+Sy*Sz;
-                Mx[2][2]=Cx*Cy;
-                break;
-
-            case ORDER_XZY:
-                Mx[0][0]=Cy*Cz;
-                Mx[0][1]=-Sz;
-                Mx[0][2]=Cz*Sy;
-                Mx[1][0]=Sx*Sy+Cx*Cy*Sz;
-                Mx[1][1]=Cx*Cz;
-                Mx[1][2]=-Cy*Sx+Cx*Sy*Sz;
-                Mx[2][0]=-Cx*Sy+Cy*Sx*Sz;
-                Mx[2][1]=Cz*Sx;
-                Mx[2][2]=Cx*Cy+Sx*Sy*Sz;
-                break;
-            }
-            for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 3; j++) {
-                    System.out.println("Mx[" + i + "][" + j + "] = " + Mx[i][j]);
-                }
-            }*/
         
         if (imageAInfo == null) {
             image.setMatrix(rot);
