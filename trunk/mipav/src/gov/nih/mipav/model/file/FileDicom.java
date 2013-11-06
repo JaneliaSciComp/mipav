@@ -3749,9 +3749,12 @@ public class FileDicom extends FileDicomBase {
         tagTable = fileInfo.getTagTable();
 
         int editIndex = 0;
-        FileDicomTag newTag = null;        
+        FileDicomTag newTag = null;
+        int rereadLocation = -1;
+        boolean rereadLastTag = false; //if a new tag gets added before the current tag,
+        							//re-read the current tag incase yet another tag needs to be added
         
-        while (flag == true) {
+nextTag: while (flag == true) {
             if (fileInfo.containsDICM) {
                 // endianess is defined in a tag and set here, after the transfer
                 // syntax group has been read in
@@ -3792,15 +3795,21 @@ public class FileDicom extends FileDicomBase {
                 		backup = backup + 2;
                 	}
                 	raFile.seek(getFilePointer() - backup);
+                	rereadLocation = getFilePointer() - backup;
                 	int length = editTags[editIndex].getDataLength()+backup;
                 	changeDicomFileSize(raFile, length, getFilePointer()-backup, 0);
                 	raFile.seek(getFilePointer()-backup);  //gets raFile to current tag
+                	
                 	//key = getNextTag(endianess);
+                	System.out.println("Reading at location "+getFilePointer());
                 	writeNextTag(editTags[editIndex], raFile);
                 	editIndex++;
+                	
                 	if(editIndex == editKeys.length) {
                 		flag = false;
                 	}
+                	rereadLastTag = true;
+                	
                 }
                 
                 
@@ -3854,6 +3863,15 @@ public class FileDicom extends FileDicomBase {
                 } else {
                     flag = false;
                 }
+            }
+            
+            if(rereadLastTag) {
+            	rereadLastTag = false;
+            	System.out.println("Rereading/resetting to location: "+rereadLocation+" from location "+getFilePointer());
+            	loadTagBuffer();
+            	seek(rereadLocation);
+            	rereadLocation = -1;
+            	
             }
 
         }
