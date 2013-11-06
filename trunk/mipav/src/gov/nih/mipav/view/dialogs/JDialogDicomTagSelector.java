@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.DicomDictionary;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagInfo;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.view.MipavUtil;
@@ -856,6 +857,22 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 
 		public void insertUpdate(DocumentEvent e) {
 			updateBoxInput();
+			String updateText = updateField.getText();
+			if(updateText.length() == 4) {
+				String groupStr = groupText.getText();
+				if(groupStr.length() == 4) {
+					try {
+						int group = Integer.valueOf(groupStr, 16);
+						int element = Integer.valueOf(updateText, 16);
+						FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(new FileDicomKey(group, element));
+						nameValue.setText(tagInfo.getName());
+					} catch(Exception ex) {
+						
+					} catch(Error er) {
+						
+					}
+				}
+			}
 			
 			System.out.println("Insert:" +updateField.getText());
 		}

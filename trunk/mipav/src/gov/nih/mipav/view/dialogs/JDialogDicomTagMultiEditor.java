@@ -120,6 +120,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 	private void processSlice(File f) {
 		System.out.println("Processing file: "+f.getAbsolutePath());
 		createFileInfo(f);
+		FileDicomKey key = null;
 		try {
 			FileDicom writeDicom = new FileDicom(f.getAbsolutePath());
 			int length = tagsTable.getRowCount();
@@ -127,7 +128,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			tagArray = new FileDicomTag[length];
 			Set<Entry<FileDicomKey, FileDicomTag>> entrySet = tagList.entrySet();
 			for(int i=0; i<length; i++) {
-				FileDicomKey key = new FileDicomKey(tagsTable.getValueAt(i, 0).toString());
+				key = new FileDicomKey(tagsTable.getValueAt(i, 0).toString());
 				Iterator<Entry<FileDicomKey, FileDicomTag>> keyItr = entrySet.iterator();
 				Entry<FileDicomKey, FileDicomTag> entry = null;
 				keyArray[i] = key;
@@ -164,7 +165,11 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			processed = true;
 			
 		} catch(IOException ex) {
-			System.err.println("Unable to write to file: "+f.getAbsolutePath());
+			MipavUtil.displayError("Unable to write to file: "+f.getAbsolutePath());
+		} catch(Exception ex1) {
+			if(key != null) {
+				MipavUtil.displayError("Key could not be saved: "+key);
+			}
 		}
 	}
 
