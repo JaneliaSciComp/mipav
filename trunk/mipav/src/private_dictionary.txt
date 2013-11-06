@@ -1,5 +1,5 @@
 #DICOM dictionary contains private tags, including from GDCM source code that have 
-#undergone additional processing and correction at the National Intrepid 
+#undergone additional processing and correction by Justin Senseney at the National Intrepid 
 #Center of Excellence, Bethesda, MD, USA (justin.s.senseney.civ@health.mil). DTI tags  
 #have also been added with VERS value of "NISH"
 #
