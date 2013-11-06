@@ -119,7 +119,7 @@ public class FileSpar extends FileBase {
         double[] offCentre = new double[3];
         double[] angulation = new double[3];
         int[] extents = new int[3];
-        
+        int ori  = FileInfoBase.SAGITTAL;
         //String version;
         //String[] versionNumber;
 
@@ -148,6 +148,10 @@ public class FileSpar extends FileBase {
                 extents[1] = parseInt(nextLine);
             } else if(nextLine.contains("cc_size")) {
                 extents[2] = parseInt(nextLine);
+            } else if (nextLine.contains("patient_orientation")) {
+                if (nextLine.contains("supine")) {
+                    ori = FileInfoBase.AXIAL;
+                }
             }
 
             nextLine = raFile.readLine();
@@ -160,8 +164,6 @@ public class FileSpar extends FileBase {
             Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException(" Error on raFile.close()");
         }
-        
-        int ori  = FileInfoBase.SAGITTAL;
         
         if(imageAInfo != null) {
             ori = imageAInfo.getImageOrientation();
