@@ -708,8 +708,9 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 				parentDialog.getTagListTextField().setText("");
 			} else {
 				DefaultTableModel model = (DefaultTableModel)parentDialog.getTagTable().getModel();
-				for(int i=1; i<model.getRowCount(); i++) {
-					model.removeRow(1);
+				int[] rowSelect = parentDialog.getTagTable().getSelectedRows();
+				for(int i=rowSelect.length-1; i>=0; i--) {
+					model.removeRow(rowSelect[i]);
 				}
 			}
 			
