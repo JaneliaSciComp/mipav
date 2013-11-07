@@ -323,8 +323,18 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             FileIO io = new FileIO();
             io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
+            for (int i = 0; i < baseImage.getExtents()[2]; i++) {
+                for (int j = 0; j < 3; j++) {
+                    baseImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.MICROMETERS, j);
+                }
+            }
             String baseImageName = baseImage.getImageName();
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
+            for (int i = 0; i < transformImage.getExtents()[2]; i++) {
+                for (int j = 0; j < 3; j++) {
+                    transformImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.MICROMETERS, j);
+                }
+            }
             String transformImageName = transformImage.getImageName();
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
@@ -406,7 +416,17 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             io.setTIFFOrientation(false);
             
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
+            for (int j = 0; j < baseImage.getExtents()[2]; j++) {
+                for (int k = 0; k < 3; k++) {
+                    baseImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.MICROMETERS, k);
+                }
+            }
             ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
+            for (int j = 0; j < transformImage.getExtents()[2]; j++) {
+                for (int k = 0; k < 3; k++) {
+                    transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.MICROMETERS, k);
+                }
+            }
             
             while(exec.getActiveCount() == concurrentNum) {}
             
