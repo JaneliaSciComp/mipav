@@ -1,7 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
+import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Line3f;
+import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -34,8 +36,10 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogFaceAnonymize;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
+import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -60,8 +64,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private int dimY;
 	private int dimZ;
 
-	private boolean blurFace = false;
-	private boolean removeFace = false;
+	private boolean blur = false;
+	private boolean remove = false;
+	private boolean face = false;
 	private boolean showSegmentation = false;
 
 	private BitSet brainMaskMin;
@@ -115,8 +120,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
             return;
         }
 
-        
-
         try {
             skullRemoval();
         } catch (OutOfMemoryError x) {
@@ -127,10 +130,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         }
     }
     
-    public void setOutputOption( boolean blurFace, boolean removeFace, boolean showSegmentation )
+    public void setOutputOption( boolean blur, boolean remove, boolean face, boolean showSegmentation )
     {
-    	this.blurFace = blurFace;
-    	this.removeFace = removeFace;
+    	this.blur = blur;
+    	this.remove = remove;
+    	this.face = face;
     	this.showSegmentation = showSegmentation;
     }
 
@@ -234,20 +238,19 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         calculateRadius(destImage);
         
         initSphere(destImage, noMax);
-        destImage.getMask().flip(0, dimX*dimY*dimZ);
         
         fireProgressStateChanged(90);
         
         
-        
-    	if ( blurFace || removeFace )
+    	if ( blur || remove )
     	{
     		subtractMask( destImage );
         	destImage.setImageName( srcImage.getImageName() + "_deskull" );
 				
-			if ( blurFace )
+			if ( blur )
 			{
-				// Blur face and add it back to the image:				
+//				ModelImage blurOutside = randomize( destImage, 5 );	        				
+//				 Blur face and add it back to the image:				
 		        int index = srcImage.getExtents()[2] / 2;
 		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
 		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
@@ -276,12 +279,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	
     	if ( showSegmentation )
     	{
-        	short id = (short) destImage.getVOIs().getUniqueID();
-        	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
-        	centerGravity.importPoint(cog);
-        	destImage.registerVOI(centerGravity);
-        	centerGravity.setColor( Color.green );    	
+//        	short id = (short) destImage.getVOIs().getUniqueID();
+//        	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
+//        	centerGravity.importPoint(cog);
+//        	destImage.registerVOI(centerGravity);
+//        	centerGravity.setColor( Color.green );    	
 
+    		destImage.resetVOIs();
         	destImage.setImageName( srcImage.getImageName() + "_outsideMask" );
         	new ViewJFrameImage(destImage);
     	}
@@ -355,21 +359,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		TriMesh sphere = createMesh( image.getMask() );
 		if ( sphere != null )
 		{
+			TriMesh convexHullMesh = convexHull(sphere);
 
-			ConvexHull3f convexHull = new ConvexHull3f( sphere.VBuffer.GetVertexQuantity(), sphere.VBuffer.GetPositionArray(), 0.00001f, true );
-			IndexBuffer iBuffer = new IndexBuffer(convexHull.GetIndices());
-			VertexBuffer vBuffer = new VertexBuffer( sphere.VBuffer );
-			TriMesh convexHullMesh = new TriMesh( vBuffer, iBuffer );
-
-//			System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
-			convexHullMesh = removeUnusedVertices(convexHullMesh);
-//			System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
-			BitSet meshCHMask = computeSurfaceMask(convexHullMesh);	
-			floodFill(meshCHMask, cog);
-//			ModelImage outlineMaskImage = (ModelImage)destImage.clone();
-//			outlineMaskImage.setMask(meshCHMask);
-//			outlineMaskImage.setImageName( destImage.getImageName() + "_CH_Mask" );        	
-//			new ViewJFrameImage(outlineMaskImage);		
+			BitSet meshCHMask = createMask( convexHullMesh, false, "_ch_mask" );
 
 			TriMesh kMesh = createMesh( meshCHMask );
 			if ( kMesh != null )
@@ -379,36 +371,57 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				betAlg.setExtractPaint(true);
 				betAlg.extractBrain();
 				betAlg = null;
-
-//				BitSet meshMask = computeSurfaceMask(kMesh);			
-//				floodFill(meshMask, cog);
-//				ModelImage betMaskImage = (ModelImage)destImage.clone();
-//				betMaskImage.setMask((BitSet) meshMask.clone());
-//				betMaskImage.setImageName( destImage.getImageName() + "_BETMask" );        	
-//				new ViewJFrameImage(betMaskImage);
+				
+				TriMesh convexHullBrain = convexHull(kMesh);
+				if ( convexHullBrain != null )
+				{
+					destImage.setMask( createMask( convexHullBrain, false, "ch_bet_mask" ) );
+					kMesh = convexHullBrain;
+				}
+				
+				if ( face | showSegmentation )
+				{
+					Plane3f clipPlane = new Plane3f( getPlaneNormal( faceOrientation ), getPlaneCenter( faceOrientation ) );
+					float minDist = Float.MAX_VALUE;
+					int minIndex = -1;
+					for ( int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++ )
+					{
+						float distance = clipPlane.DistanceTo( kMesh.VBuffer.GetPosition3(i) );
+						if ( distance < minDist )
+						{
+							minDist = distance;
+							minIndex = i;
+						}
+						if ( distance < 0 )
+						{
+							System.err.println( "Plane error " + kMesh.VBuffer.GetPosition3(i) );
+						}
+					}
+//					System.err.println( minIndex  + " " + minDist );
+					if ( minIndex != -1 )
+					{
+						clipPlane = new Plane3f( getPlaneNormal(faceOrientation), kMesh.VBuffer.GetPosition3(minIndex) );
+						BitSet clipMask = createMask( clipPlane );
+						if ( showSegmentation )
+						{
+							ModelImage outlineMaskImage = (ModelImage)destImage.clone();
+							outlineMaskImage.setMask(clipMask);
+							outlineMaskImage.setImageName( destImage.getImageName() + "_ClipMask" );  
+							outlineMaskImage.resetVOIs();      	
+							new ViewJFrameImage(outlineMaskImage);
+						}
+						if ( face )
+						{
+							destImage.setMask(clipMask);
+						}
+					}
+				}
 			}
 		}
-                
-        
-//		MjCorticalMesh_WM corticalMesh = new MjCorticalMesh_WM( sphere, cog );
-//		if ( corticalMesh.CheckManifold() )
-//		{
-//			/* cortical mesh initializations */
-//			corticalMesh.computeMeanCurvature();
-//			/* calculate the conformal mapping of mesh to the flattened plane and
-//			 * sphere maps, and setup the display for the plane and sphere: */
-//			corticalMesh.computeConformalMapping();
-//
-//			System.err.println( "inflating mesh" );
-//			corticalMesh.doInflation(0);
-//			for ( int i = 0; i < 10; i++ )
-//			{
-//				corticalMesh.doInflation(1);
-//				corticalMesh.doInflation(2);
-//				corticalMesh.updateMesh( true );
-//			}
-//		}
-		
+		if ( !face )
+		{
+	        destImage.getMask().flip(0, dimX*dimY*dimZ);
+		}
 	}
 	
     
@@ -616,459 +629,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		return skull;
 	}
 	
-	
-    private void createVOIs( ModelImage image )
-    {
-    	short id = (short) image.getVOIs().getUniqueID();
-    	VOI sphere = new VOI(id, "sphere", VOI.CONTOUR, 1f );
-    	
-    	Vector<Vector3f> centerCog = new Vector<Vector3f>();
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-			float scaleZ = z / cog.Z;
-			if ( z > cog.Z )
-			{
-				scaleZ = (dimZ - 1 - z)/cog.Z;
-			}
-			scaleZ += .25f;
-			scaleZ = Math.min(1,scaleZ);
-			centerCog.add( new Vector3f( cog.X, cog.Y, z) );
-    		
-    		sphere.getCurves().add(circleZ( scaleZ, maxRadius, cog, z ));
-    	}
-    	
-//    	destImage.registerVOI(sphere);
-//    	sphere.setColor( Color.green );
-
-
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourWM_Z = new VOI(id, "contourWM_Z", VOI.CONTOUR, 1f );
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourEdge_XYZ = new VOI(id, "contourEdge_Z", VOI.CONTOUR, 1f );
-    	    	    	
-    	
-    	for ( int z = 0; z < centerCog.size(); z++ )
-    	{
-    		Vector3f center = centerCog.elementAt(z);
-
-    		VOIContour contourWM = new VOIContour( false, true );
-    		VOIContour sphereContour = (VOIContour) sphere.getCurves().elementAt(z);
-    		for ( int i = 0; i < sphereContour.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(sphereContour.elementAt(i));
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			
-    			Vector3f lastWMPt = new Vector3f(pt);
-    			boolean found = false;
-    			while ( inBounds(pt) )
-    			{
-					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-    				if ( image.getMask().get(index) )
-    				{
-    					lastWMPt.copy(pt);
-    					found = true;
-    				}
-    				pt.add(dir);
-    			}
-    			if ( !found )
-    			{
-    				dir.neg();
-    				pt.copy(lastWMPt);
-    				Vector3f checkDir1 = Vector3f.sub( lastWMPt, center ); checkDir1.normalize();
-    				Vector3f checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			while ( checkDir1.dot(checkDir2) > 0 )
-        			{
-    					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-        				if ( image.getMask().get(index) )
-        				{
-        					lastWMPt.copy(pt);
-        					break;
-        				}
-        				pt.add(dir);
-        				checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			}    				
-    			}
-    			pt.copy(lastWMPt);
-    			contourWM.add(new Vector3f(pt));
-    		}    		
-    		contourWM_Z.getCurves().add(contourWM);
-    	}
-    	
-
-    	// Brain / Non-Brain boundary in the z-planes:
-    	Vector3f globalMin = new Vector3f(dimX, dimY, dimZ);
-    	Vector3f globalMax = new Vector3f(-1, -1, -1);
-    	Vector<Vector3f> minContour = new Vector<Vector3f>();
-    	Vector<Vector3f> maxContour = new Vector<Vector3f>();
-    	for ( int z = 0; z < centerCog.size(); z++ )
-    	{
-    		Vector3f center = centerCog.elementAt(z);
-
-    		VOIContour contourWM = (VOIContour) contourWM_Z.getCurves().elementAt(z);
-    		VOIContour contourEdge = new VOIContour( false, true );
-
-    		Vector3f min = new Vector3f(dimX, dimY, dimZ);
-    		Vector3f max = new Vector3f(-1, -1, -1);
-    		for ( int i = 0; i < contourWM.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(contourWM.elementAt(i));
-    			min.min(pt);
-    			max.max(pt);
-    			
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			    			
-    			while ( inBounds(pt) )
-    			{
-    				float value = image.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-    				if ( useCSFMin && (value <= csfThresholdMin) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				else if ( !useCSFMin && (value >= csfThresholdMax) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				pt.add(dir);
-    			}
-    		}
-    		minContour.add(min);
-    		maxContour.add(max);
-    		
-    		globalMin.min(min);
-    		globalMax.max(max);
-    		contourEdge_XYZ.getCurves().add(contourEdge);
-    	}
-    	
-
-    	
-
-		System.err.println( globalMin + "    " + globalMax );
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourWM_Y = new VOI(id, "contourWM_Y", VOI.CONTOUR, 1f );
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourEdge_Y = new VOI(id, "contourEdge_Y", VOI.CONTOUR, 1f );
-    	
-
-    	Vector<Vector3f> centerCogY = new Vector<Vector3f>();
-    	VOI sphereY = new VOI(id, "sphereY", VOI.CONTOUR, 1f );
-    	for ( int y = (int)(globalMin.Y + 1); y < globalMax.Y; y++ )
-    	{
-			float scaleY = y / cog.Y;
-			if ( y > cog.Y )
-			{
-				scaleY = (dimY - 1 - y)/cog.Y;
-			}
-			scaleY += .25f;
-			scaleY = Math.min(1,scaleY);
-			centerCogY.add( new Vector3f( cog.X, y, cog.Z) );
-
-    		sphereY.getCurves().add(circleY( scaleY, maxRadius, cog, y ));
-    		
-    	}
-//    	destImage.registerVOI(sphereY);
-//    	sphereY.setColor( Color.green );
-    	
-    	for ( int y = 0; y < centerCogY.size(); y++ )
-    	{
-    		Vector3f center = centerCogY.elementAt(y);
-
-    		VOIContour contourWM = new VOIContour( false, true );
-    		VOIContour sphereContour = (VOIContour) sphereY.getCurves().elementAt(y);
-    		for ( int i = 0; i < sphereContour.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(sphereContour.elementAt(i));
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			
-    			Vector3f lastWMPt = new Vector3f(pt);
-    			boolean found = false;
-    			while ( inBounds(pt) )
-    			{
-					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-    				if ( image.getMask().get(index) )
-    				{
-    					lastWMPt.copy(pt);
-    					found = true;
-    				}
-    				pt.add(dir);
-    			}
-    			if ( !found )
-    			{
-    				dir.neg();
-    				pt.copy(lastWMPt);
-    				Vector3f checkDir1 = Vector3f.sub( lastWMPt, center ); checkDir1.normalize();
-    				Vector3f checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			while ( checkDir1.dot(checkDir2) > 0 )
-        			{
-    					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-        				if ( image.getMask().get(index) )
-        				{
-        					lastWMPt.copy(pt);
-        					break;
-        				}
-        				pt.add(dir);
-        				checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			}    				
-    			}
-    			pt.copy(lastWMPt);
-    			contourWM.add(new Vector3f(pt));
-    		}    		
-    		contourWM_Y.getCurves().add(contourWM);
-    	}
-    	
-    	
-    	
-    	for ( int y = 0; y < centerCogY.size(); y++ )
-    	{
-    		Vector3f center = centerCogY.elementAt(y);
-
-    		VOIContour contourWM = (VOIContour) contourWM_Y.getCurves().elementAt(y);
-    		VOIContour contourEdge = new VOIContour( false, true );
-
-    		for ( int i = 0; i < contourWM.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(contourWM.elementAt(i));    			
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			    			
-    			while ( inBounds(pt) )
-    			{
-    				float value = image.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-    				if ( useCSFMin && (value <= csfThresholdMin) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				else if ( !useCSFMin && (value >= csfThresholdMax) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				pt.add(dir);
-    			}
-    		}
-    		contourEdge_XYZ.getCurves().add(contourEdge);
-    	}
-    	
-
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourWM_X = new VOI(id, "contourWM_X", VOI.CONTOUR, 1f );
-    	
-    	id = (short) image.getVOIs().getUniqueID();
-    	VOI contourEdge_X = new VOI(id, "contourEdge_X", VOI.CONTOUR, 1f );
-    	
-
-    	Vector<Vector3f> centerCogX = new Vector<Vector3f>();
-    	VOI sphereX = new VOI(id, "sphereY", VOI.CONTOUR, 1f );
-    	for ( int x = (int)(globalMin.X + 1); x < globalMax.X; x++ )
-    	{
-			float scaleX = x / cog.X;
-			if ( x > cog.X )
-			{
-				scaleX = (dimX - 1 - x)/cog.X;
-			}
-			scaleX += .25f;
-			scaleX = Math.min(1,scaleX);
-			centerCogX.add( new Vector3f( x, cog.Y, cog.Z) );
-
-    		sphereX.getCurves().add(circleX( scaleX, maxRadius, cog, x ));
-    		
-    	}
-//    	destImage.registerVOI(sphereY);
-//    	sphereY.setColor( Color.green );
-    	
-    	for ( int x = 0; x < centerCogX.size(); x++ )
-    	{
-    		Vector3f center = centerCogX.elementAt(x);
-
-    		VOIContour contourWM = new VOIContour( false, true );
-    		VOIContour sphereContour = (VOIContour) sphereX.getCurves().elementAt(x);
-    		for ( int i = 0; i < sphereContour.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(sphereContour.elementAt(i));
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			
-    			Vector3f lastWMPt = new Vector3f(pt);
-    			boolean found = false;
-    			while ( inBounds(pt) )
-    			{
-					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-    				if ( image.getMask().get(index) )
-    				{
-    					lastWMPt.copy(pt);
-    					found = true;
-    				}
-    				pt.add(dir);
-    			}
-    			if ( !found )
-    			{
-    				dir.neg();
-    				pt.copy(lastWMPt);
-    				Vector3f checkDir1 = Vector3f.sub( lastWMPt, center ); checkDir1.normalize();
-    				Vector3f checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			while ( checkDir1.dot(checkDir2) > 0 )
-        			{
-    					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-        				if ( image.getMask().get(index) )
-        				{
-        					lastWMPt.copy(pt);
-        					break;
-        				}
-        				pt.add(dir);
-        				checkDir2 = Vector3f.sub( pt, center ); checkDir2.normalize();
-        			}    				
-    			}
-    			pt.copy(lastWMPt);
-    			contourWM.add(new Vector3f(pt));
-    		}    		
-    		contourWM_X.getCurves().add(contourWM);
-    	}
-    	
-    	
-    	
-    	for ( int x = 0; x < centerCogX.size(); x++ )
-    	{
-    		Vector3f center = centerCogX.elementAt(x);
-
-    		VOIContour contourWM = (VOIContour) contourWM_X.getCurves().elementAt(x);
-    		VOIContour contourEdge = new VOIContour( false, true );
-
-    		for ( int i = 0; i < contourWM.size(); i++ )
-    		{
-    			Vector3f pt = new Vector3f(contourWM.elementAt(i));    			
-    			Vector3f dir = Vector3f.sub( pt, center );
-    			dir.normalize();
-    			    			
-    			while ( inBounds(pt) )
-    			{
-    				float value = image.getFloat((int)pt.X, (int)pt.Y, (int)pt.Z);
-    				if ( useCSFMin && (value <= csfThresholdMin) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				else if ( !useCSFMin && (value >= csfThresholdMax) )
-    				{
-    					contourEdge.add(pt);
-    					break;
-    				}
-    				pt.add(dir);
-    			}
-    		}
-    		contourEdge_XYZ.getCurves().add(contourEdge);
-    	}
-    	
-    	
-    	
-    	
-    	
-
-    	
-    	image.registerVOI(contourWM_Z);
-    	contourWM_Z.setColor( Color.blue );
-//    	image.registerVOI(contourEdge_XYZ);
-//    	contourEdge_XYZ.setColor( Color.magenta );
-    	
-    	image.registerVOI(contourWM_Y);
-    	contourWM_Y.setColor( Color.blue );
-//    	image.registerVOI(contourEdge_Y);
-//    	contourEdge_Y.setColor( Color.magenta );
-    	
-    	image.registerVOI(contourWM_X);
-    	contourWM_X.setColor( Color.blue );
-//    	image.registerVOI(contourEdge_X);
-//    	contourEdge_X.setColor( Color.magenta );
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	if ( blurFace || removeFace )
-    	{
-    		contourEdge_XYZ.setAllActive(true);
-
-            // Make result image of source type
-    		ModelImage maskOutside = new ModelImage(image.getType(), image.getExtents(),
-                                         JDialogBase.makeImageName(image.getImageName(), "_mask"));
-    		AlgorithmMask maskAlgo;
-            // Make algorithm[
-            if (image.isColorImage()) {
-                maskAlgo = new AlgorithmMask(maskOutside, image, 0, 0, 0, true, true);
-            } else {
-                maskAlgo = new AlgorithmMask(maskOutside, image, 0, true, true);
-            }
-            maskAlgo.setRunningInSeparateThread(false);
-            maskAlgo.run();
-//            new ViewJFrameImage(maskOutside);    	
-
-            image.clearMask();
-            image.resetVOIs();
-
-            // Remove face:
-            AlgorithmImageCalculator imageCalc = new AlgorithmImageCalculator( image, maskOutside,
-            		AlgorithmImageCalculator.SUBTRACT, AlgorithmImageMath.CLIP, true, null );
-            imageCalc.setRunningInSeparateThread(false);
-				imageCalc.run();				
-				
-			if ( blurFace )
-			{
-				// Blur face and add it back to the image:
-				
-		        int index = srcImage.getExtents()[2] / 2;
-		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
-		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
-
-		        float correction = xRes / zRes;
-
-	            final float[] sigmas = {5, 5, 5*correction};
-	    		ModelImage blurOutside = new ModelImage(image.getType(), image.getExtents(),
-                        JDialogBase.makeImageName(image.getImageName(), "_blur"));
-	            AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(maskOutside, sigmas, true, false);
-	            gaussianBlurSepAlgo.setRunningInSeparateThread(false);
-	            gaussianBlurSepAlgo.run();
-
-                try {
-                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
-                } catch (final IOException e) {
-                	blurOutside.disposeLocal();
-                    MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
-                    return;
-                }
-	            
-//                new ViewJFrameImage(blurOutside);
-	            addBlur( blurOutside, image );
-			}
-    	}
-    }
-    
+	    
     private boolean inBounds( Vector3f pt )
     {
 		if ( (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) && (pt.Z >= 0) && (pt.Z < dimZ) )
@@ -3159,33 +2720,173 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
     }
 
+    private TriMesh convexHull( TriMesh mesh )
+    {
+		ConvexHull3f convexHull = new ConvexHull3f( mesh.VBuffer.GetVertexQuantity(), mesh.VBuffer.GetPositionArray(), 0.00001f, true );
+		IndexBuffer iBuffer = new IndexBuffer(convexHull.GetIndices());
+		VertexBuffer vBuffer = new VertexBuffer( mesh.VBuffer );
+		TriMesh convexHullMesh = new TriMesh( vBuffer, iBuffer );
 
-	private ModelImage blur( BitSet mask )
+//		System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
+		convexHullMesh = removeUnusedVertices(convexHullMesh);
+		return convexHullMesh;
+    }
+    
+
+	private ModelImage randomize( ModelImage image, int stepSize )
 	{
-		ModelImage image = (ModelImage)srcImage.clone();
+		ModelImage blurImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
+				JDialogBase.makeImageName(srcImage.getImageName(), "_blur"));
+		int stepsX = dimX / stepSize;
+		int stepsY = dimY / stepSize;
+		int stepsZ = dimZ / stepSize;
+		int length = stepsX*stepsY*stepsZ;
+		Vector2d[] randomArray = new Vector2d[length];		
+		Random gen = new Random();
+		for ( int i = 0; i < length; i++ )
+		{
+			randomArray[i] = new Vector2d( gen.nextInt(), i );
+		}
+    	Arrays.sort( randomArray );
+
+		for ( int z = 0; z < stepsZ; z++ )
+		{
+			for ( int y = 0; y < stepsY; y++ )
+			{
+				for ( int x = 0; x < stepsX; x++ )
+				{								
+					// index into the random array:
+					int randomIndex = z * stepsY * stepsX + y * stepsX + x;	
+					
+					// recreate randomized index into random array:
+					int targetIndex = (int) randomArray[randomIndex].Y;					
+					int targetX = targetIndex % stepsX;
+					targetIndex -= targetX;
+					targetIndex /= stepsX;
+					
+					int targetY = targetIndex % stepsY;
+					targetIndex -= targetY;
+					targetIndex /= stepsY;
+					
+					int targetZ = targetIndex;
+					
+					// go from random array to big array:					
+					targetZ *= stepSize;
+					targetY *= stepSize;
+					targetX *= stepSize;
+					
+					int srcZ = z * stepSize;
+					for ( int z1 = targetZ; z1 < targetZ + stepSize; z1++ )
+					{					
+						int srcY = y * stepSize;
+						for ( int y1 = targetY; y1 < targetY + stepSize; y1++ )
+						{	
+							int srcX = x * stepSize;
+							for ( int x1 = targetX; x1 < targetX + stepSize; x1++ )
+							{
+//								System.err.println( x1 + " " + y1 + " " + z1 + "      " + srcX + " " + srcY + " " + srcZ );
+								blurImage.set( x1,y1,z1, image.getFloat(srcX++, srcY, srcZ) );
+							}							
+							srcY++;
+						}						
+						srcZ++;
+					}
+				}
+			}
+		}
+		
+		blurImage.calcMinMax();
+		return blurImage;
+	}
+	
+	private Vector3f getPlaneNormal( int faceOrientation )
+	{
+		float temp = (float) (1f/Math.sqrt(2f));
+        if(faceOrientation == JDialogFaceAnonymize.FACING_LEFT) 
+        {
+        	return new Vector3f( temp, -temp, 0 );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_RIGHT) 
+        {
+        	return new Vector3f( -temp, -temp, 0 );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_DOWN) 
+        {
+        	return new Vector3f( 0, -temp, -temp );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_UP) 
+        {
+        	return new Vector3f( 0, temp, temp );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_INTO_SCREEN) 
+        {
+        	return new Vector3f( 0, -temp, -temp );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_OUT_OF_SCREEN) 
+        {
+        	return new Vector3f( 0, -temp, temp );
+        }
+    	return new Vector3f( temp, -temp, 0 );
+	}
+	
+	private Vector3f getPlaneCenter( int faceOrientation )
+	{
+        if(faceOrientation == JDialogFaceAnonymize.FACING_LEFT) {
+        	return new Vector3f( 0, dimY, dimZ / 2 );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_RIGHT) {
+        	return new Vector3f( dimX, dimY, dimZ / 2 );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_DOWN) {
+        	return new Vector3f( dimX/2, dimY, dimZ );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_UP) {
+        	return new Vector3f( dimX/2, 0, 0 );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_INTO_SCREEN) {
+        	return new Vector3f( dimX/2, dimY, dimZ );
+        }
+        else if(faceOrientation == JDialogFaceAnonymize.FACING_OUT_OF_SCREEN) {
+        	return new Vector3f( dimX/2, dimY, 0 );
+        }
+    	return new Vector3f( 0, dimY, dimZ / 2 );
+		
+	}
+
+	private BitSet createMask( Plane3f clipPlane )
+	{
+		BitSet mask = new BitSet(dimX*dimY*dimZ);
+		Vector3f pt = new Vector3f();
 		for ( int z = 0; z < dimZ; z++ )
 		{
 			for ( int y = 0; y < dimY; y++ )
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					int index = z*dimY*dimX + y*dimX + x;
-					if ( !mask.get(index) )
+					pt.set(x,y,z);
+					float distance = clipPlane.DistanceTo( pt );
+					if ( distance < 0 )
 					{
-						image.set(index, 0);
+						mask.set( z*dimY*dimX + y*dimX + x);
 					}
-					else
-					{
-						image.set(index, 1);
-					}
-					if ( (z == 0) || (z == dimZ -1) )
-					{
-						image.set(index, 0);
-					}						
 				}
 			}
 		}
-		return image;
+		return mask;
 	}
-    
+	
+	private BitSet createMask( TriMesh mesh, boolean show, String postScript )
+	{
+		BitSet meshMask = computeSurfaceMask(mesh);	
+		floodFill(meshMask, cog);
+		if ( show )
+		{
+			ModelImage maskImage = (ModelImage)destImage.clone();
+			maskImage.setMask(meshMask);
+			maskImage.setImageName( destImage.getImageName() + postScript );        	
+			new ViewJFrameImage(maskImage);		
+		}
+		return meshMask;
+	}
+
 }
