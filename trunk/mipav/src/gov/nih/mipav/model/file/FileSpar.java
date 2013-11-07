@@ -345,7 +345,28 @@ public class FileSpar extends FileBase {
             return image;
         }
         
-        ModelImage imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
+        ModelImage imageA = null;
+        try {
+            imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
+        }
+        catch (Exception e) {
+            String fileDirectory = imageAInfo.getFileDirectory();
+            if (fileDirectory == null) {
+                return null;
+            }
+            // If the string ends with a File.separator, strip out the final FileSeparator
+            if ((fileDirectory.lastIndexOf(File.separator)) == fileDirectory.length() - 1) {
+                fileDirectory = fileDirectory.substring(0, fileDirectory.length() - 1);
+            }
+            int lastSeparatorIndex = fileDirectory.lastIndexOf(File.separator);
+            fileDirectory = fileDirectory.substring(lastSeparatorIndex + 1);
+            int periodIndex = fileDirectory.indexOf(".");
+            if (periodIndex > 0) {
+                fileDirectory = fileDirectory.substring(0, periodIndex);
+            }
+            fileDirectory = "_" + fileDirectory;
+            imageA = ViewUserInterface.getReference().getRegisteredImageByName(fileDirectory);
+        }
         
         if(image != imageA) {
             TransMatrix aTransOriginal = new TransMatrix(imageA.getMatrix());
