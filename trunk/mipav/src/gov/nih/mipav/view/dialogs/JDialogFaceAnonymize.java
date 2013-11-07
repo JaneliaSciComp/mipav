@@ -20,29 +20,29 @@ import javax.swing.*;
 /**
  */
 public class JDialogFaceAnonymize extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
-
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface 
+        {
 
     /** Face orientation not obtained from file information. */
-    private static final int FACING_UNKNOWN = -1;
+    public static final int FACING_UNKNOWN = -1;
 
     /** Indicates sagittal image with x-axis oriented posterior to anterior. */
-    private static final int FACING_RIGHT = 1;
+    public static final int FACING_RIGHT = 1;
 
     /** Indicates sagittal image with x-axis oriented anterior to posterior. */
-    private static final int FACING_LEFT = 2;
+    public static final int FACING_LEFT = 2;
 
     /** Indicates axial image with y-axis oriented posterior to anterior. */
-    private static final int FACING_DOWN = 3;
+    public static final int FACING_DOWN = 3;
 
     /** Indicates axial with y-axis oriented anterior to posterior. */
-    private static final int FACING_UP = 4;
+    public static final int FACING_UP = 4;
 
     /** Indicates coronal image with z-axis oriented posterior to anterior. */
-    private static final int FACING_INTO_SCREEN = 5;
+    public static final int FACING_INTO_SCREEN = 5;
 
     /** Indicates coronal image with z-axis oriented anterior to posterior. */
-    private static final int FACING_OUT_OF_SCREEN = 6;
+    public static final int FACING_OUT_OF_SCREEN = 6;
 
     /** The face orientation parameter. */
     private static final String PARAM_FACE_ORIENTATION = "face_orientation";
@@ -75,11 +75,17 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     /** Button for facing up image. */
     private JRadioButton facingUpRadio;
 
-    /** Button for blurring the face / skull. */
+    /** Button for blurring just the face. */
     private JRadioButton blurFaceRadio;
 
-    /** Button for removing the face / skull. */
+    /** Button for removing just the face. */
     private JRadioButton removeFaceRadio;
+
+    /** Button for blurring the face / skull. */
+    private JRadioButton blurAllRadio;
+
+    /** Button for removing the face / skull. */
+    private JRadioButton removeAllRadio;
 
     /** Button for displaying the segmentation. */
     private JRadioButton showSegmentationRadio;
@@ -87,8 +93,9 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     /** The image that face anonymization will be performed on. */
     private ModelImage srcImage;
 
-    private boolean blurFace = false;
-    private boolean removeFace = false;
+    private boolean blur = false;
+    private boolean remove = false;
+    private boolean face = true;
     private boolean showSegmentation = false;
 
     /**
@@ -218,7 +225,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         try {
             System.gc();
             defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
-            defaceAlgo.setOutputOption( blurFace, removeFace, showSegmentation );
+            defaceAlgo.setOutputOption( blur, remove, face, showSegmentation );
             defaceAlgo.addListener(this);
 
             createProgressBar(srcImage.getImageName(), defaceAlgo);
@@ -362,11 +369,17 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
         orientationPanel.setBorder(MipavUtil.buildTitledBorder("Options"));
 
-        blurFaceRadio = new JRadioButton("Blur face and skull regions.");
+        blurFaceRadio = new JRadioButton("Blur face.");
         blurFaceRadio.setFont(MipavUtil.font12);
 
-        removeFaceRadio = new JRadioButton("Remove face and skull regions.");
+        removeFaceRadio = new JRadioButton("Remove face.");
         removeFaceRadio.setFont(MipavUtil.font12);
+
+        blurAllRadio = new JRadioButton("Blur face and skull regions.");
+        blurAllRadio.setFont(MipavUtil.font12);
+
+        removeAllRadio = new JRadioButton("Remove face and skull regions.");
+        removeAllRadio.setFont(MipavUtil.font12);
 
         showSegmentationRadio = new JRadioButton("Show segmentation results.");
         showSegmentationRadio.setFont(MipavUtil.font12);
@@ -375,10 +388,14 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         ButtonGroup group = new ButtonGroup();
         group.add(blurFaceRadio);
         group.add(removeFaceRadio);
+        group.add(blurAllRadio);
+        group.add(removeAllRadio);
         group.add(showSegmentationRadio);
 
         orientationPanel.add(blurFaceRadio);
         orientationPanel.add(removeFaceRadio);
+        orientationPanel.add(blurAllRadio);
+        orientationPanel.add(removeAllRadio);
         orientationPanel.add(showSegmentationRadio);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -433,8 +450,9 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
      */
     private boolean setVariables() {
 
-        blurFace = blurFaceRadio.isSelected();
-        removeFace = removeFaceRadio.isSelected();
+        blur = blurFaceRadio.isSelected() | blurAllRadio.isSelected();
+        remove = removeFaceRadio.isSelected() | removeAllRadio.isSelected();
+        face = blurFaceRadio.isSelected() | removeFaceRadio.isSelected();
         showSegmentation = showSegmentationRadio.isSelected();
 
         return true;
