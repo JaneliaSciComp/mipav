@@ -2144,7 +2144,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (imageHashtable.containsKey(name)) {
             return imageHashtable.get(name);
         } else {
-            throw new IllegalArgumentException("Image name " + name + "is not valid.");
+            throw new IllegalArgumentException("Image name " + name + " is not valid.");
             // return null;
         }
     } // end getRegisteredImageByName()
