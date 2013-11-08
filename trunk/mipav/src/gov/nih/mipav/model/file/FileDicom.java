@@ -767,8 +767,8 @@ public class FileDicom extends FileDicomBase {
 		key = new PrivateFileDicomKey(privatePublisher.getPublisher(), key.toString());
 		FileDicomTagInfo tagInfo = PrivateDicomDictionary.getInfo((PrivateFileDicomKey)key);    
 		FileDicomTagInfo tagInfoInstance = null;
-		if((tagInfo != null) && (!origKey.toString().equalsIgnoreCase("2005,140B"))) {
-		    // 2005, 140B must be specially excluded, otherwise it becomes an incorrect float instead of the correct string
+		if((tagInfo != null) && (!origKey.toString().equalsIgnoreCase("2005,1409")) && (!origKey.toString().equals("2005,140B"))) {
+		    // 2005,1409 and 2005,140B must be specially excluded, otherwise get an incorrect float instead of the correct string
 			tagInfoInstance = new FileDicomTagInfo(key, tagInfo.getType(), tagInfo.getValueMultiplicity(), tagInfo.getKeyword(), tagInfo.getName());
 		} else {
 			tagInfoInstance = new FileDicomTagInfo(key, VR.SH, 1, "Private tag", "Private tag");
