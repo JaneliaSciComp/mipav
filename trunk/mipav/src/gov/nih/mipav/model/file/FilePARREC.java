@@ -28,73 +28,197 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
  * 
  * * Updated September 16, 2011 by Beth Tyrie
  * 
- *          // This explains the derivation of the dicom transformation matrix and origin from the PARREC parameters.
-            // The PAR file is KKZ_130213_4_1.PAR
-            // The first slice of the dicom file is 20131023203338769.MR.dcm
-            // The angles are the same for the header volume parameters and for every slice
-            double angulation_rl = -8.700;
-            double angulation_ap = -4.865;
-            double angulation_fh = 3.364;
-            
-            double angX = angulation_rl;
-            double angY = angulation_ap;
-            double angZ = angulation_fh;
+ *      // This explains the derivation of the dicom transformation matrix and origin from the PARREC parameters.
+        // The axial PAR file is KKZ_130213_4_1.PAR
+        // The first slice of the axial dicom file is 20131023203338769.MR.dcm
+        // The sagittal PAR file is KKZ_130213_3_1.PAR
+        // Thd first slice of the sagittal dicom file is 20131107105801812.MR.dcm.
+        // The angles are the same for the header volume parameters and for every slice
+        int ori;
+        final int axial = 1;
+        final int sagittal = 2;
+        final int coronal = 3;
+        ori = sagittal;
+        
+        double angulation_rl = 0.0;
+        double angulation_ap = 0.0;
+        double angulation_fh = 0.0;
+        
+        switch(ori) {
+            case axial: 
+            angulation_rl = -8.700;
+            angulation_ap = -4.865;
+            angulation_fh = 3.364;
+            break;
+            case sagittal:
+            angulation_rl = 0.305;
+            angulation_ap = -4.280;
+            angulation_fh = 4.083;
+            break;
+        }
+        
+        double angX = 0.0;
+        double angY = 0.0;
+        double angZ = 0.0;
+        
+        switch(ori) {
+            case axial:
+            angX = angulation_rl;
+            angY = angulation_ap;
+            angZ = angulation_fh;
+            break;
+            case sagittal:
+            angX = angulation_ap;
+            angY = -angulation_fh;
+            angZ = -angulation_rl;
+            break;
+        }
 
-            double Sx    = Math.sin(angX * Math.PI/180.0);
-            double Sy    = Math.sin(angY * Math.PI/180.0);
-            double Sz    = Math.sin(angZ * Math.PI/180.0);
-            double Cx    = Math.cos(angX * Math.PI/180.0);
-            double Cy    = Math.cos(angY * Math.PI/180.0);
-            double Cz    = Math.cos(angZ * Math.PI/180.0);    
-            
-            // EulerOrder = ORDER_XYZ;
-            // This is the Transformation matrix shown in the dicom header
-            double m00=Cy*Cz;
-            double m01=-Cy*Sz;
-            double m02=Sy;
-            double m10=Cz*Sx*Sy+Cx*Sz;
-            double m11=Cx*Cz-Sx*Sy*Sz;
-            double m12=-Cy*Sx;
-            double m20=-Cx*Cz*Sy+Sx*Sz;
-            double m21=Cz*Sx+Cx*Sy*Sz;
-            double m22=Cx*Cy;
-            
-            System.out.println("m00 = " + m00);
-            System.out.println("m01 = " + m01);
-            System.out.println("m02 = " + m02);
-            System.out.println("m10 = " + m10);
-            System.out.println("m11 = " + m11);
-            System.out.println("m12 = " + m12);
-            System.out.println("m20 = " + m20);
-            System.out.println("m21 = " + m21);
-            System.out.println("m22 = " + m22);
-            
-            double resX = 0.859375;
-            double resY = 0.859375;
-            double resZ = 1.0;
-            
-            // The header volume offsets and the individual slice offsets are all different
-            // The header volume offsets correspond to (xDim - 1)/2, (yDim - 1)/2, (zDim - 1)/2
-            // The slice offsets correspond to (xDim - 1)/2, (yDim - 1)/2, zSlice.
-            double rl_offset_center = 6.655;
-            double ap_offset_center = 3.537;
-            double fh_offset_center = 22.171;
-            
-            double offsetX = rl_offset_center;
-            double offsetY = ap_offset_center;
-            double offsetZ = fh_offset_center;
-            
-            double dimX = 256;
-            double dimY = 256;
-            double dimZ = 140;
-            
-            double originX = offsetX - m00 * resX * (dimX-1)/2 - m01 * resY * (dimY-1)/2- m02 * resZ * (dimZ-1)/2;
-            double originY = offsetY - m10 * resX * (dimX-1)/2 - m11 * resY * (dimY-1)/2 - m12 * resZ * (dimZ-1)/2;
-            double originZ = offsetZ - m20 * resX * (dimX-1)/2 - m21 * resY * (dimY-1)/2 - m22 * resZ * (dimZ-1)/2;
-            // These are the origins shown for dicom slice 0
-            System.out.println("originX = " + originX);
-            System.out.println("originY = " + originY);
-            System.out.println("originZ = " + originZ);
+        double Sx    = Math.sin(angX * Math.PI/180.0);
+        double Sy    = Math.sin(angY * Math.PI/180.0);
+        double Sz    = Math.sin(angZ * Math.PI/180.0);
+        double Cx    = Math.cos(angX * Math.PI/180.0);
+        double Cy    = Math.cos(angY * Math.PI/180.0);
+        double Cz    = Math.cos(angZ * Math.PI/180.0);    
+        
+        // EulerOrder = ORDER_XYZ;
+        // This is the Transformation matrix shown in the dicom header
+        // The dicom transformation matrix or image.getMatrix() is the transpose of the matrix given by getPatientOrientation().
+        // image.getMatrix() and getPatientOrientation() contain just the rotation component.
+        double m00=Cy*Cz;
+        double m01=-Cy*Sz;
+        double m02=Sy;
+        double m10=Cz*Sx*Sy+Cx*Sz;
+        double m11=Cx*Cz-Sx*Sy*Sz;
+        double m12=-Cy*Sx;
+        double m20=-Cx*Cz*Sy+Sx*Sz;
+        double m21=Cz*Sx+Cx*Sy*Sz;
+        double m22=Cx*Cy;
+        
+        TransMatrix tr = new TransMatrix(4);
+        switch (ori) {
+            case axial:
+            tr.M00 = (float)m00;
+            tr.M01 = (float)m01;
+            tr.M02 = (float)m02;
+            tr.M03 = 0;
+            tr.M10 = (float)m10;
+            tr.M11 = (float)m11;
+            tr.M12 = (float)m12;
+            tr.M13 = 0;
+            tr.M20 = (float)m20;
+            tr.M21 = (float)m21;
+            tr.M22 = (float)m22;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
+            break;
+            case sagittal:
+            tr.M00 = -(float)m20;
+            tr.M01 = -(float)m21;
+            tr.M02 = -(float)m22;
+            tr.M03 = 0;
+            tr.M10 = (float)m00;
+            tr.M11 = (float)m01;
+            tr.M12 = (float)m02;
+            tr.M13 = 0;
+            tr.M20 = -(float)m10;
+            tr.M21 = -(float)m11;
+            tr.M22 = -(float)m12;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
+            break;
+        }
+        
+        System.out.println("image transMatrix = " + tr);
+        
+        double resX = 0.0;
+        double resY = 0.0;
+        double resZ = 0.0;
+        
+        switch(ori) {
+            case axial:
+            resX = 0.859375;
+            resY = 0.859375;
+            resZ = 1.0;
+            break;
+            case sagittal:
+            resX = 0.42857143;
+            resY = 0.42857143;
+            resZ = 5.0;
+            break;
+        }
+        
+        // The header volume offsets and the individual slice offsets are all different
+        // The header volume offsets correspond to (xDim - 1)/2, (yDim - 1)/2, (zDim - 1)/2
+        // The slice offsets correspond to (xDim - 1)/2, (yDim - 1)/2, zSlice.
+        
+        double rl_offset_center = 0.0;
+        double ap_offset_center = 0.0;
+        double fh_offset_center = 0.0;
+        
+        switch(ori) {
+            case axial:
+            rl_offset_center = 6.655;
+            ap_offset_center = 3.537;
+            fh_offset_center = 22.171;
+            break;
+            case sagittal:
+            rl_offset_center = 8.844;
+            ap_offset_center = -3.225;
+            fh_offset_center = -0.535;
+            break;
+        }
+        
+        double offsetX = 0.0;
+        double offsetY = 0.0;
+        double offsetZ = 0.0;
+        switch(ori) {
+            case axial:
+            offsetX = rl_offset_center;
+            offsetY = ap_offset_center;
+            offsetZ = fh_offset_center;
+            break;
+            case sagittal:
+            offsetX = ap_offset_center;
+            offsetY = -fh_offset_center;
+            offsetZ = -rl_offset_center;
+            break;
+        }
+        
+        double dimX = 0.0;
+        double dimY = 0.0;
+        double dimZ = 0.0;
+        
+        switch(ori) {
+            case axial:   
+            dimX = 256;
+            dimY = 256;
+            dimZ = 140;
+            break;
+            case sagittal:
+            dimX = 560;
+            dimY = 560;
+            dimZ = 31;
+        }
+        
+        double originX = offsetX - m00 * resX * (dimX-1)/2 - m01 * resY * (dimY-1)/2- m02 * resZ * (dimZ-1)/2;
+        double originY = offsetY - m10 * resX * (dimX-1)/2 - m11 * resY * (dimY-1)/2 - m12 * resZ * (dimZ-1)/2;
+        double originZ = offsetZ - m20 * resX * (dimX-1)/2 - m21 * resY * (dimY-1)/2 - m22 * resZ * (dimZ-1)/2;
+        if (ori == sagittal) {
+            originY = -originY;
+            originZ = -originZ;
+        }
+        // These are the origins shown for dicom slice 0
+        System.out.println("originX = " + originX);
+        System.out.println("originY = " + originY);
+        System.out.println("originZ = " + originZ);
+
  */
 
 public class FilePARREC extends FileBase {
