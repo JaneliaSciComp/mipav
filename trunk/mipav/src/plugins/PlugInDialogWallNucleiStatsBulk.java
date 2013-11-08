@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.Vector;
@@ -42,6 +43,8 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	 */
 	private static final long serialVersionUID = 2021668025631889124L;
 	
+	private File csv;
+	
 	private JTextField dirText;
 	
 	private JFileChooser fileChooser;
@@ -54,41 +57,53 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	
 	private PlugInAlgorithmWallNucleiStatsBulk midAlg = null;
 	
-	private JComboBox<String> resUnits;
+	/**Writer for CSV*/
+	private FileWriter output;
 	
-	private ViewUserInterface UI;
+	private JComboBox resUnits;
 	
 	private JTextField xResField;
 	
 	public PlugInDialogWallNucleiStatsBulk() {
        
 		super();
-
-        UI = ViewUserInterface.getReference();
-        imageList = new Vector<File>();
-        maskList = new Vector<File>();
-
         init();
     }
 	
 	public void actionPerformed(ActionEvent event) {
 		
         String command = event.getActionCommand();
-        boolean changed = !dirText.getText().equals("Path to Directory with Slices");
+        File dir;
 
         if(command.equals("Cancel")) dispose();
         else if (command.equals("Choose")) openDir();
+        //Error checking for when the file explorer dialog is completed
+        //Make sure the selected folder actually exists
         else if (command.equals("ApproveSelection")){
-        	Preferences.setImageDirectory(fileChooser.getSelectedFile());
-        	dirText.setText(fileChooser.getSelectedFile().toString());
+        	dir = fileChooser.getSelectedFile();
+        	if (dir.exists()){
+        		Preferences.setImageDirectory(fileChooser.getSelectedFile());
+        		dirText.setText(fileChooser.getSelectedFile().toString());
+        	}
+        	else {
+        		MipavUtil.displayError("Please select a valid directory");
+        		openDir();
+        	}
         }
+        //Error check before the algorithm is called
         else if  (command.equals("OK")){
-        	if (changed){
-	        	if(fileFilter()) callAlgorithm();
+        	dir = new File(dirText.getText());
+        	if (dir.exists()){//Check to see directory exists
+	        	if(fileFilter()) {//Check to see if csv is capable of writing to
+	        		if(initCSV()) callAlgorithm();
+	        	}
 	        	else 
 	        		MipavUtil.displayError("This folder does not contain any mask images");
 	        	}
-        	else MipavUtil.displayError("Please select a directory.");
+        	else {
+        		MipavUtil.displayError("Please select a valid directory.");
+        		openDir();
+        	}
         }
         else super.actionPerformed(event);
     }
@@ -98,9 +113,16 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		
 		if (algorithm instanceof PlugInAlgorithmWallNucleiStats){
 			if (midAlg.isCompleted() == true ){
-				MipavUtil.displayInfo("Batch processing has completed");	
+				MipavUtil.displayInfo("Batch processing has completed. Statistics\n"
+						+ "have been exported to CSV.");
+				try {
+					//Open the folder containing the CSV once the algorithm has completed
+					Desktop.getDesktop().open(new File(dirText.getText()));
+				} catch (IOException e) {
+					MipavUtil.displayError("Problem opening folder to explore");
+				}
 			}
-			else UI.setGlobalDataText("Unable to complete the algorithm");
+			else MipavUtil.displayInfo("Unable to complete the statistics processing");
 		}
 		dispose();
 	}
@@ -109,27 +131,20 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		
 		try{
 			int xRes;
-			String units;
 			
 			xRes = Integer.valueOf(xResField.getText());
-			units = resUnits.getSelectedItem().toString();
-			
-			Unit unitStruct = Unit.getUnit(units);
-			String unitAbbr = unitStruct.getAbbrev();
 			
 			midAlg = new PlugInAlgorithmWallNucleiStatsBulk(imageList, maskList);
 			
 			midAlg.setRes(xRes);
-			midAlg.setUnit(unitAbbr);
+			midAlg.setCSV(output);
 
-			//Progress bar is useless right now
+			//Progress bar doesn't update smoothly with algorithms
 			createProgressBar("Wall/Nuclei statistics calculation", "Initializing..." , midAlg);
 			midAlg.addListener(this);
 			setVisible(false);
 
 			if (isRunInSeparateThread()) {
-
-				// Start the thread as a low priority because we wish to still have user interface work fast.
 				if (midAlg.startMethod(Thread.MIN_PRIORITY) == false) {
 					MipavUtil.displayError("A thread is already running on this object");
 				}
@@ -155,17 +170,20 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	private boolean fileFilter(){
 		
 		File dir = new File(dirText.getText());
+        imageList = new Vector<File>();
+        maskList = new Vector<File>();
 		File mask;
 		String stripped;
-		//Populate the mask images first, then use that to get the wall images
-		//so that only masked images are processed
 		
+		//Filter out only .jpg/.jpeg images
 		File[] files = dir.listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg"));
+				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg") ||
+						name.toLowerCase().endsWith(".tif") || name.toLowerCase().endsWith(".tiff"));
 			}
 		});
 		
+		//Pair each .jpg image with its associated mask
 		for(File im : files){
 			stripped = im.toString();
 			stripped = stripped.substring(0, stripped.indexOf("."));
@@ -176,21 +194,6 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	        	maskList.add(new File(stripped));
 	        }
 		}
-		
-		/*try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, ".{jpg,jpeg}")) {
-		    for (Path file: stream) {
-		        stripped = file.toString();
-		        stripped = stripped.substring(0, stripped.indexOf("."));
-		        stripped = stripped.concat("_mask.xml");
-		        mask = new File(stripped);
-		        if (!mask.exists()){
-		        	imageList.add(file.toFile());
-		        	maskList.add(new File(stripped));
-		        }
-		    }
-		} catch (IOException | DirectoryIteratorException x) {
-		    MipavUtil.displayError("Directory Iterator not available");
-		}*/
 		
 		return !imageList.isEmpty();
 	}
@@ -208,7 +211,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         String desc = "<html><b>Directions: </b><br>"
         		+ "Please choose a folder that contains wall sections as well as binary masks<br>"
         		+ "for each slice. Masks should be binary images saved as XML files, with<br>"
-        		+ "pattern IMAGENAME_mask.xml. Wall images should have extension .jpg or .jpeg. <br></html>";
+        		+ "pattern IMAGENAME_mask.xml. Wall images should be JPEGs or TIFFs. <br></html>";
         
         JLabel dirLabel = new JLabel(desc);
         dirLabel.setForeground(Color.black);
@@ -255,7 +258,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         for(int i=0; i<allSameMeasure.length; i++) {
         	unitArr[i] = (Unit.getUnitFromLegacyNum(allSameMeasure[i])).toString();
         }
-        resUnits = new JComboBox<String>(unitArr);
+        resUnits = new JComboBox(unitArr);
         resUnits.setFont(serif12);
         resUnits.setSelectedItem("Micrometers");
         resPanel.add(resUnits);
@@ -278,14 +281,48 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	}
 	
 	/**
+	 * 
+	 * Initializes the csv file for statistics output. If the file does not already exist,
+	 * the first couple of rows are added as information header
+	 * 
+	 * @return true if initialized, false if IO error (i.e. file is locked/can't write)
+	 */
+	private boolean initCSV(){
+		
+		String directory = imageList.get(0).getParent();
+		csv = new File(directory.concat("\\statistics.csv"));
+		String units;
+		Unit unitStruct;
+		String unitAbbr;
+
+		units = resUnits.getSelectedItem().toString();
+		unitStruct = Unit.getUnit(units);
+		unitAbbr = unitStruct.getAbbrev();
+	
+		try{
+			if(!(csv.exists())){
+				output = new FileWriter(csv);
+				output.append("Image, ,Wall, , , , , ,Nuclei, ,Units, " + unitAbbr + ", \n");
+				output.append(",Min,Max,Average,Std. Dev,Area, ,Number,Min,Max,Average,Std. Dev,Area, \n");
+				output.flush();
+			}
+			else output = new FileWriter(csv, true);
+		} catch (IOException x){
+			MipavUtil.displayError("Unable to initialize csv file");
+	        return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Used for setting up and displaying the File Manager for the plugin. Since
-	 * we are only interested in multiple files at a time, the user can only choose
+	 * we are only interested in batches of files, the user can only select
 	 * directories to open.
 	 */
 	
 	private void openDir(){
 		
-		 	fileChooser = new JFileChooser();
+		 	fileChooser = new JFileChooser(Preferences.getImageDirectory());
 	        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        fileChooser.addActionListener(this);
 	        fileChooser.showOpenDialog(this);

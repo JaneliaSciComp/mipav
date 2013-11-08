@@ -11,8 +11,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.view.MipavUtil;
 
-
-
 /**
  * Plugin for the Collins' Lab to calculate statistics for histology slides. 
  * This is the first iteration of the plugin. In this, the user is required 
@@ -27,15 +25,16 @@ import gov.nih.mipav.view.MipavUtil;
  *
  */
 
-
 public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	
 	private int area;
 	
+	private int[] boolBuffer;
+	
 	/** Mask Image*/
 	private ModelImage boolImage;
 	
-	private File csv;
+	private float[] dBuffer;
 	
 	/** Foreground Distance Image*/
 	private ModelImage dImage;
@@ -56,6 +55,8 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	
 	private int length;
 	
+	
+	
 	/**Contains the mask images fo batch processing */
 	private Vector<File> maskList;
 	
@@ -71,11 +72,11 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	
 	private float[] stats;
 	
+	private int[] tempBuffer;
+	
 	/** Used to exclude pixels in the second pass of the midline finding step
 	 *  and obtain the midline without branches */
 	private ModelImage tempImage;
-
-	private String unit;
 	
 	private int xRes;
 
@@ -85,7 +86,6 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         imageList = rgb;
         maskList = bool;
         stats = new float[11];
-
     }
     
     public void finalize() {
@@ -112,30 +112,44 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	@Override
 	public void runAlgorithm() {
 		
-		initCSV();
-		
 		FileIO imLoader = new FileIO();
+		AlgorithmImageCalculator combine;
 		int itr = imageList.size();
 		increment = 100f / (float)itr;
+		int[] rgbExtents;
+		int[] boolExtents;
+		int[] gBuffer;
+		int[] maskBuffer;
+		String rgbStr;
+		String boolStr;
 		
 		for(int i=0;i<itr;i++){
 			
 			fireProgressStateChanged("Calculating "+ String.valueOf(i+1) + " of " + String.valueOf(itr));
 		
-			String rgbStr = imageList.get(i).toString();
-			String boolStr = maskList.get(i).toString();
-	
+			rgbStr = imageList.get(i).toString();
+			boolStr = maskList.get(i).toString();
 			rgbImage = imLoader.readImage(rgbStr);
 			boolImage = imLoader.readImage(boolStr);
+			
+			if (rgbImage == null) {
+	            displayError("Could not load RGB image: " + rgbStr);
+	            continue;
+	        }
 	
-			int[] rgbExtents = rgbImage.getExtents();
-			int[] boolExtents = boolImage.getExtents();
+	        if (boolImage == null) {
+	        	displayError("Could not load mask image: " + boolStr);
+	            continue;
+	        }
+	
+			rgbExtents = rgbImage.getExtents();
+			boolExtents = boolImage.getExtents();
 	
 			if((rgbExtents[0] != boolExtents[0]) && (rgbExtents[1] != boolExtents[1])){
 	
 				MipavUtil.displayError("Image extents are not equal for\n" +
 				rgbStr);
-				return; 
+				continue; 
 			}
 			
 			extents = rgbExtents;
@@ -143,26 +157,22 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 			imageHeight = extents[1];
 			length = imageWidth * imageHeight;
 			
-			tempImage = new ModelImage(ModelImage.UBYTE, extents, "Midline Mask");
-			
-			if (rgbImage == null) {
-	            displayError("There is no rgb image");
-	            return;
-	        }
-	
-	        if (boolImage == null) {
-	            displayError("There is no mask image");
-	            return;
+			boolBuffer = new int[length];
+	        tempBuffer = new int[length];
+	        
+	        try{
+	        	boolImage.exportData(0, length, boolBuffer);
+	        } catch(IOException x){
+	        	MipavUtil.displayError("Could not export image data");
+	        	continue;
 	        }
 	        
 	        segNuclei();
 	        progress += 0.25f * increment;
 	        fireProgressStateChanged((int)progress);
-	        
-	        //Extract statistics from nuclei: (#, area, average size, std. dev, min, max)
-	        
-	        int[] gBuffer = new int[length];
-	        try{
+
+	        gBuffer = new int[length];
+	        try{//Extract statistics from nuclei: (#, area, average size, std. dev, min, max)
 	        	gImage.exportData(0, length, gBuffer);
 	        	Arrays.sort(gBuffer);
 	            nucleiStatistics(gBuffer);
@@ -172,25 +182,29 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	        }
 	        
 	        processMask();
+	        tempImage = new ModelImage(ModelImage.UBYTE, extents, "Midline Mask");
 	        
 	        //Find midline from thresholded laplacian image
 			//Visited buffer, initially all 0
 	        if (maxIndex != -1){
-				int[] maskBuffer = new int[length];
+				maskBuffer = new int[length];
 				
 				//First pass
 				midline(maskBuffer, maxIndex, 0);
-		
-				//Second pass
+				//Second pass (not necessary for a complete loop probably)
 				midline(maskBuffer, maxIndex, 1);
-		
-				maskBuffer = null;
+				
+				try {
+					tempImage.importData(0, tempBuffer, false);
+				} catch (IOException e) {
+					MipavUtil.displayError("Could not import data");
+				}
 				
 				//Mask the foreground distance image so only the midline is left
-				AlgorithmImageCalculator combine = new AlgorithmImageCalculator(dImage, tempImage,
+				combine = new AlgorithmImageCalculator(dImage, tempImage,
 						AlgorithmImageCalculator.MULTIPLY, AlgorithmImageCalculator.CLIP, true, "");
 				combine.run();
-				
+
 				//Calculate statistics for the wall thickness
 				try{
 					float[] dBuffer = new float[length];
@@ -201,13 +215,11 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 					return;
 				}
 	        }
-	        
 	        writeToCSV(i);
-	        
-		}
+		}//iterate through images
 		
 		try{
-		output.close();
+			output.close();
 		}catch (IOException x){
 			MipavUtil.displayError("Could not close csv stream");
 			return;
@@ -218,16 +230,15 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		tempImage = null;
 		rgbImage = null;
 		boolImage = null;
+		maskBuffer = null;
 		setCompleted(true);
 	}
 	
-	public void setUnit(String unitAbbr){
-		
-		this.unit = unitAbbr;
+	public void setCSV(FileWriter out){
+		this.output = out;
 	}
 	
 	public void setRes(int res){
-		
 		this.xRes = res;
 	}
 	
@@ -235,15 +246,15 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		
 		this.area = 0;
 		for(int i=0; i<length; i++){
-			if (boolImage.get(i).intValue() == 1) this.area++;
+			if (boolBuffer[i] == 1) this.area++;
 		}
 	}
-	
+
 	private void maxIndex(){
 		
 		float maxPixel = (float)boolImage.getMax();
 		for(int i = 0; i<length; i++){
-			if (boolImage.get(i).floatValue() == maxPixel){
+			if (dBuffer[i] == maxPixel){
 				this.maxIndex = i;
 				return;
 			}
@@ -264,16 +275,6 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	 * to consider
 	 */
 	private void midline(int[] buffer, int seed, int pass){ 
-		
-		//Maximum number of elements in the Deque/Vector
-		final int MAXNUM = 200;
-		
-		//Neighboring pixels to consider
-		Vector<Vector2d> dir = new Vector<Vector2d>();
-		dir.add(new Vector2d(0, -1));
-		dir.add(new Vector2d(1, 0));
-		dir.add(new Vector2d(0, 1));
-		dir.add(new Vector2d(-1, 0));
 
 		//Which direction to go on the inverse pass
 		int[] dirImage = new int[length];
@@ -287,20 +288,25 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		//Set up pool as an ArrayDeque of Vector2d to keep track of which pixels are
 		//in the current wave (should change to QUEUE, since double ended structure 
 		//isn't needed)
-		ArrayDeque<Integer> pool = new ArrayDeque<Integer>(MAXNUM);
-		Vector<Integer> prevPool = new Vector<Integer>(MAXNUM);
+		ArrayDeque<Integer> pool = new ArrayDeque<Integer>();
+		Vector<Integer> prevPool = new Vector<Integer>();
+		Vector2d coord = new Vector2d();
+		Vector2d dirCoord = new Vector2d();
 		Integer index = new Integer(seed);
 		buffer[seed] = 1+pass;
 		pool.addFirst(index);
 		int poolSize = 1;
 		int x,y;
 		int direction;
-		Vector2d coord = new Vector2d();
-		Vector2d dirCoord = new Vector2d();
-		//int cnt = 0;
+		
+		//Neighboring pixels to consider
+		Vector<Vector2d> dir = new Vector<Vector2d>();
+		dir.add(new Vector2d(0, -1));
+		dir.add(new Vector2d(1, 0));
+		dir.add(new Vector2d(0, 1));
+		dir.add(new Vector2d(-1, 0));
 
 		//Propagate waves until terminus
-
 		while(poolSize > 0){
 
 			prevPool.clear();
@@ -325,8 +331,8 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 					index = new Integer((int)(dirCoord.X + dirCoord.Y * imageWidth));
 					//Check to see if the pixel has already been included in the midline mask
 					//and that it is a connection to make
-					if ((tempImage.get(index.intValue()).intValue() == 0)
-							&& (boolImage.get(index.intValue()).intValue() == 1)){
+					if ((tempBuffer[index] == 0)
+							&& (boolBuffer[index] == 1)){
 						dirImage[index.intValue()] += powers[j];
 						if(buffer[index.intValue()] == pass){
 							//Only add the pixel to the next wave if it hasn't already been checked
@@ -359,7 +365,7 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 				y = index.intValue() / imageWidth;
 				coord = new Vector2d(x, y);
 				direction = dirImage[index.intValue()];
-				tempImage.set(index.intValue(), 1);
+				tempBuffer[index] = 1;
 				for(int j=0; j<4; j++){
 					//Check to see if this pixel points in a given direction
 					if((direction & 1<<j) == 1<<j){
@@ -418,13 +424,13 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	 * @param imBuffer : image buffer resulting from ID objects, should be sorted already
 	 */
 	private void nucleiStatistics(int[] imBuffer){
-		
-		int squared = 0; //Keep track of a nucleus size to calculate std. dev
-		int prev = 1;
-		int num = 0;
-		int squaredSum = 0;
+
 		int min = 5000;
 		int max = 0;
+		int num = 0;
+		int prev = 1;
+		int squared = 0; //Keep track of a nucleus size to calculate std. dev
+		int squaredSum = 0;
 		
 		for(int i=5; i<11; i++) stats[i] = 0.0f;
 		
@@ -464,12 +470,12 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	
 	private void processMask(){
 		
-		area();
-        stats[4] = area;
-		
 		float[] sigmas = {1, 1, 1};
 		float[] threshold = new float[2];
 		
+		area();
+        stats[4] = area;
+
 		//Generate foreground distance map to determine where general midline is
         AlgorithmMorphology2D distMap = new AlgorithmMorphology2D(boolImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.DISTANCE_MAP, 0, 0, 0, 0, true);
@@ -479,6 +485,12 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         fireProgressStateChanged((int)progress);
 
         dImage = (ModelImage) boolImage.clone("Distance Map");
+        dBuffer = new float[length];
+        try {
+			dImage.exportData(0, length, dBuffer);
+		} catch (IOException e) {
+			MipavUtil.displayError("Could not export data");
+		}
        
         //Find the largest distance. This SHOULD lie along the midline
         maxIndex();
@@ -495,6 +507,13 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         
         AlgorithmThresholdDual thresh = new AlgorithmThresholdDual(boolImage, threshold, 1, 1, true, false);
         thresh.run();
+        
+        try {
+        	boolImage.exportData(0, length, boolBuffer);
+        } catch (IOException e) {
+        	MipavUtil.displayError("Could not export data");
+        }
+            
 	}
 	
 	/** 
@@ -503,13 +522,14 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	 * Mask -> Hard C-Means -> Threshold -> Fill Holes -> ID Objects -> Generate statistics
 	**/
 	private void segNuclei(){
-
-		int min = 1;
-		int max = -9999;
-		int gPix;
+		
 		float[] centroids = new float[5];
 		float[] threshold = {1, 1};
 		float inc;
+		int gPix;
+		int min = 1;
+		int max = -9999;
+		
 
 		//Extract only the green channel and calculate the min and max non-background values
 		gImage = new ModelImage(ModelImage.UBYTE, extents, "GrayG");
@@ -554,33 +574,6 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         		1.0f, AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0, true);
         nObj.setMinMax(3, 5000);
         nObj.run();
-	}
-	
-	/**
-	 * 
-	 * Initializes the csv file for statistics output. If the file does not already exist,
-	 * the first couple of rows are added as information header
-	 * 
-	 * @return true if initialized, false if IO error
-	 */
-	private boolean initCSV(){
-		
-		String directory = imageList.get(0).getParent();
-		csv = new File(directory.concat("\\statistics.csv"));
-
-		try{
-			if(!(csv.exists())){
-				output = new FileWriter(csv);
-				output.append("Image, ,Wall, , , , , ,Nuclei, ,Units, " + unit + ", \n");
-				output.append(",Min,Max,Average,Std. Dev,Area, ,Number,Min,Max,Average,Std. Dev,Area, \n");
-				output.flush();
-			}
-			else output = new FileWriter(csv, true);
-		} catch (IOException x){
-			MipavUtil.displayError("Unable to initialize csv file");
-            return false;
-		}
-		return true;
 	}
 	
 	/**
