@@ -52,9 +52,9 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 	
 	private JTextField xResField;
 	
-	private JComboBox<String> resUnits;
+	private JComboBox resUnits;
 	
-	private JComboBox<String> rgbImages, boolImages;
+	private JComboBox rgbImages, boolImages;
 	
 	private ViewUserInterface UI;
 	
@@ -185,8 +185,8 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
 
 		Enumeration<String> names = UI.getRegisteredImageNames();
 		
-        rgbImages = new JComboBox<String>();
-		boolImages = new JComboBox<String>();
+        rgbImages = new JComboBox();
+		boolImages = new JComboBox();
 
 		while (names.hasMoreElements()){
 
@@ -270,7 +270,7 @@ public class PlugInDialogWallNucleiStats extends JDialogBase implements Algorith
         for(int i=0; i<allSameMeasure.length; i++) {
         	unitArr[i] = (Unit.getUnitFromLegacyNum(allSameMeasure[i])).toString();
         }
-        resUnits = new JComboBox<String>(unitArr);
+        resUnits = new JComboBox(unitArr);
         resUnits.setFont(serif12);
         resUnits.setSelectedItem("Micrometers");
         resPanel.add(resUnits);
