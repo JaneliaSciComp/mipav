@@ -90,6 +90,15 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     /** Button for displaying the segmentation. */
     private JRadioButton showSegmentationRadio;
 
+    /** Text field corresponding to brain padding parameter. */
+    private JTextField extraBrainPaddingField;
+
+    /**
+     * FaceAnonymizer parameter. Guarantees that the extracted brain will be avoided by the specified number of
+     * millimeters. Initially set to 20.
+     */
+    private int extraMMsToPad = 10;
+
     /** The image that face anonymization will be performed on. */
     private ModelImage srcImage;
 
@@ -226,6 +235,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
             System.gc();
             defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
             defaceAlgo.setOutputOption( blur, remove, face, showSegmentation );
+            defaceAlgo.setOffSet(extraMMsToPad);
             defaceAlgo.addListener(this);
 
             createProgressBar(srcImage.getImageName(), defaceAlgo);
@@ -397,9 +407,24 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         orientationPanel.add(blurAllRadio);
         orientationPanel.add(removeAllRadio);
         orientationPanel.add(showSegmentationRadio);
+        
+        
+        JPanel removalPanel = new JPanel(new GridLayout(1, 2));
+        removalPanel.setBorder(MipavUtil.buildTitledBorder("Face removal options"));
+
+        extraBrainPaddingField = new JTextField();
+        extraBrainPaddingField.setText("" + extraMMsToPad);
+        extraBrainPaddingField.setColumns(2);
+
+        JLabel extraPaddingLabel = new JLabel("Extracted brain is avoided by a buffer of this many mms");
+        extraPaddingLabel.setFont(MipavUtil.font12);
+        removalPanel.add( extraPaddingLabel );
+        removalPanel.add(extraBrainPaddingField);
+        
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(orientationPanel, BorderLayout.NORTH);
+        mainPanel.add(removalPanel, BorderLayout.SOUTH);
 
         getContentPane().removeAll();
         getContentPane().add(mainPanel, BorderLayout.NORTH);
