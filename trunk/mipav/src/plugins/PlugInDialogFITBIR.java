@@ -4082,7 +4082,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             ageInYears = Integer.toString(Integer.parseInt(temp));
                         }
                         ((JTextField) comp).setText(ageInYears);
-                        label.setForeground(Color.red);{
+                        label.setForeground(Color.red);
                     } else if (l.equalsIgnoreCase("SiteName") && siteName != null && !siteName.equals("")) {
                         ((JTextField) comp).setText(siteName);
                     } else if (l.equalsIgnoreCase("VisitDate") && visitDate != null && !visitDate.equals("")) {
