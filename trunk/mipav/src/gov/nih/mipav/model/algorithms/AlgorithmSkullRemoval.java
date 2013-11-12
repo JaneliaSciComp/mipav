@@ -2,8 +2,10 @@ package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
+import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Line3f;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -24,6 +26,8 @@ import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaus
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
@@ -68,9 +72,14 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private boolean remove = false;
 	private boolean face = false;
 	private boolean showSegmentation = false;
+	private float offSet = 1;
 
 	private BitSet brainMaskMin;
 	private BitSet brainMaskMax;
+	
+	private int[] originalAxis;
+	private int[] targetAxis;
+	private boolean reMapped;
 	
     /**
      * Construct the face anonymizer, but do not run it yet.
@@ -81,7 +90,23 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     public AlgorithmSkullRemoval(ModelImage srcImg, int faceDirection)
     {
     	super( null, srcImg );
-    	destImage = (ModelImage) srcImg.clone();
+
+    	targetAxis = new int[]{FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_S2I_TYPE,
+                FileInfoBase.ORI_L2R_TYPE};
+    	originalAxis = srcImage.getAxisOrientation();
+        int[] axisOrder = { 0, 1, 2, 3 };
+        boolean[] axisFlip = { false, false, false, false };
+        if ( reMapped = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
+        {
+            AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImage, axisOrder, axisFlip );
+            rotateAlgo.setRunningInSeparateThread(false);
+            rotateAlgo.run();
+            srcImage = rotateAlgo.returnImage();
+        }
+        this.faceOrientation = JDialogFaceAnonymize.FACING_LEFT;
+        
+        
+    	destImage = (ModelImage) srcImage.clone();
     	destImage.setImageName( srcImage.getImageName() + "_deskull" );
         faceOrientation = faceDirection;
         
@@ -128,6 +153,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
             return;
         }
+        
+
+        fireProgressStateChanged(100);
+        
+        setCompleted(true);	
     }
     
     public void setOutputOption( boolean blur, boolean remove, boolean face, boolean showSegmentation )
@@ -136,6 +166,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	this.remove = remove;
     	this.face = face;
     	this.showSegmentation = showSegmentation;
+    }
+    
+    public void setOffSet( float offSet )
+    {
+    	this.offSet = offSet;
     }
 
     
@@ -249,43 +284,56 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				
 			if ( blur )
 			{
-//				ModelImage blurOutside = randomize( destImage, 5 );	        				
+				ModelImage pixelizedImage = randomize( srcImage, 10 );	        				
 //				 Blur face and add it back to the image:				
-		        int index = srcImage.getExtents()[2] / 2;
-		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
-		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
-
-		        float correction = xRes / zRes;
-
-	            final float[] sigmas = {5, 5, 5*correction};
-	    		ModelImage blurOutside = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                        JDialogBase.makeImageName(srcImage.getImageName(), "_blur"));
-	            AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(srcImage, sigmas, true, false);
-	            gaussianBlurSepAlgo.setRunningInSeparateThread(false);
-	            gaussianBlurSepAlgo.run();
-
-                try {
-                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);    	            
-    	            addBlur( blurOutside, destImage );
+//		        int index = srcImage.getExtents()[2] / 2;
+//		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
+//		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
+//
+//		        float correction = xRes / zRes;
+//
+//	            final float[] sigmas = {5, 5, 5*correction};
+//	    		ModelImage blurOutside = new ModelImage(srcImage.getType(), srcImage.getExtents(),
+//                        JDialogBase.makeImageName(srcImage.getImageName(), "_blur"));
+//	            AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(pixelizedImage, sigmas, true, false);
+//	            gaussianBlurSepAlgo.setRunningInSeparateThread(false);
+//	            gaussianBlurSepAlgo.run();
+//
+//                try {
+//                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);    	            
+    	            addBlur( pixelizedImage, destImage );
     	        	destImage.setImageName( srcImage.getImageName() + "_deskull_blur" );
-                	blurOutside.disposeLocal();
-                } catch (final IOException e) {
-                	blurOutside.disposeLocal();
-                    MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
-                    return;
-                }
+//                	blurOutside.disposeLocal();
+//                } catch (final IOException e) {
+//                	blurOutside.disposeLocal();
+//                    MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
+//                    return;
+//                }
 			}
     	}
+        if ( reMapped )
+        {
+        	int[] axisOrder = { 0, 1, 2, 3 };
+        	boolean[] axisFlip = { false, false, false, false };
+        	if ( MipavCoordinateSystems.matchOrientation( originalAxis, targetAxis, axisOrder, axisFlip ) )
+        	{
+        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
+        		rotateAlgo.setRunningInSeparateThread(false);
+        		rotateAlgo.run();
+        		destImage.disposeLocal();
+        		destImage = rotateAlgo.returnImage();
+        	}
+        }
     	
     	if ( showSegmentation )
     	{
-//        	short id = (short) destImage.getVOIs().getUniqueID();
-//        	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
-//        	centerGravity.importPoint(cog);
-//        	destImage.registerVOI(centerGravity);
-//        	centerGravity.setColor( Color.green );    	
-
     		destImage.resetVOIs();
+    		
+        	short id = (short) destImage.getVOIs().getUniqueID();
+        	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
+        	centerGravity.importPoint(cog);
+        	destImage.registerVOI(centerGravity);
+        	centerGravity.setColor( Color.green );    	
         	destImage.setImageName( srcImage.getImageName() + "_outsideMask" );
         	new ViewJFrameImage(destImage);
     	}
@@ -293,6 +341,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	{
     		destImage.resetVOIs();
     		destImage.clearMask();
+    		destImage.calcMinMax();
     		new ViewJFrameImage( destImage );
     	}
         fireProgressStateChanged(100);
@@ -381,7 +430,84 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				
 				if ( face | showSegmentation )
 				{
-					Plane3f clipPlane = new Plane3f( getPlaneNormal( faceOrientation ), getPlaneCenter( faceOrientation ) );
+					Vector3f front = getFront( faceOrientation, cog );
+					Vector3f bottom = getBottom( faceOrientation, cog );
+//					System.err.println( "COG " + cog );
+//					System.err.println( "Front " + front );
+//					System.err.println( "Bottom " + bottom );
+					Segment3f frontSegment = new Segment3f( front, cog );
+					Segment3f bottomSegment = new Segment3f( bottom, cog );
+					IntrSegment3Triangle3f intersection = new IntrSegment3Triangle3f();
+					
+					int[] aiTris = new int[3];
+					int iTQuantity = kMesh.GetTriangleQuantity();
+					int iV0, iV1, iV2;
+					Vector3f kV0 = new Vector3f();
+					Vector3f kV1 = new Vector3f();
+					Vector3f kV2 = new Vector3f();
+
+					float minDistFront = Float.MAX_VALUE;
+					Vector3f minDistFrontPoint = new Vector3f();
+					float minDistBottom = Float.MAX_VALUE;
+					Vector3f minDistBottomPoint = new Vector3f();
+					for ( int i = 0; i < iTQuantity; i++ )
+					{
+			            if (!kMesh.GetTriangle(i, aiTris) )
+			            {
+			                continue;
+			            }
+						iV0 = aiTris[0];
+						iV1 = aiTris[1];
+						iV2 = aiTris[2];
+
+						kMesh.VBuffer.GetPosition3(iV0, kV0);
+						kMesh.VBuffer.GetPosition3(iV1, kV1);
+						kMesh.VBuffer.GetPosition3(iV2, kV2);
+						
+						Triangle3f tri = new Triangle3f(kV0, kV1, kV2);
+						intersection.Triangle = tri;
+						
+						intersection.Segment = frontSegment;
+				    	if ( intersection.Find() )
+				    	{
+				    		// add intersection point:
+				    		Vector3f intersectionPoint = new Vector3f();
+				    		intersectionPoint.scaleAdd( intersection.GetSegmentParameter(), frontSegment.Direction, frontSegment.Center);
+				    		
+				    		float distance = front.distance(intersectionPoint);
+				    		if ( distance < minDistFront )
+				    		{
+				    			minDistFront = distance;
+				    			minDistFrontPoint.copy(intersectionPoint);
+				    		}
+				    	}
+						
+						intersection.Segment = bottomSegment;
+				    	if ( intersection.Find() )
+				    	{
+				    		// add intersection point:
+				    		Vector3f intersectionPoint = new Vector3f();
+				    		intersectionPoint.scaleAdd( intersection.GetSegmentParameter(), bottomSegment.Direction, bottomSegment.Center);
+				    		
+				    		float distance = bottom.distance(intersectionPoint);
+				    		if ( distance < minDistBottom )
+				    		{
+				    			minDistBottom = distance;
+				    			minDistBottomPoint.copy(intersectionPoint);
+				    		}
+				    	}
+					}
+//					System.err.println( minDistFrontPoint );
+//					System.err.println( minDistBottomPoint );
+					
+					Plane3f clipPlane = new Plane3f( new Vector3f( minDistFrontPoint.X, minDistFrontPoint.Y, 0),
+							new Vector3f( minDistBottomPoint.X, minDistBottomPoint.Y, 0) , 
+							new Vector3f( minDistFrontPoint.X, minDistFrontPoint.Y, dimZ));
+
+//					System.err.println( "Normal " + clipPlane.Normal );
+					
+					
+//					Plane3f clipPlane = new Plane3f( getPlaneNormal( faceOrientation ), getPlaneCenter( faceOrientation ) );
 					float minDist = Float.MAX_VALUE;
 					int minIndex = -1;
 					for ( int i = 0; i < kMesh.VBuffer.GetVertexQuantity(); i++ )
@@ -392,16 +518,28 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 							minDist = distance;
 							minIndex = i;
 						}
-						if ( distance < 0 )
-						{
-							System.err.println( "Plane error " + kMesh.VBuffer.GetPosition3(i) );
-						}
+//						if ( distance < 0 )
+//						{
+//							System.err.println( "Plane error " + kMesh.VBuffer.GetPosition3(i) );
+//						}
 					}
 //					System.err.println( minIndex  + " " + minDist );
 					if ( minIndex != -1 )
 					{
-						clipPlane = new Plane3f( getPlaneNormal(faceOrientation), kMesh.VBuffer.GetPosition3(minIndex) );
-						BitSet clipMask = createMask( clipPlane );
+				        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+				        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+				        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+				        
+						Vector3f shift = Vector3f.neg(clipPlane.Normal);
+						shift.scale(offSet/xRes, offSet/yRes, offSet/zRes);
+//						shift.scale(offSet, offSet, offSet);
+						Vector3f pos = kMesh.VBuffer.GetPosition3(minIndex);
+//						System.err.println( "Plane position " + pos );
+						pos.add(shift);
+//						System.err.println( "Plane position " + pos );
+						
+						clipPlane = new Plane3f( clipPlane.Normal, pos );
+						BitSet clipMask = createMask( clipPlane, faceOrientation, cog );
 						if ( showSegmentation )
 						{
 							ModelImage outlineMaskImage = (ModelImage)destImage.clone();
@@ -2741,14 +2879,74 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		int stepsY = dimY / stepSize;
 		int stepsZ = dimZ / stepSize;
 		int length = stepsX*stepsY*stepsZ;
-		Vector2d[] randomArray = new Vector2d[length];		
-		Random gen = new Random();
+
+		float[] blockAvg = new float[length];
+		// calculate block average intensities:
+		for ( int z = 0; z < stepsZ; z++ )
+		{
+			for ( int y = 0; y < stepsY; y++ )
+			{
+				for ( int x = 0; x < stepsX; x++ )
+				{													
+					int count = 0;
+					float sum = 0;
+					int srcZ = z * stepSize;
+					for ( int z1 = z; z1 < z + stepSize; z1++ )
+					{					
+						int srcY = y * stepSize;
+						for ( int y1 = y; y1 < y + stepSize; y1++ )
+						{	
+							int srcX = x * stepSize;
+							for ( int x1 = x; x1 < x + stepSize; x1++ )
+							{
+								sum += image.getFloat(srcX++, srcY, srcZ);
+								count++;
+							}							
+							srcY++;
+						}						
+						srcZ++;
+					}
+					sum /= (float)(count);
+					
+					int blockIndex = z * stepsY * stepsX + y * stepsX + x;	
+					blockAvg[blockIndex] = sum;
+				}
+			}
+		}
+		
+		// randomly swap blocks -- choose blocks that are with in 25% of each other:
+		boolean[] swapped = new boolean[length];
+		int[] blockIndex = new int[length];
 		for ( int i = 0; i < length; i++ )
 		{
-			randomArray[i] = new Vector2d( gen.nextInt(), i );
+			swapped[i] = false;				
+			blockIndex[i] = i;
 		}
-    	Arrays.sort( randomArray );
-
+		for ( int i = 0; i < length; i++ )
+		{
+			if ( swapped[i] )
+				continue;
+			for ( int j = length-1; j > i; j-- )
+			{
+				if ( !swapped[j] && (Math.abs(blockAvg[i] - blockAvg[j]) < .25*blockAvg[i]) )
+				{
+					int temp = blockIndex[i];
+					blockIndex[i] = blockIndex[j];
+					blockIndex[j] = temp;
+					
+					swapped[i] = true;
+					swapped[j] = true;
+				}
+			}
+		}
+//		for ( int i = 0; i < length; i++ )
+//		{
+//			System.err.println( blockIndex[i] + "   " + swapped[i] );
+//		}
+		
+		
+		
+		// Swap the blocks of voxels in the volumes:
 		for ( int z = 0; z < stepsZ; z++ )
 		{
 			for ( int y = 0; y < stepsY; y++ )
@@ -2759,7 +2957,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					int randomIndex = z * stepsY * stepsX + y * stepsX + x;	
 					
 					// recreate randomized index into random array:
-					int targetIndex = (int) randomArray[randomIndex].Y;					
+					int targetIndex = blockIndex[randomIndex];					
 					int targetX = targetIndex % stepsX;
 					targetIndex -= targetX;
 					targetIndex /= stepsX;
@@ -2774,7 +2972,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					targetZ *= stepSize;
 					targetY *= stepSize;
 					targetX *= stepSize;
-					
+										
 					int srcZ = z * stepSize;
 					for ( int z1 = targetZ; z1 < targetZ + stepSize; z1++ )
 					{					
@@ -2798,63 +2996,30 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		blurImage.calcMinMax();
 		return blurImage;
 	}
-	
-	private Vector3f getPlaneNormal( int faceOrientation )
-	{
-		float temp = (float) (1f/Math.sqrt(2f));
-        if(faceOrientation == JDialogFaceAnonymize.FACING_LEFT) 
-        {
-        	return new Vector3f( temp, -temp, 0 );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_RIGHT) 
-        {
-        	return new Vector3f( -temp, -temp, 0 );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_DOWN) 
-        {
-        	return new Vector3f( 0, -temp, -temp );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_UP) 
-        {
-        	return new Vector3f( 0, temp, temp );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_INTO_SCREEN) 
-        {
-        	return new Vector3f( 0, -temp, -temp );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_OUT_OF_SCREEN) 
-        {
-        	return new Vector3f( 0, -temp, temp );
-        }
-    	return new Vector3f( temp, -temp, 0 );
-	}
-	
-	private Vector3f getPlaneCenter( int faceOrientation )
-	{
-        if(faceOrientation == JDialogFaceAnonymize.FACING_LEFT) {
-        	return new Vector3f( 0, dimY, dimZ / 2 );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_RIGHT) {
-        	return new Vector3f( dimX, dimY, dimZ / 2 );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_DOWN) {
-        	return new Vector3f( dimX/2, dimY, dimZ );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_UP) {
-        	return new Vector3f( dimX/2, 0, 0 );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_INTO_SCREEN) {
-        	return new Vector3f( dimX/2, dimY, dimZ );
-        }
-        else if(faceOrientation == JDialogFaceAnonymize.FACING_OUT_OF_SCREEN) {
-        	return new Vector3f( dimX/2, dimY, 0 );
-        }
-    	return new Vector3f( 0, dimY, dimZ / 2 );
-		
-	}
 
-	private BitSet createMask( Plane3f clipPlane )
+	private void getCogBounds( int faceOrientation, Vector3f cog, Vector3f min, Vector3f max )
 	{
+		min.set( 0, cog.Y, 0 );
+		max.set( cog.X, dimY, dimZ );
+	}
+	
+	
+	private Vector3f getFront( int faceOrientation, Vector3f cog )
+	{
+    	return new Vector3f( 0, cog.Y, cog.Z );
+	}
+	
+	private Vector3f getBottom( int faceOrientation, Vector3f cog )
+	{
+    	return new Vector3f( cog.X, dimY, cog.Z );
+	}
+	
+
+	private BitSet createMask( Plane3f clipPlane, int faceOrientation, Vector3f cog )
+	{
+		Vector3f min = new Vector3f(0,0,0);
+		Vector3f max = new Vector3f(dimX,dimY,dimZ);
+		getCogBounds( faceOrientation, cog, min, max );
 		BitSet mask = new BitSet(dimX*dimY*dimZ);
 		Vector3f pt = new Vector3f();
 		for ( int z = 0; z < dimZ; z++ )
@@ -2863,11 +3028,16 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					pt.set(x,y,z);
-					float distance = clipPlane.DistanceTo( pt );
-					if ( distance < 0 )
+					if ( (x >= min.X) && (x <= max.X) && 
+						 (y >= min.Y) && (y <= max.Y) &&
+						 (z >= min.Z) && (z <= max.Z)    )
 					{
-						mask.set( z*dimY*dimX + y*dimX + x);
+						pt.set(x,y,z);
+						float distance = clipPlane.DistanceTo( pt );
+						if ( distance < 0 )
+						{
+							mask.set( z*dimY*dimX + y*dimX + x);
+						}
 					}
 				}
 			}
