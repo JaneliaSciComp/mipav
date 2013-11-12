@@ -2729,7 +2729,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         private void populateFieldsFromCSV(final TreeMap<JLabel, JComponent> labelsAndComps, final String[] csvParams) {
-            if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")) {
+            if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")
+                    || dataStructureName.startsWith("PDBPImag") || dataStructureName.startsWith("PDBPimag")) {
                 // TODO: handle the record column when we add support for
                 // repeating groups in a form record
 
@@ -3594,7 +3595,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (fileFormatString.equalsIgnoreCase("dicom")) {
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
                 final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 final String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable()
                         .getValue("0008,0020")));
@@ -3616,14 +3617,26 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     if ( !csvParams[i].trim().equals("")) {
 
                         if (csvFieldNames[i].equalsIgnoreCase("AgeVal") && String.valueOf(ageVal) != null) {
+                            String ageInMonths = ageVal;
                             if (ageVal.contains("Y")) {
                                 final String temp = ageVal.substring(0, ageVal.length() - 6);
-                                ageVal = Integer.toString(Integer.parseInt(temp) * 12);
+                                ageInMonths = Integer.toString(Integer.parseInt(temp) * 12);
                             }
-                            if ( !csvParams[i].trim().equals(ageVal)) {
+                            if ( !csvParams[i].trim().equals(ageInMonths)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
-                                headerList.add(ageVal);
+                                headerList.add(ageInMonths);
+                            }
+                        } else if (csvFieldNames[i].equalsIgnoreCase("AgeYrs") && String.valueOf(ageVal) != null) {
+                            String ageInYears = ageVal;
+                            if (ageVal.contains("Y")) {
+                                final String temp = ageVal.substring(0, ageVal.length() - 6);
+                                ageInYears = Integer.toString(Integer.parseInt(temp));
+                            }
+                            if ( !csvParams[i].trim().equals(ageInYears)) {
+                                csvFList.add(csvFieldNames[i]);
+                                csvPList.add(csvParams[i]);
+                                headerList.add(ageInYears);
                             }
                         } else if (csvFieldNames[i].equalsIgnoreCase("visitDate") && !visitDate.equals("")) {
                             if ( !csvParams[i].trim().equals(visitDate)) {
@@ -4031,7 +4044,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
                 final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
                 final String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable()
                         .getValue("0008,0020")));
@@ -4055,12 +4068,21 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     final String l = label.getName();
                     final JComponent comp = labelsAndComps.get(label);
                     if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
+                        String ageInMonths = ageVal;
                         if (ageVal.contains("Y")) {
                             final String temp = ageVal.substring(0, ageVal.length() - 6);
-                            ageVal = Integer.toString(Integer.parseInt(temp) * 12);
+                            ageInMonths = Integer.toString(Integer.parseInt(temp) * 12);
                         }
-                        ((JTextField) comp).setText(ageVal);
+                        ((JTextField) comp).setText(ageInMonths);
                         label.setForeground(Color.red);
+                    } else if (l.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
+                        String ageInYears = ageVal;
+                        if (ageVal.contains("Y")) {
+                            final String temp = ageVal.substring(0, ageVal.length() - 6);
+                            ageInYears = Integer.toString(Integer.parseInt(temp));
+                        }
+                        ((JTextField) comp).setText(ageInYears);
+                        label.setForeground(Color.red);{
                     } else if (l.equalsIgnoreCase("SiteName") && siteName != null && !siteName.equals("")) {
                         ((JTextField) comp).setText(siteName);
                     } else if (l.equalsIgnoreCase("VisitDate") && visitDate != null && !visitDate.equals("")) {
@@ -4257,7 +4279,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
                 boolean isMultiFile = false;
                 // System.out.println(dataStructureName);
-                if (dataStructureName.startsWith("Imag")) {
+                if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")
+                        || dataStructureName.startsWith("PDBPImag") || dataStructureName.startsWith("PDBPimag")) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
                     fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
