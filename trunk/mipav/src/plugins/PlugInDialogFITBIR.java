@@ -267,7 +267,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.7";
+    private static final String pluginVersion = "0.8";
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
 
