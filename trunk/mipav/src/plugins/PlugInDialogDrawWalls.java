@@ -4,17 +4,23 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.BitSet;
 import java.util.Vector;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmVOILogicalOperations;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -22,6 +28,7 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
@@ -48,7 +55,15 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	
 	private int listLength;
 	
+	private File maskDir;
+	
 	private ModelImage rgbImage;
+	
+	private JRadioButton voiRB;
+	
+	private JRadioButton paintRB;
+	
+	private JCheckBox displayMask;
 	
 	
 	/**
@@ -99,7 +114,7 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 	        		initDrawer();
 	        	}
 	        	else 
-	        		MipavUtil.displayError("This folder does not contain any mask images");
+	        		MipavUtil.displayError("This folder does not contain any images requiring masks");
 	        	}
         	else MipavUtil.displayError("Please select a directory.");
         }
@@ -151,8 +166,14 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		File dir = new File(dirText.getText());
 		File mask;
 		String stripped;
+		String dirStr;
 		//Populate the mask images first, then use that to get the wall images
 		//so that only masked images are processed
+		
+		dirStr = dirText.getText();
+		dirStr = dirStr.concat("Masks//");
+		maskDir = new File(dirStr);
+		if(!maskDir.exists()) maskDir.mkdir();
 		
 		File[] files = dir.listFiles(new FilenameFilter() {
 			public boolean accept(File dir, String name) {
@@ -161,10 +182,16 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		});
 		
 		for(File im : files){
-			stripped = im.toString();
+			stripped = im.getName();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+			stripped = stripped.concat("_mask.xml");
+			mask = new File(dirStr.concat(stripped));
+			
+			
+			/*stripped = im.toString();
 			stripped = stripped.substring(0, stripped.indexOf("."));
 	        stripped = stripped.concat("_mask.xml");
-	        mask = new File(stripped);
+	        mask = new File(stripped);*/
 	        if (!mask.exists()){
 	        	imageList.add(im);
 	        }
@@ -274,16 +301,55 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
         setTitle(title);
         
         String desc = "<html><b>Directions: </b><br>"
-        		+ "Please use the VOI options to denote the wall sections. The first VOI should<br>"
+        		+ "Please use the VOI options to denote the wall sections. One VOI should outline<br>"
+        		+ "the outer portion of the wall. Another VOI should outline the inner portion of<br>"
+        		+ "the wall. If the wall leaves the image, use a single VOI to outline the inner<br>"
+        		+ "and outer portions of the wall. Alternatively, you can use a paint brush to<br>"
+        		+ "shade the entire wall area. When done, you can save the outlines and the proceed<br> "
+        		+ "to the next image. </html>";
+        		
+        		/*+ "Please use the VOI options to denote the wall sections. The first VOI should<br>"
         		+ "outline the outer portion of the wall. The second VOI should outline the inner<br>"
         		+ "portion of the wall. When done, you can save the outlines and the proceed to <br>"
-        		+ "the next image. </html>";
+        		+ "the next image. </html>";*/
         
         JLabel dirLabel = new JLabel(desc);
         dirLabel.setForeground(Color.black);
         dirLabel.setFont(serif12);
         getContentPane().add(dirLabel, BorderLayout.NORTH);
+        
+        voiRB = new JRadioButton("Mask from VOI");
+        voiRB.setFont(serif12);
+        voiRB.setActionCommand("voi");
+        voiRB.setSelected(true);
+        
+        paintRB = new JRadioButton("Mask from Paint");
+        paintRB.setFont(serif12);
+        paintRB.setActionCommand("paint");
+        
+        ButtonGroup group = new ButtonGroup();
+        
+        group.add(voiRB);
+        group.add(paintRB);;
+        
+        JPanel radioPanel = new JPanel();
+        radioPanel.add(voiRB);
+        radioPanel.add(paintRB);
+        
+        JPanel maskPanel = new JPanel();
+        maskPanel.setForeground(Color.black);
 
+        displayMask = new JCheckBox("Display Mask once saved", false);
+        displayMask.setFont(serif12);
+        maskPanel.add(displayMask);
+        
+        PanelManager manager = new PanelManager();
+        manager.add(radioPanel);
+        manager.addOnNextLine(maskPanel);
+        
+        
+        getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
+        
         JPanel buttonPanel = new JPanel();
         buttonPanel.setForeground(Color.black);
         
@@ -325,23 +391,66 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
 		FileWriteOptions opt; //Points to the place to save the masks
 		ModelImage outImage; //Mask image resulting from the XOR operation
 		ModelImage cloned; //Cloned version of the wall image for the XOR operation
-		String destPath, destName; //Directory and file paths
+		String destName; //Directory and file paths
+		boolean voiChecked;
+		VOIVector vois;
 		
-		VOIVector vois = rgbImage.getVOIs();
-		if(vois == null){
-			MipavUtil.displayError("No VOI was drawn. Please draw the wall boundaries.");
+		
+		
+		voiChecked = voiRB.isSelected();
+		//paintChecked = paintRB.isSelected();
+		
+		/*if(!(voiChecked ^ paintChecked)) {
+			MipavUtil.displayError("You must select one checkbox");
 			return;
-		}
-		//Requires clone, or else errors occur
+		}*/
+		
 		cloned = (ModelImage) rgbImage.clone();
-		AlgorithmVOILogicalOperations xor = 
-				new AlgorithmVOILogicalOperations(cloned, vois, AlgorithmVOILogicalOperations.XOR, false);
-		xor.run();
-		outImage = xor.getFinalMaskImage();
-		destPath = current.getParent().concat("\\");
+		
+		if(voiChecked){
+			vois = rgbImage.getVOIs();
+			if(vois == null){
+				MipavUtil.displayError("No VOI was drawn. Please draw the wall boundaries.");
+				return;
+			}
+			//Requires clone, or else errors occur
+			AlgorithmVOILogicalOperations xor = 
+					new AlgorithmVOILogicalOperations(cloned, vois, AlgorithmVOILogicalOperations.XOR, false);
+			xor.run();
+			outImage = xor.getFinalMaskImage();
+		}
+		else{
+			BitSet maskBit =  display.getComponentImage().getPaintMask();
+			if (maskBit.length()==0) {
+				MipavUtil.displayError("No paint region was drawn. Please paint the wall area.");
+				return;
+			}
+			Color paintColor = display.getControls().getTools().getPaintColor();;
+			AlgorithmMask maskAlg = new AlgorithmMask(cloned, paintColor, true, false);
+			maskAlg.calcInPlace25DCMask((BitSet)maskBit.clone(), paintColor, 0);
+			int[] extents = rgbImage.getExtents();
+			int length = extents[0]*extents[1];
+			boolean[] maskBuffer = new boolean[length];
+			int[] imBuffer = new int[4*length];
+			outImage = new ModelImage(ModelImage.BOOLEAN, extents, "Mask Image");
+			try {
+				cloned.exportData(0, 4*length, imBuffer);
+				for(int i=0;i<length;i++){
+					if(imBuffer[4*i+1] != 0 || imBuffer[4*i+2] !=0 || imBuffer[4*i+3] !=0){
+						maskBuffer[i] = true;
+					}
+				}
+				outImage.importData(0, maskBuffer, true);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		if(displayMask.isSelected())
+			new ViewJFrameImage(outImage, null, new Dimension(50, 300));
 		destName = current.getName();
 		destName = destName.substring(0, destName.indexOf(".")).concat("_mask.xml");
-		opt = new FileWriteOptions(destName, destPath, true);
+		opt = new FileWriteOptions(destName, maskDir.toString().concat("//"), true);
 		imWriter = new FileIO();
 		imWriter.writeImage(outImage, opt, false);
 	}
