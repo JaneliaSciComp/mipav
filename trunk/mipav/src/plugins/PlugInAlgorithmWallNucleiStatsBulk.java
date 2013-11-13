@@ -1,3 +1,4 @@
+import java.awt.Dimension;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
  * Plugin for the Collins' Lab to calculate statistics for histology slides. 
@@ -65,10 +67,16 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 	/**Writer for CSV*/
 	private FileWriter output;
 	
+	private ModelImage nImage;
+	
 	private float progress;
 	
 	/** Wall Image */
 	private ModelImage rgbImage;
+	
+	private boolean showWall;
+	
+	private boolean showNuc;
 	
 	private float[] stats;
 	
@@ -131,6 +139,10 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 			boolStr = maskList.get(i).toString();
 			rgbImage = imLoader.readImage(rgbStr);
 			boolImage = imLoader.readImage(boolStr);
+			rgbStr = imageList.get(i).getName();
+			rgbStr = rgbStr.substring(0, rgbStr.indexOf("."));
+			boolStr = maskList.get(i).getName();
+			boolStr = boolStr.substring(0, boolStr.indexOf("."));
 			
 			if (rgbImage == null) {
 	            displayError("Could not load RGB image: " + rgbStr);
@@ -204,7 +216,17 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 				combine = new AlgorithmImageCalculator(dImage, tempImage,
 						AlgorithmImageCalculator.MULTIPLY, AlgorithmImageCalculator.CLIP, true, "");
 				combine.run();
+				
+				if(showWall){
+					new ViewJFrameImage(tempImage, null, 
+							new Dimension(50, 300)).setTitle(rgbStr.concat("_midline"));
+				}
 
+				if(showNuc){
+					new ViewJFrameImage(nImage, null, 
+							new Dimension(50, 300)).setTitle(rgbStr.concat("_nuclei"));
+				}
+				
 				//Calculate statistics for the wall thickness
 				try{
 					float[] dBuffer = new float[length];
@@ -242,6 +264,13 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		this.xRes = res;
 	}
 	
+	public void showNuc(boolean show){
+		showNuc = show;
+	}
+	
+	public void showWall(boolean show){
+		showWall = show;
+	}
 	private void area(){
 		
 		this.area = 0;
@@ -261,6 +290,8 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 		}
 		this.maxIndex = -1;
 	}
+	
+	
 	
 	/**
 	 * Method to extract the midline from the processed mask image. It is a two-pass system. 
@@ -503,7 +534,7 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         fireProgressStateChanged((int)progress);
        
         threshold[1] = (float) boolImage.getMax();
-        threshold[0] = threshold[1] * 0.3f;
+        threshold[0] = 0.3f;
         
         AlgorithmThresholdDual thresh = new AlgorithmThresholdDual(boolImage, threshold, 1, 1, true, false);
         thresh.run();
@@ -568,6 +599,8 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
         AlgorithmMorphology2D nFill = new AlgorithmMorphology2D(gImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0, true);
         nFill.run();
+        
+        nImage = (ModelImage) gImage.clone();
         
         //Count number of nuclei 
         AlgorithmMorphology2D nObj = new AlgorithmMorphology2D(gImage, AlgorithmMorphology2D.CONNECTED4,

@@ -11,7 +11,7 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import javax.swing.*;
@@ -63,6 +63,10 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	private JComboBox resUnits;
 	
 	private JTextField xResField;
+	
+	private JCheckBox nucleiCB;
+	
+	private JCheckBox wallCB;
 	
 	public PlugInDialogWallNucleiStatsBulk() {
        
@@ -131,13 +135,18 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		
 		try{
 			int xRes;
+			boolean wall, nuclei;
 			
 			xRes = Integer.valueOf(xResField.getText());
+			wall = wallCB.isSelected();
+			nuclei = nucleiCB.isSelected();
 			
 			midAlg = new PlugInAlgorithmWallNucleiStatsBulk(imageList, maskList);
 			
 			midAlg.setRes(xRes);
 			midAlg.setCSV(output);
+			midAlg.showWall(wall);
+			midAlg.showNuc(nuclei);
 
 			//Progress bar doesn't update smoothly with algorithms
 			createProgressBar("Wall/Nuclei statistics calculation", "Initializing..." , midAlg);
@@ -170,10 +179,17 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 	private boolean fileFilter(){
 		
 		File dir = new File(dirText.getText());
+		File maskDir;
         imageList = new Vector<File>();
         maskList = new Vector<File>();
 		File mask;
 		String stripped;
+		String dirStr;
+		
+		dirStr = dirText.getText();
+		dirStr = dirStr.concat("Masks//");
+		maskDir = new File(dirStr);
+		if(!maskDir.exists()) return false;
 		
 		//Filter out only .jpg/.jpeg images
 		File[] files = dir.listFiles(new FilenameFilter() {
@@ -185,10 +201,16 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		
 		//Pair each .jpg image with its associated mask
 		for(File im : files){
-			stripped = im.toString();
+			stripped = im.getName();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+			stripped = stripped.concat("_mask.xml");
+			stripped = dirStr.concat(stripped);
+			mask = new File(stripped);
+			
+			/*stripped = im.toString();
 			stripped = stripped.substring(0, stripped.indexOf("."));
 	        stripped = stripped.concat("_mask.xml");
-	        mask = new File(stripped);
+	        mask = new File(stripped);*/
 	        if (mask.exists()){
 	        	imageList.add(im);
 	        	maskList.add(new File(stripped));
@@ -203,6 +225,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 		setForeground(Color.black);
         setTitle("Wall/Nuclei Statistics");
 
+        //getContentPane().setLayout(new GridLayout(0,1));
         
         JPanel dirPanel = new JPanel(new BorderLayout());
         dirPanel.setForeground(Color.black);
@@ -234,6 +257,8 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         
         getContentPane().add(dirPanel, BorderLayout.NORTH);
         
+        PanelManager miscPanel = new PanelManager();
+        
         JPanel resPanel = new JPanel();
         resPanel.setForeground(Color.black);
         resPanel.setBorder(buildTitledBorder("Image Resolutions"));
@@ -263,7 +288,21 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         resUnits.setSelectedItem("Micrometers");
         resPanel.add(resUnits);
         
-        getContentPane().add(resPanel, BorderLayout.CENTER);
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setForeground(Color.black);
+        
+        nucleiCB = new JCheckBox("Display nuclei segmentation", false);
+        nucleiCB.setFont(serif12);
+        wallCB = new JCheckBox("Display midline image", false);
+        wallCB.setFont(serif12);
+        
+        optionsPanel.add(nucleiCB);
+        optionsPanel.add(wallCB);
+        
+        miscPanel.add(resPanel);
+        miscPanel.addOnNextLine(optionsPanel);
+        
+        getContentPane().add(miscPanel.getPanel(), BorderLayout.CENTER);
         
         JPanel OKCancelPanel = new JPanel();
 
