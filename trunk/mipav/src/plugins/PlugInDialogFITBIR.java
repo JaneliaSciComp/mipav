@@ -267,7 +267,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.8";
+    private static final String pluginVersion = "0.9";
 
     private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
 
@@ -2027,8 +2027,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private static final String getStructFromString(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains(prefix)) {
-                return str.substring(0, str.indexOf(prefix) - 1);
+            if (str.contains("_" + prefix)) {
+                return str.substring(0, str.indexOf("_" + prefix));
             }
         }
 
@@ -2044,8 +2044,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private static final String getGuidFromString(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains(prefix)) {
-                return str.substring(str.indexOf(prefix), str.length());
+            if (str.contains("_" + prefix)) {
+                return str.substring(str.indexOf("_" + prefix) + 1, str.length());
             }
         }
 
