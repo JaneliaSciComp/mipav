@@ -2010,7 +2010,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private static final boolean containsGuid(final String str) {
         for (final String prefix : allowedGuidPrefixes) {
-            if (str.contains(prefix)) {
+            if (str.contains("_" + prefix)) {
                 return true;
             }
         }
