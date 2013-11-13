@@ -690,15 +690,140 @@ public class FilePARREC extends FileBase {
 
 
     private void updateTransformMatrix(FileInfoPARREC fileInfo, ModelImage image) {
-        TransMatrix toScanner = new TransMatrix(4);
+        int i;
         
         double[] sliceAng = fileInfo.getSliceAngulation();
-        double[] offCentre = fileInfo.getOffCentre();
-        TransMatrix trans = makeTranslationMatrix(offCentre);
-        TransMatrix rot = makeRotationMatrix(image.getExtents(), sliceAng);
-        rot.mult(trans);
         
-        image.setMatrix(ConvertToMIPAVConvention(rot));
+        double rot[] = new double[3];
+        for (i = 0; i < 3; i++) {
+            rot[i] = Math.toRadians(sliceAng[i]);
+        }
+        
+        double Sx    = Math.sin(rot[0]);
+        double Sy    = Math.sin(rot[1]);
+        double Sz    = Math.sin(rot[2]);
+        double Cx    = Math.cos(rot[0]);
+        double Cy    = Math.cos(rot[1]);
+        double Cz    = Math.cos(rot[2]); 
+        
+        // EulerOrder = ORDER_XYZ;
+        // This is the Transformation matrix shown in the dicom header
+        // The dicom transformation matrix or image.getMatrix() is the transpose of the matrix given by getPatientOrientation().
+        // image.getMatrix() and getPatientOrientation() contain just the rotation component.
+        double m00=Cy*Cz;
+        double m01=-Cy*Sz;
+        double m02=Sy;
+        double m10=Cz*Sx*Sy+Cx*Sz;
+        double m11=Cx*Cz-Sx*Sy*Sz;
+        double m12=-Cy*Sx;
+        double m20=-Cx*Cz*Sy+Sx*Sz;
+        double m21=Cz*Sx+Cx*Sy*Sz;
+        double m22=Cx*Cy;
+        
+        TransMatrix tr = new TransMatrix(4);
+        int ori = fileInfo.getImageOrientation();
+        switch (ori) {
+            case FileInfoBase.AXIAL:
+            tr.M00 = (float)m00;
+            tr.M01 = (float)m01;
+            tr.M02 = (float)m02;
+            tr.M03 = 0;
+            tr.M10 = (float)m10;
+            tr.M11 = (float)m11;
+            tr.M12 = (float)m12;
+            tr.M13 = 0;
+            tr.M20 = (float)m20;
+            tr.M21 = (float)m21;
+            tr.M22 = (float)m22;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
+            break;
+            case FileInfoBase.SAGITTAL:
+            tr.M00 = -(float)m20;
+            tr.M01 = -(float)m21;
+            tr.M02 = -(float)m22;
+            tr.M03 = 0;
+            tr.M10 = (float)m00;
+            tr.M11 = (float)m01;
+            tr.M12 = (float)m02;
+            tr.M13 = 0;
+            tr.M20 = -(float)m10;
+            tr.M21 = -(float)m11;
+            tr.M22 = -(float)m12;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
+            break;
+            case FileInfoBase.CORONAL:
+            tr.M00 = (float)m00;
+            tr.M01 = (float)m01;
+            tr.M02 = (float)m02;
+            tr.M03 = 0;
+            tr.M10 = (float)m20;
+            tr.M11 = (float)m21;
+            tr.M12 = (float)m22;
+            tr.M13 = 0;
+            tr.M20 = -(float)m10;
+            tr.M21 = -(float)m11;
+            tr.M22 = -(float)m12;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
+        }
+        double resX = fileInfo.getResolutions()[0];
+        double resY = fileInfo.getResolutions()[1];
+        double resZ = fileInfo.getResolutions()[2];
+        
+        double[] offCentre = fileInfo.getOffCentre();
+        // The header volume offsets and the individual slice offsets are all different
+        // The header volume offsets correspond to (xDim - 1)/2, (yDim - 1)/2, (zDim - 1)/2
+        // The slice offsets correspond to (xDim - 1)/2, (yDim - 1)/2, zSlice.
+        double offsetX = offCentre[0];
+        double offsetY = offCentre[1];
+        double offsetZ = offCentre[2];
+        
+        double dimX = image.getExtents()[0];
+        double dimY = image.getExtents()[1];
+        double dimZ = image.getExtents()[2];
+        
+        double originX = offsetX - m00 * resX * (dimX-1)/2 - m01 * resY * (dimY-1)/2- m02 * resZ * (dimZ-1)/2;
+        double originY = offsetY - m10 * resX * (dimX-1)/2 - m11 * resY * (dimY-1)/2 - m12 * resZ * (dimZ-1)/2;
+        double originZ = offsetZ - m20 * resX * (dimX-1)/2 - m21 * resY * (dimY-1)/2 - m22 * resZ * (dimZ-1)/2;
+        if (ori == FileInfoBase.SAGITTAL) {
+            originY = -originY;
+            originZ = -originZ;
+        }
+        else if (ori == FileInfoBase.CORONAL) {
+            originY = -originY;
+        }
+        
+        switch(ori) {
+            case FileInfoBase.AXIAL:
+                // R-L, A-P, I-S
+                tr.M03 = (float)(originX);
+                tr.M13 = (float)(originY);
+                tr.M23 = (float)(originZ);
+                break;
+            case FileInfoBase.SAGITTAL:
+                // A-P, S-I, L-R
+                tr.M03 = (float)(originZ);
+                tr.M13 = (float)(originX);
+                tr.M23 = (float)(originY);
+                break;
+            case FileInfoBase.CORONAL:
+                // R-L, S-I, A-P
+                tr.M03 = (float)(originX);
+                tr.M13 = (float)(originZ);
+                tr.M23 = (float)(originY);
+        }
+        image.setMatrix(tr);
     }
     
     /**
