@@ -32,13 +32,15 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
         // The axial PAR file is KKZ_130213_4_1.PAR
         // The first slice of the axial dicom file is 20131023203338769.MR.dcm
         // The sagittal PAR file is KKZ_130213_3_1.PAR
-        // Thd first slice of the sagittal dicom file is 20131107105801812.MR.dcm.
+        // The first slice of the sagittal dicom file is 20131107105801812.MR.dcm.
+        // The coronal PAR file is KKZ_130213_10_1.PAR
+        // The first slice of the coronal dicom file is 20131107105805315.MR.dcm.
         // The angles are the same for the header volume parameters and for every slice
         int ori;
         final int axial = 1;
         final int sagittal = 2;
         final int coronal = 3;
-        ori = sagittal;
+        ori = coronal;
         
         double angulation_rl = 0.0;
         double angulation_ap = 0.0;
@@ -55,6 +57,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             angulation_ap = -4.280;
             angulation_fh = 4.083;
             break;
+            case coronal:
+            angulation_rl = 3.931;
+            angulation_ap = -4.031;
+            angulation_fh = 4.346;
         }
         
         double angX = 0.0;
@@ -72,6 +78,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             angY = -angulation_fh;
             angZ = -angulation_rl;
             break;
+            case coronal:
+            angX = angulation_rl;
+            angY = -angulation_fh;
+            angZ = angulation_ap;
         }
 
         double Sx    = Math.sin(angX * Math.PI/180.0);
@@ -133,6 +143,23 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             tr.M32 = 0;
             tr.M33 = 1;
             break;
+            case coronal:
+            tr.M00 = (float)m00;
+            tr.M01 = (float)m01;
+            tr.M02 = (float)m02;
+            tr.M03 = 0;
+            tr.M10 = (float)m20;
+            tr.M11 = (float)m21;
+            tr.M12 = (float)m22;
+            tr.M13 = 0;
+            tr.M20 = -(float)m10;
+            tr.M21 = -(float)m11;
+            tr.M22 = -(float)m12;
+            tr.M23 = 0;
+            tr.M30 = 0;
+            tr.M31 = 0;
+            tr.M32 = 0;
+            tr.M33 = 1;
         }
         
         System.out.println("image transMatrix = " + tr);
@@ -152,6 +179,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             resY = 0.42857143;
             resZ = 5.0;
             break;
+            case coronal:
+            resX = 0.3515625;
+            resY = 0.3515625;
+            resZ = 3.3;
         }
         
         // The header volume offsets and the individual slice offsets are all different
@@ -173,6 +204,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             ap_offset_center = -3.225;
             fh_offset_center = -0.535;
             break;
+            case coronal:
+            rl_offset_center = 6.147;
+            ap_offset_center = 16.846;
+            fh_offset_center = 16.330;
         }
         
         double offsetX = 0.0;
@@ -189,6 +224,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             offsetY = -fh_offset_center;
             offsetZ = -rl_offset_center;
             break;
+            case coronal:
+            offsetX = rl_offset_center;
+            offsetY = -fh_offset_center;
+            offsetZ = ap_offset_center;
         }
         
         double dimX = 0.0;
@@ -205,6 +244,10 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
             dimX = 560;
             dimY = 560;
             dimZ = 31;
+            case coronal:
+            dimX = 512;
+            dimY = 512;
+            dimZ = 47;
         }
         
         double originX = offsetX - m00 * resX * (dimX-1)/2 - m01 * resY * (dimY-1)/2- m02 * resZ * (dimZ-1)/2;
@@ -213,6 +256,9 @@ import WildMagic.LibFoundation.Mathematics.Matrix4f;
         if (ori == sagittal) {
             originY = -originY;
             originZ = -originZ;
+        }
+        else if (ori == coronal) {
+            originY = -originY;
         }
         // These are the origins shown for dicom slice 0
         System.out.println("originX = " + originX);
