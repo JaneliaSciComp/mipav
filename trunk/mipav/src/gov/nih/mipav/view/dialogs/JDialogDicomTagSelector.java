@@ -688,7 +688,8 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 			} else if(obj == null || (obj instanceof FileDicomSQ && ((FileDicomSQ)obj).getSequenceLength() == 0)) {
 				keyToValue.put(key.toString(), UNKNOWN);
 			} else {
-				keyToValue.put(key.toString(), obj.toString());
+				String objectString = tagHash.get(key).getValue(true).toString();
+				keyToValue.put(key.toString(), objectString);
 			}
 		}
 	}
