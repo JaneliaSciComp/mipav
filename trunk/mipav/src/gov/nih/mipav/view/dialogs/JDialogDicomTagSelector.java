@@ -303,6 +303,33 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
         tagsTable.setMinimumSize(new Dimension(90, 488));
         tagsTable.setPreferredSize(new Dimension(90, 488));
         
+        tagsTable.addKeyListener(new KeyListener() {
+
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				switch(arg0.getKeyCode()) {
+				
+				case KeyEvent.VK_DELETE:
+				case KeyEvent.VK_BACK_SPACE:
+					if(parentDialog.getTagTable() != null && parentDialog.getTagTable().getSelectedRows() != null) {
+						DefaultTableModel model = (DefaultTableModel)parentDialog.getTagTable().getModel();
+						int[] rowSelect = parentDialog.getTagTable().getSelectedRows();
+						for(int i=rowSelect.length-1; i>=0; i--) {
+							model.removeRow(rowSelect[i]);
+						}
+					}
+					
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent arg0) {}
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {}
+        	
+        });
+        
         JScrollPane scroll = new JScrollPane(tagsTable);
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);

@@ -166,7 +166,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			
 		} catch(IOException ex) {
 			MipavUtil.displayError("Unable to write to file: "+f.getAbsolutePath());
-		} catch(Exception ex1) {
+		} catch(Exception ex1) { 
 			if(key != null) {
 				MipavUtil.displayError("Key could not be saved: "+key);
 			}
