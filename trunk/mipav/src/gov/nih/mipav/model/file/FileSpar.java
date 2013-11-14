@@ -492,7 +492,6 @@ public class FileSpar extends FileBase {
         }
         
         if(image != imageA) {
-            TransMatrix aTransOriginal = new TransMatrix(imageA.getMatrix());
             TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
             if (imageA.getFileInfo()[0] instanceof FileInfoDicom) {
                 originX = imageA.getFileInfo()[0].getOrigin(0);
@@ -539,7 +538,11 @@ public class FileSpar extends FileBase {
             //view.setVisible(true);
             
             ModelImage resultImage = transform.getResultImage();
-            resultImage.setMatrix(aTransOriginal);
+            resultImage.getMatrixHolder().replaceMatrices(imageA.getMatrixHolder().getMatrices());
+            for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                resultImage.getFileInfo(i).setOrigin(imageA.getFileInfo()[i].getOrigin());
+            }
+            
            
             return resultImage;
         }
