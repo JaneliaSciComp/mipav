@@ -762,7 +762,7 @@ public class ViewMenuBar {
                
 
                 menuBuilder.buildMenuItem("Subtract VOI background", "SubVOI", 0, null, false),
-                menuBuilder.buildMenuItem("Tilt correction", "TiltCorrection", 0, null, false)});
+                menuBuilder.buildMenuItem("Tilt (gantry) correction", "TiltCorrection", 0, null, false)});
 
     }
 
@@ -1039,7 +1039,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Independent component", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
-            menuBuilder.setMenuItemEnabled("Tilt correction", false);
+            menuBuilder.setMenuItemEnabled("Tilt (gantry) correction", false);
             
 
             // menuBuilder.setMenuItemEnabled("AFNI - Shear", false);
@@ -1182,7 +1182,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("VOI landmark", false);
             menuBuilder.setMenuItemEnabled("Reorientation / Resampling", false);
             menuBuilder.setMenuItemEnabled("Histogram slice matching", false);
-            menuBuilder.setMenuItemEnabled("Tilt correction", false);
+            menuBuilder.setMenuItemEnabled("Tilt (gantry) correction", false);
             menuBuilder.setMenuItemEnabled("Inverse gradient", false);
             menuBuilder.setMenuItemEnabled("Brejl-Sonka 3D", false);
         }
