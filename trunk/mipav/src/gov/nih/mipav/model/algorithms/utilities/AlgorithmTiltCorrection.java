@@ -178,7 +178,6 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
         tiltTangent = Math.tan(tiltRadians);
         
         xfrm = new TransMatrix(3);
-        xfrm.identity();
         
         for (z = 0; z < zDim; z++) {
             
@@ -217,6 +216,7 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
                 if (tiltAngle > 0.0) {
                     Ty = -Ty;
                 }
+                xfrm.identity();
                 xfrm.setTranslate(Tx, Ty);
                 algoTrans = new AlgorithmTransform(sliceImage, xfrm, interp, xRes, yRes, xDim, yDim, units, doVOI, doClip,
                         doPad, doRotateCenter, center);
