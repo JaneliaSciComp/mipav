@@ -59,7 +59,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 	/** checkbox for turning on / off the green component of the color look-up table. */
 	private JCheckBox greenCheckBox;
 	
-	/** red, green and bue histograms: */
+	/** red, green and blue histograms: */
 	protected ModelHistogram histogram, histogramG, histogramB;
 
 	/** histogram panel interface. */
@@ -565,6 +565,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 					if (histoLUTComponent.getThresholdMode() != ViewJComponentHLUTBase.NO_THRESHOLD) {
 						histoLUTComponent.dualThresholdMode(histoLUTComponent.getThresholdMode());
 					}
+					histoPanel.getHistoLUTComponent().showHistogram();
 				}
 			}
 		} else if (event.getActionCommand().equals("green")) {
@@ -578,6 +579,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 					if (histoLUTComponent.getThresholdMode() != ViewJComponentHLUTBase.NO_THRESHOLD) {
 						histoLUTComponent.dualThresholdMode(histoLUTComponent.getThresholdMode());
 					}
+					histoPanel.getHistoLUTComponent().showHistogram();
 				}
 			}
 		} else if (event.getActionCommand().equals("blue")) {
@@ -591,6 +593,7 @@ public class JPanelHistogram extends JPanel implements ActionListener, ChangeLis
 					if (histoLUTComponent.getThresholdMode() != ViewJComponentHLUTBase.NO_THRESHOLD) {
 						histoLUTComponent.dualThresholdMode(histoLUTComponent.getThresholdMode());
 					}
+					histoPanel.getHistoLUTComponent().showHistogram();
 				}
 			}
 		}  else if (command.equals("all")) {
