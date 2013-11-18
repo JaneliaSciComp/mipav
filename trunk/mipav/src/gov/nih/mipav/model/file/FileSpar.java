@@ -42,14 +42,16 @@ public class FileSpar extends FileBase {
     /** imageA file info */
     private FileInfoBase imageAInfo;
     
+    private ModelImage imageA;
+    
     /** Reference fileinfo */
     private FileInfoSPAR fileInfo;
     
     public FileSpar(String fileName, String fileDir) {
-        this(null, fileName, fileDir);
+        this(null, null, fileName, fileDir);
     }
     
-    public FileSpar(FileInfoBase imageAInfo, String fileName, String fileDir) {
+    public FileSpar(ModelImage imageA, FileInfoBase imageAInfo, String fileName, String fileDir) {
         
         if(!isHeaderFile(fileDir + fileName)) {
             String[] list = getCompleteFileNameList(fileDir + fileName);
@@ -62,6 +64,7 @@ public class FileSpar extends FileBase {
             }
         }
         
+        this.imageA = imageA;
         this.imageAInfo = imageAInfo;
         this.fileName = fileName;
         this.fileDir = fileDir;
@@ -457,29 +460,6 @@ public class FileSpar extends FileBase {
         if (imageAInfo == null) {
             image.setMatrix(tr);
             return image;
-        }
-        
-        ModelImage imageA = null;
-        try {
-            imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
-        }
-        catch (Exception e) {
-            String fileDirectory = imageAInfo.getFileDirectory();
-            if (fileDirectory == null) {
-                return null;
-            }
-            // If the string ends with a File.separator, strip out the final FileSeparator
-            if ((fileDirectory.lastIndexOf(File.separator)) == fileDirectory.length() - 1) {
-                fileDirectory = fileDirectory.substring(0, fileDirectory.length() - 1);
-            }
-            int lastSeparatorIndex = fileDirectory.lastIndexOf(File.separator);
-            fileDirectory = fileDirectory.substring(lastSeparatorIndex + 1);
-            int periodIndex = fileDirectory.indexOf(".");
-            if (periodIndex > 0) {
-                fileDirectory = fileDirectory.substring(0, periodIndex);
-            }
-            fileDirectory = "_" + fileDirectory;
-            imageA = ViewUserInterface.getReference().getRegisteredImageByName(fileDirectory);
         }
         
         if(image != imageA) {
