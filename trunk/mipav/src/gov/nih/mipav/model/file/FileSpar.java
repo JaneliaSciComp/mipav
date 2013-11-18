@@ -11,6 +11,7 @@ import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Matrix4d;
 
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
@@ -532,6 +533,7 @@ public class FileSpar extends FileBase {
             transform.setOutDimensions(imageA.getExtents());
             transform.setOutResolutions(imageA.getResolutions(0));
             transform.setUpdateOrigin(true);
+            transform.setInterp(AlgorithmTransform.NEAREST_NEIGHBOR);
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
             //ViewJFrameImage view = new ViewJFrameImage(transform.getResultImage());
