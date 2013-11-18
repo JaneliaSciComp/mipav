@@ -100,6 +100,8 @@ public class FileIO {
     
     private boolean doTIFFOrientation = true;
     
+    private ModelImage imageA = null;
+    
     
 
     // ~ Constructors
@@ -196,6 +198,10 @@ public class FileIO {
         }
 
         return fType;
+    }
+    
+    public void setImageA(ModelImage imageA) {
+        this.imageA = imageA;
     }
 
     /**
@@ -12038,7 +12044,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         FileSpar imageFile;
         
         try {
-            imageFile = new FileSpar(fileInfo, fileName, fileDir);
+            imageFile = new FileSpar(imageA, fileInfo, fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
             image = imageFile.readImage(one);
         } catch (final IOException error) {
