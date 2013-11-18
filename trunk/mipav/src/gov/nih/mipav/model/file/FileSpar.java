@@ -6,20 +6,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Vector;
-
-import WildMagic.LibFoundation.Mathematics.Matrix4d;
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
@@ -78,14 +70,12 @@ public class FileSpar extends FileBase {
     private static double parseDouble(String nextLine) {
         String info = nextLine.substring(nextLine.indexOf(":")+1);
         info=info.trim();
-        double [] offCentre = new double[3];
         return Double.parseDouble(info.substring(0));
     }
     
     private static int parseInt(String nextLine) {
         String info = nextLine.substring(nextLine.indexOf(":")+1);
         info=info.trim();
-        double [] offCentre = new double[3];
         return Integer.parseInt(info.substring(0));
     }
     
