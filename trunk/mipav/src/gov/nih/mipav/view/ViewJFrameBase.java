@@ -1133,6 +1133,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
                 userInterface.setDefaultDirectory(file.getParent());
                 userInterface.setLoad(true);
                 fileIO.setQuiet(isQuiet);
+                fileIO.setImageA(imageA);
                 
                 imageB = fileIO.readImage(file.getName(), file.getParent() + File.separator, stackFlag, imageA.getFileInfo(0), true); // read
                 this.setLUTb(fileIO.getModelLUT());
