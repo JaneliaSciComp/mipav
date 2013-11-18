@@ -7,6 +7,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -267,9 +268,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.9";
-
-    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
+    private static final String pluginVersion = "0.10";
 
     private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
 
@@ -283,6 +282,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String DATE_ELEMENT_TYPE = "Date or Date & Time";
 
+    private static final String VALUE_OTHER_SPECIFY = "Other, specify";
+
     private static final String GUID_ELEMENT_NAME = "GUID";
 
     private static final String IMG_FILE_ELEMENT_NAME = "ImgFile";
@@ -292,6 +293,20 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
 
     private static final String recordIndicatorColumn = "record";
+
+    private static final String PDBP_IMAGING_STRUCTURE_PREFIX = "PDBPImag";
+
+    private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
+
+    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women’s", "Columbia University",
+            "Emory University", "Johns Hopkins University", "Pennsylvania State University (Hershey)",
+            "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
+            "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington",
+            "UT-Southwestern Medical Center",};
+
+    private static final String[] allowedGuidPrefixes = new String[] {"TBI", "PD"};
+
+    private static final String[] imagingStructurePrefixes = new String[] {"Imag", PDBP_IMAGING_STRUCTURE_PREFIX};
 
     /**
      * Text of the privacy notice displayed to the user before the plugin can be used.
@@ -2123,7 +2138,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         } else if (mipavModality.equalsIgnoreCase("Nuclear Medicine")) {
             return "";
         } else if (mipavModality.equalsIgnoreCase("Other")) {
-            return "Other, specify";
+            return VALUE_OTHER_SPECIFY;
         } else if (mipavModality.equalsIgnoreCase("Positron Emission Tomography")) {
             return "PET";
         } else if (mipavModality.equalsIgnoreCase("Panoramic XRay")) {
@@ -2177,6 +2192,43 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         } else {
             return magField + ".0T";
         }
+    }
+
+    private static final void setElementComponentValue(final JComponent comp, final String value) {
+        // TODO: if the component is a text field, set the value. if the component is a combo box, try to select the
+        // proper item, or add it as an Other, specify
+    }
+
+    /**
+     * Returns whether the given structure name indicates that it is an imaging structure that should be processed
+     * specially (mainly, this means that the plugin looks for the Imaging file DE to pull out header info).
+     * 
+     * @param structureName The name of the form structure.
+     * @return True if the structure name starts with one of the imagingStructurePrefixes.
+     */
+    private static final boolean isImagingStructure(final String structureName) {
+        for (final String prefix : imagingStructurePrefixes) {
+            if (structureName.toLowerCase().startsWith(prefix.toLowerCase())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns whether the given structure name indicates that it is a PDBP imaging structure that should be processed
+     * specially.
+     * 
+     * @param structureName The name of the form structure.
+     * @return True if the structure name starts with the PDBP imaging prefix.
+     */
+    private static final boolean isPDBPImagingStructure(final String structureName) {
+        if (structureName.toLowerCase().startsWith(PDBP_IMAGING_STRUCTURE_PREFIX)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -2729,8 +2781,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         private void populateFieldsFromCSV(final TreeMap<JLabel, JComponent> labelsAndComps, final String[] csvParams) {
-            if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")
-                    || dataStructureName.startsWith("PDBPImag") || dataStructureName.startsWith("PDBPimag")) {
+            if (isImagingStructure(dataStructureName)) {
                 // TODO: handle the record column when we add support for
                 // repeating groups in a form record
 
@@ -2816,7 +2867,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                                                 if (isOther) {
                                                     specify = value;
-                                                    c.setSelectedItem("Other, specify");
+                                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
                                                 }
                                             }
                                             // break;
@@ -2858,7 +2909,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                                                 if (isOther) {
                                                     specify = value;
-                                                    c.setSelectedItem("Other, specify");
+                                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
                                                 }
                                             }
                                             // break;
@@ -2909,7 +2960,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 }
                                 if (isOther) {
                                     specify = value;
-                                    c.setSelectedItem("Other, specify");
+                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
                                 }
                             }
                             break;
@@ -3113,7 +3164,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final String labelName = l.getName();
 
                 // gbc.gridy = 0;
-                if ( (fix == 0 && errors.contains(l)) || fix == 1) {
+                if ( (fix == 0 && errors.contains(l)) || fix == 1 || fix == -1 /* hit cancel, same as fix later */) {
                     for (int k = 0; k < ds2.size(); k++) {
                         final Object o1 = ds2.get(k);
                         if (o1 instanceof DataElement) {
@@ -3153,7 +3204,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                         ((JComboBox) t).addActionListener(new ActionListener() {
                                             @Override
                                             public void actionPerformed(final ActionEvent e) {
-                                                if ( ((JComboBox) t).getSelectedItem().equals("Other, specify")) {
+                                                if ( ((JComboBox) t).getSelectedItem().equals(VALUE_OTHER_SPECIFY)) {
                                                     spec.setVisible(true);
                                                     spec.setText(specify);
                                                     specify = "";
@@ -3291,7 +3342,46 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // System.out.println();
                 // if valuerange is enumeration, create a combo box...otherwise
                 // create a textfield
-                if (v != null && v.contains(";") && t != null && !t.equalsIgnoreCase(DATE_ELEMENT_TYPE)) {
+
+                // special handling of SiteName for PDBP, where they want to use a set of permissible values with the
+                // free-form DE
+                if (isPDBPImagingStructure(dataStructure.getShortName()) && n.equalsIgnoreCase(SITE_NAME_ELEMENT_NAME)) {
+                    final JComboBox cb = new JComboBox();
+                    cb.setName(n);
+                    cb.setFont(MipavUtil.font12);
+                    final String[] items = PDBP_ALLOWED_SITE_NAMES;
+                    cb.addItem("");
+                    for (final String element : items) {
+                        final String item = element.trim();
+                        cb.addItem(item);
+                    }
+                    cb.addItemListener(this);
+                    if (r.equalsIgnoreCase("Required")) {
+                        l.setForeground(Color.red);
+                    }/*
+                      * else if(r.equalsIgnoreCase("Conditional")) { l.setForeground(Color.blue); }
+                      */
+                    // if (cb.getPreferredSize().width >
+                    // tabScrollPane.getPreferredSize().width - 100) {
+                    // cb.setPreferredSize(new
+                    // Dimension(tabScrollPane.getPreferredSize().width - 100,
+                    // cb.getPreferredSize().height));
+                    // }
+
+                    tooltip = "<html>";
+                    // TODO: removed because the guidelines for NINDS CDEs included from all diseases were put into the
+                    // field (which made them not very useful)
+                    // if (guide != null) {
+                    // tooltip += "<p><b>Guidelines & Instructions:</b> " + WordUtils.wrap(guide, 80, "<br/>", false)
+                    // + "</p>";
+                    // }
+                    if (notes != null) {
+                        tooltip += "<p><b>Notes:</b><br/>" + WordUtils.wrap(notes, 80, "<br/>", false) + "</p>";
+                    }
+                    tooltip += "</html>";
+                    cb.setToolTipText(tooltip);
+                    labelsAndComps.put(l, cb);
+                } else if (v != null && v.contains(";") && t != null && !t.equalsIgnoreCase(DATE_ELEMENT_TYPE)) {
                     final JComboBox cb = new JComboBox();
                     cb.setName(n);
                     cb.setFont(MipavUtil.font12);
@@ -3427,7 +3517,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                                 if (isOther) {
                                     specify = value;
-                                    c.setSelectedItem("Other, specify");
+                                    c.setSelectedItem(VALUE_OTHER_SPECIFY);
                                 }
                             }
                             break;
@@ -3645,6 +3735,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 headerList.add(visitDate);
                             }
                         } else if (csvFieldNames[i].equalsIgnoreCase("SiteName") && !siteName.equals("")) {
+                            // TODO: process differently for PDBP?
                             if ( !csvParams[i].trim().equals(siteName)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -3801,6 +3892,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                 }
+            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                // TODO: any special extraction for nifti files?
+                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
             }
 
             if (csvFList.size() > 0) {
@@ -4084,7 +4178,17 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         ((JTextField) comp).setText(ageInYears);
                         label.setForeground(Color.red);
                     } else if (l.equalsIgnoreCase("SiteName") && siteName != null && !siteName.equals("")) {
-                        ((JTextField) comp).setText(siteName);
+                        if (isPDBPImagingStructure(dataStructureName)) {
+                            final JComboBox jc = (JComboBox) comp;
+                            for (int k = 0; k < jc.getItemCount(); k++) {
+                                final String item = (String) jc.getItemAt(k);
+                                if (siteName.contains(item)) {
+                                    jc.setSelectedIndex(k);
+                                }
+                            }
+                        } else {
+                            ((JTextField) comp).setText(siteName);
+                        }
                     } else if (l.equalsIgnoreCase("VisitDate") && visitDate != null && !visitDate.equals("")) {
                         ((JTextField) comp).setText(visitDate);
                     } else if (l.equalsIgnoreCase("ImgAntmicSite") && bodyPart != null && !bodyPart.equals("")) {
@@ -4200,6 +4304,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         }
                     }
                 }
+            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                // TODO: any special extraction for nifti files?
+                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
+                final String description = fileInfoNifti.getDescription();
+
             }
         }
 
@@ -4279,8 +4389,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
                 boolean isMultiFile = false;
                 // System.out.println(dataStructureName);
-                if (dataStructureName.startsWith("Imag") || dataStructureName.startsWith("imag")
-                        || dataStructureName.startsWith("PDBPImag") || dataStructureName.startsWith("PDBPimag")) {
+                if (isImagingStructure(dataStructureName)) {
                     final ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
                     fileChooser.setMulti(ViewUserInterface.getReference().getLastStackFlag());
 
@@ -4864,7 +4973,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 } else if (comp instanceof JComboBox) {
                     value = (String) ( ((JComboBox) comp).getSelectedItem());
-                    if (value.equalsIgnoreCase("Other, specify")) {
+                    if (value.equalsIgnoreCase(VALUE_OTHER_SPECIFY)) {
                         value = specs.get(comp).getText().trim();
                     }
                 }
