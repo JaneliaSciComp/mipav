@@ -12,8 +12,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
@@ -21,9 +19,11 @@ import javax.swing.*;
  */
 public class JDialogFaceAnonymize extends JDialogScriptableBase
         implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface 
-        {
+{
 
-    /** Face orientation not obtained from file information. */
+	private static final long serialVersionUID = 4849596386051779471L;
+
+	/** Face orientation not obtained from file information. */
     public static final int FACING_UNKNOWN = -1;
 
     /** Indicates sagittal image with x-axis oriented posterior to anterior. */
@@ -97,7 +97,9 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
      * FaceAnonymizer parameter. Guarantees that the extracted brain will be avoided by the specified number of
      * millimeters. Initially set to 20.
      */
-    private int extraMMsToPad = 10;
+    private int extraMMsToPad = 0;
+    
+    private JTextField imageTextField;
 
     /** The image that face anonymization will be performed on. */
     private ModelImage srcImage;
@@ -106,6 +108,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     private boolean remove = false;
     private boolean face = true;
     private boolean showSegmentation = false;
+    private ModelImage atlasImage = null;
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
@@ -143,7 +146,44 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-
+        
+        if ( command.equalsIgnoreCase("atlasImageBrowse") )
+		{
+        	ViewUserInterface.getReference().openImageFrame();
+        	ViewJFrameImage imageFrame =  ViewUserInterface.getReference().getActiveImageFrame();
+        	if ( imageFrame != null )
+        	{
+                if(atlasImage != null) {
+                	atlasImage.disposeLocal();
+                	atlasImage = null;
+                }
+        		atlasImage = imageFrame.getActiveImage();
+        		if ( atlasImage != null )
+        		{
+        			imageTextField.setText( atlasImage.getImageFileName());
+        		}
+        	}
+//            JFileChooser chooser = new JFileChooser();   
+//            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+//                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+//            } else {
+//                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+//            }
+//            chooser.setDialogTitle("Choose image");
+//            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+//            int returnValue = chooser.showOpenDialog(this);
+//            if (returnValue == JFileChooser.APPROVE_OPTION) {
+//                FileIO fileIO = new FileIO();
+//                if(atlasImage != null) {
+//                	atlasImage.disposeLocal();
+//                	atlasImage = null;
+//                }
+//                atlasImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory() + File.separator, false, null);  
+//
+//                imageTextField.setText(chooser.getSelectedFile().getAbsolutePath());
+//                ViewUserInterface.getReference().setDefaultDirectory(chooser.getCurrentDirectory().toString() );
+//            }
+        } 
         if (command.equals("OK")) {
         	if ( faceOrientation == FACING_UNKNOWN )
         	{
@@ -233,7 +273,14 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
 
         try {
             System.gc();
-            defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
+            if ( atlasImage != null )
+            {
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, atlasImage, faceOrientation);
+            }
+            else
+            {
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
+            }
             defaceAlgo.setOutputOption( blur, remove, face, showSegmentation );
             defaceAlgo.setOffSet(extraMMsToPad);
             defaceAlgo.addListener(this);
@@ -422,9 +469,23 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         removalPanel.add(extraBrainPaddingField);
         
 
+        JPanel atlasPanel = new JPanel(new BorderLayout());
+        atlasPanel.add( new JLabel("Optional Atlas Image:"), BorderLayout.WEST );
+        imageTextField = new JTextField();
+        atlasPanel.add( imageTextField, BorderLayout.CENTER );
+		JButton browseButton = new JButton("Browse");
+		browseButton.setMinimumSize(MipavUtil.defaultButtonSize);
+		browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
+		browseButton.setFont(serif12B);
+		browseButton.addActionListener(this);
+		browseButton.setActionCommand("atlasImageBrowse");	
+		atlasPanel.add( browseButton, BorderLayout.EAST );
+        
+
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(orientationPanel, BorderLayout.NORTH);
-        mainPanel.add(removalPanel, BorderLayout.SOUTH);
+        mainPanel.add(removalPanel, BorderLayout.CENTER);
+        mainPanel.add(atlasPanel, BorderLayout.SOUTH);
 
         getContentPane().removeAll();
         getContentPane().add(mainPanel, BorderLayout.NORTH);
@@ -479,6 +540,13 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         remove = removeFaceRadio.isSelected() | removeAllRadio.isSelected();
         face = blurFaceRadio.isSelected() | removeFaceRadio.isSelected();
         showSegmentation = showSegmentationRadio.isSelected();
+        if (MipavUtil.testParameter(extraBrainPaddingField.getText(), 0, 500)) {
+            extraMMsToPad = Integer.parseInt(extraBrainPaddingField.getText());
+        } else {
+            MipavUtil.displayError("Number of mms to pad around brain region should be between 0 and 500");
+
+            return false;
+        }
 
         return true;
     }

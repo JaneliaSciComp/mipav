@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-import WildMagic.LibFoundation.Distance.DistanceVector3Plane3;
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Line3f;
@@ -8,24 +7,16 @@ import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector2d;
-import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.Meshes.ConvexHull3f;
 import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Rendering.MaterialState;
-import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.BoxBV;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
-import WildMagic.LibGraphics.SceneGraph.StandardMesh;
-import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -38,12 +29,10 @@ import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogFaceAnonymize;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
-import gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.MjCorticalMesh_WM;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -63,7 +52,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private float gmThresholdMax = -1;
 	private float maxRadius = -1;
 	private Vector3f cog;
-	private Vector3f cogMax;
 	private int dimX;
 	private int dimY;
 	private int dimZ;
@@ -72,14 +60,16 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private boolean remove = false;
 	private boolean face = false;
 	private boolean showSegmentation = false;
-	private float offSet = 1;
-
-	private BitSet brainMaskMin;
-	private BitSet brainMaskMax;
+	private float offSet = 0;
 	
 	private int[] originalAxis;
 	private int[] targetAxis;
-	private boolean reMapped;
+	
+	private int[] originalAxisTargetAtlas;
+	private boolean reMappedSrc = false;
+	private boolean reMappedTargetAtlas = false;
+	
+	private ModelImage atlasBasedImage;
 	
     /**
      * Construct the face anonymizer, but do not run it yet.
@@ -96,7 +86,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	originalAxis = srcImage.getAxisOrientation();
         int[] axisOrder = { 0, 1, 2, 3 };
         boolean[] axisFlip = { false, false, false, false };
-        if ( reMapped = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
+        if ( reMappedSrc = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
         {
             AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImage, axisOrder, axisFlip );
             rotateAlgo.setRunningInSeparateThread(false);
@@ -112,12 +102,64 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         
     	dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
     	dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
-    	dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
-    	
-
-    	brainMaskMin = new BitSet(dimX*dimY*dimZ);
-    	brainMaskMax = new BitSet(dimX*dimY*dimZ);
+    	dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;    	
     }
+    
+    /**
+     * Construct the face anonymizer, but do not run it yet.
+     *
+     * @param  srcImg            The image to de-face
+     * @param  faceDirection     the orientation of the patient's face, as determined by the dialog
+     */
+    public AlgorithmSkullRemoval(ModelImage srcImg, ModelImage atlasImage, int faceDirection)
+    {
+    	super( null, atlasImage );
+
+    	targetAxis = new int[]{FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_S2I_TYPE,
+                FileInfoBase.ORI_L2R_TYPE};
+    	originalAxis = srcImage.getAxisOrientation();
+        int[] axisOrder = { 0, 1, 2, 3 };
+        boolean[] axisFlip = { false, false, false, false };
+        if ( reMappedSrc = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
+        {
+            AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImage, axisOrder, axisFlip );
+            rotateAlgo.setRunningInSeparateThread(false);
+            rotateAlgo.run();
+            srcImage = rotateAlgo.returnImage();
+        }
+        
+
+    	this.atlasBasedImage = srcImg;
+    	originalAxisTargetAtlas = srcImg.getAxisOrientation();
+        axisOrder = new int[]{ 0, 1, 2, 3 };
+        axisFlip = new boolean[]{ false, false, false, false };
+        if ( reMappedTargetAtlas = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
+        {
+        	AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImg, axisOrder, axisFlip );
+        	rotateAlgo.setRunningInSeparateThread(false);
+        	rotateAlgo.run();
+        	this.atlasBasedImage = rotateAlgo.returnImage();
+        }
+        this.faceOrientation = JDialogFaceAnonymize.FACING_LEFT;
+
+        ModelImage temp = registerImages( atlasBasedImage, srcImage );
+        if ( temp != null )
+        {
+        	srcImage = temp;
+        }
+        
+    	destImage = (ModelImage) srcImage.clone();
+    	destImage.setImageName( srcImage.getImageName() + "_deskull" );
+        faceOrientation = faceDirection;
+        
+    	dimX = srcImage.getExtents().length > 0 ? srcImage.getExtents()[0] : 1;
+    	dimY = srcImage.getExtents().length > 1 ? srcImage.getExtents()[1] : 1;
+    	dimZ = srcImage.getExtents().length > 2 ? srcImage.getExtents()[2] : 1;
+    }
+    
+    
+    
+    
     /**
      * Clean up memory used by the algorithm.
      */
@@ -181,92 +223,48 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         estimateParameters();
         
         fireProgressStateChanged(30);
-
-        useCSFMin = true;
-        maskBrain(useCSFMin, brainMaskMin);       
-        destImage.setMask(brainMaskMin);
-//        if ( showSegmentation )
-//        {
-//        	ModelImage csfMinImage = (ModelImage)destImageMin.clone();
-//        	csfMinImage.setImageName( srcImage.getImageName() + "_csfMin" );
-//        	new ViewJFrameImage(csfMinImage);
-//        }
-
-        useCSFMin = false;
-        maskBrain(useCSFMin, brainMaskMax);       
-//        if ( showSegmentation )
-//        {
-//        	ModelImage csfMaxImage = (ModelImage)destImageMin.clone();
-//        	csfMaxImage.setImageName( srcImage.getImageName() + "_csfMax" );
-//        csfMaxImage.setMask(brainMaskMax);
-//        	new ViewJFrameImage(csfMaxImage);
-//        }
-        BitSet newMask = fillCSFMax( brainMaskMax );
-        BitSet filledCSFMask = null;
-        if ( newMask.cardinality() != 0 )
-        {     
-        	brainMaskMax = newMask;
-            
-//            if ( showSegmentation )
-//            {
-//            	ModelImage csfMaxImage = (ModelImage)destImageMax.clone();
-//            	csfMaxImage.setImageName( srcImage.getImageName() + "_csfMax_New" );
-//            csfMaxImage.setMask(brainMaskMax);
-//            	new ViewJFrameImage(csfMaxImage);
-//            }
-            filledCSFMask = outlineMask(brainMaskMax);
-        }
         
         useCSFMin = true;
         VOI seedPoints;
-        if ( filledCSFMask != null )
-        {
-            brainMaskMin.or( filledCSFMask );
-//            if ( showSegmentation )
-//            {
-//            	ModelImage csfMaxImage = (ModelImage)destImageMax.clone();
-//            	csfMaxImage.setImageName( srcImage.getImageName() + "_csfMax_Outline" );
-//            	csfMaxImage.setMask(brainMaskMin);
-//            	new ViewJFrameImage(csfMaxImage);
-//            }
-        }
-    	seedPoints = estimateWhiteMatter(destImage, brainMaskMin); 
+    	seedPoints = estimateWhiteMatter(destImage); 
     	
 
-    	boolean noMax = false;
-    	for ( int i = 0; i < seedPoints.getCurves().size(); i++ )
-    	{
-    		VOIBase seedVOI = seedPoints.getCurves().elementAt(i);
-    		for ( int j = 0; j < seedVOI.size(); j++ )
-    		{
-    			Vector3f seed = seedVOI.elementAt(j);    		
-        		int index = (int) (seed.Z * dimX * dimY + seed.Y * dimX + seed.X);	
-        		if ( brainMaskMax.get(index) )
-        		{
-        			noMax = true;
-        		}
-    		}
-    	}
-    	if ( noMax )
+    	boolean noMax = true;
+//    	for ( int i = 0; i < seedPoints.getCurves().size(); i++ )
+//    	{
+//    		VOIBase seedVOI = seedPoints.getCurves().elementAt(i);
+//    		for ( int j = 0; j < seedVOI.size(); j++ )
+//    		{
+//    			Vector3f seed = seedVOI.elementAt(j);    		
+//        		int index = (int) (seed.Z * dimX * dimY + seed.Y * dimX + seed.X);	
+//        		float value = destImage.getFloat(index);
+//        		if ( value >= csfThresholdMax )
+//        		{
+//        			noMax = false;
+//        		}
+//    		}
+//    	}
+//    	if ( noMax )
     	{
     		gmThresholdMax = max_98P;
-            Preferences.debug( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n", Preferences.DEBUG_ALGORITHM );
-            fillWhiteMatter(destImage, brainMaskMin, seedPoints);
-    	}
-    	else
-    	{
-    		gmThresholdMin = min_2P;
     		Preferences.debug( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n", Preferences.DEBUG_ALGORITHM );
-            fillWhiteMatter(destImage, brainMaskMin, seedPoints);
+    		System.err.println( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n" );
     	}
+//    	else
+//    	{
+//    		gmThresholdMin = min_2P;
+//    		Preferences.debug( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n", Preferences.DEBUG_ALGORITHM );
+//    		System.err.println( "White matter thresholds : " + gmThresholdMin + " " + gmThresholdMax + " " + noMax + "\n" );
+//    	}
+        fillWhiteMatter(destImage, seedPoints);
         
-//        if ( showSegmentation )
-//        {
-//    		destImage.calcMinMax();
-//        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
-//        	whiteMatterImage.setImageName( srcImage.getImageName() + "_whiteMatter" );
-//        	new ViewJFrameImage(whiteMatterImage);
-//        }
+        if ( showSegmentation )
+        {
+    		destImage.calcMinMax();
+        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
+        	whiteMatterImage.setImageName( srcImage.getImageName() + "_whiteMatter" );
+        	new ViewJFrameImage(whiteMatterImage);
+        }
         fireProgressStateChanged(60);                
         
         
@@ -311,7 +309,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //                }
 			}
     	}
-        if ( reMapped )
+        if ( reMappedSrc )
         {
         	int[] axisOrder = { 0, 1, 2, 3 };
         	boolean[] axisFlip = { false, false, false, false };
@@ -324,7 +322,23 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         		destImage = rotateAlgo.returnImage();
         	}
         }
-    	
+
+    	if ( atlasBasedImage != null )
+    	{
+        	int[] axisOrder = { 0, 1, 2, 3 };
+        	boolean[] axisFlip = { false, false, false, false };
+        	if ( MipavCoordinateSystems.matchOrientation( destImage.getAxisOrientation(), atlasBasedImage.getAxisOrientation(), 
+        			axisOrder, axisFlip ) )
+        	{
+        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
+        		rotateAlgo.setRunningInSeparateThread(false);
+        		rotateAlgo.run();
+        		destImage.disposeLocal();
+        		destImage = rotateAlgo.returnImage();
+        	}
+    		atlasBasedImage.setMask( destImage.getMask() );
+        	new ViewJFrameImage(atlasBasedImage);        	
+    	}
     	if ( showSegmentation )
     	{
     		destImage.resetVOIs();
@@ -335,10 +349,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         	destImage.registerVOI(centerGravity);
         	centerGravity.setColor( Color.green );    	
         	destImage.setImageName( srcImage.getImageName() + "_outsideMask" );
-        	new ViewJFrameImage(destImage);
+        	new ViewJFrameImage(destImage);        	
     	}
     	if ( !showSegmentation )
-    	{
+    	{    		        	
     		destImage.resetVOIs();
     		destImage.clearMask();
     		destImage.calcMinMax();
@@ -405,10 +419,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	 */
 	private void initSphere(ModelImage image, boolean noMax) 
 	{			
-		TriMesh sphere = createMesh( image.getMask() );
-		if ( sphere != null )
+		TriMesh whiteMatterMesh = createMesh( image.getMask() );
+		if ( whiteMatterMesh != null )
 		{
-			TriMesh convexHullMesh = convexHull(sphere);
+			TriMesh convexHullMesh = convexHull(whiteMatterMesh);
 
 			BitSet meshCHMask = createMask( convexHullMesh, false, "_ch_mask" );
 
@@ -424,6 +438,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				TriMesh convexHullBrain = convexHull(kMesh);
 				if ( convexHullBrain != null )
 				{
+					if ( offSet != 0 )
+					{
+						scaleMesh(convexHullBrain);
+					}
 					destImage.setMask( createMask( convexHullBrain, false, "ch_bet_mask" ) );
 					kMesh = convexHullBrain;
 				}
@@ -526,18 +544,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //					System.err.println( minIndex  + " " + minDist );
 					if ( minIndex != -1 )
 					{
-				        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
-				        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
-				        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
-				        
-						Vector3f shift = Vector3f.neg(clipPlane.Normal);
-						shift.scale(offSet/xRes, offSet/yRes, offSet/zRes);
-//						shift.scale(offSet, offSet, offSet);
-						Vector3f pos = kMesh.VBuffer.GetPosition3(minIndex);
-//						System.err.println( "Plane position " + pos );
-						pos.add(shift);
-//						System.err.println( "Plane position " + pos );
-						
+						Vector3f pos = kMesh.VBuffer.GetPosition3(minIndex);						
 						clipPlane = new Plane3f( clipPlane.Normal, pos );
 						BitSet clipMask = createMask( clipPlane, faceOrientation, cog );
 						if ( showSegmentation )
@@ -662,121 +669,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         
         FileSurface_WM.save(kName, mesh, 0, new VertexBuffer(positions), flip, direction, startLocation, box, inverseDicomMatrix);
     }
-
-
-	private void createWhiteMatterMesh( ModelImage image, TriMesh sphere )
-	{
-		int numVertices = sphere.VBuffer.GetVertexQuantity();
-		
-		for ( int i = 0; i < numVertices; i++ )
-		{
-			Vector3f pt = sphere.VBuffer.GetPosition3(i);
-			Vector3f dir = Vector3f.sub( pt, cog );
-			dir.normalize();
-			
-			Vector3f lastWMPt = new Vector3f(pt);
-			boolean found = false;
-			while ( inBounds(pt) )
-			{
-				int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-				if ( image.getMask().get(index) )
-				{
-					lastWMPt.copy(pt);
-					found = true;
-				}
-				pt.add(dir);
-			}
-			pt.copy(lastWMPt);
-			if ( !found )
-			{
-				dir.neg();
-				pt.copy(lastWMPt);
-				Vector3f checkDir1 = Vector3f.sub( lastWMPt, cog ); checkDir1.normalize();
-				Vector3f checkDir2 = Vector3f.sub( pt, cog ); checkDir2.normalize();
-    			while ( inBounds(pt) && (checkDir1.dot(checkDir2) > 0) )
-    			{
-					int index = (int) ((int)pt.Z * dimX * dimY + (int)pt.Y * dimX + (int)pt.X);
-    				if ( image.getMask().get(index) )
-    				{
-    					lastWMPt.copy(pt);
-    					break;
-    				}
-    				Vector3f temp = Vector3f.add(pt,  dir);
-    				checkDir2 = Vector3f.sub( temp, cog ); checkDir2.normalize();
-    				if ( inBounds(temp) && (checkDir1.dot(checkDir2) > 0) )
-    				{
-    					pt.add(dir);
-    				}
-    			}    				
-			}
-			sphere.VBuffer.SetPosition3(i, pt);
-		}
-		
-		sphere.UpdateMS(true);
-	}
 	
-	
-	
-
-	private TriMesh createSkullMesh( ModelImage image, TriMesh sphere, boolean maxFound )
-	{		
-		int numVertices = sphere.VBuffer.GetVertexQuantity();
-		TriMesh skull = new TriMesh( new VertexBuffer(sphere.VBuffer), new IndexBuffer( sphere.IBuffer ) );		
-		skull.AttachGlobalState(new MaterialState());
-
-    	float csfThresholdMin = .1f * (max_98P - min_2P);
-    	float csfThresholdMax = .9f * (max_98P - min_2P);
-		
-		
-		for ( int i = 0; i < numVertices; i++ )
-		{
-			Vector3f pt = sphere.VBuffer.GetPosition3(i);
-//			Vector3f dir = Vector3f.sub( pt, cog );
-			Vector3f dir = sphere.VBuffer.GetNormal3(i);
-			dir.normalize();
-
-			Vector3f startPt = new Vector3f(pt);
-			Vector3f maxPt = new Vector3f();
-			Vector3f minPt = new Vector3f();
-			boolean minFound = false;
-			while ( inBounds(pt) )
-			{
-				float value = image.getFloat( (int)pt.X, (int)pt.Y, (int)pt.Z );
-				if ( !maxFound && (value > csfThresholdMax) )
-				{
-					skull.VBuffer.SetPosition3(i, pt);
-					maxFound = true;
-					maxPt.copy(pt);
-				}
-				if ( maxFound && !minFound && (value < csfThresholdMin) )
-				{
-					skull.VBuffer.SetPosition3(i, pt);
-					minFound = true;
-					minPt.copy(pt);
-				}
-				if ( maxFound && minFound && ((value > csfThresholdMax ) || minPt.distance(pt) > 5) )
-				{
-					skull.VBuffer.SetPosition3(i, pt);
-					break;
-				}
-				pt.add(dir);
-			}
-		}
-		
-		skull.UpdateMS(true);
-		return skull;
-	}
-	
-	    
-    private boolean inBounds( Vector3f pt )
-    {
-		if ( (pt.X >= 0) && (pt.X < dimX) && (pt.Y >= 0) && (pt.Y < dimY) && (pt.Z >= 0) && (pt.Z < dimZ) )
-		{
-			return true;
-		}
-		return false;
-    }
-
     
     private boolean inBounds( int x, int y, int z )
     {
@@ -806,29 +699,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	
     }
     
-    private void maskBrain( Boolean useMin, BitSet mask )
-    {
-
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-    		for ( int y = 0; y < dimY; y++ )
-    		{
-    			for ( int x = 0; x < dimX; x++ )
-    			{
-    				float value = destImage.getFloat(x,y,z);
-    				if ( useMin && (value <= csfThresholdMin) )
-    				{
-    					mask.set( z * dimX*dimY + y * dimX + x );
-    				}
-    				else if ( !useMin && (value >= csfThresholdMax) )
-    				{
-    					mask.set( z * dimX*dimY + y * dimX + x );
-    				}
-    			}
-    		}
-    	}
-    }
-
     
     private float getMedianIntensity( ModelImage image, BitSet mask )
     {
@@ -856,7 +726,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         return intensity[iIQuantity / 2];
     }
     
-    private void fillWhiteMatter( ModelImage image, BitSet csfMask, VOI seedPoints )
+    private void fillWhiteMatter( ModelImage image, VOI seedPoints )
     {
     	if ( seedPoints == null )
     	{
@@ -869,7 +739,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	int length = dimX * dimY * dimZ;
     	BitSet visited = new BitSet(length);
     	BitSet whiteMatter = new BitSet(length);
-    	
+
+    	Vector<Vector3f> originalSeedList = new Vector<Vector3f>();
     	Vector<Vector3f> seedList = new Vector<Vector3f>();
     	for ( int i = 0; i < seedPoints.getCurves().size(); i++ )
     	{
@@ -881,16 +752,20 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     			visited.set(index);
 				whiteMatter.set(index);
     			seedList.add(seed);
+    			originalSeedList.add(seed);
     		}
     	}    	
     	
-		fill( image, seedList, visited, whiteMatter, csfMask );
+		fill( image, originalSeedList, seedList, visited, whiteMatter );
     	
 		image.setMask( whiteMatter );
     }
     
-    private void fill( ModelImage image, Vector<Vector3f> seedList, BitSet visited, BitSet whiteMatter, BitSet csfMask )
+    private void fill( ModelImage image, Vector<Vector3f> originalSeedList, Vector<Vector3f> seedList, BitSet visited, BitSet whiteMatter )
     {
+    	Vector3f min = new Vector3f(dimX, dimY, dimZ);
+    	Vector3f max = new Vector3f(0,0,0);
+		getBoundsDistance( min, max, originalSeedList, 120 );
     	while ( seedList.size() > 0 )
     	{
     		Vector3f seed = seedList.remove(0);
@@ -906,12 +781,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     					{
     						if ( x != seed.X || y != seed.Y || z != seed.Z )
     						{
-    							int index = (int) (z * dimX * dimY + y * dimX + x);
-
-    							if ( csfMask.get(index)  )
-    							{
+								float value = image.getFloat(x, y, z);
+								if ( (value <= gmThresholdMin) || (value >= gmThresholdMax) )
+								{
     								csfFound = true;
-    							}
+								}
     						}
     					}
     				}
@@ -933,13 +807,16 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 								if ( !visited.get(index) )
 								{
 									visited.set(index);
-									float value = image.getFloat(x, y, z);
-									if ( !csfFound )
+									if ( (x >= min.X) && (x <= max.X) && (y >= min.Y) && (y <= max.Y) && (z >= min.Z) && (z <= max.Z) )
 									{
-										if ( (value > gmThresholdMin) && (value < gmThresholdMax) )
+										float value = image.getFloat(x, y, z);
+										if ( !csfFound )
 										{
-											whiteMatter.set(index);
-											seedList.add( new Vector3f(x, y, z) );
+											if ( (value > gmThresholdMin) && (value < gmThresholdMax) )
+											{
+												whiteMatter.set(index);
+												seedList.add( new Vector3f(x, y, z) );
+											}
 										}
 									}
     							}
@@ -952,460 +829,42 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     }
     
     
-    
-    
-
-    private BitSet fillCSFMax( BitSet csfMask )
+    private void getBoundsDistance( Vector3f min, Vector3f max, Vector<Vector3f> originalSeedList, float limit )
     {
-    	int length = dimX * dimY * dimZ;
-    	BitSet visited = new BitSet(length);
-    	BitSet newMask = new BitSet(length);
-    	Vector<Vector3f> seedList = new Vector<Vector3f>();
-
-
-		int index = (int) (cog.Z * dimX * dimY + cog.Y * dimX + cog.X);	
-        Preferences.debug( "Min Center " + brainMaskMax.get(index) + "\n", Preferences.DEBUG_ALGORITHM );
-        if ( csfMask.get(index) )
-        {
-			visited.set(index);
-			newMask.set(index);
-        	seedList.add( new Vector3f(cog) );
-        }
-        
-        index = (int) (cogMax.Z * dimX * dimY + cogMax.Y * dimX + cogMax.X);	
-        Preferences.debug( "Max Center " + brainMaskMax.get(index) + "\n", Preferences.DEBUG_ALGORITHM );
-        if ( csfMask.get(index) )
-        {
-			visited.set(index);
-			newMask.set(index);
-        	seedList.add( new Vector3f(cogMax) );
-        }
-    	    	
-        if ( seedList.size() == 0 )
-        {
-			for ( int z = (int) (cog.Z-5); z <= cog.Z+5; z++ )
-			{
-				for ( int y = (int) (cog.Y-5); y <= cog.Y+5; y++ )
-				{
-					for ( int x = (int) (cog.X-5); x <= cog.X+5; x++ )
-					{
-						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-						{
-							index = (int) (z * dimX * dimY + y * dimX + x);
-							if ( csfMask.get(index) )
-							{
-								visited.set(index);
-								newMask.set(index);
-								seedList.add( new Vector3f(x, y, z) );
-							}
-						}
-					}
-				}
-			}    	
-			for ( int z = (int) (cogMax.Z-5); z <= cogMax.Z+5; z++ )
-			{
-				for ( int y = (int) (cogMax.Y-5); y <= cogMax.Y+5; y++ )
-				{
-					for ( int x = (int) (cogMax.X-5); x <= cogMax.X+5; x++ )
-					{
-						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-						{
-							index = (int) (z * dimX * dimY + y * dimX + x);
-							if ( csfMask.get(index) )
-							{
-								visited.set(index);
-								newMask.set(index);
-								seedList.add( new Vector3f(x, y, z) );
-							}
-						}
-					}
-				}
-			}    	
-        }
-    	
-		fillCSFMax( seedList, visited, newMask, csfMask );
-    	return newMask;
-    }
-    
-    private void fillCSFMax( Vector<Vector3f> seedList, BitSet visited, BitSet newMask, BitSet csfMask )
-    {    	
-    	
-    	
-
-    	while ( seedList.size() > 0 )
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        Vector3f range = new Vector3f( limit/xRes, limit/yRes, limit/zRes );
+    	Vector3f pos = new Vector3f();
+    	for ( int i = 0; i < originalSeedList.size(); i++ )
     	{
-    		Vector3f seed = seedList.remove(0);
-
-    		int x = (int) seed.X;
-    		int y = (int) seed.Y;
-    		int z = (int) (seed.Z -1);
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) seed.Y;
-    		z = (int) (seed.Z +1);
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) (seed.Y - 1);
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) (seed.Y + 1);
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) (seed.X - 1);
-    		y = (int) seed.Y;
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) (seed.X + 1);
-    		y = (int) seed.Y;
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
+    		pos.copy(originalSeedList.elementAt(i) );
+    		min.min( Vector3f.sub( pos, range ) );
+    		max.max( Vector3f.add( pos, range ) );
     	}
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-    	
-//    	while ( seedList.size() > 0 )
-//    	{
-//    		Vector3f seed = seedList.remove(0);
-//			for ( int z = (int) (seed.Z-1); z <= seed.Z+1; z++ )
-//			{
-//				for ( int y = (int) (seed.Y-1); y <= seed.Y+1; y++ )
-//				{
-//					for ( int x = (int) (seed.X-1); x <= seed.X+1; x++ )
-//					{
-//						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-//						{
-//							if ( x != seed.X || y != seed.Y || z != seed.Z )
-//							{
-//								int index = (int) (z * dimX * dimY + y * dimX + x);
-//
-//								if ( !visited.get(index) )
-//								{
-//									visited.set(index);
-//									if ( csfMask.get(index) )
-//									{
-//										newMask.set(index);
-//										seedList.add( new Vector3f(x, y, z) );
-//									}
-//    							}
-//    						}
-//    					}
-//    				}
-//    			}
-//    		}
-//    	}
+    	System.err.println( "Bounds = " + min + "   " + max );
     }
     
     
-    
-    private BitSet fillCSFMin( BitSet csfMask )
+    private VOI estimateWhiteMatter( ModelImage image )
     {
-    	int length = dimX * dimY * dimZ;
-    	BitSet visited = new BitSet(length);
-    	BitSet newMask = new BitSet(length);
     	Vector<Vector3f> seedList = new Vector<Vector3f>();
-
-
-		int index = (int) (cog.Z * dimX * dimY + cog.Y * dimX + cog.X);	
-        Preferences.debug( "Min Center " + brainMaskMax.get(index) + "\n", Preferences.DEBUG_ALGORITHM );
-        if ( !csfMask.get(index) )
-        {
-			visited.set(index);
-			newMask.set(index);
-        	seedList.add( new Vector3f(cog) );
-        }
-        
-        index = (int) (cogMax.Z * dimX * dimY + cogMax.Y * dimX + cogMax.X);	
-        Preferences.debug( "Max Center " + brainMaskMax.get(index) + "\n", Preferences.DEBUG_ALGORITHM );
-        if ( !csfMask.get(index) )
-        {
-			visited.set(index);
-			newMask.set(index);
-        	seedList.add( new Vector3f(cogMax) );
-        }
-    	    	
-        if ( seedList.size() == 0 )
-        {
-			for ( int z = (int) (cog.Z-5); z <= cog.Z+5; z++ )
-			{
-				for ( int y = (int) (cog.Y-5); y <= cog.Y+5; y++ )
-				{
-					for ( int x = (int) (cog.X-5); x <= cog.X+5; x++ )
-					{
-						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-						{
-							index = (int) (z * dimX * dimY + y * dimX + x);
-							if ( !csfMask.get(index) )
-							{
-								visited.set(index);
-								newMask.set(index);
-								seedList.add( new Vector3f(x, y, z) );
-							}
-						}
-					}
-				}
-			}    	
-			for ( int z = (int) (cogMax.Z-5); z <= cogMax.Z+5; z++ )
-			{
-				for ( int y = (int) (cogMax.Y-5); y <= cogMax.Y+5; y++ )
-				{
-					for ( int x = (int) (cogMax.X-5); x <= cogMax.X+5; x++ )
-					{
-						if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
-						{
-							index = (int) (z * dimX * dimY + y * dimX + x);
-							if ( !csfMask.get(index) )
-							{
-								visited.set(index);
-								newMask.set(index);
-								seedList.add( new Vector3f(x, y, z) );
-							}
-						}
-					}
-				}
-			}    	
-        }
-    	
-		fillCSFMin( seedList, visited, newMask, csfMask );
-    	return newMask;
-    }
-    
-    private void fillCSFMin( Vector<Vector3f> seedList, BitSet visited, BitSet newMask, BitSet csfMask )
-    {    	
-    	while ( seedList.size() > 0 )
-    	{
-    		Vector3f seed = seedList.remove(0);
-
-    		int x = (int) seed.X;
-    		int y = (int) seed.Y;
-    		int z = (int) (seed.Z -1);
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) seed.Y;
-    		z = (int) (seed.Z +1);
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) (seed.Y - 1);
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) seed.X;
-    		y = (int) (seed.Y + 1);
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) (seed.X - 1);
-    		y = (int) seed.Y;
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-
-    		x = (int) (seed.X + 1);
-    		y = (int) seed.Y;
-    		z = (int) seed.Z;
-    		if ( inBounds( x, y, z ) )
-    		{
-    			int index = (int) (z * dimX * dimY + y * dimX + x);
-    			if ( !visited.get(index) )
-    			{
-    				visited.set(index);
-    				if ( !csfMask.get(index) )
-    				{
-    					newMask.set(index);
-    					seedList.add( new Vector3f(x, y, z) );
-    				}
-    			}
-    		}
-    	}
-    }
-    
-    
-    
-    
-    
-    private VOI estimateWhiteMatter( ModelImage image, BitSet mask )
-    {
+    	seedList.add(cog);
+    	Vector3f min = new Vector3f(dimX, dimY, dimZ);
+    	Vector3f max = new Vector3f(0,0,0);
+		getBoundsDistance( min, max, seedList, 60 );
+		
     	int cubeSize = 5;
     	int cubeHalf = cubeSize/2;
     	
     	Vector<Vector2d> cubeIntensities = new Vector<Vector2d>();
     	Vector<Vector3f> cubeCenters = new Vector<Vector3f>();
-    	for ( int z = 0; z < dimZ - cubeSize; z++ )
+    	for ( int z = (int) min.Z; z < max.Z - cubeSize; z++ )
     	{
-    		for ( int y = 0; y < dimY - cubeSize; y++ )
+    		for ( int y = (int) min.Y; y < max.Y - cubeSize; y++ )
     		{
-    			for ( int x = 0; x < dimX - cubeSize; x++ )
+    			for ( int x = (int) min.X; x < max.X - cubeSize; x++ )
     			{
-    				boolean csfFound = false;
-    				int index;
     				int count = 0;
     				double meanIntensity = 0;
     				for ( int z2 = z; z2 < (z+cubeSize); z2++ )
@@ -1419,42 +878,34 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
             						float value = srcImage.getFloat(x2,y2,z2);
             						meanIntensity += value;
             						count++;
-            						index = z2 * dimX*dimY + y2 * dimX + x2;
-            						if ( mask.get(index) )
-            						{
-            							csfFound = true;
-            						}
             					}
             				}
         				}    					
     				}
-    				if ( !csfFound )
+    				meanIntensity /= (float)count;
+
+    				count = 0;
+    				double meanVariance = 0;
+    				for ( int z2 = z; z2 < (z+cubeSize); z2++ )
     				{
-    					meanIntensity /= (float)count;
-
-    					count = 0;
-    					double meanVariance = 0;
-    					for ( int z2 = z; z2 < (z+cubeSize); z2++ )
+    					for ( int y2 = y; y2 < (y+cubeSize); y2++ )
     					{
-    						for ( int y2 = y; y2 < (y+cubeSize); y2++ )
+    						for ( int x2 = x; x2 < (x+cubeSize); x2++ )
     						{
-    							for ( int x2 = x; x2 < (x+cubeSize); x2++ )
+    							if ( (x2 < dimX) && (y2 < dimY) && (z2 < dimZ) )
     							{
-    								if ( (x2 < dimX) && (y2 < dimY) && (z2 < dimZ) )
-    								{
-    									float value = srcImage.getFloat(x2,y2,z2);
-    									meanVariance += ((value - meanIntensity) * (value - meanIntensity));
-    									count++;
-    								}
+    								float value = srcImage.getFloat(x2,y2,z2);
+    								meanVariance += ((value - meanIntensity) * (value - meanIntensity));
+    								count++;
     							}
-    						}    					
-    					}
-    					meanVariance /= (float)count;
-    					cubeIntensities.add(new Vector2d( meanIntensity, meanVariance) );
-
-    					Vector3f center = new Vector3f( x + cubeHalf, y + cubeHalf, z + cubeHalf );
-    					cubeCenters.add(center);
+    						}
+    					}    					
     				}
+    				meanVariance /= (float)count;
+    				cubeIntensities.add(new Vector2d( meanIntensity, meanVariance) );
+
+    				Vector3f center = new Vector3f( x + cubeHalf, y + cubeHalf, z + cubeHalf );
+    				cubeCenters.add(center);
     			}
     		}
     	}
@@ -1466,10 +917,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	}
     	Arrays.sort( sortedIntensities );
 
-//    	System.err.println( "Intensity range =    " + sortedIntensities[0].X + "    " +  sortedIntensities[cubeIntensities.size()-1].X );
-//    	System.err.println( "Intensity range = " + (sortedIntensities[0].X - sortedIntensities[cubeIntensities.size()-1].X) );
-//    	System.err.println( "Variance range =    " + sortedIntensities[0].Y + "    " + sortedIntensities[cubeIntensities.size()-1].Y );
-//    	System.err.println( "Variance range = " + (sortedIntensities[0].Y - sortedIntensities[cubeIntensities.size()-1].Y) );
+    	System.err.println( "csfMin = " + csfThresholdMin + " " + " max = " + csfThresholdMax + " useMin = " + useCSFMin );
+    	System.err.println( "Intensity range =    " + sortedIntensities[0].X + "    " +  sortedIntensities[cubeIntensities.size()-1].X );
+    	System.err.println( "Intensity range = " + (sortedIntensities[0].X - sortedIntensities[cubeIntensities.size()-1].X) );
+    	System.err.println( "Variance range =    " + sortedIntensities[0].Y + "    " + sortedIntensities[cubeIntensities.size()-1].Y );
+    	System.err.println( "Variance range = " + (sortedIntensities[0].Y - sortedIntensities[cubeIntensities.size()-1].Y) );
     	
     	int minIndex = -1;
     	double minVar = Double.MAX_VALUE;
@@ -1486,8 +938,20 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     			minIndex = i;
     		}
     	}
+    	double maxIntensity = -Double.MAX_VALUE;
     	
-   	
+    	for ( int i = 0; i < sortedIntensities.length; i++ )
+    	{    		
+    		if ( sortedIntensities[i].Y <= minVar )
+    		{
+    			if ( sortedIntensities[i].X > maxIntensity )
+    			{
+    				maxIntensity = sortedIntensities[i].X;
+    			}
+    		}
+    	}
+    	
+    	System.err.println( maxIntensity + " " + minVar );
     	
     	
 
@@ -1497,22 +961,33 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
     	for ( int i = 0; i < cubeCenters.size(); i++ )
     	{
-    		if ( useCSFMin && (cubeIntensities.elementAt(i).X > csfThresholdMin) && 
-    				(cubeIntensities.elementAt(i).Y == sortedIntensities[minIndex].Y) )
-    		{   			
+    		if ( cubeIntensities.elementAt(i).X == maxIntensity && cubeIntensities.elementAt(i).Y <= minVar )
+    		{	
+    			System.err.println( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y );
     			seedPoints.importPoint(cubeCenters.elementAt(i));
-
-    			Preferences.debug( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y + "\n", Preferences.DEBUG_ALGORITHM );
-//    			System.err.println( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y );
     		}
-    		else if ( !useCSFMin && (cubeIntensities.elementAt(i).X < csfThresholdMax) && 
-    				(cubeIntensities.elementAt(i).Y == sortedIntensities[minIndex].Y) )
-    		{   			
-    			seedPoints.importPoint(cubeCenters.elementAt(i));
-
-    			Preferences.debug( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y + "\n", Preferences.DEBUG_ALGORITHM );
+    		
+    		
+//    		if (cubeIntensities.elementAt(i).Y <= sortedIntensities[minIndex].Y)
+//    		{
 //    			System.err.println( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y );
-    		}
+//    		}
+//    		if ( useCSFMin && (cubeIntensities.elementAt(i).X > csfThresholdMin) && 
+//    				(cubeIntensities.elementAt(i).Y == sortedIntensities[minIndex].Y) )
+//    		{   			
+//    			seedPoints.importPoint(cubeCenters.elementAt(i));
+//
+//    			Preferences.debug( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y + "\n", Preferences.DEBUG_ALGORITHM );
+////    			System.err.println( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y );
+//    		}
+//    		else if ( !useCSFMin && (cubeIntensities.elementAt(i).X < csfThresholdMax) && 
+//    				(cubeIntensities.elementAt(i).Y == sortedIntensities[minIndex].Y) )
+//    		{   			
+//    			seedPoints.importPoint(cubeCenters.elementAt(i));
+//
+//    			Preferences.debug( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y + "\n", Preferences.DEBUG_ALGORITHM );
+////    			System.err.println( "Seed point: " + cubeCenters.elementAt(i) + "       intensity = " + cubeIntensities.elementAt(i).X + " variance = " + cubeIntensities.elementAt(i).Y );
+//    		}
     	}
 
     	image.registerVOI(seedPoints);
@@ -1685,585 +1160,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	value = destImage.getFloat((int)posMax.X, (int)posMax.Y, (int)posMax.Z);
         Preferences.debug( "CSF max = " + posMax + "   value = " + value + "\n", Preferences.DEBUG_ALGORITHM );
 
-    	cog = new Vector3f(posMin);
-    	cogMax = new Vector3f(posMax);
-//    	short id = (short) destImage.getVOIs().getUniqueID();
-//    	VOI centerGravity = new VOI(id, "centerGravity", VOI.POINT, 1f );
-//    	centerGravity.importPoint(cog);
-//    	destImage.registerVOI(centerGravity);
-//    	centerGravity.setColor( Color.green );    	
-//    	Preferences.debug( "Center of gravity " + cog + "\n", Preferences.DEBUG_ALGORITHM );   	    	
+    	cog = new Vector3f(posMin); 	    	
     }
 
-    private VOIContour circleX( float scale, float maxRadius, Vector3f cog, float x )
-    {
-    	float[] res = srcImage.getResolutions(0);
-    	float zRatio = res[1] / res[2];
-		VOIContour sphereContour = new VOIContour( false, true );
-		float radialSamples = 900;
-		for ( int i = 0; i < radialSamples; i++ )
-		{
-			Vector3f pt = new Vector3f( x, (float)(cog.Y + scale*maxRadius * Math.cos( Math.PI * 2.0 * i/radialSamples )),
-					(float)(cog.Z + zRatio * scale*maxRadius * Math.sin( Math.PI * 2.0 * i/radialSamples)) );
-			sphereContour.add(pt);
-		}
-		return sphereContour;
-    }
-
-    private VOIContour circleY( float scale, float maxRadius, Vector3f cog, float y )
-    {
-    	float[] res = srcImage.getResolutions(0);
-    	float zRatio = res[0] / res[2];
-		VOIContour sphereContour = new VOIContour( false, true );
-		float radialSamples = 900;
-		for ( int i = 0; i < radialSamples; i++ )
-		{
-			Vector3f pt = new Vector3f( (float)(cog.X + scale*maxRadius * Math.cos( Math.PI * 2.0 * i/radialSamples )), y,
-					(float)(cog.Z + zRatio * scale*maxRadius * Math.sin( Math.PI * 2.0 * i/radialSamples)) );
-			sphereContour.add(pt);
-		}
-		return sphereContour;
-    }
-    
-    private VOIContour circleZ( float scale, float maxRadius, Vector3f cog, float z )
-    {
-    	float[] res = srcImage.getResolutions(0);
-    	float yRatio = res[0] / res[1];
-		VOIContour sphereContour = new VOIContour( false, true );
-		float radialSamples = 900;
-		for ( int i = 0; i < radialSamples; i++ )
-		{
-			Vector3f pt = new Vector3f( (float)(cog.X + scale*maxRadius * Math.cos( Math.PI * 2.0 * i/radialSamples )),
-					(float)(cog.Y + yRatio * scale*maxRadius * Math.sin( Math.PI * 2.0 * i/radialSamples)), z );
-			sphereContour.add(pt);
-		}
-		return sphereContour;
-    }
-    
-    
-
-    /**
-     * Creates a BitSet mask that is the volume enclosed by the triangle mesh.
-     * This function is not accurate if the mesh is not closed, however it will still return a mask.
-     * @return
-     */
-    private BitSet createVolumeMask( final TriMesh kMesh, BitSet wmMask )
-    {    	
-    	final BoxBV kBoundingBox = new BoxBV(kMesh.VBuffer);
-    	
-    	Vector3f[] kBoxCorners = new Vector3f[8];
-    	kBoundingBox.GetBox().ComputeVertices( kBoxCorners );
-    	Vector3f kMaxBB = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-    	Vector3f kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
-    	for ( int i = 0; i < kBoxCorners.length; i++ )
-    	{
-        	kMaxBB.max( kBoxCorners[i] );
-        	kMinBB.min( kBoxCorners[i] );
-    	}
-            	
-    	final BitSet mask = new BitSet();
-    	
-    	final Vector3f[] directions = new Vector3f[5];
-    	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
-    	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
-    	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
-    	directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
-    	directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
-    	for ( int i = 0; i < directions.length; i++ )
-    	{
-    		directions[i].normalize();
-    	}
-        long startTime = System.currentTimeMillis();
-    	
-
-		int xMin = (int)Math.floor(kMinBB.X);
-		int yMin = (int)Math.floor(kMinBB.Y);
-		int zMin = (int)Math.floor(kMinBB.Z);
-		int xMax = (int)Math.ceil(kMaxBB.X);
-		int yMax = (int)Math.ceil(kMaxBB.Y);
-		int zMax = (int)Math.ceil(kMaxBB.Z);
-
-//        if (Preferences.isMultiThreadingEnabled())
-//        {
-//        	int nthreads = ThreadUtil.getAvailableCores();
-//        	int intervalX = xMax - xMin;
-//        	int intervalY = yMax - yMin;
-//        	int intervalZ = zMax - zMin;
-//            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
-//            float stepX = 0;
-//            if ( intervalX > intervalY && intervalX > intervalZ )
-//            {
-//            	stepX = (float)intervalX / (float)nthreads;
-//            }
-//            float stepY = 0;
-//            if ( intervalY > intervalX && intervalY > intervalZ )
-//            {
-//            	stepY = (float)intervalY / (float)nthreads;
-//            }
-//            float stepZ = 0;
-//            if ( intervalZ > intervalX && intervalZ > intervalY )
-//            {
-//            	stepZ = (float)intervalZ / (float)nthreads;
-//            }
-//            if ( stepX == 0 && stepY == 0 && stepZ == 0 )
-//            {
-//            	stepZ = (float)intervalZ / (float)nthreads;			            	
-//            }
-//
-//            for (int i = 0; i < nthreads; i++) {
-//                final int startX = stepX == 0 ? xMin : (int) (xMin + (    i * stepX));
-//                final int   endX = stepX == 0 ? xMax : (int) (xMin + ((i+1) * stepX));
-//                final int startY = stepY == 0 ? yMin : (int) (yMin + (    i * stepY));
-//                final int   endY = stepY == 0 ? yMax : (int) (yMin + ((i+1) * stepY));
-//                final int startZ = stepZ == 0 ? zMin : (int) (zMin + (    i * stepZ));
-//                final int   endZ = stepZ == 0 ? zMax : (int) (zMin + ((i+1) * stepZ));
-//                System.err.println( startX + " " + endX + "      " + startY + " " + endY + "      " + startZ + "  " + endZ );
-//                final Runnable task = new Runnable() {
-//                    public void run() {
-//                    	calcVolumeMask( kMesh, kBoundingBox, mask, null, directions, startX, endX, startY, endY, startZ, endZ,
-//                        		dimX, dimY );
-//                        doneSignal.countDown();
-//                    }
-//                };
-//
-//                ThreadUtil.mipavThreadPool.execute(task);
-//            }
-//            try {
-//                doneSignal.await();
-//            } catch (final InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        else
-        {
-        	calcVolumeMask( kMesh, wmMask, kBoundingBox, mask, directions, xMin, xMax, yMin, yMax, zMin, zMax );
-        }
-    	
-    	
-        
-        long now = System.currentTimeMillis();
-        double elapsedTime = (double) (now - startTime);
-
-        // if elasedTime is invalid, then set it to 0
-        if (elapsedTime <= 0) {
-            elapsedTime = (double) 0.0;
-        }
-
-        double timeinSec =  (double) (elapsedTime / 1000.0); // return in seconds!!
-        
-//        System.err.println( "Elapsed time: " + timeinSec );
-		//kOutputImage.calcMinMax();
-		//new ViewJFrameImage( kOutputImage );
-		return mask;
-    }
-    
-    private void calcVolumeMask( final TriMesh kMesh, BitSet wmMask, final BoxBV kBoundingBox,
-    		final BitSet mask,     		 
-    		final Vector3f[] directions, 
-    		final int xMin, final int xMax,
-    		final int yMin, final int yMax, 
-    		final int zMin, final int zMax )
-    {
-    	Vector3f kTest = new Vector3f();
-    	Line3f[] akLines = new Line3f[directions.length];
-		for ( int i = 0; i < directions.length; i++ )
-		{
-			akLines[i] = new Line3f( Vector3f.ONE, directions[i] );
-		}
-    	
-//    	System.err.println( kMesh.GetTriangleQuantity() );
-    	for ( int z = zMin; z <= zMax; z++ )
-    	{
-//    		System.err.println( z );
-    		for ( int y = yMin; y <= yMax; y++ )
-    		{
-    			for ( int x = xMin; x <= xMax; x++ )
-    			{
-    				int index = z * dimX * dimY + y * dimX + x;
-    				if ( wmMask.get(index) )
-    				{
-    					mask.set(index);
-    				}
-    				else
-    				{
-    					kTest.set(x,y,z);
-
-    					if ( kBoundingBox.Contains( kTest ) )
-    					{
-    						for ( int i = 0; i < directions.length; i++ )
-    						{
-    							akLines[i].Origin = kTest;
-    						}
-    						if ( testIntersections( kMesh, kTest, akLines ) )
-    						{
-    							mask.set( index );
-    						}
-    					}
-    				}
-    			}
-    		}
-    	}
-    }
-    
-    
-    /**
-     * Test if the input point is inside the mesh.
-     * @param origin point to test for inside/outside mesh.
-     * @param directions set of randomised directions for counting mesh-intersections (odd = inside, even = outside).
-     * @return true when the point is inside the mesh, false otherwise.
-     */
-    private boolean testIntersections( TriMesh kMesh, Vector3f origin, Line3f[] akLines )
-    {
-    	int[] lineIntersectionCount = new int[akLines.length]; 
-    	
-    	
-        // Compute intersections with the model-space triangles.
-		Triangle3f kTriangle = new Triangle3f();
-        int iTQuantity = kMesh.GetTriangleQuantity();
-    	IntrLine3Triangle3f kIntr = new IntrLine3Triangle3f();
-        
-        int iV0, iV1, iV2;
-        int[] aiTris = new int[3];
-        
-        for (int i = 0; i < iTQuantity; i++)
-        {
-            if (!kMesh.GetTriangle(i,aiTris) )
-            {
-                continue;
-            }
-
-            iV0 = aiTris[0];
-            iV1 = aiTris[1];
-            iV2 = aiTris[2];
-
-            kMesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
-            kMesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
-            kMesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
-            
-            for ( int j = 0; j < akLines.length; j++ )
-            {
-            	kIntr.Line = akLines[j];
-            	kIntr.Triangle = kTriangle;
-            	if (kIntr.Find() && 0 <= kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
-            	{
-            		lineIntersectionCount[j]++;
-            	}
-            }  	
-        }
-        int oddCount = 0;
-        for ( int j = 0; j < akLines.length; j++ )
-        {
-        	if ( (lineIntersectionCount[j]%2) == 1 )
-        	{
-        		oddCount++;
-        	}
-        }
-    	return ( oddCount >= (1 + akLines.length/2) );
-    }
-    
-    
-
-    public void smoothMesh( TriMesh mesh, int iteration, float alpha, boolean volumeLimit, float volumePercent)
-    {
-        float initialVolume = 0.0f;
-        float presentVolume;
-        boolean noVolumeLimit = true;
-        float presentPercent;
-
-        HashSet[] connections = buildConnections(mesh);
-        
-        if (volumeLimit) {
-            initialVolume = ComputeVolume(mesh);
-        }
-
-        // repeat for however many iterations
-        for (int k = 0; (k < iteration) && noVolumeLimit; k++) {
-            scaleMesh( mesh, alpha, connections );
-            if (volumeLimit) {
-                presentVolume = ComputeVolume(mesh);
-                presentPercent = Math.abs(100.0f * (presentVolume - initialVolume) / initialVolume);
-
-                if (presentPercent >= volumePercent) {
-                    noVolumeLimit = false;
-                }
-            } // if (doVolumeLimit)
-        }
-
-        mesh.UpdateMS();
-    }
-    
-
-    private HashSet[] buildConnections( TriMesh mesh ) {
-        Iterator iter;
-        int index;
-        boolean addT1, addT2, addT3;
-
-        int iVQuantity = mesh.VBuffer.GetVertexQuantity();
-        HashSet<Integer>[] connections = new HashSet[iVQuantity];
-
-        int iTQuantity = mesh.GetTriangleQuantity();
-        for (int i = 0; i < iTQuantity; i++)
-        {
-            int iV0, iV1, iV2;
-            int[] aiTris = new int[3];
-            if (!mesh.GetTriangle(i, aiTris) )
-            {
-                continue;
-            }
-            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
-
-            if (connections[iV0] == null) {
-                connections[iV0] = new HashSet<Integer>();
-            }
-
-            addT2 = true;
-            addT3 = true;
-
-            for (iter = connections[iV0].iterator(); iter.hasNext();) {
-                index = ((Integer) iter.next()).intValue();
-
-                if (index == iV1) {
-                    addT2 = false;
-                } else if (index == iV2) {
-                    addT3 = false;
-                }
-            }
-
-            if (addT2) {
-                connections[iV0].add(new Integer(iV1));
-            }
-
-            if (addT3) {
-                connections[iV0].add(new Integer(iV2));
-            }
-
-            if (connections[iV1] == null) {
-                connections[iV1] = new HashSet<Integer>();
-            }
-
-            addT1 = true;
-            addT3 = true;
-
-            for (iter = connections[iV1].iterator(); iter.hasNext();) {
-                index = ((Integer) iter.next()).intValue();
-
-                if (index == iV0) {
-                    addT1 = false;
-                } else if (index == iV2) {
-                    addT3 = false;
-                }
-            }
-
-            if (addT1) {
-                connections[iV1].add(new Integer(iV0));
-            }
-
-            if (addT3) {
-                connections[iV1].add(new Integer(iV2));
-            }
-
-            if (connections[iV2] == null) {
-                connections[iV2] = new HashSet<Integer>();
-            }
-
-            addT1 = true;
-            addT2 = true;
-
-            for (iter = connections[iV2].iterator(); iter.hasNext();) {
-                index = ((Integer) iter.next()).intValue();
-
-                if (index == iV0) {
-                    addT1 = false;
-                } else if (index == iV1) {
-                    addT2 = false;
-                }
-            }
-
-            if (addT1) {
-                connections[iV2].add(new Integer(iV0));
-            }
-
-            if (addT2) {
-                connections[iV2].add(new Integer(iV1));
-            }
-        }
-        return connections;
-    }
-
-    
-
-    
-    private void scaleMesh( TriMesh mesh, float fValue, HashSet[] connections )
-    {
-        int iVQuantity = mesh.VBuffer.GetVertexQuantity();
-        VertexBuffer kVBuffer = new VertexBuffer( mesh.VBuffer );
-
-        int num;
-        Vector3f kSum = new Vector3f();
-        Vector3f kOriginalPos = new Vector3f();
-        Vector3f kConnectionPos = new Vector3f();
-
-        // for each coordinate vertex
-        for (int i = 0; i < iVQuantity; i++) {
-
-            kSum.set(0f,0f,0f);
-            num = 0;
-            mesh.VBuffer.GetPosition3(i, kOriginalPos);
-
-            // get all the verticies that are connected to this one (at i)
-            for (Iterator iter = connections[i].iterator(); iter.hasNext();) {
-                int index = ((Integer) iter.next()).intValue();
-
-                mesh.VBuffer.GetPosition3(index, kConnectionPos);
-
-                // Sum of (xj - xi) where j ranges over all the points connected to xi
-                // xj = m_kV2; xi = m_kV3
-                kConnectionPos.sub( kOriginalPos );
-                kSum.add( kConnectionPos );
-                num++;
-            }
-            // xi+1 = xi + (alpha)*(sum of(points xi is connected to - xi))
-
-            if (num > 1) {
-                kSum.scale( 1.0f / num );
-            }
-
-            kSum.scale( fValue );
-            kOriginalPos.add( kSum );
-            kVBuffer.SetPosition3(i, kOriginalPos);
-        }
-
-        for (int i = 0; i < iVQuantity; i++) {
-        	mesh.VBuffer.SetPosition3(i, kVBuffer.GetPosition3(i) );
-        }
-
-        kVBuffer.dispose();
-        kVBuffer = null;
-    }
-    
-    
-    
-    
-
-    
-    /**
-     * Calculates volume of triangle mesh. The mesh consists of triangle faces and encloses a bounded region. Face j, 0
-     * <= j <= n-1 has verticies P0, P1, and P2. The order of the verticies is counterclockwise as you view the face
-     * from outside the bounded region. The mesh is closed and manifold in the sense that each edge is shared by exactly
-     * two triangles. The volume of the bounded region is:<br>
-     *
-     * <pre>
-             V = 1/6 (Sum from j=0 to n-1 of {P0 dot P1 cross P2})
-     *   </pre>
-     *
-     * The terms of the summation can be positive, negative, or zero. The term is positive if the face is
-     * counterclockwise when viewed from the zero vector, or zero if the face appears to be a line segment when viewed
-     * from the zero vector. NOTICE THAT THERE ARE 2 DIFFERENT DEFINITIONS OF COUNTERCLOCKWISE, COUNTERCLOCKWISE AS
-     * VIEWED FROM OUTSIDE THE BOUNDED REGION AND COUNTERCLOCKWISE AS VIEWED FROM THE ZERO VECTOR.
-     *
-     * <p>A 3D image on a rectangular lattice contains points (i0, i1, i2) where 0 <= ik < Bk for specified dimension
-     * bounds Bk. These are just indicies. The actual physical measurements are provided by scaling factors Dk > 0. For
-     * example, a 256x256x256 MRI has B0 = B1 = B2 = 256. If each voxel is 1 mm in x, 1 mm in y, and 5 mm in z, then D0
-     * = D1 = 1 and D2 = 5. The 3D image encloses a rectangular region [0,C0] x [0,C1] x [0,C2] in <em>physical
-     * space</em> where Ck = Dk*Bk. In the example, C0 = D0*B0 = 256 mm in x, C1 = D1*B1 = 256 mm in y, and C2 = D2*B2 =
-     * 1280 mm in z. Volume calculations are required to use physical measurements. In the example, volume will be in
-     * cubic millimeters.</p>
-     *
-     * <p>The surface extraction is performed by mapping [0,C0] x [0,C1] x [0,C2] into [-1,1] x [-1,1] x [-1,1] using
-     * uniform scaling. This is done to keep the floating point values within order 1 to avoid the floating point errors
-     * that occur if you were to use the index values themselves. The topology of a level surface is invariant under any
-     * scaling (not just uniform), but the continuous level of detail algorithm for triangle decimation does edge
-     * collapses based on various geometric measurements of the mesh representing the level surface. The geometric
-     * measurements are not invariant under nonuniform scaling. Map the image into a cube using uniform scaling so that
-     * the triangle collapse order is invariant. The uniform scaling is done so that the largest image dimension [0,M]
-     * is mapped to [-1,1]. The other ranges are mapped to intervals of the form [-L,L) where L < 1. If (i0,i1,i2) is in
-     * [0,B0) x [0,B1) x [0,B2), the corresponding (x0,x1,x2) in [-1,1) is:<br>
-     * </p>
-     *
-     * <pre>
-                     2*Dk*ik - Ck
-             xk =    ------------
-                     max{C0,C1,C2}
-     *   </pre>
-     *
-     * <p>However, we want to map from [0,Bk) to an inclusive interval [-Rk,Rk], where 0 < Rk < 1 and Rk = 1 -
-     * Dk/max{C0,C1,C2}. This ensures that surfaces begin in the center of a voxel rather than at the (0,0,0) corner of
-     * the voxel. The problem is easiest to see in the Z direction: a surface that should cover the full Z range will
-     * end before the last slice. Therefore, the formula should be:<br>
-     * </p>
-     *
-     * <pre>
-                     2*Dk*ik - Ck + Dk
-             xk =    -----------------
-                       max{C0,C1,C2}
-     *   </pre>
-     *
-     * <p>Once a closed manifold triangle mesh is extracted, the problem is now to compute its volume in physical space.
-     * Note that ik are indicies in the original image, but the true physical length that is measured (relative to other
-     * index locations) is yk = Dk*ik. Any triangle mesh (x0,x1,x2) must be mapped to (y0,y1,y2) before the volume
-     * calculation. The mapping is:<br>
-     * </p>
-     *
-     * <pre>
-                     max{C0,C1,C2}*xk + Ck - Dk
-             yk =    --------------------------
-                                  2
-     *   </pre>
-     *
-     * <p>The volume calculations use the previously mentioned formula where the P points are the (y0,y1,y2) values.</p>
-     *
-     * @return  The volume of the surface.
-     */
-    public float ComputeVolume( TriMesh mesh )
-    {
-        float fSum = 0.0f; 
-        int iTriangleQuantity = mesh.GetTriangleQuantity();
-        int[] aiConnect = mesh.IBuffer.GetData();
-        Vector3f kPos0 = new Vector3f();
-        Vector3f kPos1 = new Vector3f();
-        Vector3f kPos2 = new Vector3f();
-        for (int iT = 0; iT < iTriangleQuantity; iT++) {
-
-            // get indices to triangle vertices
-            int iV0 = aiConnect[iT * 3 + 0];
-            int iV1 = aiConnect[iT * 3 + 1];
-            int iV2 = aiConnect[iT * 3 + 2];
-
-            // get vertices
-            mesh.VBuffer.GetPosition3(iV0, kPos0);
-            mesh.VBuffer.GetPosition3(iV1, kPos1);
-            mesh.VBuffer.GetPosition3(iV2, kPos2);
-            
-            // compute triple scalar product
-            // The scalar triple product of three vectors A, B, and C is denoted
-            // [A,B,C] and defined by
-            // [A,B,C] = A dot ( B x C)
-            // = B dot ( C x A)
-            // = C dot ( A x B)
-            // = det (A (B C) )
-            // = | A1 A2 A3 |
-            // | B1 B2 B3 |
-            // | C1 C2 C3 |
-            // V = 1/6 (Sum from j=0 to n-1 of {P0 dot P1 cross P2})
-            // P0 = y0, P1 = y1, P2 = y2
-            // fProd = P0 dot (P1 x P2)
-            // fSum = sum of fProds
-            // volume returned = 1/6 fSum
-            float fProd = (kPos0.X * ((kPos1.Y * kPos2.Z) - (kPos1.Z * kPos2.Y))) +
-                          (kPos0.Y * ((kPos1.Z * kPos2.X) - (kPos1.X * kPos2.Z))) +
-                          (kPos0.Z * ((kPos1.X * kPos2.Y) - (kPos1.Y * kPos2.X)));
-
-            fSum += fProd;
-        }
-    	float[] res = srcImage.getResolutions(0);
-        fSum = (Math.abs(fSum / 6.0f) * res[0] * res[1] * res[2]);
-        return fSum;
-    }
-
-    
-    
-    
-    
 
 	/**
 	 * Computes a volume mask of the triangle mesh surface. The BitSet mask volume has the same volume dimensions as the current image.
@@ -2271,7 +1170,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	 * @param mesh triangle mesh to convert to a volume mask representation.
 	 * @return BitSet mask, which is set to true wherever the triangle mesh intersects the volume voxel.
 	 */
-	public BitSet computeSurfaceMask( TriMesh mesh )
+	private BitSet computeSurfaceMask( TriMesh mesh )
 	{
 	    BitSet surfaceMask = null;
 
@@ -2727,91 +1626,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     }
     
     
-    private BitSet outlineMask( BitSet mask )
-    {
-    	int index;
-    	int length = dimX * dimY * dimZ;
-    	BitSet newMask = new BitSet(length);
 
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-    		for ( int y = 0; y < dimY; y++ )
-    		{
-    			for ( int x = 0; x < dimX; x++ )
-    			{
-    	    		index = z * dimX*dimY + y * dimX + x;
-    	    		if ( mask.get(index) )
-    	    		{
-    	    			break;
-    	    		}
-    	    		newMask.set(index);
-    			}
-    			for ( int x = dimX-1; x >= 0; x-- )
-    			{
-    	    		index = z * dimX*dimY + y * dimX + x;
-    	    		if ( mask.get(index) )
-    	    		{
-    	    			break;
-    	    		}
-    	    		newMask.set(index);
-    			}
-    		}
-    	}
- 	
-    	for ( int z = 0; z < dimZ; z++ )
-    	{
-			for ( int x = 0; x < dimX; x++ )
-			{
-    			for ( int y = 0; y < dimY; y++ )
-    			{
-    	    		index = z * dimX*dimY + y * dimX + x;
-    	    		if ( mask.get(index) )
-    	    		{
-    	    			break;
-    	    		}
-    	    		newMask.set(index);
-    			}
-    			for ( int y = dimY-1; y >= 0; y-- )
-    			{
-    	    		index = z * dimX*dimY + y * dimX + x;
-    	    		if ( mask.get(index) )
-    	    		{
-    	    			break;
-    	    		}
-    	    		newMask.set(index);
-    			}
-    		}
-    	}
-
-//		for ( int x = 0; x < dimX; x++ )
-//    	{
-//    		for ( int y = 0; y < dimY; y++ )
-//    		{
-//    			for ( int z = 0; z < dimZ; z++ )
-//    			{
-//    	    		index = z * dimX*dimY + y * dimX + x;
-//    	    		if ( mask.get(index) )
-//    	    		{
-//    	    			break;
-//    	    		}
-//    	    		newMask.set(index);
-//    			}
-//    			for ( int z = dimZ-1; z >= 0; z-- )
-//    			{
-//    	    		index = z * dimX*dimY + y * dimX + x;
-//    	    		if ( mask.get(index) )
-//    	    		{
-//    	    			break;
-//    	    		}
-//    	    		newMask.set(index);
-//    			}
-//    		}
-//    	}
-    
-    	
-    	return newMask;
-    }
-    
     
     private TriMesh createMesh( BitSet mask )
     {
@@ -3057,6 +1872,68 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 			new ViewJFrameImage(maskImage);		
 		}
 		return meshMask;
+	}
+	
+	private ModelImage registerImages( ModelImage target, ModelImage src )
+	{
+
+        AlgorithmRegOAR3D reg3 = new AlgorithmRegOAR3D(target, src, 1, 12, 0, -30, 30,
+                15, 6, -30, 30, 15, 6, -30, 30, 15, 6, true, true, true, 
+                false, 2, 3);
+        reg3.setJTEM(false);
+        reg3.run();
+        reg3.setRunningInSeparateThread(false);
+        
+
+        if (reg3.isCompleted()) {
+        	final int xdimA = target.getExtents()[0];
+        	final int ydimA = target.getExtents()[1];
+        	final int zdimA = target.getExtents()[2];
+        	final float xresA = target.getFileInfo(0).getResolutions()[0];
+        	final float yresA = target.getFileInfo(0).getResolutions()[1];
+        	final float zresA = target.getFileInfo(0).getResolutions()[2];
+        	final TransMatrix finalMatrix = reg3.getTransform();
+
+
+        	final String name = JDialogBase.makeImageName(src.getImageName(), "_register");
+
+        	AlgorithmTransform transform = new AlgorithmTransform(src, finalMatrix, AlgorithmTransform.TRILINEAR, xresA, yresA, zresA, xdimA,
+        			ydimA, zdimA, true, false, false);
+
+        	transform.setUpdateOriginFlag(true);
+        	transform.setFillValue((float) src.getMin());
+        	transform.run();
+        	ModelImage resultImage = transform.getTransformedImage();
+        	transform.finalize();
+
+        	resultImage.calcMinMax();
+        	resultImage.setImageName(name);
+        	return resultImage;
+        }
+        return null;
+	}
+	
+	private void scaleMesh( TriMesh mesh )
+	{
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        
+		Vector3f scale = new Vector3f(offSet/xRes, offSet/yRes, offSet/zRes);
+		
+		for ( int i = 0; i < mesh.VBuffer.GetVertexQuantity(); i++ )
+		{
+			Vector3f pos = mesh.VBuffer.GetPosition3(i);
+			Vector3f normal = mesh.VBuffer.GetNormal3(i);
+			normal.mult( scale );		
+			
+//			System.err.println(pos);
+			pos.add(normal);
+//			System.err.println(pos);
+//			System.err.println("");
+//			System.err.println("");
+			mesh.VBuffer.SetPosition3(i, pos);
+		}
 	}
 
 }
