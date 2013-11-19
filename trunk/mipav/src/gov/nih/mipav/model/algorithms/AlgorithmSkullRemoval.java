@@ -133,7 +133,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	originalAxisTargetAtlas = srcImg.getAxisOrientation();
         axisOrder = new int[]{ 0, 1, 2, 3 };
         axisFlip = new boolean[]{ false, false, false, false };
-        if ( reMappedTargetAtlas = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxis, axisOrder, axisFlip ) )
+        if ( reMappedTargetAtlas = MipavCoordinateSystems.matchOrientation( targetAxis, originalAxisTargetAtlas, axisOrder, axisFlip ) )
         {
         	AlgorithmRotate rotateAlgo = new AlgorithmRotate( srcImg, axisOrder, axisFlip );
         	rotateAlgo.setRunningInSeparateThread(false);
@@ -146,6 +146,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         if ( temp != null )
         {
         	srcImage = temp;
+//        	new ViewJFrameImage(srcImage);
         }
         
     	destImage = (ModelImage) srcImage.clone();
@@ -258,13 +259,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //    	}
         fillWhiteMatter(destImage, seedPoints);
         
-        if ( showSegmentation )
-        {
-    		destImage.calcMinMax();
-        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
-        	whiteMatterImage.setImageName( srcImage.getImageName() + "_whiteMatter" );
-        	new ViewJFrameImage(whiteMatterImage);
-        }
+//        if ( showSegmentation )
+//        {
+//    		destImage.calcMinMax();
+//        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
+//        	whiteMatterImage.setImageName( srcImage.getImageName() + "_whiteMatter" );
+//        	new ViewJFrameImage(whiteMatterImage);
+//        }
         fireProgressStateChanged(60);                
         
         
@@ -274,6 +275,49 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         
         fireProgressStateChanged(90);
         
+        if ( reMappedSrc )
+        {
+        	int[] axisOrder = { 0, 1, 2, 3 };
+        	boolean[] axisFlip = { false, false, false, false };
+        	if ( MipavCoordinateSystems.matchOrientation( originalAxis, targetAxis, axisOrder, axisFlip ) )
+        	{
+        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
+        		rotateAlgo.setRunningInSeparateThread(false);
+        		rotateAlgo.run();
+        		destImage.disposeLocal();
+        		destImage = rotateAlgo.returnImage();
+        	}
+        }
+
+    	if ( atlasBasedImage != null )
+    	{
+        	int[] axisOrder = { 0, 1, 2, 3 };
+        	boolean[] axisFlip = { false, false, false, false };
+        	if ( MipavCoordinateSystems.matchOrientation( destImage.getAxisOrientation(), atlasBasedImage.getAxisOrientation(), 
+        			axisOrder, axisFlip ) )
+        	{
+        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
+        		rotateAlgo.setRunningInSeparateThread(false);
+        		rotateAlgo.run();
+        		destImage.disposeLocal();
+        		destImage = rotateAlgo.returnImage();
+        	}
+    		atlasBasedImage.setMask( destImage.getMask() );
+            if ( reMappedTargetAtlas )
+            {
+            	if ( MipavCoordinateSystems.matchOrientation( originalAxisTargetAtlas, targetAxis, axisOrder, axisFlip ) )
+            	{
+            		AlgorithmRotate rotateAlgo = new AlgorithmRotate( atlasBasedImage, axisOrder, axisFlip );
+            		rotateAlgo.setRunningInSeparateThread(false);
+            		rotateAlgo.run();
+            		atlasBasedImage.disposeLocal();
+            		atlasBasedImage = rotateAlgo.returnImage();
+            	}
+            }
+            destImage = atlasBasedImage;
+//        	new ViewJFrameImage(atlasBasedImage);        	
+    	}
+
         
     	if ( blur || remove )
     	{
@@ -309,36 +353,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //                }
 			}
     	}
-        if ( reMappedSrc )
-        {
-        	int[] axisOrder = { 0, 1, 2, 3 };
-        	boolean[] axisFlip = { false, false, false, false };
-        	if ( MipavCoordinateSystems.matchOrientation( originalAxis, targetAxis, axisOrder, axisFlip ) )
-        	{
-        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
-        		rotateAlgo.setRunningInSeparateThread(false);
-        		rotateAlgo.run();
-        		destImage.disposeLocal();
-        		destImage = rotateAlgo.returnImage();
-        	}
-        }
-
-    	if ( atlasBasedImage != null )
-    	{
-        	int[] axisOrder = { 0, 1, 2, 3 };
-        	boolean[] axisFlip = { false, false, false, false };
-        	if ( MipavCoordinateSystems.matchOrientation( destImage.getAxisOrientation(), atlasBasedImage.getAxisOrientation(), 
-        			axisOrder, axisFlip ) )
-        	{
-        		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
-        		rotateAlgo.setRunningInSeparateThread(false);
-        		rotateAlgo.run();
-        		destImage.disposeLocal();
-        		destImage = rotateAlgo.returnImage();
-        	}
-    		atlasBasedImage.setMask( destImage.getMask() );
-        	new ViewJFrameImage(atlasBasedImage);        	
-    	}
+    	
+    	
     	if ( showSegmentation )
     	{
     		destImage.resetVOIs();
@@ -446,7 +462,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					kMesh = convexHullBrain;
 				}
 				
-				if ( face | showSegmentation )
+				if ( face )
 				{
 					Vector3f front = getFront( faceOrientation, cog );
 					Vector3f bottom = getBottom( faceOrientation, cog );
@@ -547,14 +563,14 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 						Vector3f pos = kMesh.VBuffer.GetPosition3(minIndex);						
 						clipPlane = new Plane3f( clipPlane.Normal, pos );
 						BitSet clipMask = createMask( clipPlane, faceOrientation, cog );
-						if ( showSegmentation )
-						{
-							ModelImage outlineMaskImage = (ModelImage)destImage.clone();
-							outlineMaskImage.setMask(clipMask);
-							outlineMaskImage.setImageName( destImage.getImageName() + "_ClipMask" );  
-							outlineMaskImage.resetVOIs();      	
-							new ViewJFrameImage(outlineMaskImage);
-						}
+//						if ( showSegmentation )
+//						{
+//							ModelImage outlineMaskImage = (ModelImage)destImage.clone();
+//							outlineMaskImage.setMask(clipMask);
+//							outlineMaskImage.setImageName( destImage.getImageName() + "_ClipMask" );  
+//							outlineMaskImage.resetVOIs();      	
+//							new ViewJFrameImage(outlineMaskImage);
+//						}
 						if ( face )
 						{
 							destImage.setMask(clipMask);
