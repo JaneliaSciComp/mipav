@@ -274,7 +274,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.11";
+    private static final String pluginVersion = "0.12";
 
     private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
 
@@ -2164,10 +2164,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             if (sec.length() == 1) {
                 sec = "0" + sec;
             }
-            isoTime = "T" + hour + ":" + min + ":" + sec;
+            isoTime = hour + ":" + min + ":" + sec;
         }
 
-        return isoDate + isoTime;
+        return isoDate + "T" + isoTime;
     }
 
     /**
