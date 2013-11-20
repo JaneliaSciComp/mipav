@@ -688,7 +688,13 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 			} else if(obj == null || (obj instanceof FileDicomSQ && ((FileDicomSQ)obj).getSequenceLength() == 0)) {
 				keyToValue.put(key.toString(), UNKNOWN);
 			} else {
-				String objectString = tagHash.get(key).getValue(true).toString();
+				Object objectVal = tagHash.get(key).getValue(true);
+				String objectString = new String();
+				if(objectVal == null) {
+					//use empty object string for MIPAV-required dicom tags that don't exist in image
+				} else {
+					objectString = objectVal.toString();
+				}
 				keyToValue.put(key.toString(), objectString);
 			}
 		}

@@ -303,6 +303,16 @@ public class FileInfoDicom extends FileInfoBase {
     }
     
     /**
+	 * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
+	 * <code>0028,1203</code> tags.
+	 * 
+	 * @return DOCUMENT ME!
+	 */
+	public final ModelLUT getLUT() {
+	    return lut;
+	}
+
+	/**
      * Generates a new version of a particular tag in the given tag table with same length that is DICOM compatible 
      * @param key
      * @return
@@ -412,16 +422,6 @@ public class FileInfoDicom extends FileInfoBase {
         super.finalize();
     }
     
-    /**
-     * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
-     * <code>0028,1203</code> tags.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public final ModelLUT getLUT() {
-        return lut;
-    }
-
     /**
      * This method extracts directional cosines from the DICOM image header (tag = "0020, 0037"). Since the third row of
      * transformation matrix is not given in the tag but can be derived by taking the cross product. The result is then
