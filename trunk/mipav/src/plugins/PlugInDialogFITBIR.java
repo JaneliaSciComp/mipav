@@ -212,21 +212,27 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private int brightness = 0;
 
     /** Dev data dictionary server. */
+    @SuppressWarnings("unused")
     private static final String ddDevServer = "http://fitbir-dd-dev.cit.nih.gov/";
 
     /** Dev portal auth server. */
+    @SuppressWarnings("unused")
     private static final String authDevServer = "http://fitbir-portal-dev.cit.nih.gov/";
 
     /** Stage data dictionary server. */
+    @SuppressWarnings("unused")
     private static final String ddStageServer = "http://fitbir-dd-stage.cit.nih.gov/";
 
     /** Stage portal auth server. */
+    @SuppressWarnings("unused")
     private static final String authStageServer = "http://fitbir-portal-stage.cit.nih.gov/";
 
     /** Demo data dictionary server. */
+    @SuppressWarnings("unused")
     private static final String ddDemoServer = "http://fitbir-dd-demo.cit.nih.gov/";
 
     /** Demo portal auth server. */
+    @SuppressWarnings("unused")
     private static final String authDemoServer = "http://fitbir-portal-demo.cit.nih.gov/";
 
     /** Prod data dictionary server. */
@@ -272,6 +278,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
 
+    @SuppressWarnings("unused")
     private static final String STRUCT_STATUS_PUBLISHED = "PUBLISHED";
 
     private static final String STRUCT_TYPE_IMAGING = "Imaging";
@@ -1028,9 +1035,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 final List<String> origFiles = FileUtility.getFileNameList(origImage);
 
-                final int modality = origImage.getFileInfo(0).getModality();
-                final String modalityString = FileInfoBase.getModalityStr(modality).replaceAll("\\s+", "");
-
                 final String dsName = getStructFromString(name);
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
@@ -1125,7 +1129,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 File f;
                 String csvDir = "";
                 String copyFromImageFilePath = "";
-                String copyFromImageThumbnailPath = "";
                 String copyToImageFilePath = "";
                 String copyToImageThumbnailPath = "";
                 while (iter.hasNext()) {
@@ -1164,11 +1167,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             }
                             f = new File(csvDir + value);
                             if (f.exists()) {
-                                copyFromImageThumbnailPath = csvDir + value;
                                 copyToImageThumbnailPath = value;
                             }
                         } else {
-                            copyFromImageThumbnailPath = value;
                             copyToImageThumbnailPath = value.substring(value.lastIndexOf(File.separator) + 1,
                                     value.length());
                         }
@@ -2074,7 +2075,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @return An ISO 8601 formatted version of the given date (or the original string if not in the DICOM/US date
      *         format).
      */
-    private static final String convertDateTimeToISOFormat(final String date) {
+    private static final String convertDateToISOFormat(final String date) {
         final String pattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
         final Pattern p = Pattern.compile(pattern);
         final Matcher m = p.matcher(date);
@@ -2093,6 +2094,59 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         return date;
+    }
+
+    /**
+     * Converts from DICOM/US date and time format (MM/DD/YYYY) or M/D/YYYY to ISO 8601 format (YYYY-MM-DDThh:mm:ss).
+     * 
+     * @param date A date string in the format MM/DD/YYYY or M/D/YYYY.
+     * @param time A time string in the format hh:mm:ss.fract.
+     * @return An ISO 8601 formatted version of the given date and time (or the original string if not in the DICOM/US
+     *         date format).
+     */
+    private static final String convertDateTimeToISOFormat(final String date, final String time) {
+        String isoDate = date;
+        String isoTime = time;
+
+        final String datePattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
+        final String timePattern = "^(\\d{1,2}):(\\d{1,2}):(\\d{1,2})\\.\\d+$";
+
+        Pattern p = Pattern.compile(datePattern);
+        Matcher m = p.matcher(date);
+        if (m.find()) {
+            String month = m.group(1);
+            String day = m.group(2);
+            final String year = m.group(3);
+            // add leading zeroes, if necessary
+            if (month.length() == 1) {
+                month = "0" + month;
+            }
+            if (day.length() == 1) {
+                day = "0" + day;
+            }
+            isoDate = year + "-" + month + "-" + day;
+        }
+
+        p = Pattern.compile(timePattern);
+        m = p.matcher(time);
+        if (m.find()) {
+            String hour = m.group(1);
+            String min = m.group(2);
+            String sec = m.group(3);
+            // add leading zeroes, if necessary
+            if (hour.length() == 1) {
+                hour = "0" + hour;
+            }
+            if (min.length() == 1) {
+                min = "0" + min;
+            }
+            if (sec.length() == 1) {
+                sec = "0" + sec;
+            }
+            isoTime = "T" + hour + ":" + min + ":" + sec;
+        }
+
+        return isoDate + isoTime;
     }
 
     /**
@@ -2187,16 +2241,168 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @return The magnetic field strength with T appended, and .0 if it was an integer value originally.
      */
     private static final String convertMagFieldStrengthToBRICS(final String magField) {
-        if (magField.contains(".")) {
-            return magField + "T";
-        } else {
-            return magField + ".0T";
+        if (magField != null && !magField.equals("")) {
+            if (magField.contains(".")) {
+                return magField + "T";
+            } else {
+                return magField + ".0T";
+            }
         }
+
+        return "";
+    }
+
+    /**
+     * Attempts to convert from the DICOM manufacturer name to BRICS scanner manufacturer permissible values. If nothing
+     * matches, return the original name.
+     * 
+     * @param manuf The DICOM manufacturer name.
+     * @return The DICOM manufacturer name to BRICS scanner manufacturer permissible values. If nothing matches, return
+     *         the original name.
+     */
+    private static final String convertManufNameToBRICS(final String manuf) {
+        final String upperManuf = manuf.toUpperCase();
+        if (upperManuf.startsWith("AGFA")) {
+            return "Agfa";
+        } else if (upperManuf.startsWith("CARESTREAM")) {
+            return "Carestream";
+        } else if (upperManuf.startsWith("GE")) {
+            return "GE";
+        } else if (upperManuf.startsWith("HITACHI")) {
+            return "Hitachi";
+        } else if (upperManuf.startsWith("HOLOGIC")) {
+            return "Hologic";
+        } else if (upperManuf.startsWith("KONICA")) {
+            return "Konica Minolta";
+        } else if (upperManuf.startsWith("PHILIPS")) {
+            return "Philips";
+        } else if (upperManuf.startsWith("SIEMENS")) {
+            return "Siemens";
+        } else if (upperManuf.startsWith("TOSHIBA")) {
+            return "Toshiba";
+        }
+
+        return manuf;
+    }
+
+    /**
+     * Attempts to convert from the DICOM model name to BRICS scanner model permissible values. If nothing matches,
+     * return the original name.
+     * 
+     * @param manuf The DICOM model name.
+     * @return The DICOM model name to BRICS scanner model permissible values. If nothing matches, return the original
+     *         name.
+     */
+    private static final String convertModelNameToBRICS(final String model) {
+        final String upperModel = model.toUpperCase();
+        if (upperModel.contains("ACHIEVA")) {
+            return "Achieva";
+        } else if (upperModel.contains("SIGNA")) {
+            return "Signa";
+        } else if (upperModel.contains("SYMPHONY")) {
+            return "Symphony";
+        } else if (upperModel.contains("TRIO")) {
+            return "Trio";
+        }
+
+        return model;
+    }
+
+    /**
+     * Attempts to convert from the Nifti description field (hopefully [MANUF] [MODEL] [VERSION]) to BRICS scanner model
+     * permissible values. If nothing matches, return an empty string.
+     * 
+     * @param description The Nifti description string (hopefully in the format [MANUF] [MODEL] [VERSION]).
+     * @return The scanner model name. If nothing matches, return an empty string.
+     */
+    private static final String convertNiftiDescToBRICSManuf(final String description) {
+        final String upperDescription = description.toUpperCase();
+        if (upperDescription.startsWith("AGFA")) {
+            return "Agfa";
+        } else if (upperDescription.startsWith("CARESTREAM")) {
+            return "Carestream";
+        } else if (upperDescription.startsWith("GE")) {
+            return "GE";
+        } else if (upperDescription.startsWith("HITACHI")) {
+            return "Hitachi";
+        } else if (upperDescription.startsWith("HOLOGIC")) {
+            return "Hologic";
+        } else if (upperDescription.startsWith("KONICA")) {
+            return "Konica Minolta";
+        } else if (upperDescription.startsWith("PHILIPS")) {
+            return "Philips";
+        } else if (upperDescription.startsWith("SIEMENS")) {
+            return "Siemens";
+        } else if (upperDescription.startsWith("TOSHIBA")) {
+            return "Toshiba";
+        }
+
+        return "";
+    }
+
+    /**
+     * Attempts to convert from the Nifti description field (hopefully [MANUF] [MODEL] [VERSION]) to BRICS scanner
+     * scanner version number. If nothing matches, return an empty string.
+     * 
+     * @param description The Nifti description string (hopefully in the format [MANUF] [MODEL] [VERSION]).
+     * @return The scanner version number. If nothing matches, return an empty string.
+     */
+    private static final String convertNiftiDescToBRICSVer(final String description) {
+        final String pattern = "\\s+([.-_\\d]+)$";
+        final Pattern p = Pattern.compile(pattern);
+        final Matcher m = p.matcher(description.trim());
+        if (m.find()) {
+            return m.group(1);
+        }
+
+        return "";
+    }
+
+    /**
+     * Attempts to convert from the Nifti description field (hopefully [MANUF] [MODEL] [VERSION]) to BRICS scanner
+     * manufacturer permissible values. If nothing matches, return an empty string.
+     * 
+     * @param description The Nifti description string (hopefully in the format [MANUF] [MODEL] [VERSION]).
+     * @return The manufacturer name. If nothing matches, return an empty string.
+     */
+    private static final String convertNiftiDescToBRICSModel(final String description) {
+        final String upperDescription = description.toUpperCase();
+        if (upperDescription.contains("ACHIEVA")) {
+            return "Achieva";
+        } else if (upperDescription.contains("SIGNA")) {
+            return "Signa";
+        } else if (upperDescription.contains("SYMPHONY")) {
+            return "Symphony";
+        } else if (upperDescription.contains("TRIO")) {
+            return "Trio";
+        }
+
+        return "";
     }
 
     private static final void setElementComponentValue(final JComponent comp, final String value) {
-        // TODO: if the component is a text field, set the value. if the component is a combo box, try to select the
-        // proper item, or add it as an Other, specify
+        if (value != null && !value.equals("")) {
+            if (comp instanceof JTextField) {
+                ((JTextField) comp).setText(value);
+            } else if (comp instanceof JComboBox) {
+                // TODO: add support for setting Other, specify if not found in dropdown?
+                boolean found = false;
+                final JComboBox jc = (JComboBox) comp;
+                for (int k = 0; k < jc.getItemCount(); k++) {
+                    final String item = (String) jc.getItemAt(k);
+                    if (item.equalsIgnoreCase(value)) {
+                        jc.setSelectedIndex(k);
+                        found = true;
+                    }
+                }
+                if ( !found) {
+                    System.err.println("Value not found. DE:\t" + comp.getName() + "\t" + value);
+                }
+            } else {
+                System.err.println("Unrecognized component type (" + comp.getName() + "):\t"
+                        + comp.getClass().getName());
+            }
+        }
     }
 
     /**
@@ -2559,7 +2765,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private boolean launchedFromInProcessState = false;
 
-        private JLabel requiredLabel, conditionalLabel;
+        private JLabel requiredLabel/* , conditionalLabel */;
 
         private String dataStructureName;
 
@@ -2716,7 +2922,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             }
                             if ( !csvParams[i].trim().equals("") && deType != null
                                     && deType.equalsIgnoreCase(DATE_ELEMENT_TYPE)) {
-                                csvParams[i] = convertDateTimeToISOFormat(csvParams[i]);
+                                csvParams[i] = convertDateToISOFormat(csvParams[i]);
                             }
                         }
 
@@ -3254,7 +3460,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final List<BasicDataStructure> bdsToGet = new Vector<BasicDataStructure>();
             bdsToGet.add(dataStructure);
 
+            @SuppressWarnings("deprecation")
             final List<DataStructure> dsList = dictionaryProvider.getDataDictionary(bdsToGet);
+
             Set<MapElement> dataElements = null;
             for (final DataStructure ds : dsList) {
                 dataElements = ds.getDataElements();
@@ -3687,7 +3895,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
                 final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                final String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable()
+                final String visitDate = convertDateToISOFormat((String) (fileInfoDicom.getTagTable()
                         .getValue("0008,0020")));
                 final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
                 final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
@@ -3957,359 +4165,212 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final float[] res = img.getResolutions(0);
             final int[] units = img.getUnitsOfMeasure();
             final int exts[] = img.getExtents();
-            final int modality = img.getFileInfo(0).getModality();
-            final String modalityString = FileInfoBase.getModalityStr(modality);
-            // System.out.println(modalityString);
+            int modality = img.getFileInfo(0).getModality();
+            String modalityString = FileInfoBase.getModalityStr(modality);
             final int fileFormatInt = img.getFileInfo(0).getFileFormat();
+
             String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
             if (fileFormatString.equalsIgnoreCase("xml")) {
                 fileFormatString = "mipav xml";
             } else if (fileFormatString.equalsIgnoreCase("mat")) {
-                fileFormatString.equalsIgnoreCase("matlab");
+                fileFormatString = "matlab";
             }
-            // System.out.println(fileFormatString);
+
+            // if no modality, try to guess from structure being used
+            if (modality == FileInfoBase.UNKNOWN_MODALITY) {
+                final String upperStructureName = dataStructureName.toUpperCase();
+                if (upperStructureName.endsWith("IMAGINGMR")) {
+                    modality = FileInfoBase.MAGNETIC_RESONANCE;
+                } else if (upperStructureName.endsWith("IMAGINGCT")) {
+                    modality = FileInfoBase.COMPUTED_TOMOGRAPHY;
+                }
+                modalityString = FileInfoBase.getModalityStr(modality);
+            }
 
             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
-            // get index for extents
-            Set<JLabel> keySet = labelsAndComps.keySet();
-            Iterator<JLabel> iter = keySet.iterator();
+
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
 
                 if (l.equalsIgnoreCase("ImgDimensionTyp")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    final String item = exts.length + "D";
-                    if (item != null && !item.equals("")) {
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            if ( ((String) jc.getItemAt(k)).equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-                    }
-                    if (jc.getSelectedIndex() == 0) {
-                        jc.setSelectedIndex(jc.getItemCount() - 1);
-                    }
-                    label.setForeground(Color.red);
+                    setElementComponentValue(comp, exts.length + "D");
                 } else if (l.equalsIgnoreCase("ImgDim1ExtentVal")) {
-                    if (String.valueOf(exts[0]) != null && !String.valueOf(exts[0]).equals("")) {
-                        ((JTextField) comp).setText(String.valueOf(exts[0]));
-                        label.setForeground(Color.red);
-                    }
+                    setElementComponentValue(comp, String.valueOf(exts[0]));
                 } else if (l.equalsIgnoreCase("ImgDim2ExtentVal")) {
-                    if (String.valueOf(exts[1]) != null && !String.valueOf(exts[1]).equals("")) {
-                        ((JTextField) comp).setText(String.valueOf(exts[1]));
-                        label.setForeground(Color.red);
-                    }
+                    setElementComponentValue(comp, String.valueOf(exts[1]));
                 } else if (l.equalsIgnoreCase("ImgDim3ExtentVal")) {
-                    if (img.getNDims() > 2 && (String.valueOf(exts[2]) != null && !String.valueOf(exts[2]).equals(""))) {
-                        ((JTextField) comp).setText(String.valueOf(exts[2]));
-                        label.setForeground(Color.red);
+                    if (img.getNDims() > 2) {
+                        setElementComponentValue(comp, String.valueOf(exts[2]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim4ExtentVal")) {
-                    if (img.getNDims() > 3 && (String.valueOf(exts[3]) != null && !String.valueOf(exts[3]).equals(""))) {
-                        ((JTextField) comp).setText(String.valueOf(exts[3]));
-                        label.setForeground(Color.red);
+                    if (img.getNDims() > 3) {
+                        setElementComponentValue(comp, String.valueOf(exts[3]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim5ExtentVal")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgDim1UoMVal")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[0]) != null
-                                && !FileInfoBase.getUnitsOfMeasureStr(units[0]).equals("")) {
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[0]).equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-                    }
-                    label.setForeground(Color.red);
+                    setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[0]));
                 } else if (l.equalsIgnoreCase("ImgDim2UoMVal")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (FileInfoBase.getUnitsOfMeasureStr(units[1]) != null
-                                && !FileInfoBase.getUnitsOfMeasureStr(units[1]).equals("")) {
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[1]).equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-                    }
-                    label.setForeground(Color.red);
+                    setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[1]));
                 } else if (l.equalsIgnoreCase("ImgDim3UoMVal")) {
                     if (img.getNDims() > 2) {
-                        final JComboBox jc = (JComboBox) comp;
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[2]) != null
-                                    && !FileInfoBase.getUnitsOfMeasureStr(units[2]).equals("")) {
-                                if (FileInfoBase.getUnitsOfMeasureStr(units[2]).equalsIgnoreCase(item)) {
-                                    jc.setSelectedIndex(k);
-                                }
-                            }
-                        }
-                        label.setForeground(Color.red);
+                        setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[2]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim4UoMVal")) {
                     if (img.getNDims() > 3) {
-                        final JComboBox jc = (JComboBox) comp;
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
-                            if (FileInfoBase.getUnitsOfMeasureStr(units[3]) != null
-                                    && !FileInfoBase.getUnitsOfMeasureStr(units[3]).equals("")) {
-                                if (FileInfoBase.getUnitsOfMeasureStr(units[3]).equalsIgnoreCase(item)) {
-                                    jc.setSelectedIndex(k);
-                                }
-                            }
-                        }
-                        label.setForeground(Color.red);
+                        setElementComponentValue(comp, FileInfoBase.getUnitsOfMeasureStr(units[3]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim5UoMVal")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgDim1ResolVal")) {
-                    if (String.valueOf(res[0]) != null && !String.valueOf(res[0]).equals("")) {
-                        ((JTextField) comp).setText(String.valueOf(res[0]));
-                        label.setForeground(Color.red);
-                    }
+                    setElementComponentValue(comp, String.valueOf(res[0]));
                 } else if (l.equalsIgnoreCase("ImgDim2ResolVal")) {
-                    if (String.valueOf(res[1]) != null && !String.valueOf(res[1]).equals("")) {
-                        ((JTextField) comp).setText(String.valueOf(res[1]));
-                        label.setForeground(Color.red);
-                    }
+                    setElementComponentValue(comp, String.valueOf(res[1]));
                 } else if (l.equalsIgnoreCase("ImgDim3ResolVal")) {
                     if (img.getNDims() > 2) {
-                        if (String.valueOf(res[2]) != null && !String.valueOf(res[2]).equals("")) {
-                            ((JTextField) comp).setText(String.valueOf(res[2]));
-                            label.setForeground(Color.red);
-                        }
+                        setElementComponentValue(comp, String.valueOf(res[2]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim4ResolVal")) {
                     if (img.getNDims() > 3) {
-                        if (String.valueOf(res[3]) != null && !String.valueOf(res[3]).equals("")) {
-                            ((JTextField) comp).setText(String.valueOf(res[3]));
-                            label.setForeground(Color.red);
-                        }
+                        setElementComponentValue(comp, String.valueOf(res[3]));
                     }
                 } else if (l.equalsIgnoreCase("ImgDim5ResolVal")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("ImgModltyTyp")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    final String bricsMod = convertModalityToBRICS(modalityString);
-                    if ( !bricsMod.equals("")) {
-                        jc.setSelectedItem(bricsMod);
-                    }
-                    label.setForeground(Color.red);
-                } else if (l.equalsIgnoreCase("ImgFileFormatTyp") && fileFormatString != null
-                        && !fileFormatString.equals("")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (fileFormatString.equalsIgnoreCase(item)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
-                    label.setForeground(Color.red);
+                    setElementComponentValue(comp, convertModalityToBRICS(modalityString));
+                } else if (l.equalsIgnoreCase("ImgFileFormatTyp")) {
+                    setElementComponentValue(comp, fileFormatString);
                 } else if (l.equalsIgnoreCase("ImgSliceThicknessVal")) {
-                    if (sliceThickness == 0) {
-                        ((JTextField) comp).setText("");
-                    } else if (String.valueOf(sliceThickness) != null && !String.valueOf(sliceThickness).equals("")) {
-                        ((JTextField) comp).setText(String.valueOf(sliceThickness));
+                    String thicknessStr = "";
+                    if (sliceThickness > 0) {
+                        thicknessStr = String.valueOf(sliceThickness);
                     }
-                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp") && orientation != null && !orientation.equals("")) {
-                    final JComboBox jc = (JComboBox) comp;
-                    for (int k = 0; k < jc.getItemCount(); k++) {
-                        final String item = (String) jc.getItemAt(k);
-                        if (item.contains(orientation)) {
-                            jc.setSelectedIndex(k);
-                        }
-                    }
-                    // } else if
-                    // (l.equalsIgnoreCase(IMG_HASH_CODE_ELEMENT_NAME)) {
-                    // ((JTextField)
-                    // comp).setText("This will be filled for you upon generating files");
+                    setElementComponentValue(comp, thicknessStr);
+                } else if (l.equalsIgnoreCase("ImgSliceOrientTyp")) {
+                    setElementComponentValue(comp, orientation);
                 }
-            }
 
-            if (fileFormatString.equalsIgnoreCase("dicom")) {
+                if (fileFormatString.equalsIgnoreCase("dicom")) {
+                    final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
 
-                final FileInfoDicom fileInfoDicom = (FileInfoDicom) img.getFileInfo(0);
+                    final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
+                    final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
+                    final String visitDate = (String) (fileInfoDicom.getTagTable().getValue("0008,0020"));
+                    final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
+                    final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
+                    final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
+                    final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
 
-                final String ageVal = (String) (fileInfoDicom.getTagTable().getValue("0010,1010"));
-                final String siteName = (String) (fileInfoDicom.getTagTable().getValue("0008,0080"));
-                final String visitDate = convertDateTimeToISOFormat((String) (fileInfoDicom.getTagTable()
-                        .getValue("0008,0020")));
-                final String visitTime = (String) (fileInfoDicom.getTagTable().getValue("0008,0030"));
-                final String sliceOversample = (String) (fileInfoDicom.getTagTable().getValue("0018,0093"));
-                final String gap = (String) (fileInfoDicom.getTagTable().getValue("0018,0088"));
-                final String bodyPart = (String) (fileInfoDicom.getTagTable().getValue("0018,0015"));
+                    final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+                    final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+                    final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+                    final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
 
-                final String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
-                final String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
-                final String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
-                final String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+                    final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
+                    final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
 
-                final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
-                final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
-
-                keySet = labelsAndComps.keySet();
-                iter = keySet.iterator();
-                while (iter.hasNext()) {
-                    final JLabel label = iter.next();
-                    final String l = label.getName();
-                    final JComponent comp = labelsAndComps.get(label);
                     if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
                         String ageInMonths = ageVal;
                         if (ageVal.contains("Y")) {
                             final String temp = ageVal.substring(0, ageVal.length() - 6);
                             ageInMonths = Integer.toString(Integer.parseInt(temp) * 12);
                         }
-                        ((JTextField) comp).setText(ageInMonths);
-                        label.setForeground(Color.red);
+                        setElementComponentValue(comp, ageInMonths);
                     } else if (l.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
                         String ageInYears = ageVal;
                         if (ageVal.contains("Y")) {
                             final String temp = ageVal.substring(0, ageVal.length() - 6);
                             ageInYears = Integer.toString(Integer.parseInt(temp));
                         }
-                        ((JTextField) comp).setText(ageInYears);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("SiteName") && siteName != null && !siteName.equals("")) {
-                        if (isPDBPImagingStructure(dataStructureName)) {
-                            final JComboBox jc = (JComboBox) comp;
-                            for (int k = 0; k < jc.getItemCount(); k++) {
-                                final String item = (String) jc.getItemAt(k);
-                                if (siteName.contains(item)) {
-                                    jc.setSelectedIndex(k);
-                                }
-                            }
-                        } else {
-                            ((JTextField) comp).setText(siteName);
-                        }
-                    } else if (l.equalsIgnoreCase("VisitDate") && visitDate != null && !visitDate.equals("")) {
-                        ((JTextField) comp).setText(visitDate);
-                    } else if (l.equalsIgnoreCase("ImgAntmicSite") && bodyPart != null && !bodyPart.equals("")) {
-                        final JComboBox jc = (JComboBox) comp;
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
-                            if (bodyPart.equalsIgnoreCase(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-
-                    } else if (l.equalsIgnoreCase("ImgStdyDateTime")
-                            && ( (visitDate != null && !visitDate.equals("")) || visitTime != null
-                                    && !visitTime.equals(""))) {
-                        ((JTextField) comp).setText(visitDate + " " + visitTime);
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgSliceOverSampVal") && sliceOversample != null
-                            && !sliceOversample.equals("")) {
-                        ((JTextField) comp).setText(sliceOversample);
-                    } else if (l.equalsIgnoreCase("ImgGapBetwnSlicesMeasr") && gap != null && !gap.equals("")) {
-                        ((JTextField) comp).setText(gap);
-                    } else if (l.equalsIgnoreCase("ImgFOVMeasrDescTxt") && fieldOfView != null
-                            && !fieldOfView.equals("")) {
-                        ((JTextField) comp).setText(fieldOfView);
-                    } else if (l.equalsIgnoreCase("ImgScannerManufName") && manufacturer != null
-                            && !manufacturer.equals("")) {
-                        final JComboBox jc = (JComboBox) comp;
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
-                            if (manufacturer.contains(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-                        label.setForeground(Color.red);
-                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum") && softwareVersion != null
-                            && !softwareVersion.equals("")) {
-                        ((JTextField) comp).setText(softwareVersion);
-                    } else if (l.equalsIgnoreCase("ImgHeadPostnTxt") && patientPosition != null
-                            && !patientPosition.equals("")) {
-                        ((JTextField) comp).setText(patientPosition);
-                    } else if (l.equalsIgnoreCase("ImgScannerModelName") && scannerModel != null
-                            && !scannerModel.equals("")) {
-                        // ((JTextField) comp).setText(scannerModel);
-                        final JComboBox jc = (JComboBox) comp;
-                        for (int k = 0; k < jc.getItemCount(); k++) {
-                            final String item = (String) jc.getItemAt(k);
-                            if (scannerModel.contains(item)) {
-                                jc.setSelectedIndex(k);
-                            }
-                        }
-                    } else if (l.equalsIgnoreCase("ImgBandwidthVal") && bandwidth != null && !bandwidth.equals("")) {
-                        ((JTextField) comp).setText(bandwidth);
+                        setElementComponentValue(comp, ageInYears);
+                    } else if (l.equalsIgnoreCase("SiteName")) {
+                        setElementComponentValue(comp, siteName);
+                    } else if (l.equalsIgnoreCase("VisitDate")) {
+                        setElementComponentValue(comp, convertDateToISOFormat(visitDate));
+                    } else if (l.equalsIgnoreCase("ImgAntmicSite")) {
+                        setElementComponentValue(comp, bodyPart);
+                    } else if (l.equalsIgnoreCase("ImgStdyDateTime")) {
+                        setElementComponentValue(comp, convertDateTimeToISOFormat(visitDate, visitTime));
+                    } else if (l.equalsIgnoreCase("ImgSliceOverSampVal")) {
+                        setElementComponentValue(comp, sliceOversample);
+                    } else if (l.equalsIgnoreCase("ImgGapBetwnSlicesMeasr")) {
+                        setElementComponentValue(comp, gap);
+                    } else if (l.equalsIgnoreCase("ImgFOVMeasrDescTxt")) {
+                        setElementComponentValue(comp, fieldOfView);
+                    } else if (l.equalsIgnoreCase("ImgScannerManufName")) {
+                        setElementComponentValue(comp, convertManufNameToBRICS(manufacturer));
+                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                        setElementComponentValue(comp, softwareVersion);
+                    } else if (l.equalsIgnoreCase("ImgHeadPostnTxt")) {
+                        setElementComponentValue(comp, patientPosition);
+                    } else if (l.equalsIgnoreCase("ImgScannerModelName")) {
+                        setElementComponentValue(comp, convertModelNameToBRICS(scannerModel));
+                    } else if (l.equalsIgnoreCase("ImgBandwidthVal")) {
+                        setElementComponentValue(comp, bandwidth);
                     }
-                }
 
-                if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                    if (modalityString.equalsIgnoreCase("magnetic resonance")) {
+                        final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+                        final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+                        final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable()
+                                .getValue("0018,0087"));
+                        final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
 
-                    final String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
-                    final String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
-                    final String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
-                    final String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+                        final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
+                        final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
+                        final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
+                        final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
+                        final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
+                        final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
 
-                    final String mriT1T2Name = (String) (fileInfoDicom.getTagTable().getValue("0018,0024"));
-                    final String inversionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0082"));
-                    final String echoTrainMeas = (String) (fileInfoDicom.getTagTable().getValue("0018,0091"));
-                    final String phaseEncode = (String) (fileInfoDicom.getTagTable().getValue("0018,1312"));
-                    final String numAverages = (String) (fileInfoDicom.getTagTable().getValue("0018,0083"));
-                    final String receiveCoilName = (String) (fileInfoDicom.getTagTable().getValue("0018,1250"));
-
-                    keySet = labelsAndComps.keySet();
-                    iter = keySet.iterator();
-                    while (iter.hasNext()) {
-                        final JLabel label = iter.next();
-                        final String l = label.getName();
-                        final JComponent comp = labelsAndComps.get(label);
-                        if (l.equalsIgnoreCase("ImgEchoDur") && echoTime != null && !echoTime.equals("")) {
-                            ((JTextField) comp).setText(echoTime);
-                            label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgRepetitionGapVal") && repetitionTime != null
-                                && !repetitionTime.equals("")) {
-                            ((JTextField) comp).setText(repetitionTime);
-                        } else if (l.equalsIgnoreCase("ImgScannerStrgthVal") && magnaticFieldStrength != null
-                                && !magnaticFieldStrength.equals("")) {
-                            final JComboBox jc = (JComboBox) comp;
-                            for (int k = 0; k < jc.getItemCount(); k++) {
-                                final String item = (String) jc.getItemAt(k);
-                                if (item.contains(convertMagFieldStrengthToBRICS(magnaticFieldStrength))) {
-                                    jc.setSelectedIndex(k);
-                                }
-                            }
-                            label.setForeground(Color.red);
-                        } else if (l.equalsIgnoreCase("ImgMRIT1T2SeqName") && mriT1T2Name != null
-                                && !mriT1T2Name.equals("")) {
-                            ((JTextField) comp).setText(mriT1T2Name);
-                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum") && numAverages != null
-                                && !numAverages.equals("")) {
-                            ((JTextField) comp).setText(numAverages);
-                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr") && flipAngle != null
-                                && !flipAngle.equals("")) {
-                            ((JTextField) comp).setText(flipAngle);
-                        } else if (l.equalsIgnoreCase("ImgEchoTrainLngthMeasr") && echoTrainMeas != null
-                                && !echoTrainMeas.equals("")) {
-                            ((JTextField) comp).setText(echoTrainMeas);
-                        } else if (l.equalsIgnoreCase("ImgInversionTime") && inversionTime != null
-                                && !inversionTime.equals("")) {
-                            ((JTextField) comp).setText(inversionTime);
-                        } else if (l.equalsIgnoreCase("ImgRFCoilName") && receiveCoilName != null
-                                && !receiveCoilName.equals("")) {
-                            ((JTextField) comp).setText(receiveCoilName);
-                        } else if (l.equalsIgnoreCase("ImgPhasEncdeDirctTxt") && phaseEncode != null
-                                && !phaseEncode.equals("")) {
-                            ((JTextField) comp).setText(phaseEncode);
+                        if (l.equalsIgnoreCase("ImgEchoDur")) {
+                            setElementComponentValue(comp, echoTime);
+                            // label.setForeground(Color.red);
+                        } else if (l.equalsIgnoreCase("ImgRepetitionGapVal")) {
+                            setElementComponentValue(comp, repetitionTime);
+                        } else if (l.equalsIgnoreCase("ImgScannerStrgthVal")) {
+                            setElementComponentValue(comp, convertMagFieldStrengthToBRICS(magnaticFieldStrength));
+                            // label.setForeground(Color.red);
+                        } else if (l.equalsIgnoreCase("ImgMRIT1T2SeqName")) {
+                            setElementComponentValue(comp, mriT1T2Name);
+                        } else if (l.equalsIgnoreCase("ImgSignalAvgNum")) {
+                            setElementComponentValue(comp, numAverages);
+                        } else if (l.equalsIgnoreCase("ImgFlipAngleMeasr")) {
+                            setElementComponentValue(comp, flipAngle);
+                        } else if (l.equalsIgnoreCase("ImgEchoTrainLngthMeasr")) {
+                            setElementComponentValue(comp, echoTrainMeas);
+                        } else if (l.equalsIgnoreCase("ImgInversionTime")) {
+                            setElementComponentValue(comp, inversionTime);
+                        } else if (l.equalsIgnoreCase("ImgRFCoilName")) {
+                            setElementComponentValue(comp, receiveCoilName);
+                        } else if (l.equalsIgnoreCase("ImgPhasEncdeDirctTxt")) {
+                            setElementComponentValue(comp, phaseEncode);
                         }
                     }
-                }
-            } else if (fileFormatString.equalsIgnoreCase("nifti")) {
-                // TODO: any special extraction for nifti files?
-                // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
-                final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
-                final String description = fileInfoNifti.getDescription();
+                } else if (fileFormatString.equalsIgnoreCase("nifti")) {
+                    // Description = Philips Medical Systems Achieva 3.2.1 (from .nii T1 of Dr. Vaillancourt's)
+                    final FileInfoNIFTI fileInfoNifti = (FileInfoNIFTI) img.getFileInfo(0);
+                    final String description = fileInfoNifti.getDescription();
 
+                    final String manuf = convertNiftiDescToBRICSManuf(description);
+                    final String model = convertNiftiDescToBRICSModel(description);
+                    final String scannerVer = convertNiftiDescToBRICSVer(description);
+
+                    if (l.equalsIgnoreCase("ImgScannerManufName")) {
+                        setElementComponentValue(comp, manuf);
+                        // label.setForeground(Color.red);
+                    } else if (l.equalsIgnoreCase("ImgScannerModelName")) {
+                        setElementComponentValue(comp, model);
+                    } else if (l.equalsIgnoreCase("ImgScannerSftwrVrsnNum")) {
+                        setElementComponentValue(comp, scannerVer);
+                    }
+                }
             }
         }
 
@@ -4500,7 +4561,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 // TODO: hardcoded element handling
                                 if (l.getName().equalsIgnoreCase(IMG_PREVIEW_ELEMENT_NAME)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                    final String n = file.getName();
                                     tf.setText("Automatically generated from selected image files.");
                                 } else if (l.getName().equalsIgnoreCase(labelName)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
@@ -5279,6 +5339,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             this.dial = dial;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public void run() {
 
