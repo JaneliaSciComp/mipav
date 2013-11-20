@@ -5,9 +5,11 @@ import gov.nih.mipav.model.file.FileDicom;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagInfo;
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.PrivateDicomDictionary;
+import gov.nih.mipav.model.file.PrivateFileDicomKey;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.view.MipavUtil;
@@ -127,7 +129,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 			keyArray = new FileDicomKey[length];
 			tagArray = new FileDicomTag[length];
 			Set<Entry<FileDicomKey, FileDicomTag>> entrySet = tagList.entrySet();
-			for(int i=0; i<length; i++) {
+tableItr:	for(int i=0; i<length; i++) {
 				key = new FileDicomKey(tagsTable.getValueAt(i, 0).toString());
 				Iterator<Entry<FileDicomKey, FileDicomTag>> keyItr = entrySet.iterator();
 				Entry<FileDicomKey, FileDicomTag> entry = null;
@@ -147,6 +149,33 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 				if(tagArray[i] == null) {
 					FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(keyArray[i]);
 					if(tagInfo == null) {
+						if(key.getGroupNumber() % 2 == 1) { //if dicom tag is private
+							if(!key.getElement().equals("0010")) {
+								String publisher = PrivateFileDicomKey.NO_PUBLISHER;
+								String group = key.getGroup();
+								for(int j=0; j<keyArray.length; j++) {
+									if(keyArray[j].getGroup().equals(group) && keyArray[j].getElement().equals("0010")) {
+										publisher = tagsTable.getValueAt(j, 2).toString();
+										break;
+									}
+								}
+								if(publisher.equals(PrivateFileDicomKey.NO_PUBLISHER)) {
+									FileDicomTag pubTag = fileInfo.getTagTable().get(new FileDicomKey(group+",0010"));
+									if(pubTag != null) {
+										publisher = pubTag.getValue(true).toString();
+									}
+								}
+								if(publisher.equals(PrivateFileDicomKey.NO_PUBLISHER)) {
+									MipavUtil.displayError("Unable to add tag "+keyArray[i].toString()+", no pubilsher specified");
+									continue tableItr;
+								} else {
+									keyArray[i] = new PrivateFileDicomKey(publisher, keyArray[i].toString());
+									tagInfo = PrivateDicomDictionary.getInfo((PrivateFileDicomKey)keyArray[i]);
+								}	
+							} else { //is publisher tag
+								tagInfo = new FileDicomTagInfo(key, VR.LO, 1, "Publisher", "Publisher");
+							}
+						}
 						//TODO: Implement method for getting unknown dicom tag info, VR: UN?
 					}
 					tagArray[i] = new FileDicomTag(tagInfo);
