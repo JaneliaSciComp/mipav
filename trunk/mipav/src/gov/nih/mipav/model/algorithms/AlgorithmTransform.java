@@ -3,16 +3,27 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.util.MipavCoordinateSystems;
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileDicomTagTable;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIBaseVector;
+import gov.nih.mipav.model.structures.VOIVector;
 
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.io.IOException;
 import java.util.BitSet;
 
-import WildMagic.LibFoundation.Mathematics.*;
+import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 /**
@@ -221,7 +232,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param pad if <code>true</code> output image is padded so that none of the image is clipped
      */
     public AlgorithmTransform(final ModelImage srcImage, final TransMatrix xfrm, final int interp, final float oXres,
-            final float oYres, int oXdim, int oYdim, final int[] units, final boolean tVOI, boolean clip,
+            final float oYres, int oXdim, int oYdim, final int[] units, final boolean tVOI, final boolean clip,
             final boolean pad) {
         super(null, srcImage);
         transformVOI = tVOI;
@@ -380,7 +391,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param center
      */
     public AlgorithmTransform(final ModelImage srcImage, final TransMatrix xfrm, final int interp, final float oXres,
-            final float oYres, int oXdim, int oYdim, final int[] units, final boolean tVOI, boolean clip,
+            final float oYres, int oXdim, int oYdim, final int[] units, final boolean tVOI, final boolean clip,
             final boolean pad, final boolean doCenter, final Vector3f center) {
         super(null, srcImage);
         transformVOI = tVOI;
@@ -577,7 +588,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public AlgorithmTransform(final ModelImage _srcImage, final TransMatrix xfrm, final int interp, final float _oXres,
             final float _oYres, final float _oZres, final int _oXdim, final int _oYdim, final int _oZdim,
-            final int[] units, final boolean tVOI, boolean clip, final boolean pad) {
+            final int[] units, final boolean tVOI, final boolean clip, final boolean pad) {
         super(null, _srcImage);
         this.interp = interp;
         this.srcImage = _srcImage;
@@ -731,7 +742,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public AlgorithmTransform(final ModelImage _srcImage, final TransMatrix xfrm, final int interp, final float _oXres,
             final float _oYres, final float _oZres, final int _oXdim, final int _oYdim, final int _oZdim,
-            final int[] units, final boolean tVOI, boolean clip, final boolean pad, final boolean doCenter,
+            final int[] units, final boolean tVOI, final boolean clip, final boolean pad, final boolean doCenter,
             final Vector3f center) {
         super(null, _srcImage);
         this.interp = interp;
@@ -929,18 +940,18 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
 
             final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-            T00 = (double)kTM.M00;
-            T01 = (double)kTM.M01;
-            T02 = (double)kTM.M02;
-            T03 = (double)kTM.M03;
-            T10 = (double)kTM.M10;
-            T11 = (double)kTM.M11;
-            T12 = (double)kTM.M12;
-            T13 = (double)kTM.M13;
-            T20 = (double)kTM.M20;
-            T21 = (double)kTM.M21;
-            T22 = (double)kTM.M22;
-            T23 = (double)kTM.M23;
+            T00 = kTM.M00;
+            T01 = kTM.M01;
+            T02 = kTM.M02;
+            T03 = kTM.M03;
+            T10 = kTM.M10;
+            T11 = kTM.M11;
+            T12 = kTM.M12;
+            T13 = kTM.M13;
+            T20 = kTM.M20;
+            T21 = kTM.M21;
+            T22 = kTM.M22;
+            T23 = kTM.M23;
 
             Bspline.setup3DBSpline(imgBuffer, inVolExtents, degree);
 
@@ -1053,18 +1064,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
         final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; l < tDim; l++) {
             Bspline.setup3DBSpline(imgBuffer, inVolExtents, degree);
@@ -1192,18 +1203,18 @@ public class AlgorithmTransform extends AlgorithmBase {
             resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
             final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-            T00 = (double)kTM.M00;
-            T01 = (double)kTM.M01;
-            T02 = (double)kTM.M02;
-            T03 = (double)kTM.M03;
-            T10 = (double)kTM.M10;
-            T11 = (double)kTM.M11;
-            T12 = (double)kTM.M12;
-            T13 = (double)kTM.M13;
-            T20 = (double)kTM.M20;
-            T21 = (double)kTM.M21;
-            T22 = (double)kTM.M22;
-            T23 = (double)kTM.M23;
+            T00 = kTM.M00;
+            T01 = kTM.M01;
+            T02 = kTM.M02;
+            T03 = kTM.M03;
+            T10 = kTM.M10;
+            T11 = kTM.M11;
+            T12 = kTM.M12;
+            T13 = kTM.M13;
+            T20 = kTM.M20;
+            T21 = kTM.M21;
+            T22 = kTM.M22;
+            T23 = kTM.M23;
 
             Bspline.setup3DBSplineC(imgBuffer, inVolExtents, degree);
 
@@ -1242,10 +1253,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         index = 4 * (i + (j * xDim) + (k * sliceSize));
-                        imgBuffer2[index] = (float)value[0];
-                        imgBuffer2[index + 1] = (float)value[1];
-                        imgBuffer2[index + 2] = (float)value[2];
-                        imgBuffer2[index + 3] = (float)value[3];
+                        imgBuffer2[index] = (float) value[0];
+                        imgBuffer2[index + 1] = (float) value[1];
+                        imgBuffer2[index + 2] = (float) value[2];
+                        imgBuffer2[index + 3] = (float) value[3];
 
                         counter++;
                     } // end for k
@@ -1329,18 +1340,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         resols[2] = image.getFileInfo()[0].getResolutions()[2];
 
         final TransMatrix kTM = AlgorithmTransform.matrixtoInverseArray(xfrm);
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; l < tDim; l++) {
             Bspline.setup3DBSplineC(imgBuffer, inVolExtents, degree);
@@ -1380,10 +1391,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         index = 4 * (i + (j * xDim) + (k * sliceSize));
-                        imgBuffer2[index] = (float)value[0];
-                        imgBuffer2[index + 1] = (float)value[1];
-                        imgBuffer2[index + 2] = (float)value[2];
-                        imgBuffer2[index + 3] = (float)value[3];
+                        imgBuffer2[index] = (float) value[0];
+                        imgBuffer2[index + 1] = (float) value[1];
+                        imgBuffer2[index + 2] = (float) value[2];
+                        imgBuffer2[index + 3] = (float) value[3];
 
                         counter++;
                     } // end for k
@@ -1635,8 +1646,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         oXres = transformedImg.getFileInfo(0).getResolutions()[0];
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), image
-                .getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(),
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         final int mod = Math.max(1, oYdim / 50);
         final int imgLength = iXdim * iYdim;
@@ -1784,8 +1795,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         oXres = transformedImg.getFileInfo(0).getResolutions()[0];
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), image
-                .getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(),
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         final int mod = Math.max(1, oYdim / 50);
         final int imgLength = iXdim * iYdim;
@@ -2239,8 +2250,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final float[] resolutions = new float[] {oXres, oYres};
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions,
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -2378,8 +2389,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final float[] resolutions = new float[] {oXres, oYres};
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions,
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -3940,8 +3951,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         // int [] extents = new int [] {oXdim, oYdim, oZdim};
         final float[] resolutions = new float[] {oXres, oYres, oZres};
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions,
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         for (i = 0; i < oXdim; i++) {
             imm = i * oXres;
@@ -4146,8 +4157,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         // int [] extents = new int [] {oXdim, oYdim, oZdim};
         final float[] resolutions = new float[] {oXres, oYres, oZres};
 
-        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false, null);
+        AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions,
+                image.getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         for (i = 0; i < oXdim; i++) {
             imm = i * oXres;
@@ -4525,6 +4536,7 @@ public class AlgorithmTransform extends AlgorithmBase {
     /**
      * Prepares this class for destruction.
      */
+    @Override
     public void finalize() {
         disposeLocal();
         super.finalize();
@@ -4644,20 +4656,21 @@ public class AlgorithmTransform extends AlgorithmBase {
     /**
      * Starts the program.
      */
+    @Override
     public void runAlgorithm() {
         TransMatrix newMatrix;
         // TransMatrix newTMatrix;
 
         if (AlgorithmTransform.updateOrigin) {
-            //AlgorithmTransform.updateOrigin(this.transMatrix);
+            // AlgorithmTransform.updateOrigin(this.transMatrix);
             updateOrigin();
         }
 
         // System.err.println("MATRIX: " + transMatrix);
 
         // BEN: fix this so the origin is updated correctly
-        AlgorithmTransform
-                .updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix, isSATransform, null);
+        AlgorithmTransform.updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix,
+                isSATransform, null);
 
         transform();
 
@@ -4765,6 +4778,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param padValue
      * @deprecated The value is not just used for padding. Please use setFillValue().
      */
+    @Deprecated
     public void setPadValue(final float padValue) {
         setFillValue(padValue);
     }
@@ -4796,16 +4810,16 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param units DOCUMENT ME!
      * @param matrix DOCUMENT ME!
      * @param useSATransform DOCUMENT ME!
-     * @param m 
+     * @param m
      */
     private static void updateFileInfo(final ModelImage image, final ModelImage resultImage, final float[] resolutions,
-            final int[] units, final TransMatrix matrix, final boolean useSATransform, AlgorithmBase srcAlg) {
+            final int[] units, final TransMatrix matrix, final boolean useSATransform, final AlgorithmBase srcAlg) {
 
-    	final FileInfoBase[] fileInfo = resultImage.getFileInfo();
-    	float firstPos[] = null;
-    	float delPos[] = null;
-    	float sliceLocation0 = Float.NaN;
-    	float delLoc = Float.NaN;
+        final FileInfoBase[] fileInfo = resultImage.getFileInfo();
+        float firstPos[] = null;
+        float delPos[] = null;
+        float sliceLocation0 = Float.NaN;
+        float delLoc = Float.NaN;
 
         if (resultImage.getNDims() == 2) {
             fileInfo[0] = (FileInfoBase) image.getFileInfo(0).clone();
@@ -4851,29 +4865,32 @@ public class AlgorithmTransform extends AlgorithmBase {
                         // create a new reference file info
                         fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                 oldDicomInfo.getFileFormat());
-                        ((FileInfoDicom) fileInfo[0]).setVr_type(oldDicomInfo.getVr_type()); 
+                        ((FileInfoDicom) fileInfo[0]).setVr_type(oldDicomInfo.getVr_type());
                     } else {
 
                         // all other slices are children of the first file info..
                         fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                 oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
-                        ((FileInfoDicom) fileInfo[i]).setVr_type(oldDicomInfo.getVr_type()); 
+                        ((FileInfoDicom) fileInfo[i]).setVr_type(oldDicomInfo.getVr_type());
                         childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
                     }
 
                     if (image.getExtents()[2] > i) {
 
                         // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i).clone());
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(i));
                     } else {
 
                         // not possible for other rotations because the z-dimension is different
-                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags((FileInfoDicom)oldDicomInfo.clone());
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().importTags(oldDicomInfo);
                     }
-                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) resultImage.getExtents()[1]), 2);
-                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) resultImage.getExtents()[0]), 2);
-                    if(srcAlg != null) {
-                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010",
+                            new Short((short) resultImage.getExtents()[1]), 2);
+                    ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011",
+                            new Short((short) resultImage.getExtents()[0]), 2);
+                    if (srcAlg != null) {
+                        srcAlg.fireProgressStateChanged((float) .7 * (i / ((float) resultImage.getExtents()[2])),
+                                "Reorient", "Reorient on slice " + i);
                     }
                 }
 
@@ -4887,45 +4904,21 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } else {
                         fileInfo[i] = (FileInfoBase) image.getFileInfo(0).clone();
                     }
-                    
-                    if(srcAlg != null) {
-                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
+
+                    if (srcAlg != null) {
+                        srcAlg.fireProgressStateChanged((float) .7 * (i / ((float) resultImage.getExtents()[2])),
+                                "Reorient", "Reorient on slice " + i);
                     }
                 }
             }
-          
-            if ((image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) &&
-            	(image.getExtents()[2] != resultImage.getExtents()[2])) {
-            	
-            	float lastPos[] = null;
+
+            if ( (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
+                    && (image.getExtents()[2] != resultImage.getExtents()[2])) {
+
+                float lastPos[] = null;
                 orientation = (String) ((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0020,0032");
                 if (orientation != null) {
-                		
-                        int index1 = -1, index2 = -1;
 
-                        for (int k = 0; k < orientation.length(); k++) {
-
-                            if (orientation.charAt(k) == '\\') {
-
-                                if (index1 == -1) {
-                                    index1 = k;
-                                } else {
-                                    index2 = k;
-                                }
-                            }
-                        }
-
-                        coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
-                        coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-                        coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-                        firstPos = new float[3];
-
-                        matrix.transform(coord[0], coord[1], coord[2], firstPos);
-                } // if (orientation != null)
-                orientation = (String) ((FileInfoDicom) fileInfo[resultImage.getExtents()[2]-1]).getTagTable().getValue("0020,0032");
-                
-                if (orientation != null) {
-            		
                     int index1 = -1, index2 = -1;
 
                     for (int k = 0; k < orientation.length(); k++) {
@@ -4943,35 +4936,62 @@ public class AlgorithmTransform extends AlgorithmBase {
                     coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
                     coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
                     coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-                    
+                    firstPos = new float[3];
+
+                    matrix.transform(coord[0], coord[1], coord[2], firstPos);
+                } // if (orientation != null)
+                orientation = (String) ((FileInfoDicom) fileInfo[resultImage.getExtents()[2] - 1]).getTagTable()
+                        .getValue("0020,0032");
+
+                if (orientation != null) {
+
+                    int index1 = -1, index2 = -1;
+
+                    for (int k = 0; k < orientation.length(); k++) {
+
+                        if (orientation.charAt(k) == '\\') {
+
+                            if (index1 == -1) {
+                                index1 = k;
+                            } else {
+                                index2 = k;
+                            }
+                        }
+                    }
+
+                    coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                    coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                    coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+
                     lastPos = new float[3];
 
                     matrix.transform(coord[0], coord[1], coord[2], lastPos);
                 } // if (orientation != null)
-                if ((firstPos != null) && (lastPos != null)) {
+                if ( (firstPos != null) && (lastPos != null)) {
                     delPos = new float[3];
                     for (int i = 0; i <= 2; i++) {
-                    	delPos[i] = (lastPos[i] - firstPos[i])/(resultImage.getExtents()[2] - 1);
+                        delPos[i] = (lastPos[i] - firstPos[i]) / (resultImage.getExtents()[2] - 1);
                     }
                 } // if ((firstPos != null) && (lastPos != null)
-                if ((((FileInfoDicom)fileInfo[0]).getTagTable().containsTag("0020,1041")) &&
-                		(((FileInfoDicom)fileInfo[1]).getTagTable().containsTag("0020,1041")))	{
-                	if (((String)((FileInfoDicom)fileInfo[0]).getTagTable().getValue("0020,1041") != null) &&
-                			((String)((FileInfoDicom)fileInfo[1]).getTagTable().getValue("0020,1041") != null)) {
-                		try {
-                		    sliceLocation0 = Float.parseFloat((String)((FileInfoDicom)fileInfo[0]).getTagTable().getValue("0020,1041"));
-                		    float sliceLocation1 = Float.parseFloat((String)((FileInfoDicom)fileInfo[1]).getTagTable().getValue("0020,1041"));
-                		    delLoc = (sliceLocation1 - sliceLocation0) * resolutions[2]/image.getFileInfo()[0].getResolutions()[2];
-                		}
-                		catch (NumberFormatException nfe) {
-                			
-                		}
-                	}
-                	
+                if ( ( ((FileInfoDicom) fileInfo[0]).getTagTable().containsTag("0020,1041"))
+                        && ( ((FileInfoDicom) fileInfo[1]).getTagTable().containsTag("0020,1041"))) {
+                    if ( ((String) ((FileInfoDicom) fileInfo[0]).getTagTable().getValue("0020,1041") != null)
+                            && ((String) ((FileInfoDicom) fileInfo[1]).getTagTable().getValue("0020,1041") != null)) {
+                        try {
+                            sliceLocation0 = Float.parseFloat((String) ((FileInfoDicom) fileInfo[0]).getTagTable()
+                                    .getValue("0020,1041"));
+                            final float sliceLocation1 = Float.parseFloat((String) ((FileInfoDicom) fileInfo[1])
+                                    .getTagTable().getValue("0020,1041"));
+                            delLoc = (sliceLocation1 - sliceLocation0) * resolutions[2]
+                                    / image.getFileInfo()[0].getResolutions()[2];
+                        } catch (final NumberFormatException nfe) {
+
+                        }
+                    }
+
                 }
             } // if ((image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) &&
-            
-            
+
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
 
                 fileInfo[i].setDataType(resultImage.getType());
@@ -4987,65 +5007,68 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setOrigin(AlgorithmTransform.imgOrigin);
                 AlgorithmTransform.imgOrigin[2] = AlgorithmTransform.startPos
                         + (AlgorithmTransform.direct[2] * i * resolutions[2]);
-                
 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
-                	if (image.getExtents()[2] == resultImage.getExtents()[2]) {
-                		// don't interpolate here in case spacing between slices is uneven
-	                    orientation = (String) ((FileInfoDicom) fileInfo[i]).getTagTable().getValue("0020,0032");
-	
-	                    if (orientation != null) {
-	
-	                        int index1 = -1, index2 = -1;
-	
-	                        for (int k = 0; k < orientation.length(); k++) {
-	
-	                            if (orientation.charAt(k) == '\\') {
-	
-	                                if (index1 == -1) {
-	                                    index1 = k;
-	                                } else {
-	                                    index2 = k;
-	                                }
-	                            }
-	                        }
-	
-	                        coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
-	                        coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-	                        coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-	
-	                        matrix.transform(coord[0], coord[1], coord[2], tempPos);
-	
-	                        // System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1] + "
-	                        // " + tempPos[2]);
-	                        orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
-	                        ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
+                    if (image.getExtents()[2] == resultImage.getExtents()[2]) {
+                        // don't interpolate here in case spacing between slices is uneven
+                        orientation = (String) ((FileInfoDicom) fileInfo[i]).getTagTable().getValue("0020,0032");
+
+                        if (orientation != null) {
+
+                            int index1 = -1, index2 = -1;
+
+                            for (int k = 0; k < orientation.length(); k++) {
+
+                                if (orientation.charAt(k) == '\\') {
+
+                                    if (index1 == -1) {
+                                        index1 = k;
+                                    } else {
+                                        index2 = k;
+                                    }
+                                }
+                            }
+
+                            coord[0] = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                            coord[1] = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                            coord[2] = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+
+                            matrix.transform(coord[0], coord[1], coord[2], tempPos);
+
+                            // System.err.println("transformed " + orientation + " to: " +tempPos[0] + " " + tempPos[1]
+                            // + "
+                            // " + tempPos[2]);
+                            orientation = tempPos[0] + "\\" + tempPos[1] + "\\" + tempPos[2];
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
                         } // if (orientation != null)
-	                    
+
                     } // if (image.getExtents()[2] == resultImage.getExtents()[2])
-                	else { // image.getExtents()[2] != resultImage.getExtents()[2]
+                    else { // image.getExtents()[2] != resultImage.getExtents()[2]
                         if (delPos != null) {
-                        	orientation = (firstPos[0] + i * delPos[0]) + "\\" + (firstPos[1]+ i * delPos[1]) + "\\" +
-                        	              (firstPos[2] + i * delPos[2]);
-                        	((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
+                            orientation = (firstPos[0] + i * delPos[0]) + "\\" + (firstPos[1] + i * delPos[1]) + "\\"
+                                    + (firstPos[2] + i * delPos[2]);
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0032", orientation);
                         } // if (delPos != null)
-                        if (!Float.isNaN(delLoc)) {
-                        	String sliceLoc = Float.toString(sliceLocation0 + i * delLoc);
-                        	// slice location
-                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,1041", sliceLoc, sliceLoc.length()); 
+                        if ( !Float.isNaN(delLoc)) {
+                            final String sliceLoc = Float.toString(sliceLocation0 + i * delLoc);
+                            // slice location
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,1041", sliceLoc,
+                                    sliceLoc.length());
                         }
-                        String instanceString = Integer.toString(i+1);
-                        ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,0013", instanceString, instanceString.length());
-                        String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
-                        ((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0020,1002", imagesInAcquisition, imagesInAcquisition.length());
-                        String res2 = String.valueOf(resolutions[2]);
-                        if (((FileInfoDicom)fileInfo[i]).getTagTable().containsTag("0018,0050")) {
-                        	// Slice thickness
-                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0018,0050", res2, res2.length());    	
+                        final String instanceString = Integer.toString(i + 1);
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,0013", instanceString,
+                                instanceString.length());
+                        final String imagesInAcquisition = Integer.toString(resultImage.getExtents()[2]);
+                        ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0020,1002", imagesInAcquisition,
+                                imagesInAcquisition.length());
+                        final String res2 = String.valueOf(resolutions[2]);
+                        if ( ((FileInfoDicom) fileInfo[i]).getTagTable().containsTag("0018,0050")) {
+                            // Slice thickness
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0018,0050", res2, res2.length());
                         }
-                        if (((FileInfoDicom)fileInfo[i]).getTagTable().containsTag("0018,0088")) {
-                        	// Spacing  between slices
-                        	((FileInfoDicom)fileInfo[i]).getTagTable().setValue("0018,0088", res2, res2.length());    	
+                        if ( ((FileInfoDicom) fileInfo[i]).getTagTable().containsTag("0018,0088")) {
+                            // Spacing between slices
+                            ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0018,0088", res2, res2.length());
                         }
                     } // else image.getExtents()[2] != resultImage.getExtents()[2]
                 } // if (fileInfo[i].getFileFormat() == FileUtility.DICOM)
@@ -5079,39 +5102,36 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
-     * Update origin.
-     * Translate the image origin from image space to patient space (scanner space).
-     * The basic ideas,  tranlate the (0,0,0) point from scaner space to image space,
-     * then subtract the original image origin. 
-     * The (0, 0, 0) point is the upper left corner of the scanner space's image.   
+     * Update origin. Translate the image origin from image space to patient space (scanner space). The basic ideas,
+     * tranlate the (0,0,0) point from scaner space to image space, then subtract the original image origin. The (0, 0,
+     * 0) point is the upper left corner of the scanner space's image.
+     * 
      * @param xfrm DOCUMENT ME!
      */
-    
+
     private static void updateOrigin(final TransMatrix xfrm) {
 
-		if (xfrm.getDim() == 3) {
-			xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
-		} else {
-			xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
-		}
+        if (xfrm.getDim() == 3) {
+            xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
+        } else {
+            xfrm.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
+        }
 
-	}
-    
-    
+    }
+
     /**
-	 * Translate the image origin from image space to patient space (scanner
-	 * space). The basic ideas, tranlate the (0,0,0) point from scaner space to
-	 * image space, then multiply the resolution, and subtract the image origin. The (0, 0, 0) point
-	 * is the upper left corner of the scanner space's image.
-	 */
+     * Translate the image origin from image space to patient space (scanner space). The basic ideas, tranlate the
+     * (0,0,0) point from scaner space to image space, then multiply the resolution, and subtract the image origin. The
+     * (0, 0, 0) point is the upper left corner of the scanner space's image.
+     */
     private void updateOrigin() {
 
         // Remmember the the interpolation routines going from the output to the input image
-        // use the inverse matrix, but that here we wish to take the input origin to the 
+        // use the inverse matrix, but that here we wish to take the input origin to the
         // output origin, so we do not take the inverse.
         TransMatrix trans;
         TransMatrix xfrmC;
-       
+
         if ( (DIM >= 3) && ( !do25D)) {
             imgLength = iXdim * iYdim * iZdim;
         } else {
@@ -5153,18 +5173,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                     trans.setTranslate( -center.X, -center.Y);
                 }
             } // if ((doCenter) && (!haveCentered))
-           
+
             if (trans.getDim() == 3) {
                 trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin);
             } else {
-                //System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
-                //		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
-                //		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+                // System.err.println("Before: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                // "AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                // "AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
                 trans.transform(imgOrigin[0], imgOrigin[1], imgOrigin[2], imgOrigin);
-                
-                //System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
-                //		"AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
-                //		"AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
+
+                // System.err.println("After: AlgorithmTransform.imgOrigin[0] = " + AlgorithmTransform.imgOrigin[0] +
+                // "AlgorithmTransform.imgOrigin[1] = " + AlgorithmTransform.imgOrigin[1] +
+                // "AlgorithmTransform.imgOrigin[2] = " + AlgorithmTransform.imgOrigin[2]);
             }
         } catch (final OutOfMemoryError e) {
             disposeLocal();
@@ -5292,7 +5312,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
                     transformAlgorithmBspline2D(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian4Dim2D(imgBuf, xfrm, clip);
                 } else if (interp == AlgorithmTransform.QUINTIC_LAGRANGIAN) {
@@ -5315,12 +5335,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                	transformAlgorithmBspline2D(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 3);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 4);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
@@ -5383,7 +5403,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline3D(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline3D(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
@@ -5438,13 +5458,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                	transformAlgorithmBspline2D(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2D(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2D(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -5491,7 +5511,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
                     transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
                 } else if (interp == AlgorithmTransform.CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian4Dim2DC(imgBuf, imgBuf2, xfrm, clip);
                 } else if (interp == AlgorithmTransform.QUINTIC_LAGRANGIAN) {
@@ -5516,12 +5536,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                	transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform25DVOI(srcImage, imgBuf, xfrm);
                     }
@@ -5597,7 +5617,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline3DC(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline3DC(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
@@ -5652,13 +5672,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE3) {
-                	transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 3);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == AlgorithmTransform.BSPLINE4) {
-                	transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
+                    transformAlgorithmBspline2DC(imgBuf, xfrm, 4);
 
                     if ( (transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -5733,7 +5753,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index;
         int index2;
         int indexC;
-        int length = iXdim * iYdim;
+        final int length = iXdim * iYdim;
         int index2Size;
 
         double T00, T01, T02, T10, T11, T12;
@@ -5742,15 +5762,15 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final int mod = Math.max(1, oXdim / 50);
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
         voiVector = image.getVOIs();
-        
+
         if (voiVector.size() == 0) {
             return;
         }
@@ -5763,117 +5783,114 @@ public class AlgorithmTransform extends AlgorithmBase {
             throw error;
         }
         for (index = 0; index < voiVector.size(); index++) {
-        	VOI presentVOI = voiVector.elementAt(index);
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		VOIBaseVector curves = presentVOI.getCurves();	
-        		index2Size = curves.size();
-        	}
-        	else {
-        		index2Size = 1;
-        	}
-        	for (index2 = 0; index2 < index2Size; index2++) {
-        		indexC++;
-		        
-		        maskImage.clearMask();
-		        
-		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+            final VOI presentVOI = voiVector.elementAt(index);
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                final VOIBaseVector curves = presentVOI.getCurves();
+                index2Size = curves.size();
+            } else {
+                index2Size = 1;
+            }
+            for (index2 = 0; index2 < index2Size; index2++) {
+                indexC++;
 
-				BitSet mask = maskImage.getMask();
+                maskImage.clearMask();
 
-				
-				for (i = 0; i < length; i++) {
+                (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false,
+                        false, index2);
 
-					if (mask.get(i)) {
-						maskImage.set(i, indexC + 1);
-					}
-					else {
-						maskImage.set(i, 0);
-					}
-				}
-		        
-		
-		        try {
-		            maskImage.exportData(0, length, imgBuffer); // locks and releases lock
-		            
-		        } catch (final IOException error) {
-		            displayError("Algorithm VOI transform: Image(s) locked");
-		            setCompleted(false);
-		
-		            return;
-		        }
-		
-		        for (i = 0; (i < oXdim) && !threadStopped; i++) {
-		
-		            if ( ( (i % mod) == 0)) {
-		                fireProgressStateChanged((int) ( ((float) i / oXdim * 100) + .5));
-		            }
-		
-		            if (pad) {
-		                iAdj = i - AlgorithmTransform.margins[0];
-		            } else {
-		                iAdj = i;
-		            }
-		
-		            imm = iAdj * oXres;
-		            temp1 = (imm * T00) + T02;
-		            temp2 = (imm * T10) + T12;
-		
-		            for (j = 0; (j < oYdim) && !threadStopped; j++) {
-		
-		                // transform i,j
-		                if (pad) {
-		                    jAdj = j - AlgorithmTransform.margins[1];
-		                } else {
-		                    jAdj = j;
-		                }
-		
-		                jmm = jAdj * oYres;
-		                value = fillValue; // if transformed out of bounds.
-		                X = (temp1 + (jmm * T01)) / iXres;
-		                roundX = (int) (X + 0.5);
-		
-		                if ( (X >= -0.5) && (X < iXdim)) {
-		                    Y = (temp2 + (jmm * T11)) / iYres;
-		                    roundY = (int) (Y + 0.5);
-		
-		                    if ( (Y >= -0.5) && (Y < iYdim)) {
-		                        X0pos = Math.min(roundX, iXdim - 1);
-		                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
-		                        value = imgBuffer[Y0pos + X0pos];
-		                    } // end if Y in bounds
-		                } // end if X in bounds
-		
-		                tmpMask.set(i, j, value);
-		            } // end for j
-		        } // end for i
-		
-		        if (threadStopped) {
-		            return;
-		        }
-		
-		        // ******* Make algorithm for VOI extraction.
-		        tmpMask.calcMinMax();
-		
-		        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-		
-		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-		        VOIExtAlgo.run();
-		        VOIExtAlgo.finalize();
-		        VOIExtAlgo = null;
-		        destImage.addVOIs(tmpMask.getVOIs());
-		        tmpMask.resetVOIs();
-		        for (j = 0; j < oYdim; j++) {
-	        		for (i = 0; i < oXdim; i++) {
-	        			tmpMask.set(i, j, fillValue);
-	        		}
-	        	}
-        	} // for (index2 = 0; index2 < curves.size(); index2++)
+                final BitSet mask = maskImage.getMask();
+
+                for (i = 0; i < length; i++) {
+
+                    if (mask.get(i)) {
+                        maskImage.set(i, indexC + 1);
+                    } else {
+                        maskImage.set(i, 0);
+                    }
+                }
+
+                try {
+                    maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+
+                } catch (final IOException error) {
+                    displayError("Algorithm VOI transform: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    if ( ( (i % mod) == 0)) {
+                        fireProgressStateChanged((int) ( ((float) i / oXdim * 100) + .5));
+                    }
+
+                    if (pad) {
+                        iAdj = i - AlgorithmTransform.margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+
+                    imm = iAdj * oXres;
+                    temp1 = (imm * T00) + T02;
+                    temp2 = (imm * T10) + T12;
+
+                    for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                        // transform i,j
+                        if (pad) {
+                            jAdj = j - AlgorithmTransform.margins[1];
+                        } else {
+                            jAdj = j;
+                        }
+
+                        jmm = jAdj * oYres;
+                        value = fillValue; // if transformed out of bounds.
+                        X = (temp1 + (jmm * T01)) / iXres;
+                        roundX = (int) (X + 0.5);
+
+                        if ( (X >= -0.5) && (X < iXdim)) {
+                            Y = (temp2 + (jmm * T11)) / iYres;
+                            roundY = (int) (Y + 0.5);
+
+                            if ( (Y >= -0.5) && (Y < iYdim)) {
+                                X0pos = Math.min(roundX, iXdim - 1);
+                                Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+                                value = imgBuffer[Y0pos + X0pos];
+                            } // end if Y in bounds
+                        } // end if X in bounds
+
+                        tmpMask.set(i, j, value);
+                    } // end for j
+                } // end for i
+
+                if (threadStopped) {
+                    return;
+                }
+
+                // ******* Make algorithm for VOI extraction.
+                tmpMask.calcMinMax();
+
+                AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+                VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                VOIExtAlgo.run();
+                VOIExtAlgo.finalize();
+                VOIExtAlgo = null;
+                destImage.addVOIs(tmpMask.getVOIs());
+                tmpMask.resetVOIs();
+                for (j = 0; j < oYdim; j++) {
+                    for (i = 0; i < oXdim; i++) {
+                        tmpMask.set(i, j, fillValue);
+                    }
+                }
+            } // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
         tmpMask.disposeLocal();
         tmpMask = null;
         maskImage.disposeLocal();
         maskImage = null;
-       
+
     }
 
     /**
@@ -5890,7 +5907,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      */
     private void transform25DVOI(final ModelImage image, final double[] imgBuffer, final TransMatrix kTM) {
-    	int i, j, z;
+        int i, j, z;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         double X, Y;
@@ -5901,13 +5918,13 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index;
         int index2;
         int indexC;
-        int sliceSize = iXdim * iYdim;
+        final int sliceSize = iXdim * iYdim;
         int index2Size;
         VOIBaseVector curves = null;
-        int xBounds[] = new int[2];
-        int yBounds[] = new int[2];
-        int zBounds[] = new int[2];
-        int zFound[] = new int[iZdim];
+        final int xBounds[] = new int[2];
+        final int yBounds[] = new int[2];
+        final int zBounds[] = new int[2];
+        final int zFound[] = new int[iZdim];
         boolean duplicateZ = false;
 
         double T00, T01, T02, T10, T11, T12;
@@ -5916,15 +5933,15 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final int mod = Math.max(1, oXdim / 50);
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
         voiVector = image.getVOIs();
-        
+
         if (voiVector.size() == 0) {
             return;
         }
@@ -5937,170 +5954,165 @@ public class AlgorithmTransform extends AlgorithmBase {
             throw error;
         }
         for (index = 0; index < voiVector.size(); index++) {
-        	VOI presentVOI = voiVector.elementAt(index);
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		curves = presentVOI.getCurves();	
-        		index2Size = curves.size();
-        	}
-        	else {
-        		index2Size = 1;
-        	}
-            for (i = 0; i < iZdim; i++) {
-            	zFound[i] = 0;
+            final VOI presentVOI = voiVector.elementAt(index);
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                curves = presentVOI.getCurves();
+                index2Size = curves.size();
+            } else {
+                index2Size = 1;
             }
-        	for (index2 = 0; index2 < index2Size; index2++) {
-        		if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		    curves.get(index2).getBounds(xBounds, yBounds, zBounds);	
-        		}
-        		else {
-        			presentVOI.getBounds(xBounds, yBounds, zBounds);
-        		}
-        		duplicateZ = false;
-        		for (i = zBounds[0]; i <= zBounds[1]; i++) {
-        			zFound[i]++;
-        			if (zFound[i] >= 2) {
-        				duplicateZ = true;
-        			}
-        		}
-        		if (duplicateZ) {
-        			indexC++;
-		        	duplicateZ = false;
-		        	for (i = 0; i < iZdim; i++) {
-		        		zFound[i] = 0;
-		        	}
-			        tmpMask.calcMinMax();
-			
-			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-			
-			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-			        VOIExtAlgo.run();
-			        VOIExtAlgo.finalize();
-			        VOIExtAlgo = null;
-			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.resetVOIs();
-			        for (z = 0; z < oZdim; z++) {
-			        	for (j = 0; j < oYdim; j++) {
-			        		for (i = 0; i < oXdim; i++) {
-			        			tmpMask.set(i, j, z, fillValue);
-			        		}
-			        	}
-			        }
-			        index2--;
-			        continue;
-		        }
-		        
-		        maskImage.clearMask();
-		        
-		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+            for (i = 0; i < iZdim; i++) {
+                zFound[i] = 0;
+            }
+            for (index2 = 0; index2 < index2Size; index2++) {
+                if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                    curves.get(index2).getBounds(xBounds, yBounds, zBounds);
+                } else {
+                    presentVOI.getBounds(xBounds, yBounds, zBounds);
+                }
+                duplicateZ = false;
+                for (i = zBounds[0]; i <= zBounds[1]; i++) {
+                    zFound[i]++;
+                    if (zFound[i] >= 2) {
+                        duplicateZ = true;
+                    }
+                }
+                if (duplicateZ) {
+                    indexC++;
+                    duplicateZ = false;
+                    for (i = 0; i < iZdim; i++) {
+                        zFound[i] = 0;
+                    }
+                    tmpMask.calcMinMax();
 
-				BitSet mask = maskImage.getMask();
+                    AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
 
-				
-				for (i = zBounds[0]*sliceSize; i < (zBounds[1]+1)*sliceSize; i++) {
+                    VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                    VOIExtAlgo.run();
+                    VOIExtAlgo.finalize();
+                    VOIExtAlgo = null;
+                    destImage.addVOIs(tmpMask.getVOIs());
+                    tmpMask.resetVOIs();
+                    for (z = 0; z < oZdim; z++) {
+                        for (j = 0; j < oYdim; j++) {
+                            for (i = 0; i < oXdim; i++) {
+                                tmpMask.set(i, j, z, fillValue);
+                            }
+                        }
+                    }
+                    index2--;
+                    continue;
+                }
 
-					if (mask.get(i)) {
-						maskImage.set(i, indexC + 1);
-					}
-					else {
-						maskImage.set(i, 0);
-					}
-				}
-		  
-		
-		        for (z = zBounds[0]; z <= zBounds[1]; z++) {
-		            
-		            try {
-		                maskImage.exportData(z * sliceSize, sliceSize, imgBuffer); // locks and releases lock
-		            } catch (final IOException error) {
-		                displayError("Algorithm VOI transform: Image(s) locked");
-		                setCompleted(false);
+                maskImage.clearMask();
 
-		                return;
-		            }
-		        
-		
-			        for (i = 0; (i < oXdim) && !threadStopped; i++) {
-			
-			            if ( ( (i % mod) == 0)) {
-			                fireProgressStateChanged((int) ( ((float) i / oXdim * 100) + .5));
-			            }
-			
-			            if (pad) {
-			                iAdj = i - AlgorithmTransform.margins[0];
-			            } else {
-			                iAdj = i;
-			            }
-			
-			            imm = iAdj * oXres;
-			            temp1 = (imm * T00) + T02;
-			            temp2 = (imm * T10) + T12;
-			
-			            for (j = 0; (j < oYdim) && !threadStopped; j++) {
-			
-			                // transform i,j
-			                if (pad) {
-			                    jAdj = j - AlgorithmTransform.margins[1];
-			                } else {
-			                    jAdj = j;
-			                }
-			
-			                jmm = jAdj * oYres;
-			                value = fillValue; // if transformed out of bounds.
-			                X = (temp1 + (jmm * T01)) / iXres;
-			                roundX = (int) (X + 0.5);
-			
-			                if ( (X >= -0.5) && (X < iXdim)) {
-			                    Y = (temp2 + (jmm * T11)) / iYres;
-			                    roundY = (int) (Y + 0.5);
-			
-			                    if ( (Y >= -0.5) && (Y < iYdim)) {
-			                        X0pos = Math.min(roundX, iXdim - 1);
-			                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
-			                        value = imgBuffer[Y0pos + X0pos];
-			                    } // end if Y in bounds
-			                } // end if X in bounds
-			
-			                tmpMask.set(i, j, z, value);
-			            } // end for j
-			        } // end for i
-			
-			        if (threadStopped) {
-			            return;
-			        }
-		        } // for (z = zBounds[0]; z <= zBounds[1]; z++)
-		
-		        // ******* Make algorithm for VOI extraction.
-		        if (index2 == curves.size()-1) {
-		        	indexC++;
-		        	duplicateZ = false;
-		        	for (i = 0; i < iZdim; i++) {
-		        		zFound[i] = 0;
-		        	}
-			        tmpMask.calcMinMax();
-			
-			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-			
-			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-			        VOIExtAlgo.run();
-			        VOIExtAlgo.finalize();
-			        VOIExtAlgo = null;
-			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.resetVOIs();
-			        for (z = 0; z < oZdim; z++) {
-			        	for (j = 0; j < oYdim; j++) {
-			        		for (i = 0; i < oXdim; i++) {
-			        			tmpMask.set(i, j, z, fillValue);
-			        		}
-			        	}
-			        }
-		        }
-        	} // for (index2 = 0; index2 < curves.size(); index2++)
+                (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false,
+                        false, index2);
+
+                final BitSet mask = maskImage.getMask();
+
+                for (i = zBounds[0] * sliceSize; i < (zBounds[1] + 1) * sliceSize; i++) {
+
+                    if (mask.get(i)) {
+                        maskImage.set(i, indexC + 1);
+                    } else {
+                        maskImage.set(i, 0);
+                    }
+                }
+
+                for (z = zBounds[0]; z <= zBounds[1]; z++) {
+
+                    try {
+                        maskImage.exportData(z * sliceSize, sliceSize, imgBuffer); // locks and releases lock
+                    } catch (final IOException error) {
+                        displayError("Algorithm VOI transform: Image(s) locked");
+                        setCompleted(false);
+
+                        return;
+                    }
+
+                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                        if ( ( (i % mod) == 0)) {
+                            fireProgressStateChanged((int) ( ((float) i / oXdim * 100) + .5));
+                        }
+
+                        if (pad) {
+                            iAdj = i - AlgorithmTransform.margins[0];
+                        } else {
+                            iAdj = i;
+                        }
+
+                        imm = iAdj * oXres;
+                        temp1 = (imm * T00) + T02;
+                        temp2 = (imm * T10) + T12;
+
+                        for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                            // transform i,j
+                            if (pad) {
+                                jAdj = j - AlgorithmTransform.margins[1];
+                            } else {
+                                jAdj = j;
+                            }
+
+                            jmm = jAdj * oYres;
+                            value = fillValue; // if transformed out of bounds.
+                            X = (temp1 + (jmm * T01)) / iXres;
+                            roundX = (int) (X + 0.5);
+
+                            if ( (X >= -0.5) && (X < iXdim)) {
+                                Y = (temp2 + (jmm * T11)) / iYres;
+                                roundY = (int) (Y + 0.5);
+
+                                if ( (Y >= -0.5) && (Y < iYdim)) {
+                                    X0pos = Math.min(roundX, iXdim - 1);
+                                    Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+                                    value = imgBuffer[Y0pos + X0pos];
+                                } // end if Y in bounds
+                            } // end if X in bounds
+
+                            tmpMask.set(i, j, z, value);
+                        } // end for j
+                    } // end for i
+
+                    if (threadStopped) {
+                        return;
+                    }
+                } // for (z = zBounds[0]; z <= zBounds[1]; z++)
+
+                // ******* Make algorithm for VOI extraction.
+                if (index2 == curves.size() - 1) {
+                    indexC++;
+                    duplicateZ = false;
+                    for (i = 0; i < iZdim; i++) {
+                        zFound[i] = 0;
+                    }
+                    tmpMask.calcMinMax();
+
+                    AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+                    VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                    VOIExtAlgo.run();
+                    VOIExtAlgo.finalize();
+                    VOIExtAlgo = null;
+                    destImage.addVOIs(tmpMask.getVOIs());
+                    tmpMask.resetVOIs();
+                    for (z = 0; z < oZdim; z++) {
+                        for (j = 0; j < oYdim; j++) {
+                            for (i = 0; i < oXdim; i++) {
+                                tmpMask.set(i, j, z, fillValue);
+                            }
+                        }
+                    }
+                }
+            } // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
         tmpMask.disposeLocal();
         tmpMask = null;
-       
+
     }
 
     /**
@@ -6117,7 +6129,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      */
     private void transform3DVOI(final ModelImage image, final double[] imgBuffer, final TransMatrix kTM) {
-    	int i, j, k, z;
+        int i, j, k, z;
         int iAdj, jAdj, kAdj;
         int X0pos, Y0pos, Z0pos;
         double X, Y, Z;
@@ -6127,8 +6139,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index;
         int index2;
         int indexC;
-        int sliceSize = iXdim * iYdim;
-        int length = sliceSize * iZdim;
+        final int sliceSize = iXdim * iYdim;
+        final int length = sliceSize * iZdim;
         int index2Size;
         VOIBaseVector curves = null;
 
@@ -6136,21 +6148,21 @@ public class AlgorithmTransform extends AlgorithmBase {
         ModelImage tmpMask = null;
         VOIVector voiVector;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
-        
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
         voiVector = image.getVOIs();
-        
+
         if (voiVector.size() == 0) {
             return;
         }
@@ -6167,148 +6179,142 @@ public class AlgorithmTransform extends AlgorithmBase {
             throw error;
         }
         for (z = 0; z < oZdim; z++) {
-        	for (j = 0; j < oYdim; j++) {
-        		for (i = 0; i < oXdim; i++) {
-        			tmpMask.set(i, j, z, fillValue);
-        		}
-        	}
+            for (j = 0; j < oYdim; j++) {
+                for (i = 0; i < oXdim; i++) {
+                    tmpMask.set(i, j, z, fillValue);
+                }
+            }
         }
-      
+
         for (index = 0; index < voiVector.size(); index++) {
-        	VOI presentVOI = voiVector.elementAt(index);
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		curves = presentVOI.getCurves();	
-        		index2Size = curves.size();
-        	}
-        	else {
-        		index2Size = 1;
-        	}
-           
-        	for (index2 = 0; index2 < index2Size; index2++) {
-		        
-		        maskImage.clearMask();
-		        
-		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+            final VOI presentVOI = voiVector.elementAt(index);
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                curves = presentVOI.getCurves();
+                index2Size = curves.size();
+            } else {
+                index2Size = 1;
+            }
 
-				BitSet mask = maskImage.getMask();
+            for (index2 = 0; index2 < index2Size; index2++) {
 
-				
-				for (i = 0; i < length; i++) {
+                maskImage.clearMask();
 
-					if (mask.get(i)) {
-						maskImage.set(i, indexC + 1);
-					}
-					else {
-						maskImage.set(i, 0);
-					}
-				}
-		  
-		
-	            try {
-	                maskImage.exportData(0, length, imgBuffer); // locks and releases lock
-	            } catch (final IOException error) {
-	                displayError("Algorithm VOI transform: Image(s) locked");
-	                setCompleted(false);
+                (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false,
+                        false, index2);
 
-	                return;
-	            }
-		        
-		        
-		        for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                final BitSet mask = maskImage.getMask();
 
-		            if (pad) {
-		                kAdj = k - AlgorithmTransform.margins[2];
-		            } else {
-		                kAdj = k;
-		            }
+                for (i = 0; i < length; i++) {
 
-		            kmm = kAdj * oZres;
-		            k1 = (kmm * T02) + T03;
-		            k2 = (kmm * T12) + T13;
-		            k3 = (kmm * T22) + T23;
+                    if (mask.get(i)) {
+                        maskImage.set(i, indexC + 1);
+                    } else {
+                        maskImage.set(i, 0);
+                    }
+                }
 
-		            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                try {
+                    maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+                } catch (final IOException error) {
+                    displayError("Algorithm VOI transform: Image(s) locked");
+                    setCompleted(false);
 
-		                if (pad) {
-		                    jAdj = j - AlgorithmTransform.margins[1];
-		                } else {
-		                    jAdj = j;
-		                }
+                    return;
+                }
 
-		                jmm = jAdj * oYres;
-		                j1 = (jmm * T01) + k1;
-		                j2 = (jmm * T11) + k2;
-		                j3 = (jmm * T21) + k3;
+                for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-		                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                    if (pad) {
+                        kAdj = k - AlgorithmTransform.margins[2];
+                    } else {
+                        kAdj = k;
+                    }
 
-		                    // transform i,j,k
-		                    if (pad) {
-		                        iAdj = i - AlgorithmTransform.margins[0];
-		                    } else {
-		                        iAdj = i;
-		                    }
+                    kmm = kAdj * oZres;
+                    k1 = (kmm * T02) + T03;
+                    k2 = (kmm * T12) + T13;
+                    k3 = (kmm * T22) + T23;
 
-		                    imm = iAdj * oXres;
-		                    value = fillValue; // if voxel is transformed out of bounds
-		                    X = (j1 + (imm * T00)) * invXRes;
+                    for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
-		                    if ( (X >= -0.5) && (X < iXdim)) {
-		                        Y = (j2 + (imm * T10)) * invYRes;
+                        if (pad) {
+                            jAdj = j - AlgorithmTransform.margins[1];
+                        } else {
+                            jAdj = j;
+                        }
 
-		                        if ( (Y >= -0.5) && (Y < iYdim)) {
-		                            Z = (j3 + (imm * T20)) * invZRes;
+                        jmm = jAdj * oYres;
+                        j1 = (jmm * T01) + k1;
+                        j2 = (jmm * T11) + k2;
+                        j3 = (jmm * T21) + k3;
 
-		                            if ( (Z >= -0.5) && (Z < iZdim)) {
-		                                X0pos = Math.min((int) (X + 0.5), iXdim - 1);
-		                                Y0pos = Math.min((int) (Y + 0.5), iYdim - 1) * iXdim;
-		                                Z0pos = Math.min((int) (Z + 0.5), iZdim - 1) * sliceSize;
-		                                value = imgBuffer[Z0pos + Y0pos + X0pos];
-		                            } // end if Z in bounds
-		                        } // end if Y in bounds
-		                    } // end if X in bounds
+                        for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-		                    if (value != fillValue) {
-		                        tmpMask.set(i, j, k, value);
-		                    }
-		                } // end for i
-		            } // end for j
-		        } // end for k
-			       
-			
-		        if (threadStopped) {
-		            return;
-		        }
-		
-		        // ******* Make algorithm for VOI extraction.
-		        if ((curves != null) && (index2 == curves.size()-1)) {
-		        	indexC++;
-			        tmpMask.calcMinMax();
-			
-			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-			
-			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-			        VOIExtAlgo.run();
-			        VOIExtAlgo.finalize();
-			        VOIExtAlgo = null;
-			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.resetVOIs();
-			        for (z = 0; z < oZdim; z++) {
-			        	for (j = 0; j < oYdim; j++) {
-			        		for (i = 0; i < oXdim; i++) {
-			        			tmpMask.set(i, j, z, fillValue);
-			        		}
-			        	}
-			        }
-		        }
-        	} // for (index2 = 0; index2 < curves.size(); index2++)
+                            // transform i,j,k
+                            if (pad) {
+                                iAdj = i - AlgorithmTransform.margins[0];
+                            } else {
+                                iAdj = i;
+                            }
+
+                            imm = iAdj * oXres;
+                            value = fillValue; // if voxel is transformed out of bounds
+                            X = (j1 + (imm * T00)) * invXRes;
+
+                            if ( (X >= -0.5) && (X < iXdim)) {
+                                Y = (j2 + (imm * T10)) * invYRes;
+
+                                if ( (Y >= -0.5) && (Y < iYdim)) {
+                                    Z = (j3 + (imm * T20)) * invZRes;
+
+                                    if ( (Z >= -0.5) && (Z < iZdim)) {
+                                        X0pos = Math.min((int) (X + 0.5), iXdim - 1);
+                                        Y0pos = Math.min((int) (Y + 0.5), iYdim - 1) * iXdim;
+                                        Z0pos = Math.min((int) (Z + 0.5), iZdim - 1) * sliceSize;
+                                        value = imgBuffer[Z0pos + Y0pos + X0pos];
+                                    } // end if Z in bounds
+                                } // end if Y in bounds
+                            } // end if X in bounds
+
+                            if (value != fillValue) {
+                                tmpMask.set(i, j, k, value);
+                            }
+                        } // end for i
+                    } // end for j
+                } // end for k
+
+                if (threadStopped) {
+                    return;
+                }
+
+                // ******* Make algorithm for VOI extraction.
+                if ( (curves != null) && (index2 == curves.size() - 1)) {
+                    indexC++;
+                    tmpMask.calcMinMax();
+
+                    AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+                    VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                    VOIExtAlgo.run();
+                    VOIExtAlgo.finalize();
+                    VOIExtAlgo = null;
+                    destImage.addVOIs(tmpMask.getVOIs());
+                    tmpMask.resetVOIs();
+                    for (z = 0; z < oZdim; z++) {
+                        for (j = 0; j < oYdim; j++) {
+                            for (i = 0; i < oXdim; i++) {
+                                tmpMask.set(i, j, z, fillValue);
+                            }
+                        }
+                    }
+                }
+            } // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
         tmpMask.disposeLocal();
         tmpMask = null;
 
-        
     }
 
     /**
@@ -6337,8 +6343,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index;
         int index2;
         int indexC;
-        int sliceSize = iXdim * iYdim;
-        int length = sliceSize * iZdim;
+        final int sliceSize = iXdim * iYdim;
+        final int length = sliceSize * iZdim;
         int index2Size;
         VOIBaseVector curves = null;
 
@@ -6349,7 +6355,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         } else {
             byteFillValue = Math.round(fillValue);
         }
-
 
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask;
@@ -6369,9 +6374,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         T21 = kTM.M21;
         T22 = kTM.M22;
         T23 = kTM.M23;
-        
+
         voiVector = image.getVOIs();
-        
+
         if (voiVector.size() == 0) {
             return;
         }
@@ -6388,153 +6393,147 @@ public class AlgorithmTransform extends AlgorithmBase {
             throw error;
         }
         for (z = 0; z < oZdim; z++) {
-        	for (j = 0; j < oYdim; j++) {
-        		for (i = 0; i < oXdim; i++) {
-        			tmpMask.set(i, j, z, fillValue);
-        		}
-        	}
+            for (j = 0; j < oYdim; j++) {
+                for (i = 0; i < oXdim; i++) {
+                    tmpMask.set(i, j, z, fillValue);
+                }
+            }
         }
-      
+
         for (index = 0; index < voiVector.size(); index++) {
-        	VOI presentVOI = voiVector.elementAt(index);
-        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		curves = presentVOI.getCurves();	
-        		index2Size = curves.size();
-        	}
-        	else {
-        		index2Size = 1;
-        	}
-            
-        	for (index2 = 0; index2 < index2Size; index2++) {
-        
-		        maskImage.clearMask();
-		        
-		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+            final VOI presentVOI = voiVector.elementAt(index);
+            if (presentVOI.getCurveType() == VOI.CONTOUR) {
+                curves = presentVOI.getCurves();
+                index2Size = curves.size();
+            } else {
+                index2Size = 1;
+            }
 
-				BitSet mask = maskImage.getMask();
+            for (index2 = 0; index2 < index2Size; index2++) {
 
-				
-				for (i = 0; i < length; i++) {
+                maskImage.clearMask();
 
-					if (mask.get(i)) {
-						maskImage.set(i, indexC + 1);
-					}
-					else {
-						maskImage.set(i, 0);
-					}
-				}
-		  
-		
-	            try {
-	                maskImage.exportData(0, length, imgBuffer); // locks and releases lock
-	            } catch (final IOException error) {
-	                displayError("Algorithm VOI transform: Image(s) locked");
-	                setCompleted(false);
+                (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false,
+                        false, index2);
 
-	                return;
-	            }
-		        
-		        
-		        for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                final BitSet mask = maskImage.getMask();
 
-		            if ( ( (k % mod) == 0)) {
-		                fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
-		            }
+                for (i = 0; i < length; i++) {
 
-		            if (pad) {
-		                kAdj = k - AlgorithmTransform.margins[2];
-		            } else {
-		                kAdj = k;
-		            }
+                    if (mask.get(i)) {
+                        maskImage.set(i, indexC + 1);
+                    } else {
+                        maskImage.set(i, 0);
+                    }
+                }
 
-		            kmm = kAdj * oZres;
-		            k1 = (kmm * T02) + T03;
-		            k2 = (kmm * T12) + T13;
-		            k3 = (kmm * T22) + T23;
+                try {
+                    maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+                } catch (final IOException error) {
+                    displayError("Algorithm VOI transform: Image(s) locked");
+                    setCompleted(false);
 
-		            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    return;
+                }
 
-		                if (pad) {
-		                    jAdj = j - AlgorithmTransform.margins[1];
-		                } else {
-		                    jAdj = j;
-		                }
+                for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-		                jmm = jAdj * oYres;
-		                j1 = (jmm * T01) + k1;
-		                j2 = (jmm * T11) + k2;
-		                j3 = (jmm * T21) + k3;
+                    if ( ( (k % mod) == 0)) {
+                        fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
+                    }
 
-		                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+                    if (pad) {
+                        kAdj = k - AlgorithmTransform.margins[2];
+                    } else {
+                        kAdj = k;
+                    }
 
-		                    // transform i,j,k
-		                    if (pad) {
-		                        iAdj = i - AlgorithmTransform.margins[0];
-		                    } else {
-		                        iAdj = i;
-		                    }
+                    kmm = kAdj * oZres;
+                    k1 = (kmm * T02) + T03;
+                    k2 = (kmm * T12) + T13;
+                    k3 = (kmm * T22) + T23;
 
-		                    imm = iAdj * oXres;
-		                    value = byteFillValue; // if voxel is transformed out of bounds
-		                    X = (j1 + (imm * T00)) * invXRes;
+                    for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
-		                    if ( (X >= -0.5) && (X < iXdim)) {
-		                        Y = (j2 + (imm * T10)) * invYRes;
+                        if (pad) {
+                            jAdj = j - AlgorithmTransform.margins[1];
+                        } else {
+                            jAdj = j;
+                        }
 
-		                        if ( (Y >= -0.5) && (Y < iYdim)) {
-		                            Z = (j3 + (imm * T20)) * invZRes;
+                        jmm = jAdj * oYres;
+                        j1 = (jmm * T01) + k1;
+                        j2 = (jmm * T11) + k2;
+                        j3 = (jmm * T21) + k3;
 
-		                            if ( (Z >= -0.5) && (Z < iZdim)) {
-		                                X0pos = Math.min((int) (X + 0.5f), iXdim - 1);
-		                                Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
-		                                Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
-		                                value = (imgBuffer[Z0pos + Y0pos + X0pos] & 0xff);
-		                            } // end if Z in bounds
-		                        } // end if Y in bounds
-		                    } // end if X in bounds
+                        for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-		                    if (value != byteFillValue) {
-		                        tmpMask.set(i, j, k, value);
-		                    }
-		                } // end for i
-		            } // end for j
-		        } // end for k
-			       
-			
-		        if (threadStopped) {
-		            return;
-		        }
-		
-		        // ******* Make algorithm for VOI extraction.
-		        if (index2 == curves.size()-1) {
-		        	indexC++;
-		        	
-			        tmpMask.calcMinMax();
-			
-			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-			
-			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-			        VOIExtAlgo.run();
-			        VOIExtAlgo.finalize();
-			        VOIExtAlgo = null;
-			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.resetVOIs();
-			        for (z = 0; z < oZdim; z++) {
-			        	for (j = 0; j < oYdim; j++) {
-			        		for (i = 0; i < oXdim; i++) {
-			        			tmpMask.set(i, j, z, byteFillValue);
-			        		}
-			        	}
-			        }
-		        }
-        	} // for (index2 = 0; index2 < curves.size(); index2++)
+                            // transform i,j,k
+                            if (pad) {
+                                iAdj = i - AlgorithmTransform.margins[0];
+                            } else {
+                                iAdj = i;
+                            }
+
+                            imm = iAdj * oXres;
+                            value = byteFillValue; // if voxel is transformed out of bounds
+                            X = (j1 + (imm * T00)) * invXRes;
+
+                            if ( (X >= -0.5) && (X < iXdim)) {
+                                Y = (j2 + (imm * T10)) * invYRes;
+
+                                if ( (Y >= -0.5) && (Y < iYdim)) {
+                                    Z = (j3 + (imm * T20)) * invZRes;
+
+                                    if ( (Z >= -0.5) && (Z < iZdim)) {
+                                        X0pos = Math.min((int) (X + 0.5f), iXdim - 1);
+                                        Y0pos = Math.min((int) (Y + 0.5f), iYdim - 1) * iXdim;
+                                        Z0pos = Math.min((int) (Z + 0.5f), iZdim - 1) * sliceSize;
+                                        value = (imgBuffer[Z0pos + Y0pos + X0pos] & 0xff);
+                                    } // end if Z in bounds
+                                } // end if Y in bounds
+                            } // end if X in bounds
+
+                            if (value != byteFillValue) {
+                                tmpMask.set(i, j, k, value);
+                            }
+                        } // end for i
+                    } // end for j
+                } // end for k
+
+                if (threadStopped) {
+                    return;
+                }
+
+                // ******* Make algorithm for VOI extraction.
+                if (index2 == curves.size() - 1) {
+                    indexC++;
+
+                    tmpMask.calcMinMax();
+
+                    AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+
+                    VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                    VOIExtAlgo.run();
+                    VOIExtAlgo.finalize();
+                    VOIExtAlgo = null;
+                    destImage.addVOIs(tmpMask.getVOIs());
+                    tmpMask.resetVOIs();
+                    for (z = 0; z < oZdim; z++) {
+                        for (j = 0; j < oYdim; j++) {
+                            for (i = 0; i < oXdim; i++) {
+                                tmpMask.set(i, j, z, byteFillValue);
+                            }
+                        }
+                    }
+                }
+            } // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
         maskImage.disposeLocal();
         maskImage = null;
         tmpMask.disposeLocal();
         tmpMask = null;
 
-        
     }
 
     /**
@@ -6557,12 +6556,12 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 =(double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         int position;
         double dx, dy, dx1, dy1;
@@ -6669,12 +6668,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
@@ -6779,12 +6778,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         int temp3, temp4, temp5, temp6, temp7, temp8;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -6830,10 +6829,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 X0pos = Math.min(roundX, iXdim - 1);
                                 Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                 temp4 = 4 * (Y0pos + X0pos);
-                                imgBuf2[4 * (i + (j * oXdim))] = (float)imgBuf[temp4];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 1] = (float)imgBuf[temp4 + 1];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 2] = (float)imgBuf[temp4 + 2];
-                                imgBuf2[ (4 * (i + (j * oXdim))) + 3] = (float)imgBuf[temp4 + 3];
+                                imgBuf2[4 * (i + (j * oXdim))] = (float) imgBuf[temp4];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 1] = (float) imgBuf[temp4 + 1];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 2] = (float) imgBuf[temp4 + 2];
+                                imgBuf2[ (4 * (i + (j * oXdim))) + 3] = (float) imgBuf[temp4 + 3];
                             } else {
 
                                 // set intensity of i,j,k to new transformed coordinate if
@@ -6854,13 +6853,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 x0y1 = x0 * y1;
                                 x1y0 = x1 * y0;
                                 x0y0 = x0 * y0;
-                                imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
+                                imgBuf2[temp3] = (float) ( (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
                                         + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]));
-                                imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
+                                imgBuf2[temp3 + 1] = (float) ( (x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
                                         + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
-                                imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
+                                imgBuf2[temp3 + 2] = (float) ( (x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
                                         + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
-                                imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
+                                imgBuf2[temp3 + 3] = (float) ( (x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
                                         + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                             }
                         } // end if Y in bounds
@@ -6909,12 +6908,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -7015,12 +7014,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         int temp3, temp4, temp5, temp6, temp7, temp8;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -7066,10 +7065,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                                     X0pos = Math.min(roundX, iXdim - 1);
                                     Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                                     temp4 = 4 * (Y0pos + X0pos);
-                                    imgBuf2[temp3] = (float)imgBuf[temp4];
-                                    imgBuf2[temp3 + 1] = (float)imgBuf[temp4 + 1];
-                                    imgBuf2[temp3 + 2] = (float)imgBuf[temp4 + 2];
-                                    imgBuf2[temp3 + 3] = (float)imgBuf[temp4 + 3];
+                                    imgBuf2[temp3] = (float) imgBuf[temp4];
+                                    imgBuf2[temp3 + 1] = (float) imgBuf[temp4 + 1];
+                                    imgBuf2[temp3 + 2] = (float) imgBuf[temp4 + 2];
+                                    imgBuf2[temp3 + 3] = (float) imgBuf[temp4 + 3];
                                 } else {
 
                                     // set intensity of i,j,k to new transformed coordinate if
@@ -7090,14 +7089,14 @@ public class AlgorithmTransform extends AlgorithmBase {
                                     x0y1 = x0 * y1;
                                     x1y0 = x1 * y0;
                                     x0y0 = x0 * y0;
-                                    imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
+                                    imgBuf2[temp3] = (float) ( (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
                                             + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]));
-                                    imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
-                                            + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
-                                    imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
-                                            + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
-                                    imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
-                                            + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
+                                    imgBuf2[temp3 + 1] = (float) ( (x1y1 * imgBuf[temp5 + 1])
+                                            + (x0y1 * imgBuf[temp6 + 1]) + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
+                                    imgBuf2[temp3 + 2] = (float) ( (x1y1 * imgBuf[temp5 + 2])
+                                            + (x0y1 * imgBuf[temp6 + 2]) + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
+                                    imgBuf2[temp3 + 3] = (float) ( (x1y1 * imgBuf[temp5 + 3])
+                                            + (x0y1 * imgBuf[temp6 + 3]) + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                                 }
                             } // end if Y in bounds
                         } // end if X in bounds
@@ -7151,12 +7150,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         int temp3, temp4, temp5, temp6, temp7, temp8;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -7203,10 +7202,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                             X0pos = Math.min(roundX, iXdim - 1);
                             Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
                             temp4 = 4 * (Y0pos + X0pos);
-                            imgBuf2[temp3] = (float)imgBuf[temp4];
-                            imgBuf2[temp3 + 1] = (float)imgBuf[temp4 + 1];
-                            imgBuf2[temp3 + 2] = (float)imgBuf[temp4 + 2];
-                            imgBuf2[temp3 + 3] = (float)imgBuf[temp4 + 3];
+                            imgBuf2[temp3] = (float) imgBuf[temp4];
+                            imgBuf2[temp3 + 1] = (float) imgBuf[temp4 + 1];
+                            imgBuf2[temp3 + 2] = (float) imgBuf[temp4 + 2];
+                            imgBuf2[temp3 + 3] = (float) imgBuf[temp4 + 3];
                         } else {
 
                             // set intensity of i,j,k to new transformed coordinate if
@@ -7227,13 +7226,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                             x0y1 = x0 * y1;
                             x1y0 = x1 * y0;
                             x0y0 = x0 * y0;
-                            imgBuf2[temp3] = (float)((x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6]) + (x1y0 * imgBuf[temp7])
-                                    + (x0y0 * imgBuf[temp8]));
-                            imgBuf2[temp3 + 1] = (float)((x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
+                            imgBuf2[temp3] = (float) ( (x1y1 * imgBuf[temp5]) + (x0y1 * imgBuf[temp6])
+                                    + (x1y0 * imgBuf[temp7]) + (x0y0 * imgBuf[temp8]));
+                            imgBuf2[temp3 + 1] = (float) ( (x1y1 * imgBuf[temp5 + 1]) + (x0y1 * imgBuf[temp6 + 1])
                                     + (x1y0 * imgBuf[temp7 + 1]) + (x0y0 * imgBuf[temp8 + 1]));
-                            imgBuf2[temp3 + 2] = (float)((x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
+                            imgBuf2[temp3 + 2] = (float) ( (x1y1 * imgBuf[temp5 + 2]) + (x0y1 * imgBuf[temp6 + 2])
                                     + (x1y0 * imgBuf[temp7 + 2]) + (x0y0 * imgBuf[temp8 + 2]));
-                            imgBuf2[temp3 + 3] = (float)((x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
+                            imgBuf2[temp3 + 3] = (float) ( (x1y1 * imgBuf[temp5 + 3]) + (x0y1 * imgBuf[temp6 + 3])
                                     + (x1y0 * imgBuf[temp7 + 3]) + (x0y0 * imgBuf[temp8 + 3]));
                         }
                     } // end if Y in bounds
@@ -7252,818 +7251,805 @@ public class AlgorithmTransform extends AlgorithmBase {
             MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
         }
     }
-    
-	/**
-	 * Transforms and resamples volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 */
-	private void transformAlgorithmBspline2D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j;
-		int iAdj, jAdj;
-		double X, Y;
-		double value;
-		double imm, jmm;
-		final int mod = Math.max(1, oYdim / 50);
-
-		double j1, j2;
-		double T00, T01, T02, T10, T11, T12;
-		int nz;
-		int x, y, z;
-		double sliceMin;
-		double sliceMax;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-
-		if (srcImage.getNDims() == 2) {
-			nz = 1;
-		} else if (srcImage.getNDims() == 3) {
-			nz = srcImage.getExtents()[2];
-		} else {
-			nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
-		}
-
-		AlgorithmBSpline Bspline = new AlgorithmBSpline();
-
-		final float invXRes = 1 / iXres;
-		final float invYRes = 1 / iYres;
-
-		int index = 0;
-
-		for (z = 0; z < nz; z++) {
-
-			if (z >= 1) {
-
-				try {
-					srcImage.exportData(z * imgLength, imgLength, imgBuf);
-				} catch (final IOException error) {
-					displayError("Algorithm Transform: Image(s) locked");
-					setCompleted(false);
-
-					return;
-				}
-			}
-
-			sliceMin = Float.MAX_VALUE;
-			sliceMax = -Float.MAX_VALUE;
-
-			for (y = 0; y < iYdim; y++) {
-				for (x = 0; x < iXdim; x++) {
-					if (imgBuf[x + (iXdim * y)] > sliceMax) {
-						sliceMax = imgBuf[x + (iXdim * y)];
-					}
-					if (imgBuf[x + (iXdim * y)] < sliceMin) {
-						sliceMin = imgBuf[x + (iXdim * y)];
-					}
-				}
-			}
-
-			Bspline.setup2DBSpline(imgBuf, new int[]{iXdim,iYdim}, degree);
-
-			for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
-				if ( ( (j % mod) == 0)) {
-					fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
-				}
-
-				if (pad) {
-					jAdj = j - AlgorithmTransform.margins[1];
-				} else {
-					jAdj = j;
-				}
-
-				jmm = jAdj * oYres;
-				j1 = (jmm * T01) + T02;
-				j2 = (jmm * T11) + T12;
-
-				for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-					// transform i,j,z
-					value = fillValue; // if voxel is transformed out of bounds
-					if (pad) {
-						iAdj = i - AlgorithmTransform.margins[0];
-					} else {
-						iAdj = i;
-					}
-					imm = iAdj * oXres;
-					X = (j1 + (imm * T00)) * invXRes;
-
-					if ( (X > -0.5f) && (X < iXdim)) {
-						Y = (j2 + (imm * T10)) * invYRes;
-
-						if ( (Y > -0.5f) && (Y < iYdim)) {
-							value = Bspline.bSpline2D(0, 0, X, Y);
-
-							if (value > sliceMax) {
-								value = sliceMax;
-							} else if (value < sliceMin) {
-								value = sliceMin;
-							}
-						}
-					}
-
-					destImage.set(index++, value);
-				}
-			}
-		}
-
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-
-	}
-
-
-	/**
-	 * Transforms and resamples volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 */
-	private void transformAlgorithmBspline2DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j;
-		int iAdj, jAdj;
-		double X, Y;
-		double[] value = new double[4];
-		double imm, jmm;
-		final int mod = Math.max(1, oYdim / 50);
-
-		double j1, j2;
-		double T00, T01, T02, T10, T11, T12;
-		int nz;
-		int x, y, z;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-
-		if (srcImage.getNDims() == 2) {
-			nz = 1;
-		} else if (srcImage.getNDims() == 3) {
-			nz = srcImage.getExtents()[2];
-		} else {
-			nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
-		}
-
-		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
-
-		final double invXRes = 1.0 / iXres;
-		final double invYRes = 1.0 / iYres;
-
-		final int[] index = new int[4];
-		index[0] = 0;
-		index[1] = 1;
-		index[2] = 2;
-		index[3] = 3;
-
-		final double[] imageMin = new double[4];
-		final double[] imageMax = new double[4];
-
-		for (z = 0; z < nz; z++) {
-
-			if (z >= 1) {
-
-				try {
-					srcImage.exportData(z * imgLength, imgLength, imgBuf);
-				} catch (final IOException error) {
-					displayError("Algorithm Transform: Image(s) locked");
-					setCompleted(false);
-
-					return;
-				}
-			}
-			for ( int c = 0; c < 4; c++ )
-			{
-				imageMin[c] = Float.MAX_VALUE;
-				imageMax[c] = Float.MIN_VALUE;
-			}
-
-			for (y = 0; y < iYdim; y++) {
-				for (x = 0; x < iXdim; x++) {
-					for ( int c = 0; c < 4; c++ )
-					{
-						if ( imgBuf[ 4 * (y * iXdim + x) + c] > imageMax[c] )
-						{
-							imageMax[c] = imgBuf[ 4 * (y * iXdim + x) + c];
-						}
-						if ( imgBuf[ 4 * (y * iXdim + x) + c] < imageMin[c] )
-						{
-							imageMin[c] = imgBuf[ 4 * (y * iXdim + x) + c];
-						}                   		
-					}
-				}
-			}
-
-			Bspline.setup2DBSplineC(imgBuf, new int[]{iXdim,iYdim}, degree);
-
-			for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
-				if ( ( (j % mod) == 0)) {
-					fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
-				}
-
-				if (pad) {
-					jAdj = j - AlgorithmTransform.margins[1];
-				} else {
-					jAdj = j;
-				}
-
-				jmm = jAdj * oYres;
-				j1 = (jmm * T01) + T02;
-				j2 = (jmm * T11) + T12;
-
-				for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-					// transform i,j,z
-					value[0] = fillValue; // if voxel is transformed out of bounds
-					value[1] = fillValue; // if voxel is transformed out of bounds
-					value[2] = fillValue; // if voxel is transformed out of bounds
-					value[3] = fillValue; // if voxel is transformed out of bounds
-					if (pad) {
-						iAdj = i - AlgorithmTransform.margins[0];
-					} else {
-						iAdj = i;
-					}
-					imm = iAdj * oXres;
-					X = (j1 + (imm * T00)) * invXRes;
-
-					if ( (X > -0.5f) && (X < iXdim)) {
-						Y = (j2 + (imm * T10)) * invYRes;
-
-						if ( (Y > -0.5f) && (Y < iYdim)) {
-							value = Bspline.bSpline2DC(0, 0, X, Y);
-
-							for ( int c = 0; c < 4; c++ )
-							{
-								if (value[c] > imageMax[c]) {
-									value[c] = imageMax[c];
-								} else if (value[c] < imageMin[c]) {
-									value[c] = imageMin[c];
-								}
-							}
-						}
-					}
-
-					for ( int c = 0; c < 4; c++ )
-					{
-						destImage.set(index[c], value[c]);
-						index[c] += 4;
-					}
-				}
-			}
-		}
-
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-
-	}
-
-
-	/**
-	 * Transforms and resamples volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 */
-	private void transformAlgorithmBspline3D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j, k;
-		int iAdj, jAdj, kAdj;
-		double X, Y, Z;
-		double value;
-		double imm, jmm, kmm;
-		final int mod = Math.max(1, oZdim / 50);
-		final AlgorithmBSpline Bspline = new AlgorithmBSpline();
-		double imageMin;
-		double imageMax;
-
-		srcImage.calcMinMax();
-		imageMin = srcImage.getMin();
-		imageMax = srcImage.getMax();
-
-		double k1, k2, k3, j1, j2, j3;
-
-		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T03 = (double)kTM.M03;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-		T13 = (double)kTM.M13;
-		T20 = (double)kTM.M20;
-		T21 = (double)kTM.M21;
-		T22 = (double)kTM.M22;
-		T23 = (double)kTM.M23;
-
-		Bspline.setup3DBSpline(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
-
-		final double invXRes = 1.0 / iXres;
-		final double invYRes = 1.0 / iYres;
-		final double invZRes = 1.0 / iZres;
-
-		int index = 0;
-
-		for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-			if ( ( (k % mod) == 0)) {
-				fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
-			}
-
-			if (pad) {
-				kAdj = k - AlgorithmTransform.margins[2];
-			} else {
-				kAdj = k;
-			}
-
-			kmm = kAdj * oZres;
-			k1 = (kmm * T02) + T03;
-			k2 = (kmm * T12) + T13;
-			k3 = (kmm * T22) + T23;
-
-			for (j = 0; (j < oYdim) && !threadStopped; j++) {
-				if (pad) {
-					jAdj = j - AlgorithmTransform.margins[1];
-				} else {
-					jAdj = j;
-				}
-				jmm = jAdj * oYres;
-				j1 = (jmm * T01) + k1;
-				j2 = (jmm * T11) + k2;
-				j3 = (jmm * T21) + k3;
-
-				for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-					// transform i,j,k
-					value = fillValue; // if voxel is transformed out of bounds
-					if (pad) {
-						iAdj = i - AlgorithmTransform.margins[0];
-					} else {
-						iAdj = i;
-					}
-					imm = iAdj * oXres;
-					X = (j1 + (imm * T00)) * invXRes;
-
-					if ( (X > -0.5f) && (X < iXdim)) {
-						Y = (j2 + (imm * T10)) * invYRes;
-
-						if ( (Y > -0.5f) && (Y < iYdim)) {
-							Z = (j3 + (imm * T20)) * invZRes;
-
-							if ( (Z > -0.5f) && (Z < iZdim)) {
-								//value = splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim, degree);
-								value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
-
-								if (value > imageMax) {
-									value = imageMax;
-								} else if (value < imageMin) {
-									value = imageMin;
-								}
-							}
-						}
-					}
-
-					destImage.set(index++, value);
-				}
-			}
-		}
-
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-
-	}
-
-
-	/**
-	 * Transforms and resamples volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 * */
-	private void transformAlgorithmBspline3DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j, k;
-		int iAdj, jAdj, kAdj;
-		double X, Y, Z;
-		double[] value = new double[4];
-		double imm, jmm, kmm;
-		final int mod = Math.max(1, oZdim / 50);
-		final double[] imageMin = new double[4];
-		final double[] imageMax = new double[4];
-
-		double k1, k2, k3, j1, j2, j3;
-
-		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T03 = (double)kTM.M03;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-		T13 = (double)kTM.M13;
-		T20 = (double)kTM.M20;
-		T21 = (double)kTM.M21;
-		T22 = (double)kTM.M22;
-		T23 = (double)kTM.M23;
-
-		final double invXRes = 1.0 / iXres;
-		final double invYRes = 1.0 / iYres;
-		final double invZRes = 1.0 / iZres;
-
-		final int[] index = new int[4];
-		index[0] = 0;
-		index[1] = 1;
-		index[2] = 2;
-		index[3] = 3;
-
-		imageMin[0] = srcImage.getMinA();
-		imageMin[1] = srcImage.getMinR();
-		imageMin[2] = srcImage.getMinG();
-		imageMin[3] = srcImage.getMinB();
-		imageMax[0] = srcImage.getMaxA();
-		imageMax[1] = srcImage.getMaxR();
-		imageMax[2] = srcImage.getMaxG();
-		imageMax[3] = srcImage.getMaxB();
-
-		AlgorithmBSpline Bspline = new AlgorithmBSpline();
-		Bspline.setup3DBSplineC(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
-
-		for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-			if ( ( (k % mod) == 0)) {
-				fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
-			}
-
-			if (pad) {
-				kAdj = k - AlgorithmTransform.margins[2];
-			} else {
-				kAdj = k;
-			}
-
-			kmm = kAdj * oZres;
-			k1 = (kmm * T02) + T03;
-			k2 = (kmm * T12) + T13;
-			k3 = (kmm * T22) + T23;
-
-			for (j = 0; (j < oYdim) && !threadStopped; j++) {
-				if (pad) {
-					jAdj = j - AlgorithmTransform.margins[1];
-				} else {
-					jAdj = j;
-				}
-				jmm = jAdj * oYres;
-				j1 = (jmm * T01) + k1;
-				j2 = (jmm * T11) + k2;
-				j3 = (jmm * T21) + k3;
-
-				for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-					// transform i,j,k
-					value[0] = fillValue; // if voxel is transformed out of bounds
-					value[1] = fillValue; // if voxel is transformed out of bounds
-					value[2] = fillValue; // if voxel is transformed out of bounds
-					value[3] = fillValue; // if voxel is transformed out of bounds
-					if (pad) {
-						iAdj = i - AlgorithmTransform.margins[0];
-					} else {
-						iAdj = i;
-					}
-					imm = iAdj * oXres;
-					X = (j1 + (imm * T00)) * invXRes;
-
-					if ( (X > -0.5f) && (X < iXdim)) {
-						Y = (j2 + (imm * T10)) * invYRes;
-
-						if ( (Y > -0.5f) && (Y < iYdim)) {
-							Z = (j3 + (imm * T20)) * invZRes;
-
-							if ( (Z > -0.5f) && (Z < iZdim)) {
-								value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
-								for ( int c = 0; c < 4; c++ )
-								{
-									if (value[c] > imageMax[c]) {
-										value[c] = imageMax[c];
-									} else if (value[c] < imageMin[c]) {
-										value[c] = imageMin[c];
-									}
-								}
-							}
-						}
-					}
-					for ( int c = 0; c < 4; c++ )
-					{
-						destImage.set(index[c], value[c]);
-						index[c] += 4;
-					}
-				}
-			}
-		}
-
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-	}
-
-	/**
-	 * Transforms and resamples volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 */
-	private void transformAlgorithmBspline4D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j, k;
-		int iAdj, jAdj, kAdj;
-		double X, Y, Z;
-		double value;
-		double imm, jmm, kmm;
-		int x, y, z;
-		double volMin;
-		double volMax;
-		int t;
-
-		double k1, k2, k3, j1, j2, j3;
-
-		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T03 = (double)kTM.M03;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-		T13 = (double)kTM.M13;
-		T20 = (double)kTM.M20;
-		T21 = (double)kTM.M21;
-		T22 = (double)kTM.M22;
-		T23 = (double)kTM.M23;
-
-		AlgorithmBSpline Bspline = new AlgorithmBSpline();
-
-		final double invXRes = 1.0 / iXres;
-		final double invYRes = 1.0 / iYres;
-		final double invZRes = 1.0 / iZres;
-
-		int index = 0;
-
-		int iProgress = iTdim * oZdim;
-		for (t = 0; t < iTdim; t++) {
-
-			if ( (t >= 1)) {
-
-				try {
-					srcImage.exportData(t * imgLength, imgLength, imgBuf);
-				} catch (final IOException error) {
-					displayError("Algorithm Transform: Image(s) locked");
-					setCompleted(false);
-
-					return;
-				}
-			}
-
-			volMin = Float.MAX_VALUE;
-			volMax = -Float.MAX_VALUE;
-
-			for (z = 0; z < iZdim; z++) {
-				for (y = 0; y < iYdim; y++) {
-					for (x = 0; x < iXdim; x++) {
-						if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] > volMax) {
-							volMax = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
-						}
-						if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] < volMin) {
-							volMin = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
-						}
-					}
-				}
-			}
-
-			Bspline.setup3DBSpline(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
-
-			for (k = 0; (k < oZdim) && !threadStopped; k++) {
-				fireProgressStateChanged((int) ( ((float) (t*oZdim + k) / iProgress * 100) + 0.5));
-				if (pad) {
-					kAdj = k - AlgorithmTransform.margins[2];
-				} else {
-					kAdj = k;
-				}
-				kmm = kAdj * oZres;
-				k1 = (kmm * T02) + T03;
-				k2 = (kmm * T12) + T13;
-				k3 = (kmm * T22) + T23;
-
-				for (j = 0; (j < oYdim) && !threadStopped; j++) {
-					if (pad) {
-						jAdj = j - AlgorithmTransform.margins[1];
-					} else {
-						jAdj = j;
-					}
-					jmm = jAdj * oYres;
-					j1 = (jmm * T01) + k1;
-					j2 = (jmm * T11) + k2;
-					j3 = (jmm * T21) + k3;
-
-					for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-						// transform i,j,k
-						value = fillValue; // if voxel is transformed out of bounds
-						if (pad) {
-							iAdj = i - AlgorithmTransform.margins[0];
-						} else {
-							iAdj = i;
-						}
-						imm = iAdj * oXres;
-						X = (j1 + (imm * T00)) * invXRes;
-
-						if ( (X > -0.5f) && (X < iXdim)) {
-							Y = (j2 + (imm * T10)) * invYRes;
-
-							if ( (Y > -0.5f) && (Y < iYdim)) {
-								Z = (j3 + (imm * T20)) * invZRes;
-
-								if ( (Z > -0.5f) && (Z < iZdim)) {
-									value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
-									if (value > volMax) {
-										value = volMax;
-									} else if (value < volMin) {
-										value = volMin;
-									}
-								}
-							}
-						}
-
-						destImage.set(index++, value);
-					}
-				}
-			}
-		}
-
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-
-	}
-
-	/**
-	 * Transforms and resamples color volume using Bspline interpolation.
-	 * 
-	 * @param imgBuf image array
-	 * @param kTM transformation matrix to be applied
-	 * @param degree degree of polynomial
-	 */
-	private void transformAlgorithmBspline4DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
-		int i, j, k;
-		int iAdj, jAdj, kAdj;
-		double X, Y, Z;
-		double[] value = new double[4];
-		double imm, jmm, kmm;
-		int x, y, z, c;
-		final double volMin[] = new double[4];
-		final double volMax[] = new double[4];
-		int t;
-
-		double k1, k2, k3, j1, j2, j3;
-
-		double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
-
-		T00 = (double)kTM.M00;
-		T01 = (double)kTM.M01;
-		T02 = (double)kTM.M02;
-		T03 = (double)kTM.M03;
-		T10 = (double)kTM.M10;
-		T11 = (double)kTM.M11;
-		T12 = (double)kTM.M12;
-		T13 = (double)kTM.M13;
-		T20 = (double)kTM.M20;
-		T21 = (double)kTM.M21;
-		T22 = (double)kTM.M22;
-		T23 = (double)kTM.M23;
-
-		AlgorithmBSpline Bspline = new AlgorithmBSpline();
-
-		final double invXRes = 1.0 / iXres;
-		final double invYRes = 1.0 / iYres;
-		final double invZRes = 1.0 / iZres;
-
-		final int index[] = new int[4];
-		index[0] = 0;
-		index[1] = 1;
-		index[2] = 2;
-		index[3] = 3;
-
-		int iProgress = iTdim * oZdim;
-		for (t = 0; t < iTdim; t++) {
-
-			if ( (t >= 1)) {
-
-				try {
-					srcImage.exportData(t * imgLength, imgLength, imgBuf);
-				} catch (final IOException error) {
-					displayError("Algorithm Transform: Image(s) locked");
-					setCompleted(false);
-
-					return;
-				}
-			}
-
-			for (c = 0; c < 4; c++) {
-				volMin[c] = Float.MAX_VALUE;
-				volMax[c] = -Float.MAX_VALUE;
-			}
-			for (z = 0; z < iZdim; z++) {
-				for (y = 0; y < iYdim; y++) {
-					for (x = 0; x < iXdim; x++) {
-						for (c = 0; c < 4; c++) {
-							if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] > volMax[c]) {
-								volMax[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
-							}
-
-							if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] < volMin[c]) {
-								volMin[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
-							}
-						}
-					}
-				}
-			}
-
-			Bspline.setup3DBSplineC(imgBuf, new int[]{iXdim,iYdim,iZdim}, degree);
-
-			for (k = 0; (k < oZdim) && !threadStopped; k++) {
-				fireProgressStateChanged((int) ( ((float) (t*oZdim + k) / iProgress * 100) + 0.5));
-				
-				if (pad) {
-					kAdj = k - AlgorithmTransform.margins[2];
-				} else {
-					kAdj = k;
-				}
-				kmm = kAdj * oZres;
-				k1 = (kmm * T02) + T03;
-				k2 = (kmm * T12) + T13;
-				k3 = (kmm * T22) + T23;
-
-				for (j = 0; (j < oYdim) && !threadStopped; j++) {
-					if (pad) {
-						jAdj = j - AlgorithmTransform.margins[1];
-					} else {
-						jAdj = j;
-					}
-					jmm = jAdj * oYres;
-					j1 = (jmm * T01) + k1;
-					j2 = (jmm * T11) + k2;
-					j3 = (jmm * T21) + k3;
-
-					for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-						// transform i,j,k
-						value[0] = fillValue; // if voxel is transformed out of bounds
-						value[1] = fillValue; // if voxel is transformed out of bounds
-						value[2] = fillValue; // if voxel is transformed out of bounds
-						value[3] = fillValue; // if voxel is transformed out of bounds
-						if (pad) {
-							iAdj = i - AlgorithmTransform.margins[0];
-						} else {
-							iAdj = i;
-						}
-						imm = iAdj * oXres;
-						X = (j1 + (imm * T00)) * invXRes;
-
-						if ( (X > -0.5f) && (X < iXdim)) {
-							Y = (j2 + (imm * T10)) * invYRes;
-
-							if ( (Y > -0.5f) && (Y < iYdim)) {
-								Z = (j3 + (imm * T20)) * invZRes;
-
-								if ( (Z > -0.5f) && (Z < iZdim)) {
-									value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
-									for ( c = 0; c < 4; c++ )
-									{
-										if (value[c] > volMax[c]) {
-											value[c] = volMax[c];
-										} else if (value[c] < volMin[c]) {
-											value[c] = volMin[c];
-										}
-									}
-								}
-							}
-						}
-						for ( c = 0; c < 4; c++ )
-						{								
-							destImage.set(index[c], value[c]);
-							index[c] += 4;
-						}
-					}
-				}
-			}
-		}
-		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
-	}
+
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     */
+    private void transformAlgorithmBspline2D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j;
+        int iAdj, jAdj;
+        double X, Y;
+        double value;
+        double imm, jmm;
+        final int mod = Math.max(1, oYdim / 50);
+
+        double j1, j2;
+        double T00, T01, T02, T10, T11, T12;
+        int nz;
+        int x, y, z;
+        double sliceMin;
+        double sliceMax;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
+        if (srcImage.getNDims() == 2) {
+            nz = 1;
+        } else if (srcImage.getNDims() == 3) {
+            nz = srcImage.getExtents()[2];
+        } else {
+            nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
+        }
+
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+        final float invXRes = 1 / iXres;
+        final float invYRes = 1 / iYres;
+
+        int index = 0;
+
+        for (z = 0; z < nz; z++) {
+
+            if (z >= 1) {
+
+                try {
+                    srcImage.exportData(z * imgLength, imgLength, imgBuf);
+                } catch (final IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+            }
+
+            sliceMin = Float.MAX_VALUE;
+            sliceMax = -Float.MAX_VALUE;
+
+            for (y = 0; y < iYdim; y++) {
+                for (x = 0; x < iXdim; x++) {
+                    if (imgBuf[x + (iXdim * y)] > sliceMax) {
+                        sliceMax = imgBuf[x + (iXdim * y)];
+                    }
+                    if (imgBuf[x + (iXdim * y)] < sliceMin) {
+                        sliceMin = imgBuf[x + (iXdim * y)];
+                    }
+                }
+            }
+
+            Bspline.setup2DBSpline(imgBuf, new int[] {iXdim, iYdim}, degree);
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                if ( ( (j % mod) == 0)) {
+                    fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
+                }
+
+                if (pad) {
+                    jAdj = j - AlgorithmTransform.margins[1];
+                } else {
+                    jAdj = j;
+                }
+
+                jmm = jAdj * oYres;
+                j1 = (jmm * T01) + T02;
+                j2 = (jmm * T11) + T12;
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    // transform i,j,z
+                    value = fillValue; // if voxel is transformed out of bounds
+                    if (pad) {
+                        iAdj = i - AlgorithmTransform.margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ( (X > -0.5f) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                            value = Bspline.bSpline2D(0, 0, X, Y);
+
+                            if (value > sliceMax) {
+                                value = sliceMax;
+                            } else if (value < sliceMin) {
+                                value = sliceMin;
+                            }
+                        }
+                    }
+
+                    destImage.set(index++, value);
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+
+    }
+
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     */
+    private void transformAlgorithmBspline2DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j;
+        int iAdj, jAdj;
+        double X, Y;
+        double[] value = new double[4];
+        double imm, jmm;
+        final int mod = Math.max(1, oYdim / 50);
+
+        double j1, j2;
+        double T00, T01, T02, T10, T11, T12;
+        int nz;
+        int x, y, z;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
+        if (srcImage.getNDims() == 2) {
+            nz = 1;
+        } else if (srcImage.getNDims() == 3) {
+            nz = srcImage.getExtents()[2];
+        } else {
+            nz = srcImage.getExtents()[2] * srcImage.getExtents()[3];
+        }
+
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+
+        final int[] index = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
+
+        final double[] imageMin = new double[4];
+        final double[] imageMax = new double[4];
+
+        for (z = 0; z < nz; z++) {
+
+            if (z >= 1) {
+
+                try {
+                    srcImage.exportData(z * imgLength, imgLength, imgBuf);
+                } catch (final IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+            }
+            for (int c = 0; c < 4; c++) {
+                imageMin[c] = Float.MAX_VALUE;
+                imageMax[c] = Float.MIN_VALUE;
+            }
+
+            for (y = 0; y < iYdim; y++) {
+                for (x = 0; x < iXdim; x++) {
+                    for (int c = 0; c < 4; c++) {
+                        if (imgBuf[4 * (y * iXdim + x) + c] > imageMax[c]) {
+                            imageMax[c] = imgBuf[4 * (y * iXdim + x) + c];
+                        }
+                        if (imgBuf[4 * (y * iXdim + x) + c] < imageMin[c]) {
+                            imageMin[c] = imgBuf[4 * (y * iXdim + x) + c];
+                        }
+                    }
+                }
+            }
+
+            Bspline.setup2DBSplineC(imgBuf, new int[] {iXdim, iYdim}, degree);
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+
+                if ( ( (j % mod) == 0)) {
+                    fireProgressStateChanged((int) ( ( ((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) + 0.5f));
+                }
+
+                if (pad) {
+                    jAdj = j - AlgorithmTransform.margins[1];
+                } else {
+                    jAdj = j;
+                }
+
+                jmm = jAdj * oYres;
+                j1 = (jmm * T01) + T02;
+                j2 = (jmm * T11) + T12;
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    // transform i,j,z
+                    value[0] = fillValue; // if voxel is transformed out of bounds
+                    value[1] = fillValue; // if voxel is transformed out of bounds
+                    value[2] = fillValue; // if voxel is transformed out of bounds
+                    value[3] = fillValue; // if voxel is transformed out of bounds
+                    if (pad) {
+                        iAdj = i - AlgorithmTransform.margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ( (X > -0.5f) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                            value = Bspline.bSpline2DC(0, 0, X, Y);
+
+                            for (int c = 0; c < 4; c++) {
+                                if (value[c] > imageMax[c]) {
+                                    value[c] = imageMax[c];
+                                } else if (value[c] < imageMin[c]) {
+                                    value[c] = imageMin[c];
+                                }
+                            }
+                        }
+                    }
+
+                    for (int c = 0; c < 4; c++) {
+                        destImage.set(index[c], value[c]);
+                        index[c] += 4;
+                    }
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+
+    }
+
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     */
+    private void transformAlgorithmBspline3D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
+        final int mod = Math.max(1, oZdim / 50);
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+        double imageMin;
+        double imageMax;
+
+        srcImage.calcMinMax();
+        imageMin = srcImage.getMin();
+        imageMax = srcImage.getMax();
+
+        double k1, k2, k3, j1, j2, j3;
+
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        Bspline.setup3DBSpline(imgBuf, new int[] {iXdim, iYdim, iZdim}, degree);
+
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+
+        int index = 0;
+
+        for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+            if ( ( (k % mod) == 0)) {
+                fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
+            }
+
+            if (pad) {
+                kAdj = k - AlgorithmTransform.margins[2];
+            } else {
+                kAdj = k;
+            }
+
+            kmm = kAdj * oZres;
+            k1 = (kmm * T02) + T03;
+            k2 = (kmm * T12) + T13;
+            k3 = (kmm * T22) + T23;
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                if (pad) {
+                    jAdj = j - AlgorithmTransform.margins[1];
+                } else {
+                    jAdj = j;
+                }
+                jmm = jAdj * oYres;
+                j1 = (jmm * T01) + k1;
+                j2 = (jmm * T11) + k2;
+                j3 = (jmm * T21) + k3;
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    // transform i,j,k
+                    value = fillValue; // if voxel is transformed out of bounds
+                    if (pad) {
+                        iAdj = i - AlgorithmTransform.margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ( (X > -0.5f) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                            Z = (j3 + (imm * T20)) * invZRes;
+
+                            if ( (Z > -0.5f) && (Z < iZdim)) {
+                                // value = splineAlg.interpolatedValue(image, X, Y, Z, iXdim, iYdim, iZdim, degree);
+                                value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
+
+                                if (value > imageMax) {
+                                    value = imageMax;
+                                } else if (value < imageMin) {
+                                    value = imageMin;
+                                }
+                            }
+                        }
+                    }
+
+                    destImage.set(index++, value);
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+
+    }
+
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     * */
+    private void transformAlgorithmBspline3DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
+        final int mod = Math.max(1, oZdim / 50);
+        final double[] imageMin = new double[4];
+        final double[] imageMax = new double[4];
+
+        double k1, k2, k3, j1, j2, j3;
+
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+
+        final int[] index = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
+
+        imageMin[0] = srcImage.getMinA();
+        imageMin[1] = srcImage.getMinR();
+        imageMin[2] = srcImage.getMinG();
+        imageMin[3] = srcImage.getMinB();
+        imageMax[0] = srcImage.getMaxA();
+        imageMax[1] = srcImage.getMaxR();
+        imageMax[2] = srcImage.getMaxG();
+        imageMax[3] = srcImage.getMaxB();
+
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+        Bspline.setup3DBSplineC(imgBuf, new int[] {iXdim, iYdim, iZdim}, degree);
+
+        for (k = 0; (k < oZdim) && !threadStopped; k++) {
+
+            if ( ( (k % mod) == 0)) {
+                fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5f));
+            }
+
+            if (pad) {
+                kAdj = k - AlgorithmTransform.margins[2];
+            } else {
+                kAdj = k;
+            }
+
+            kmm = kAdj * oZres;
+            k1 = (kmm * T02) + T03;
+            k2 = (kmm * T12) + T13;
+            k3 = (kmm * T22) + T23;
+
+            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                if (pad) {
+                    jAdj = j - AlgorithmTransform.margins[1];
+                } else {
+                    jAdj = j;
+                }
+                jmm = jAdj * oYres;
+                j1 = (jmm * T01) + k1;
+                j2 = (jmm * T11) + k2;
+                j3 = (jmm * T21) + k3;
+
+                for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                    // transform i,j,k
+                    value[0] = fillValue; // if voxel is transformed out of bounds
+                    value[1] = fillValue; // if voxel is transformed out of bounds
+                    value[2] = fillValue; // if voxel is transformed out of bounds
+                    value[3] = fillValue; // if voxel is transformed out of bounds
+                    if (pad) {
+                        iAdj = i - AlgorithmTransform.margins[0];
+                    } else {
+                        iAdj = i;
+                    }
+                    imm = iAdj * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+
+                    if ( (X > -0.5f) && (X < iXdim)) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ( (Y > -0.5f) && (Y < iYdim)) {
+                            Z = (j3 + (imm * T20)) * invZRes;
+
+                            if ( (Z > -0.5f) && (Z < iZdim)) {
+                                value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
+                                for (int c = 0; c < 4; c++) {
+                                    if (value[c] > imageMax[c]) {
+                                        value[c] = imageMax[c];
+                                    } else if (value[c] < imageMin[c]) {
+                                        value[c] = imageMin[c];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    for (int c = 0; c < 4; c++) {
+                        destImage.set(index[c], value[c]);
+                        index[c] += 4;
+                    }
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+    }
+
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     */
+    private void transformAlgorithmBspline4D(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        double X, Y, Z;
+        double value;
+        double imm, jmm, kmm;
+        int x, y, z;
+        double volMin;
+        double volMax;
+        int t;
+
+        double k1, k2, k3, j1, j2, j3;
+
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+
+        int index = 0;
+
+        final int iProgress = iTdim * oZdim;
+        for (t = 0; t < iTdim; t++) {
+
+            if ( (t >= 1)) {
+
+                try {
+                    srcImage.exportData(t * imgLength, imgLength, imgBuf);
+                } catch (final IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+            }
+
+            volMin = Float.MAX_VALUE;
+            volMax = -Float.MAX_VALUE;
+
+            for (z = 0; z < iZdim; z++) {
+                for (y = 0; y < iYdim; y++) {
+                    for (x = 0; x < iXdim; x++) {
+                        if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] > volMax) {
+                            volMax = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
+                        }
+                        if (imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)] < volMin) {
+                            volMin = imgBuf[x + (iXdim * y) + (iXdim * iYdim * z)];
+                        }
+                    }
+                }
+            }
+
+            Bspline.setup3DBSpline(imgBuf, new int[] {iXdim, iYdim, iZdim}, degree);
+
+            for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                fireProgressStateChanged((int) ( ((float) (t * oZdim + k) / iProgress * 100) + 0.5));
+                if (pad) {
+                    kAdj = k - AlgorithmTransform.margins[2];
+                } else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
+                k1 = (kmm * T02) + T03;
+                k2 = (kmm * T12) + T13;
+                k3 = (kmm * T22) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    if (pad) {
+                        jAdj = j - AlgorithmTransform.margins[1];
+                    } else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + k1;
+                    j2 = (jmm * T11) + k2;
+                    j3 = (jmm * T21) + k3;
+
+                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                        // transform i,j,k
+                        value = fillValue; // if voxel is transformed out of bounds
+                        if (pad) {
+                            iAdj = i - AlgorithmTransform.margins[0];
+                        } else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+
+                        if ( (X > -0.5f) && (X < iXdim)) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+
+                            if ( (Y > -0.5f) && (Y < iYdim)) {
+                                Z = (j3 + (imm * T20)) * invZRes;
+
+                                if ( (Z > -0.5f) && (Z < iZdim)) {
+                                    value = Bspline.bSpline3D(0, 0, 0, X, Y, Z);
+                                    if (value > volMax) {
+                                        value = volMax;
+                                    } else if (value < volMin) {
+                                        value = volMin;
+                                    }
+                                }
+                            }
+                        }
+
+                        destImage.set(index++, value);
+                    }
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+
+    }
+
+    /**
+     * Transforms and resamples color volume using Bspline interpolation.
+     * 
+     * @param imgBuf image array
+     * @param kTM transformation matrix to be applied
+     * @param degree degree of polynomial
+     */
+    private void transformAlgorithmBspline4DC(final double[] imgBuf, final TransMatrix kTM, final int degree) {
+        int i, j, k;
+        int iAdj, jAdj, kAdj;
+        double X, Y, Z;
+        double[] value = new double[4];
+        double imm, jmm, kmm;
+        int x, y, z, c;
+        final double volMin[] = new double[4];
+        final double volMax[] = new double[4];
+        int t;
+
+        double k1, k2, k3, j1, j2, j3;
+
+        double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
+
+        final AlgorithmBSpline Bspline = new AlgorithmBSpline();
+
+        final double invXRes = 1.0 / iXres;
+        final double invYRes = 1.0 / iYres;
+        final double invZRes = 1.0 / iZres;
+
+        final int index[] = new int[4];
+        index[0] = 0;
+        index[1] = 1;
+        index[2] = 2;
+        index[3] = 3;
+
+        final int iProgress = iTdim * oZdim;
+        for (t = 0; t < iTdim; t++) {
+
+            if ( (t >= 1)) {
+
+                try {
+                    srcImage.exportData(t * imgLength, imgLength, imgBuf);
+                } catch (final IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+
+                    return;
+                }
+            }
+
+            for (c = 0; c < 4; c++) {
+                volMin[c] = Float.MAX_VALUE;
+                volMax[c] = -Float.MAX_VALUE;
+            }
+            for (z = 0; z < iZdim; z++) {
+                for (y = 0; y < iYdim; y++) {
+                    for (x = 0; x < iXdim; x++) {
+                        for (c = 0; c < 4; c++) {
+                            if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] > volMax[c]) {
+                                volMax[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
+                            }
+
+                            if (imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c] < volMin[c]) {
+                                volMin[c] = imgBuf[4 * (x + (iXdim * y) + (iXdim * iYdim * z)) + c];
+                            }
+                        }
+                    }
+                }
+            }
+
+            Bspline.setup3DBSplineC(imgBuf, new int[] {iXdim, iYdim, iZdim}, degree);
+
+            for (k = 0; (k < oZdim) && !threadStopped; k++) {
+                fireProgressStateChanged((int) ( ((float) (t * oZdim + k) / iProgress * 100) + 0.5));
+
+                if (pad) {
+                    kAdj = k - AlgorithmTransform.margins[2];
+                } else {
+                    kAdj = k;
+                }
+                kmm = kAdj * oZres;
+                k1 = (kmm * T02) + T03;
+                k2 = (kmm * T12) + T13;
+                k3 = (kmm * T22) + T23;
+
+                for (j = 0; (j < oYdim) && !threadStopped; j++) {
+                    if (pad) {
+                        jAdj = j - AlgorithmTransform.margins[1];
+                    } else {
+                        jAdj = j;
+                    }
+                    jmm = jAdj * oYres;
+                    j1 = (jmm * T01) + k1;
+                    j2 = (jmm * T11) + k2;
+                    j3 = (jmm * T21) + k3;
+
+                    for (i = 0; (i < oXdim) && !threadStopped; i++) {
+
+                        // transform i,j,k
+                        value[0] = fillValue; // if voxel is transformed out of bounds
+                        value[1] = fillValue; // if voxel is transformed out of bounds
+                        value[2] = fillValue; // if voxel is transformed out of bounds
+                        value[3] = fillValue; // if voxel is transformed out of bounds
+                        if (pad) {
+                            iAdj = i - AlgorithmTransform.margins[0];
+                        } else {
+                            iAdj = i;
+                        }
+                        imm = iAdj * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+
+                        if ( (X > -0.5f) && (X < iXdim)) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+
+                            if ( (Y > -0.5f) && (Y < iYdim)) {
+                                Z = (j3 + (imm * T20)) * invZRes;
+
+                                if ( (Z > -0.5f) && (Z < iZdim)) {
+                                    value = Bspline.bSpline3DC(0, 0, 0, X, Y, Z);
+                                    for (c = 0; c < 4; c++) {
+                                        if (value[c] > volMax[c]) {
+                                            value[c] = volMax[c];
+                                        } else if (value[c] < volMin[c]) {
+                                            value[c] = volMin[c];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        for (c = 0; c < 4; c++) {
+                            destImage.set(index[c], value[c]);
+                            index[c] += 4;
+                        }
+                    }
+                }
+            }
+        }
+        Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
+    }
 
     /**
      * Transforms and resamples volume using cubic Lagrangian interpolation.
@@ -8084,12 +8070,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
 
@@ -8163,12 +8149,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -8220,10 +8206,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = (float)value[0];
-                imgBuf2[temp3 + 1] = (float)value[1];
-                imgBuf2[temp3 + 2] = (float)value[2];
-                imgBuf2[temp3 + 3] = (float)value[3];
+                imgBuf2[temp3] = (float) value[0];
+                imgBuf2[temp3 + 1] = (float) value[1];
+                imgBuf2[temp3 + 2] = (float) value[2];
+                imgBuf2[temp3 + 3] = (float) value[3];
             }
         }
 
@@ -8262,18 +8248,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double k1, k2, k3, j1, j2, j3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         CLag.setup3DCubicLagrangian(imgBuf, inVolExtents, clip);
 
@@ -8371,18 +8357,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -8453,10 +8439,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = (float)value[0];
-                    imgBuf2[temp4 + 1] = (float)value[1];
-                    imgBuf2[temp4 + 2] = (float)value[2];
-                    imgBuf2[temp4 + 3] = (float)value[3];
+                    imgBuf2[temp4] = (float) value[0];
+                    imgBuf2[temp4 + 1] = (float) value[1];
+                    imgBuf2[temp4 + 2] = (float) value[2];
+                    imgBuf2[temp4 + 3] = (float) value[3];
                 }
             }
         }
@@ -8498,12 +8484,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8593,12 +8579,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8650,10 +8636,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = (float)value[0];
-                    imgBuf2[temp3 + 1] = (float)value[1];
-                    imgBuf2[temp3 + 2] = (float)value[2];
-                    imgBuf2[temp3 + 3] = (float)value[3];
+                    imgBuf2[temp3] = (float) value[0];
+                    imgBuf2[temp3 + 1] = (float) value[1];
+                    imgBuf2[temp3 + 2] = (float) value[2];
+                    imgBuf2[temp3 + 3] = (float) value[3];
                 } // for i
             } // for j
 
@@ -8703,18 +8689,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2, temp3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -8826,18 +8812,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -8911,10 +8897,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = (float)value[0];
-                        imgBuffer2[temp4 + 1] = (float)value[1];
-                        imgBuffer2[temp4 + 2] = (float)value[2];
-                        imgBuffer2[temp4 + 3] = (float)value[3];
+                        imgBuffer2[temp4] = (float) value[0];
+                        imgBuffer2[temp4 + 1] = (float) value[1];
+                        imgBuffer2[temp4 + 2] = (float) value[2];
+                        imgBuffer2[temp4 + 3] = (float) value[3];
                     }
                 }
             }
@@ -8965,12 +8951,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -9057,12 +9043,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -9113,10 +9099,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = (float)value[0];
-                        imgBuf2[temp3 + 1] = (float)value[1];
-                        imgBuf2[temp3 + 2] = (float)value[2];
-                        imgBuf2[temp3 + 3] = (float)value[3];
+                        imgBuf2[temp3] = (float) value[0];
+                        imgBuf2[temp3 + 1] = (float) value[1];
+                        imgBuf2[temp3 + 2] = (float) value[2];
+                        imgBuf2[temp3 + 3] = (float) value[3];
                     } // for i
                 } // for j
 
@@ -9164,12 +9150,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -9243,12 +9229,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -9300,10 +9286,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = (float)value[0];
-                imgBuf2[temp3 + 1] = (float)value[1];
-                imgBuf2[temp3 + 2] = (float)value[2];
-                imgBuf2[temp3 + 3] = (float)value[3];
+                imgBuf2[temp3] = (float) value[0];
+                imgBuf2[temp3 + 1] = (float) value[1];
+                imgBuf2[temp3 + 2] = (float) value[2];
+                imgBuf2[temp3 + 3] = (float) value[3];
             }
         }
 
@@ -9343,18 +9329,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double i1, i2, i3, j1, j2, j3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         HLag.setup3DHepticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -9447,18 +9433,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -9529,10 +9515,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = (float)value[0];
-                    imgBuf2[temp4 + 1] = (float)value[1];
-                    imgBuf2[temp4 + 2] = (float)value[2];
-                    imgBuf2[temp4 + 3] = (float)value[3];
+                    imgBuf2[temp4] = (float) value[0];
+                    imgBuf2[temp4 + 1] = (float) value[1];
+                    imgBuf2[temp4 + 2] = (float) value[2];
+                    imgBuf2[temp4 + 3] = (float) value[3];
                 }
             }
         }
@@ -9574,12 +9560,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -9668,12 +9654,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -9725,10 +9711,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = (float)value[0];
-                    imgBuf2[temp3 + 1] = (float)value[1];
-                    imgBuf2[temp3 + 2] = (float)value[2];
-                    imgBuf2[temp3 + 3] = (float)value[3];
+                    imgBuf2[temp3] = (float) value[0];
+                    imgBuf2[temp3 + 1] = (float) value[1];
+                    imgBuf2[temp3 + 2] = (float) value[2];
+                    imgBuf2[temp3 + 3] = (float) value[3];
                 } // for i
             } // for j
 
@@ -9777,18 +9763,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2, temp3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -9900,18 +9886,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -9985,10 +9971,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = (float)value[0];
-                        imgBuffer2[temp4 + 1] = (float)value[1];
-                        imgBuffer2[temp4 + 2] =(float)value[2];
-                        imgBuffer2[temp4 + 3] = (float)value[3];
+                        imgBuffer2[temp4] = (float) value[0];
+                        imgBuffer2[temp4 + 1] = (float) value[1];
+                        imgBuffer2[temp4 + 2] = (float) value[2];
+                        imgBuffer2[temp4 + 3] = (float) value[3];
                     }
                 }
             }
@@ -10038,12 +10024,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10130,12 +10116,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10186,10 +10172,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = (float)value[0];
-                        imgBuf2[temp3 + 1] = (float)value[1];
-                        imgBuf2[temp3 + 2] = (float)value[2];
-                        imgBuf2[temp3 + 3] = (float)value[3];
+                        imgBuf2[temp3] = (float) value[0];
+                        imgBuf2[temp3 + 1] = (float) value[1];
+                        imgBuf2[temp3 + 2] = (float) value[2];
+                        imgBuf2[temp3 + 3] = (float) value[3];
                     } // for i
                 } // for j
 
@@ -10238,12 +10224,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         final int mod = Math.max(1, oXdim / 50);
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10272,10 +10258,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 value = fillValue;
                 X = (jmm * T01) + i1;
                 X = X * invXRes;
-                if ((X >= -0.5) && (X < iXdim)) {
+                if ( (X >= -0.5) && (X < iXdim)) {
                     Y = (jmm * T11) + i2;
                     Y = Y * invYRes;
-                    if ((Y >= -0.5) && (Y < iYdim)) {
+                    if ( (Y >= -0.5) && (Y < iYdim)) {
                         roundX = (int) (X + 0.5);
                         roundY = (int) (Y + 0.5);
 
@@ -10316,12 +10302,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         final int mod = Math.max(1, oXdim / 50);
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10352,28 +10338,28 @@ public class AlgorithmTransform extends AlgorithmBase {
                 bValue = fillValue;
                 X = (jmm * T01) + i1;
                 X = X * invXRes;
-                if ((X >= -0.5) && (X < iXdim)) {
+                if ( (X >= -0.5) && (X < iXdim)) {
                     Y = (jmm * T11) + i2;
                     Y = Y * invYRes;
-                    if ((Y >= -0.5) && (Y < iYdim)) {
+                    if ( (Y >= -0.5) && (Y < iYdim)) {
                         roundX = (int) (X + 0.5);
                         roundY = (int) (Y + 0.5);
 
                         xOffset = Math.min(roundX, iXdim - 1);
                         yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                        inputSum = 4*(xOffset + yOffset);
-                        aValue = (float)imgBuf[inputSum];
-                        rValue = (float)imgBuf[inputSum+1];
-                        gValue = (float)imgBuf[inputSum+2];
-                        bValue = (float)imgBuf[inputSum+3];
+                        inputSum = 4 * (xOffset + yOffset);
+                        aValue = (float) imgBuf[inputSum];
+                        rValue = (float) imgBuf[inputSum + 1];
+                        gValue = (float) imgBuf[inputSum + 2];
+                        bValue = (float) imgBuf[inputSum + 3];
                     } // if ((Y >= -0.5) && (Y < iYdim))
                 } // if ((X >= -0.5) && (X < iXdim))
-                outputSum = 4*(i + (oXdim *j));
+                outputSum = 4 * (i + (oXdim * j));
                 imgBuf2[outputSum] = aValue;
-                imgBuf2[outputSum+1] = rValue;
-                imgBuf2[outputSum+2] = gValue;
-                imgBuf2[outputSum+3] = bValue;
-                
+                imgBuf2[outputSum + 1] = rValue;
+                imgBuf2[outputSum + 2] = gValue;
+                imgBuf2[outputSum + 3] = bValue;
+
             }
         }
 
@@ -10408,25 +10394,25 @@ public class AlgorithmTransform extends AlgorithmBase {
         final double invXRes = 1.0 / iXres;
         final double invYRes = 1.0 / iYres;
         final double invZRes = 1.0 / iZres;
-        
+
         final int mod = Math.max(1, oXdim / 50);
 
         sliceSize = iXdim * iYdim;
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10467,18 +10453,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value = fillValue;
                     X = (kmm * T02) + j1;
                     X = X * invXRes;
-                    if ((X >= -0.5) && (X < iXdim)) {
+                    if ( (X >= -0.5) && (X < iXdim)) {
                         Y = (kmm * T12) + j2;
                         Y = Y * invYRes;
-                        if ((Y >= -0.5) && (Y < iYdim)) {
+                        if ( (Y >= -0.5) && (Y < iYdim)) {
                             Z = (kmm * T22) + j3;
                             Z = Z * invZRes;
-                            if ((Z >= -0.5) && (Z < iZdim)) {
-        
+                            if ( (Z >= -0.5) && (Z < iZdim)) {
+
                                 roundX = (int) (X + 0.5);
                                 roundY = (int) (Y + 0.5);
                                 roundZ = (int) (Z + 0.5);
-                            
+
                                 xOffset = Math.min(roundX, iXdim - 1);
                                 yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                                 zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
@@ -10526,18 +10512,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -10578,33 +10564,33 @@ public class AlgorithmTransform extends AlgorithmBase {
                     bValue = fillValue;
                     X = (kmm * T02) + j1;
                     X = X * invXRes;
-                    if ((X >= -0.5) && (X < iXdim)) {
+                    if ( (X >= -0.5) && (X < iXdim)) {
                         Y = (kmm * T12) + j2;
                         Y = Y * invYRes;
-                        if ((Y >= -0.5) && (Y < iYdim)) {
+                        if ( (Y >= -0.5) && (Y < iYdim)) {
                             Z = (kmm * T22) + j3;
                             Z = Z * invZRes;
-                            if ((Z >= -0.5) && (Z < iZdim)) {
+                            if ( (Z >= -0.5) && (Z < iZdim)) {
                                 roundX = (int) (X + 0.5);
                                 roundY = (int) (Y + 0.5);
                                 roundZ = (int) (Z + 0.5);
-                            
+
                                 xOffset = Math.min(roundX, iXdim - 1);
                                 yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                                 zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                                inputSum = 4*(xOffset + yOffset + zOffset);
-                                aValue = (float)imgBuf[inputSum];
-                                rValue = (float)imgBuf[inputSum+1];
-                                gValue = (float)imgBuf[inputSum+2];
-                                bValue = (float)imgBuf[inputSum+3];
+                                inputSum = 4 * (xOffset + yOffset + zOffset);
+                                aValue = (float) imgBuf[inputSum];
+                                rValue = (float) imgBuf[inputSum + 1];
+                                gValue = (float) imgBuf[inputSum + 2];
+                                bValue = (float) imgBuf[inputSum + 3];
                             } // if ((Z >= -0.5) && (Z < iZdim))
                         } // if ((Y >= -0.5) && (Y < iYdim))
                     } // if ((X >= -0.5) && (X < iXdim))
-                    outputSum = 4*(i + (oXdim *j) + (outSliceSize *k));
+                    outputSum = 4 * (i + (oXdim * j) + (outSliceSize * k));
                     imgBuf2[outputSum] = aValue;
-                    imgBuf2[outputSum+1] = rValue;
-                    imgBuf2[outputSum+2] = gValue;
-                    imgBuf2[outputSum+3] = bValue;
+                    imgBuf2[outputSum + 1] = rValue;
+                    imgBuf2[outputSum + 2] = gValue;
+                    imgBuf2[outputSum + 3] = bValue;
                 }
             }
         }
@@ -10640,12 +10626,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         final double invYRes = 1.0 / iYres;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged(Math.round((float) k / oZdim * 100));
@@ -10671,10 +10657,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     value = fillValue;
                     X = (jmm * T01) + i1;
                     X = X * invXRes;
-                    if ((X >= -0.5) && (X < iXdim)) {
+                    if ( (X >= -0.5) && (X < iXdim)) {
                         Y = (jmm * T11) + i2;
                         Y = Y * invYRes;
-                        if ((Y >= -0.5) && (Y < iYdim)) {
+                        if ( (Y >= -0.5) && (Y < iYdim)) {
                             roundX = (int) (X + 0.5);
                             roundY = (int) (Y + 0.5);
 
@@ -10683,7 +10669,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                             value = imgBuf[xOffset + yOffset];
                         } // if ((Y >= -0.5) && (Y < iYdim))
                     } // if ((X >= -0.5) && (X < iXdim))
-                    
+
                     destImage.set(i, j, k, value);
                 }
             }
@@ -10729,15 +10715,15 @@ public class AlgorithmTransform extends AlgorithmBase {
         final double invYRes = 1.0 / iYres;
         int inputSum;
         int outputSum;
-        int oSliceSize = oXdim * oYdim;
+        final int oSliceSize = oXdim * oYdim;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
             fireProgressStateChanged((int) ( ((float) k / oZdim * 100) + 0.5));
@@ -10766,27 +10752,27 @@ public class AlgorithmTransform extends AlgorithmBase {
                     bValue = fillValue;
                     X = (jmm * T01) + i1;
                     X = X * invXRes;
-                    if ((X >= -0.5) && (X < iXdim)) {
+                    if ( (X >= -0.5) && (X < iXdim)) {
                         Y = (jmm * T11) + i2;
                         Y = Y * invYRes;
-                        if ((Y >= -0.5) && (Y < iYdim)) {
+                        if ( (Y >= -0.5) && (Y < iYdim)) {
                             roundX = (int) (X + 0.5);
                             roundY = (int) (Y + 0.5);
 
                             xOffset = Math.min(roundX, iXdim - 1);
                             yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                            inputSum = 4*(xOffset + yOffset);
-                            aValue = (float)imgBuf[inputSum];
-                            rValue = (float)imgBuf[inputSum+1];
-                            gValue = (float)imgBuf[inputSum+2];
-                            bValue = (float)imgBuf[inputSum+3];
+                            inputSum = 4 * (xOffset + yOffset);
+                            aValue = (float) imgBuf[inputSum];
+                            rValue = (float) imgBuf[inputSum + 1];
+                            gValue = (float) imgBuf[inputSum + 2];
+                            bValue = (float) imgBuf[inputSum + 3];
                         } // if ((Y >= -0.5) && (Y < iYdim))
                     } // if ((X >= -0.5) && (X < iXdim))
-                    outputSum = 4*(i + (oXdim *j));
+                    outputSum = 4 * (i + (oXdim * j));
                     imgBuf2[outputSum] = aValue;
-                    imgBuf2[outputSum+1] = rValue;
-                    imgBuf2[outputSum+2] = gValue;
-                    imgBuf2[outputSum+3] = bValue;
+                    imgBuf2[outputSum + 1] = rValue;
+                    imgBuf2[outputSum + 2] = gValue;
+                    imgBuf2[outputSum + 3] = bValue;
                 }
             }
 
@@ -10838,18 +10824,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -10886,18 +10872,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value = fillValue;
                         X = (kmm * T02) + j1;
                         X = X * invXRes;
-                        if ((X >= -0.5) && (X < iXdim)) {
+                        if ( (X >= -0.5) && (X < iXdim)) {
                             Y = (kmm * T12) + j2;
                             Y = Y * invYRes;
-                            if ((Y >= -0.5) && (Y < iYdim)) {
+                            if ( (Y >= -0.5) && (Y < iYdim)) {
                                 Z = (kmm * T22) + j3;
                                 Z = Z * invZRes;
-                                if ((Z >= -0.5) && (Z < iZdim)) {
-            
+                                if ( (Z >= -0.5) && (Z < iZdim)) {
+
                                     roundX = (int) (X + 0.5);
                                     roundY = (int) (Y + 0.5);
                                     roundZ = (int) (Z + 0.5);
-                                
+
                                     xOffset = Math.min(roundX, iXdim - 1);
                                     yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                                     zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
@@ -10959,18 +10945,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -11010,33 +10996,33 @@ public class AlgorithmTransform extends AlgorithmBase {
                         bValue = fillValue;
                         X = (kmm * T02) + j1;
                         X = X * invXRes;
-                        if ((X >= -0.5) && (X < iXdim)) {
+                        if ( (X >= -0.5) && (X < iXdim)) {
                             Y = (kmm * T12) + j2;
                             Y = Y * invYRes;
-                            if ((Y >= -0.5) && (Y < iYdim)) {
+                            if ( (Y >= -0.5) && (Y < iYdim)) {
                                 Z = (kmm * T22) + j3;
                                 Z = Z * invZRes;
-                                if ((Z >= -0.5) && (Z < iZdim)) {
+                                if ( (Z >= -0.5) && (Z < iZdim)) {
                                     roundX = (int) (X + 0.5);
                                     roundY = (int) (Y + 0.5);
                                     roundZ = (int) (Z + 0.5);
-                                
+
                                     xOffset = Math.min(roundX, iXdim - 1);
                                     yOffset = Math.min(roundY, iYdim - 1) * iXdim;
                                     zOffset = Math.min(roundZ, iZdim - 1) * sliceSize;
-                                    inputSum = 4*(xOffset + yOffset + zOffset);
-                                    aValue = (float)imgBuf[inputSum];
-                                    rValue = (float)imgBuf[inputSum+1];
-                                    gValue = (float)imgBuf[inputSum+2];
-                                    bValue = (float)imgBuf[inputSum+3];
+                                    inputSum = 4 * (xOffset + yOffset + zOffset);
+                                    aValue = (float) imgBuf[inputSum];
+                                    rValue = (float) imgBuf[inputSum + 1];
+                                    gValue = (float) imgBuf[inputSum + 2];
+                                    bValue = (float) imgBuf[inputSum + 3];
                                 } // if ((Z >= -0.5) && (Z < iZdim))
                             } // if ((Y >= -0.5) && (Y < iYdim))
                         } // if ((X >= -0.5) && (X < iXdim))
-                        outputSum = 4*(i + (oXdim *j) + (oSliceSize *k));
+                        outputSum = 4 * (i + (oXdim * j) + (oSliceSize * k));
                         imgBuffer2[outputSum] = aValue;
-                        imgBuffer2[outputSum+1] = rValue;
-                        imgBuffer2[outputSum+2] = gValue;
-                        imgBuffer2[outputSum+3] = bValue;
+                        imgBuffer2[outputSum + 1] = rValue;
+                        imgBuffer2[outputSum + 2] = gValue;
+                        imgBuffer2[outputSum + 3] = bValue;
                     }
                 }
             } // for i
@@ -11081,12 +11067,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         final double invYRes = 1.0 / iYres;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -11114,10 +11100,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         value = fillValue;
                         X = (jmm * T01) + i1;
                         X = X * invXRes;
-                        if ((X >= -0.5) && (X < iXdim)) {
+                        if ( (X >= -0.5) && (X < iXdim)) {
                             Y = (jmm * T11) + i2;
                             Y = Y * invYRes;
-                            if ((Y >= -0.5) && (Y < iYdim)) {
+                            if ( (Y >= -0.5) && (Y < iYdim)) {
                                 roundX = (int) (X + 0.5);
                                 roundY = (int) (Y + 0.5);
 
@@ -11126,7 +11112,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                 value = imgBuf[xOffset + yOffset];
                             } // if ((Y >= -0.5) && (Y < iYdim))
                         } // if ((X >= -0.5) && (X < iXdim))
-                        
+
                         destImage.set(i, j, k, l, value);
                     }
                 }
@@ -11170,22 +11156,22 @@ public class AlgorithmTransform extends AlgorithmBase {
         final double invYRes = 1.0 / iYres;
         int inputSum;
         int outputSum;
-        int oSliceSize = oXdim * oYdim;
-        int oVolSize = oSliceSize * oZdim;
+        final int oSliceSize = oXdim * oYdim;
+        final int oVolSize = oSliceSize * oZdim;
         double T00, T01, T02, T10, T11, T12;
-    
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-    
+
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
-    
+
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
-    
+
                 for (i = 0; (i < oXdim) && !threadStopped; i++) {
                     if (pad) {
                         iAdj = i - AlgorithmTransform.margins[0];
@@ -11196,7 +11182,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     i1 = (imm * T00) + T02;
                     i2 = (imm * T10) + T12;
                     for (j = 0; (j < oYdim) && !threadStopped; j++) {
-    
+
                         // transform i,j
                         if (pad) {
                             jAdj = j - AlgorithmTransform.margins[1];
@@ -11210,53 +11196,51 @@ public class AlgorithmTransform extends AlgorithmBase {
                         bValue = fillValue;
                         X = (jmm * T01) + i1;
                         X = X * invXRes;
-                        if ((X >= -0.5) && (X < iXdim)) {
+                        if ( (X >= -0.5) && (X < iXdim)) {
                             Y = (jmm * T11) + i2;
                             Y = Y * invYRes;
-                            if ((Y >= -0.5) && (Y < iYdim)) {
+                            if ( (Y >= -0.5) && (Y < iYdim)) {
                                 roundX = (int) (X + 0.5);
                                 roundY = (int) (Y + 0.5);
 
                                 xOffset = Math.min(roundX, iXdim - 1);
                                 yOffset = Math.min(roundY, iYdim - 1) * iXdim;
-                                inputSum = 4*(xOffset + yOffset);
-                                aValue = (float)imgBuf[inputSum];
-                                rValue = (float)imgBuf[inputSum+1];
-                                gValue = (float)imgBuf[inputSum+2];
-                                bValue = (float)imgBuf[inputSum+3];
+                                inputSum = 4 * (xOffset + yOffset);
+                                aValue = (float) imgBuf[inputSum];
+                                rValue = (float) imgBuf[inputSum + 1];
+                                gValue = (float) imgBuf[inputSum + 2];
+                                bValue = (float) imgBuf[inputSum + 3];
                             } // if ((Y >= -0.5) && (Y < iYdim))
                         } // if ((X >= -0.5) && (X < iXdim))
-                        outputSum = 4*(i + (oXdim *j));
+                        outputSum = 4 * (i + (oXdim * j));
                         imgBuf2[outputSum] = aValue;
-                        imgBuf2[outputSum+1] = rValue;
-                        imgBuf2[outputSum+2] = gValue;
-                        imgBuf2[outputSum+3] = bValue;
+                        imgBuf2[outputSum + 1] = rValue;
+                        imgBuf2[outputSum + 2] = gValue;
+                        imgBuf2[outputSum + 3] = bValue;
                     }
                 }
-    
+
                 try {
                     destImage.importData( (4 * l * oVolSize) + (4 * k * oSliceSize), imgBuf2, true);
                 } catch (final IOException error) {
                     MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
                 }
-    
+
                 if ( (k < (oZdim - 1)) || (l < (oTdim - 1))) {
-    
+
                     try {
                         srcImage.exportData( (l * oZdim * imgLength) + ( (k + 1) * imgLength), imgLength, imgBuf);
                     } catch (final IOException error) {
                         displayError("Algorithm Transform: IOException Error on exportData");
                         setCompleted(false);
-    
+
                         return;
                     }
                 } // if ((k < (oZdim - 1))|| (l < (oTdim - 1)))
             } // for k
         } // for l
-    
-    }
 
-    
+    }
 
     /**
      * Transforms and resamples volume using quintic Lagrangian interpolation.
@@ -11277,12 +11261,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -11355,12 +11339,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -11411,10 +11395,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = (float)value[0];
-                imgBuf2[temp3 + 1] = (float)value[1];
-                imgBuf2[temp3 + 2] = (float)value[2];
-                imgBuf2[temp3 + 3] = (float)value[3];
+                imgBuf2[temp3] = (float) value[0];
+                imgBuf2[temp3 + 1] = (float) value[1];
+                imgBuf2[temp3 + 2] = (float) value[2];
+                imgBuf2[temp3 + 3] = (float) value[3];
             }
         }
 
@@ -11454,18 +11438,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double i1, i2, i3, j1, j2, j3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         QLag.setup3DQuinticLagrangian(imgBuf, inVolExtents, clip);
 
@@ -11558,18 +11542,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -11640,10 +11624,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = (float)value[0];
-                    imgBuf2[temp4 + 1] = (float)value[1];
-                    imgBuf2[temp4 + 2] = (float)value[2];
-                    imgBuf2[temp4 + 3] = (float)value[3];
+                    imgBuf2[temp4] = (float) value[0];
+                    imgBuf2[temp4 + 1] = (float) value[1];
+                    imgBuf2[temp4 + 2] = (float) value[2];
+                    imgBuf2[temp4 + 3] = (float) value[3];
                 }
             }
         }
@@ -11779,12 +11763,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -11836,10 +11820,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = (float)value[0];
-                    imgBuf2[temp3 + 1] = (float)value[1];
-                    imgBuf2[temp3 + 2] = (float)value[2];
-                    imgBuf2[temp3 + 3] = (float)value[3];
+                    imgBuf2[temp3] = (float) value[0];
+                    imgBuf2[temp3 + 1] = (float) value[1];
+                    imgBuf2[temp3 + 2] = (float) value[2];
+                    imgBuf2[temp3 + 3] = (float) value[3];
                 } // for i
             } // for j
 
@@ -11898,18 +11882,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -11983,10 +11967,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = (float)value[0];
-                        imgBuffer2[temp4 + 1] = (float)value[1];
-                        imgBuffer2[temp4 + 2] = (float)value[2];
-                        imgBuffer2[temp4 + 3] = (float)value[3];
+                        imgBuffer2[temp4] = (float) value[0];
+                        imgBuffer2[temp4 + 1] = (float) value[1];
+                        imgBuffer2[temp4 + 2] = (float) value[2];
+                        imgBuffer2[temp4 + 3] = (float) value[3];
                     }
                 }
             }
@@ -12038,18 +12022,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2, temp3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -12154,12 +12138,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -12247,12 +12231,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -12303,10 +12287,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = (float)value[0];
-                        imgBuf2[temp3 + 1] = (float)value[1];
-                        imgBuf2[temp3 + 2] = (float)value[2];
-                        imgBuf2[temp3 + 3] = (float)value[3];
+                        imgBuf2[temp3] = (float) value[0];
+                        imgBuf2[temp3 + 1] = (float) value[1];
+                        imgBuf2[temp3 + 2] = (float) value[2];
+                        imgBuf2[temp3 + 3] = (float) value[3];
                     } // for j
                 } // for i
 
@@ -12361,18 +12345,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         final int mod = Math.max(1, oZdim / 50);
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
         // T30 = (float)xfrm[3][0]; T31 = (float)xfrm[3][1]; T32 = (float)xfrm[3][2]; T33 = (float)xfrm[3][3];
 
         int position1, position2;
@@ -12534,18 +12518,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int deltaX, deltaY, deltaZ;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         int position1, position2;
         double b1, b2;
@@ -12929,18 +12913,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         int deltaX, deltaY, deltaZ;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         int position1, position2;
         double b1, b2;
@@ -13055,7 +13039,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY)]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX)])));
 
-                                    imgBuffer2[temp] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                    imgBuffer2[temp] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 1]) + (dx * imgBuffer[4 * (position1 + deltaX) + 1])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 1]) + (dx * imgBuffer[4 * (position1
@@ -13065,7 +13049,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 1]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 1])));
 
-                                    imgBuffer2[temp + 1] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                    imgBuffer2[temp + 1] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 2]) + (dx * imgBuffer[4 * (position1 + deltaX) + 2])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 2]) + (dx * imgBuffer[4 * (position1
@@ -13075,7 +13059,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 2]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 2])));
 
-                                    imgBuffer2[temp + 2] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                    imgBuffer2[temp + 2] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                     b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 3]) + (dx * imgBuffer[4 * (position1 + deltaX) + 3])))
                                             + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 3]) + (dx * imgBuffer[4 * (position1
@@ -13085,7 +13069,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                             + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 3]) + (dx * imgBuffer[4 * (position2
                                                     + deltaY + deltaX) + 3])));
 
-                                    imgBuffer2[temp + 3] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                    imgBuffer2[temp + 3] = (float) ( ( (1 - dz) * b1) + (dz * b2));
                                 } // end if Z in bounds
                             } // end if Y in bounds
                         } // end if X in bounds
@@ -13141,18 +13125,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double i1, i2, i3, j1, j2, j3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
             fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
@@ -13264,7 +13248,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY)]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX)])));
 
-                                imgBuffer2[temp8] =(float)( ( (1 - dz) * b1) + (dz * b2));
+                                imgBuffer2[temp8] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 1]) + (dx * imgBuffer[4 * (position1 + deltaX) + 1])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 1]) + (dx * imgBuffer[4 * (position1
@@ -13274,7 +13258,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 1]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 1])));
 
-                                imgBuffer2[temp8 + 1] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                imgBuffer2[temp8 + 1] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 2]) + (dx * imgBuffer[4 * (position1 + deltaX) + 2])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 2]) + (dx * imgBuffer[4 * (position1
@@ -13284,7 +13268,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 2]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 2])));
 
-                                imgBuffer2[temp8 + 2] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                imgBuffer2[temp8 + 2] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                                 b1 = (dy1 * ( (dx1 * imgBuffer[4 * position1 + 3]) + (dx * imgBuffer[4 * (position1 + deltaX) + 3])))
                                         + (dy * ( (dx1 * imgBuffer[4 * (position1 + deltaY) + 3]) + (dx * imgBuffer[4 * (position1
@@ -13294,7 +13278,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                                         + (dy * ( (dx1 * imgBuffer[4 * (position2 + deltaY) + 3]) + (dx * imgBuffer[4 * (position2
                                                 + deltaY + deltaX) + 3])));
 
-                                imgBuffer2[temp8 + 3] = (float)(( (1 - dz) * b1) + (dz * b2));
+                                imgBuffer2[temp8 + 3] = (float) ( ( (1 - dz) * b1) + (dz * b2));
 
                             } // end if Z in bounds
                         } // end if Y in bounds
@@ -13543,12 +13527,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
 
@@ -13621,12 +13605,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -13677,10 +13661,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
 
                 temp3 = 4 * (i + (j * oXdim));
-                imgBuf2[temp3] = (float)value[0];
-                imgBuf2[temp3 + 1] = (float)value[1];
-                imgBuf2[temp3 + 2] = (float)value[2];
-                imgBuf2[temp3 + 3] = (float)value[3];
+                imgBuf2[temp3] = (float) value[0];
+                imgBuf2[temp3 + 1] = (float) value[1];
+                imgBuf2[temp3 + 2] = (float) value[2];
+                imgBuf2[temp3 + 3] = (float) value[3];
             }
         }
 
@@ -13719,18 +13703,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double i1, i2, i3, j1, j2, j3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         WSinc.setup3DWSinc(imgBuf, inVolExtents, clip);
 
@@ -13823,18 +13807,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             argbMax = 255.0f;
@@ -13905,10 +13889,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));
-                    imgBuf2[temp4] = (float)value[0];
-                    imgBuf2[temp4 + 1] = (float)value[1];
-                    imgBuf2[temp4 + 2] = (float)value[2];
-                    imgBuf2[temp4 + 3] = (float)value[3];
+                    imgBuf2[temp4] = (float) value[0];
+                    imgBuf2[temp4 + 1] = (float) value[1];
+                    imgBuf2[temp4 + 2] = (float) value[2];
+                    imgBuf2[temp4 + 3] = (float) value[3];
                 }
             }
         }
@@ -13949,12 +13933,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -14043,12 +14027,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -14101,10 +14085,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     temp3 = 4 * (i + (j * oXdim));
-                    imgBuf2[temp3] = (float)value[0];
-                    imgBuf2[temp3 + 1] = (float)value[1];
-                    imgBuf2[temp3 + 2] = (float)value[2];
-                    imgBuf2[temp3 + 3] = (float)value[3];
+                    imgBuf2[temp3] = (float) value[0];
+                    imgBuf2[temp3 + 1] = (float) value[1];
+                    imgBuf2[temp3 + 2] = (float) value[2];
+                    imgBuf2[temp3 + 3] = (float) value[3];
                 } // for i
             } // for j
 
@@ -14153,18 +14137,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2, temp3;
         double T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
@@ -14276,18 +14260,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T03 = (double)kTM.M03;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
-        T13 = (double)kTM.M13;
-        T20 = (double)kTM.M20;
-        T21 = (double)kTM.M21;
-        T22 = (double)kTM.M22;
-        T23 = (double)kTM.M23;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T03 = kTM.M03;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
+        T13 = kTM.M13;
+        T20 = kTM.M20;
+        T21 = kTM.M21;
+        T22 = kTM.M22;
+        T23 = kTM.M23;
 
         oSliceSize = oXdim * oYdim;
         oVolSize = oSliceSize * oZdim;
@@ -14361,10 +14345,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp4 = 4 * (i + (j * oXdim) + (k * oSliceSize));
-                        imgBuffer2[temp4] = (float)value[0];
-                        imgBuffer2[temp4 + 1] = (float)value[1];
-                        imgBuffer2[temp4 + 2] = (float)value[2];
-                        imgBuffer2[temp4 + 3] = (float)value[3];
+                        imgBuffer2[temp4] = (float) value[0];
+                        imgBuffer2[temp4 + 1] = (float) value[1];
+                        imgBuffer2[temp4 + 2] = (float) value[2];
+                        imgBuffer2[temp4 + 3] = (float) value[3];
                     }
                 }
             }
@@ -14414,12 +14398,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double temp1, temp2;
         double T00, T01, T02, T10, T11, T12;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -14506,12 +14490,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         double T00, T01, T02, T10, T11, T12;
         float argbMax = 255.0f;
 
-        T00 = (double)kTM.M00;
-        T01 = (double)kTM.M01;
-        T02 = (double)kTM.M02;
-        T10 = (double)kTM.M10;
-        T11 = (double)kTM.M11;
-        T12 = (double)kTM.M12;
+        T00 = kTM.M00;
+        T01 = kTM.M01;
+        T02 = kTM.M02;
+        T10 = kTM.M10;
+        T11 = kTM.M11;
+        T12 = kTM.M12;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
             fireProgressStateChanged((int) ( ((float) l / oTdim * 100) + 0.5));
@@ -14562,10 +14546,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         }
 
                         temp3 = 4 * (i + (j * oXdim));
-                        imgBuf2[temp3] = (float)value[0];
-                        imgBuf2[temp3 + 1] = (float)value[1];
-                        imgBuf2[temp3 + 2] = (float)value[2];
-                        imgBuf2[temp3 + 3] = (float)value[3];
+                        imgBuf2[temp3] = (float) value[0];
+                        imgBuf2[temp3 + 1] = (float) value[1];
+                        imgBuf2[temp3 + 2] = (float) value[2];
+                        imgBuf2[temp3 + 3] = (float) value[3];
                     } // for i
                 } // for j
 
@@ -14624,6 +14608,4 @@ public class AlgorithmTransform extends AlgorithmBase {
         AlgorithmTransform.imgOrigin[1] -= ty;
     }
 
-
-   
 }
