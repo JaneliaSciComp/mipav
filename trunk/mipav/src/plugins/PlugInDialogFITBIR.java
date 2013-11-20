@@ -274,7 +274,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.10";
+    private static final String pluginVersion = "0.11";
 
     private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
 
@@ -443,7 +443,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             }
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
-        } else if (command.equalsIgnoreCase("Help")) {
+        } else if (command.equalsIgnoreCase("HelpWeb")) {
 
             MipavUtil.showWebHelp("Image_submission_plug-in");
 
@@ -733,10 +733,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("Help");
         menuBar.add(menu);
-        final JMenuItem menuItem = new JMenuItem("Help");
-        menuItem.setActionCommand("Help");
-        menuItem.addActionListener(this);
-        menu.add(menuItem);
+
+        final JMenuItem helpMenuItem = new JMenuItem("Help web page");
+        helpMenuItem.setActionCommand("HelpWeb");
+        helpMenuItem.addActionListener(this);
+        menu.add(helpMenuItem);
+
+        final JMenuItem memMenuItem = new JMenuItem("Memory usage");
+        memMenuItem.setActionCommand("MemoryUsage");
+        memMenuItem.addActionListener(ViewUserInterface.getReference());
+        menu.add(memMenuItem);
+
+        final JMenuItem jvmMenuItem = new JMenuItem("JVM information");
+        jvmMenuItem.setActionCommand("AboutJava");
+        jvmMenuItem.addActionListener(ViewUserInterface.getReference());
+        menu.add(jvmMenuItem);
+
         this.setJMenuBar(menuBar);
 
         getContentPane().add(topPanel, BorderLayout.NORTH);
@@ -1048,6 +1060,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
                 final String zipFilePath = outputDirBase + outputFileNameBase + ".zip";
 
+                printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
+
                 ModelImage thumbnailImage = createThumbnailImage(origImage);
 
                 final FileWriteOptions opts = new FileWriteOptions(outputFileNameBase + ".jpg", outputDirBase, true);
@@ -1056,7 +1070,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     thumbnailImage.disposeLocal();
                     thumbnailImage = null;
                 }
-                printlnToLog("Creating thumbnail image:\t" + outputDirBase + outputFileNameBase + ".jpg");
+
                 try {
                     printlnToLog("Creating ZIP file:\t" + zipFilePath);
                     for (final String file : origFiles) {
@@ -2009,6 +2023,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @return True if the string starts with one of the BIRCS prefixes (case sensitive).
      */
     private static final boolean isGuid(final String str) {
+        final String pattern = "^[\\w]+$";
+        final Pattern p = Pattern.compile(pattern);
+        final Matcher m = p.matcher(str.trim());
+        if ( !m.matches()) {
+            return false;
+        }
+
         for (final String prefix : allowedGuidPrefixes) {
             if (str.startsWith(prefix)) {
                 return true;
@@ -2105,14 +2126,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      *         date format).
      */
     private static final String convertDateTimeToISOFormat(final String date, final String time) {
-        String isoDate = date;
-        String isoTime = time;
+        String isoDate = date.trim();
+        String isoTime = time.trim();
 
         final String datePattern = "^(\\d{1,2})[/-]*(\\d{1,2})[/-]*(\\d{4})$";
         final String timePattern = "^(\\d{1,2}):(\\d{1,2}):(\\d{1,2})\\.\\d+$";
 
         Pattern p = Pattern.compile(datePattern);
-        Matcher m = p.matcher(date);
+        Matcher m = p.matcher(isoDate);
         if (m.find()) {
             String month = m.group(1);
             String day = m.group(2);
@@ -2128,7 +2149,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         }
 
         p = Pattern.compile(timePattern);
-        m = p.matcher(time);
+        m = p.matcher(isoTime);
         if (m.find()) {
             String hour = m.group(1);
             String min = m.group(2);
@@ -2832,7 +2853,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             final JPanel panel = new JPanel(new GridBagLayout());
             tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-            tabScrollPane.setPreferredSize(new Dimension(650, 500));
+
+            // tabScrollPane.setPreferredSize(new Dimension(660, 500));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
             for (final BasicDataStructure ds : dataStructureList) {
@@ -2977,9 +2999,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             getContentPane().add(mainPanel);
 
+            final Dimension dim = getContentPane().getPreferredSize();
+            if (dim.height > 500) {
+                dim.height = 500;
+            }
+            tabScrollPane.setPreferredSize(dim);
+
             pack();
             MipavUtil.centerInWindow(owner, this);
-            this.setMinimumSize(this.getSize());
+            // this.setMinimumSize(this.getSize());
             if (setInitialVisible) {
                 setVisible(true);
             }
@@ -3378,34 +3406,36 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                             final JPanel curPanel = groupPanels.get(de.getGroup());
 
                             if (l.getName().equalsIgnoreCase(de.getName())) {
-                                // gbc.gridy++;
-                                gbc.gridy = de.getPosition() - 1;
+                                final JPanel elementPanel = new JPanel(new GridBagLayout());
+                                final GridBagConstraints egbc = new GridBagConstraints();
+                                egbc.insets = new Insets(2, 5, 2, 5);
+                                egbc.fill = GridBagConstraints.HORIZONTAL;
+                                egbc.anchor = GridBagConstraints.EAST;
+                                egbc.weightx = 0;
+                                // elementPanel.add(l, egbc);
 
-                                gbc.insets = new Insets(2, 5, 2, 5);
-                                gbc.fill = GridBagConstraints.HORIZONTAL;
-                                gbc.anchor = GridBagConstraints.EAST;
-                                gbc.weightx = 0;
-                                curPanel.add(l, gbc);
-                                gbc.weightx = 1;
-                                gbc.gridx = 1;
-                                gbc.anchor = GridBagConstraints.WEST;
+                                egbc.weightx = 1;
+                                egbc.gridy = 0;
+                                egbc.gridx = 0;
+                                egbc.anchor = GridBagConstraints.WEST;
+
                                 if (de.getType().equalsIgnoreCase(FILE_ELEMENT_TYPE)) {
-                                    curPanel.add(t, gbc);
-                                    gbc.gridx = 2;
+                                    elementPanel.add(t, egbc);
+                                    egbc.gridx++;
                                     final JButton browseButton = new JButton("Browse");
                                     browseButton.addActionListener(this);
                                     browseButton.setActionCommand("browse_" + labelName);
-                                    curPanel.add(browseButton, gbc);
+                                    elementPanel.add(browseButton, egbc);
 
                                 } else {
-                                    gbc.gridwidth = 2;
-                                    curPanel.add(t, gbc);
+                                    egbc.gridwidth = 2;
+                                    elementPanel.add(t, egbc);
                                     if (t instanceof JComboBox) {
 
-                                        gbc.gridy++;
+                                        egbc.gridy++;
                                         // ds2.add(de.getPosition(), "");
                                         final JTextField spec = new JTextField();
-                                        curPanel.add(spec, gbc);
+                                        elementPanel.add(spec, egbc);
                                         spec.setVisible(false);
                                         ((JComboBox) t).addActionListener(new ActionListener() {
                                             @Override
@@ -3414,9 +3444,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                                     spec.setVisible(true);
                                                     spec.setText(specify);
                                                     specify = "";
+                                                    pack();
+                                                    validate();
                                                     repaint();
                                                 } else {
                                                     spec.setVisible(false);
+                                                    pack();
+                                                    validate();
                                                     repaint();
                                                 }
                                             }
@@ -3424,6 +3458,19 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                         specs.put((JComboBox) t, spec);
                                     }
                                 }
+
+                                // gbc.gridy++;
+                                gbc.insets = new Insets(2, 5, 2, 5);
+                                gbc.fill = GridBagConstraints.HORIZONTAL;
+                                gbc.anchor = GridBagConstraints.NORTHWEST;
+                                gbc.weightx = 0;
+                                gbc.gridx = 0;
+                                gbc.gridy = de.getPosition() - 1;
+                                curPanel.add(l, gbc);
+                                gbc.gridx = 1;
+                                gbc.anchor = GridBagConstraints.NORTHEAST;
+                                gbc.weightx = 1;
+                                curPanel.add(elementPanel, gbc);
 
                                 // gridYCounter = gridYCounter + 1;
                                 // gbc.gridy = gridYCounter;
@@ -3440,10 +3487,13 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             gbc2.fill = GridBagConstraints.HORIZONTAL;
             gbc2.gridx = 0;
             gbc2.gridy = 0;
-            mainPanel.add(groupPanels.get(MAIN_GROUP_NAME), gbc2);
-            gbc2.gridy++;
+            gbc2.insets = new Insets(2, 5, 2, 5);
+            if (groupPanels.containsKey(MAIN_GROUP_NAME)) {
+                mainPanel.add(groupPanels.get(MAIN_GROUP_NAME), gbc2);
+                gbc2.gridy++;
+            }
             for (final String g : groupPanels.navigableKeySet()) {
-                if ( !g.equals(MAIN_GROUP_NAME)) {
+                if ( !g.equals(MAIN_GROUP_NAME) /* && groupPanels.get(g).getComponentCount() > 0 */) {
                     mainPanel.add(groupPanels.get(g), gbc2);
                     gbc2.gridy++;
                 }
@@ -3531,6 +3581,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // }
 
                 l = new JLabel(title);
+                // l = new JLabel("<html>" + WordUtils.wrap(title, 50, "<br/>", false) + "</html>");
                 l.setFont(MipavUtil.font12);
                 l.setName(n);
 
@@ -4275,6 +4326,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     final String scannerModel = (String) (fileInfoDicom.getTagTable().getValue("0008,1090"));
                     final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
 
+                    final String patientName = (String) (fileInfoDicom.getTagTable().getValue("0010,0010"));
+                    final String patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
+
                     if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
                         String ageInMonths = ageVal;
                         if (ageVal.contains("Y")) {
@@ -4313,6 +4367,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         setElementComponentValue(comp, convertModelNameToBRICS(scannerModel));
                     } else if (l.equalsIgnoreCase("ImgBandwidthVal")) {
                         setElementComponentValue(comp, bandwidth);
+                    } else if (l.equalsIgnoreCase("GUID")) {
+                        if (isGuid(patientID)) {
+                            setElementComponentValue(comp, patientID);
+                        } else if (isGuid(patientName)) {
+                            setElementComponentValue(comp, patientName);
+                        }
                     }
 
                     if (modalityString.equalsIgnoreCase("magnetic resonance")) {
