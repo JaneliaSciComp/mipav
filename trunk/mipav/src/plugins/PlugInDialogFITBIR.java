@@ -2430,7 +2430,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      * @return True if the structure name starts with the PDBP imaging prefix.
      */
     private static final boolean isPDBPImagingStructure(final String structureName) {
-        if (structureName.toLowerCase().startsWith(PDBP_IMAGING_STRUCTURE_PREFIX)) {
+        if (structureName.toLowerCase().startsWith(PDBP_IMAGING_STRUCTURE_PREFIX.toLowerCase())) {
             return true;
         }
 
