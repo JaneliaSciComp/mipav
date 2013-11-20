@@ -305,7 +305,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String SITE_NAME_ELEMENT_NAME = "SiteName";
 
-    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women’s", "Columbia University",
+    private static final String[] PDBP_ALLOWED_SITE_NAMES = {"Brigham and Women's", "Columbia University",
             "Emory University", "Johns Hopkins University", "Pennsylvania State University (Hershey)",
             "Pacific Northwest National Laboratory", "University of Alabama (Birmingham)",
             "University of Pennsylvania", "University of Florida (Gainesville)", "University of Washington",
