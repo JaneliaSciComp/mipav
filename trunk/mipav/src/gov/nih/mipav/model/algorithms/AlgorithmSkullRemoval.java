@@ -59,7 +59,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private boolean blur = false;
 	private boolean remove = false;
 	private boolean face = false;
-	private boolean showSegmentation = false;
+	private boolean showFaceSegmentation = false;
+	private boolean showSkullSegmentation = false;
 	private float offSet = 0;
 	
 	private int[] originalAxis;
@@ -203,12 +204,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         setCompleted(true);	
     }
     
-    public void setOutputOption( boolean blur, boolean remove, boolean face, boolean showSegmentation )
+    public void setOutputOption( boolean blur, boolean remove, boolean face, boolean showFaceSegmentation, boolean showSkullSegmentation )
     {
     	this.blur = blur;
     	this.remove = remove;
     	this.face = face;
-    	this.showSegmentation = showSegmentation;
+    	this.showFaceSegmentation = showFaceSegmentation;
+    	this.showSkullSegmentation = showSkullSegmentation;
     }
     
     public void setOffSet( float offSet )
@@ -318,44 +320,24 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //        	new ViewJFrameImage(atlasBasedImage);        	
     	}
 
-        
-    	if ( blur || remove )
+
+    	if ( remove )
     	{
     		subtractMask( destImage );
-        	destImage.setImageName( srcImage.getImageName() + "_deskull" );
-				
-			if ( blur )
-			{
-				ModelImage pixelizedImage = randomize( srcImage, 10 );	        				
-//				 Blur face and add it back to the image:				
-//		        int index = srcImage.getExtents()[2] / 2;
-//		        float xRes = srcImage.getFileInfo(index).getResolutions()[0];
-//		        float zRes = srcImage.getFileInfo(index).getResolutions()[2];
-//
-//		        float correction = xRes / zRes;
-//
-//	            final float[] sigmas = {5, 5, 5*correction};
-//	    		ModelImage blurOutside = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-//                        JDialogBase.makeImageName(srcImage.getImageName(), "_blur"));
-//	            AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(pixelizedImage, sigmas, true, false);
-//	            gaussianBlurSepAlgo.setRunningInSeparateThread(false);
-//	            gaussianBlurSepAlgo.run();
-//
-//                try {
-//                	blurOutside.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);    	            
-    	            addBlur( pixelizedImage, destImage );
-    	        	destImage.setImageName( srcImage.getImageName() + "_deskull_blur" );
-//                	blurOutside.disposeLocal();
-//                } catch (final IOException e) {
-//                	blurOutside.disposeLocal();
-//                    MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
-//                    return;
-//                }
-			}
+    		destImage.setImageName( srcImage.getImageName() + "_deskull" );
+    	}
+
+    	if ( blur )
+    	{
+    		ModelImage pixelizedImage = randomize( destImage, 10 );	        	            
+    		addBlur( pixelizedImage, destImage );
+    		pixelizedImage.disposeLocal();
+    		pixelizedImage = null;
+    		destImage.setImageName( srcImage.getImageName() + "_deskull_blur" );
     	}
     	
     	
-    	if ( showSegmentation )
+    	if ( showFaceSegmentation | showSkullSegmentation )
     	{
     		destImage.resetVOIs();
     		
@@ -365,17 +347,21 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         	destImage.registerVOI(centerGravity);
         	centerGravity.setColor( Color.green );    	
         	destImage.setImageName( srcImage.getImageName() + "_outsideMask" );
-        	new ViewJFrameImage(destImage);        	
     	}
-    	if ( !showSegmentation )
+    	else
     	{    		        	
     		destImage.resetVOIs();
     		destImage.clearMask();
     		destImage.calcMinMax();
-    		new ViewJFrameImage( destImage );
     	}
         fireProgressStateChanged(100);
-        
+		new ViewJFrameImage( destImage );
+
+		if ( reMappedSrc )
+		{
+			srcImage.disposeLocal();
+			srcImage = null;
+		}
         setCompleted(true);	
     }
     
@@ -462,7 +448,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					kMesh = convexHullBrain;
 				}
 				
-				if ( face )
+				if ( face || showFaceSegmentation )
 				{
 					Vector3f front = getFront( faceOrientation, cog );
 					Vector3f bottom = getBottom( faceOrientation, cog );
@@ -571,7 +557,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //							outlineMaskImage.resetVOIs();      	
 //							new ViewJFrameImage(outlineMaskImage);
 //						}
-						if ( face )
+						if ( face || showFaceSegmentation )
 						{
 							destImage.setMask(clipMask);
 						}
@@ -579,7 +565,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				}
 			}
 		}
-		if ( !face )
+		if ( !(face || showFaceSegmentation) )
 		{
 	        destImage.getMask().flip(0, dimX*dimY*dimZ);
 		}
@@ -698,6 +684,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     
     private void addBlur( ModelImage blurImage, ModelImage destImage )
     {    	
+		int dimX = destImage.getExtents()[0];
+		int dimY = destImage.getExtents()[1];
+		int dimZ = destImage.getExtents()[2];
     	for ( int z = 0; z < dimZ; z++ )
     	{
     		for ( int y = 0; y < dimY; y++ )
@@ -1704,11 +1693,11 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
 	private ModelImage randomize( ModelImage image, int stepSize )
 	{
-		ModelImage blurImage = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-				JDialogBase.makeImageName(srcImage.getImageName(), "_blur"));
-		int stepsX = dimX / stepSize;
-		int stepsY = dimY / stepSize;
-		int stepsZ = dimZ / stepSize;
+		ModelImage blurImage = new ModelImage(image.getType(), image.getExtents(),
+				JDialogBase.makeImageName(image.getImageName(), "_blur"));
+		int stepsX = image.getExtents()[0] / stepSize;
+		int stepsY = image.getExtents()[1] / stepSize;
+		int stepsZ = image.getExtents()[2] / stepSize;
 		int length = stepsX*stepsY*stepsZ;
 
 		float[] blockAvg = new float[length];
@@ -1825,6 +1814,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		}
 		
 		blurImage.calcMinMax();
+//		new ViewJFrameImage(blurImage);
 		return blurImage;
 	}
 

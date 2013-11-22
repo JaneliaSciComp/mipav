@@ -87,8 +87,11 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     /** Button for removing the face / skull. */
     private JRadioButton removeAllRadio;
 
-    /** Button for displaying the segmentation. */
-    private JRadioButton showSegmentationRadio;
+    /** Button for displaying the face segmentation. */
+    private JRadioButton showFaceSegmentationRadio;
+
+    /** Button for displaying the full segmentation. */
+    private JRadioButton showAllSegmentationRadio;
 
     /** Text field corresponding to brain padding parameter. */
     private JTextField extraBrainPaddingField;
@@ -107,7 +110,8 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
     private boolean blur = false;
     private boolean remove = false;
     private boolean face = true;
-    private boolean showSegmentation = false;
+    private boolean showFaceSegmentation = false;
+    private boolean showSkullSegmentation = false;
     private ModelImage atlasImage = null;
 
     /**
@@ -281,7 +285,7 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
             {
             	defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
             }
-            defaceAlgo.setOutputOption( blur, remove, face, showSegmentation );
+            defaceAlgo.setOutputOption( blur, remove, face, showFaceSegmentation, showSkullSegmentation );
             defaceAlgo.setOffSet(extraMMsToPad);
             defaceAlgo.addListener(this);
 
@@ -432,28 +436,34 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
         removeFaceRadio = new JRadioButton("Remove face.");
         removeFaceRadio.setFont(MipavUtil.font12);
 
-        blurAllRadio = new JRadioButton("Blur face and skull regions.");
+        blurAllRadio = new JRadioButton("Blur skull.");
         blurAllRadio.setFont(MipavUtil.font12);
 
-        removeAllRadio = new JRadioButton("Remove face and skull regions.");
+        removeAllRadio = new JRadioButton("Remove skull.");
         removeAllRadio.setFont(MipavUtil.font12);
 
-        showSegmentationRadio = new JRadioButton("Show segmentation results.");
-        showSegmentationRadio.setFont(MipavUtil.font12);
-        showSegmentationRadio.setSelected(true);
+        showFaceSegmentationRadio = new JRadioButton("Show face segmentation results.");
+        showFaceSegmentationRadio.setFont(MipavUtil.font12);
+        showFaceSegmentationRadio.setSelected(true);
+
+        showAllSegmentationRadio = new JRadioButton("Show skull segmentation results.");
+        showAllSegmentationRadio.setFont(MipavUtil.font12);
+        showAllSegmentationRadio.setSelected(true);
 
         ButtonGroup group = new ButtonGroup();
         group.add(blurFaceRadio);
         group.add(removeFaceRadio);
         group.add(blurAllRadio);
         group.add(removeAllRadio);
-        group.add(showSegmentationRadio);
+        group.add(showFaceSegmentationRadio);
+        group.add(showAllSegmentationRadio);
 
         orientationPanel.add(blurFaceRadio);
-        orientationPanel.add(removeFaceRadio);
         orientationPanel.add(blurAllRadio);
+        orientationPanel.add(removeFaceRadio);
         orientationPanel.add(removeAllRadio);
-        orientationPanel.add(showSegmentationRadio);
+        orientationPanel.add(showFaceSegmentationRadio);
+        orientationPanel.add(showAllSegmentationRadio);
         
         
         JPanel removalPanel = new JPanel(new GridLayout(1, 2));
@@ -536,10 +546,11 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
      */
     private boolean setVariables() {
 
-        blur = blurFaceRadio.isSelected() | blurAllRadio.isSelected();
-        remove = removeFaceRadio.isSelected() | removeAllRadio.isSelected();
-        face = blurFaceRadio.isSelected() | removeFaceRadio.isSelected();
-        showSegmentation = showSegmentationRadio.isSelected();
+        blur = blurFaceRadio.isSelected() || blurAllRadio.isSelected();
+        remove = removeFaceRadio.isSelected() || removeAllRadio.isSelected();
+        face = blurFaceRadio.isSelected() || removeFaceRadio.isSelected();
+        showFaceSegmentation = showFaceSegmentationRadio.isSelected();
+        showSkullSegmentation = showAllSegmentationRadio.isSelected() ;
         if (MipavUtil.testParameter(extraBrainPaddingField.getText(), 0, 500)) {
             extraMMsToPad = Integer.parseInt(extraBrainPaddingField.getText());
         } else {
