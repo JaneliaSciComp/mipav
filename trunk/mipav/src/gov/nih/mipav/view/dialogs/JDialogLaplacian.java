@@ -47,6 +47,16 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
+    
+    private JCheckBox nonLinearCheckBox;
+    
+    private boolean nonLinear = false;
+    
+    private JLabel labelKernelSize;
+    
+    private JComboBox comboBoxKernelSize;
+    
+    private int kernelSize = 3;
 
     /** DOCUMENT ME! */
     private boolean image25D = false;
@@ -267,6 +277,35 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
         if (source == image25DCheckbox) {
             sigmasPanel.enable3DComponents(!image25DCheckbox.isSelected());
+            if (image.getNDims() == 3) {
+                nonLinearCheckBox.setEnabled(image25DCheckbox.isSelected());
+                if (!image25DCheckbox.isSelected()) {
+                    nonLinearCheckBox.setSelected(false);
+                    labelKernelSize.setEnabled(false);
+                    comboBoxKernelSize.setEnabled(false);
+                }
+            }
+        }
+        if (source == nonLinearCheckBox) {
+            if (nonLinearCheckBox.isSelected()) {
+                sepCheckbox.setEnabled(false);
+                sepCheckbox.setSelected(false);
+                useOCLCheckbox.setEnabled(false);
+                useOCLCheckbox.setSelected(false);
+                labelKernelSize.setEnabled(true);
+                comboBoxKernelSize.setEnabled(true);
+            }
+            else {
+                useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+                if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+                {
+                    useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+                }
+                sepCheckbox.setEnabled(useOCLCheckbox.isSelected());
+                sepCheckbox.setSelected(useOCLCheckbox.isSelected());
+                labelKernelSize.setEnabled(false);
+                comboBoxKernelSize.setEnabled(false);
+            }
         }
         if (source == sepCheckbox || source == useOCLCheckbox) {
         	sepCheckbox.removeItemListener(this);
@@ -297,6 +336,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                 outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+                
+                nonLinearCheckBox.setSelected(MipavUtil.getBoolean(st));
+                comboBoxKernelSize.setSelectedIndex((MipavUtil.getInt(st) - 1)/2);
 
                 sepCheckbox.setSelected(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
@@ -326,6 +368,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
         String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
         defaultsString += outputPanel.isOutputNewImageSet() + delim;
+        defaultsString += nonLinear + delim;
+        defaultsString += kernelSize + delim;
         defaultsString += image25D + delim;
         defaultsString += sigmasPanel.getUnnormalized3DSigmas()[0] + delim;
         defaultsString += sigmasPanel.getUnnormalized3DSigmas()[1] + delim;
@@ -391,6 +435,22 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         }
     }
     
+    /**
+     * 
+     * @param nonLinear
+     */
+    public void setNonLinear(boolean nonLinear) {
+        this.nonLinear = nonLinear;
+    }
+    
+    /**
+     * 
+     * @param kernelSize
+     */
+    public void setKernelSize(int kernelSize) {
+        this.kernelSize = kernelSize;
+    }
+    
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -454,7 +514,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas,
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, nonLinear, kernelSize, sigmas,
                                                            outputPanel.isProcessWholeImageSet(), false, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -494,7 +554,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false,
+                    laplacianAlgo = new AlgorithmLaplacian(image, nonLinear, kernelSize, sigmas, outputPanel.isProcessWholeImageSet(), false,
                                                            ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -560,7 +620,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas,
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, nonLinear, kernelSize, sigmas,
                                                            outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -599,7 +659,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), image25D,
+                    laplacianAlgo = new AlgorithmLaplacian(image, nonLinear, kernelSize, sigmas, outputPanel.isProcessWholeImageSet(), image25D,
                                                            ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -669,6 +729,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         sigmasPanel = new JPanelSigmas(image);
 
         scriptParameters.setOutputOptionsGUI(outputPanel);
+        setNonLinear(scriptParameters.getParams().getBoolean("non_linear"));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
         setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         scriptParameters.setSigmasGUI(sigmasPanel);
         setAmpFactor(scriptParameters.getParams().getFloat("amplification_factor"));
@@ -685,6 +747,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("non_linear", nonLinear));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
         scriptParameters.storeSigmas(sigmasPanel);
         scriptParameters.getParams().put(ParameterFactory.newParameter("amplification_factor", ampFactor));
@@ -721,6 +785,30 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         algoPanel.add(labelAmpFact);
         textAmpFact = createTextField("1.0");
         algoPanel.add(textAmpFact);
+        
+        nonLinearCheckBox = WidgetFactory.buildCheckBox("Use nonlinear Laplcian", false, this);
+        if (image.getNDims() == 2) {
+            nonLinearCheckBox.setEnabled(true);
+        }
+        else {
+            nonLinearCheckBox.setEnabled(false);
+        }
+        algoPanel.addOnNextLine(nonLinearCheckBox);
+        
+        labelKernelSize = WidgetFactory.buildLabel("Kernel size:"); // make & set a label
+        labelKernelSize.setEnabled(false);
+        algoPanel.addOnNextLine(labelKernelSize); // add kernel label
+
+        comboBoxKernelSize = new JComboBox();
+        comboBoxKernelSize.setFont(serif12);
+        comboBoxKernelSize.setBackground(Color.white);
+        if (image.getNDims() == 2) {
+            this.buildKernelSizeComboBox(true); // 2D images MUST be slice filtered
+        } else {
+            this.buildKernelSizeComboBox(false); // default setting for 3D+ images is volume filtering
+        }
+        comboBoxKernelSize.setEnabled(false);
+        algoPanel.add(comboBoxKernelSize);
 
         sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true, this);
         algoPanel.addOnNextLine(sepCheckbox);
@@ -762,6 +850,28 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
         System.gc();
     }
+    
+    /**
+     * Creates the combo-box that allows user to select the size of the kernel (mask).
+     *
+     * @param  singleSlices  DOCUMENT ME!
+     */
+    private void buildKernelSizeComboBox(boolean singleSlices) {
+
+        if (singleSlices) {
+            comboBoxKernelSize.addItem("3x3");
+            comboBoxKernelSize.addItem("5x5");
+            comboBoxKernelSize.addItem("7x7");
+            comboBoxKernelSize.addItem("9x9");
+            comboBoxKernelSize.addItem("11x11");
+        } else {
+            comboBoxKernelSize.addItem("3x3x3");
+            comboBoxKernelSize.addItem("5x5x5");
+            comboBoxKernelSize.addItem("7x7x7");
+            comboBoxKernelSize.addItem("9x9x9");
+            comboBoxKernelSize.addItem("11x11x11");
+        }
+    }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
@@ -773,6 +883,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
         System.gc();
 
+        nonLinear = nonLinearCheckBox.isSelected();
         image25D = image25DCheckbox.isSelected();
         separable = sepCheckbox.isSelected();
         useOCL = useOCLCheckbox.isSelected();
@@ -791,8 +902,30 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
             return false;
         }
+        
+        if (nonLinear) {
+            this.determineKernelSize();
+        }
 
         return true;
+    }
+    
+    /**
+     * Associate one side of the kernel size with selectBox choice.
+     */
+    private void determineKernelSize() {
+
+        if (comboBoxKernelSize.getSelectedIndex() == 0) {
+            kernelSize = 3;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 1) {
+            kernelSize = 5;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 2) {
+            kernelSize = 7;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 3) {
+            kernelSize = 9;
+        } else if (comboBoxKernelSize.getSelectedIndex() == 4) {
+            kernelSize = 11;
+        }
     }
 
     /**
@@ -848,6 +981,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
             table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT, "1.0,1.0,1.0"));
             table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, true));
             table.put(new ParameterFloat("amplification_factor", 1));
+            table.put(new ParameterBoolean("non_linear", false));
+            table.put(new ParameterInt("kernel_size, 3"));
+            
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
