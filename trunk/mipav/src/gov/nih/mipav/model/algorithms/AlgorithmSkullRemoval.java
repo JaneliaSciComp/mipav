@@ -71,6 +71,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private boolean reMappedTargetAtlas = false;
 	
 	private ModelImage atlasBasedImage;
+	private ModelImage registeredSourceImage;
 	
     /**
      * Construct the face anonymizer, but do not run it yet.
@@ -143,14 +144,14 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         }
         this.faceOrientation = JDialogFaceAnonymize.FACING_LEFT;
 
-        ModelImage temp = registerImages( atlasBasedImage, srcImage );
-        if ( temp != null )
+        registeredSourceImage = registerImages( atlasBasedImage, srcImage );
+        if ( registeredSourceImage != null )
         {
         	if ( reMappedSrc )
         	{
         		srcImage.disposeLocal();
         	}
-        	srcImage = temp;
+        	srcImage = registeredSourceImage;
 //        	new ViewJFrameImage(srcImage);
         }
         
@@ -369,7 +370,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         fireProgressStateChanged(100);
 		new ViewJFrameImage( destImage );
 
-		if ( reMappedSrc )
+		if ( reMappedSrc || (registeredSourceImage != null) )
 		{
 			srcImage.disposeLocal();
 			srcImage = null;
