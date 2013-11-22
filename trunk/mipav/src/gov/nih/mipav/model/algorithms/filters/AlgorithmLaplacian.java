@@ -15,6 +15,10 @@ import java.util.*;
  *
  * @version  0.1 Feb 11, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
+ * 
+ * Reference for nonlinear Laplacian operator:
+ * "A Nonlinear Laplace Operator as Edge Detector in Noisy Edges" by Lucas J. Van Vliet and Ian T. Young,
+ * Computer Vision, Graphics, and Image Processing, Vol. 45, 1989, pp. 167-195.
  */
 public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterface {
 
@@ -36,6 +40,10 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
      * areas.
      */
     private boolean entireImage;
+    
+    private boolean nonLinear = false;
+    
+    private int kernelSize = 3;
 
     /** Storage location of the second derivative of the Gaussian in the X direction. */
     private float[] GxxData;
@@ -105,8 +113,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             }
         } // for (int i = 0; i < objectBuffer.length; i++)
     }
-
-
+    
     /**
      * Constructs a Laplacian algorithm object.
      *
@@ -117,11 +124,32 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
      *                    2D images disregard this flag.
      * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
      */
-    public AlgorithmLaplacian(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor) {
+    public AlgorithmLaplacian(ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                              boolean img25D, float ampFactor) {
+        this(srcImg, false, 3, sigmas, maskFlag, img25D, ampFactor);
+    }
+
+
+    /**
+     * Constructs a Laplacian algorithm object.
+     *
+     * @param  srcImg     source image model
+     * @param  nonLinear  If true, use nonlinear Laplacian
+     * @param  kernelSize Used only with nonlinear Laplacian
+     * @param  sigmas     Gaussian's standard deviations in the each dimension
+     * @param  maskFlag   Flag that indicates that the Laplacian will be calculated for the whole image if equal to true
+     * @param  img25D     Flag, if true, indicates that each slice of the 3D volume should be processed independently.
+     *                    2D images disregard this flag.
+     * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
+     */
+    public AlgorithmLaplacian(ModelImage srcImg, boolean nonLinear, int kernelSize, float[] sigmas, boolean maskFlag,
+                              boolean img25D, float ampFactor) {
         super(null, srcImg);
 
         destImage = null; // Calc in place
         srcImage = srcImg;
+        this.nonLinear = nonLinear;
+        this.kernelSize = kernelSize;
         this.sigmas = sigmas;
         entireImage = maskFlag;
         edgeImage = false;
@@ -139,18 +167,22 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
      *
      * @param  destImg    image model where result image is to stored
      * @param  srcImg     source image model
+     * @param  nonLinear  If true, use nonlinear Laplacian
+     * @param  kernelSize Used only with nonlinear Laplacian
      * @param  sigmas     Gaussian's standard deviations in the each dimension
      * @param  maskFlag   Flag that indicates that the Laplacian will be calculated for the whole image if equal to true
      * @param  img25D     Flag, if true, indicates that each slice of the 3D volume should be processed independently.
      *                    2D images disregard this flag.
      * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
      */
-    public AlgorithmLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D,
-                              float ampFactor) {
+    public AlgorithmLaplacian(ModelImage destImg, ModelImage srcImg, boolean nonLinear, int kernelSize, float[] sigmas, 
+                              boolean maskFlag, boolean img25D, float ampFactor) {
         super(destImg, srcImg);
 
         destImage = destImg; // Put results in destination image.
         srcImage = srcImg;
+        this.nonLinear = nonLinear;
+        this.kernelSize = kernelSize;
         this.sigmas = sigmas;
         edgeImage = false;
         entireImage = maskFlag;
@@ -246,6 +278,12 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             return;
         }
         final long startTime = System.currentTimeMillis();
+        
+        if (nonLinear) {
+            runNonLinear();
+            System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
+            return;
+        }
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
@@ -331,6 +369,246 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
         }
         
         System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
+    }
+    
+    private void runNonLinear() {
+        int length;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = 1;
+        if (srcImage.getNDims() > 2) {
+            zDim = srcImage.getExtents()[2];
+        }
+        int totalLength;
+        double buffer[];
+        double resultBuffer[];
+        int s;
+        int start;
+        int i;
+        ModelImage finalImage = null;
+        if (destImage != null) {
+            finalImage = destImage;
+        }
+        else {
+            finalImage = srcImage;
+        }
+        double resultMin;
+        double resultMax;
+        double typeMin;
+        double typeMax;
+        double a;
+        double b;
+        int x;
+        int y;
+        int halfSize = (kernelSize - 1)/2;
+        int xLow;
+        int xHigh;
+        int yLow;
+        int yHigh;
+        double localMin;
+        double localMax;
+        int index;
+        double lap;
+    
+        try {
+            length = srcImage.getSliceSize();
+            totalLength = length * zDim;;
+            buffer = new double[length];
+            resultBuffer = new double[length * zDim];
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            resultBuffer = null;
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
+            return;
+        }
+
+        int mod = totalLength / 20; // since progress bar is already at 80
+
+
+        for (s = 0; (s < zDim) && !threadStopped; s++) {
+            start = s * length;
+
+            try {
+                srcImage.exportData(start, length, buffer); // locks and releases lock
+            } catch (IOException error) {
+                buffer = null;
+                resultBuffer = null;
+                System.gc();
+                displayError("Algorithm Laplacian: Image(s) locked");
+                setCompleted(false);
+
+                return;
+            }
+            
+            double min, max;
+            min = Double.MAX_VALUE;
+            max = -Double.MAX_VALUE;
+            
+            double minL, maxL;
+            minL = Double.MAX_VALUE;
+            maxL = -Double.MAX_VALUE;
+            
+            if (entireImage == false) {
+
+                for (i = 0; i < length; i++) {
+
+                    if (mask.get(start + i)) {
+
+                        if (buffer[i] > max) {
+                            max = buffer[i];
+                        } 
+                        if (buffer[i] < min) {
+                            min = buffer[i];
+                        }
+                    }
+                }
+            } // if (entireImage == false)
+            
+            for (i = 0; (i < length) && !threadStopped; i++) {
+
+                if ((((start + i) % mod) == 0)) {
+                    fireProgressStateChanged(80 + (20 * (start + i)) / (totalLength - 1), null, null);
+
+                }
+
+                if ((entireImage == true) || mask.get(start + i)) {
+                    x = i % xDim;
+                    y = i / xDim;
+                    xLow = Math.max(0, x - halfSize);
+                    xHigh = Math.min(xDim-1, x + halfSize);
+                    yLow = Math.max(0, y - halfSize);
+                    yHigh = Math.min(yDim-1, y + halfSize);
+                    localMin = Double.MAX_VALUE;
+                    localMax = - Double.MAX_VALUE;
+                    for (y = yLow; y <= yHigh; y++) {
+                        for (x = xLow; x <= xHigh; x++) {
+                            index = x + y * xDim;
+                            if (buffer[index] < localMin) {
+                                localMin = buffer[index];
+                            }
+                            if (buffer[index] > localMax) {
+                                localMax = buffer[index];
+                            }
+                        }
+                    }
+                    lap = amplificationFactor * (localMin + localMax - 2.0 * buffer[i]);
+                    if (entireImage == false) {
+                        if (lap > maxL) {
+                            maxL = lap;
+                        } 
+                        if (lap < minL) {
+                            minL = lap;
+                        }
+                    }
+                    resultBuffer[start + i] = lap;
+                } else {
+                    resultBuffer[start + i] = buffer[i];
+                    // resultBuffer[i] = 0;
+                }
+            }
+            
+            if (entireImage == false) {
+
+                for (i = 0; i < length; i++) {
+
+                    if (mask.get(start + i)) {
+                        resultBuffer[start+i] = (((resultBuffer[start+i] - minL) / (maxL - minL)) * (max - min)) + min;
+                    }
+                }
+            }
+        } // for (s = 0; (s < zDim) && !threadStopped; s++)
+        
+        resultMin = Double.MAX_VALUE;
+        resultMax = -Double.MAX_VALUE;
+        for (i = 0; i < totalLength; i++) {
+             if (resultBuffer[i] < resultMin) {
+                 resultMin = resultBuffer[i];
+             }
+             if (resultBuffer[i] > resultMax) {
+                 resultMax = resultBuffer[i];
+             }
+        }
+        
+        
+        switch(finalImage.getType()) {
+            case ModelStorageBase.BOOLEAN:
+                typeMin = 0;
+                typeMax = 1;
+                break;
+            case ModelStorageBase.BYTE:
+                typeMin = -128;
+                typeMax = 127;
+                break;
+            case ModelStorageBase.UBYTE:
+                typeMin = 0;
+                typeMax = 255;
+                break;
+            case ModelStorageBase.SHORT:
+                typeMin = -32768;
+                typeMax = 32767;
+                break;
+            case ModelStorageBase.USHORT:
+                typeMin = 0;
+                typeMax = 65535;
+                break;
+            case ModelStorageBase.INTEGER:
+                typeMin = Integer.MIN_VALUE;
+                typeMax = Integer.MAX_VALUE;
+                break;
+            case ModelStorageBase.UINTEGER:
+                typeMin = 0;
+                typeMax = 4294967295L;
+                break;
+            case ModelStorageBase.LONG:
+                typeMin = Long.MIN_VALUE;
+                typeMax = Long.MAX_VALUE;
+                break;
+            case ModelStorageBase.FLOAT:
+                typeMin = -Float.MAX_VALUE;
+                typeMax = Float.MAX_VALUE;
+                break;
+            case ModelStorageBase.DOUBLE:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+                break;
+            default:
+                typeMin = -Double.MAX_VALUE;
+                typeMax = Double.MAX_VALUE;
+        }
+        
+        if ((resultMin < typeMin) || (resultMax > typeMax)) {
+            // typeMax = a * resultMax + b;
+            // typeMin = a * resultMin + b;
+            a = (typeMax - typeMin)/(resultMax - resultMin);
+            b = typeMax - a * resultMax;
+            for (i = 0; i < totalLength; i++) {
+                resultBuffer[i] = (float)(a * resultBuffer[i] + b);
+            }
+        }
+
+        try {
+            if (destImage != null) {
+                destImage.importData(0, resultBuffer, true);
+            }
+            else {
+                srcImage.importData(0, resultBuffer, true);
+            }
+
+            //if ((edgeImage == true) && (nImages == 1)) {
+                //genZeroXMask(resultBuffer);
+            //}
+        } catch (IOException error) {
+            buffer = null;
+            resultBuffer = null;
+            errorCleanUp("Algorithm Laplacian importData: Image(s) locked", true);
+
+            return;
+        }
+
+        setCompleted(true);
+        
+       
     }
 
     /**
