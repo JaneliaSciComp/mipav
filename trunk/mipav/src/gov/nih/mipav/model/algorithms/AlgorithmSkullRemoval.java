@@ -146,6 +146,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         ModelImage temp = registerImages( atlasBasedImage, srcImage );
         if ( temp != null )
         {
+        	if ( reMappedSrc )
+        	{
+        		srcImage.disposeLocal();
+        	}
         	srcImage = temp;
 //        	new ViewJFrameImage(srcImage);
         }
@@ -295,7 +299,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     	{
         	int[] axisOrder = { 0, 1, 2, 3 };
         	boolean[] axisFlip = { false, false, false, false };
-        	if ( MipavCoordinateSystems.matchOrientation( destImage.getAxisOrientation(), atlasBasedImage.getAxisOrientation(), 
+        	if ( MipavCoordinateSystems.matchOrientation( atlasBasedImage.getAxisOrientation(), destImage.getAxisOrientation(),  
         			axisOrder, axisFlip ) )
         	{
         		AlgorithmRotate rotateAlgo = new AlgorithmRotate( destImage, axisOrder, axisFlip );
@@ -304,9 +308,9 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
         		destImage.disposeLocal();
         		destImage = rotateAlgo.returnImage();
         	}
-    		atlasBasedImage.setMask( destImage.getMask() );
             if ( reMappedTargetAtlas )
             {
+        		atlasBasedImage.setMask( destImage.getMask() );
             	if ( MipavCoordinateSystems.matchOrientation( originalAxisTargetAtlas, targetAxis, axisOrder, axisFlip ) )
             	{
             		AlgorithmRotate rotateAlgo = new AlgorithmRotate( atlasBasedImage, axisOrder, axisFlip );
@@ -315,8 +319,16 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
             		atlasBasedImage.disposeLocal();
             		atlasBasedImage = rotateAlgo.returnImage();
             	}
+        		destImage.disposeLocal();
+                destImage = atlasBasedImage;
             }
-            destImage = atlasBasedImage;
+            else
+            {
+            	ModelImage temp = (ModelImage)atlasBasedImage.clone();
+            	temp.setMask( destImage.getMask() );
+            	destImage.disposeLocal();
+            	destImage = temp;
+            }
 //        	new ViewJFrameImage(atlasBasedImage);        	
     	}
 
