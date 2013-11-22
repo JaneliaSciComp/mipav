@@ -1199,11 +1199,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-        if(dim.getHeight() < 950) {
-            getContentPane().setMaximumSize(new Dimension(685, 850));
-            getContentPane().setPreferredSize(new Dimension(685, 850));
-        }
-        
+        getContentPane().setMaximumSize(new Dimension(685, (int)dim.getHeight() - 120));
+        getContentPane().setPreferredSize(new Dimension(685, (int)dim.getHeight() - 120));
         
         pack();
         setVisible(true);
