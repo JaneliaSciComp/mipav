@@ -421,6 +421,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             }
             ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
+            io = null;
             for (int j = 0; j < transformImage.getExtents()[2]; j++) {
                 for (int k = 0; k < 3; k++) {
                     transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.MICROMETERS, k);
