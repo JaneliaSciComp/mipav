@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.Vector;
 
@@ -9,8 +10,10 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoBase.UnitType;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -36,7 +39,7 @@ import javax.swing.*;
  *
  */
 
-public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin implements AlgorithmInterface {
 
 	/**
 	 * 
@@ -79,7 +82,14 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
         String command = event.getActionCommand();
         File dir;
 
-        if(command.equals("Cancel")) dispose();
+        if(command.equals("Cancel")) {
+        	if (isExitRequired()) {
+                System.exit(0);
+                ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
+        }
         else if (command.equals("Choose")) openDir();
         //Error checking for when the file explorer dialog is completed
         //Make sure the selected folder actually exists
@@ -128,7 +138,12 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogBase implements Algo
 			}
 			else MipavUtil.displayInfo("Unable to complete the statistics processing");
 		}
-		dispose();
+		if (isExitRequired()) {
+            System.exit(0);
+            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else {
+            return;
+        }
 	}
 	
 	protected void callAlgorithm() {
