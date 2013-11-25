@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -25,14 +26,17 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
+import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
-public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements AlgorithmInterface {
 
 	/**
 	 * 
@@ -127,7 +131,13 @@ public class PlugInDialogDrawWalls extends JDialogBase implements AlgorithmInter
         	if (display != null) display.close();
         	imageList.clear();
         	rgbImage = null;
-        	dispose();
+        	//dispose();
+        	if (isExitRequired()) {
+                System.exit(0);
+                ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
         }
     }
 
