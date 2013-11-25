@@ -410,7 +410,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     	
     	ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         
-        ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
         for(int i=0; i<transformImageAr.length; i++) {
             FileIO io = new FileIO();
             io.setTIFFOrientation(false);
@@ -431,7 +430,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             while(exec.getActiveCount() == concurrentNum) {}
             
             FusionAlg algInstance = new FusionAlg(this, baseImage, transformImage);
-            algList.add(algInstance);
             exec.execute(algInstance);
 
         }
