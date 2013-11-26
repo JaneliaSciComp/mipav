@@ -1040,6 +1040,13 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                             }
                             io.writeImage(resImageVec.get(j), options, false);
                         }
+                        if (!(parentShow && showMaxProj)) {
+                            for (int j = resImageVec.size() - 1; j >= 0; j--) {
+                                ModelImage img = resImageVec.remove(j);
+                                img.disposeLocal();
+                            }
+                            resImageVec = null;
+                        }
                     }
                 }
             }
