@@ -1043,6 +1043,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                         if (!(parentShow && showMaxProj)) {
                             for (int j = resImageVec.size() - 1; j >= 0; j--) {
                                 ModelImage img = resImageVec.remove(j);
+                                ViewUserInterface.getReference().unRegisterImage(img);
                                 img.disposeLocal();
                             }
                             resImageVec = null;
