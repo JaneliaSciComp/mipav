@@ -321,6 +321,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     	if (register) {
             AlgorithmRegOAR3D regAlgo3D = null;
             FileIO io = new FileIO();
+            io.setQuiet(true);
             io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             for (int i = 0; i < baseImage.getExtents()[2]; i++) {
@@ -412,6 +413,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         for(int i=0; i<transformImageAr.length; i++) {
             FileIO io = new FileIO();
+            io.setQuiet(true);
             io.setTIFFOrientation(false);
             
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
@@ -460,6 +462,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             maxAlgoClone[i] = new AlgorithmMaximumIntensityProjection(maxAlgo[i].getSrcImage(), maxAlgo[i].getStartSlice(), maxAlgo[i].getStopSlice(), 
                                         maxAlgo[i].getWindow(), maxAlgo[i].getMinIntensity()[0], maxAlgo[i].getMaxIntensity()[0], maxAlgo[i].isComputeMaximum(), 
                                         maxAlgo[i].isComputeMinimum(), maxAlgo[i].getProjectionDirection());
+            maxAlgoClone[i].setQuiet(true);
         }
         
         return maxAlgoClone;
@@ -772,6 +775,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             //fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
             
             FileIO io = new FileIO();
+            io.setQuiet(true);
             FileWriteOptions options = new FileWriteOptions(null, null, true);
             saveType = saveType.toLowerCase();
             if(saveType.contains("raw")) {
@@ -1057,6 +1061,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
         private void transform() {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, transformImage);
+            transform.setQuiet(true);
             transform.setPadFlag(false);
             transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
@@ -1137,6 +1142,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
+            transform.setQuiet(true);
             transform.setPadFlag(true);
             transform.setMatrix(mat);
             transform.setImage25D(false);
@@ -1200,6 +1206,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         private ModelImage rotate(ModelImage image, int mode) {
             AlgorithmRotate rotate = new AlgorithmRotate(image, mode);
+            rotate.setQuiet(true);
             rotate.run(); //transform image replaced
             ViewUserInterface.getReference().unRegisterImage(image);
             image.disposeLocal();
