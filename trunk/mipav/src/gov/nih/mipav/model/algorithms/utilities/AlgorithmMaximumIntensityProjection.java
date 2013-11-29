@@ -59,6 +59,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	private int projectionDirection = Z_PROJECTION;
 	/** When the image is a color image, the colorFactor is set to 4, otherwise it defaults to 1. */
 	private int colorFactor = 1;
+	private boolean quiet = false;
 
 	//	~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -155,6 +156,14 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		maxIntensity = null;
 		super.finalize();
 	}
+	
+	/**
+	 * 
+	 * @param quiet
+	 */
+	public void setQuiet(boolean quiet) {
+	    this.quiet = quiet;
+	}
 
 	/**
 	 * Runs the Intensity Projection algorithm.
@@ -246,7 +255,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		float totalLength = (newSlices*lengthZ);
 		int updates = (int)(totalLength/10f);
 		int mod = 0;
-		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		if (!quiet) {
+		    fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		}
 		int index;
 		double mag;
 		if (srcImage.isComplexImage()) {
@@ -286,7 +297,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					}
 					minIntensityValue[0] = Double.MAX_VALUE;
 					mod++;
-					if ( (mod%updates) == 0 )
+					if ((!quiet) && ( (mod%updates) == 0 ))
 					{
 						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 					}
@@ -335,7 +346,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						minIntensityValue[c] = Double.MAX_VALUE;
 					}
 					mod++;
-					if ( (mod%updates) == 0 )
+					if ((!quiet) && ( (mod%updates) == 0 ))
 					{
 						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 					}
@@ -351,7 +362,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		{
 			ZProjectionImageMin.calcMinMax();
 		}
-		fireProgressStateChanged(100);
+		if (!quiet) {
+		    fireProgressStateChanged(100);
+		}
 	}
 
 	/**
@@ -418,7 +431,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		float totalLength = (newSlices*dimZ*dimX);
 		int update = (int)(totalLength/10);
 		int mod = 0;
-		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		if (!quiet) {
+		    fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		}
 		int index;
 		double mag;
 		double maxIntensityRealValue = -Double.MAX_VALUE;
@@ -465,7 +480,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						}
 						minIntensityValue[0] = Double.MAX_VALUE;
 						mod++;
-						if ( (mod%update) == 0 )
+						if ((!quiet) && ( (mod%update) == 0 ))
 						{
 							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 						}
@@ -516,7 +531,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 							minIntensityValue[c] = Double.MAX_VALUE;
 						}
 						mod++;
-						if ( (mod%update) == 0 )
+						if ((!quiet) && ( (mod%update) == 0 ))
 						{
 							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 						}
@@ -533,7 +548,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		{
 			YProjectionImageMin.calcMinMax();
 		}
-		fireProgressStateChanged(100);
+		if (!quiet) {
+		    fireProgressStateChanged(100);
+		}
 	}
 
 	/**
@@ -600,7 +617,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		float totalLength = (newSlices*dimZ*dimY);
 		int update = (int)(totalLength/10);
 		int mod = 0;
-		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		if (!quiet) {
+		    fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
+		}
 		int index;
 		double mag;
 		double maxIntensityRealValue = -Double.MAX_VALUE;
@@ -644,7 +663,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						}
 						minIntensityValue[0] = Double.MAX_VALUE;
 						mod++;
-						if ( (mod%update) == 0 )
+						if ((!quiet) && ( (mod%update) == 0 ))
 						{
 							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 						}
@@ -694,7 +713,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 							minIntensityValue[c] = Double.MAX_VALUE;
 						}
 						mod++;
-						if ( (mod%update) == 0 )
+						if ((!quiet) && ( (mod%update) == 0 ))
 						{
 							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
 						}
@@ -711,7 +730,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		{
 			XProjectionImageMin.calcMinMax();
 		}
-		fireProgressStateChanged(100);
+		if (!quiet) {
+		    fireProgressStateChanged(100);
+		}
 	}
 
 
