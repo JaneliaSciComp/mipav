@@ -13089,7 +13089,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
         try {
             imageFile = new FileTiff(fileName, fileDir);
             imageFile.setTIFFOrientation(doTIFFOrientation);
-            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            imageFile.setSuppressProgressBar(suppressProgressBar);
+            if (!suppressProgressBar) {
+                createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            }
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
 
@@ -13161,6 +13164,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
                 // directory with the prefix name so read and return image as a single file.
                 imageFile.setTIFFOrientation(doTIFFOrientation);
+                imageFile.setSuppressProgressBar(suppressProgressBar);
                 image = imageFile.readImage(false, false);
                 LUT = imageFile.getModelLUT();
                 imageFile.finalize();
@@ -13169,6 +13173,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 return image;
             } else {
                 imageFile.setTIFFOrientation(doTIFFOrientation);
+                imageFile.setSuppressProgressBar(suppressProgressBar);
                 imageFile.readImage(true, false);
             }
         } catch (final IOException error) {
@@ -13217,8 +13222,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
             myFileInfo.setExtents(extents);
 
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName());
-            createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
+            if (!suppressProgressBar) {
+                createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
                     FileIO.FILE_READ);
+            }
 
         } catch (final OutOfMemoryError error) {
 
@@ -13266,12 +13273,15 @@ nList:      for (int i = 0; i < nListImages; i++) {
         for (i = 0; i < nFiles; i++) {
 
             try {
-                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
-                progressBar.updateValueImmed(Math.round((float) i / (nFiles - 1) * 100));
+                if (!suppressProgressBar) {
+                    progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                    progressBar.updateValueImmed(Math.round((float) i / (nFiles - 1) * 100));
+                }
                 (imageFile).setFileName(fileList[i]);
 
                 // fileTIFF.testme(i);
                 (imageFile).setTIFFOrientation(doTIFFOrientation);
+                (imageFile).setSuppressProgressBar(suppressProgressBar);
                 (imageFile).readImage(true, false);
                 myFileInfo = (imageFile).getFileInfo();
                 myFileInfo.setExtents(extents);
