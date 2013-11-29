@@ -16239,7 +16239,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         try { // Construct a new file object
             imageFile = new FileTiff(options.getFileName(), options.getFileDirectory());
-            createProgressBar(imageFile, options.getFileName(), FileIO.FILE_WRITE);
+            imageFile.setSuppressProgressBar(suppressProgressBar);
+            if (!suppressProgressBar) {
+                createProgressBar(imageFile, options.getFileName(), FileIO.FILE_WRITE);
+            }
 
             if (LUT == null) {
                 extents = new int[2];
