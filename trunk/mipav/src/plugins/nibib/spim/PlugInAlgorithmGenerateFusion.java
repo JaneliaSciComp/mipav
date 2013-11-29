@@ -322,6 +322,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             AlgorithmRegOAR3D regAlgo3D = null;
             FileIO io = new FileIO();
             io.setQuiet(true);
+            io.setSuppressProgressBar(true);
             io.setTIFFOrientation(false);
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             for (int i = 0; i < baseImage.getExtents()[2]; i++) {
@@ -414,6 +415,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         for(int i=0; i<transformImageAr.length; i++) {
             FileIO io = new FileIO();
             io.setQuiet(true);
+            io.setSuppressProgressBar(true);
             io.setTIFFOrientation(false);
             
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
@@ -776,6 +778,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             
             FileIO io = new FileIO();
             io.setQuiet(true);
+            io.setSuppressProgressBar(true);
             FileWriteOptions options = new FileWriteOptions(null, null, true);
             saveType = saveType.toLowerCase();
             if(saveType.contains("raw")) {
