@@ -102,6 +102,8 @@ public class FileIO {
     
     private ModelImage imageA = null;
     
+    private boolean suppressProgressBar = false;
+    
     
 
     // ~ Constructors
@@ -202,6 +204,14 @@ public class FileIO {
     
     public void setImageA(ModelImage imageA) {
         this.imageA = imageA;
+    }
+    
+    /**
+     * 
+     * @param suppressProgressBar
+     */
+    public void setSuppressProgressBar(boolean suppressProgressBar) {
+        this.suppressProgressBar = suppressProgressBar;
     }
 
     /**
@@ -4389,7 +4399,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         }
                     }
 
-                    createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
+                    if (!suppressProgressBar) {
+                        createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
+                    }
 
                     final int beginSlice = options.getBeginSlice();
                     final int endSlice = options.getEndSlice();
@@ -4553,7 +4565,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 } else if (bz2zip) {
                     compressionExt = ".bz2";
                 }
-                createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
+                if (!suppressProgressBar) {
+                    createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
+                }
                 int progVal = 0;
                 inputFileName = new String[1];
                 outputFileName = new String[1];
@@ -4581,7 +4595,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                     if (zip) {
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         try {
                             // Create the ZIP output stream
                             zout = new ZipOutputStream(new FileOutputStream(outputFileName[i]));
@@ -4598,7 +4614,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         }
 
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         if (singleFileNIFTI) {
                             // for single file nifti....we write out to gzout directly from image data
                             final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -4614,7 +4632,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             }
                             final byte[] headerByteData = fileNIFTI.getBufferByte();
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out headerByteData
                             buf = new byte[1024];
                             for (int k = 0; k < headerByteData.length; k = k + 1024) {
@@ -4641,7 +4661,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
 
                             final int tS = options.getBeginTime();
@@ -4701,7 +4723,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
 
                             final int tS = options.getBeginTime();
@@ -4759,7 +4783,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // Tranfer the bytes from the input file to the Zip output stream
                             buf = new byte[1024];
                             try {
@@ -4771,7 +4797,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -4797,7 +4825,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             return;
                         }
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         try {
                             zout.close();
                         } catch (final IOException e) {
@@ -4807,7 +4837,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     } // if (zip)
                     else if (gzip) {
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         try {
                             // Create the GZIP output stream
                             gzout = new GZIPOutputStream(new FileOutputStream(outputFileName[i]));
@@ -4816,7 +4848,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             return;
                         }
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         if (singleFileNIFTI) {
                             // for single file nifti....we write out to gzout directly from image data
                             final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -4832,7 +4866,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             }
                             final byte[] headerByteData = fileNIFTI.getBufferByte();
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out headerByteData
                             buf = new byte[1024];
                             for (int k = 0; k < headerByteData.length; k = k + 1024) {
@@ -4859,7 +4895,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
 
                             final int tS = options.getBeginTime();
@@ -4917,7 +4955,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
                             final int tS = options.getBeginTime();
                             final int tEnd = options.getEndTime();
@@ -4977,7 +5017,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // Tranfer the bytes from the input file to the GZIP output stream
                             buf = new byte[1024];
                             try {
@@ -4989,7 +5031,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -5014,7 +5058,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             return;
                         }
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         try {
                             gzout.close();
                         } catch (final IOException e) {
@@ -5024,7 +5070,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     } // if (gzip)
                     else { // bz2zip
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         try {
                             out = new FileOutputStream(outputFileName[i]);
                             out.write('B');
@@ -5036,7 +5084,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             return;
                         }
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         if (singleFileNIFTI) {
                             // for single file nifti....we write out to gzout directly from image data
                             final FileNIFTI fileNIFTI = new FileNIFTI(options.getFileName(), options.getFileDirectory());
@@ -5052,7 +5102,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             }
                             final byte[] headerByteData = fileNIFTI.getBufferByte();
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out headerByteData
                             buf = new byte[1024];
                             for (int k = 0; k < headerByteData.length; k = k + 1024) {
@@ -5079,7 +5131,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
 
                             final int tS = options.getBeginTime();
@@ -5136,7 +5190,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                             byte[] sliceByteData;
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // write out image data
                             final int tS = options.getBeginTime();
                             final int tEnd = options.getEndTime();
@@ -5192,7 +5248,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             // Tranfer the bytes from the input file to the BZIP2 output stream
                             buf = new byte[1024];
                             try {
@@ -5204,7 +5262,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 return;
                             }
                             progVal = progVal + (20 / numFiles);
-                            progressBar.updateValue(progVal, false);
+                            if (!suppressProgressBar) {
+                                progressBar.updateValue(progVal, false);
+                            }
                             try {
                                 in.close();
                             } catch (final IOException e) {
@@ -5222,7 +5282,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         }
 
                         progVal = progVal + (20 / numFiles);
-                        progressBar.updateValue(progVal, false);
+                        if (!suppressProgressBar) {
+                            progressBar.updateValue(progVal, false);
+                        }
                         // complete the bz2zip file
                         try {
                             bz2out.close();
