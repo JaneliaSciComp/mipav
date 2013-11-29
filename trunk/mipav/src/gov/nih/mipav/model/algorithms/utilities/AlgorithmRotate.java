@@ -50,6 +50,7 @@ public class AlgorithmRotate extends AlgorithmBase {
     private int[] axisOrder = { 0, 1, 2, 3 };
     private boolean[] axisFlip = { false, false, false, false };
     ViewJProgressBar progressBar;
+    private boolean quiet  = false;
 
     //private TransMatrix rotMatrix = new TransMatrix(4);
     /**
@@ -107,6 +108,14 @@ public class AlgorithmRotate extends AlgorithmBase {
         srcImage = null;
         super.finalize();
     }
+    
+    /**
+     * 
+     * @param quiet
+     */
+    public void setQuiet(boolean quiet) {
+        this.quiet = quiet;
+    }
 
     /**
      * Returns the rotated image.
@@ -129,10 +138,14 @@ public class AlgorithmRotate extends AlgorithmBase {
             return;
         }
 
-        progressBar = new ViewJProgressBar("Rotating image ",
+        if (!quiet) {
+            progressBar = new ViewJProgressBar("Rotating image ",
                 "Rotating image...", 0, 100, true);
+        }
         calcInPlace();
-        progressBar.dispose();
+        if (!quiet) {
+            progressBar.dispose();
+        }
     }
 
 
