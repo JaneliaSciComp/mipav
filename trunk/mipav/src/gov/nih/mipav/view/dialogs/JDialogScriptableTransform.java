@@ -298,6 +298,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private boolean filetVOI[] = new boolean[1];
     private boolean fileClip[] = new boolean[1];
     private boolean filePad[] = new boolean[1];
+    private boolean quiet = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -341,6 +342,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * 
+     * @param quiet
+     */
+    public void setQuiet(boolean quiet) {
+        this.quiet = quiet;    
+    }
 
     /**
      * Closes dialog box when the OK button is pressed, sets the variables, and calls the algorithm.
@@ -1482,7 +1491,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         // See algorithm performed event. This is made possible by implementing
         algoTrans.addListener(this);
 
-        createProgressBar(image.getImageName(), algoTrans);
+        if (!quiet) {
+            createProgressBar(image.getImageName(), algoTrans);
+        }
 
         // Start the thread as a low priority because we wish to still have
         // user interface work fast
