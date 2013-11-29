@@ -858,6 +858,7 @@ public class FileTiff extends FileBase {
     private ViewUserInterface UI = ViewUserInterface.getReference();
     
     private boolean doTIFFOrientation = true;
+    private boolean suppressProgressBar = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -981,8 +982,20 @@ public class FileTiff extends FileBase {
         } catch (Throwable er) { }
     }
     
+    /**
+     * 
+     * @param doTIFFOrientation
+     */
     public void setTIFFOrientation(boolean doTIFFOrientation) {
         this.doTIFFOrientation = doTIFFOrientation;
+    }
+    
+    /**
+     * 
+     * @param suppressProgressBar
+     */
+    public void setSuppressProgressBar(boolean suppressProgressBar) {
+        this.suppressProgressBar = suppressProgressBar;
     }
 
     /**
@@ -5571,7 +5584,9 @@ public class FileTiff extends FileBase {
                 tempTiff = new FileTiff(tempName, tempDir);
                 tempImage = tempTiff.readImage(false, true);
 
-                fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
+                if (!suppressProgressBar) {
+                    fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
+                }
 
 
                 tempImage.exportData(0, tempBuffer.length, tempBuffer);
@@ -5610,7 +5625,9 @@ public class FileTiff extends FileBase {
                 tempTiff = new FileTiff(tempName, tempDir);
                 tempImage = tempTiff.readImage(false, true);
 
-                fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
+                if (!suppressProgressBar) {
+                    fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
+                }
 
                 tempImage.exportData(0, tempBuffer.length, tempBuffer);
                 finalImage.importData((i * tempBuffer.length), tempBuffer, false);
@@ -5771,7 +5788,9 @@ public class FileTiff extends FileBase {
             for (s = begin, seq = options.getStartNumber(); s < end; s++, seq++) {
                 if (image.getNDims() == 4) {
                     timeOffset = s * image.getExtents()[2] * bufferSize;
-                    fireProgressStateChanged(Math.round((float) (s - begin) / (end - begin) * 100));
+                    if (!suppressProgressBar) {
+                        fireProgressStateChanged(Math.round((float) (s - begin) / (end - begin) * 100));
+                    }
                 }
 
                 if (oneFile) {
@@ -5948,9 +5967,11 @@ public class FileTiff extends FileBase {
 
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
                         if (!(image.getNDims() == 4)) {
-                            fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
+                            if (!suppressProgressBar) {
+                                fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                 (options.getEndSlice() - options.getBeginSlice() + 1) *
                                                                 100));
+                            }
                         }
 
                         if (options.isWritePackBit()) {
@@ -6045,7 +6066,9 @@ public class FileTiff extends FileBase {
                         }
                     }
                 } else {
-                    fireProgressStateChanged(Math.round((float) s / (options.getEndSlice()) * 100));
+                    if (!suppressProgressBar) {
+                        fireProgressStateChanged(Math.round((float) s / (options.getEndSlice()) * 100));
+                    }
 
                     if (options.isWritePackBit()) {
                         stripCount = filePB.getStripSize(image, s * bufferSize, (s * bufferSize) + bufferSize);
@@ -12237,7 +12260,7 @@ public class FileTiff extends FileBase {
 
                             for (j = 0; j < nBytes; j++, i++) {
 
-                                if (((i + progress) % mod) == 0) {
+                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
@@ -12264,7 +12287,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -12286,7 +12309,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -12319,7 +12342,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0; c < bitsPerSample.length; c++) {
                                     for (y = 0; y < yDim; y++) {
                                         for (x = 0; x < xDim; x++, i++, j++) {
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                             }
                                             buffer[i] = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -12332,7 +12355,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                         }
                                         
@@ -12378,7 +12401,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                         }
                                         
@@ -12404,7 +12427,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i++) {
     
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                         }
     
@@ -12454,7 +12477,7 @@ public class FileTiff extends FileBase {
                                 }
                                 for (j = 0; j < nBytes; j++, i++) {
     
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
     
@@ -12489,7 +12512,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -12516,7 +12539,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -12548,7 +12571,7 @@ public class FileTiff extends FileBase {
 
                         for (j = 0; j < nBytes; j += 2, i++) {
 
-                            if (((i + progress) % mod) == 0) {
+                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
@@ -12578,7 +12601,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i++) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -12631,7 +12654,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i++) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -12660,7 +12683,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i++) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -12714,7 +12737,7 @@ public class FileTiff extends FileBase {
                         else {
                             for (j = 0; j < nBytes; j += 2, i++) {
     
-                                if (((i + progress) % mod) == 0) {
+                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
     
@@ -12743,7 +12766,7 @@ public class FileTiff extends FileBase {
 
                         for (j = 0; j < nBytes; j += 4, i++) {
 
-                            if (((i + progress) % mod) == 0) {
+                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
@@ -12774,7 +12797,7 @@ public class FileTiff extends FileBase {
                         if (isBW24) {
                             for (j = 0; j < nBytes; j += 3, i++) {
                                 
-                                if (((i + progress) % mod) == 0) {
+                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
     
@@ -12795,7 +12818,7 @@ public class FileTiff extends FileBase {
 
                             for (j = 0; j < nBytes; j += 4, i++) {
     
-                                if (((i + progress) % mod) == 0) {
+                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
     
@@ -12828,7 +12851,7 @@ public class FileTiff extends FileBase {
 
                         for (j = 0; j < nBytes; j += 4, i++) {
 
-                            if (((i + progress) % mod) == 0) {
+                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
@@ -12961,7 +12984,7 @@ public class FileTiff extends FileBase {
                                 // For the moment I compress RGB images to unsigned bytes.
                                 for (j = 0; j < nBytes; j += 4, i += 4) {
     
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
     
@@ -12993,7 +13016,7 @@ public class FileTiff extends FileBase {
                                     // For the moment I compress RGB images to unsigned bytes
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i/4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13019,7 +13042,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) + (buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -13043,7 +13066,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) +
                                                                                          (2 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
@@ -13067,7 +13090,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j++, i += 4) {
 
-                                        if ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) +
                                                                                          (3 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
@@ -13090,7 +13113,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -13159,7 +13182,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13220,7 +13243,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -13280,7 +13303,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -13334,7 +13357,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -13376,7 +13399,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13417,7 +13440,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -13457,7 +13480,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
     
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -13495,7 +13518,7 @@ public class FileTiff extends FileBase {
 
                             for (j = 0; j < nBytes; j += samplesPerPixel, i += 4) {
 
-                                if (((i + progress) % mod) == 0) {
+                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
@@ -13532,7 +13555,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, j++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13608,7 +13631,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++, j++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13646,7 +13669,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13687,7 +13710,7 @@ public class FileTiff extends FileBase {
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
-                                    if ((((i / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                 progressLength * 100));
                                     }
@@ -13712,7 +13735,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
-                                    if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                      progress) / progressLength * 100));
                                     }
@@ -13736,7 +13759,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
-                                    if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                      (2 * buffer.length / 3) +
                                                                                      progress) / progressLength * 100));
@@ -13763,7 +13786,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 8, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -13822,7 +13845,7 @@ public class FileTiff extends FileBase {
                                     // For the moment I compress RGB images to unsigned bytes
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -13855,7 +13878,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) + (buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -13887,7 +13910,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (2 * buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) +
                                                                                          (2 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
@@ -13919,7 +13942,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                        if ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 4) + (3 * buffer.length / 4) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 4) +
                                                                                          (3 * buffer.length / 4) +
                                                                                          progress) / progressLength * 100));
@@ -13951,7 +13974,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -14033,7 +14056,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -14101,7 +14124,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -14168,7 +14191,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -14229,7 +14252,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -14277,7 +14300,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -14321,7 +14344,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -14364,7 +14387,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -14401,7 +14424,7 @@ public class FileTiff extends FileBase {
                             for (j = 0, m = 0; y < yDim; y++) {
                                 for (x = 0; x < xDim; x++, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -14489,7 +14512,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -14559,7 +14582,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -14628,7 +14651,7 @@ public class FileTiff extends FileBase {
                                 for (j = 0, m = 0; y < yDim; y++) {
                                     for (x = 0; x < xDim; x++, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -14700,7 +14723,7 @@ public class FileTiff extends FileBase {
                             if (samplesPerPixel == 3) {
                                 for (j = 0; j < nBytes; j += 6, i += 4) {
     
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
     
@@ -14737,7 +14760,7 @@ public class FileTiff extends FileBase {
                             else if (samplesPerPixel == 4) {
                                 for (j = 0; j < nBytes; j += 8, i += 4) {
                                     
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
     
@@ -14794,7 +14817,7 @@ public class FileTiff extends FileBase {
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                    if ((((i / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                 progressLength * 100));
                                     }
@@ -14826,7 +14849,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                    if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                      progress) / progressLength * 100));
                                     }
@@ -14857,7 +14880,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
-                                    if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                      (2 * buffer.length / 3) +
                                                                                      progress) / progressLength * 100));
@@ -14891,7 +14914,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 9, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -14938,7 +14961,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 12, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -14988,7 +15011,7 @@ public class FileTiff extends FileBase {
 
                                 for (j = 0; j < nBytes; j += 12, i += 4) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                     }
 
@@ -15044,7 +15067,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 3, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15077,7 +15100,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 3, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -15109,7 +15132,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 3, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -15141,7 +15164,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 4, i += 4) {
 
-                                        if ((((i / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15175,7 +15198,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 4, i += 4) {
 
-                                        if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
                                         }
@@ -15208,7 +15231,7 @@ public class FileTiff extends FileBase {
 
                                     for (j = 0; j < nBytes; j += 4, i += 4) {
 
-                                        if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) ((i / 3) +
                                                                                          (2 * buffer.length / 3) +
                                                                                          progress) / progressLength * 100));
@@ -15311,7 +15334,7 @@ public class FileTiff extends FileBase {
 
                 for (j = 0; j < nBytes; j += 8, i++) {
 
-                    if (((i + progress) % mod) == 0) {
+                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
@@ -15491,7 +15514,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -15518,7 +15541,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -15593,7 +15616,7 @@ public class FileTiff extends FileBase {
 
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15615,7 +15638,7 @@ public class FileTiff extends FileBase {
 
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15664,7 +15687,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -15697,7 +15720,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -15795,7 +15818,7 @@ public class FileTiff extends FileBase {
 
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15826,7 +15849,7 @@ public class FileTiff extends FileBase {
 
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -15879,7 +15902,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -15912,7 +15935,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -15993,7 +16016,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16021,7 +16044,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16102,7 +16125,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16130,7 +16153,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16210,7 +16233,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16244,7 +16267,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16328,7 +16351,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16362,7 +16385,7 @@ public class FileTiff extends FileBase {
 
                                 if ((x < xDim) && (y < yDim)) {
 
-                                    if (((i + progress) % mod) == 0) {
+                                    if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                         fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
                                                                                 100));
                                     }
@@ -16460,7 +16483,7 @@ public class FileTiff extends FileBase {
                                     
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -16679,7 +16702,7 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++) {
 
                                         if ((x < xDim) && (y < yDim)) {
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -16724,7 +16747,7 @@ public class FileTiff extends FileBase {
 
                                     for (iNext = 0; iNext < iCount; iNext++) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -16792,7 +16815,7 @@ public class FileTiff extends FileBase {
                                     j++;
 
                                     for (iNext = 0; iNext < iCount; iNext++, j++) {
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -16850,7 +16873,7 @@ public class FileTiff extends FileBase {
                                     j++;
 
                                     for (iNext = 0; iNext < iCount; iNext++) {
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -16994,7 +17017,7 @@ public class FileTiff extends FileBase {
     
                                             if ((x < xDim) && (y < yDim)) {
     
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                             progressLength * 100));
                                                 }
@@ -17020,7 +17043,7 @@ public class FileTiff extends FileBase {
     
                                             if ((x < xDim) && (y < yDim)) {
     
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                             progressLength * 100));
                                                 }
@@ -17046,7 +17069,7 @@ public class FileTiff extends FileBase {
     
                                         if ((x < xDim) && (y < yDim)) {
     
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -17135,7 +17158,7 @@ public class FileTiff extends FileBase {
     
                                             if ((x < xDim) && (y < yDim)) {
     
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + progress) /
                                                                                             progressLength * 100));
                                                 }
@@ -17157,7 +17180,7 @@ public class FileTiff extends FileBase {
                                             
                                             if ((x < xDim) && (y < yDim)) {
     
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + buffer.length/3 + 
                                                                              progress) / progressLength * 100));
                                                 }
@@ -17178,7 +17201,7 @@ public class FileTiff extends FileBase {
                                             
                                             if ((x < xDim) && (y < yDim)) {
     
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                              2*buffer.length/3 + progress) /
                                                                              progressLength * 100));
@@ -17202,7 +17225,7 @@ public class FileTiff extends FileBase {
         
                                             if ((x < xDim) && (y < yDim)) {
         
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + progress) /
                                                                                             progressLength * 100));
                                                 }
@@ -17224,7 +17247,7 @@ public class FileTiff extends FileBase {
                                             
                                             if ((x < xDim) && (y < yDim)) {
         
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                              buffer.length/3 + progress) /
                                                                                             progressLength * 100));
@@ -17246,7 +17269,7 @@ public class FileTiff extends FileBase {
                                             
                                             if ((x < xDim) && (y < yDim)) {
         
-                                                if (((i + progress) % mod) == 0) {
+                                                if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                     fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                              2*buffer.length/3 + progress) /
                                                                                             progressLength * 100));
@@ -17342,7 +17365,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -17380,7 +17403,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -17421,7 +17444,7 @@ public class FileTiff extends FileBase {
 
                                     if ((x < xDim) && (y < yDim)) {
 
-                                        if (((i + progress) % mod) == 0) {
+                                        if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                             fireProgressStateChanged(Math.round((float) (i + progress) /
                                                                                     progressLength * 100));
                                         }
@@ -17520,7 +17543,7 @@ public class FileTiff extends FileBase {
 
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -17560,7 +17583,7 @@ public class FileTiff extends FileBase {
                                         
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + buffer.length/3 + 
                                                                          progress) / progressLength * 100));
                                             }
@@ -17599,7 +17622,7 @@ public class FileTiff extends FileBase {
                                         
                                         if ((x < xDim) && (y < yDim)) {
 
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                          2*buffer.length/3 + progress) /
                                                                          progressLength * 100));
@@ -17641,7 +17664,7 @@ public class FileTiff extends FileBase {
     
                                         if ((x < xDim) && (y < yDim)) {
     
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + progress) /
                                                                                         progressLength * 100));
                                             }
@@ -17681,7 +17704,7 @@ public class FileTiff extends FileBase {
                                         
                                         if ((x < xDim) && (y < yDim)) {
     
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                          buffer.length/3 + progress) /
                                                                                         progressLength * 100));
@@ -17721,7 +17744,7 @@ public class FileTiff extends FileBase {
                                         
                                         if ((x < xDim) && (y < yDim)) {
     
-                                            if (((i + progress) % mod) == 0) {
+                                            if ((!suppressProgressBar) && (((i + progress) % mod) == 0)) {
                                                 fireProgressStateChanged(Math.round((float) (i/3 + 
                                                                          2*buffer.length/3 + progress) /
                                                                                         progressLength * 100));
