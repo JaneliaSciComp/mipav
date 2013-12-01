@@ -106,6 +106,8 @@ public class AlgorithmRotate extends AlgorithmBase {
      */
     public void finalize() {
         srcImage = null;
+        axisOrder = null;
+        axisFlip = null;
         super.finalize();
     }
     
