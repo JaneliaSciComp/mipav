@@ -339,6 +339,40 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
         init();
     }
+    
+    /**
+     * Constructs new transform dialog and sets up GUI components.
+     * 
+     * @param theParentFrame Parent frame.
+     * @param im Source image.
+     */
+    public JDialogScriptableTransform(final Frame theParentFrame, final ModelImage im, boolean doInit) {
+        super(theParentFrame, false);
+
+        image = im;
+        image.makeUnitsOfMeasureIdentical();
+        resampleImage = im;
+
+        userInterface = ViewUserInterface.getReference();
+        cZres = 1.f;
+        cZdim = 1;
+        dims = new float[3];
+        resols = new float[3];
+        dims[0] = image.getFileInfo()[0].getExtents()[0];
+        dims[1] = image.getFileInfo()[0].getExtents()[1];
+        if (image.getNDims() > 2) {
+            dims[2] = image.getFileInfo()[0].getExtents()[2];
+        }
+
+        resols[0] = image.getFileInfo()[0].getResolutions()[0];
+        resols[1] = image.getFileInfo()[0].getResolutions()[1];
+        if (image.getNDims() > 2) {
+            resols[2] = image.getFileInfo()[0].getResolutions()[2];
+        }
+        if (doInit) {
+            init();
+        }
+    }
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
@@ -454,7 +488,25 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             algoTal = null;
         }
 
+        finalize();
         dispose();
+    }
+    
+    public void finalize() {
+        dims = null;
+        resols = null;
+        units = null;
+        xfrm = null;
+        fileInterp = null;
+        fileXres = null;
+        fileYres = null;
+        fileZres = null;
+        fileXdim = null;
+        fileYdim = null;
+        fileZdim = null;
+        filetVOI = null;
+        fileClip = null;
+        filePad = null;
     }
 
     /**
