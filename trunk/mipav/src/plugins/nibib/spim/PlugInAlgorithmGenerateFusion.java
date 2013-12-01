@@ -1056,6 +1056,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                             resImageVec = null;
                         }
                     }
+                    maxAlgoClone[i].finalize();
                 }
             }
         }
@@ -1063,14 +1064,13 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
 
         private void transform() {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, transformImage);
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, transformImage, false);
             transform.setQuiet(true);
             transform.setPadFlag(false);
             transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
             transform.setSeparateThread(false);
             transform.setClipFlag(true);
-            transform.setDimAndResXYZ();
             transform.setUnits(baseImage.getUnitsOfMeasure());
             transform.setQuietRunning(!doInterImages);
             transform.setFileXDim(0);
@@ -1144,7 +1144,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
         
         private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image, false);
             transform.setQuiet(true);
             transform.setPadFlag(true);
             transform.setMatrix(mat);
@@ -1152,7 +1152,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             transform.setSeparateThread(false);
             transform.setClipFlag(true);
             transform.setQuietRunning(!doInterImages);
-            transform.setDimAndResXYZ();
             transform.setUnits(image.getUnitsOfMeasure());
             transform.setOutDimensions(outDim);//transformImage.getExtents());
             transform.setOutResolutions(outRes);
@@ -1214,6 +1213,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             ViewUserInterface.getReference().unRegisterImage(image);
             image.disposeLocal();
             image = rotate.getDestImage();
+            rotate.finalize();
             if(doInterImages) {
                 new ViewJFrameImage(image);
             }
