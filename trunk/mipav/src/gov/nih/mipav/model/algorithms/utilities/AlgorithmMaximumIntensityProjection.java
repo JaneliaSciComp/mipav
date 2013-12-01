@@ -154,6 +154,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	public void finalize() {
 		minIntensity = null;
 		maxIntensity = null;
+		imResolutions = null;
+		resultImages.clear();
+		resultImages = null;
 		super.finalize();
 	}
 	
