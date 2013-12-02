@@ -27,6 +27,8 @@ import gov.nih.mipav.util.ThreadUtil;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,6 +40,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
@@ -56,7 +60,6 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
@@ -703,7 +706,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
     }
 
-    public class FusionAlg implements Callable, Runnable {
+    public class FusionAlg implements Runnable {
 
         private ModelImage baseImage, transformImage;
         
@@ -1064,25 +1067,24 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
 
         private void transform() {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, transformImage, false);
-            transform.setQuiet(true);
-            transform.setPadFlag(false);
-            transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
-            transform.setImage25D(false);
-            transform.setSeparateThread(false);
-            transform.setClipFlag(true);
-            transform.setUnits(baseImage.getUnitsOfMeasure());
-            transform.setQuietRunning(!doInterImages);
-            transform.setFileXDim(0);
-            
             int[] dim = new int[transformImage.getExtents().length];
             float[] res = new float[transformImage.getResolutions(0).length];
+            float oXres = 1.0f;
+            float oYres = 1.0f;
+            float oZres = 1.0f;
+            int oXdim = 0;
+            int oYdim = 0;
+            int oZdim = 0;
             
             switch (mode) {
             
             case DownsampleToBase:
-                transform.setOutDimensions(baseImage.getExtents());
-                transform.setOutResolutions(baseImage.getResolutions(0));
+                oXdim = baseImage.getExtents()[0];
+                oYdim = baseImage.getExtents()[1];
+                oZdim = baseImage.getExtents()[2];
+                oXres = baseImage.getResolutions(0)[0];
+                oYres = baseImage.getResolutions(0)[1];
+                oZres = baseImage.getResolutions(0)[2];
                 break;
             
             case UpsampleToTransform:
@@ -1094,7 +1096,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     }
                 }
                 
-                transform.setOutDimensions(dim);
+                oXdim = dim[0];
+                oYdim = dim[1];
+                oZdim = dim[2];
                 
                 for(int i=0; i<res.length; i++) {
                     if(transformImage.getResolutions(0)[i] < baseImage.getResolutions(0)[i]) {
@@ -1104,7 +1108,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     }
                 }
                 
-                transform.setOutResolutions(res);
+                oXres = res[0];
+                oYres = res[1];
+                oZres = res[2];
                 break;
             
             case DownsampleUpsampleCombined:
@@ -1123,46 +1129,127 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     dim[i] = (int) ((baseImage.getExtents()[i] + transformImage.getExtents()[i]) / 2.0); 
                 }
                 
-                transform.setOutDimensions(dim);
-                transform.setOutResolutions(res);
+                oXdim = dim[0];
+                oYdim = dim[1];
+                oZdim = dim[2];
+                oXres = res[0];
+                oYres = res[1];
+                oZres = res[2];
                 break;
                 
             }
 
-            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            boolean doPad = false;
+            TransMatrix xfrm = new TransMatrix(4);
+            xfrm.identity();
+            if (mtxFileLoc == null) {
+                MipavUtil.displayError("mtxFileLoc = null");
+            }
+            try {
+                // search for file name relative to image first, then relative to MIPAV default, then absolute path
+                File file = null;
+                
+                file = new File(transformImage.getImageDirectory() + mtxFileLoc);
+                if ( !file.exists()) {
+                    file = new File(ViewUserInterface.getReference().getDefaultDirectory() + mtxFileLoc);
+                }
+                if ( !file.exists()) {
+                    file = new File(mtxFileLoc);
+                }
+
+                final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+                
+                int fileInterp[] = new int[1];
+                float fileXres[] = new float[1];
+                float fileYres[] = new float[1];
+                float fileZres[] = new float[1];
+                int fileXdim[] = new int[1];
+                int fileYdim[] = new int[1];
+                int fileZdim[] = new int[1];
+                boolean filetVOI[] = new boolean[1];
+                boolean fileClip[] = new boolean[1];
+                boolean filePad[] = new boolean[1];
+                xfrm.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim, 
+                                      filetVOI, fileClip, filePad, false);
+                raFile.close();
+
+                // We don't know the coordinate system that the transformation represents. Therefore
+                // bring up a dialog where the user can ID the coordinate system changes (i.e.
+                // world coordinate and/or the "left-hand" coordinate system!
+                // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+            } catch (final IOException error) {
+                MipavUtil.displayError("Matrix read error");
+                xfrm.identity();
+            }
+            int interp = AlgorithmTransform.TRILINEAR;
+            int units[] = new int[3];
+            units[0] = baseImage.getUnitsOfMeasure()[0];
+            units[1] = baseImage.getUnitsOfMeasure()[1];
+            units[2] = baseImage.getUnitsOfMeasure()[2];
+            boolean doClip = true;
+            boolean doVOI = false;
+            boolean doRotateCenter = false;
+            Vector3f center = new Vector3f();
+            float fillValue = 0.0f;
+            boolean doUpdateOrigin = false;
+            boolean isSATransform = false;
+            AlgorithmTransform algoTrans = new AlgorithmTransform(transformImage, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
+                    doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans.setFillValue(fillValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            algoTrans.setUseScannerAnatomical(isSATransform);
+            
+            algoTrans.run();
             
             if(!doInterImages) {
                 ViewUserInterface.getReference().unRegisterImage(transformImage);
                 transformImage.disposeLocal();
             }
             
-            transformImage = transform.getResultImage();
+            transformImage = algoTrans.getTransformedImage();
+            algoTrans.disposeLocal();
+            algoTrans = null;
+            transformImage.calcMinMax();
             
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
         }
+
         
         private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image, false);
-            transform.setQuiet(true);
-            transform.setPadFlag(true);
-            transform.setMatrix(mat);
-            transform.setImage25D(false);
-            transform.setSeparateThread(false);
-            transform.setClipFlag(true);
-            transform.setQuietRunning(!doInterImages);
-            transform.setUnits(image.getUnitsOfMeasure());
-            transform.setOutDimensions(outDim);//transformImage.getExtents());
-            transform.setOutResolutions(outRes);
-            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            boolean doPad = true;
+            int interp = AlgorithmTransform.TRILINEAR;
+            int units[] = new int[3];
+            units[0] = image.getUnitsOfMeasure()[0];
+            units[1] = image.getUnitsOfMeasure()[1];
+            units[2] = image.getUnitsOfMeasure()[2];
+            boolean doClip = true;
+            boolean doVOI = false;
+            boolean doRotateCenter = false;
+            Vector3f center = new Vector3f();
+            float fillValue = 0.0f;
+            boolean doUpdateOrigin = false;
+            boolean isSATransform = false;
+            AlgorithmTransform algoTrans = new AlgorithmTransform(image, mat, interp, outRes[0], outRes[1], outRes[2], 
+                    outDim[0], outDim[1], outDim[2], units,
+                    doVOI, doClip, doPad, doRotateCenter, center);
+            algoTrans.setFillValue(fillValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+            algoTrans.setUseScannerAnatomical(isSATransform);
+            
+            algoTrans.run();
             
             if(!doInterImages) {
                 ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
             }
             
-            return transform.getResultImage();
+            ModelImage subImage = algoTrans.getTransformedImage();
+            algoTrans.disposeLocal();
+            algoTrans = null;
+            subImage.calcMinMax();
+            return subImage;
         }
 
         private void downsampleUpsampleCombined() {
