@@ -185,8 +185,7 @@ tableItr:	for(int i=0; i<length; i++) {
 			}
 			
 			RandomAccessFile raFile = new RandomAccessFile(f, "rw");
-			
-			System.out.println("Here again");
+		
 			writeDicom.writeTags(raFile, fileInfo, keyArray, tagArray);
 			
 			this.dispose();
