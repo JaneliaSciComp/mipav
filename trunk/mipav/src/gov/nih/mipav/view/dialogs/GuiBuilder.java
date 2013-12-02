@@ -73,6 +73,10 @@ public class GuiBuilder implements ActionListener {
     public ExitStatus getExitStatus() {
         return exit;
     }
+    
+    public boolean getSuccess() {
+    	return exit.equals(ExitStatus.OK_SUCCESS);
+    }
 
     private static GridBagConstraints gbc = new GridBagConstraints();
     private static GridBagLayout gbLayout = new GridBagLayout();
