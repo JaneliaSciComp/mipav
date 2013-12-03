@@ -221,11 +221,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 			stripped = stripped.concat("_mask.xml");
 			stripped = dirStr.concat(stripped);
 			mask = new File(stripped);
-			
-			/*stripped = im.toString();
-			stripped = stripped.substring(0, stripped.indexOf("."));
-	        stripped = stripped.concat("_mask.xml");
-	        mask = new File(stripped);*/
+
 	        if (mask.exists()){
 	        	imageList.add(im);
 	        	maskList.add(new File(stripped));
