@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.BitSet;
@@ -12,6 +13,7 @@ import java.util.Vector;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,6 +26,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmVOILogicalOperations;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
@@ -61,6 +65,8 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	
 	private File maskDir;
 	
+	private Vector<File> maskList;
+	
 	private ModelImage rgbImage;
 	
 	private JRadioButton voiRB;
@@ -68,6 +74,24 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	private JRadioButton paintRB;
 	
 	private JCheckBox displayMask;
+	
+	private JCheckBox calcStats;
+	
+	private PlugInAlgorithmWallNucleiStatsBulk calcAlg;
+	
+	private JComboBox resUnits;
+	
+	private JPanel resPanel;
+	
+	private JTextField xResField;
+	
+	private File csv;
+	
+	private FileWriter output;
+	
+	private JCheckBox nucleiCB;
+	
+	private JCheckBox wallCB;
 	
 	
 	/**
@@ -93,6 +117,21 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         boolean changed = !dirText.getText().equals("Path to Directory with Slices");
 
         if (command.equals("Choose")) openDir();
+        else if (command.equals("calc")){
+        	if (calcStats.isSelected()) {
+        		xResField.setEnabled(true);
+        		resUnits.setEnabled(true);
+        		nucleiCB.setEnabled(true);
+                wallCB.setEnabled(true);
+        	}
+        	else{
+        		xResField.setEnabled(false);
+        		resUnits.setEnabled(false);
+        		nucleiCB.setEnabled(false);
+                wallCB.setEnabled(false);
+        	}
+        		
+        }
         else if (command.equals("ApproveSelection")){
         	//Changes the text field to match the directory selected by the user
         	dirText.setText(fileChooser.getSelectedFile().toString());
@@ -103,7 +142,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         	counter++;
         	if(counter < listLength){
         		display.close();
-        		callAlgorithm();
+        		openImage();
         		String title = "Wall Drawing " + String.valueOf(counter+1) + " of "
         				+ String.valueOf(listLength);
                 setTitle(title);
@@ -114,7 +153,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         	if (changed){
         		//If there are no images, tell the user
 	        	if(fileFilter()) {
-	        		callAlgorithm();
+	        		openImage();
 	        		initDrawer();
 	        	}
 	        	else 
@@ -127,7 +166,18 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         
         //This is at the end so that if "Next" is pushed when there are no images
         //left, it falls to this case
-        if(command.equals("Cancel")||command.equals("End")) {
+        if(command.equals("End") && calcStats.isSelected()){
+        	if (display != null) display.close();
+        	imageList.clear();
+        	rgbImage = null;
+        	if(statsFilter()){
+        		calcAlg = new PlugInAlgorithmWallNucleiStatsBulk(imageList, maskList);
+        		calcAlg.addListener(this);
+        		calcAlg.run();
+        	}
+        	
+        }
+        if(command.equals("Cancel")|| (command.equals("End") && !calcStats.isSelected())) {
         	if (display != null) display.close();
         	imageList.clear();
         	rgbImage = null;
@@ -136,6 +186,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
                 System.exit(0);
                 ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
             } else {
+            	dispose();
                 return;
             }
         }
@@ -154,7 +205,43 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	 * Opens the next image in the list and displays it for the user to draw VOIs on
 	 */
 	
-	protected void callAlgorithm() {
+	protected void callAlgorithm(){
+		try{
+			int xRes;
+			boolean wall, nuclei;
+			
+			xRes = Integer.valueOf(xResField.getText());
+			wall = wallCB.isSelected();
+			nuclei = nucleiCB.isSelected();
+			
+			calcAlg = new PlugInAlgorithmWallNucleiStatsBulk(imageList, maskList);
+			
+			calcAlg.setRes(xRes);
+			calcAlg.setCSV(output);
+			calcAlg.showWall(wall);
+			calcAlg.showNuc(nuclei);
+
+			//Progress bar doesn't update smoothly with algorithms
+			createProgressBar("Wall/Nuclei statistics calculation", "Initializing..." , calcAlg);
+			calcAlg.addListener(this);
+			setVisible(false);
+
+			if (isRunInSeparateThread()) {
+				if (calcAlg.startMethod(Thread.MIN_PRIORITY) == false) {
+					MipavUtil.displayError("A thread is already running on this object");
+				}
+			} else {
+				calcAlg.run();
+			}
+			
+		}
+		catch (OutOfMemoryError x){
+			MipavUtil.displayError("Unable to allocate enough memory");
+            return;
+		}
+	}
+	
+	private void openImage() {
 		
 		FileIO imLoader = new FileIO();
 		
@@ -162,6 +249,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		rgbImage = imLoader.readImage(current.toString());
 		rgbImage.setImageName(current.getName(),false);
 		display = new ViewJFrameImage(rgbImage, null, new Dimension(0,300));
+		display.setVisible(true);
 	}
 	
 	/**
@@ -197,11 +285,6 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 			stripped = stripped.concat("_mask.xml");
 			mask = new File(dirStr.concat(stripped));
 			
-			
-			/*stripped = im.toString();
-			stripped = stripped.substring(0, stripped.indexOf("."));
-	        stripped = stripped.concat("_mask.xml");
-	        mask = new File(stripped);*/
 	        if (!mask.exists()){
 	        	imageList.add(im);
 	        }
@@ -209,27 +292,46 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		
 		listLength = imageList.size();
 		return !imageList.isEmpty();
+	}
+	
+	private boolean statsFilter(){
 		
-		/*Path dir = Paths.get(dirText.getText());
+		File dir = new File(dirText.getText());
+		File maskDir;
+        imageList = new Vector<File>();
+        maskList = new Vector<File>();
 		File mask;
 		String stripped;
+		String dirStr;
 		
-		//Populate the mask images first, then use that to get the wall images
-		//so that only masked images are processed
-		try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.{jpg,jpeg}")) {
-		    for (Path file: stream) {
-		        stripped = file.toString();
-		        stripped = stripped.substring(0, stripped.indexOf("."));
-		        stripped = stripped.concat("_mask.xml");
-		        mask = new File(stripped);
-		        if (!mask.exists()) imageList.add(file.toFile());
-		    }
-		} catch (IOException | DirectoryIteratorException x) {
-		    MipavUtil.displayError("Directory Iterator not available");
+		dirStr = dirText.getText();
+		dirStr = dirStr.concat("Masks//");
+		maskDir = new File(dirStr);
+		if(!maskDir.exists()) return false;
+		
+		//Filter out only .jpg/.jpeg images
+		File[] files = dir.listFiles(new FilenameFilter() {
+			public boolean accept(File dir, String name) {
+				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg") ||
+						name.toLowerCase().endsWith(".tif") || name.toLowerCase().endsWith(".tiff"));
+			}
+		});
+		
+		//Pair each .jpg image with its associated mask
+		for(File im : files){
+			stripped = im.getName();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+			stripped = stripped.concat("_mask.xml");
+			stripped = dirStr.concat(stripped);
+			mask = new File(stripped);
+
+	        if (mask.exists()){
+	        	imageList.add(im);
+	        	maskList.add(new File(stripped));
+	        }
 		}
 		
-		listLength = imageList.size();
-		return !imageList.isEmpty();*/
+		return !imageList.isEmpty();
 	}
 	
 	private void init(){
@@ -293,6 +395,33 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		fileChooser.showOpenDialog(this);
 	}
 	
+	private boolean initCSV(){
+		
+		String directory = imageList.get(0).getParent();
+		csv = new File(directory.concat("\\statistics.csv"));
+		String units;
+		Unit unitStruct;
+		String unitAbbr;
+
+		units = resUnits.getSelectedItem().toString();
+		unitStruct = Unit.getUnit(units);
+		unitAbbr = unitStruct.getAbbrev();
+	
+		try{
+			if(!(csv.exists())){
+				output = new FileWriter(csv);
+				output.append("Image, ,Wall, , , , , ,Nuclei, ,Units, " + unitAbbr + ", \n");
+				output.append(",Min,Max,Average,Std. Dev,Area, ,Number,Min,Max,Average,Std. Dev,Area, \n");
+				output.flush();
+			}
+			else output = new FileWriter(csv, true);
+		} catch (IOException x){
+			MipavUtil.displayError("Unable to initialize csv file");
+	        return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * Initalizes the dialog for when the user needs to draw the VOIS on the image.
 	 * Provides instruction and buttons to save/move on to the next image, or even
@@ -353,9 +482,61 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         displayMask.setFont(serif12);
         maskPanel.add(displayMask);
         
+        calcStats = new JCheckBox("Calculate Statistics at End", false);
+        calcStats.setFont(serif12);
+        maskPanel.add(calcStats);
+        calcStats.addActionListener(this);
+        calcStats.setActionCommand("calc");
+        
+        resPanel = new JPanel();
+        resPanel.setForeground(Color.black);
+        resPanel.setBorder(buildTitledBorder("Image Resolutions"));
+        
+        JLabel xRes = new JLabel("Resolution: ");
+        xRes.setForeground(Color.black);
+        xRes.setFont(serif12);
+        resPanel.add(xRes);
+        
+        xResField = new JTextField(5);
+        xResField.setText("1");
+        xResField.setHorizontalAlignment(JTextField.RIGHT);
+        xResField.setFont(serif12);
+        resPanel.add(xResField);
+
+        Unit[] allSame = UnitType.getUnitsOfType(UnitType.LENGTH);
+        int[] allSameMeasure = new int[allSame.length]; 
+        for(int i=0; i<allSameMeasure.length; i++) {
+            allSameMeasure[i] = allSame[i].getLegacyNum();
+        }
+        String[] unitArr = new String[allSameMeasure.length];
+        for(int i=0; i<allSameMeasure.length; i++) {
+        	unitArr[i] = (Unit.getUnitFromLegacyNum(allSameMeasure[i])).toString();
+        }
+        resUnits = new JComboBox(unitArr);
+        resUnits.setFont(serif12);
+        resUnits.setSelectedItem("Micrometers");
+        resPanel.add(resUnits);
+        xResField.setEnabled(false);
+        resUnits.setEnabled(false);
+        
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setForeground(Color.black);
+        
+        nucleiCB = new JCheckBox("Display nuclei segmentation", false);
+        nucleiCB.setFont(serif12);
+        wallCB = new JCheckBox("Display midline image", false);
+        wallCB.setFont(serif12);
+        
+        optionsPanel.add(nucleiCB);
+        optionsPanel.add(wallCB);
+        nucleiCB.setEnabled(false);
+        wallCB.setEnabled(false);
+        
         PanelManager manager = new PanelManager();
         manager.add(radioPanel);
         manager.addOnNextLine(maskPanel);
+        manager.addOnNextLine(resPanel);
+        manager.addOnNextLine(optionsPanel);
         
         
         getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
