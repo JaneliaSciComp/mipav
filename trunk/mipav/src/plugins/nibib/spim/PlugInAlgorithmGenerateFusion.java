@@ -461,18 +461,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         return resultImageList;
     }
     
-    public static AlgorithmMaximumIntensityProjection[] generateMaxProjAlg(AlgorithmMaximumIntensityProjection[] maxAlgo) {
-        AlgorithmMaximumIntensityProjection[] maxAlgoClone = new AlgorithmMaximumIntensityProjection[maxAlgo.length];
-        for(int i=0; i<maxAlgoClone.length; i++) {
-            maxAlgoClone[i] = new AlgorithmMaximumIntensityProjection(maxAlgo[i].getSrcImage(), maxAlgo[i].getStartSlice(), maxAlgo[i].getStopSlice(), 
-                                        maxAlgo[i].getWindow(), maxAlgo[i].getMinIntensity()[0], maxAlgo[i].getMaxIntensity()[0], maxAlgo[i].isComputeMaximum(), 
-                                        maxAlgo[i].isComputeMinimum(), maxAlgo[i].getProjectionDirection());
-            maxAlgoClone[i].setQuiet(true);
-        }
-        
-        return maxAlgoClone;
-    }
-    
     
     public class MeasureAlg implements Runnable {
 
@@ -983,7 +971,13 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
             if(showMaxProj || saveMaxProj) {
-                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion.generateMaxProjAlg(maxAlgo);
+                AlgorithmMaximumIntensityProjection[] maxAlgoClone = new AlgorithmMaximumIntensityProjection[maxAlgo.length];
+                for(int i=0; i<maxAlgoClone.length; i++) {
+                    maxAlgoClone[i] = new AlgorithmMaximumIntensityProjection(maxAlgo[i].getSrcImage(), maxAlgo[i].getStartSlice(), maxAlgo[i].getStopSlice(), 
+                                                maxAlgo[i].getWindow(), maxAlgo[i].getMinIntensity()[0], maxAlgo[i].getMaxIntensity()[0], maxAlgo[i].isComputeMaximum(), 
+                                                maxAlgo[i].isComputeMinimum(), maxAlgo[i].getProjectionDirection());
+                    maxAlgoClone[i].setQuiet(true);
+                }
                 
                 for(int i=0; i<maxAlgoClone.length; i++) {
                     maxAlgoClone[i].setSrcImage(image);
