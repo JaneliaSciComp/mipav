@@ -150,6 +150,7 @@ public class ModelImage extends ModelStorageBase {
      * @deprecated Only one ViewUserInterface should be instantiated for an instance of MIPAV running, so _UI should be ViewUserInterface.getReference()
      */
     public ModelImage(final int type, final int[] dimExtents, final String name, final ViewUserInterface _UI) {
+        
     	super(type, dimExtents);
 
         int i;
@@ -4839,7 +4840,14 @@ public class ModelImage extends ModelStorageBase {
             voiVector = null;
         } // if ( voiVector != null )
 
-        matrixHolder = null;
+        if (matrixHolder != null) {
+            matrixHolder.clearMatrices();
+            matrixHolder = null;
+        }
+        if (provenanceHolder != null) {
+            provenanceHolder.clear();
+            provenanceHolder = null;
+        }
         mask = null;
         maskBU = null;
         imageName = null;
