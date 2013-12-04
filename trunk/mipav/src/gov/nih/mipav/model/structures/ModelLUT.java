@@ -219,6 +219,34 @@ public class ModelLUT extends ModelStorageBase {
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
     
+    
+    public void finalize() {
+        indexedLUT = null;
+        remappedLUT = null;
+        x = null;
+        if (alphaLine != null) {
+            alphaLine.finalize();
+            alphaLine = null;
+        }
+        if (redLine != null) {
+            redLine.finalize();
+            redLine = null;
+        }
+        if (greenLine != null) {
+            greenLine.finalize();
+            greenLine = null;
+        }
+        if (blueLine != null) {
+            blueLine.finalize();
+            blueLine = null;
+        }
+        if (transferLine != null) {
+            transferLine.finalize();
+            transferLine = null;
+        }
+        super.disposeLocal();
+    }
+    
     /**
      * Build LUT consisting of a student t-distribution at the specified level os significance for the given
      * degrees of freedom.
