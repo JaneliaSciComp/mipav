@@ -18,47 +18,65 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	private File reportFile;
 	private File slipFile;
 	private FileWriter csv;
+	private FileWriter concatCSV;
 	
 	public PlugInAlgorithmParseSlips(){
 		super();
 	}
-	public PlugInAlgorithmParseSlips(File report, File slip, FileWriter csv){
+	public PlugInAlgorithmParseSlips(File report, File slip, FileWriter csv, FileWriter concat){
 		super();
 		reportFile = report;
 		slipFile = slip;
 		this.csv = csv;
+		concatCSV = concat;
 	}
 	
 	@Override
 	public void runAlgorithm() {
 		// TODO Auto-generated method stub
 		int index;
-		String slipIDval;
+		String reportIDval;
 		String[] reportString;
 		String[] slipString;
 		readCSV();
-		for(int i=0;i<slipLines.size();i++){
-			slipIDval = slipID.remove(0);
-			slipString = slipLines.remove(0);
-			if(reportID.contains(slipIDval)){
-				index = reportID.indexOf(slipIDval);
-				reportID.remove(index);
-				reportString = reportLines.remove(index);
-				
+		for(int i=0;i<reportLines.size();i++){
+			reportIDval = reportID.get(i);
+			reportString = reportLines.get(i);
+			if(slipID.contains(reportIDval)){
+				index = slipID.indexOf(reportIDval);
+				slipID.remove(index);
+				slipString = slipLines.remove(index);
 				compare(reportString, slipString);
+				try {
+					concatCSV.append(makeString(reportString) + makeString(slipString) + "\n");
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			} 
 			else{
 				try {
-					csv.append(slipIDval.concat(",not in report\n"));
+					csv.append(reportIDval.concat(",not in Coriell\n"));
+					concatCSV.append(makeString(reportString) + "\n");
 				} catch (IOException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
 		}
+		for(int i=0;i<slipLines.size();i++){
+			try {
+				csv.append("," + slipID.get(i) + ",not found in Sample Report\n");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		try {
 			csv.flush();
 			csv.close();
+			concatCSV.flush();
+			concatCSV.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -71,6 +89,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		this.csv = out;
 	}
 	
+	public void setConcatCSV(FileWriter out){
+		this.concatCSV = out;
+	}
+	
 	public void setReportFile(File report){
 		this.reportFile = report;
 	}
@@ -80,38 +102,37 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	}
 	
 	private void compare(String[] reportString, String[] slipString){
+
 		String base = new String(slipString[0] + ",," );
 		String export = new String();
-		//Subject ID check
-		reportString[3] = reportString[3].replaceAll("\\s", "");
-		slipString[1] = slipString[1].replaceAll("\\s", "");
-		if(!reportString[3].equals(slipString[1])) export+=reportString[3] + "," + slipString[1] + ",";
+		
+		//Container check: Yes, I know it's bad
+		reportString[8] = reportString[8].replace("DNA", "Whole Blood");
+		reportString[8] = reportString[8].replace("RNA", "Whole Blood");
+		if(! (slipString[1].equalsIgnoreCase(reportString[8])
+				|| slipString[1].toLowerCase().contains(reportString[8].toLowerCase())
+				|| reportString[8].toLowerCase().contains(slipString[1].toLowerCase())
+				)) export+=reportString[8] + "," + slipString[1] + ",";
 		else export += ",,";
-		//Gender check
-		reportString[4] = reportString[4].replaceAll("\\s", "");
-		slipString[2] = slipString[2].replaceAll("\\s", "");
-		if(!reportString[4].equals(slipString[2])) export+=reportString[4] + "," + slipString[2] + ",";
+		//Date Check
+		if(!slipString[3].equals(reportString[7].trim())) {
+			//System.out.println(reportString[7] + " " + slipString[3]);
+			export+=reportString[7] + "," + slipString[3] + ",";
+		}
 		else export += ",,";
-		//Alias ID check
-		reportString[2] = reportString[2].replaceAll("\\s", "");
-		slipString[3] = slipString[3].replaceAll("\\s", "");
-		if(!reportString[2].equals(slipString[3])) export+=reportString[2] + "," + slipString[3] + ",";
+		//GUID Check
+		if(!slipString[5].equalsIgnoreCase(reportString[2].trim())) export+=reportString[2] + "," + slipString[5] + ",";
 		else export += ",,";
-		//Side ID check
-		if(! (reportString[0].equals(slipString[7]) || 
-				reportString[0].contains(slipString[7]) 
-				|| slipString[7].contains(reportString[0]))) export+=reportString[0] + "," + slipString[7] + ",";
+		//Gender Check
+		if(!slipString[6].equalsIgnoreCase(reportString[4].trim())) export+=reportString[4] + "," + slipString[6] + ",";
 		else export += ",,";
-		//Volume check
-		//if(!reportString[12].split(" ")[0].equals(slipString[8])) export=export.concat(",Volume");
-		//Collection date check
-		reportString[7] = reportString[7].replaceAll("\\s", "");
-		slipString[10] = slipString[10].replaceAll("\\s", "");
-		if(!reportString[7].equals(slipString[10])) export+=reportString[7] + "," + slipString[10] + ",";
+		//Site Check: Don't complain, I know it's ugly
+		if(! (slipString[7].equalsIgnoreCase(reportString[0])
+				|| slipString[7].toLowerCase().contains(reportString[0].toLowerCase())
+				|| reportString[0].toLowerCase().contains(slipString[7].toLowerCase())
+				)) export+=reportString[0] + "," + slipString[7] + ",";
 		else export += ",,";
-		//Recieved date
-		//if(!reportString[14].equals(slipString[11])) export=export.concat(",Recieved Date");
-		//Check if all the same
+
 		if(! (export.split(",").length == 0)){
 			try {
 				export = base.concat(export);
@@ -121,6 +142,85 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private String[] organizeInput(String[] input){
+		String[] organized = new String[8];
+		String[] tempArray;
+		String tempStr;
+		//System.out.println(makeString(input));
+		organized[0] = input[0].trim(); //PID
+		organized[1] = input[7].trim() + "/" + input[11].trim(); //Specimen
+		
+		tempStr = input[14].trim();
+		while(tempStr.endsWith("0") || tempStr.endsWith(".")){
+			tempStr = tempStr.substring(0, tempStr.length()-1);
+		}
+		
+		organized[2] = tempStr + " " + input[15].trim(); //Volume
+		if(input[16] == "null")
+			organized[3] = "null";
+		else{
+			organized[3] = input[16].trim().split(" ")[0];
+			tempArray = organized[3].split("-");
+			tempStr = tempArray[0];
+			if(tempArray[1].startsWith("0"))
+				tempArray[0] = tempArray[1].replace("0", "");
+			else tempArray[0] = tempArray[1];
+			if(tempArray[2].startsWith("0"))
+				tempArray[1] = tempArray[2].replace("0", "");
+			else tempArray[1] = tempArray[2];
+			tempArray[2] = tempStr;
+			organized[3] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
+		}//Collection Date
+		
+		if(input[17] == "null")
+			organized[4] = "null";
+		else{
+			organized[4] = input[17].trim().split(" ")[0];
+			tempArray = organized[4].split("-");
+			tempStr = tempArray[0];
+			if(tempArray[1].startsWith("0"))
+				tempArray[0] = tempArray[1].replace("0", "");
+			else tempArray[0] = tempArray[1];
+			if(tempArray[2].startsWith("0"))
+				tempArray[1] = tempArray[2].replace("0", "");
+			else tempArray[1] = tempArray[2];
+			tempArray[2] = tempStr;
+			organized[4] = tempArray[0] + "/" + tempArray[1] + "/" + tempArray[2];
+		}//Date Received
+		
+		organized[5] = input[6].trim(); //GUID
+		organized[6] = input[5].trim(); //Gender
+		organized[7] = input[13].trim(); //Site
+		
+		return organized;
+	}
+	
+	private String makeString(String[] array){
+		String cont = new String();
+		for(int i=0; i<array.length; i++){
+			cont += array[i] + ",";
+		}
+		//cont += "\n";
+		return cont;
+	}
+	
+	private String[] parseLine(String line){
+		String[] output = new String[20];
+		int cnt = 0;
+		int ind = 0;
+		while(cnt<20){
+			ind = line.indexOf(";");
+			if(ind > 0)
+				output[cnt] = line.substring(0, ind);
+			else if (ind == -1) break;
+			else if (ind == 0) output[cnt] = "null";
+			line = line.substring(ind+1);
+			cnt++;
+		}
+		
+		return output;
 	}
 
 	private void readCSV(){
@@ -152,9 +252,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				slipID = new Vector<String>();
 				while (( line = input.readLine()) != null){
 					//System.out.println(line);
-					lineArray = line.split(",");
+					line = line.replace("\"", "");
+					lineArray = parseLine(line); //semi-colon delimiter 
 					if(lineArray.length !=0){
-						slipLines.add(lineArray);
+						slipLines.add(organizeInput(lineArray));
 						slipID.add(lineArray[0]);
 					}
 				}
