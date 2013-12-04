@@ -390,6 +390,7 @@ public class TransferFunction extends ModelSerialCloneable {
         }
 
         pts = null;
+        slopes = null;
     }
 
     /**
