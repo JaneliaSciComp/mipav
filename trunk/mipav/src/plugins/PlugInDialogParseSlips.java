@@ -3,15 +3,15 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -19,7 +19,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 
@@ -32,15 +31,23 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	
 	private FileWriter csv;
 	
+	private File concatCSVFile;
+	
+	private FileWriter concatCSV;
+	
 	private JTextField reportField;
 	
-	private JTextField slipField;
+	private JTextField coriellField;
 	
 	private JFileChooser fileChooser;
 	
 	private String whichFile;
 	
 	private String baseDir;
+	
+	private JRadioButton delRB;
+	
+	private JRadioButton appRB;
 	
 	/**
 	 * 
@@ -57,8 +64,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		//System.out.println(command);
 		if(command.equals("Report"))
 			openDir(reportField, command);
-		else if(command.equals("Slip"))
-			openDir(slipField, command);
+		else if(command.equals("Coriell"))
+			openDir(coriellField, command);
 		else if(command.equals("ApproveSelection") && whichFile.equals("Report")){
 			if(fileChooser.getSelectedFile().exists()){
 				reportField.setText(fileChooser.getSelectedFile().toString());
@@ -67,16 +74,16 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			else
 				MipavUtil.displayError("This file does not exists");
 		}
-		else if(command.equals("ApproveSelection") && whichFile.equals("Slip")){
+		else if(command.equals("ApproveSelection") && whichFile.equals("Coriell")){
 			if(fileChooser.getSelectedFile().exists()){
-				slipField.setText(fileChooser.getSelectedFile().toString());
-				baseDir = slipField.getText();
+				coriellField.setText(fileChooser.getSelectedFile().toString());
+				baseDir = coriellField.getText();
 			}
 			else
 				MipavUtil.displayError("This file does not exists");
 		}
 		else if(command.equals("OK")){
-			if(new File(reportField.getText()).exists() && new File(slipField.getText()).exists()){
+			if(new File(reportField.getText()).exists() && new File(coriellField.getText()).exists()){
 				callAlgorithm();
 			}
 		}
@@ -94,33 +101,41 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		// TODO Auto-generated method stub
-		MipavUtil.displayInfo("Comparison file is in" + new File(reportField.getText()).getParent());
+		MipavUtil.displayInfo("Comparison file is in " + new File(reportField.getText()).getParent());
 		
 	}
 	
 	protected void callAlgorithm(){
 		
 		File reportFile = new File(reportField.getText());
-		File slipFile = new File(slipField.getText());
-		String directory = reportFile.getParent();
-		csvFile = new File(directory.concat("/comparison.csv"));
+		File coriellFile = new File(coriellField.getText());
+		String reportText = reportField.getText();
+		String reportName = reportText.substring(0, reportText.indexOf("."));
+		String coriellText = coriellField.getText();
+		String coriellName = coriellText.substring(0, coriellText.indexOf("."));
+		csvFile = new File(coriellName + "_comparison.csv");
+		concatCSVFile = new File(reportName + "_complete.csv");
 		try {
 			if(csvFile.exists()){
+				if(delRB.isSelected()) csvFile.delete();
 				csv = new FileWriter(csvFile, true);
 			}
 			else{
 				csv = new FileWriter(csvFile, true);
 				initCSV();
 			}
-			
+			if(concatCSVFile.exists() && delRB.isSelected()){
+				concatCSVFile.delete();
+			}
+			concatCSV = new FileWriter(concatCSVFile, true);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		parseAlg = new PlugInAlgorithmParseSlips(reportFile, slipFile, csv);
+		parseAlg = new PlugInAlgorithmParseSlips(reportFile, coriellFile, csv, concatCSV);
 		parseAlg.addListener(this);
 		parseAlg.run();
-		setVisible(false);
+		//setVisible(false);
 		
 	}
 	
@@ -135,7 +150,7 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         String desc = "<html><b>Directions: </b><br>"
         		+ "Please choose a folder that contains the two csv files to compare. <br>"
         		+ "The summary of reports should go to Report, and the other should <br>"
-        		+ "into Slip.</html>";
+        		+ "into Coriell.</html>";
 
         JLabel dirLabel = new JLabel(desc);
         dirLabel.setForeground(Color.black);
@@ -146,32 +161,50 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         JPanel choosePanel = new JPanel();
         
         reportField = new JTextField(30);
-        reportField.setText("Report CSV");
+        reportField.setText("Sample Report CSV");
         reportField.setFont(serif12);
         choosePanel.add(reportField);
         
-        JButton repButton = new JButton("Choose Report");
+        JButton repButton = new JButton("Choose Sample");
         repButton.setFont(serif12);
         repButton.setActionCommand("Report");
         repButton.addActionListener(this);
         choosePanel.add(repButton);
         
-        JPanel slipPanel = new JPanel();
+        JPanel coriellPanel = new JPanel();
         
-        slipField = new JTextField(30);
-        slipField.setText("Slip CSV");
-        slipField.setFont(serif12);
-        slipPanel.add(slipField);
+        coriellField = new JTextField(30);
+        coriellField.setText("Coriell Report CSV");
+        coriellField.setFont(serif12);
+        coriellPanel.add(coriellField);
         
-        JButton slipButton = new JButton("Choose Slip");
-        slipButton.setFont(serif12);
-        slipButton.setActionCommand("Slip");
-        slipButton.addActionListener(this);
-        slipPanel.add(slipButton);
+        JButton coriellButton = new JButton("Choose Coriell");
+        coriellButton.setFont(serif12);
+        coriellButton.setActionCommand("Coriell");
+        coriellButton.addActionListener(this);
+        coriellPanel.add(coriellButton);
+        
+        delRB = new JRadioButton("Delete to Old Files");
+        delRB.setFont(serif12);
+        delRB.setActionCommand("delete");
+        
+        appRB = new JRadioButton("Append Old Files");
+        appRB.setFont(serif12);
+        appRB.setActionCommand("append");
+        appRB.setSelected(true);
+        ButtonGroup group = new ButtonGroup();
+        
+        group.add(delRB);
+        group.add(appRB);;
+        
+        JPanel radioPanel = new JPanel();
+        radioPanel.add(appRB);
+        radioPanel.add(delRB);
         
         PanelManager manager = new PanelManager();
         manager.add(choosePanel);
-        manager.addOnNextLine(slipPanel);
+        manager.addOnNextLine(coriellPanel);
+        manager.addOnNextLine(radioPanel);
         
         getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
 
@@ -191,12 +224,13 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	}
 	
 	private void initCSV(){
-		String header = "Site Tube ID,,";
-		header += "Subject ID 1,Subject ID 2,";
+		String header = "Site Tube ID, Coriell ID,";
+		header += "Container 1,Container 2,";
+		header += "Collect Date 1,Collect Date 2,";
+		header += "GUID 1,GUID 2,";
 		header += "Gender 1,Gender 2,";
-		header += "Alias ID 1,Alias ID 2,";
-		header += "Side ID 1,Site ID 2,";
-		header += "Collect Date 1,Collect Date 2\n";
+		header += "Side ID 1,Site ID 2\n";
+		
 		try {
 			csv.append(header);
 		} catch (IOException e) {
