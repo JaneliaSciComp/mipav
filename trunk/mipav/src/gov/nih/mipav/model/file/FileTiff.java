@@ -886,7 +886,10 @@ public class FileTiff extends FileBase {
         int i;
         fileName = null;
         fileDir = null;
-        fileInfo = null;
+        if (fileInfo != null) {
+            fileInfo.setImageDescription(null);
+            fileInfo = null;
+        }
         file = null;
         image = null;
         byteBuffer = null;
@@ -921,7 +924,10 @@ public class FileTiff extends FileBase {
         imageDescription = null;
         imgBuffer = null;
         imgResols = null;
-        LUT = null;
+        if (LUT != null) {
+            LUT.finalize();
+            LUT = null;
+        }
         software = null;
         str = null;
         tileByteCounts = null;
