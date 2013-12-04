@@ -898,15 +898,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                     
                     doMaxProj(deconvImg, false, true, deconvDir, options, io);
                     
-                    deconvImg.unRegisterImage();
                     deconvImg.disposeLocal(false);
                 }
                 
                 if(!doShowPrefusion && !doInterImages) {
-                    ViewUserInterface.getReference().unRegisterImage(prefusionBaseImage);
                     prefusionBaseImage.disposeLocal();
                     
-                    ViewUserInterface.getReference().unRegisterImage(prefusionTransformImage);
                     prefusionTransformImage.disposeLocal();
                 }
             }
@@ -931,7 +928,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             if(showAriMean) {
                 resultImageList.add(subAriImage);
             } else if(saveAriMean && !doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(subAriImage);
                 subAriImage.disposeLocal();
             }
             
@@ -954,15 +950,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             if(showGeoMean) {
                 resultImageList.add(subGeoImage);
             } else if(saveGeoMean && !doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(subGeoImage);
                 subGeoImage.disposeLocal();
             }
             
             if(!doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(baseImage);
                 baseImage.disposeLocal();
                 
-                ViewUserInterface.getReference().unRegisterImage(transformImage);
                 transformImage.disposeLocal();
             }
             
@@ -1047,7 +1040,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                         if (!(parentShow && showMaxProj)) {
                             for (int j = resImageVec.size() - 1; j >= 0; j--) {
                                 ModelImage img = resImageVec.remove(j);
-                                ViewUserInterface.getReference().unRegisterImage(img);
                                 img.disposeLocal();
                             }
                             resImageVec = null;
@@ -1196,7 +1188,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             algoTrans.run();
             
             if(!doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(transformImage);
                 transformImage.disposeLocal();
             }
             
@@ -1235,7 +1226,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             algoTrans.run();
             
             if(!doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(image);
                 image.disposeLocal();
             }
             
@@ -1291,7 +1281,6 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             AlgorithmRotate rotate = new AlgorithmRotate(image, mode);
             rotate.setQuiet(true);
             rotate.run(); //transform image replaced
-            ViewUserInterface.getReference().unRegisterImage(image);
             image.disposeLocal();
             image = rotate.getDestImage();
             rotate.finalize();
