@@ -1657,6 +1657,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         fileName = null;
         fileSuffix = null;
+        
+        extents = null;
+        if (lut != null) {
+            lut.finalize();
+            lut = null;
+        }
 
         try {
             super.finalize();
