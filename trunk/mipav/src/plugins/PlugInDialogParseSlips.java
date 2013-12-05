@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -48,6 +49,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	private JRadioButton delRB;
 	
 	private JRadioButton appRB;
+	
+	private JCheckBox headerCheck;
 	
 	/**
 	 * 
@@ -128,13 +131,16 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 				concatCSVFile.delete();
 			}
 			concatCSV = new FileWriter(concatCSVFile, true);
+			parseAlg = new PlugInAlgorithmParseSlips(reportFile, coriellFile, csv, concatCSV);
+			parseAlg.addListener(this);
+			parseAlg.removeHeader(headerCheck.isSelected());
+			parseAlg.run();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MipavUtil.displayError("CSV files are locked (something is open)");
 		}
-		parseAlg = new PlugInAlgorithmParseSlips(reportFile, coriellFile, csv, concatCSV);
-		parseAlg.addListener(this);
-		parseAlg.run();
+		
 		//setVisible(false);
 		
 	}
@@ -201,10 +207,16 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         radioPanel.add(appRB);
         radioPanel.add(delRB);
         
+        JPanel checkPanel = new JPanel();
+        headerCheck = new JCheckBox("Remove header in Coriell file");
+        headerCheck.setSelected(true);
+        checkPanel.add(headerCheck);
+        
         PanelManager manager = new PanelManager();
         manager.add(choosePanel);
         manager.addOnNextLine(coriellPanel);
         manager.addOnNextLine(radioPanel);
+        manager.addOnNextLine(checkPanel);
         
         getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
 
