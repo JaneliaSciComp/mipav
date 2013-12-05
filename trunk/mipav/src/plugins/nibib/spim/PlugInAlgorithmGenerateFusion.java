@@ -720,6 +720,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         public Boolean call() {
             //fireProgressStateChanged(5, "Transform", "Rotating");
+            System.out.println("Processing " + baseImage.getImageName() + " and " + transformImage.getImageName());
 
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
