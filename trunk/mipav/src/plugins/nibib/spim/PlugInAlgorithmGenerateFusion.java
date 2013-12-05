@@ -1184,6 +1184,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
+            algoTrans.setSuppressProgressBar(true);
             
             algoTrans.run();
             
@@ -1222,6 +1223,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
             algoTrans.setUseScannerAnatomical(isSATransform);
+            algoTrans.setSuppressProgressBar(true);
             
             algoTrans.run();
             
