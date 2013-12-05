@@ -19,6 +19,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	private File slipFile;
 	private FileWriter csv;
 	private FileWriter concatCSV;
+	private boolean removeHeader;
 	
 	public PlugInAlgorithmParseSlips(){
 		super();
@@ -91,6 +92,10 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	
 	public void setConcatCSV(FileWriter out){
 		this.concatCSV = out;
+	}
+	
+	public void removeHeader(boolean remove){
+		removeHeader = remove;
 	}
 	
 	public void setReportFile(File report){
@@ -222,6 +227,27 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		
 		return output;
 	}
+	
+	private String[] parseLine2(String line){
+		String[] output = new String[20];
+		int cnt = 0;
+		int ind = 0;
+		while(cnt<20){
+			ind = line.indexOf(",");
+			if(ind > 0){
+				output[cnt] = line.substring(0, ind);
+				cnt++;
+			}
+			else if (ind == -1) break;
+			line = line.substring(ind+1);
+		}
+		String[] realout = new String[cnt];
+		for(int i=0;i<cnt;i++){
+			realout[i] = output[i];
+		}
+		
+		return realout;
+	}
 
 	private void readCSV(){
 
@@ -232,13 +258,20 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				String line = null; 
 				reportLines = new Vector<String[]>();
 				reportID = new Vector<String>();
+				String PID;
 
 				while (( line = input.readLine()) != null){
 					//System.out.println(line);
-					lineArray = line.split(",");
+					lineArray = parseLine2(line);
 					if(lineArray.length != 0){
-						reportLines.add(lineArray);
-						reportID.add(lineArray[9]);
+						PID = lineArray[9];
+						if(reportID.contains(PID)){
+							csv.append(PID + ",duplicated\n");
+						}
+						else{
+							reportLines.add(lineArray);
+							reportID.add(PID);
+						}
 					}
 				}
 			}
@@ -250,6 +283,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				String line = null; 
 				slipLines = new Vector<String[]>();
 				slipID = new Vector<String>();
+				if (removeHeader) input.readLine(); //Strip header from Coriell file
 				while (( line = input.readLine()) != null){
 					//System.out.println(line);
 					line = line.replace("\"", "");
