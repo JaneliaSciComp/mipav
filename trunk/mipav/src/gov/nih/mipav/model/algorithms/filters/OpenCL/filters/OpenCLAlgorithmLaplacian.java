@@ -451,7 +451,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		int[] maskOrigins = kOrigins_2D;
 
 		// Read the program source code and create the program
-		String source = readFile("Laplacian.cl");
+		String source = readKernelFile("Laplacian.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -580,7 +580,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 				color, colorMask );
 
 		// Read the program source code and create the program
-		String source = readFile("Convolve.cl");
+		String source = readKernelFile("Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -677,7 +677,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		int[] errcode = new int[1];
 
 		// Read the program source code and create the program
-		String source = readFile("Convolve.cl");
+		String source = readKernelFile("Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -870,7 +870,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		int[] maskOrigins_3D = new int[]{kOrigins_3D[0], kOrigins_3D[1], kOrigins_3D[2], 0};
 
 		// Read the program source code and create the program
-		String source = readFile("Laplacian.cl");
+		String source = readKernelFile("Laplacian.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -992,7 +992,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		}
 
 		// Read the program source code and create the program
-		String source = readFile("Convolve.cl");
+		String source = readKernelFile("Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);

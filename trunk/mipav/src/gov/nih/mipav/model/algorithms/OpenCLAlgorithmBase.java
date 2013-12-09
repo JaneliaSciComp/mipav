@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import javax.media.nativewindow.NativeSurface;
 import javax.media.opengl.GL;
@@ -41,8 +42,10 @@ import org.jocl.*;
  */
 public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
-	public cl_context cl = null;
-	public cl_device_id device = null;
+	protected static Vector<cl_context> contextLibrary = null;
+	protected static Vector<Long> openCLTypeLibrary = null;
+	protected cl_context cl = null;
+	protected cl_device_id device = null;
 
 	private static boolean isOCLAvailable = false;
 	private static boolean isOCL_CPU_Available = false;
@@ -92,6 +95,27 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
 	protected void initCL( long iType, GL3 gl )
 	{
+		
+		if ( contextLibrary != null )
+		{
+			for ( int i = 0; i < openCLTypeLibrary.size(); i++ )
+			{
+				if ( openCLTypeLibrary.elementAt(i) == iType )
+				{
+					cl = contextLibrary.elementAt(i);
+
+					int[] refCount = new int[1];
+					long[] actualCount = new long[1];
+					clGetContextInfo( cl, CL.CL_CONTEXT_NUM_DEVICES, Sizeof.cl_int, Pointer.to(refCount), actualCount );
+					cl_device_id[] deviceIDs = new cl_device_id[refCount[0]];
+					clGetContextInfo( cl, CL.CL_CONTEXT_DEVICES, refCount[0]*Sizeof.cl_device_id, Pointer.to(deviceIDs), actualCount );
+					device = deviceIDs[0];
+					return;
+				}
+			}
+		}
+		
+		
 		cl_platform_id platform = null;
 
 		int[] errcode = new int[1];
@@ -146,6 +170,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 			System.err.println( "No such device..." );
 			return;
 		}
+
 		
 		// Initialize the context properties
 		cl_context_properties contextProperties = new cl_context_properties();
@@ -154,14 +179,25 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		{
 			initContextProperties(contextProperties, gl);
 		}
-
 		cl = clCreateContext(
 				contextProperties, 1, new cl_device_id[]{device}, 
 				null, null, errcode);
+//		long[] refCount = new long[1];
+//		long[] actualCount = new long[1];
+//		clGetContextInfo( cl, CL.CL_CONTEXT_REFERENCE_COUNT, Sizeof.cl_long, Pointer.to(refCount), actualCount );
+//		System.err.println( "initCL " + cl.toString() + "    " + refCount[0] + "    " + actualCount[0] );
 		if ( errcode[0] != CL.CL_SUCCESS )
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
+		
+		if ( contextLibrary == null )
+		{
+			contextLibrary = new Vector<cl_context>();
+			openCLTypeLibrary = new Vector<Long>();
+		}
+		contextLibrary.add(cl);
+		openCLTypeLibrary.add(iType);
 		
 		CL.setExceptionsEnabled(true);
 	}
@@ -216,7 +252,20 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		{
 			throw new RuntimeException("unsupported GLContext: " + glContext);
 		}
+	}	
+	
+	/**
+	 * Checks the OpenCL error status.
+	 * @param errcode
+	 */
+	protected void checkError( int errcode )
+	{
+		if ( errcode != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode) );
+		}
 	}
+
 
 	/**
 	 * Prepare this class for destruction.
@@ -514,7 +563,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	 * @param fileName The name of the file to read.
 	 * @return The contents of the file
 	 */
-	public static String readFile(String fileName)
+	public static String readKernelFile(String fileName)
 	{	
 		String line = null;
         BufferedReader input = null;

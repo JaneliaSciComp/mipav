@@ -1,22 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters.OpenCL.filters;
 
 
-import static org.jocl.CL.CL_DEVICE_GLOBAL_MEM_SIZE;
-import static org.jocl.CL.CL_DEVICE_MAX_MEM_ALLOC_SIZE;
-import static org.jocl.CL.CL_DEVICE_MAX_WORK_GROUP_SIZE;
-import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
-import static org.jocl.CL.CL_TRUE;
-import static org.jocl.CL.clBuildProgram;
-import static org.jocl.CL.clCreateBuffer;
-import static org.jocl.CL.clCreateCommandQueue;
-import static org.jocl.CL.clCreateKernel;
-import static org.jocl.CL.clCreateProgramWithSource;
-import static org.jocl.CL.clEnqueueNDRangeKernel;
-import static org.jocl.CL.clEnqueueReadBuffer;
-import static org.jocl.CL.clFinish;
-import static org.jocl.CL.clReleaseMemObject;
-import static org.jocl.CL.clSetKernelArg;
-import static org.jocl.CL.stringFor_errorCode;
+import static org.jocl.CL.*;
 import gov.nih.mipav.model.GaussianKernelFactory;
 import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
@@ -242,18 +227,6 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		setCompleted(true);
 	}
 	
-	
-	/**
-	 * Checks the OpenCL error status.
-	 * @param errcode
-	 */
-	private void checkError( int errcode )
-	{
-		if ( errcode != CL.CL_SUCCESS )
-		{
-			System.err.println( stringFor_errorCode(errcode) );
-		}
-	}
 
 	/**
 	 * Calls Deconvolution for each volume in the time series image.
@@ -358,7 +331,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		Pointer indexP = Pointer.to(index);
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
+		String source = OpenCLAlgorithmBase.readKernelFile("Deconvolution.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		checkError( clBuildProgram(program, 0, null, "-cl-mad-enable", null, null) );
@@ -771,7 +744,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
+		String source = OpenCLAlgorithmBase.readKernelFile("Deconvolution.cl");
 		program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		errcode[0] = clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -1048,9 +1021,15 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 	 * Dual image deconvolution.
 	 * @param time
 	 */
-	private void deconvolutionSep3D_Dual( int time )
+	private synchronized void deconvolutionSep3D_Dual( int time )
 	{
-		initCL(m_iDeviceType, null);
+//		try {
+			initCL(m_iDeviceType, null);
+//		} catch (org.jocl.CLException e )
+//		{
+//			System.err.println( e.getStackTrace() );
+//			return;
+//		}
 
 		// Test Memory for the GPU:
 		int nBuffers = 5;
@@ -1145,7 +1124,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		// At this point all the buffers have been created.			
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Deconvolution.cl");
+		String source = OpenCLAlgorithmBase.readKernelFile("Deconvolution.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		checkError( clBuildProgram(program, 0, null, "-cl-mad-enable", null, null) );
@@ -1560,9 +1539,37 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clReleaseMemObject(derivativeY[1]);
 		clReleaseMemObject(derivativeZ[1]);
 
+		
+		
+		
+		
+		
+		
+		
+
+		clReleaseKernel(kernelX_1);
+		clReleaseKernel(kernelY_1);
+		clReleaseKernel(kernelZ_Div);
+		clReleaseKernel(kernelX_2);
+		clReleaseKernel(kernelY_2);
+		clReleaseKernel(kernelZ_Mult);
+		clReleaseKernel(kernelX_1B);
+		clReleaseKernel(kernelY_1B);
+		clReleaseKernel(kernelZ_DivB);
+		clReleaseKernel(kernelX_2B);
+		clReleaseKernel(kernelY_2B);
+		clReleaseKernel(kernelZ_MultB);
+		clReleaseKernel(reductionKernel);
+		clReleaseKernel(scaleKernel);
+		clReleaseProgram(program);
+		clReleaseCommandQueue(commandQueue);
+		
+		
+//		super.releaseContext();
+
 		inputA = null;
 		inputB = null;
-		output = null;
+		output = null;		
 	}
 	
 	/**
@@ -1746,7 +1753,6 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		clSetKernelArg(multKernel, 2, Sizeof.cl_mem, Pointer.to(estimateBuffer));
 
 		clEnqueueNDRangeKernel(commandQueue, multKernel, 1, null, global_work_size, null, 0, null, null);
-		
 	}
 
 	/**
@@ -1764,7 +1770,7 @@ public class OpenCLAlgorithmDeconvolution extends OpenCLAlgorithmBase {
 		if ( reductionKernel == null )
 		{
 			// Read the program source code and create the program
-			String source = OpenCLAlgorithmBase.readFile("ParallelReduction.cl");
+			String source = OpenCLAlgorithmBase.readKernelFile("ParallelReduction.cl");
 			cl_program program = clCreateProgramWithSource(cl, 1, new String[]{ source }, null, errcode);
 			checkError(errcode[0]);
 			checkError( clBuildProgram(program, 0, null, "-cl-mad-enable", null, null) );
