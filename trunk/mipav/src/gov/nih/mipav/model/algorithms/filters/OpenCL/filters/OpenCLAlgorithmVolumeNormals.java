@@ -126,7 +126,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 
-		String source = readFile("VolumeNormals.cl");
+		String source = readKernelFile("VolumeNormals.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -185,7 +185,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 
-		String source = readFile("VolumeNormals.cl");
+		String source = readKernelFile("VolumeNormals.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -301,7 +301,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 
 		long[] tex_globalWorkSize = new long[]{ width, height, depth };
 
-		String source = readFile("VolumeNormalsShared.cl");
+		String source = readKernelFile("VolumeNormalsShared.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, errcode);
 		if ( errcode[0] != CL.CL_SUCCESS )

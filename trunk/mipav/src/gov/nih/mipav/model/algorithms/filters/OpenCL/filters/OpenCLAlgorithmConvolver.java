@@ -57,7 +57,7 @@ public class OpenCLAlgorithmConvolver {
 		int[] errcode = new int[1];
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Convolve.cl");
+		String source = OpenCLAlgorithmBase.readKernelFile("Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
@@ -211,7 +211,7 @@ public class OpenCLAlgorithmConvolver {
 		int[] errcode = new int[1];
 
 		// Read the program source code and create the program
-		String source = OpenCLAlgorithmBase.readFile("Convolve.cl");
+		String source = OpenCLAlgorithmBase.readKernelFile("Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, null);
 		errcode[0] = clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);

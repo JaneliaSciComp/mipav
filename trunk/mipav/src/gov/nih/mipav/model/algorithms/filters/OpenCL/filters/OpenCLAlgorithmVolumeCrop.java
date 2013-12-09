@@ -149,7 +149,7 @@ public class OpenCLAlgorithmVolumeCrop extends OpenCLAlgorithmBase
 		
 
 
-		String source = readFile("VolumeCrop.cl");
+		String source = readKernelFile("VolumeCrop.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, errcode);
 		if ( errcode[0] != CL.CL_SUCCESS )
