@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -148,6 +149,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     private float rotateEndZ = 5.0f;
     private float coarseRateZ = 3.0f;
     private float fineRateZ = 1.0f;
+    private Semaphore semaphore;
 
     /**
      * Constructor.
@@ -414,7 +416,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         } // if (register)
     	
     	ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
-        
+        semaphore = new Semaphore(concurrentNum);
+    	
         for(int i=0; i<transformImageAr.length; i++) {
             FileIO io = new FileIO();
             io.setQuiet(true);
@@ -435,8 +438,12 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 }
             }
             
-            while(exec.getActiveCount() == concurrentNum) {}
-            
+            try {
+                semaphore.acquire();
+            }
+            catch (InterruptedException e) {
+                System.out.println("Interrupted exception on semaphore.acquire() " + e);    
+            }
             FusionAlg algInstance = new FusionAlg(this, baseImage, transformImage);
             exec.execute(algInstance);
 
@@ -716,6 +723,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         
         public void run() {
             call();
+            semaphore.release();
         }
         
         public Boolean call() {
