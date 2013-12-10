@@ -54,7 +54,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     
     private JLabel labelKernelSize;
     
-    private JComboBox comboBoxKernelSize;
+    private JComboBox<String> comboBoxKernelSize;
     
     private int kernelSize = 3;
 
@@ -799,14 +799,10 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         labelKernelSize.setEnabled(false);
         algoPanel.addOnNextLine(labelKernelSize); // add kernel label
 
-        comboBoxKernelSize = new JComboBox();
+        comboBoxKernelSize = new JComboBox<String>();
         comboBoxKernelSize.setFont(serif12);
         comboBoxKernelSize.setBackground(Color.white);
-        if (image.getNDims() == 2) {
-            this.buildKernelSizeComboBox(true); // 2D images MUST be slice filtered
-        } else {
-            this.buildKernelSizeComboBox(false); // default setting for 3D+ images is volume filtering
-        }
+        this.buildKernelSizeComboBox();
         comboBoxKernelSize.setEnabled(false);
         algoPanel.add(comboBoxKernelSize);
 
@@ -856,21 +852,12 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
      *
      * @param  singleSlices  DOCUMENT ME!
      */
-    private void buildKernelSizeComboBox(boolean singleSlices) {
-
-        if (singleSlices) {
-            comboBoxKernelSize.addItem("3x3");
-            comboBoxKernelSize.addItem("5x5");
-            comboBoxKernelSize.addItem("7x7");
-            comboBoxKernelSize.addItem("9x9");
-            comboBoxKernelSize.addItem("11x11");
-        } else {
-            comboBoxKernelSize.addItem("3x3x3");
-            comboBoxKernelSize.addItem("5x5x5");
-            comboBoxKernelSize.addItem("7x7x7");
-            comboBoxKernelSize.addItem("9x9x9");
-            comboBoxKernelSize.addItem("11x11x11");
-        }
+    private void buildKernelSizeComboBox() {
+        comboBoxKernelSize.addItem("3x3");
+        comboBoxKernelSize.addItem("5x5");
+        comboBoxKernelSize.addItem("7x7");
+        comboBoxKernelSize.addItem("9x9");
+        comboBoxKernelSize.addItem("11x11");
     }
 
     /**
