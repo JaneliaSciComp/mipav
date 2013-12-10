@@ -5682,7 +5682,6 @@ public class FileTiff extends FileBase {
         int k, s;
         int begin = 0;
         int end = 1;
-        ModelImage tmpImage = null;
         int seq;
         int imgOffset;
         int nextIFD;
@@ -6109,10 +6108,6 @@ public class FileTiff extends FileBase {
             raFile.close();
 
             throw error;
-        }
-
-        if (tmpImage != null) {
-            image = tmpImage;
         }
 
         raFile.close();
