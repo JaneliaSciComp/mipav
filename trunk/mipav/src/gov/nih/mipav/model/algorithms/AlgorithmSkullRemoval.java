@@ -73,6 +73,8 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 	private ModelImage atlasBasedImage;
 	private ModelImage registeredSourceImage;
 	
+	private ModelImage originalSrc;
+	
     /**
      * Construct the face anonymizer, but do not run it yet.
      *
@@ -82,6 +84,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     public AlgorithmSkullRemoval(ModelImage srcImg, int faceDirection)
     {
     	super( null, srcImg );
+    	originalSrc = srcImg;
 
     	targetAxis = new int[]{FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_S2I_TYPE,
                 FileInfoBase.ORI_L2R_TYPE};
@@ -116,6 +119,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     public AlgorithmSkullRemoval(ModelImage srcImg, ModelImage atlasImage, int faceDirection)
     {
     	super( null, atlasImage );
+    	originalSrc = srcImg;
 
     	targetAxis = new int[]{FileInfoBase.ORI_A2P_TYPE, FileInfoBase.ORI_S2I_TYPE,
                 FileInfoBase.ORI_L2R_TYPE};
@@ -266,7 +270,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //    	}
         fillWhiteMatter(destImage, seedPoints);
         
-//        if ( showSegmentation )
+//        if ( showFaceSegmentation | showSkullSegmentation )
 //        {
 //    		destImage.calcMinMax();
 //        	ModelImage whiteMatterImage = (ModelImage)destImage.clone();
@@ -274,7 +278,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //        	new ViewJFrameImage(whiteMatterImage);
 //        }
         fireProgressStateChanged(60);                
-        
         
         calculateRadius(destImage);
         
@@ -333,7 +336,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //        	new ViewJFrameImage(atlasBasedImage);        	
     	}
 
-
+    	BitSet mask = (BitSet)(destImage.getMask().clone());
+    	destImage.disposeLocal();
+    	destImage = (ModelImage)originalSrc.clone();
+    	destImage.setMask(mask);
     	if ( remove )
     	{
     		subtractMask( destImage );
@@ -375,6 +381,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 			srcImage.disposeLocal();
 			srcImage = null;
 		}
+		
         setCompleted(true);	
     }
     
@@ -770,10 +777,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     			visited.set(index);
 				whiteMatter.set(index);
     			seedList.add(seed);
-    			originalSeedList.add(seed);
+//    			originalSeedList.add(seed);
     		}
     	}    	
-    	
+    	originalSeedList.add(cog);
 		fill( image, originalSeedList, seedList, visited, whiteMatter );
     	
 		image.setMask( whiteMatter );
@@ -783,17 +790,19 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     {
     	Vector3f min = new Vector3f(dimX, dimY, dimZ);
     	Vector3f max = new Vector3f(0,0,0);
-		getBoundsDistance( min, max, originalSeedList, 120 );
+		getBoundsDistance( min, max, originalSeedList, 80 );
     	while ( seedList.size() > 0 )
     	{
     		Vector3f seed = seedList.remove(0);
 
     		boolean csfFound = false;
-    		for ( int z = (int) (seed.Z-1); z <= seed.Z+1; z++ )
+    		int step = 1;
+//    		int z = (int) seed.Z;
+    		for ( int z = (int) (seed.Z-step); z <= seed.Z+step; z++ )
     		{
-    			for ( int y = (int) (seed.Y-1); y <= seed.Y+1; y++ )
+    			for ( int y = (int) (seed.Y-step); y <= seed.Y+step; y++ )
     			{
-    				for ( int x = (int) (seed.X-1); x <= seed.X+1; x++ )
+    				for ( int x = (int) (seed.X-step); x <= seed.X+step; x++ )
     				{
     					if ( (x >= 0) && (x < dimX) && (y >= 0) && (y < dimY) && (z >= 0) && (z < dimZ) )
     					{
@@ -827,13 +836,16 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 									visited.set(index);
 									if ( (x >= min.X) && (x <= max.X) && (y >= min.Y) && (y <= max.Y) && (z >= min.Z) && (z <= max.Z) )
 									{
-										float value = image.getFloat(x, y, z);
 										if ( !csfFound )
 										{
-											if ( (value > gmThresholdMin) && (value < gmThresholdMax) )
+											if ( distance( cog, x, y, z ) < 80 )
 											{
-												whiteMatter.set(index);
-												seedList.add( new Vector3f(x, y, z) );
+												float value = image.getFloat(x, y, z);
+												if ( (value > gmThresholdMin) && (value < gmThresholdMax) )
+												{
+													whiteMatter.set(index);
+													seedList.add( new Vector3f(x, y, z) );
+												}
 											}
 										}
 									}
@@ -860,7 +872,19 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
     		min.min( Vector3f.sub( pos, range ) );
     		max.max( Vector3f.add( pos, range ) );
     	}
+    	min.max(Vector3f.ZERO);
+    	max.min(new Vector3f(dimX,dimY,dimZ));
     	System.err.println( "Bounds = " + min + "   " + max );
+    }
+    
+    private float distance( Vector3f cog, int x, int y, int z )
+    {
+        float xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        float yRes = srcImage.getFileInfo(0).getResolutions()[1];
+        float zRes = srcImage.getFileInfo(0).getResolutions()[2];
+        Vector3f temp = new Vector3f( cog.X*xRes,cog.Y*yRes,cog.Z*zRes);
+    	float dist = temp.distance( new Vector3f(x*xRes,y*yRes,z*zRes) );
+    	return dist;
     }
     
     
@@ -1706,8 +1730,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 
 	private ModelImage randomize( ModelImage image, int stepSize )
 	{
-		ModelImage blurImage = new ModelImage(image.getType(), image.getExtents(),
-				JDialogBase.makeImageName(image.getImageName(), "_blur"));
+
+		int dimX = image.getExtents()[0];
+		int dimY = image.getExtents()[1];
+		int dimZ = image.getExtents()[2];
+		
+		ModelImage blurImage = (ModelImage)image.clone();
+		blurImage.setImageName( JDialogBase.makeImageName(image.getImageName(), "_blur") );
 		int stepsX = image.getExtents()[0] / stepSize;
 		int stepsY = image.getExtents()[1] / stepSize;
 		int stepsZ = image.getExtents()[2] / stepSize;
@@ -1724,6 +1753,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					int count = 0;
 					float sum = 0;
 					int srcZ = z * stepSize;
+					boolean useBlock = true;
 					for ( int z1 = z; z1 < z + stepSize; z1++ )
 					{					
 						int srcY = y * stepSize;
@@ -1732,6 +1762,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 							int srcX = x * stepSize;
 							for ( int x1 = x; x1 < x + stepSize; x1++ )
 							{
+								if ( !image.getMask().get( srcZ*dimY*dimX + srcY*dimX + srcX) )
+								{
+									useBlock = false;
+								}
 								sum += image.getFloat(srcX++, srcY, srcZ);
 								count++;
 							}							
@@ -1743,6 +1777,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 					
 					int blockIndex = z * stepsY * stepsX + y * stepsX + x;	
 					blockAvg[blockIndex] = sum;
+					if ( !useBlock )
+					{
+						blockAvg[blockIndex] = -1;
+					}
 				}
 			}
 		}
@@ -1752,6 +1790,10 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		int[] blockIndex = new int[length];
 		for ( int i = 0; i < length; i++ )
 		{
+			if ( blockAvg[i] == -1 )
+			{
+				swapped[i] = true;
+			}
 			swapped[i] = false;				
 			blockIndex[i] = i;
 		}
@@ -1761,7 +1803,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 				continue;
 			for ( int j = length-1; j > i; j-- )
 			{
-				if ( !swapped[j] && (Math.abs(blockAvg[i] - blockAvg[j]) < .25*blockAvg[i]) )
+				if ( !swapped[j] && (Math.abs(blockAvg[i] - blockAvg[j]) < .30*blockAvg[i]) )
 				{
 					int temp = blockIndex[i];
 					blockIndex[i] = blockIndex[j];
@@ -1776,8 +1818,6 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 //		{
 //			System.err.println( blockIndex[i] + "   " + swapped[i] );
 //		}
-		
-		
 		
 		// Swap the blocks of voxels in the volumes:
 		for ( int z = 0; z < stepsZ; z++ )
@@ -1815,8 +1855,13 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 							int srcX = x * stepSize;
 							for ( int x1 = targetX; x1 < targetX + stepSize; x1++ )
 							{
-//								System.err.println( x1 + " " + y1 + " " + z1 + "      " + srcX + " " + srcY + " " + srcZ );
-								blurImage.set( x1,y1,z1, image.getFloat(srcX++, srcY, srcZ) );
+//								if ( image.getMask().get( z1*dimY*dimX + y1*dimX + x1) &&
+//										image.getMask().get( srcZ*dimY*dimX + srcY*dimX + srcX))
+								{
+									//								System.err.println( x1 + " " + y1 + " " + z1 + "      " + srcX + " " + srcY + " " + srcZ );
+									blurImage.set( x1,y1,z1, image.getFloat(srcX, srcY, srcZ) );
+								}
+								srcX++;
 							}							
 							srcY++;
 						}						
@@ -1827,7 +1872,7 @@ public class AlgorithmSkullRemoval extends AlgorithmBase
 		}
 		
 		blurImage.calcMinMax();
-//		new ViewJFrameImage(blurImage);
+//		new ViewJFrameImage((ModelImage)blurImage.clone());
 		return blurImage;
 	}
 
