@@ -33,7 +33,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	protected FileInfoDicom fileInfo;
 	
-	protected static final String SAVE = "Process";
+	public static final String SAVE = "Process";
 	
 	private boolean processed = false;
 
@@ -91,7 +91,7 @@ public class JDialogDicomTagMultiEditor extends JDialogDicomTagSelector {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		if(e.getSource().equals(closeButton) && !processed) {
+		if(e.getActionCommand().equals(closeButton.getActionCommand()) && !processed) {
 			callAlgorithm();
 		} else {
 			super.actionPerformed(e);

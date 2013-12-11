@@ -62,25 +62,25 @@ import javax.swing.table.TableModel;
 public class JDialogDicomTagSelector extends JDialogScriptableBase implements ListSelectionListener, DicomTagSelectorImpl {
 
 	/**For adding a top level dicom tag*/
-	private static final String ADD_TAG = "Add";
+	public static final String ADD_TAG = "Add";
 	
 	/**For adding a dicom tag contained within a sequence*/
-	private static final String ADD_TAG_SEQ = "Add sequence tag";
+	public static final String ADD_TAG_SEQ = "Add sequence tag";
 
 	/**Closes the dialog*/
-	private static final String CLOSE = "Close";
+	public static final String CLOSE = "Close";
 
 	/**For removing all tags from the main dialog*/
-	private static final String CLEAR_TAGS = "Clear tags";
+	public static final String CLEAR_TAGS = "Clear tags";
 	
 	/**Indicates tag value may exist but cannot be understood by the dialog. */
-	private static final String UNKNOWN = "Unknown";
+	public static final String UNKNOWN = "Unknown";
 	
 	/**Indicates tag value is a sequence tag*/
-	private static final String SEQUENCE = "Sequence";
+	public static final String SEQUENCE = "Sequence";
 
 	/**Indicates tag is a private tag*/
-	private static final String PRIVATE = "Private tag";
+	public static final String PRIVATE = "Private tag";
 	
 	/**Min/max size of all text boxes contained in scroll panes.*/
 	private final Dimension SCROLL_PANE_SIZE = new Dimension(200, 25);
@@ -764,6 +764,18 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 				} else {
 					DefaultTableModel model = (DefaultTableModel)parentDialog.getTagTable().getModel();
 					//FileDicomTag tagValue = tagList.get(new FileDicomKey(tag));
+					if(Integer.valueOf(groupText.getText()) % 2 == 1) {
+						if(elementText.getText().equals("0010")) {
+							
+						} else {
+							
+						}
+					}
+					
+					if(elementText.equals("0010") && Integer.valueOf(groupText.getText()) % 2 == 1) {
+						
+					}
+					
 					model.addRow(new String[]{
 							tag,
 							nameValue.getText(),
