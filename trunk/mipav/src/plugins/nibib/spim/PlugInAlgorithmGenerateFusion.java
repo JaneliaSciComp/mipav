@@ -25,7 +25,6 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.util.ThreadUtil;
 
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -61,7 +60,6 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
  * This class implements a basic algorithm that performs operations on 2D and 3D images. 
