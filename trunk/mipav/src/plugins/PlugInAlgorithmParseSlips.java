@@ -218,7 +218,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		while(cnt<20){
 			ind = line.indexOf(";");
 			if(ind > 0)
-				output[cnt] = line.substring(0, ind);
+				output[cnt] = line.substring(0, ind).trim();
 			else if (ind == -1) break;
 			else if (ind == 0) output[cnt] = "null";
 			line = line.substring(ind+1);
@@ -235,7 +235,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		while(cnt<20){
 			ind = line.indexOf(",");
 			if(ind > 0){
-				output[cnt] = line.substring(0, ind);
+				output[cnt] = line.substring(0, ind).trim();
 				cnt++;
 			}
 			else if (ind == -1) break;
