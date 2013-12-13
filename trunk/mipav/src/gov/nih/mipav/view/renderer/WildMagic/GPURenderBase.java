@@ -131,7 +131,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
 	protected boolean updateBoundingCube = false;
-
+    
+	protected float nearPlane = 0.01f;
+	
     protected boolean isSpaceNavCodeRunning = false;
     /** actual min and max values for the 3D mouse (the space navigator) */
     private static float spaceNavMax, spaceNavMin;
@@ -167,7 +169,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     public GPURenderBase()
     {
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
-        
+    
         try {
     		if(SpaceNavigatorController.hasSpaceNavigator() && SpaceNavigatorPoller.getListeners().length == 0) {
     			SpaceNavigatorPoller.registerListener(this);
@@ -192,7 +194,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
                 m_eBuffering, m_eMultisampling,
                 m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );      
+        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
@@ -216,6 +218,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     		e.printStackTrace();
     	}
         checkIfSpaceNavNeedsCalibration();
+    
     }
     
     /**
@@ -233,7 +236,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     }
     
     protected boolean m_bDispose = false;
-	private float nearPlane;
 	public void dispose()
     {
 		m_bDispose = true;
@@ -297,6 +299,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         m_kZRotate = null;
         
         SpaceNavigatorPoller.deRegisterListener(this);
+
 
         super.dispose();
     }
@@ -380,28 +383,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	public void keyPressed(KeyEvent e) {
         char ucKey = e.getKeyChar();
         
-//        switch(e.getKeyCode()) {
-//		case KeyEvent.VK_ENTER:
-//	    	System.out.println("Next connexion level.");
-//	    	break;
-//   
-//		case KeyEvent.VK_UP:
-//			System.out.println("Heading up.");
-//	    	break;
-//	    	
-//	    case KeyEvent.VK_DOWN:
-//	    	System.out.println("Heading down.");
-//	    	break;
-//	    	
-//	    case KeyEvent.VK_RIGHT:
-//	    	System.out.println("Heading right.");
-//	    	break;
-//	    	
-//	    case KeyEvent.VK_LEFT:
-//	    	System.out.println("Heading left.");
-//	    	break;
-//	    }
-
         
         if(e.isAltDown()) {
 	        
@@ -409,7 +390,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         	boolean rotateProcessed = false;
 	        Matrix3f rotateMatrix = null;
 	        switch(e.getKeyCode()) {
-	        	        	
 	        case KeyEvent.VK_UP:
 	        	rotateProcessed = true;
 	        	rotateMatrix = Matrix3f.inverse(m_kXRotate);
@@ -431,15 +411,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	        	break;
 	        }
 	        if(rotateProcessed) {	
-//		        Matrix3f kRotate = m_spkScene.Local.GetRotate();
-//		        kRotate.mult(rotateMatrix);
-//		        m_spkScene.Local.SetRotate(kRotate);
-//		        m_spkScene.UpdateGS();
-//		        m_kCuller.ComputeVisibleSet(m_spkScene);
-//		        
-//		        for ( int i = 0; i < m_kDisplayList.size(); i++ ) {
-//		            m_kDisplayList.get(i).GetScene().Local.SetRotateCopy(m_spkScene.Local.GetRotate());
-//		        }
 	        	updateScene(rotateMatrix);
 		        return;
 	        }
@@ -481,7 +452,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         }
         return;
     }
-
+    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.renderer.flythroughview.FlyThroughRenderInterface#record(boolean)
      */
@@ -1012,8 +983,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     public Matrix4f getSceneToWorldMatrix() {
     	return m_kSceneToWorld;
     }
-
     
+
 	/**
 	 * 3D MOUSE MOTION CONSTANTS
 	 */
@@ -1032,7 +1003,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     Vector3f currentLocation = new Vector3f();
     double mouseRot = 0;
     
-    @Override
 	public void processSpaceNavEvent()
     {
     	System.out.println("tx: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
