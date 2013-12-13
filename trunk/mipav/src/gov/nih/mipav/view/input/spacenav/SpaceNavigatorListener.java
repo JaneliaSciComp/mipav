@@ -8,4 +8,5 @@ package gov.nih.mipav.view.input.spacenav;
 public interface SpaceNavigatorListener {
 	/** Processes a polled event from the space navigator */
 	public void processSpaceNavEvent();
+	public void processSpaceNavEvent(SpaceNavigatorEvent e);
 }
