@@ -3509,10 +3509,14 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	}
 
 	@Override
-	protected void UpdateSceneRotation() {
-		super.UpdateSceneRotation();
-		m_kSceneToWorld.copy(m_kVolumeRayCast.GetWorld());
-	}
+   protected void UpdateSceneRotation()
+   {
+	   super.UpdateSceneRotation();
+	   
+	   if(!isSpaceNavCodeRunning){
+		   m_kSceneToWorld.copy(m_kVolumeRayCast.GetWorld());
+	   }
+   }
 
 	void NormalKernel(float[] a, float[] b, int width, int height, int depth,
 			int color, int numElements) {
@@ -3601,11 +3605,14 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		opacitySlider.addChangeListener(this);
 	}
 
+
 	/**
 	 * Opacity sliders for when this renderer is displayed as a stand-alone app.
 	 */
 	private JSlider opacitySlider;
 	private JLabel opacityLabel;
+
+   
 
 	/*
 	 * (non-Javadoc)
@@ -3638,6 +3645,12 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		}
 		
 	}
+		
+//		public void processSpaceNavEvent(SpaceNavigatorEvent e)
+//		{
+//			super.processSpaceNavEvent(e);
+//			System.out.println("testing: processSpaceNavEvent() in VolumeTriPlanerBaseRender");
+//		}
 
 	/**
 	 * Set the VolumeRayCast front clipping plane constant
