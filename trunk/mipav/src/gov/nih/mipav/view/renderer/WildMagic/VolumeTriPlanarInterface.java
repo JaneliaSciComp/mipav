@@ -25,6 +25,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.input.spacenav.*;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanel3DMouse_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustomBlend;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelDisplay_WM;
@@ -127,7 +128,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateInterface, ActionListener, WindowListener, 
 																ComponentListener, ChangeListener, VOIManagerInterfaceListener, 
-																PropertyChangeListener, SpaceNavigatorListener
+																PropertyChangeListener
 {
     public class IntVector extends Vector<Integer> {
         /**  */
@@ -318,6 +319,9 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
     /** Coronal view panel. */
     protected JPanel panelCoronal;
+    
+    /** 3D mouse user-interface panel: */
+    protected JPanel3DMouse_WM mouseGUI;
 
     /** Current frame width and height. */
     protected int screenWidth, screenHeight;
@@ -380,10 +384,6 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         }
         this.configureFrame();
         MipavInitGPU.InitGPU();
-       
-        if(SpaceNavigatorController.hasSpaceNavigator()) {
-        	SpaceNavigatorPoller.registerListener(this);
-        }
     }
 
     public VolumeTriPlanarInterface(final ModelImage _imageA, final ModelImage _imageB) {
@@ -437,14 +437,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         raycastRenderWM.setVisible(true);
         raycastRenderWM.startAnimator(true);
     	
-//    	try {
-//    		if(SpaceNavigatorController.hasSpaceNavigator()) {
-//    			SpaceNavigatorPoller.registerListener(this);
-//    		}
-//    	} catch (Error e) {
-//    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-//    		e.printStackTrace();
-//    	}
+    	
     }
 
     /*
@@ -626,7 +619,15 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             SaveState();
         } else if (command.equals("LoadState")) {
             LoadState();
-        } 
+        } else if (command.equals("Mouse3D")) {
+        	if(mouseGUI.isInMenu()){
+        		tabbedPane.remove(mouseGUI.getMainPanel());
+        		mouseGUI.setInMenu(false);
+        	}else{
+        		insertTab("3D Mouse", mouseGUI.getMainPanel());
+        		mouseGUI.setInMenu(true);
+        	}
+        }
 
     }
 
@@ -833,6 +834,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void buildSurfaceTexturePanel() {
         surfaceTextureGUI = new JPanelSurfaceTexture_WM(this);
         maxPanelWidth = Math.max(surfaceTextureGUI.getPreferredSize().width, maxPanelWidth);
+    }
+    
+    /**
+     * Build the clipping control panel for the surface render.
+     */
+    public void build3DMousePanel() {
+        mouseGUI = new JPanel3DMouse_WM(this);
+        maxPanelWidth = Math.max(mouseGUI.getPreferredSize().width, maxPanelWidth);
     }
 
     /**
@@ -2392,6 +2401,10 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             m_kVOIInterface.disposeLocal(true);
             m_kVOIInterface = null;
         }
+        if (mouseGUI != null) {
+            mouseGUI.disposeLocal();
+            mouseGUI = null;
+        }
     }
 
     private void disposeImageIndependentComponents() {
@@ -3071,6 +3084,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         buildHistoLUTPanel();
         buildOpacityPanel();
         buildRenderModePanel();
+        build3DMousePanel();
 
         m_kVolumeImageA.GetImage().addImageDisplayListener(this);
         if (m_kVolumeImageB.GetImage() != null) {
@@ -3110,11 +3124,14 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
                 menuObj.buildMenuItem("Close frame", "CloseFrame", 0, null, false)}));
         menuBar.add(menuObj.makeMenu("Options", false, new JComponent[] {
                 menuObj.buildCheckBoxMenuItem("Show axes", "ShowAxes", true),
-                menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true),}));
+                menuObj.buildCheckBoxMenuItem("Show crosshairs", "ShowXHairs", true)//,
+//                menuObj.buildMenuItem("Open 3D Mouse Options", "Mouse3D", 0, null, false)
+                }));
         menuBar.add(menuObj.makeMenu("Toolbars", false, new JMenuItem[] {
                 menuObj.buildCheckBoxMenuItem("VOI toolbar", "VOIToolbar", false),
-                menuObj.buildCheckBoxMenuItem("4D toolbar", "4DToolbar", false)
+                menuObj.buildCheckBoxMenuItem("4D toolbar", "4DToolbar", false),
         // menuObj.buildCheckBoxMenuItem("RFA toolbar", "RFAToolbar", false)
+                menuObj.buildCheckBoxMenuItem("Open 3D Mouse Options", "Mouse3D",false)
                 }));
 
         menuObj.setMenuItemEnabled("RFA toolbar", false);
@@ -3123,6 +3140,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
         return menuBar;
     }
+    
     /**
      * The the top one volume view toolbar.
      */
@@ -3476,20 +3494,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
 	}
 
-	@Override
-	public void processSpaceNavEvent() {
-		DecimalFormat dec = new DecimalFormat("0.00000");
-		
-		StringBuilder builder = new StringBuilder();
-		builder.append("RX: ").append(dec.format(SpaceNavigatorController.getRX()));
-		builder.append("\tRY: ").append(dec.format(SpaceNavigatorController.getRY()));
-		builder.append("\tRZ: ").append(dec.format(SpaceNavigatorController.getRZ())).append("\t\t");
-		builder.append("TX: ").append(dec.format(SpaceNavigatorController.getTX()));
-		builder.append("\tTY: ").append(dec.format(SpaceNavigatorController.getTY()));
-		builder.append("\tTZ: ").append(dec.format(SpaceNavigatorController.getTZ()));
-		
-		System.out.println(builder.toString());
-	}        
+	    
 
 	public void setCameraNearPlane( float distance )
 	{
