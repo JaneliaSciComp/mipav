@@ -950,10 +950,28 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         }
     }
     
+	/**
+	 * 3D MOUSE MOTION CONSTANTS
+	 */
+	double defaultVelocityTranslational = 0.01;
+	//double radiusScalarTranslational = 0.005;
+	//int radiusPowerTranslational = 2;
+	double transScalar = 0.05;
+	double transPower = 1;
+	float ZXDistanceStep = 0f;
+	float ZYDistanceStep = 0f;
+	float ZZDistanceStep = 0f;
+    double defaultVelocityRotational = 1;
+    double rotScalar = 0.25;
+    double rotPower = 2;
+    Vector3f zVector = new Vector3f(0,0,1);
+    Vector3f currentLocation = new Vector3f();
+    double mouseRot = 0;
+    
     @Override
 	public void processSpaceNavEvent()
     {
-    	System.out.println("t: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
+    	System.out.println("tx: "+SpaceNavigatorController.getTX()+"\tty: "+SpaceNavigatorController.getTY()+"\ttz: "+SpaceNavigatorController.getTZ()+
     			"\trx: "+SpaceNavigatorController.getRX()+"\try: "+SpaceNavigatorController.getTX()+"\trz: "+SpaceNavigatorController.getRZ());
     	Vector3f oldLoc, newLoc, kLoc;
     	isSpaceNavCodeRunning = true;
@@ -997,8 +1015,18 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	oldLoc = new Vector3f();
     	newLoc = new Vector3f();
         kLoc = new Vector3f(m_akWorldAxis[1]);
+       
+        currentLocation.copy(m_spkCamera.GetLocation());
+        Vector3f zValue = Vector3f.mult(zVector, currentLocation);
+        ZYDistanceStep = zValue.length();
+        double ZYScaleTrans = ZYDistanceStep * transScalar;
+        double ZYTrans = Math.pow(ZYScaleTrans, transPower);
         
-        kLoc.scale( (float) (invertTZ * scaleValue / ( translationScaleFactor * mouseSpeedScaler ) ));
+        double yMouseScaleTranslational = defaultVelocityTranslational + ZYTrans;
+        double yMouseVelocityTranslational = yMouseScaleTranslational * scaleValue;
+        
+        kLoc.scale((float)(yMouseVelocityTranslational));    
+        
         oldLoc.copy(m_spkCamera.GetLocation());
         kLoc = Vector3f.sub(m_spkCamera.GetLocation(), kLoc);
         m_spkCamera.SetLocation(kLoc);
@@ -1044,7 +1072,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	newLoc = new Vector3f();
         kLoc = new Vector3f(m_akWorldAxis[0]); 
         
-        kLoc.scale((float) -(invertTY *  scaleValue / ( translationScaleFactor * mouseSpeedScaler ) ));
+        currentLocation.copy(m_spkCamera.GetLocation());
+        ZZDistanceStep = zValue.length();
+        double ZZScaleTrans = ZZDistanceStep * transScalar;
+        double ZZTrans = Math.pow(ZZScaleTrans, transPower);
+        
+        double zMouseScaleTranslational = defaultVelocityTranslational + ZZTrans;
+        double zMouseVelocityTranslational = zMouseScaleTranslational * scaleValue;
+        
+        kLoc.scale((float)(-zMouseVelocityTranslational));    
+        
         oldLoc.copy(m_spkCamera.GetLocation());
         kLoc.add(m_spkCamera.GetLocation());
         m_spkCamera.SetLocation(kLoc);
@@ -1058,6 +1095,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         {
         	zCameraMove += newLoc.length();
         }
+        
+        System.out.println(m_spkCamera.GetLocation());
         
 //        System.out.println("zCameraMove: " + zCameraMove + ", mouseSpeedScaler: " + mouseSpeedScaler);
         
@@ -1091,8 +1130,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         oldLoc = new Vector3f();
     	newLoc = new Vector3f();
         kLoc = new Vector3f(m_akWorldAxis[2]); 
-	        
-	    kLoc.scale((float) ( invertTX * scaleValue / ( translationScaleFactor * mouseSpeedScaler) ));
+        
+        //RADIUS TERM (c*r^a) CAN BE ADDED TO mouseScaleTranslational IF DESIRED:        
+        //Vector3f currentLocation = new Vector3f();
+        //currentLocation.copy(m_spkCamera.GetLocation());
+        //double radius = currentLocation.length();
+        //double radiusScaleStep = Math.pow(radius, radiusPowerTranslational);
+        //double radiusScaleFinal = radiusScaleStep * radiusScalarTranslational;
+	    
+        currentLocation.copy(m_spkCamera.GetLocation());
+        ZXDistanceStep = zValue.length();
+        double ZXScaleTrans = ZXDistanceStep * transScalar;
+        double ZXTrans = Math.pow(ZXScaleTrans, transPower);
+        
+        //ALTERNATE W/ RADIUS SCALING:
+        //xMouseScaleTranslational = (defaultVelocityTranslational + radiusScaleFinal * (1 + ZXTrans));
+        
+        double xMouseScaleTranslational = defaultVelocityTranslational + ZXTrans;
+        double xMouseVelocityTranslational = xMouseScaleTranslational * scaleValue;
+        
+        kLoc.scale((float)(xMouseVelocityTranslational));    
+      	    
         oldLoc.copy(m_spkCamera.GetLocation());
         kLoc.add(m_spkCamera.GetLocation());
         m_spkCamera.SetLocation(kLoc);
@@ -1114,13 +1172,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //    	printSpaceNavData();
 		isSpaceNavCodeRunning = false;
 		
+		System.out.println(m_spkCamera.GetLocation());
+		
 	//	System.out.println("tX: " + tX + ", scaleValue: " + scaleValue + ", tCutoff: " + translationCutoff + ", rCutoff: " + rotationCutoff);
 	    
 	}
-    
+       
     private void rotateAboutXAxis()
     {
-    	double rXValue = normalizeSpaceNavValue(SpaceNavigatorController.getRZ());
+    	double rXValue = normalizeSpaceNavValue(SpaceNavigatorController.getRX());
     	Vector3f kAxis = new Vector3f(Vector3f.UNIT_X);
 	    double fAngle;
 	    Matrix3f kRot, kIncr = new Matrix3f();
@@ -1152,10 +1212,48 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	}
 	    
     	kRot = m_spkMotionObject.Local.GetRotate();
+    	
+        currentLocation.copy(m_spkCamera.GetLocation());
+        Vector3f zValue = Vector3f.mult(zVector, currentLocation);
+        
+// POSSIBLE "FINE MOVEMENT" BUTTON
+        
+//        if (fineMovementButton = true)
+//    	{
+//    		double zDistance = 0;
+//    	}
+//    	else
+//    	{
+//    		double zDistance = zValue.length();
+//    	}
+    	
+        double zDistance = zValue.length();
+        double zScaleRotStep = zDistance * rotScalar;
+        double zScaleRot = Math.pow(zScaleRotStep, rotPower);
+        
     	fAngle = invertRX * m_fRotSpeed * rXValue * rotationScaleFactor; 
+    	double mouseScaleRotational = defaultVelocityRotational + zScaleRot;
+    	double mouseVelocityRotational = mouseScaleRotational * fAngle;
+    	
+    	
+    	if(Math.abs(mouseVelocityRotational) > 0.07)
+    	{
+    		if(mouseVelocityRotational > 0.07)
+    		{
+    			mouseRot = 0.07;
+    		}
+    		else
+    		{
+    			mouseRot = -0.07;
+    		}
+    	}
+    	else
+    	{
+    		mouseRot = mouseVelocityRotational;
+    	}    	    	    	
        
-    	kIncr.fromAxisAngle(kAxis, (float)fAngle);
-        kRot.multLeft( kIncr ).orthonormalize();
+    	kIncr.fromAxisAngle(kAxis, (float)mouseRot);
+    	kRot.multLeft( kIncr ).orthonormalize();
         m_spkMotionObject.Local.SetRotate(kRot);
         kIncr = null;
         kAxis = null;
@@ -1196,9 +1294,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	}
 	    
     	kRot = m_spkMotionObject.Local.GetRotate();
-    	fAngle = invertRZ * m_fRotSpeed * rYValue * rotationScaleFactor;
-	
-        kIncr.fromAxisAngle(kAxis, (float)fAngle);
+    	currentLocation.copy(m_spkCamera.GetLocation());
+        Vector3f zValue = Vector3f.mult(zVector, currentLocation);
+        double zDistance = zValue.length();
+        double zScaleRotStep = zDistance * rotScalar;
+        double zScaleRot = Math.pow(zScaleRotStep, rotPower);
+        
+    	fAngle = invertRZ * m_fRotSpeed * rYValue * rotationScaleFactor; 
+    	double mouseScaleRotational = defaultVelocityRotational + zScaleRot;
+    	double mouseVelocityRotational = mouseScaleRotational * fAngle;
+    	
+    	if(Math.abs(mouseVelocityRotational) > 0.07)
+    	{
+    		if(mouseVelocityRotational > 0.07)
+    		{
+    			mouseRot = 0.07;
+    		}
+    		else
+    		{
+    			mouseRot = -0.07;
+    		}
+    	}
+    	else
+    	{
+    		mouseRot = mouseVelocityRotational;
+    	}    	    	
+       
+    	kIncr.fromAxisAngle(kAxis, (float)mouseRot);
         kRot.multLeft( kIncr ).orthonormalize();
         m_spkMotionObject.Local.SetRotate(kRot);
         kIncr = null;
@@ -1240,9 +1362,33 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     		}
     	}
     	kRot = m_spkMotionObject.Local.GetRotate();
-    	fAngle = invertRY * m_fRotSpeed * rZValue * rotationScaleFactor;
-	
-        kIncr.fromAxisAngle(kAxis, (float)fAngle);
+    	currentLocation.copy(m_spkCamera.GetLocation());
+        Vector3f zValue = Vector3f.mult(zVector, currentLocation);
+        double zDistance = zValue.length();
+        double zScaleRotStep = zDistance * rotScalar;
+        double zScaleRot = Math.pow(zScaleRotStep, rotPower);
+        
+    	fAngle = invertRY * m_fRotSpeed * rZValue * rotationScaleFactor; 
+    	double mouseScaleRotational = defaultVelocityRotational + zScaleRot;
+    	double mouseVelocityRotational = mouseScaleRotational * fAngle;
+    	    	
+    	if(Math.abs(mouseVelocityRotational) > 0.07)
+    	{
+    		if(mouseVelocityRotational > 0.07)
+    		{
+    			mouseRot = 0.07;
+    		}
+    		else
+    		{
+    			mouseRot = -0.07;
+    		}
+    	}
+    	else
+    	{
+    		mouseRot = mouseVelocityRotational;
+    	}    	    	
+       
+    	kIncr.fromAxisAngle(kAxis, (float)mouseRot);
         kRot.multLeft( kIncr ).orthonormalize();
         m_spkMotionObject.Local.SetRotate(kRot);
         kIncr = null;
