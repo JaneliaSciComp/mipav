@@ -1,8 +1,14 @@
 package gov.nih.mipav.view.input.spacenav;
+import java.util.ArrayList;
+
+import javax.media.ControllerAdapter;
+
 import gov.nih.mipav.view.Preferences;
 import net.java.games.input.Component; 
 import net.java.games.input.Controller; 
 import net.java.games.input.ControllerEnvironment; 
+import net.java.games.input.ControllerEvent;
+import net.java.games.input.ControllerListener;
 
 /** 
  * 
@@ -24,7 +30,7 @@ import net.java.games.input.ControllerEnvironment;
  *  @author justinsenseney
  */ 
 
-public class SpaceNavigatorController { 
+public class SpaceNavigatorController{ 
 
 	public static final int NUM_BUTTONS = 2; 
 	
@@ -57,6 +63,30 @@ public class SpaceNavigatorController {
 		if(controller != null) {
 			Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
 		}
+//		ce.addControllerListener(new ControllerListener() {
+//			
+//			@Override
+//			public void controllerAdded(ControllerEvent arg0) {
+//				System.out.println("entered controllerAdded");
+//				ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
+//				Controller[] cs = ce.getControllers(); 
+//				if (cs.length == 0) { 
+//					Preferences.debug("No controllers found", Preferences.DEBUG_MINOR);  
+//				} else {
+//					Preferences.debug("Num. controllers: " + cs.length, Preferences.DEBUG_MINOR);  
+//				}
+//				
+//				controller = findSpaceNavigator(cs); 
+//				if(controller != null) {
+//					Preferences.debug("Space Navigator controller: " + controller.getName() + ", " + controller.getType()); 
+//				}
+//			}
+//			
+//			@Override
+//			public void controllerRemoved(ControllerEvent arg0) {
+//				SpaceNavigatorPoller.deregisterAllListeners();
+//			}
+//		});
 	}
 	
 	private static final Component[] comps; 
@@ -119,33 +149,43 @@ public class SpaceNavigatorController {
 	}
 	
 	public static boolean hasSpaceNavigator() {
+		if(controller != null) {
+			return true;
+		}
 		ControllerEnvironment ce = ControllerEnvironment.getDefaultEnvironment();
 		Controller[] cs = ce.getControllers(); 
-		Controller c = findSpaceNavigator(cs);
-		return c != null;
+		controller = findSpaceNavigator(cs);
+		return controller != null;
 	}
 	
-	private static Controller findSpaceNavigator (Controller[] cs) { 
+	private static Controller findSpaceNavigator (Controller[] cs) { //Assumes SpaceNavigatorController.controller == null
 		Controller.Type type; 
 		int i = 0; 
+		ArrayList<Integer> stickNums = new ArrayList<Integer>();
 		while (i < cs.length) { 
 			type = cs[i].getType(); 
 			if ((type == Controller.Type.STICK)) {
-				break; 
+				stickNums.add(i); 
 			}
 			i++; 
 		} 
 	
-		if (i == cs.length) { 
+		if (stickNums.size() == 0) { 
 			Preferences.debug("No space navigator found"); 
 			return null;
 		} else {
 			Preferences.debug("Space navigator index: " + i); 
 		}
 		
-		if(cs[i].getName().toLowerCase().contains("spacenavigator")) {
-			return cs[i]; 
+		String[] nameCompares = new String[stickNums.size()];
+		for(int j=0; j<nameCompares.length; j++) {
+			nameCompares[j] = cs[stickNums.get(j)].getName().toLowerCase();
+
+			if(nameCompares[j].contains("space") ){ //&& nameCompares[j].contains("navigator")) {
+				return cs[stickNums.get(j)]; //returns controller indicated by the given name
+			}
 		}
+		
 		
 		return null;
 	} 
@@ -215,7 +255,9 @@ public class SpaceNavigatorController {
 	} // end of isButtonPressed() 
 	
 	public static void poll() { 
-		controller.poll(); 
+		if(!controller.poll()){
+			SpaceNavigatorPoller.deregisterAllListeners();
+		}
 	} 
 	
 	
@@ -273,4 +315,19 @@ public class SpaceNavigatorController {
 	public static float getRZ () { 
 		return comps[rzAxisIdx].getPollData(); 
 	} 
+	
+	public static boolean checkIfSpaceNavNeedsCalibration(){
+		return SpaceNavigatorPoller.checkIfNeedCalibration();
+	}
+
+//	@Override
+//	public void controllerAdded(ControllerEvent arg0) {
+//		
+//	}
+//
+//	@Override
+//	public void controllerRemoved(ControllerEvent arg0) {
+//		SpaceNavigatorPoller.deregisterAllListeners();
+//		
+//	}
 } 
