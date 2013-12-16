@@ -23,7 +23,6 @@ import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
-import gov.nih.mipav.view.input.spacenav.*;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanel3DMouse_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
@@ -78,7 +77,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.text.DecimalFormat;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -114,13 +112,11 @@ import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Rendering.Light;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
@@ -923,22 +919,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         TriMesh kMesh = kExtractor.getLevelSurface( 245, false );
         if ( kMesh != null )
         {
-            //              Get the adjacent triangles:
-                VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-                        2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-                        2 * kMesh.GetTriangleQuantity(), .9f,
-                        kMesh.IBuffer.GetData() );
-                kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
-                TriMesh[] kMeshes = new TriMesh[1];
-                kMeshes[0] = kMesh;
-                if (kMeshes[0] != null) {
-                    getVolumeGPU().displayVolumeRaycast(false);
-                    kMeshes[0].SetName(new String("VOI_" + m_iVOICount++));
-                    getSurfacePanel().addSurfaces(kMeshes);
-                    getRendererGUI().setDisplaySurfaceCheck(true);
-                    getRendererGUI().setDisplayVolumeCheck(false);
-                }
-                kVETMesh = null;
+        	TriMesh[] kMeshes = new TriMesh[1];
+        	kMeshes[0] = kMesh;
+        	getVolumeGPU().displayVolumeRaycast(false);
+        	kMeshes[0].SetName(new String("VOI_" + m_iVOICount++));
+        	getSurfacePanel().addSurfaces(kMeshes);
+        	getRendererGUI().setDisplaySurfaceCheck(true);
+        	getRendererGUI().setDisplayVolumeCheck(false);
         }
         kExtractor = null;
         kImage.disposeLocal();
