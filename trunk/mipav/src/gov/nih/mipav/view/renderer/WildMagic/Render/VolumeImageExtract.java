@@ -124,14 +124,14 @@ implements GLEventListener, KeyListener
 			{
 				m_bDisplaySecond = false;
 				m_iSlice = 0;
-/*
+				/*
 				ModelImage temp = new ModelImage( ModelStorageBase.INTEGER, m_kVolumeImage.GetImage().getExtents(), "temp" );
 				try {
 					temp.importData( m_kCalcImage2.Data );
 				} catch (IOException e) { }
 				temp.calcMinMax();
 				new ViewJFrameImage(temp);
-*/
+				 */
 				int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeImage.GetImage());
 				float[] startLocation = m_kVolumeImage.GetImage().getFileInfo(0).getOrigin();
 				SurfaceExtractorCubes kExtractor = 
@@ -145,24 +145,18 @@ implements GLEventListener, KeyListener
 				TriMesh kMesh = kExtractor.getLevelSurface(m_iExtractLevel, m_kCalcImage2.TriTable, false);
 				if ( kMesh != null )
 				{
-					//                    Get the adjacent triangles:
-						VETMesh kVETMesh = new VETMesh( 2* kMesh.VBuffer.GetVertexQuantity(), .9f,
-								2 * kMesh.IBuffer.GetIndexQuantity(), .9f,
-								2 * kMesh.GetTriangleQuantity(), .9f,
-								kMesh.IBuffer.GetData() );
-						kMesh.IBuffer = new IndexBuffer( kVETMesh.GetTriangles() );
-						TriMesh[] kMeshes = new TriMesh[1];
-						kMeshes[0] = kMesh;
-						if ( kMeshes[0] != null )
-						{
-							m_kParent.getVolumeGPU().displayVolumeRaycast(false);
-							String kSurfaceName = JDialogBase.makeImageName(m_kVolumeImage.GetImage().getImageName(), ms_iSurface + "_extract.sur");
-							kMeshes[0].SetName( kSurfaceName );
-							m_kParent.getSurfacePanel().addSurfaces(kMeshes);
-							m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
-							m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
-							ms_iSurface++;
-						}
+					TriMesh[] kMeshes = new TriMesh[1];
+					kMeshes[0] = kMesh;
+					if ( kMeshes[0] != null )
+					{
+						m_kParent.getVolumeGPU().displayVolumeRaycast(false);
+						String kSurfaceName = JDialogBase.makeImageName(m_kVolumeImage.GetImage().getImageName(), ms_iSurface + "_extract.sur");
+						kMeshes[0].SetName( kSurfaceName );
+						m_kParent.getSurfacePanel().addSurfaces(kMeshes);
+						m_kParent.getRendererGUI().setDisplaySurfaceCheck( true );
+						m_kParent.getRendererGUI().setDisplayVolumeCheck( false );
+						ms_iSurface++;
+					}
 				}
 				dispose(arg0);
 			}
