@@ -140,7 +140,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-
+    	super.setStartTime();
         // Blur image if necessary (the extraction algorithm does not work on
         // flat surfaces.
         // Therefore blur flat surface to produce a small intensity gradient and
@@ -166,6 +166,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         if (maskImage.getNDims() > 2) {
             extractSurface();
         }
+		System.err.println( "AlgorithmExtractSurfaceCubes Time : " + super.getElapsedTime() );
     }
 
     /**
