@@ -39,6 +39,10 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
+    
+    private boolean clearInflectionPoints = true;
+    
+    private JCheckBox clearPointsBox;
 
     /** false = apply algorithm only to VOI regions. */
     private boolean image25D = false; // Flag for applying to every slice
@@ -278,7 +282,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
                 // Make algorithm
                 laplacianSepAlgo = new AlgorithmEdgeLaplacianSep(resultImage, image, sigmas,
-                                                                 outputPanel.isProcessWholeImageSet(), image25D);
+                                                                 outputPanel.isProcessWholeImageSet(), image25D, clearInflectionPoints);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -335,7 +339,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
                 // Make algorithm
                 laplacianSepAlgo = new AlgorithmEdgeLaplacianSep(resultImage, image, sigmas,
-                                                                 outputPanel.isProcessWholeImageSet(), image25D);
+                                                                 outputPanel.isProcessWholeImageSet(), image25D, clearInflectionPoints);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -388,7 +392,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
                 // Make algorithm
                 laplacianAlgo = new AlgorithmEdgeLaplacian(resultImage, image, sigmas,
-                                                           outputPanel.isProcessWholeImageSet(), image25D);
+                                                           outputPanel.isProcessWholeImageSet(), image25D, clearInflectionPoints);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -445,7 +449,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
                 // Make algorithm
                 laplacianAlgo = new AlgorithmEdgeLaplacian(resultImage, image, sigmas,
-                                                           outputPanel.isProcessWholeImageSet(), image25D);
+                                                           outputPanel.isProcessWholeImageSet(), image25D, clearInflectionPoints);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -485,6 +489,14 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(edgeImage);
     }
+    
+    /**
+     * 
+     * @param clearInflectionPoints
+     */
+    public void setClearInflectionPoints(boolean clearInflectionPoints) {
+        this.clearInflectionPoints = clearInflectionPoints;
+    }
 
     /**
      * {@inheritDoc}
@@ -501,6 +513,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
         image25D = scriptParameters.doProcess3DAs25D();
         separable = scriptParameters.doProcessSeparable();
+        setClearInflectionPoints(scriptParameters.getParams().getBoolean("clear_inflection_points"));
     }
 
     /**
@@ -516,6 +529,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
         scriptParameters.storeProcess3DAs25D(image25D);
         scriptParameters.storeProcessSeparable(separable);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clear_inflection_points", clearInflectionPoints));
     }
 
     /**
@@ -528,6 +542,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
         setTitle("EdgeLap");
 
         sigmaPanel = new JPanelSigmas(image);
+        
+        clearPointsBox = WidgetFactory.buildCheckBox("Clear inflection points", true);
 
         sepCheckBox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true);
 
@@ -538,7 +554,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
         }
 
         PanelManager optionsPanelManager = new PanelManager("Options");
-        optionsPanelManager.add(sepCheckBox);
+        optionsPanelManager.add(clearPointsBox);
+        optionsPanelManager.addOnNextLine(sepCheckBox);
         optionsPanelManager.addOnNextLine(image25DCheckbox);
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -573,6 +590,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+        
+        clearInflectionPoints = clearPointsBox.isSelected();
 
         if (image25DCheckbox.isSelected()) {
             image25D = true;
@@ -639,6 +658,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D, false));
             table.put(new ParameterList(AlgorithmParameters.SIGMAS, Parameter.PARAM_FLOAT, "1.0,1.0,1.0"));
             table.put(new ParameterBoolean(AlgorithmParameters.SIGMA_DO_Z_RES_CORRECTION, true));
+            table.put(new ParameterBoolean("clear_inflection_points", true));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
