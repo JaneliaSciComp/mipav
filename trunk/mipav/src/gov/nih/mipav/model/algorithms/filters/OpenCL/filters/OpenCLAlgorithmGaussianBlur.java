@@ -27,6 +27,8 @@ import org.jocl.CL;
 import org.jocl.Pointer;
 import org.jocl.Sizeof;
 import org.jocl.cl_command_queue;
+import org.jocl.cl_context;
+import org.jocl.cl_device_id;
 import org.jocl.cl_kernel;
 import org.jocl.cl_mem;
 import org.jocl.cl_program;
@@ -687,6 +689,31 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
+	}
+	
+	
+	public static cl_mem gaussianBlurSep3D( cl_context cl, cl_device_id device, cl_mem inputBuffer, int time, int elementCount, 
+			float[] sigmas, int width, int height, int depth, int color, int[] colorMask )
+	{
+		int[] errcode = new int[1];
+
+		float[] output = new float[ elementCount ];
+		cl_mem outputBuffer = clCreateBuffer(cl, CL.CL_MEM_WRITE_ONLY,
+				Sizeof.cl_float * output.length, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		// Convolve Seperable:
+		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
+		gkf.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+		Kernel gaussianKernel = gkf.createKernel();
+		OpenCLAlgorithmConvolver.convolveSep3D( cl, device, 
+				inputBuffer, outputBuffer, width, height, depth, elementCount, gaussianKernel, 
+				color, colorMask, false );
+
+        return outputBuffer;
 	}
 	
 	/**

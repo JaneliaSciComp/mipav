@@ -2,17 +2,22 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmMarchingCubes;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -54,6 +59,11 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private boolean blurFlag;
+    
+    private JCheckBox useOCLCheckbox;
+
+    /** DOCUMENT ME! */
+    private boolean useOCL = false;
 
     /** DOCUMENT ME! */
     private JTextField blurTF;
@@ -161,7 +171,34 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         String command = event.getActionCommand();
         String fileLocation;
 
-
+        if ( event.getSource() == useOCLCheckbox )
+        {
+        	decimateSurfaceCB.removeActionListener(this);
+        	if ( useOCLCheckbox.isSelected() )
+        	{
+        		decimateSurfaceCB.setSelected(false);
+        		decimateSurfaceCB.setEnabled(false);
+        	}
+        	else
+        	{
+        		decimateSurfaceCB.setEnabled(true);
+        	}
+        	decimateSurfaceCB.addActionListener(this);
+        }
+        if ( event.getSource() == decimateSurfaceCB )
+        {
+        	useOCLCheckbox.removeActionListener(this);
+        	if ( decimateSurfaceCB.isSelected() )
+        	{
+        		useOCLCheckbox.setSelected(false);
+        		useOCLCheckbox.setEnabled(false);
+        	}
+        	else
+        	{
+            	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        	}      	
+        	useOCLCheckbox.addActionListener(this);
+        }
         if (command.equals("File")) {
 
             try {
@@ -284,12 +321,12 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmExtractSurface) {
+        if (algorithm instanceof AlgorithmExtractSurface || algorithm instanceof OpenCLAlgorithmMarchingCubes) {
             image.clearMask();
             System.gc();
         }
 
-        if (extractSurAlgo.isCompleted() == true) {
+        if (algorithm.isCompleted() == true) {
             attachSurface(image);
 
             insertScriptLine();
@@ -338,6 +375,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         scriptParameters.getParams().put(ParameterFactory.newParameter("file_name", fileName));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_blur_before_extraction", blurFlag));
         scriptParameters.getParams().put(ParameterFactory.newParameter("blur_std_dev", blurValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.USE_OPENCL, useOCL));
     }
     
     /**
@@ -366,6 +404,9 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         setFileName(scriptParameters.getParams().getString("file_name"));
         setBlurFlag(scriptParameters.getParams().getBoolean("do_blur_before_extraction"));
         setBlurValue(scriptParameters.getParams().getFloat("blur_std_dev"));
+        if (scriptParameters.getParams().containsParameter(AlgorithmParameters.USE_OPENCL)) {
+        	setUseOCL(scriptParameters.getParams().getBoolean(AlgorithmParameters.USE_OPENCL));
+        }
     }
 
     // *******************************************************************
@@ -455,6 +496,17 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     public void setMode(int mode) {
         this.mode = mode;
     }
+    
+    /** Accessor that sets whether to use OpenCL processing (may still not be set if it is not supported on the system).
+     * 
+     * @param useOCL Whether to try to use OpenCL processing.
+     */
+    public void setUseOCL(boolean useOCL) {
+        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        if (useOCLCheckbox != null) {
+        	useOCLCheckbox.setSelected( this.useOCL );
+        }
+    }
 
     /**
      * Attach the generated surface to an image.
@@ -481,9 +533,35 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+        
+        // Check if the algorithm should use OpenCL, calculate and return:
+    	if ( useOCL )
+    	{
+    		OpenCLAlgorithmMarchingCubes cubesAlg;
+    		if ( mode == AlgorithmExtractSurface.VOI_MODE )
+    		{
+                ModelImage voiImage = image.generateShortImage(1, false, false);    			
+    			level = 0;
+    			cubesAlg = new OpenCLAlgorithmMarchingCubes(voiImage, level, true,
+            			decimateFlag, blurFlag, blurValue, fileName);
+    		}
+    		else if ( mode == AlgorithmExtractSurface.MASK_MODE )
+    		{ 			
+    			level = 0;
+    			cubesAlg = new OpenCLAlgorithmMarchingCubes(image, level, false,
+            			decimateFlag, blurFlag, blurValue, fileName);
+    		}
+    		else
+    		{
+    			cubesAlg = new OpenCLAlgorithmMarchingCubes(image, level, true,
+    					decimateFlag, blurFlag, blurValue, fileName);
+    		}
+        	cubesAlg.addListener(this);
+        	cubesAlg.run();
+    		return;
+        }
 
         if (image.getNDims() == 3) {
-
             // Make algorithm
             extractSurAlgo = new AlgorithmExtractSurfaceCubes(image, level, mode,
                                                               decimateFlag, blurFlag, blurValue, fileName);
@@ -555,6 +633,17 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         blurTF.setText("0.5");
         blurTF.setFont(serif12);
         blurTF.setEnabled(false);
+        
+
+        useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.addActionListener(this);
+    	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+    	if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+    	{
+    		useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+    	}
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
@@ -585,6 +674,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         imageVOIPanel.add(blurTF, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        imageVOIPanel.add( useOCLCheckbox, gbc );
 
         JPanel decimatePanel = new JPanel();
 
@@ -593,6 +686,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
 
         decimateSurfaceCB = new JCheckBox("Decimate surface (Reduce triangle count)", false);
         decimateSurfaceCB.setFont(serif12);
+    	decimateSurfaceCB.addActionListener(this);
         decimatePanel.add(decimateSurfaceCB);
 
         gbc = new GridBagConstraints();
@@ -869,8 +963,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     private boolean setVariables() {
         decimateFlag = decimateSurfaceCB.isSelected();
         blurFlag = blurCheck.isSelected();
+        useOCL = useOCLCheckbox.isSelected();
         fileName = fileTF.getText();
-
         int idx = fileName.lastIndexOf('.');
 
         if (idx < 0) {

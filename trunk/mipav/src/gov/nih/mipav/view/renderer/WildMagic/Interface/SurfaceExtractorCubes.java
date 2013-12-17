@@ -286,6 +286,8 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 		Vector<Vector3f> newVertices = new Vector<Vector3f>();
 		Vector<TriangleKey> newTriangles = new Vector<TriangleKey>();
 		super.MakeUnique(vertices, triangles, newVertices, newTriangles);
+		Preferences.debug("\n\nVertex count reduced from " + vertices.size() + " to " + newVertices.size() + ".\n", Preferences.DEBUG_MINOR);
+		Preferences.debug("Triangle count reduced from " + triangles.size() + " to " + newTriangles.size() + ".\n\n", Preferences.DEBUG_MINOR);
 
 		// pack vertices and triangle connectivity into arrays
 		int iVQuantity = newVertices.size();
