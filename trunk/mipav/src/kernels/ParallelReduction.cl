@@ -1,9 +1,9 @@
 
 __kernel void reduceSum(
 __global int *input,
-__global int *output, 
-unsigned int n, 
-unsigned int blockSize, 
+__global float *output, 
+unsigned long n, 
+unsigned long blockSize, 
 __local volatile float* sdata
 ){
     // perform first level of reduction,
@@ -12,9 +12,12 @@ __local volatile float* sdata
     unsigned int i = get_group_id(0)*(get_local_size(0)*2) + get_local_id(0);
 
     sdata[tid] = (i < n) ? input[i] : 0;
-    if (i + blockSize < n) 
-        sdata[tid] += input[i+blockSize];  
-
+    i += blockSize; 
+    while (i < n) 
+    {
+        sdata[tid] += input[i];  
+        i += blockSize; 
+    }
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // do reduction in shared mem
