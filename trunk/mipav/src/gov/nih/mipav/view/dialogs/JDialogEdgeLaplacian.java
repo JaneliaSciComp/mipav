@@ -178,8 +178,16 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-     // save the completion status for later
-        setComplete(laplacianSepAlgo.isCompleted());
+        
+        if (algorithm instanceof AlgorithmEdgeLaplacianSep) {
+            // save the completion status for later
+            setComplete(laplacianSepAlgo.isCompleted());
+        }
+        
+        if (algorithm instanceof AlgorithmEdgeLaplacian) {
+            // save the completion status for later
+            setComplete(laplacianAlgo.isCompleted());
+        }
 
         if (laplacianSepAlgo != null) {
             laplacianSepAlgo.finalize();
