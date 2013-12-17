@@ -292,7 +292,8 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         // ((ViewJComponentEditImage)component).getActiveImage().getUserInterface());
 
         // large kernel edge Laplacian - less noise, poorer localization sigmas[0]   = 2f; sigmas[1]   = 2f;
-        lap = new AlgorithmEdgeLaplacianSep(null, null, edgelap_sigmas, true, false);
+        boolean clearInflectionPoints = true;
+        lap = new AlgorithmEdgeLaplacianSep(null, null, edgelap_sigmas, true, false, clearInflectionPoints);
         progressBar.updateValueImmed(75);
         largeKernel = lap.calcZeroXMaskBitset(((ViewJComponentEditImage) component).getActiveImageSliceBuffer(),
                                               extents);
@@ -554,6 +555,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
     public static float[] getLocalCosts( ModelImage kImage, int selection, float[] activeSliceBuffer, float[] xDirections, float[] yDirections, ViewJProgressBar progressBar )
     {
         float[] localCosts = null;
+        boolean clearInflectionPoints = true;
 
         int[] extents = new int[2];
         int xDim = kImage.getExtents()[0];
@@ -768,7 +770,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, clearInflectionPoints);
                 largeKernelR = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 if ( progressBar != null )
                 {
@@ -786,7 +788,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, clearInflectionPoints);
                 largeKernelG = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 if ( progressBar != null )
                 {
@@ -804,7 +806,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.25f;
                 sigmas[1] = 1.25f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, false, clearInflectionPoints);
                 largeKernelB = lap.calcZeroXMaskBitset(singleBuffer, extents);
                 if ( progressBar != null )
                 {
@@ -848,7 +850,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 // large kernel edge Laplacian - less noise, poorer localization
                 sigmas[0] = 1.85f;
                 sigmas[1] = 1.85f;
-                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true);
+                lap = new AlgorithmEdgeLaplacian(null, null, sigmas, true, true, clearInflectionPoints);
                 lap.setZeroDetectionType(AlgorithmEdgeLaplacian.MARCHING_SQUARES);
                 if ( progressBar != null )
                 {
