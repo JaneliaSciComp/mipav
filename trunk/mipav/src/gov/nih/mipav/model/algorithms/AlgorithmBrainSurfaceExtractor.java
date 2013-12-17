@@ -191,6 +191,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         boolean do25D = false; // do full 3d
         boolean regionFlag = true; // do the whole image
+        boolean clearInflectionPoints = true;
 
         String imgName = image.getImageName();
 
@@ -275,9 +276,9 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         if (doSeparable) {
 
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
-                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
+                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, clearInflectionPoints);
             } else {
-                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
+                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, clearInflectionPoints);
                 edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
                 linkProgressToAlgorithm(edgeAlgo);
             }
@@ -294,9 +295,9 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         } else {
 
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
-                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, clearInflectionPoints);
             } else {
-                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D);
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, clearInflectionPoints);
                 linkProgressToAlgorithm(edgeAlgo);
                 edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
 
