@@ -1,8 +1,11 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 
@@ -13,6 +16,13 @@ import java.util.*;
  * Calculates the EdgeLap of an image at a scale defined by the user. This algorithm produces an edge map of the zero
  * crossings of the laplacian of the gaussian for 2D images and 2.5D images. This version uses the separable kernel
  * convolution algorithm (faster, but uses more memory).
+ * 
+ * If clearInflectionPoints is true, remove zero crossings which do not correspond to actual edges but to inflection
+ * points instead.  If a zero crossing is not a point of inflection, then in the direction perpendicular to the crossing
+ * edge the sign of the simple central difference operator of the Gaussian of the image times the sign of the third-degree
+ * central difference operator of the Gaussian of the image must be less than zero.
+ * Reference: "Refining Edges Detected by a LoG Operator" by Fatih Ulupinar and Gerard Medioni, Computer Vision, Graphics,
+ * and Image Processing, Vol. 51, 1990, pp. 275-298.
  * 
  * <p>Note: From Design of FIR bilevel Laplacian-of-Gaussian filter by Soo-Chang Pei and Ji-Hwei Horng:
  * "Wiejak showed that the LoG filter may be decomposed into the sum of two separable filters:
@@ -73,6 +83,12 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * in the mask image is background.
      */
     private ModelImage zXMask;
+    
+    private boolean clearInflectionPoints = true;
+    
+    private int clearedPoints = 0;
+    
+    private float[] gaussBuffer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -85,15 +101,17 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the EdgeLap will be calculated for the whole image if equal to true
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
+     * @param  clearInflectionPoints If true, do not set zero crossings corresponding to points of inflection
      */
     public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
-                                     boolean img25D) {
+                                     boolean img25D, boolean clearInflectionPoints) {
         super(destImg, srcImg);
 
         this.sigmas = sigmas;
         image25D = img25D;
 
         entireImage = maskFlag;
+        this.clearInflectionPoints = clearInflectionPoints;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -290,7 +308,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         sigmas = null;
         super.finalize();
     }
-
+    
     /**
      * Generates a zero crossing mask for a 2D function. Sets a ModelImage to 255 if a zero crossing is detected.
      *
@@ -299,11 +317,13 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * @param  detectionType  the type of zero crossing detection to perform
      */
     public void genZeroXMask(int slice, float[] buffer, int detectionType) {
-        float x0, x1, x2, x3;
         int i0, i1, i2, i3;
+        float x0, x1, x2, x3;
         int i, j;
         int indexY;
         int length;
+        float cdif1;
+        float cdif3;
 
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -320,35 +340,78 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
             for (i = 0; i < xxDim; i++) {
                 i0 = indexY + i;
+                i1 = i0 + 1;
+                i2 = i0 + xDim;
+                i3 = i0 + 1 + xDim;
+
+                x0 = buffer[i0];
+                x1 = buffer[i1];
+                x2 = buffer[i2];
+                x3 = buffer[i3];
 
                 if (detectionType == MARCHING_SQUARES) {
-                    i1 = i0 + 1;
-                    i2 = i0 + xDim;
-                    i3 = i0 + 1 + xDim;
-
-                    x0 = buffer[i0];
-                    x1 = buffer[i1];
-                    x2 = buffer[i2];
-                    x3 = buffer[i3];
 
                     if ((x0 >= level) && (x1 >= level) && (x2 >= level) && (x3 >= level)) { // case 0 - no edge
                     } else if ((x0 >= level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
                         // case 1 - edge in the lower left
                         zXMask.set(offset + i2, 255);
+                        if (clearInflectionPoints && i >= 2 && i <= xDim-3 && j >= 1 & j <= yDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY] - gaussBuffer[offset + i - 1 + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY - xDim] - 2*gaussBuffer[offset + i + 1 + indexY]
+                                    + 2*gaussBuffer[offset + i - 1 + indexY + 2*xDim] - gaussBuffer[offset + i - 2 + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i2, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 >= level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
 
                         // case 2 - edge in the lower right
                         zXMask.set(offset + i3, 255);
+                        if (clearInflectionPoints && i >= 1 && i <= xDim-4 && j >= 1 & j <= yDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + indexY] - gaussBuffer[offset + i + 2 + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i - 1 + indexY - xDim] - 2 * gaussBuffer[offset + i + indexY]
+                                    + 2 * gaussBuffer[offset + i + 2 + indexY + 2*xDim] - gaussBuffer[offset + i + 3 + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i3, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 >= level) && (x1 >= level) && (x2 < level) && (x3 < level)) {
 
                         // case 3 - edge horizontally
                         zXMask.set(offset + i2, 255);
                         zXMask.set(offset + i3, 255);
+                        if (clearInflectionPoints && j >= 1 && j <= yDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + indexY] - gaussBuffer[offset + i + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i + indexY - xDim] - 2 * gaussBuffer[offset + i + indexY]
+                                    + 2*gaussBuffer[offset + i + indexY + 2*xDim] - gaussBuffer[offset + i + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i2, 0);
+                                clearedPoints++;
+                            }
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY] - gaussBuffer[offset + i + 1 + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i + 1 + indexY - xDim] - 2 * gaussBuffer[offset + i + 1 + indexY]
+                                    + 2*gaussBuffer[offset + i + 1 + indexY + 2*xDim] - gaussBuffer[offset + i + 1 + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i3, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 >= level) && (x1 < level) && (x2 >= level) && (x3 >= level)) {
 
                         // case 4 - edge in the upper right
                         zXMask.set(offset + i1, 255);
+                        if (clearInflectionPoints && i >= 1 && i <= xDim-4 && j >= 2 & j <= yDim - 3) {
+                            cdif1 = gaussBuffer[offset + i + 2 + indexY - xDim] - gaussBuffer[offset + i + indexY + xDim];
+                            cdif3 = gaussBuffer[offset + i + 3 + indexY - 2*xDim] - 2*gaussBuffer[offset + i + 2 + indexY - xDim]
+                                    + 2*gaussBuffer[offset + i + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY + 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i1, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 >= level) && (x1 < level) && (x2 < level) && (x3 >= level)) {
 
                         // case 5 - ambiguous case; either edge in upper right and lower left or
@@ -360,19 +423,69 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                         // case 6 - edge going vertically along the right
                         zXMask.set(offset + i1, 255);
                         zXMask.set(offset + i3, 255);
+                        if (clearInflectionPoints && i >= 1 && i <= xDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + 2 + indexY] - gaussBuffer[offset + i + indexY];
+                            cdif3 = gaussBuffer[offset + i + 3 + indexY] - 2*gaussBuffer[offset + i + 2 + indexY]
+                                    +2*gaussBuffer[offset + i + indexY] - gaussBuffer[offset + i - 1 + indexY];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i1, 0);
+                                clearedPoints++;
+                            }
+                            cdif1 = gaussBuffer[offset + i + 2 + indexY + xDim] - gaussBuffer[offset + i + indexY + xDim];
+                            cdif3 = gaussBuffer[offset + i + 3 + indexY + xDim] - 2*gaussBuffer[offset + i + 2 + indexY + xDim]
+                                    +2*gaussBuffer[offset + i + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY + xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i3, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 >= level) && (x1 < level) && (x2 < level) && (x3 < level)) {
 
                         // case 7 - edge in the upper left
                         zXMask.set(offset + i0, 255);
+                        if (clearInflectionPoints && i >= 2 && i <= xDim - 3 && j >= 2 && j <= yDim - 3) {
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY - xDim];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY + 2*xDim] - 2*gaussBuffer[offset + i + 1 + indexY + xDim]
+                                    + 2*gaussBuffer[offset + i - 1 + indexY - xDim] - gaussBuffer[offset + i - 2 + indexY - 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i0, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 >= level)) {
 
                         // case 8 - edge in the upper left
                         zXMask.set(offset + i0, 255);
+                        if (clearInflectionPoints && i >= 2 && i <= xDim - 3 && j >= 2 && j <= yDim - 3) {
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY - xDim];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY + 2*xDim] - 2*gaussBuffer[offset + i + 1 + indexY + xDim]
+                                    + 2*gaussBuffer[offset + i - 1 + indexY - xDim] - gaussBuffer[offset + i - 2 + indexY - 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i0, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
                         // case 9 - edge going vertically along the left
                         zXMask.set(offset + i0, 255);
                         zXMask.set(offset + i2, 255);
+                        if (clearInflectionPoints && i >= 2 && i <= xDim - 3) {
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY] - gaussBuffer[offset + i - 1 + indexY];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY] - 2*gaussBuffer[offset + i + 1 + indexY]
+                                    +2*gaussBuffer[offset + i - 1 + indexY] - gaussBuffer[offset + i - 2 + indexY];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i0, 0);
+                                clearedPoints++;
+                            }
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY + xDim];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY + xDim] - 2*gaussBuffer[offset + i + 1 + indexY + xDim]
+                                    +2*gaussBuffer[offset + i - 1 + indexY + xDim] - gaussBuffer[offset + i - 2 + indexY + xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i2, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
 
                         // case 10 - ambiguous case; either edge in upper left and lower right or
@@ -383,19 +496,62 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
                         // case 11 - edge in the upper right
                         zXMask.set(offset + i1, 255);
+                        if (clearInflectionPoints && i >= 1 && i <= xDim-4 && j >= 2 & j <= yDim - 3) {
+                            cdif1 = gaussBuffer[offset + i + 2 + indexY - xDim] - gaussBuffer[offset + i + indexY + xDim];
+                            cdif3 = gaussBuffer[offset + i + 3 + indexY - 2*xDim] - 2*gaussBuffer[offset + i + 2 + indexY - xDim]
+                                    + 2*gaussBuffer[offset + i + indexY + xDim] - gaussBuffer[offset + i - 1 + indexY + 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i1, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 < level) && (x2 >= level) && (x3 >= level)) {
 
                         // case 12 - edge going horizontally along the top
                         zXMask.set(offset + i0, 255);
                         zXMask.set(offset + i1, 255);
+                        if (clearInflectionPoints && j >= 2 && j <= yDim-3) {
+                            cdif1 = gaussBuffer[offset + i + indexY + xDim] - gaussBuffer[offset + i + indexY - xDim];
+                            cdif3 = gaussBuffer[offset + i + indexY + 2*xDim] - 2*gaussBuffer[offset + i + indexY + xDim]
+                                    + 2*gaussBuffer[offset + i + indexY - xDim] - gaussBuffer[offset + i + indexY - 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i0, 0);
+                                clearedPoints++;
+                            }
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY + xDim] - gaussBuffer[offset + i + 1 + indexY - xDim];
+                            cdif3 = gaussBuffer[offset + i + 1 + indexY + 2*xDim] - 2*gaussBuffer[offset + i + 1 + indexY + xDim]
+                                    + 2*gaussBuffer[offset + i + 1 + indexY - xDim] - gaussBuffer[offset + i + 1 + indexY - 2*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i1, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 < level) && (x2 < level) && (x3 >= level)) {
 
                         // case 13 - edge in the lower right
                         zXMask.set(offset + i3, 255);
+                        if (clearInflectionPoints && i >= 1 && i <= xDim-4 && j >= 1 & j <= yDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + indexY] - gaussBuffer[offset + i + 2 + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i - 1 + indexY - xDim] - 2 * gaussBuffer[offset + i + indexY]
+                                    + 2 * gaussBuffer[offset + i + 2 + indexY + 2*xDim] - gaussBuffer[offset + i + 3 + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i3, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 < level) && (x2 >= level) && (x3 < level)) {
 
                         // case 14 - edge in the lower left
                         zXMask.set(offset + i2, 255);
+                        if (clearInflectionPoints && i >= 2 && i <= xDim-3 && j >= 1 & j <= yDim - 4) {
+                            cdif1 = gaussBuffer[offset + i + 1 + indexY] - gaussBuffer[offset + i - 1 + indexY + 2*xDim];
+                            cdif3 = gaussBuffer[offset + i + 2 + indexY - xDim] - 2*gaussBuffer[offset + i + 1 + indexY]
+                                    + 2*gaussBuffer[offset + i - 1 + indexY + 2*xDim] - gaussBuffer[offset + i - 2 + indexY + 3*xDim];
+                            if (((cdif1 >= 0) && (cdif3 >= 0)) || ((cdif1 <= 0) && (cdif3 <= 0))) {
+                                zXMask.set(offset + i2, 0);
+                                clearedPoints++;
+                            }
+                        }
                     } else if ((x0 < level) && (x1 < level) && (x2 < level) && (x3 < level)) { // case 15 - no edge
                     }
                 } else if (detectionType == NEGATIVE_EDGES) {
@@ -404,14 +560,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                         zXMask.set(offset + i0, 255);
                     }
                 } else if (detectionType == OLD_DETECTION) {
-                    i1 = i0 + 1;
-                    i2 = i0 + xDim;
-                    i3 = i0 + 1 + xDim;
-
-                    x0 = buffer[i0];
-                    x1 = buffer[i1];
-                    x2 = buffer[i2];
-                    x3 = buffer[i3];
 
                     if ((x0 > level) && (x1 > level) && (x2 > level) && (x3 > level)) {
                         zXMask.set(offset + i0, 0);
@@ -452,6 +600,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      */
     public void runAlgorithm() {
         int[] destExtents = null;
+        AlgorithmGaussianBlurSep gaussianBlurAlgoSep;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -493,6 +642,17 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if (destImage != null) { // NEW
             
+            if (clearInflectionPoints && ((srcImage.getNDims() == 2) || image25D)) {
+                gaussianBlurAlgoSep = new AlgorithmGaussianBlurSep(srcImage, sigmas, entireImage, srcImage.getNDims() > 2);
+                if ( !entireImage) {
+                    gaussianBlurAlgoSep.setMask(mask);
+                }
+                gaussianBlurAlgoSep.run();
+                gaussBuffer = gaussianBlurAlgoSep.getResultBuffer();
+                gaussianBlurAlgoSep.finalize();
+                gaussianBlurAlgoSep = null;
+            }
+            
 
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D(1, zeroDetectionType);
@@ -501,6 +661,10 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
                 calcStoreInDest2D(srcImage.getExtents()[2], zeroDetectionType);
             }
+        }
+        
+        if (clearInflectionPoints && ((srcImage.getNDims() == 2) || image25D)) {
+            Preferences.debug("Inflection points cleared = " + clearedPoints + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if (threadStopped) {
