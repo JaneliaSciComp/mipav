@@ -6,6 +6,8 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
+
 import gov.nih.mipav.util.TestingFileUtil;
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -55,16 +57,16 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     //private int interpolation = 0;
     private Vector3f cog;
     
-    private TransMatrix toOrigin;
-    private TransMatrix fromOrigin;
+    private TransMatrixd toOrigin;
+    private TransMatrixd fromOrigin;
     @Before
     protected void setUp() throws Exception {
-        toOrigin = new TransMatrix(4);
+        toOrigin = new TransMatrixd(4);
         toOrigin.Set(1.0f, 0.0f, 0.0f, 17.314208192569254f,
                      0.0f, 1.0f, 0.0f, 21.140626155237523f,
                      0.0f, 0.0f, 1.0f, 11.527512442322395f,
                      0.0f, 0.0f, 0.0f, 1.0f);
-        fromOrigin = new TransMatrix(toOrigin);
+        fromOrigin = new TransMatrixd(toOrigin);
         fromOrigin.Set(0, 3, -toOrigin.Get(0,3));
         fromOrigin.Set(1, 3, -toOrigin.Get(1,3));
         fromOrigin.Set(2, 3, -toOrigin.Get(2,3));
@@ -95,12 +97,12 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
 
     public void testConvertToMatrix(){
         double[] point = {-30.0, -30.0, -30.0, 2.1839247649369415, 3.0813184180912216, -0.1371298864664574, 1.05, 1.05, 1.05, 0.0, 0.0, 0.0};
-        TransMatrix refMatrix = new TransMatrix(4);
+        TransMatrixd refMatrix = new TransMatrixd(4);
         refMatrix.Set(0.7875000000000002f, 0.45466333698683026f, -0.5249999999999999f, 2.303270404345806f, 
                       -0.22733166849341516f, 0.9187500000000002f, 0.45466333698683026f, 3.4939248560798895f, 
                       0.65625f, -0.22733166849341516f, 0.7875000000000002f, -4.2440488019808456f, 
                       0.0f, 0.0f, 0.0f, 1.0f);
-        TransMatrix testMatrix = powell.convertToMatrix(toOrigin, fromOrigin, point);
+        TransMatrixd testMatrix = powell.convertToMatrix(toOrigin, fromOrigin, point);
         // TODO does TransMatrix define a useful equals method?
         Assert.assertTrue(refMatrix.equals(testMatrix));
     }
