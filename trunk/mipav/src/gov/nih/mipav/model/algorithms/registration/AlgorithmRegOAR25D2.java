@@ -12,6 +12,7 @@ import gov.nih.mipav.model.algorithms.Vectornd;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -1692,12 +1693,26 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 //OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = answer.matrix.get(0, 2);
-                trans[1][iNumber] = answer.matrix.get(1, 2);
+                TransMatrixd tMatd = answer.matrixd;
+                TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+                for (i = 0; i < tMatd.getDim(); i++) {
+                    for (j = 0; j < tMatd.getDim(); j++) {
+                        tMat.set(i, j, tMatd.get(i, j));
+                    }
+                }
+                trans[0][iNumber] = tMat.get(0, 2);
+                trans[1][iNumber] = tMat.get(1, 2);
             } // if (doGraph)
 
-            answer.matrix.Inverse();
-            transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
+            answer.matrixd.Inverse();
+            TransMatrixd tMatd = answer.matrixd;
+            TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+            for (i = 0; i < tMatd.getDim(); i++) {
+                for (j = 0; j < tMatd.getDim(); j++) {
+                    tMat.set(i, j, tMatd.get(i, j));
+                }
+            }
+            transform = new AlgorithmTransform(input1, tMat, interp2, iResols[0], iResols[1], iExtents[0],
                                                iExtents[1], transformVOIs, true, false);
             transform.run();
 
@@ -1712,7 +1727,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             }
 
             if (inputImage2 != null) {
-                transform = new AlgorithmTransform(input2, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
+                transform = new AlgorithmTransform(input2, tMat, interp2, iResols[0], iResols[1], iExtents[0],
                                                    iExtents[1], false, true, false);
                 transform.run();
 
@@ -1728,7 +1743,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             } // if (inputImage2 != null)
 
             if (inputImage3 != null) {
-                transform = new AlgorithmTransform(input3, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
+                transform = new AlgorithmTransform(input3, tMat, interp2, iResols[0], iResols[1], iExtents[0],
                                                    iExtents[1], false, true, false);
                 transform.run();
 
@@ -2014,7 +2029,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                         return;
                     }
 
-                    transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
+                    transform = new AlgorithmTransform(inputw_1, tMat, interp2, resIso[0], resIso[1],
                                                        extentsIso[0], extentsIso[1], false, true, false);
                     transform.run();
 
@@ -2131,7 +2146,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                             return;
                         }
 
-                        transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
+                        transform = new AlgorithmTransform(inputw_1, tMat, interp2, resIso[0], resIso[1],
                                                            extentsIso[0], extentsIso[1], false, true, false);
                         transform.run();
 

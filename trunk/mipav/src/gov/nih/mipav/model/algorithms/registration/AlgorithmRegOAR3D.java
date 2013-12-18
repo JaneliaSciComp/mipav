@@ -96,9 +96,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
     long timeNow;
 
     /** DOCUMENT ME! */
-    TransMatrix tMatrix = new TransMatrix(4);
-
-    /** DOCUMENT ME! */
     private boolean allowLevel16XY = true;
 
     /** DOCUMENT ME! */
@@ -870,23 +867,21 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
     public double getAnswer() {
         return answer.cost;
     }
-
-    /**
-     * Access that returns an array containing the transformation parameters.
-     * 
-     * @return transformation array (0-2 rot, 3-5 trans, 6-9 scale, 9-12 skew)
-     */
-    public double[] getTransArray() {
-        return answer.initial;
-    }
-
+    
     /**
      * Accessor that returns the matrix calculated in this algorithm.
      * 
      * @return Matrix found at the end of algorithm.
      */
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+            for (int j = 0; j < tMatd.getDim(); j++) {
+                tMat.set(i, j, tMatd.get(i, j));
+            }
+        }
+        return tMat;
     }
 
     /**
@@ -895,7 +890,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @return Matrix found at the end of algorithm with the compoents halved.
      */
     public TransMatrix getTransformHalf() {
-        return answer.halfMatrix;
+        TransMatrixd tMatd = answer.halfMatrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+            for (int j = 0; j < tMatd.getDim(); j++) {
+                tMat.set(i, j, tMatd.get(i, j));
+            }
+        }
+        return tMat;
     }
 
     /**
@@ -904,8 +906,18 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @return z rotation and x and y translations from the matrix found at the end of algorithm.
      */
     public TransMatrix getTransformMigsagittal() {
-        return answer.midsagMatrix;
+        TransMatrixd tMatd = answer.midsagMatrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+            for (int j = 0; j < tMatd.getDim(); j++) {
+                tMat.set(i, j, tMatd.get(i, j));
+            }
+        }
+        return tMat;
     }
+
+
+    
 
     /**
      * Runs the image registration. Blurs the images based on what their minimum resolutions are. The reference image is
@@ -1739,7 +1751,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             return;
         }
 
-        answer.matrix.Inverse();
+        answer.matrixd.Inverse();
         fireProgressStateChanged(100);
         disposeLocal();
         finalize();
@@ -2801,8 +2813,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
         // System.out.println("Input x = " + input.xRes + " y = " + input.yRes + " z = " + input.zRes );
         item2 = new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0, input.xRes));
-        item2.halfMatrix = powell.getMatrixHalf(0, input.xRes);
-        item2.midsagMatrix = powell.getMatrixMidsagittal(0, input.xRes);
+        item2.halfMatrixd = powell.getMatrixHalf(0, input.xRes);
+        item2.midsagMatrixd = powell.getMatrixMidsagittal(0, input.xRes);
 
         fireProgressStateChanged((int) progressTo);
         Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
