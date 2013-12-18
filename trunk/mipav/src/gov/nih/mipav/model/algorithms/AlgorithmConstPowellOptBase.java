@@ -45,7 +45,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
     protected double[] finalPoint;
 
     /** The transformation matrix from the origin of the input image. */
-    protected TransMatrix fromOrigin;
+    protected TransMatrixd fromOrigin;
 
     /** The cost of the function at the best minimum. */
     protected double functionAtBest;
@@ -81,7 +81,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
     protected double[] tolerance;
 
     /** The transformation matrix to the origin of the input image. */
-    protected TransMatrix toOrigin;
+    protected TransMatrixd toOrigin;
 
     /** Array of translation and rotation limits for each dimension. */
     protected float[][] trLimits;
@@ -126,7 +126,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
      *
      * @return  Matrix representation of that point.
      */
-    public abstract TransMatrix convertToMatrix(double[] vector);
+    public abstract TransMatrixd convertToMatrix(double[] vector);
 
     /**
      * Returns the final point with translations, rotations, scales, and skews representing the best
@@ -149,7 +149,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
      *
      * @return  A matrix representing the best transformation.
      */
-    public abstract TransMatrix getMatrix();
+    public abstract TransMatrixd getMatrix();
 
     /**
      * Returns the matrix representing the best transformation. The passed in parameter represents the
@@ -161,7 +161,7 @@ public abstract class AlgorithmConstPowellOptBase extends AlgorithmBase implemen
      *
      * @return  A matrix representing the best transformation.
      */
-    public abstract TransMatrix getMatrix(float sample);
+    public abstract TransMatrixd getMatrix(double sample);
 
     /**
      * Calls cost function with inputed point and saves result in functionAtBest.

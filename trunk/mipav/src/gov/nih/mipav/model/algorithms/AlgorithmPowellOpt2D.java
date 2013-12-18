@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
 
 
 /**
@@ -41,10 +42,10 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
         super(parent, degreeOfFreedom, costFunc, tols, maxIter);
 
         this.rigid = _rigid;
-        toOrigin = new TransMatrix(3);
+        toOrigin = new TransMatrixd(3);
         toOrigin.setTranslate(com.X, com.Y);
 
-        fromOrigin = new TransMatrix(3);
+        fromOrigin = new TransMatrixd(3);
         fromOrigin.setTranslate(-com.X, -com.Y);
     }
 
@@ -116,12 +117,12 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @param vector	a 7-dimension transformation vector including 1 rotation, 2 translations, 2 scalings and 2 skews.
      * @return			a 3x3 transformation matrix
      */
-    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector) {
+    public TransMatrixd convertToMatrix(TransMatrixd toOrigin, TransMatrixd fromOrigin, double[] vector) {
 
 		if (vector == null || vector.length != 7) {
 			return null;
 		}
-		TransMatrix matrix = new TransMatrix(3);
+		TransMatrixd matrix = new TransMatrixd(3);
 
 		//System.err.println( vector[0] + " " + vector[1] + " " + vector[2] + " " + 0.0 + " " +
 		//        vector[3] + " " + vector[4] + " " + vector[5] + " " + vector[6] );
@@ -179,21 +180,21 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
     }
 
     /**
-     * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrix, float)
+     * @see AlgorithmPowellOptBase#adjustTranslation(TransMatrixd, double)
      */
-    public void adjustTranslation(TransMatrix mat, float sample){
-        float transX = mat.get(0, 2) * sample;
-        float transY = mat.get(1, 2) * sample;
+    public void adjustTranslation(TransMatrixd mat, double sample){
+        double transX = mat.get(0, 2) * sample;
+        double transY = mat.get(1, 2) * sample;
 
         mat.set(0, 2, transX);
         mat.set(1, 2, transY);
     }
     
     /**
-     * @see AlgorithmPowellOptBase#getMatrix(int, float)
+     * @see AlgorithmPowellOptBase#getMatrix(int, double)
      */
-    public TransMatrix getMatrix(int index,float sample) {
-        TransMatrix mat = getMatrix(index);
+    public TransMatrixd getMatrix(int index, double sample) {
+        TransMatrixd mat = getMatrix(index);
         adjustTranslation(mat, sample);
         return mat;
     }

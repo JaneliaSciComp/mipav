@@ -5,7 +5,8 @@ import WildMagic.LibFoundation.Mathematics.*;
 import de.jtem.numericalMethods.calculus.minimizing.Powell;
 import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables;
 import de.jtem.numericalMethods.calculus.minimizing.BrentOnLine;
-import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
+
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -56,7 +57,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
     protected AlgorithmOptimizeFunctionBase costFunction;
 
     /** The transformation matrix from the origin of the input image. */
-    protected TransMatrix fromOrigin;
+    protected TransMatrixd fromOrigin;
 
     /** The maximum number of iterations the optimization allows. */
     protected int maxIterations;
@@ -71,7 +72,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
     protected double[] tolerance;
 
     /** The transformation matrix to the origin of the input image. */
-    protected TransMatrix toOrigin;
+    protected TransMatrixd toOrigin;
 
     /**
      * Array used to hold the initial points, final points and costs
@@ -89,7 +90,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
     /**
      * Store the paths for every thread.
      */
-    protected Hashtable<Long, Vector<Vector<Vector3f>>> paths = new Hashtable<Long, Vector<Vector<Vector3f>>>();
+    protected Hashtable<Long, Vector<Vector<Vector3d>>> paths = new Hashtable<Long, Vector<Vector<Vector3d>>>();
 
     /**
      * The flag to indicate whether the searching path need to be recorded.
@@ -131,7 +132,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param vector    a transformation vector.
      * @return          a transformation matrix
      */
-    public TransMatrix convertToMatrix(double[] vector){
+    public TransMatrixd convertToMatrix(double[] vector){
         return convertToMatrix(getToOrigin(), getFromOrigin(), vector);
     }
 
@@ -142,7 +143,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param vector            a transformation vector.
      * @return                  a transformation matrix.
      */
-    public abstract TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector);
+    public abstract TransMatrixd convertToMatrix(TransMatrixd toOrigin, TransMatrixd fromOrigin, double[] vector);
     
     /**
      * Construct a full transformation vector from the partial transformation vector.
@@ -162,7 +163,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param point         a transformation vector.
      * @return              a transformation matrix.
      */
-    public final TransMatrix convertToMatrix(double[] defaultPoint, double[] point){
+    public final TransMatrixd convertToMatrix(double[] defaultPoint, double[] point){
         double[] fullPoint = constructPoint(defaultPoint, point);
         return convertToMatrix(fullPoint);
     }
@@ -207,9 +208,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param sample    the translation scaling parameter.
      * @return          the translation scaled transformation vector.
      */
-    public double[] getPoint(int index, float sample){
+    public double[] getPoint(int index, double sample){
         double[] point = getPoint(index);
-        TransMatrix mat = convertToMatrix(point);
+        TransMatrixd mat = convertToMatrix(point);
 
         point[3] = mat.get(0, 3) * sample;
         point[4] = mat.get(1, 3) * sample;
@@ -241,7 +242,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param index     the index of transformation vector.
      * @return          the transformation matrix
      */
-    public final TransMatrix getMatrix(int index){
+    public final TransMatrixd getMatrix(int index){
         double[] point = getPoint(index);
         return convertToMatrix(point);
     }
@@ -254,14 +255,14 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param sample    the translation scaling parameter.
      * @return          the scaled transformation matrix.
      */
-    public abstract TransMatrix getMatrix(int index, float sample);
+    public abstract TransMatrixd getMatrix(int index, double sample);
     
     /**
      * Adjust the translation of the transformation matrix by the sample pararmeter.
      * @param mat       the transformation matrix
      * @param sample    the resolution adjusting parameter.
      */
-    public abstract void adjustTranslation(TransMatrix mat, float sample);
+    public abstract void adjustTranslation(TransMatrixd mat, double sample);
     
     /**
      * Measure the cost value for the given transformation vector.
@@ -283,7 +284,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param m     a transformation matrix.
      * @return      the cost value.
      */
-    public final double measureCost(TransMatrix m){
+    public final double measureCost(TransMatrixd m){
         if(costFunction == null){
             gov.nih.mipav.view.MipavUtil.displayError("The cost function is null.");
             return Double.MAX_VALUE;
@@ -449,9 +450,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         /**
          * Prepare for recording the search path.
          */
-        Vector<Vector3f> path = null;
+        Vector<Vector3d> path = null;
         if (pathRecorded && (dof == 3)) {
-            path = new Vector<Vector3f>();
+            path = new Vector<Vector3d>();
         }
         
         if ( useJTEM ) {
@@ -550,7 +551,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
                     point[index] = pts[index][index];
                     if (pathRecorded && dof == 3) {
-                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
+                        path.add(new Vector3d(point[0], point[1], point[2]));
                     }
                 } // end of nDims loop
 
@@ -608,7 +609,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                         keepGoing = true;
                     }
                     if (pathRecorded && dof == 3) {
-                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
+                        path.add(new Vector3d(point[0], point[1], point[2]));
                     }
                 } // end of nDims loop
 
@@ -626,9 +627,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
         if (pathRecorded && dof == 3) {
             long threadId = Thread.currentThread().getId();
-            Vector<Vector<Vector3f>> pathList = paths.get(threadId);
+            Vector<Vector<Vector3d>> pathList = paths.get(threadId);
             if (pathList == null) {
-                pathList = new Vector<Vector<Vector3f>>();
+                pathList = new Vector<Vector<Vector3d>>();
                 paths.put(threadId, pathList);
             }
             pathList.add(path);
@@ -682,29 +683,29 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      */
     public abstract void updatePoint(double[] point, double cost, Vectornd v);
 
-    public float[] createTerrain(final float transXFrom, final float transXTo,
-            final float transXStep, final float transYFrom,
-            final float transYTo, final float transYStep, final float rotFrom,
-            final float rotTo, final float rotStep) {
+    public double[] createTerrain(final double transXFrom, final double transXTo,
+            final double transXStep, final double transYFrom,
+            final double transYTo, final double transYStep, final double rotFrom,
+            final double rotTo, final double rotStep) {
         final int xdim = (int) ((transXTo - transXFrom) / transXStep);
         final int ydim = (int) ((transYTo - transYFrom) / transYStep);
         final int zdim = (int) ((rotTo - rotFrom) / rotStep);
-        final float[] terrain = new float[xdim * ydim * zdim];
+        final double[] terrain = new double[xdim * ydim * zdim];
         final CountDownLatch doneSignal = new CountDownLatch(8);
         for (int i = 0; i < 2; i++) {
-            final float zFrom = rotFrom + i * (rotTo - rotFrom) / 2;
-            final float zTo = rotFrom + (i + 1) * (rotTo - rotFrom) / 2;
+            final double zFrom = rotFrom + i * (rotTo - rotFrom) / 2;
+            final double zTo = rotFrom + (i + 1) * (rotTo - rotFrom) / 2;
             final int zstart = i * zdim / 2;
             for (int j = 0; j < 2; j++) {
-                final float yFrom = transYFrom + j * (transYTo - transYFrom)
+                final double yFrom = transYFrom + j * (transYTo - transYFrom)
                         / 2;
-                final float yTo = transYFrom + (j + 1)
+                final double yTo = transYFrom + (j + 1)
                         * (transYTo - transYFrom) / 2;
                 final int ystart = j * ydim / 2;
                 for (int k = 0; k < 2; k++) {
-                    final float xFrom = transXFrom + k
+                    final double xFrom = transXFrom + k
                             * (transXTo - transXFrom) / 2;
-                    final float xTo = transXFrom + (k + 1)
+                    final double xTo = transXFrom + (k + 1)
                             * (transXTo - transXFrom) / 2;
                     final int xstart = k * xdim / 2;
                     Runnable task = new Runnable() {
@@ -729,10 +730,10 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         return terrain;
     }
 
-    private void createTerrain(float[] terrain, float transXFrom,
-            float transXTo, float transXStep, int xstart, int xdim,
-            float transYFrom, float transYTo, float transYStep, int ystart,
-            int ydim, float rotFrom, float rotTo, float rotStep, int zstart,
+    private void createTerrain(double[] terrain, double transXFrom,
+            double transXTo, double transXStep, int xstart, int xdim,
+            double transYFrom, double transYTo, double transYStep, int ystart,
+            int ydim, double rotFrom, double rotTo, double rotStep, int zstart,
             int zdim) {
         int nxs = (int) ((transXTo - transXFrom) / transXStep);
         int nys = (int) ((transYTo - transYFrom) / transYStep);
@@ -745,7 +746,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                 for (int k = 0; k < nxs; k++) {
                     pt[1] = transXFrom + k * transXStep;
                     terrain[(i + zstart) * xdim * ydim + (j + ystart) * xdim
-                            + k + xstart] = (float) (255 * (1.0 - costFunction
+                            + k + xstart] =  (255 * (1.0 - costFunction
                             .cost(convertToMatrix(pt))));
                 }
             }
@@ -761,11 +762,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
     	this.pathRecorded = pathRecorded;
     }
 
-    public TransMatrix getFromOrigin() {
+    public TransMatrixd getFromOrigin() {
         return fromOrigin;
     }
 
-    public TransMatrix getToOrigin() {
+    public TransMatrixd getToOrigin() {
         return toOrigin;
     }
 
