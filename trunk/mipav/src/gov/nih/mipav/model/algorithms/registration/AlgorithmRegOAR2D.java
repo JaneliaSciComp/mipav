@@ -896,10 +896,17 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @return Matrix found at the end of algorithm.
      */
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+            for (int j = 0; j < tMatd.getDim(); j++) {
+                tMat.set(i, j, tMatd.get(i, j));
+            }
+        }
+        return tMat;
     }
 
-    public void drawLine(final int xdim, final int ydim, final int zdim, final float[] image, final float value,
+    public void drawLine(final int xdim, final int ydim, final int zdim, final double[] image, final float value,
             final Vector<Point3D> path) {
         if (path == null) {
             return;
@@ -1678,7 +1685,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             return;
         }
 
-        answer.matrix.Inverse();
+        answer.matrixd.Inverse();
 
         disposeLocal();
         finalize();
@@ -1742,7 +1749,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         print(origImagePath, "Original Final Path:");
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, DOF, cost, getTolerance(DOF),
                 maxIter, rigidFlag);
-        final float[] terrain = powell.createTerrain(xFrom, xTo, xStep, yFrom, yTo, yStep, zFrom, zTo, zStep);
+        final double[] terrain = powell.createTerrain(xFrom, xTo, xStep, yFrom, yTo, yStep, zFrom, zTo, zStep);
         final int xdim = (int) ( (xTo - xFrom) / xStep);
         final int ydim = (int) ( (yTo - yFrom) / yStep);
         final int zdim = (int) ( (zTo - zFrom) / zStep);

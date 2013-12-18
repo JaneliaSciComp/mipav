@@ -933,9 +933,15 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         }
     }
     
-    
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrix;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+            for (int j = 0; j < tMatd.getDim(); j++) {
+                tMat.set(i, j, tMatd.get(i, j));
+            }
+        }
+        return tMat;
     }
     
     public double getAnswer() {
@@ -1874,7 +1880,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             else { // fastMode
 
                 double[] initial = new double[12];
-                item = new MatrixListItem(0, new TransMatrix(4), initial);
+                item = new MatrixListItem(0, new TransMatrixd(4), initial);
 
                 double diffX = 0;
                 double diffY = 0;
@@ -1944,13 +1950,27 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 rot[1][iNumber] = (float) (answer.initial[1]);
                 rot[2][iNumber] = (float) (answer.initial[2]);
                 //OARmat = answer.matrix.getMatrix();
-                trans[0][iNumber] = answer.matrix.get(0, 3);
-                trans[1][iNumber] = answer.matrix.get(1, 3);
-                trans[2][iNumber] = answer.matrix.get(2, 3);
+                TransMatrixd tMatd = answer.matrix;
+                TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+                for (i = 0; i < tMatd.getDim(); i++) {
+                    for (int j = 0; j < tMatd.getDim(); j++) {
+                        tMat.set(i, j, tMatd.get(i, j));
+                    }
+                }
+                trans[0][iNumber] = tMat.get(0, 3);
+                trans[1][iNumber] = tMat.get(1, 3);
+                trans[2][iNumber] = tMat.get(2, 3);
             } // if (doGraph)
 
             answer.matrix.Inverse();
-            transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iResols[2],
+            TransMatrixd tMatd = answer.matrix;
+            TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+            for (i = 0; i < tMatd.getDim(); i++) {
+                for (int j = 0; j < tMatd.getDim(); j++) {
+                    tMat.set(i, j, tMatd.get(i, j));
+                }
+            }
+            transform = new AlgorithmTransform(input1, tMat, interp2, iResols[0], iResols[1], iResols[2],
                                                iExtents[0], iExtents[1], iExtents[2], false, true, false);
             transform.run();
             
@@ -2097,7 +2117,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             } // if ((iNumber == inputImage.getExtents()[3] - 1) && regToAdjImage)
             
             else if (resample && regToAdjImage) {
-                transform = new AlgorithmTransform(input1, answer.matrix, interp2, resIso[0], resIso[1], resIso[2],
+                transform = new AlgorithmTransform(input1, tMat, interp2, resIso[0], resIso[1], resIso[2],
                                                    extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
 
                 transform.run();
@@ -2196,7 +2216,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         return;
                     }
 
-                    transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
+                    transform = new AlgorithmTransform(inputw_1, tMat, interp2, resIso[0], resIso[1],
                                                        resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false,
                                                        true, false);
                     transform.run();
@@ -2331,7 +2351,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                             return;
                         }
 
-                        transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
+                        transform = new AlgorithmTransform(inputw_1, tMat, interp2, resIso[0], resIso[1],
                                                            resIso[2], extentsIso[0], extentsIso[1], extentsIso[2],
                                                            false, true, false);
                         transform.run();
@@ -4065,7 +4085,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         protected double[] initial;
 
         /** Matrix that gives best transformation. */
-        protected TransMatrix matrix;
+        protected TransMatrixd matrix;
 
         /**
          * Creates new minimum object, setting the data and copying the point array explicitly.
@@ -4074,7 +4094,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
          * @param  _matrix   Matrix that gives best transformation.
          * @param  _initial  Rotations, translations, scales, and skews that make up transformation.
          */
-        protected MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
+        protected MatrixListItem(double _cost, TransMatrixd _matrix, double[] _initial) {
             this.cost = _cost;
             this.matrix = _matrix;
             initial = new double[_initial.length];
