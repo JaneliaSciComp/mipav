@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import java.util.BitSet;
 import java.text.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
@@ -19,19 +17,19 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** total number of id voxels in true image. */
-    private int absoluteTrue;
+    private double absoluteTrue;
 
     /** where trueImage has id but test image does not. */
-    private int falseNegative;
+    private double falseNegative;
 
     /** where trueImage does not have id but test image does. */
-    private int falsePositive;
+    private double falsePositive;
 
     /** false negative volume fraction. */
-    private float fnvf;
+    private double fnvf;
 
     /** false positive volume fraction. */
-    private float fpvf;
+    private double fpvf;
 
     /** DOCUMENT ME! */
     private int length;
@@ -52,22 +50,16 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
     private int testLength;
 
     /** DOCUMENT ME! */
-    private short[] testMask;
-
-    /** DOCUMENT ME! */
     private ViewVOIVector testVOIs;
 
     /** positive volume fraction. */
-    private float tpvf;
+    private double tpvf;
 
     /** number of the absoluteTrue found in the test image. */
-    private int trueFound;
+    private double trueFound;
 
     /** DOCUMENT ME! */
     private int trueID;
-
-    /** DOCUMENT ME! */
-    private short[] trueMask;
 
     /** DOCUMENT ME! */
     private ViewVOIVector trueVOIs;
@@ -102,7 +94,7 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        int i, j, k;
+        int i, j, m;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -141,8 +133,6 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
             return;
         }
 
-        trueMask = new short[length];
-        testMask = new short[testLength];
         ViewUserInterface.getReference().setGlobalDataText(srcImage.getImageName() + " = true\n");
         ViewUserInterface.getReference().setGlobalDataText(testImage.getImageName() + " = test\n");
         
@@ -155,23 +145,18 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
         //
         //*******************************************************************
         
-        int testArea, trueArea; //stores the areas of the contours per slice
-        int testAreaCumm, trueAreaCumm; //stores the areas of contours per VOI grouping
-        int iArea, iAreaCumm; //stores the intersection areas of the contours per slice/VOI grouping
+        double testAreaCumm, trueAreaCumm; //stores the areas of contours per VOI grouping
+        double iAreaCumm;
         int testVOIsize, trueVOIsize; //find the total number of contours per VOI grouping
-        float dice, diceCumm; //Dice's Coefficient
+        double dice, diceCumm; //Dice's Coefficient
         String formattedDice; //Dice's Coefficient formatted to 3 decimal points
         boolean truePresent, testPresent; //Checks to see if contours are present in the slice
-        VOIContour trueContour, testContour; 
+        VOIContour trueContour, testContour, intersectionContour; 
         
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
         float[] resolutions = srcImage.getResolutions(0); //image resolution (in units)
         float ratio = resolutions[0]*resolutions[1]; //conversion from pixel to real area
 		String units = srcImage.getFileInfo()[0].getAreaUnitsOfMeasureStr(); //image units of measure
-        BitSet trueBit = new BitSet(length); //Mask of pixels inside the contours
-        BitSet testBit = new BitSet(length);
         DecimalFormat formatter = new DecimalFormat("#.###");
         
         for (i = 0; i < nTrueVOIs; i++) {
@@ -193,58 +178,110 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
         	//Go slice by slice to determine intersected regions
         	for (int depth = 0; depth < zDim; depth++){
         	
-        		trueBit.clear();
-            	testBit.clear();
-            	iArea = 0;
-            	testArea = 0;
-            	trueArea = 0;
             	truePresent = false;
             	testPresent = false;
+            	double exactPartialTruePixelCount = 0.0;
+            	double exactTotalTruePixelCount = 0.0;
+            	double exactPartialTestPixelCount = 0.0;
+            	double exactTotalTestPixelCount = 0.0;
+            	double exactPartialIntersectionPixelCount = 0.0;
+            	double exactTotalIntersectionPixelCount = 0.0;
+            	double term;
+            	short subjID = 0;
+                String subjName = "subjName";
+                VOI subj = new VOI(subjID, subjName, VOI.CONTOUR, -1.0f); 
+                short clipID = 1;
+                String clipName = "clipName";
+                VOI clip = new VOI(clipID, clipName, VOI.CONTOUR, -1.0f);
+                short intersectionID = 2;
+                String intersectionName = "intersectionName";
+                VOI intersection = new VOI(intersectionID, intersectionName, VOI.CONTOUR, -1.0f);
+                int intersectionVOISize;
         		
             	//If the contour is in the current slice, add its pixels to the mask
 	        	for (int w=0; w<trueVOIsize;w++){	
 	        		trueContour = (VOIContour) (trueVOIs.VOIAt(i).getCurves().elementAt(w));
 	        		if (trueContour.slice(4) == depth){
-	        			trueContour.setMask(trueBit, xDim, yDim , false, 1);
+	        		    exactPartialTruePixelCount = 0.0;
+	        		    for (m = 0; m < trueContour.size()-1; m++) {
+	        		        term = (trueContour.elementAt(m).X*trueContour.elementAt(m+1).Y 
+	        		                - trueContour.elementAt(m+1).X*trueContour.elementAt(m).Y);
+	        	            exactPartialTruePixelCount += term;        
+	        		    }
+	        		    term =  (trueContour.elementAt(trueContour.size()-1).X*trueContour.elementAt(0).Y 
+	        		            - trueContour.elementAt(0).X*trueContour.elementAt(trueContour.size()-1).Y);
+	        	        exactPartialTruePixelCount += term;
+	        	        exactTotalTruePixelCount += 0.5*Math.abs(exactPartialTruePixelCount);
+	        			//trueContour.setMask(trueBit, xDim, yDim , false, 1);
 	        			truePresent = true; //At least one contour is present in this slice
+	        			subj.importCurve(trueContour);
 	        		}
 	        	}
 	        	for (int w=0; w<testVOIsize;w++){
 	        		testContour = (VOIContour) (testVOIs.VOIAt(i).getCurves().elementAt(w));
 	        		if (testContour.slice(4) == depth){
-	        			testContour.setMask(testBit, xDim, yDim , false, 1);  
+	        		    exactPartialTestPixelCount = 0.0;
+	        		    for (m = 0; m < testContour.size()-1; m++) {
+                            term = (testContour.elementAt(m).X*testContour.elementAt(m+1).Y 
+                                    - testContour.elementAt(m+1).X*testContour.elementAt(m).Y);
+                            exactPartialTestPixelCount += term;        
+                        }
+                        term =  (testContour.elementAt(testContour.size()-1).X*testContour.elementAt(0).Y 
+                                - testContour.elementAt(0).X*testContour.elementAt(testContour.size()-1).Y);
+                        exactPartialTestPixelCount += term;
+                        exactTotalTestPixelCount += 0.5*Math.abs(exactPartialTestPixelCount);
+	        			//testContour.setMask(testBit, xDim, yDim , false, 1);  
 	        			testPresent = true;
+	        			clip.importCurve(testContour);
 	        		}
 	        	}
 
 	        	//If no contours are present in this slice, do not calculate anything
 	        	if (testPresent && truePresent){
+	        	    new GenericPolygonClipper(GenericPolygonClipper.gpc_op.GPC_INT, subj, clip, intersection);
+	        	    intersectionVOISize = intersection.getSize();
+	        	    for (int w=0; w<intersectionVOISize;w++){
+	                    intersectionContour = (VOIContour) (intersection.getCurves().elementAt(w));
+	                    if (intersectionContour.slice(4) == depth){
+	                        exactPartialIntersectionPixelCount = 0.0;
+	                        for (m = 0; m < intersectionContour.size()-1; m++) {
+	                            term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
+	                                    - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
+	                            exactPartialIntersectionPixelCount += term;        
+	                        }
+	                        term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
+	                                - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
+	                        exactPartialIntersectionPixelCount += term;
+	                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
+	                    }
+	                }
 	        		//calculate areas based on the masks
-		        	for (int w=0; w<length; w++){	
-		        		if (testBit.get(w) == true) 
-		        			testArea++;
-		        		if (trueBit.get(w) == true)
-		        			trueArea++;
+		        	//for (int w=0; w<length; w++){	
+		        		//if (testBit.get(w) == true) 
+		        			//testArea++;
+		        		//if (trueBit.get(w) == true)
+		        			//trueArea++;
 		        		//Calculates the intersection of the two masks
-		        		if ((testBit.get(w) == true) && (trueBit.get(w) == true)) 
-		        			iArea++;
-		        	}
+		        		//if ((testBit.get(w) == true) && (trueBit.get(w) == true)) 
+		        			//iArea++;
+		        	//}
 	        		
-	        		dice = 2*(float)iArea/(float)(testArea+trueArea);
+	        		dice = 2*exactTotalIntersectionPixelCount/(exactTotalTestPixelCount+exactTotalTruePixelCount);
 	        		formattedDice = formatter.format(dice); //format to 3 decimal places
 	        		
-		        	iAreaCumm += iArea;
-		        	testAreaCumm += testArea;
-		        	trueAreaCumm += trueArea;
+		        	iAreaCumm += exactTotalIntersectionPixelCount;
+		        	testAreaCumm += exactTotalTestPixelCount;
+		        	trueAreaCumm += exactTotalTruePixelCount;
 		        	
 		        	ViewUserInterface.getReference().setGlobalDataText("\nStatistics for VOIs with ID = " 
 		        			+ String.valueOf(trueID) + ", Slice = "+ String.valueOf(depth) + "\n");
-		        	ViewUserInterface.getReference().setGlobalDataText("     True VOI Area =\n\t" + String.valueOf(trueArea) +
-		                    " pixels\n\t" + String.valueOf(trueArea*ratio) + " " + units + "\n");
-		        	ViewUserInterface.getReference().setGlobalDataText("     Test VOI Area =\n\t" + String.valueOf(testArea) +
-		        			" pixels\n\t" + String.valueOf(testArea*ratio) + " " + units + "\n");
-		        	ViewUserInterface.getReference().setGlobalDataText("     Intersection Area =\n\t" + String.valueOf(iArea) +
-		        			" pixels\n\t" + String.valueOf(iArea*ratio) + " " + units + "\n");
+		        	ViewUserInterface.getReference().setGlobalDataText("     True VOI Area =\n\t" + String.valueOf(exactTotalTruePixelCount) +
+		                    " pixels\n\t" + String.valueOf(exactTotalTruePixelCount*ratio) + " " + units + "\n");
+		        	ViewUserInterface.getReference().setGlobalDataText("     Test VOI Area =\n\t" + String.valueOf(exactTotalTestPixelCount) +
+		        			" pixels\n\t" + String.valueOf(exactTotalTestPixelCount*ratio) + " " + units + "\n");
+		        	ViewUserInterface.getReference().setGlobalDataText("     Intersection Area =\n\t" 
+		        			+ String.valueOf(exactTotalIntersectionPixelCount) +
+		        			" pixels\n\t" + String.valueOf(exactTotalIntersectionPixelCount*ratio) + " " + units + "\n");
 		        	ViewUserInterface.getReference().setGlobalDataText("     Dice's Coefficient = " + formattedDice +
 		        			"\n");
 	        	}
@@ -263,47 +300,110 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                     testID = testVOIs.VOIAt(j).getID();
 
                     if (trueID == testID) {
-
-                        for (k = 0; k < length; k++) {
-                            trueMask[k] = -1;
-                            testMask[k] = -1;
-                        }
-
-                        trueMask = srcImage.generateVOIMask(trueMask, i);
-                        testMask = testImage.generateVOIMask(testMask, j);
+                        
                         absoluteTrue = 0;
                         trueFound = 0;
                         falseNegative = 0;
                         falsePositive = 0;
-
-                        for (k = 0; k < length; k++) {
-
-                            if (trueMask[k] == trueID) {
-                                absoluteTrue++;
-
-                                if (testMask[k] == trueID) {
-                                    trueFound++;
-                                } else {
-                                    falseNegative++;
+                        
+                      //Go slice by slice to determine intersected regions
+                        for (int depth = 0; depth < zDim; depth++){
+                        
+                            truePresent = false;
+                            testPresent = false;
+                            double exactPartialTruePixelCount = 0.0;
+                            double exactTotalTruePixelCount = 0.0;
+                            double exactPartialTestPixelCount = 0.0;
+                            double exactTotalTestPixelCount = 0.0;
+                            double exactPartialIntersectionPixelCount = 0.0;
+                            double exactTotalIntersectionPixelCount = 0.0;
+                            double term;
+                            short subjID = 0;
+                            String subjName = "subjName";
+                            VOI subj = new VOI(subjID, subjName, VOI.CONTOUR, -1.0f); 
+                            short clipID = 1;
+                            String clipName = "clipName";
+                            VOI clip = new VOI(clipID, clipName, VOI.CONTOUR, -1.0f);
+                            short intersectionID = 2;
+                            String intersectionName = "intersectionName";
+                            VOI intersection = new VOI(intersectionID, intersectionName, VOI.CONTOUR, -1.0f);
+                            int intersectionVOISize;
+                            
+                            //If the contour is in the current slice, add its pixels to the mask
+                            for (int w=0; w<trueVOIsize;w++){   
+                                trueContour = (VOIContour) (trueVOIs.VOIAt(i).getCurves().elementAt(w));
+                                if (trueContour.slice(4) == depth){
+                                    exactPartialTruePixelCount = 0.0;
+                                    for (m = 0; m < trueContour.size()-1; m++) {
+                                        term = (trueContour.elementAt(m).X*trueContour.elementAt(m+1).Y 
+                                                - trueContour.elementAt(m+1).X*trueContour.elementAt(m).Y);
+                                        exactPartialTruePixelCount += term;        
+                                    }
+                                    term =  (trueContour.elementAt(trueContour.size()-1).X*trueContour.elementAt(0).Y 
+                                            - trueContour.elementAt(0).X*trueContour.elementAt(trueContour.size()-1).Y);
+                                    exactPartialTruePixelCount += term;
+                                    exactTotalTruePixelCount += 0.5*Math.abs(exactPartialTruePixelCount);
+                                    //trueContour.setMask(trueBit, xDim, yDim , false, 1);
+                                    truePresent = true; //At least one contour is present in this slice
+                                    subj.importCurve(trueContour);
                                 }
-                            } // if (trueMask[k] == trueID)
-                            else { // trueMask[k] != trueID
-
-                                if (testMask[k] == trueID) {
-                                    falsePositive++;
+                            }
+                            for (int w=0; w<testVOIsize;w++){
+                                testContour = (VOIContour) (testVOIs.VOIAt(j).getCurves().elementAt(w));
+                                if (testContour.slice(4) == depth){
+                                    exactPartialTestPixelCount = 0.0;
+                                    for (m = 0; m < testContour.size()-1; m++) {
+                                        term = (testContour.elementAt(m).X*testContour.elementAt(m+1).Y 
+                                                - testContour.elementAt(m+1).X*testContour.elementAt(m).Y);
+                                        exactPartialTestPixelCount += term;        
+                                    }
+                                    term =  (testContour.elementAt(testContour.size()-1).X*testContour.elementAt(0).Y 
+                                            - testContour.elementAt(0).X*testContour.elementAt(testContour.size()-1).Y);
+                                    exactPartialTestPixelCount += term;
+                                    exactTotalTestPixelCount += 0.5*Math.abs(exactPartialTestPixelCount);
+                                    //testContour.setMask(testBit, xDim, yDim , false, 1);  
+                                    testPresent = true;
+                                    clip.importCurve(testContour);
                                 }
-                            } // else trueMask[k] != trueID
-                        } // for (k = 0; k < length; k++)
+                            }
+
+                            //If no contours are present in this slice, do not calculate anything
+                            if (testPresent && truePresent){
+                                new GenericPolygonClipper(GenericPolygonClipper.gpc_op.GPC_INT, subj, clip, intersection);
+                                intersectionVOISize = intersection.getSize();
+                                for (int w=0; w<intersectionVOISize;w++){
+                                    intersectionContour = (VOIContour) (intersection.getCurves().elementAt(w));
+                                    if (intersectionContour.slice(4) == depth){
+                                        exactPartialIntersectionPixelCount = 0.0;
+                                        for (m = 0; m < intersectionContour.size()-1; m++) {
+                                            term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
+                                                    - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
+                                            exactPartialIntersectionPixelCount += term;        
+                                        }
+                                        term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
+                                                - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
+                                        exactPartialIntersectionPixelCount += term;
+                                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
+                                    }
+                                }
+                            }
+                            
+                            trueFound += exactTotalIntersectionPixelCount;
+                            falsePositive += (exactTotalTestPixelCount - exactTotalIntersectionPixelCount);
+                            absoluteTrue += exactTotalTruePixelCount;
+                            falseNegative += (exactTotalTruePixelCount - exactTotalIntersectionPixelCount);
+                        
+                        }//for (int depth = 0; depth < zDim; depth++)
 
                         ViewUserInterface.getReference().setGlobalDataText("\nStatistics for VOIs with ID = " + String.valueOf(trueID) +
                                                         "\n");
-                        fnvf = (float) falseNegative / (float) absoluteTrue;
+                        fnvf = falseNegative / absoluteTrue;
                         ViewUserInterface.getReference().setGlobalDataText("     False negative volume fraction = " +
                                                         String.valueOf(fnvf) + "\n");
-                        fpvf = (float) falsePositive / (float) absoluteTrue;
+                        fpvf = falsePositive / absoluteTrue;
                         ViewUserInterface.getReference().setGlobalDataText("     False positive volume fraction = " +
                                                         String.valueOf(fpvf) + "\n");
-                        tpvf = (float) trueFound / (float) absoluteTrue;
+                        tpvf = trueFound / absoluteTrue;
                         ViewUserInterface.getReference().setGlobalDataText("     True Positive volume fraction = " + String.valueOf(tpvf) +
                                                         "\n");
                     } // if (trueID == testID)
@@ -311,7 +411,7 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
             } // if ((trueVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
             
             //Display cumulative area information from the VOI grouping
-            diceCumm = 2*(float)iAreaCumm / (float)(trueAreaCumm + testAreaCumm);
+            diceCumm = 2*iAreaCumm /(trueAreaCumm + testAreaCumm);
             formattedDice = formatter.format(diceCumm);
 
             ViewUserInterface.getReference().setGlobalDataText("     True Area (Cumulative) =\n\t" + String.valueOf(trueAreaCumm) +
