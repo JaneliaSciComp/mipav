@@ -212,7 +212,6 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
 	        		            - trueContour.elementAt(0).X*trueContour.elementAt(trueContour.size()-1).Y);
 	        	        exactPartialTruePixelCount += term;
 	        	        exactTotalTruePixelCount += 0.5*Math.abs(exactPartialTruePixelCount);
-	        			//trueContour.setMask(trueBit, xDim, yDim , false, 1);
 	        			truePresent = true; //At least one contour is present in this slice
 	        			subj.importCurve(trueContour);
 	        		}
@@ -229,8 +228,7 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                         term =  (testContour.elementAt(testContour.size()-1).X*testContour.elementAt(0).Y 
                                 - testContour.elementAt(0).X*testContour.elementAt(testContour.size()-1).Y);
                         exactPartialTestPixelCount += term;
-                        exactTotalTestPixelCount += 0.5*Math.abs(exactPartialTestPixelCount);
-	        			//testContour.setMask(testBit, xDim, yDim , false, 1);  
+                        exactTotalTestPixelCount += 0.5*Math.abs(exactPartialTestPixelCount); 
 	        			testPresent = true;
 	        			clip.importCurve(testContour);
 	        		}
@@ -255,16 +253,6 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
 	                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
 	                    }
 	                }
-	        		//calculate areas based on the masks
-		        	//for (int w=0; w<length; w++){	
-		        		//if (testBit.get(w) == true) 
-		        			//testArea++;
-		        		//if (trueBit.get(w) == true)
-		        			//trueArea++;
-		        		//Calculates the intersection of the two masks
-		        		//if ((testBit.get(w) == true) && (trueBit.get(w) == true)) 
-		        			//iArea++;
-		        	//}
 	        		
 	        		dice = 2*exactTotalIntersectionPixelCount/(exactTotalTestPixelCount+exactTotalTruePixelCount);
 	        		formattedDice = formatter.format(dice); //format to 3 decimal places
@@ -343,7 +331,6 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                                             - trueContour.elementAt(0).X*trueContour.elementAt(trueContour.size()-1).Y);
                                     exactPartialTruePixelCount += term;
                                     exactTotalTruePixelCount += 0.5*Math.abs(exactPartialTruePixelCount);
-                                    //trueContour.setMask(trueBit, xDim, yDim , false, 1);
                                     truePresent = true; //At least one contour is present in this slice
                                     subj.importCurve(trueContour);
                                 }
@@ -361,7 +348,6 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                                             - testContour.elementAt(0).X*testContour.elementAt(testContour.size()-1).Y);
                                     exactPartialTestPixelCount += term;
                                     exactTotalTestPixelCount += 0.5*Math.abs(exactPartialTestPixelCount);
-                                    //testContour.setMask(testBit, xDim, yDim , false, 1);  
                                     testPresent = true;
                                     clip.importCurve(testContour);
                                 }
