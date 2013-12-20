@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
@@ -13,6 +14,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -52,6 +54,10 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	
 	private JCheckBox headerCheck;
 	
+	private JTextField catalogField;
+	
+	private JTextField removeField;
+	
 	/**
 	 * 
 	 */
@@ -69,6 +75,8 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			openDir(reportField, command);
 		else if(command.equals("Coriell"))
 			openDir(coriellField, command);
+		else if(command.equals("Catalog"))
+			openDir(catalogField, command);
 		else if(command.equals("ApproveSelection") && whichFile.equals("Report")){
 			if(fileChooser.getSelectedFile().exists()){
 				reportField.setText(fileChooser.getSelectedFile().toString());
@@ -85,12 +93,20 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 			else
 				MipavUtil.displayError("This file does not exists");
 		}
+		else if(command.equals("ApproveSelection") && whichFile.equals("Catalog")){
+			if(fileChooser.getSelectedFile().exists()){
+				catalogField.setText(fileChooser.getSelectedFile().toString());
+				baseDir = catalogField.getText();
+			}
+			else 
+				MipavUtil.displayError("This file does not exists");
+		}
 		else if(command.equals("OK")){
 			if(new File(reportField.getText()).exists() && new File(coriellField.getText()).exists()){
 				callAlgorithm();
 			}
 		}
-		else if(command.equals("Cancel")){
+		else if(command.equals("Cancel") || command.equals("CatalogCan")){
 			if (isExitRequired()) {
                 System.exit(0);
                 ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -99,12 +115,20 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
                 return;
             }
 		}
+		else if(command.equals("CatalogOK")){
+			if(new File(catalogField.getText()).exists()){
+				callAlgorithm2();
+			}
+		}
 	}
 	
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		// TODO Auto-generated method stub
-		MipavUtil.displayInfo("Comparison file is in " + new File(reportField.getText()).getParent());
+		if(algorithm instanceof PlugInAlgorithmParseSlips)
+			MipavUtil.displayInfo("Comparison file is in " + new File(reportField.getText()).getParent());
+		else if(algorithm instanceof PlugInAlgorithmCompleteCatalog)
+			MipavUtil.displayInfo("Output file is in " + new File(catalogField.getText()).getParent());
 		
 	}
 	
@@ -145,6 +169,22 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 		
 	}
 	
+	protected void callAlgorithm2(){
+		File catalogFile = new File(catalogField.getText());
+		String catalogFolder = catalogFile.getParent();
+		File catalogCSV = new File(catalogFolder + "/Complete_count.csv");
+		int remove = Integer.parseInt(removeField.getText());
+		try{
+			csv = new FileWriter(catalogCSV);
+			PlugInAlgorithmCompleteCatalog catAlg = new PlugInAlgorithmCompleteCatalog(catalogFile, csv, remove);
+			catAlg.addListener(this);
+			catAlg.run();
+		}
+		catch (IOException e) {
+			MipavUtil.displayError("CSV file is locked");
+		}
+	}
+	
 	private void init(){
 		setForeground(Color.black);
         setTitle("Choose CSV Locations");
@@ -162,7 +202,6 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         dirLabel.setForeground(Color.black);
         dirLabel.setFont(serif12);
         dirPanel.add(dirLabel);
-        getContentPane().add(dirPanel, BorderLayout.NORTH);
         
         JPanel choosePanel = new JPanel();
         
@@ -212,14 +251,6 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
         headerCheck.setSelected(true);
         checkPanel.add(headerCheck);
         
-        PanelManager manager = new PanelManager();
-        manager.add(choosePanel);
-        manager.addOnNextLine(coriellPanel);
-        manager.addOnNextLine(radioPanel);
-        manager.addOnNextLine(checkPanel);
-        
-        getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
-
         JPanel OKCancelPanel = new JPanel();
 
         buildOKButton();
@@ -227,7 +258,70 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 
         buildCancelButton();
         OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+        
+        PanelManager manager = new PanelManager();
+        manager.add(dirPanel);
+        manager.addOnNextLine(choosePanel);
+        manager.addOnNextLine(coriellPanel);
+        manager.addOnNextLine(radioPanel);
+        manager.addOnNextLine(checkPanel);
+        manager.addOnNextLine(OKCancelPanel);
+        
+        //getContentPane().add(manager.getPanel(), BorderLayout.CENTER);
+        
+        JPanel catalogPanel = new JPanel();
+        
+        catalogField = new JTextField(30);
+        catalogField.setText("Catalog Report CSV");
+        catalogField.setFont(serif12);
+        catalogPanel.add(catalogField);
+        
+        JButton catalogButton = new JButton("Choose Catalog File");
+        catalogButton.setFont(serif12);
+        catalogButton.setActionCommand("Catalog");
+        catalogButton.addActionListener(this);
+        catalogPanel.add(catalogButton);
+        
+        JPanel removePanel = new JPanel();
+        
+        JLabel removeLabel = new JLabel("Remove how many header lines?");
+        removeLabel.setBackground(Color.black);
+        removeLabel.setFont(serif12);
+        removePanel.add(removeLabel);
+        
+        removeField = new JTextField(5);
+        removeField.setText("2");
+        removeField.setFont(serif12);
+        removeField.setHorizontalAlignment(JTextField.RIGHT);
+        removePanel.add(removeField);
+        
+        JPanel OKCancelPanel2 = new JPanel();
+        JButton catalogOK = new JButton("OK");
+        catalogOK.setFont(serif12);
+        catalogOK.setActionCommand("CatalogOK");
+        catalogOK.addActionListener(this);
+        OKCancelPanel2.add(catalogOK);
+        JButton catalogCan = new JButton("Cancel");
+        catalogCan.setFont(serif12);
+        catalogCan.setActionCommand("CatalogCan");
+        catalogCan.addActionListener(this);
+        OKCancelPanel2.add(catalogCan);
+        
+        PanelManager manager2 = new PanelManager();
+        manager2.add(catalogPanel);
+        manager2.addOnNextLine(removePanel);
+        manager2.addOnNextLine(OKCancelPanel2);
+        
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Coriel Compare", null, manager.getPanel(),
+                "Coriel");
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
+        tabbedPane.addTab("Catalog Counting", null, manager2.getPanel(),
+                "Catalog");
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);
+        getContentPane().add(tabbedPane, BorderLayout.CENTER);
+        getContentPane().add(new JPanel(), BorderLayout.NORTH);
+        getContentPane().add(new JPanel(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
