@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import java.text.*;
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
@@ -153,11 +154,14 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
         boolean truePresent, testPresent; //Checks to see if contours are present in the slice
         VOIContour trueContour, testContour, intersectionContour; 
         
-        int zDim = srcImage.getExtents()[2];
+        int zDim = 1;
+        if (srcImage.getNDims() > 2) {
+            zDim = srcImage.getExtents()[2];
+        }
         float[] resolutions = srcImage.getResolutions(0); //image resolution (in units)
         float ratio = resolutions[0]*resolutions[1]; //conversion from pixel to real area
 		String units = srcImage.getFileInfo()[0].getAreaUnitsOfMeasureStr(); //image units of measure
-        DecimalFormat formatter = new DecimalFormat("#.###");
+		DecimalFormat kf = new DecimalFormat("#########0.####");
         
         for (i = 0; i < nTrueVOIs; i++) {
      	
@@ -255,7 +259,7 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
 	                }
 	        		
 	        		dice = 2*exactTotalIntersectionPixelCount/(exactTotalTestPixelCount+exactTotalTruePixelCount);
-	        		formattedDice = formatter.format(dice); //format to 3 decimal places
+	        		formattedDice = kf.format(dice); //format to 4 decimal places
 	        		
 		        	iAreaCumm += exactTotalIntersectionPixelCount;
 		        	testAreaCumm += exactTotalTestPixelCount;
@@ -263,13 +267,15 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
 		        	
 		        	ViewUserInterface.getReference().setGlobalDataText("\nStatistics for VOIs with ID = " 
 		        			+ String.valueOf(trueID) + ", Slice = "+ String.valueOf(depth) + "\n");
-		        	ViewUserInterface.getReference().setGlobalDataText("     True VOI Area =\n\t" + String.valueOf(exactTotalTruePixelCount) +
-		                    " pixels\n\t" + String.valueOf(exactTotalTruePixelCount*ratio) + " " + units + "\n");
-		        	ViewUserInterface.getReference().setGlobalDataText("     Test VOI Area =\n\t" + String.valueOf(exactTotalTestPixelCount) +
-		        			" pixels\n\t" + String.valueOf(exactTotalTestPixelCount*ratio) + " " + units + "\n");
+		        	ViewUserInterface.getReference().setGlobalDataText("     True VOI Area =\n\t" + 
+		        			String.valueOf(kf.format(exactTotalTruePixelCount)) +
+		                    " pixels\n\t" + String.valueOf(kf.format(exactTotalTruePixelCount*ratio)) + " " + units + "\n");
+		        	ViewUserInterface.getReference().setGlobalDataText("     Test VOI Area =\n\t" 
+		                    + String.valueOf(kf.format(exactTotalTestPixelCount)) +
+		        			" pixels\n\t" + String.valueOf(kf.format(exactTotalTestPixelCount*ratio)) + " " + units + "\n");
 		        	ViewUserInterface.getReference().setGlobalDataText("     Intersection Area =\n\t" 
-		        			+ String.valueOf(exactTotalIntersectionPixelCount) +
-		        			" pixels\n\t" + String.valueOf(exactTotalIntersectionPixelCount*ratio) + " " + units + "\n");
+		        			+ String.valueOf(kf.format(exactTotalIntersectionPixelCount)) +
+		        			" pixels\n\t" + String.valueOf(kf.format(exactTotalIntersectionPixelCount*ratio)) + " " + units + "\n");
 		        	ViewUserInterface.getReference().setGlobalDataText("     Dice's Coefficient = " + formattedDice +
 		        			"\n");
 	        	}
@@ -385,27 +391,28 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                                                         "\n");
                         fnvf = falseNegative / absoluteTrue;
                         ViewUserInterface.getReference().setGlobalDataText("     False negative volume fraction = " +
-                                                        String.valueOf(fnvf) + "\n");
+                                                        String.valueOf(kf.format(fnvf)) + "\n");
                         fpvf = falsePositive / absoluteTrue;
                         ViewUserInterface.getReference().setGlobalDataText("     False positive volume fraction = " +
-                                                        String.valueOf(fpvf) + "\n");
+                                                        String.valueOf(kf.format(fpvf)) + "\n");
                         tpvf = trueFound / absoluteTrue;
-                        ViewUserInterface.getReference().setGlobalDataText("     True Positive volume fraction = " + String.valueOf(tpvf) +
-                                                        "\n");
+                        ViewUserInterface.getReference().setGlobalDataText("     True Positive volume fraction = " + 
+                        String.valueOf(kf.format(tpvf)) + "\n");
                     } // if (trueID == testID)
                 } // for (j = 0; j < nTestVOIs; j++)
             } // if ((trueVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
             
             //Display cumulative area information from the VOI grouping
             diceCumm = 2*iAreaCumm /(trueAreaCumm + testAreaCumm);
-            formattedDice = formatter.format(diceCumm);
+            formattedDice = kf.format(diceCumm);
 
-            ViewUserInterface.getReference().setGlobalDataText("     True Area (Cumulative) =\n\t" + String.valueOf(trueAreaCumm) +
-            		" pixels\n\t" + String.valueOf(trueAreaCumm*ratio) + " " + units + "\n");
-        	ViewUserInterface.getReference().setGlobalDataText("     Test Area (Cumulative) =\n\t" + String.valueOf(testAreaCumm) +
-        			" pixels\n\t" + String.valueOf(testAreaCumm*ratio) + " " + units + "\n");
-        	ViewUserInterface.getReference().setGlobalDataText("     Intersection Area (Cumulative) =\n\t" + String.valueOf(iAreaCumm) +
-        			" pixels\n\t" + String.valueOf(iAreaCumm*ratio) + " " + units + "\n");
+            ViewUserInterface.getReference().setGlobalDataText("     True Area (Cumulative) =\n\t" + String.valueOf(kf.format(trueAreaCumm)) +
+            		" pixels\n\t" + String.valueOf(kf.format(trueAreaCumm*ratio)) + " " + units + "\n");
+        	ViewUserInterface.getReference().setGlobalDataText("     Test Area (Cumulative) =\n\t" + String.valueOf(kf.format(testAreaCumm)) +
+        			" pixels\n\t" + String.valueOf(kf.format(testAreaCumm*ratio)) + " " + units + "\n");
+        	ViewUserInterface.getReference().setGlobalDataText("     Intersection Area (Cumulative) =\n\t" + 
+        			String.valueOf(kf.format(iAreaCumm)) +
+        			" pixels\n\t" + String.valueOf(kf.format(iAreaCumm*ratio)) + " " + units + "\n");
         	ViewUserInterface.getReference().setGlobalDataText("     Dice's Coefficient (Cumulative) = " + formattedDice +
                     "\n");
         	
