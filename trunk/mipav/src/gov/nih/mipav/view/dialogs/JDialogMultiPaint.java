@@ -4,7 +4,6 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -228,6 +227,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private boolean isVisiblePaint = true;
 
     private boolean isCompactDisplay = true;
+    
+    private ThreadGroup threads = new ThreadGroup("paintThreads");
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -295,7 +296,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        //System.out.println(command);
 
         if (command.equals("AdvancedPaint:Close")) {
 
@@ -2612,6 +2612,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @param to DOCUMENT ME!
      */
     private void switchPaintAndMask(int from, int to, int colorNum) {
+
         multiButton[from].setSelected(false);
         listButton[from].setSelected(false);
 
@@ -2654,8 +2655,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         // record selected image; set to image B
-        ModelImage active = image.getParentFrame().getActiveImage();
-        image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
+        //Not necessary, causing bugs when intensityDropper gets reset
+        
+        //ModelImage active = image.getParentFrame().getActiveImage();
+        //image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
         // set the color of the button being switched to
 
@@ -2676,9 +2679,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         final ModelImage imageB = image.getParentFrame().getImageB();
 
         image.getParentFrame().getComponentImage().setModifyFlag(false);
-
-        Thread thread = new Thread() {
+        
+        Thread thread = new Thread(threads, "paintMask") {
             public void run() {
+            	
+            	//ViewUserInterface.getReference().setGlobalDataText("From " + multiButton[_from].getText() + "\n");
 
                 // call the paint to mask program for existing mask
                 image.getParentFrame().getComponentImage().setIntensityDropper(
@@ -2732,12 +2737,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             }
         };
 
-        thread.start();
-
-        // reset the active image and intensity label
-        if ( !active.equals(image.getParentFrame().getActiveImage())) {
-            image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
+        while(threads.activeCount()>0){
+        	
         }
+        
+        thread.start();
+        
+        // reset the active image and intensity label
+        //unnecessary, causing bugs when intensityDropper gets reset
+        
+        //if ( !active.equals(image.getParentFrame().getActiveImage())) {
+        //    image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
+        //}
 
         selected = to;
         multiButton[selected].setSelected(true);
