@@ -239,23 +239,21 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
 	        	}
 
 	        	//If no contours are present in this slice, do not calculate anything
-	        	if (testPresent && truePresent){
+	        	if (testPresent && truePresent) {
 	        	    new GenericPolygonClipper(GenericPolygonClipper.gpc_op.GPC_INT, subj, clip, intersection);
 	        	    intersectionVOISize = intersection.getSize();
 	        	    for (int w=0; w<intersectionVOISize;w++){
 	                    intersectionContour = (VOIContour) (intersection.getCurves().elementAt(w));
-	                    if (intersectionContour.slice(4) == depth){
-	                        exactPartialIntersectionPixelCount = 0.0;
-	                        for (m = 0; m < intersectionContour.size()-1; m++) {
-	                            term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
-	                                    - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
-	                            exactPartialIntersectionPixelCount += term;        
-	                        }
-	                        term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
-	                                - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
-	                        exactPartialIntersectionPixelCount += term;
-	                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
-	                    }
+                        exactPartialIntersectionPixelCount = 0.0;
+                        for (m = 0; m < intersectionContour.size()-1; m++) {
+                            term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
+                                    - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
+                            exactPartialIntersectionPixelCount += term;        
+                        }
+                        term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
+                                - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
+                        exactPartialIntersectionPixelCount += term;
+                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
 	                }
 	        		
 	        		dice = 2*exactTotalIntersectionPixelCount/(exactTotalTestPixelCount+exactTotalTruePixelCount);
@@ -365,18 +363,16 @@ public class AlgorithmEvaluateSegmentation extends AlgorithmBase {
                                 intersectionVOISize = intersection.getSize();
                                 for (int w=0; w<intersectionVOISize;w++){
                                     intersectionContour = (VOIContour) (intersection.getCurves().elementAt(w));
-                                    if (intersectionContour.slice(4) == depth){
-                                        exactPartialIntersectionPixelCount = 0.0;
-                                        for (m = 0; m < intersectionContour.size()-1; m++) {
-                                            term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
-                                                    - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
-                                            exactPartialIntersectionPixelCount += term;        
-                                        }
-                                        term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
-                                                - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
-                                        exactPartialIntersectionPixelCount += term;
-                                        exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
+                                    exactPartialIntersectionPixelCount = 0.0;
+                                    for (m = 0; m < intersectionContour.size()-1; m++) {
+                                        term = (intersectionContour.elementAt(m).X*intersectionContour.elementAt(m+1).Y 
+                                                - intersectionContour.elementAt(m+1).X*intersectionContour.elementAt(m).Y);
+                                        exactPartialIntersectionPixelCount += term;        
                                     }
+                                    term =  (intersectionContour.elementAt(intersectionContour.size()-1).X*intersectionContour.elementAt(0).Y 
+                                            - intersectionContour.elementAt(0).X*intersectionContour.elementAt(intersectionContour.size()-1).Y);
+                                    exactPartialIntersectionPixelCount += term;
+                                    exactTotalIntersectionPixelCount += 0.5*Math.abs(exactPartialIntersectionPixelCount);
                                 }
                             }
                             
