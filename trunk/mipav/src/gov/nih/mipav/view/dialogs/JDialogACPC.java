@@ -439,6 +439,8 @@ public class JDialogACPC extends JDialogBase {
         optionPanel.setForeground(Color.black);
         optionPanel.setBorder(buildTitledBorder("Other options"));
 
+        useIncorrectAcpcXDim = Preferences.is(Preferences.PREF_USE_INCORRECT_ACPC_XDIM);
+
         final JCheckBox useIncorrectAcpcXDimCheckBox = new JCheckBox(
                 "Use incorrect, old MIPAV calculation of ACPC X dim", useIncorrectAcpcXDim);
         useIncorrectAcpcXDimCheckBox.setFont(serif12);
@@ -446,7 +448,6 @@ public class JDialogACPC extends JDialogBase {
             @Override
             public void itemStateChanged(final ItemEvent e) {
                 useIncorrectAcpcXDim = useIncorrectAcpcXDimCheckBox.isSelected();
-                System.err.println(useIncorrectAcpcXDim);
             }
         });
         optionPanel.add(useIncorrectAcpcXDimCheckBox, BorderLayout.NORTH);
@@ -1321,6 +1322,9 @@ public class JDialogACPC extends JDialogBase {
         transform.setOrigDim(origDim);
         transform.setOrigOrigin(image.getFileInfo()[0].getOrigin());
         transform.setUseIncorrectAcpcXDim(useIncorrectAcpcXDim);
+        if (useIncorrectAcpcXDim != Preferences.is(Preferences.PREF_USE_INCORRECT_ACPC_XDIM)) {
+            Preferences.setProperty(Preferences.PREF_USE_INCORRECT_ACPC_XDIM, String.valueOf(useIncorrectAcpcXDim));
+        }
         transform.setAcpcRes(acpcRes);
         final Vector3f pt = new Vector3f();
         transform.origToAcpc(origPC, pt);

@@ -5,10 +5,22 @@ import gov.nih.mipav.util.ThreadUtil;
 
 import gov.nih.mipav.view.dialogs.JDialogOverlay;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Event;
+import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.swing.KeyStroke;
 
@@ -19,7 +31,7 @@ import javax.swing.KeyStroke;
  * user. It is a text file and can be manually edited - not recommended.
  */
 public class Preferences {
-    
+
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
@@ -27,7 +39,7 @@ public class Preferences {
      * Defines options for interpolating displayed image slices.
      * 
      * @author senseneyj
-     *
+     * 
      */
     public enum InterpolateDisplay {
         /** Displays using nearest-neighbor */
@@ -36,101 +48,102 @@ public class Preferences {
         BILINEAR("Bilinear", RenderingHints.VALUE_INTERPOLATION_BILINEAR),
         /** Bicubic interpolation */
         BICUBIC("Bicubic", RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        
+
         /** The rendering hint provided to Graphics2D in creating this interpolation. */
         private final RenderingHints renderingHint;
-        
-        /** The format of complex display */
-        private String str;
 
-        InterpolateDisplay(String str, Object renderingHintObj) {
+        /** The format of complex display */
+        private final String str;
+
+        InterpolateDisplay(final String str, final Object renderingHintObj) {
             this.renderingHint = new RenderingHints(RenderingHints.KEY_INTERPOLATION, renderingHintObj);
             this.str = str;
         }
-        
+
         /**
          * @return the renderingHint
          */
         public RenderingHints getRenderingHint() {
             return renderingHint;
         }
-        
+
+        @Override
         public String toString() {
             return str;
         }
     }
-    
-	/**
-	 * Defines options for displaying pixel values of complex images.
-	 * 
-	 * @author senseneyj
-	 *
-	 */
+
+    /**
+     * Defines options for displaying pixel values of complex images.
+     * 
+     * @author senseneyj
+     * 
+     */
     public enum ComplexDisplay {
         /** Displays complex images in a + bi format */
         APLUSBI("a + bi", 2),
         /** Displays complex images in r*e^(i*theta) format */
-        REITHETA("r * e^(i"+'\u03B8'+")", 2),
+        REITHETA("r * e^(i" + '\u03B8' + ")", 2),
         /** Displays the magnitude of complex images */
         MAGNITUDE("Magnitude", 1);
-        
-        /** The format of complex display */
-        private String str;
-        
-        /** How many parts the complex display has */
-        private int numParts;
 
-        ComplexDisplay(String str, int numParts) {
+        /** The format of complex display */
+        private final String str;
+
+        /** How many parts the complex display has */
+        private final int numParts;
+
+        ComplexDisplay(final String str, final int numParts) {
             this.str = str;
             this.numParts = numParts;
         }
-        
+
+        @Override
         public String toString() {
             return str;
         }
-        
-        
+
         public int getNumParts() {
             return numParts;
         }
     }
-    
+
     /**
      * Defines options for defining color and brightness display based on pixel values.
      * 
      * @author senseneyj
-     *
+     * 
      */
     public enum DefaultDisplay {
         /** MIPAV default setting */
         Mipav("MIPAV default"),
-        /**ImageJ default setting */
+        /** ImageJ default setting */
         ImageJ("ImageJ default setting"),
         /** Window and level settings (will also be reflected as transfer function */
         WindowLevel("Saved window & level"),
-        /** Minimum and maximum settings  */
+        /** Minimum and maximum settings */
         MinMax("Saved min & max"),
         /** Lookuptable table and associated transfer function */
-        LUT("User-defined LUT & transfer function"),
-        Default("Default"); //for backwards compatibility
-        
-        /** The format of default display */
-        private String str;
+        LUT("User-defined LUT & transfer function"), Default("Default"); // for backwards compatibility
 
-        DefaultDisplay(String str) {
+        /** The format of default display */
+        private final String str;
+
+        DefaultDisplay(final String str) {
             this.str = str;
         }
-        
+
+        @Override
         public String toString() {
             return str;
         }
     }
-    
+
     /**
      * Defines system architecture on which MIPAV is running.
      * 
      * @author senseneyj
-     *
+     * 
      */
     public enum SystemArchitecture {
         /** Indicates an unknown system architecture. */
@@ -155,7 +168,7 @@ public class Preferences {
         ARCH_SPARC,
         /** Indicates a PA RISC system architecture. */
         ARCH_PA_RISC;
-        
+
         /**
          * Gets the system architecture.
          * 
@@ -191,12 +204,12 @@ public class Preferences {
             }
         }
     }
-    
+
     /**
      * Defines operating system on which MIPAV is running.
      * 
      * @author senseneyj
-     *
+     * 
      */
     public enum OperatingSystem {
         /** Operating system enum for Windows. */
@@ -205,7 +218,7 @@ public class Preferences {
         OS_UNIX,
         /** Operating system enum for the MAC. */
         OS_MAC;
-        
+
         /**
          * Gets the operating system.
          * 
@@ -298,7 +311,7 @@ public class Preferences {
 
     /** Constant that indicates if the splash graphic should be shown when mipav starts. */
     public static final String PREF_SHOW_SPLASH = "SplashGraphics";
-    
+
     /** Class name for selected look and feel type, can also be "None" (default selection) */
     public static final String PREF_SHOW_UI_LF = "LookAndFeel";
 
@@ -374,7 +387,7 @@ public class Preferences {
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
     /** Constant that indicates whether to use VOI XOR'ing. */
-    //public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
+    // public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
 
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
@@ -390,16 +403,16 @@ public class Preferences {
 
     /** Constant that indicates if left mouse click inside image should cause intensity value to display */
     public static final String PREF_SHOW_INTENSITY_ON_LEFT_CLICK = "intensityOnLeftClick";
-    
-    /** Constant that indicates if right mouse click inside image should cause window/level changes*/
+
+    /** Constant that indicates if right mouse click inside image should cause window/level changes */
     public static final String PREF_SHOW_WINLEV_ON_RIGHT_CLICK = "winLevOnRightClick";
-    
-    /** Constant that indicates if window/level changes should be relative to the current transfer function values*/
+
+    /** Constant that indicates if window/level changes should be relative to the current transfer function values */
     public static final String PREF_RELATIVE_WINDOW_LEVEL = "relativeWindowLevel";
-    
-    /** Constant that indicates if images are to be open im tiled format*/
+
+    /** Constant that indicates if images are to be open im tiled format */
     public static final String PREF_OPEN_IMAGES_IN_TILED_FORMAT = "openImagesInTiledFormat";
-    
+
     /**
      * Constant that indicates the last used paint brush so that it will be set as the default when new images are
      * opened or mipav is restarted.
@@ -441,7 +454,7 @@ public class Preferences {
 
     /** Constant that indicates the active image color. */
     public static final String PREF_ACTIVE_IMAGE_COLOR = "ActiveImageColor";
-    
+
     /** Constant that indicates the active image color border size */
     public static final String PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE = "ActiveImageColorBorderSize";
 
@@ -462,29 +475,31 @@ public class Preferences {
 
     /** Constant to indicate default brightness and color display to screen */
     public static final String PREF_DEFAULT_DISPLAY = "DefaultDisplay";
-    
-    /** Constant that indicates method used to display complex data values on MIPAV toolbar 
-     * (MIPAV visually always shows magnitude or log magnitude). */
+
+    /**
+     * Constant that indicates method used to display complex data values on MIPAV toolbar (MIPAV visually always shows
+     * magnitude or log magnitude).
+     */
     public static final String PREF_COMPLEX_DISPLAY = "ComplexDisplay";
-    
+
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
-    
+
     /** Constant that indicates whether DICOM ordering should be used by default for loading AFNI images */
     public static final String PREF_AFNI_ORDER_LOAD = "DicomOrderLoad";
-    
+
     /** Constant that indicates whether image will display using a stored LUT (from image file or generic to image type) */
     public static final String PREF_FILE_LUT_DISPLAY = "LutDisplay";
-    
+
     /** Constant that indicates the mode of image interpolation used for display */
     public static final String PREF_INTERPOLATE_MODE = "InterpolateMode";
-    
+
     /** Constant that indicates whether image is updated in real-time on histogram changes */
     public static final String PREF_HISTOGRAM_DISPLAY = "HistogramDisplay";
-    
+
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM_VOI = "TRIM_VOI";
-    
+
     /** Constant that indicates the mask trim level variable. */
     public static final String PREF_TRIM_MASK = "TRIM_MASK";
 
@@ -650,24 +665,26 @@ public class Preferences {
     public static final String PREF_MAX = "MaxValue";
 
     public static final String PREF_NDAR_PLUGIN_SERVER = "NDARPluginServer";
-    
+
     public static final String PREF_NDAR_PLUGIN_DATASTRUCT_NAME = "image01";
-    
+
     public static final String PREF_NDAR_PLUGIN_OUTPUT_DIR = "NDAROutputDir";
-    
+
     public static final String PREF_NDAR_PLUGIN_CSV_DIR = "NDARCSVDir";
-    
+
     public static final String PREF_BRICS_PLUGIN_OUTPUT_DIR = "BRICSOutputDir";
-    
+
     public static final String PREF_BRICS_PLUGIN_CSV_DIR = "BRICSCSVDir";
-    
+
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
-    
+
     public static final String PREF_BUG_REPORT_NAME = "BugReportName";
-    
+
     public static final String PREF_BUG_REPORT_EMAIL = "BugReportEmail";
-    
+
     public static final String PREF_BUG_REPORT_URGENCY = "BugReportUrgency";
+
+    public static final String PREF_USE_INCORRECT_ACPC_XDIM = "UseIncorrectAcpcXDim";
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
@@ -735,7 +752,8 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_VOI, "0.3");
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_MASK, "0");
         Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false, false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, preferencesDir + File.separatorChar + "exceptions.txt");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, preferencesDir + File.separatorChar
+                + "exceptions.txt");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");
@@ -792,13 +810,13 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_FILE_LUT_DISPLAY, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, "true");
-        
+
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
 
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_COLOR, "BLACK");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
-        
+
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_INTENSITY_ON_LEFT_CLICK, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_WINLEV_ON_RIGHT_CLICK, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_RELATIVE_WINDOW_LEVEL, "true");
@@ -807,8 +825,8 @@ public class Preferences {
         // performance information properties
         Preferences.defaultProps.setProperty(Preferences.PREF_MULTI_THREADING_ENABLED,
                 (ThreadUtil.getAvailableCores() > 1) ? "true" : "flase");
-        Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS, String.valueOf(ThreadUtil
-                .getAvailableCores()));
+        Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS,
+                String.valueOf(ThreadUtil.getAvailableCores()));
         Preferences.defaultProps.setProperty(Preferences.PREF_GPU_COMP_ENABLED, "false");
 
     }
@@ -818,8 +836,7 @@ public class Preferences {
 
     /**
      * Adds a new shortcut to the hashtable. if there is already a command predefined for the keystroke set from <code>
-     * setShortcut()</code>,
-     * it will be removed then replaced with the new command.
+     * setShortcut()</code>, it will be removed then replaced with the new command.
      * 
      * @param command the command to map
      * 
@@ -878,7 +895,7 @@ public class Preferences {
 
         if ( (command != null) && (shortcut != null)) {
 
-            //System.out.println("shortcut: " + command + ": " + shortcut.toString());
+            // System.out.println("shortcut: " + command + ": " + shortcut.toString());
             if (Preferences.isDefaultCommand(command)) {
                 MipavUtil.displayWarning("This is a default function: shortcut can not be remapped");
 
@@ -904,8 +921,8 @@ public class Preferences {
             Preferences.userShortcutTable.put(command, shortcut);
 
             /*
-             * MipavUtil.displayInfo("Shortcut captured: " + shortcut.toString().replaceAll("pressed", "").trim() + " : " +
-             * command);
+             * MipavUtil.displayInfo("Shortcut captured: " + shortcut.toString().replaceAll("pressed", "").trim() +
+             * " : " + command);
              */
             Preferences.saveShortcuts();
             shortcut = null;
@@ -969,17 +986,17 @@ public class Preferences {
                         if ( (keyStr.length() == 2) || (keyStr.length() == 3)) {
                             fIndex = Integer.parseInt(keyStr.substring(1));
 
-                            Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(
-                                    MipavUtil.functionKeys[fIndex], 0, false));
+                            Preferences.userShortcutTable.put(shortcutStr,
+                                    KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false));
                         } else {
 
                             if (modifiers != 0) {
 
-                                Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr
-                                        .charAt(keyStr.length() - 1), modifiers, false));
+                                Preferences.userShortcutTable.put(shortcutStr,
+                                        KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1), modifiers, false));
                             } else {
-                                Preferences.userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0),
-                                        modifiers, false));
+                                Preferences.userShortcutTable.put(shortcutStr,
+                                        KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false));
                             }
                         }
                     }
@@ -988,7 +1005,7 @@ public class Preferences {
                 // throw in the defaults just in case
 
             } else {
-               
+
             }
         } catch (final Exception e) {
             e.printStackTrace();
@@ -1007,14 +1024,14 @@ public class Preferences {
         final boolean[] levels = Preferences.getDebugLevels();
 
         if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
-            if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {	
-                System.err.println("DEBUG: "+string);
+            if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
+                System.err.println("DEBUG: " + string);
             } else {
                 Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
             }
         }
     }
-    
+
     /**
      * Gets all the text printed to the debug panel.
      * 
@@ -1032,12 +1049,12 @@ public class Preferences {
     public static final void data(final String string) {
 
         if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
-            System.err.println("DATA: "+string);
+            System.err.println("DATA: " + string);
         } else {
             Preferences.messageFrame.append(string, ViewJFrameMessage.DATA);
         }
     }
-    
+
     /**
      * Gets all the text printed to the data panel.
      * 
@@ -1056,8 +1073,8 @@ public class Preferences {
     public static final void debug(final String string, final int level) {
         final boolean[] debugLevels = Preferences.getDebugLevels();
         if (debugLevels[level]) {
-            if (Preferences.messageFrame == null  || !Preferences.messageFrame.isVisible()) {
-                System.err.println("DEBUG level "+level+": "+string);
+            if (Preferences.messageFrame == null || !Preferences.messageFrame.isVisible()) {
+                System.err.println("DEBUG level " + level + ": " + string);
             } else {
                 try {
                     Preferences.messageFrame.append(string, ViewJFrameMessage.DEBUG);
@@ -1119,35 +1136,35 @@ public class Preferences {
      * @return The default display enumeration.
      */
     public static DefaultDisplay getDefaultDisplay() {
-    	if(Preferences.mipavProps == null) {
-    		Preferences.read();
-    	}
-    	String defaultDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
-    	if(defaultDisplay == null) {
-    		defaultDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
-    	}
-    	// if we find the old 'Default' display, force it to the new 'MIPAV default'
-    	if (defaultDisplay.equals(DefaultDisplay.Default.name())) {
-    	    defaultDisplay = DefaultDisplay.Mipav.name();
-    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
-    	}
-    	
-    	DefaultDisplay display; 
-    	try {
-    	    display = DefaultDisplay.valueOf(defaultDisplay);
-    	} catch (IllegalArgumentException e) {
-    	    Preferences.debug("Unrecognized default display mode. Resetting to MIPAV default.", Preferences.DEBUG_MINOR);
-    	    display = DefaultDisplay.Mipav;
-    	    Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
-    	}
-    	
-    	return display;
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String defaultDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
+        if (defaultDisplay == null) {
+            defaultDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
+        }
+        // if we find the old 'Default' display, force it to the new 'MIPAV default'
+        if (defaultDisplay.equals(DefaultDisplay.Default.name())) {
+            defaultDisplay = DefaultDisplay.Mipav.name();
+            Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+        }
+
+        DefaultDisplay display;
+        try {
+            display = DefaultDisplay.valueOf(defaultDisplay);
+        } catch (final IllegalArgumentException e) {
+            Preferences
+                    .debug("Unrecognized default display mode. Resetting to MIPAV default.", Preferences.DEBUG_MINOR);
+            display = DefaultDisplay.Mipav;
+            Preferences.setDefaultDisplay(DefaultDisplay.Mipav);
+        }
+
+        return display;
     }
-    
+
     /**
-     * Returns how pixel values are displayed on the MIPAV toolbar for complex images.  Although
-     * MIPAV always displays the magnitude or log magnitude when viewing an image, the toolbar can
-     * display both real and complex components.
+     * Returns how pixel values are displayed on the MIPAV toolbar for complex images. Although MIPAV always displays
+     * the magnitude or log magnitude when viewing an image, the toolbar can display both real and complex components.
      * 
      * @return The complex display enumeration, includes number of parts that the complex display requires
      */
@@ -1159,21 +1176,21 @@ public class Preferences {
         if (complexDisplay == null) {
             complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
         }
-        return ComplexDisplay.valueOf(complexDisplay); 
+        return ComplexDisplay.valueOf(complexDisplay);
     }
-    
-    /** 
-     * Returns how pixel values are interpolated for displayed slices.  Default is nearest neighbor.
+
+    /**
+     * Returns how pixel values are interpolated for displayed slices. Default is nearest neighbor.
      */
     public static InterpolateDisplay getInterpolateDisplay() {
         if (Preferences.mipavProps == null) {
             Preferences.read();
         }
         String interpolateDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
-        if(interpolateDisplay == null) {
+        if (interpolateDisplay == null) {
             interpolateDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
         }
-        
+
         return InterpolateDisplay.valueOf(interpolateDisplay);
     }
 
@@ -1185,14 +1202,14 @@ public class Preferences {
     public static final boolean[] getDebugLevels() {
         final boolean[] levels = new boolean[5];
 
-        if(Preferences.getProperty(Preferences.PREF_DEBUG) != null) {
+        if (Preferences.getProperty(Preferences.PREF_DEBUG) != null) {
             final String[] str = Preferences.getProperty(Preferences.PREF_DEBUG).split(",");
-            for(int i=0; i<levels.length; i++) {
+            for (int i = 0; i < levels.length; i++) {
                 levels[i] = Boolean.valueOf(str[i]).booleanValue();
             }
         } else {
-            for(int i=0; i<levels.length; i++) {
-                levels[i] = false; //do not print out any debug output if debug preferences have not been set
+            for (int i = 0; i < levels.length; i++) {
+                levels[i] = false; // do not print out any debug output if debug preferences have not been set
             }
         }
         return levels;
@@ -1798,8 +1815,8 @@ public class Preferences {
     }
 
     /**
-     * The number of threads available for MIPAV for processing.  MIPAV typically uses this number
-     * for highly-parallel algorithm computations.
+     * The number of threads available for MIPAV for processing. MIPAV typically uses this number for highly-parallel
+     * algorithm computations.
      * 
      * @return the number of threads available for mipav
      */
@@ -2120,10 +2137,10 @@ public class Preferences {
 
         return 0.3f; // no match
     }
-    
+
     /**
-     * Accessor to get the TRIM parameter (trimming VOIcontour of points). Default value is 0.3 which trims no
-     * points in the contours.
+     * Accessor to get the TRIM parameter (trimming VOIcontour of points). Default value is 0.3 which trims no points in
+     * the contours.
      * 
      * @return the trim value.
      */
@@ -2241,8 +2258,7 @@ public class Preferences {
     /**
      * Gets the boolean state of the property, where in the preferences file the &quot;yes&quot;, &quot;on&quot;,
      * &quot;true&quot; all return <code>true</code>, but anything else (or non-existent property) returns <code>
-     * false</code>.
-     * This method is provided for semantic preference, but is exactly the same as (in fact, calls) <code>
+     * false</code>. This method is provided for semantic preference, but is exactly the same as (in fact, calls) <code>
      * isPreference</code>.
      * 
      * @see #isPreference(String)
@@ -2335,8 +2351,8 @@ public class Preferences {
     }
 
     /**
-     * Indicates whether GPU-computing should be enabled.  The renderer and algorithms use this
-     * information for processing
+     * Indicates whether GPU-computing should be enabled. The renderer and algorithms use this information for
+     * processing
      * 
      * @return true if gpu compinting is enabled
      */
@@ -2344,28 +2360,28 @@ public class Preferences {
         if (Preferences.mipavProps == null) {
             Preferences.read();
         }
-    
+
         String gpuEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
         if (gpuEnabled == null) {
             gpuEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_GPU_COMP_ENABLED);
         }
-    
+
         if (Boolean.valueOf(gpuEnabled)) {
             return true;
         }
-    
+
         return false;
     }
 
     /**
-     * Maintained for backwards compatibility.  If interpolation mode is equal to nearest neighbor,
-     * then returns false, otherwise returns true.
+     * Maintained for backwards compatibility. If interpolation mode is equal to nearest neighbor, then returns false,
+     * otherwise returns true.
      * 
      * @return
      */
     public static boolean isInterpolateDisplay() {
-        InterpolateDisplay interp = Preferences.getInterpolateDisplay();
-        if(interp.equals(InterpolateDisplay.NEAREST)) {
+        final InterpolateDisplay interp = Preferences.getInterpolateDisplay();
+        if (interp.equals(InterpolateDisplay.NEAREST)) {
             return false;
         } else {
             return true;
@@ -2373,8 +2389,8 @@ public class Preferences {
     }
 
     /**
-     * Indicates whether multi-threading should be enabled for algorithms.  Most algorithms check this before
-     * launching highly-parallel processes (such as FFT).
+     * Indicates whether multi-threading should be enabled for algorithms. Most algorithms check this before launching
+     * highly-parallel processes (such as FFT).
      * 
      * @return true if multi-threading is enabled
      */
@@ -2391,7 +2407,7 @@ public class Preferences {
         }
         return false;
     }
-    
+
     /**
      * Indicates whether the image display should be updated in real-time as histogram LUTs are changed
      * 
@@ -2410,13 +2426,11 @@ public class Preferences {
         }
         return false;
     }
-    
 
     /**
      * Gets the boolean state of the property, where in the preferences file the &quot;yes&quot;, &quot;on&quot;,
      * &quot;true&quot; all return <code>true</code>, but anything else (or non-existent property) returns <code>
-     * false</code>.
-     * While not as intuitive, perhaps, as some of the specially named property-retrieval methods (eg.,
+     * false</code>. While not as intuitive, perhaps, as some of the specially named property-retrieval methods (eg.,
      * <code>isSplashScreen</code>), this method can be used to replace all of those methods when the preferences
      * property is known. It can also be convenient for limited-use properties used in debugging.
      * 
@@ -2585,6 +2599,7 @@ public class Preferences {
      * @param dialogName String the name of the dialog
      * @param defaultsString String the String to save for this dialog
      */
+    @Deprecated
     public static final void saveDialogDefaults(final String dialogName, final String defaultsString) {
         Preferences.setProperty(dialogName, defaultsString);
     }
@@ -2740,17 +2755,17 @@ public class Preferences {
             Preferences.setProperty(Preferences.PREF_DEBUG, str);
         }
     }
-    
+
     /**
      * Sets the default display mode for 2D/3D image display.
      * 
      * @param display the DefaultDisplay type
      */
-    public static void setDefaultDisplay(DefaultDisplay display) {
-        if(display == null) {
+    public static void setDefaultDisplay(final DefaultDisplay display) {
+        if (display == null) {
             return;
         }
-        
+
         Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, display.name());
     }
 
@@ -2824,11 +2839,11 @@ public class Preferences {
      * 
      * @param interp the InterpolateDisplay type
      */
-    public static void setInterpolationMode(InterpolateDisplay interp) {
-        if(interp == null) {
+    public static void setInterpolationMode(final InterpolateDisplay interp) {
+        if (interp == null) {
             return;
         }
-        
+
         Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, interp.name());
     }
 
@@ -2954,11 +2969,11 @@ public class Preferences {
      * @param mFrame Message frame to set.
      */
     public static final void setMessageFrame(final ViewJFrameMessage mFrame) {
-        if(Preferences.messageFrame != null) {
-        	Preferences.messageFrame.dispose();
+        if (Preferences.messageFrame != null) {
+            Preferences.messageFrame.dispose();
         }
-    	
-    	Preferences.messageFrame = mFrame;
+
+        Preferences.messageFrame = mFrame;
     }
 
     /**
@@ -3036,10 +3051,10 @@ public class Preferences {
     public static final void setPreferencesFileName(final String fileName) {
         Preferences.preferencesFileName = fileName;
         Preferences.preferencesFile = Preferences.preferencesDir + File.separator + Preferences.preferencesFileName;
-        
-        Preferences.debug("New preferences location: "+Preferences.preferencesFile);   
+
+        Preferences.debug("New preferences location: " + Preferences.preferencesFile);
     }
-    
+
     /**
      * Change the file directory of the preferences file.
      * 
@@ -3048,10 +3063,10 @@ public class Preferences {
     public static final void setPreferencesFileDirectory(final String fileDir) {
         Preferences.preferencesDir = fileDir;
         Preferences.preferencesFile = Preferences.preferencesDir + File.separator + Preferences.preferencesFileName;
-        
-        Preferences.debug("New preferences location: "+Preferences.preferencesFile); 
+
+        Preferences.debug("New preferences location: " + Preferences.preferencesFile);
     }
-    
+
     /**
      * Sets the property key in the MIPAV property list and saves it to a file.
      * 
@@ -3123,10 +3138,10 @@ public class Preferences {
         Preferences.defaultShortcutTable = new Hashtable<String, KeyStroke>();
         Preferences.defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
-        Preferences.defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK
-                + Event.CTRL_MASK, false));
-        Preferences.defaultShortcutTable.put("SaveAllImages", KeyStroke.getKeyStroke('S', Event.ALT_MASK 
-        		+ Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("SaveImageAs",
+                KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
+        Preferences.defaultShortcutTable.put("SaveAllImages",
+                KeyStroke.getKeyStroke('S', Event.ALT_MASK + Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
@@ -3140,20 +3155,20 @@ public class Preferences {
         Preferences.defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
         Preferences.defaultShortcutTable.put("measureVOI", KeyStroke.getKeyStroke('M', 0, false));
         Preferences.defaultShortcutTable.put("RecordIntensity", KeyStroke.getKeyStroke('R', Event.CTRL_MASK, false));
-        
+
         for (int i = 0; i < 9; i++) {
-            Preferences.defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i + 1)
-                    .charAt(0), Event.CTRL_MASK, false));
+            Preferences.defaultShortcutTable.put("LastImage " + i,
+                    KeyStroke.getKeyStroke(Integer.toString(i + 1).charAt(0), Event.CTRL_MASK, false));
         }
 
         return Preferences.defaultShortcutTable;
     }
-    
+
     /**
-     * Resets the current MIPAV properties to the defaults and saves the preferences file.  Cannot be undone.
+     * Resets the current MIPAV properties to the defaults and saves the preferences file. Cannot be undone.
      */
     public static void resetToDefaults() {
-    	mipavProps = defaultProps;
-    	save();
+        mipavProps = defaultProps;
+        save();
     }
 }
