@@ -348,7 +348,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @return
      */
     public static Object generateNewTagValue(String key, String strValue) {
-        FileDicomTagInfo tag = DicomDictionary.getDicomTagTable().get(key);
+        FileDicomTagInfo tag = DicomDictionary.getInfo(new FileDicomKey(key));
         return generateNewTagValue(key, "", tag.getType());
     }
     
