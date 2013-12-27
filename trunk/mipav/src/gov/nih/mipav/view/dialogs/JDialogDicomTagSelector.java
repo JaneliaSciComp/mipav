@@ -911,7 +911,7 @@ public class JDialogDicomTagSelector extends JDialogScriptableBase implements Li
 					try {
 						int group = Integer.valueOf(groupStr, 16);
 						int element = Integer.valueOf(updateText, 16);
-						FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(new FileDicomKey(group, element));
+						FileDicomTagInfo tagInfo = DicomDictionary.getInfo(new FileDicomKey(group, element));
 						nameValue.setText(tagInfo.getName());
 					} catch(Exception ex) {
 						
