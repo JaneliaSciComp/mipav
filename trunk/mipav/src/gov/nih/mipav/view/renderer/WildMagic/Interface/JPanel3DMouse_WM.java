@@ -82,12 +82,14 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     private GridBagConstraints gbc_2;
     private GridBagConstraints gbc_3;
     private GridBagConstraints gbc_4;
+    private GridBagConstraints gbc_5;
     private JCheckBox chckbxLeftright;
     private JCheckBox chckbxUpdown;
     private JCheckBox chckbxForwardsbackwards;
     private JCheckBox chckbxRotationRX;
     private JCheckBox chckbxRotationRy;
     private JCheckBox chckbxRotationRz;
+    private JCheckBox chckbxfine;
     private JSlider mouseTranslationCutoffSlider;
     private JLabel lblTranslation;
     private JLabel lblRotation;
@@ -99,7 +101,8 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
     private JLabel rollIcon;
     private JLabel lblTranslations;
     private JLabel lblRotations;
-    
+    private JButton buttonfine;
+    private JButton buttonnormal;
 	
     /**
      * Constructor.
@@ -176,6 +179,13 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          gbc_2.gridx = 2;
          mouseSpeedPanel.add(mouseRotationSpeedSlider, gbc_2);
          
+         gbc_5 = new GridBagConstraints();
+         gbc_5.insets = new Insets(0, 0, 0, 5);
+         gbc_5.gridx = 0;
+         gbc_5.gridy = 3;
+         gbc_5.anchor = GridBagConstraints.WEST;
+         
+         
          //create the invert direction check boxes
          JPanel invertPanel = new JPanel();
          invertPanel.setMinimumSize(new Dimension(100, 100));
@@ -185,7 +195,11 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          
          JPanel cutoffPanel = new JPanel();
          cutoffPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
-         cutoffPanel.setBorder(buildTitledBorder("sensitivity cutoffs"));
+         cutoffPanel.setBorder(buildTitledBorder("Sensitivity Cutoffs"));
+         
+         JPanel fineMovementPanel = new JPanel();
+         fineMovementPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+         fineMovementPanel.setBorder(buildTitledBorder("Fine Movements"));
 
          labelX1 = new JLabel("0");
          labelX1.setForeground(Color.black);
@@ -388,7 +402,31 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
                   gbc_textField.gridy = 2;
                   cutoffPanel.add(translationCutoffTextField, gbc_textField);
 //                  translationCutoffTextField.setColumns(10);
-  
+                  
+                  GridBagLayout gbl_fineMovementPanel = new GridBagLayout();
+                  gbl_fineMovementPanel.columnWidths = new int[]{0, 0, 53, 223, 42, 0};
+                  gbl_fineMovementPanel.rowHeights = new int[]{32, 32, 31, 0};
+                  gbl_fineMovementPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 1.0, Double.MIN_VALUE};
+                  gbl_fineMovementPanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
+                  fineMovementPanel.setLayout(gbl_fineMovementPanel);
+                  
+             contentBox.add(fineMovementPanel);
+             
+             buttonfine = new JButton("Fine Movement");
+             buttonfine.setBounds(104, 110, 83, 23);
+             buttonfine.addActionListener(this);
+             
+             buttonnormal = new JButton("Normal Movement");
+             buttonnormal.setBounds(104, 110, 83, 23);
+             buttonnormal.addActionListener(this);
+             
+             chckbxfine = new JCheckBox("Fine Movement");
+             chckbxfine.setBounds(104, 110, 83, 23);
+             chckbxfine.addActionListener(this);
+             
+             fineMovementPanel.add(buttonfine);
+             fineMovementPanel.add(buttonnormal);
+             
          mainScrollPanel.add(contentBox, BorderLayout.NORTH);
          
          mainPanel.add(scroller, BorderLayout.CENTER);
@@ -410,10 +448,14 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
 			GPURenderBase.invertRY();
 		}else if(source == chckbxRotationRz){
 			GPURenderBase.invertRZ();
+		}else if(source == buttonfine){
+			GPURenderBase.fineMovement();
+		}else if(source == buttonnormal){
+			GPURenderBase.normalMovement();
 		}
 		
 	}
-
+	
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		// TODO finish making each button/ckbx/slider work
