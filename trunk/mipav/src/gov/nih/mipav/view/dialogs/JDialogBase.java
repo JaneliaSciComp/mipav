@@ -862,6 +862,8 @@ public abstract class JDialogBase extends JDialog
                     e.printStackTrace();
                 }
             }
+        } else {
+        	Preferences.debug("The following component could not be saved: "+name+"."+comp.getName()+" is of type "+comp.getClass(), Preferences.DEBUG_MINOR);
         }
         
     }
