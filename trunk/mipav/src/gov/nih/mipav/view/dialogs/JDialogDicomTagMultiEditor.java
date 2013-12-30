@@ -147,7 +147,7 @@ tableItr:	for(int i=0; i<length; i++) {
 				}
 				
 				if(tagArray[i] == null) {
-					FileDicomTagInfo tagInfo = DicomDictionary.getDicomTagTable().get(keyArray[i]);
+					FileDicomTagInfo tagInfo = DicomDictionary.getInfo(keyArray[i]);
 					if(tagInfo == null) {
 						if(key.getGroupNumber() % 2 == 1) { //if dicom tag is private
 							if(!key.getElement().equals("0010")) {
