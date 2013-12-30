@@ -148,6 +148,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     private static double mouseSpeedScaler = 1;
     /** used to invert the settings of the mouse */
     private static int invertTX = 1, invertTY = 1, invertTZ = 1, invertRX = 1, invertRY = 1, invertRZ = 1;
+    /** used for fine movement checkbox in 3D mouse options */
+    private static int zD = 1;
     /** holds the current value of the space navigator. normalized on a -100 to 100 scale for cross platform/calculating convenience */
     private static double tX, tY, tZ, rX, rY, rZ;
     
@@ -1002,6 +1004,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     Vector3f zVector = new Vector3f(0,0,1);
     Vector3f currentLocation = new Vector3f();
     double mouseRot = 0;
+
     
 	public void processSpaceNavEvent()
     {
@@ -1052,7 +1055,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
        
         currentLocation.copy(m_spkCamera.GetLocation());
         Vector3f zValue = Vector3f.mult(zVector, currentLocation);
-        ZYDistanceStep = zValue.length();
+        ZYDistanceStep = zD * zValue.length();
         double ZYScaleTrans = ZYDistanceStep * transScalar;
         double ZYTrans = Math.pow(ZYScaleTrans, transPower);
         
@@ -1107,7 +1110,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         kLoc = new Vector3f(m_akWorldAxis[0]); 
         
         currentLocation.copy(m_spkCamera.GetLocation());
-        ZZDistanceStep = zValue.length();
+        ZZDistanceStep = zD * zValue.length();
         double ZZScaleTrans = ZZDistanceStep * transScalar;
         double ZZTrans = Math.pow(ZZScaleTrans, transPower);
         
@@ -1173,7 +1176,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         //double radiusScaleFinal = radiusScaleStep * radiusScalarTranslational;
 	    
         currentLocation.copy(m_spkCamera.GetLocation());
-        ZXDistanceStep = zValue.length();
+        ZXDistanceStep = zD * zValue.length();
         double ZXScaleTrans = ZXDistanceStep * transScalar;
         double ZXTrans = Math.pow(ZXScaleTrans, transPower);
         
@@ -1251,8 +1254,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
         Vector3f zValue = Vector3f.mult(zVector, currentLocation);
         
 // POSSIBLE "FINE MOVEMENT" BUTTON
-        
-//        if (fineMovementButton = true)
+//        
+//        if (JPanel3DMouse_WM.chckbxfine = true)
 //    	{
 //    		double zDistance = 0;
 //    	}
@@ -1261,7 +1264,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 //    		double zDistance = zValue.length();
 //    	}
     	
-        double zDistance = zValue.length();
+        double zDistance = zD * zValue.length();     
         double zScaleRotStep = zDistance * rotScalar;
         double zScaleRot = Math.pow(zScaleRotStep, rotPower);
         
@@ -1330,7 +1333,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	kRot = m_spkMotionObject.Local.GetRotate();
     	currentLocation.copy(m_spkCamera.GetLocation());
         Vector3f zValue = Vector3f.mult(zVector, currentLocation);
-        double zDistance = zValue.length();
+        double zDistance = zD * zValue.length();
         double zScaleRotStep = zDistance * rotScalar;
         double zScaleRot = Math.pow(zScaleRotStep, rotPower);
         
@@ -1398,7 +1401,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     	kRot = m_spkMotionObject.Local.GetRotate();
     	currentLocation.copy(m_spkCamera.GetLocation());
         Vector3f zValue = Vector3f.mult(zVector, currentLocation);
-        double zDistance = zValue.length();
+        double zDistance = zD * zValue.length();
         double zScaleRotStep = zDistance * rotScalar;
         double zScaleRot = Math.pow(zScaleRotStep, rotPower);
         
@@ -1531,7 +1534,13 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	public static void invertTZ() {
 		invertTZ = invertTZ * -1; 
 	}
-	
+	public static void fineMovement() {
+		zD = zD * 0;
+	}
+	public static void normalMovement() {
+		zD = 1;
+	}
+
 
 	/** Helper method
 	 * sets the values tX, tY, tZ, rX, rY, and rZ to the current space navigator values normalized on a -100 to 100 scale.
