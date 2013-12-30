@@ -4529,9 +4529,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 {
                     VOIBase kCurrentVOI = currentVOI.getCurves().get(j);
                     Vector3f[] kBounds = kCurrentVOI.getImageBoundingBox();
+                    
+                    //Adjusts the old VOI grouping to the new image (as per Bug 496)
                     int newSlice = kCurrentVOI.slice(4) - minSlice + currentSlice;
                     kBounds[1].Z -= minSlice - currentSlice;
                     kBounds[0].Z -= minSlice - currentSlice ;
+                    
                     if ( (kBounds[1].X - kBounds[0].X < xDim) && 
                          (kBounds[1].Y - kBounds[0].Y < yDim) && 
                          (kBounds[1].Z - kBounds[0].Z < zDim) )
@@ -5217,6 +5220,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ButtonGroup VOIGroup;
         JRadioButton saveVOILPSButton;
         JRadioButton saveVOIVoxelButton;
+        
+        String voiName; 
+        Vector<String> nameVector = new Vector<String>();
 
         int nVOI;
         int i;
@@ -5227,6 +5233,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         ModelImage kImage = getActiveImage();
         VOIs = kImage.getVOIs();
         nVOI = VOIs.size();
+        
+        //New code
+        for (int iter=0;iter<nVOI;iter++){
+        	nameVector.add(VOIs.VOIAt(iter).getName());
+        }
+        //End new code
 
         for (i = 0; i < nVOI; i++) {
 
@@ -5295,6 +5307,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             } else if (!fileName.endsWith(".xml")) {
                 fileName += ".xml";
             }
+            
+          //New code
+            voiName = fileName.substring(0, fileName.indexOf(".xml"));
+            String newName = voiName;
+            int cnt = 0;
+            while(nameVector.contains(newName)){
+            	newName = voiName.concat("_" + String.valueOf(cnt));
+            	cnt++;
+            }
+            VOIs.VOIAt(i).setName(newName);
+            //End new code
 
             final FileVOI fileVOI = new FileVOI(fileName, directory, kImage);
 
