@@ -37,7 +37,7 @@ import javax.swing.*;
  * unsigned integer data. LSM files do not include the SAMPLE_FORMAT field, so if only TIFF rules were used the LSM 32
  * bit floating point numbers would be interpreted as unsigned integers.</p>
  *
- * <p>The LSM release 2.0 documentation does not completely conform with the observed files. Table 16 with the
+ * <p>The LSM release 6.0 documentation does not completely conform with the observed files. Table 16 with the
  * CZ-Private tag shows a 488 byte structure, but at least some LSM files have values of 512 bytes in the
  * s32StructureSize field. u32OffsetTimeStamps appears to point to a time stamps structure, but this structure contains
  * the ascii such as Ch1-T1, Ch2-T2, and Ch3-T3 which does not appear in the table 22 structure for time stamp
@@ -66,7 +66,7 @@ public class FileLSM extends FileBase {
     private static final int LONG = 4; // 32 bit unsigned    ****** 4 bytes !!!!
 
     /** DOCUMENT ME! */
-    private static final int RATIONAL = 5; // 2  longs 1st numorator
+    private static final int RATIONAL = 5; // 2  longs 1st numerator
 
     /** 2nd denom. */
     private static final int SBYTE = 6; // 8 bit signed
@@ -854,13 +854,19 @@ public class FileLSM extends FileBase {
     private int czSpectralScan;
 
     @SuppressWarnings("unchecked")
-    private Vector<Index>[] dataOffsets = new Vector[4000];
+    private Vector<Index>[] dataOffsets = new Vector[8000];
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
 
     /** DOCUMENT ME! */
     private byte[] decomp = null;
+    
+    private int dimensionM;
+    
+    private int dimensionP;
+    
+    private int dimensionsReserved[] = new int[16];
 
     /** DOCUMENT ME! */
     private double displayAspectTime = 0.0;
@@ -935,7 +941,7 @@ public class FileLSM extends FileBase {
     private boolean haveBleachedRectangle = false;
 
     /** DOCUMENT ME! */
-    private int[] IFDoffsets = new int[4096];
+    private int[] IFDoffsets = new int[8192];
 
     /** DOCUMENT ME! */
     private ModelImage image;
@@ -954,6 +960,8 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private float[] imgResols;
+    
+    private int internalUse1;
 
     /** DOCUMENT ME! */
     private double[] knotX = null;
@@ -987,6 +995,8 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private double objectiveSphereCorrection = -1.0;
+    
+    private int offsetAcquisitionParameters;
 
     /** DOCUMENT ME! */
     private int offsetBleachRoi;
@@ -1002,6 +1012,8 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private int offsetChannelWavelength;
+    
+    private int offsetCharacteristics;
 
     /** DOCUMENT ME! */
     private int offsetEventList;
@@ -1026,9 +1038,15 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private int offsetRoi;
+    
+    private int offsetPalette;
+    
+    private int offsetPositions;
 
     /** DOCUMENT ME! */
     private int offsetScanInformation;
+    
+    private int offsetTilePositions;
 
     /** DOCUMENT ME! */
     private int offsetTimeStamps;
@@ -1044,6 +1062,18 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private int offsetVectorOverlay;
+    
+    /** The x-offset of the center of the image in meter relative to the optical axis.
+     * For LSM images the x-direction is the direction of the x-scanner.
+     * In releases prior to 4.0 the entry was not used and the value 0 was written instead.
+     */
+    private double originX =0.0;
+    
+    /** The y-offset of the center of the image in meter relative to the optical axis.
+     * For LSM images the y-direction is the direction of the y-scanner.
+     * In releases prior to 4.0 the entry was not used and the value 0 was written instead.
+     */
+    private double originY = 0.0;
 
 
     /** DOCUMENT ME! */
@@ -1060,6 +1090,8 @@ public class FileLSM extends FileBase {
 
     /** Default ordering is red, green, blue. */
     private int redOffset = 0;
+    
+    private int reserved[] = new int[9];
 
     /** DOCUMENT ME! */
     private int rowsPerStrip = 0;
@@ -1132,6 +1164,12 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private int tileWidth;
+    
+    private double timeDifferenceX;
+    
+    private double timeDifferenceY;
+    
+    private double timeDifferenceZ;
 
     /** DOCUMENT ME! */
     private double timeInterval;
@@ -2152,7 +2190,7 @@ public class FileLSM extends FileBase {
                         }
                     } // else not (multiFile && (imgExtents.length == 3))
                 } catch (IOException error) {
-                    throw new IOException("FileTiff: write: " + error);
+                    throw new IOException("FileTiff: readImage: " + error);
                 }
 
                 if (multiFile == false) {
@@ -4011,7 +4049,7 @@ public class FileLSM extends FileBase {
         if (magicNumber == 0x00300494C) {
             Preferences.debug("Magic number corresponds to version 1.3\n", Preferences.DEBUG_FILEIO);
         } else if (magicNumber == 0x00400494C) {
-            Preferences.debug("Magic number corresponds to version 1.5 to 3.0\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Magic number corresponds to version 1.5 to 6.0\n", Preferences.DEBUG_FILEIO);
         } else {
             Preferences.debug("Illegal magic number = " + magicNumber + "\n", Preferences.DEBUG_FILEIO);
             throw new IOException("Illegal magic number = " + magicNumber);
@@ -4043,7 +4081,6 @@ public class FileLSM extends FileBase {
             Preferences.debug("CZ data is 32 bit float\n", Preferences.DEBUG_FILEIO);
         } else {
             Preferences.debug("Illegal CZ data type = " + czDataType + "\n", Preferences.DEBUG_FILEIO);
-            throw new IOException("Illegal CZ data type");
         }
 
         fileInfo.setLSMDataType(czDataType);
@@ -4065,6 +4102,16 @@ public class FileLSM extends FileBase {
             imgResols[2] = (float) (1.0E6 * voxelSizeZ);
             Preferences.debug("Voxel Size Z in micrometers = " + imgResols[2] + "\n", Preferences.DEBUG_FILEIO);
         }
+        
+        originX = getDouble(endianess);
+        Preferences.debug("The x-offset of the center of the image in meters relative to the optical axis = " + originX + "\n",
+                          Preferences.DEBUG_FILEIO);
+        fileInfo.setOriginX(originX);
+        
+        originY = getDouble(endianess);
+        Preferences.debug("The y-offset of the center of the image in meters relative to the optical axis = " + originY + "\n",
+                          Preferences.DEBUG_FILEIO);
+        fileInfo.setOriginY(originY);
 
         raFile.seek(startCZ + 88L);
         czScanType = getUnsignedShort(endianess);
@@ -4103,7 +4150,7 @@ public class FileLSM extends FileBase {
             Preferences.debug("No spectral scan\n", Preferences.DEBUG_FILEIO);
         } else if (czSpectralScan == 1) {
             Preferences.debug("Image has been acquired in spectral scan mode with a ", Preferences.DEBUG_FILEIO);
-            Preferences.debug("Meta detector\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("LSM 510 META or LSM 710 QUASAR detector\n", Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setSpectralScan(czSpectralScan);
@@ -4115,9 +4162,11 @@ public class FileLSM extends FileBase {
         } else if (czDataType2 == 1) {
             Preferences.debug("Calculated data\n", Preferences.DEBUG_FILEIO);
         } else if (czDataType2 == 2) {
-            Preferences.debug("Animation\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("3D reconstruction\n", Preferences.DEBUG_FILEIO);
+        } else if (czDataType2 == 3) {
+            Preferences.debug("Topography height map\n", Preferences.DEBUG_FILEIO);
         } else {
-            Preferences.debug("Data type has illegal value = " + czDataType2 + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("Data type2 has illegal value = " + czDataType2 + "\n", Preferences.DEBUG_FILEIO);
         }
 
         fileInfo.setLSMDataType2(czDataType2);
@@ -4645,6 +4694,106 @@ public class FileLSM extends FileBase {
             readOffsetUnmixParameters();
             raFile.seek(saveLocus);
         }
+        
+        offsetAcquisitionParameters = getInt(endianess);
+        
+        if (offsetAcquisitionParameters != 0) {
+            Preferences.debug("Offset to a block with acquisition parameters for\n", Preferences.DEBUG_FILEIO);  
+            Preferences.debug("support of the re-use function of the LSM 5/7 program\n", Preferences.DEBUG_FILEIO);
+            long saveLocus = raFile.getFilePointer();
+            raFile.seek(offsetAcquisitionParameters);
+            readOffsetAcquisitionParameters();
+            raFile.seek(saveLocus);
+        }
+        
+        offsetCharacteristics = getInt(endianess);
+        
+        if (offsetCharacteristics != 0) {
+            Preferences.debug("Offset to a block with user specified properties\n", Preferences.DEBUG_FILEIO);
+            long saveLocus = raFile.getFilePointer();
+            raFile.seek(offsetCharacteristics);
+            readOffsetCharacteristics();
+            raFile.seek(saveLocus);
+        }
+        
+        offsetPalette = getInt(endianess);
+        
+        if (offsetPalette != 0) {
+            Preferences.debug("Offset to a block with detailed color palette properties\n", Preferences.DEBUG_FILEIO);
+            long saveLocus = raFile.getFilePointer();
+            raFile.seek(offsetPalette);
+            readOffsetPalette();
+            raFile.seek(saveLocus);
+        }
+        
+        timeDifferenceX = getDouble(endianess);
+        Preferences.debug("The time difference for the acquisition of adjacent pixels in x-direction in seconds = " +
+                          timeDifferenceX + "\n", Preferences.DEBUG_FILEIO);
+        fileInfo.setTimeDifferenceX(timeDifferenceX);
+        
+        timeDifferenceY = getDouble(endianess);
+        Preferences.debug("The time difference for the acquisition of adjacent pixels in y-direction in seconds = " +
+                          timeDifferenceY + "\n", Preferences.DEBUG_FILEIO);
+        fileInfo.setTimeDifferenceY(timeDifferenceY);
+        
+        timeDifferenceZ = getDouble(endianess);
+        Preferences.debug("The time difference for the acquisition of adjacent pixels in z-direction in seconds = " +
+                          timeDifferenceZ + "\n", Preferences.DEBUG_FILEIO);
+        fileInfo.setTimeDifferenceZ(timeDifferenceZ);
+        
+        internalUse1 = getInt(endianess);
+        Preferences.debug("Internal use 1 = " + internalUse1 + "\n", Preferences.DEBUG_FILEIO);
+        
+        dimensionP = getInt(endianess);
+        Preferences.debug("Number of intensity values in position-direction = " + dimensionP + "\n", Preferences.DEBUG_FILEIO);
+        fileInfo.setDimensionP(dimensionP);
+        
+        dimensionM = getInt(endianess);
+        Preferences.debug("Number of intensity values in tile (mosaic) direction = " + dimensionM + "\n", 
+                          Preferences.DEBUG_FILEIO);
+        fileInfo.setDimensionM(dimensionM);
+        
+        for (i = 0; i < 16; i++) {
+            dimensionsReserved[i] = getInt(endianess);
+            if (dimensionsReserved[i] == 0) {
+                Preferences.debug("dimensionReserved["+i+"] = 0 as expected\n", Preferences.DEBUG_FILEIO);
+            }
+            else {
+                Preferences.debug("dimensionsReserved["+i+"] = " + dimensionsReserved[i] + " instead of the expected 0\n",
+                                  Preferences.DEBUG_FILEIO);
+            } 
+        }
+        
+        offsetTilePositions = getInt(endianess);
+        
+        if (offsetTilePositions != 0) {
+            Preferences.debug("Offset to a block with the positions of the tiles\n", Preferences.DEBUG_FILEIO);
+            long saveLocus = raFile.getFilePointer();
+            raFile.seek(offsetTilePositions);
+            readOffsetTilePositions();
+            raFile.seek(saveLocus);
+        }
+        
+        for (i = 0; i < 9; i++) {
+            reserved[i] = getInt(endianess);
+            if (reserved[i] == 0) {
+                Preferences.debug("reserved["+i+"] = 0 as expected\n", Preferences.DEBUG_FILEIO);
+            }
+            else {
+                Preferences.debug("reserved["+i+"] = " + reserved[i] + " instead of the expected 0\n");
+            }
+        }
+        
+       offsetPositions = getInt(endianess);
+        
+        if (offsetPositions != 0) {
+            Preferences.debug("Offset to a block with the positions of the acquisition regions\n", Preferences.DEBUG_FILEIO);
+            long saveLocus = raFile.getFilePointer();
+            raFile.seek(offsetPositions);
+            readOffsetPositions();
+            raFile.seek(saveLocus);
+        }
+        
     }
 
 
@@ -6096,6 +6245,1257 @@ public class FileLSM extends FileBase {
     }
 
 
+    private void readOffsetAcquisitionParameters() throws IOException {
+        int i, j;
+        int index = 0;
+        int level = 0;
+        int entry;
+        int scanType;
+        int scanSize;
+        String pad;
+        String[] tempString = new String[10000];
+        int nLONG;
+        int nRATIONAL;
+        byte[] description;
+        int endPos;
+        boolean foundEnd;
+        int startPos;
+        boolean foundStart;
+        int intValue;
+        double doubleValue;
+        int redValue;
+        int greenValue;
+        int blueValue;
+        boolean doFirst = true;
+
+        do {
+            entry = getInt(endianess);
+            scanType = getInt(endianess);
+            scanSize = getInt(endianess);
+            if (doFirst) {
+                doFirst = false;
+                Preferences.debug("entry = " + entry + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("scanType = " + scanType + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("scanSize = " + scanSize + "\n", Preferences.DEBUG_FILEIO);
+            }
+
+            if ((entry != SUBBLOCK_END) && (scanType == TYPE_SUBBLOCK)) {
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                level++;
+
+                switch (entry) {
+
+                    case SUBBLOCK_RECORDING:
+                        tempString[index++] = pad + "SUBBLOCK_RECORDING";
+                        break;
+
+                    case SUBBLOCK_LASERS:
+                        tempString[index++] = pad + "SUBBLOCK_LASERS";
+                        break;
+
+                    case SUBBLOCK_LASER:
+                        tempString[index++] = pad + "SUBBLOCK_LASER";
+                        break;
+
+                    case SUBBLOCK_TRACKS:
+                        tempString[index++] = pad + "SUBBLOCK_TRACKS";
+                        break;
+
+                    case SUBBLOCK_TRACK:
+                        tempString[index++] = pad + "SUBBLOCK_TRACK";
+                        break;
+
+                    case SUBBLOCK_DETECTION_CHANNELS:
+                        tempString[index++] = pad + "SUBBLOCK_DETECTION_CHANNELS";
+                        break;
+
+                    case SUBBLOCK_DETECTION_CHANNEL:
+                        tempString[index++] = pad + "SUBBLOCK_DETECTION_CHANNEL";
+                        break;
+
+                    case SUBBLOCK_ILLUMINATION_CHANNELS:
+                        tempString[index++] = pad + "SUBBLOCK_ILLUMINATION_CHANNELS";
+                        break;
+
+                    case SUBBLOCK_ILLUMINATION_CHANNEL:
+                        tempString[index++] = pad + "SUBBLOCK_ILLUMINATION_CHANNEL";
+                        break;
+
+                    case SUBBLOCK_BEAM_SPLITTERS:
+                        tempString[index++] = pad + "SUBBLOCK_BEAM_SPLITTERS";
+                        break;
+
+                    case SUBBLOCK_BEAM_SPLITTER:
+                        tempString[index++] = pad + "SUBBLOCK_BEAM_SPLITTER";
+                        break;
+
+                    case SUBBLOCK_DATA_CHANNELS:
+                        tempString[index++] = pad + "SUBBLOCK_DATA_CHANNELS";
+                        break;
+
+                    case SUBBLOCK_DATA_CHANNEL:
+                        tempString[index++] = pad + "SUBBLOCK_DATA_CHANNEL";
+                        break;
+
+                    case SUBBLOCK_TIMERS:
+                        tempString[index++] = pad + "SUBBLOCK_TIMERS";
+                        break;
+
+                    case SUBBLOCK_TIMER:
+                        tempString[index++] = pad + "SUBBLOCK_TIMER";
+                        break;
+
+                    case SUBBLOCK_MARKERS:
+                        tempString[index++] = pad + "SUBBLOCK_MARKERS";
+                        break;
+
+                    case SUBBLOCK_MARKER:
+                        tempString[index++] = pad + "SUBBLOCK_MARKER";
+                        break;
+                } // switch (entry)
+            } else if ((entry == SUBBLOCK_END) && (scanType == TYPE_SUBBLOCK)) {
+                level--;
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                tempString[index++] = pad + "SUBBLOCK_END";
+            } else if (scanType != TYPE_SUBBLOCK) {
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                switch (entry) {
+
+                    case RECORDING_ENTRY_NAME:
+                        tempString[index++] = pad + "RECORDING_ENTRY_NAME";
+                        break;
+
+                    case RECORDING_ENTRY_DESCRIPTION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_DESCRIPTION";
+                        break;
+
+                    case RECORDING_ENTRY_NOTES:
+                        tempString[index++] = pad + "RECORDING_ENTRY_NOTES";
+                        break;
+
+                    case RECORDING_ENTRY_OBJECTIVE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_OBJECTIVE";
+                        break;
+
+                    case RECORDING_ENTRY_PROCESSING_SUMMARY:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PROCESSING_SUMMARY";
+                        break;
+
+                    case RECORDING_ENTRY_SPECIAL_SCAN_MODE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SPECIAL_SCAN_MODE";
+                        break;
+
+                    case RECORDING_ENTRY_SCAN_TYPE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SCAN_TYPE";
+                        break;
+
+                    case OLEDB_RECORDING_ENTRY_SCAN_MODE:
+                        tempString[index++] = pad + "OLEDB_RECORDING_ENTRY_SCAN_MODE";
+                        break;
+
+                    case RECORDING_ENTRY_NUMBER_OF_STACKS:
+                        tempString[index++] = pad + "RECORDING_ENTRY_NUMBER_OF_STACKS";
+                        break;
+
+                    case RECORDING_ENTRY_LINES_PER_PLANE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_LINES_PER_PLANE";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLES_PER_LINE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLES_PER_LINE";
+                        break;
+
+                    case RECORDING_ENTRY_PLANES_PER_VOLUME:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PLANES_PER_VOLUME";
+                        break;
+
+                    case RECORDING_ENTRY_IMAGES_WIDTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_IMAGES_WIDTH";
+                        break;
+
+                    case RECORDING_ENTRY_IMAGES_HEIGHT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_IMAGES_HEIGHT";
+                        break;
+
+                    case RECORDING_ENTRY_IMAGES_NUMBER_PLANES:
+                        tempString[index++] = pad + "RECORDING_ENTRY_IMAGES_NUMBER_PLANES";
+                        break;
+
+                    case RECORDING_ENTRY_IMAGES_NUMBER_STACKS:
+                        tempString[index++] = pad + "RECORDING_ENTRY_IMAGES_NUMBER_STACKS";
+                        break;
+
+                    case RECORDING_ENTRY_IMAGES_NUMBER_CHANNELS:
+                        tempString[index++] = pad + "RECORDING_ENTRY_IMAGES_NUMBER_CHANNELS";
+                        break;
+
+                    case RECORDING_ENTRY_LINSCAN_XY_SIZE:
+                        tempString[index++] = pad + "RECORDING_ENTRY_LINSCAN_XY_SIZE";
+                        break;
+
+                    case RECORDING_ENTRY_SCAN_DIRECTION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SCAN_DIRECTION";
+                        break;
+
+                    case RECORDING_ENTRY_TIME_SERIES:
+                        tempString[index++] = pad + "RECORDING_ENTRY_TIME_SERIES";
+                        break;
+
+                    case RECORDING_ENTRY_ORIGINAL_SCAN_DATA:
+                        tempString[index++] = pad + "RECORDING_ENTRY_ORIGINAL_SCAN_DATA";
+                        break;
+
+                    case RECORDING_ENTRY_ZOOM_X:
+                        tempString[index++] = pad + "RECORDING_ENTRY_ZOOM_X";
+                        break;
+
+                    case RECORDING_ENTRY_ZOOM_Y:
+                        tempString[index++] = pad + "RECORDING_ENTRY_ZOOM_Y";
+                        break;
+
+                    case RECORDING_ENTRY_ZOOM_Z:
+                        tempString[index++] = pad + "RECORDING_ENTRY_ZOOM_Z";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLE_0X:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLE_0X";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLE_0Y:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLE_0Y";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLE_0Z:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLE_0Z";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLE_SPACING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLE_SPACING";
+                        break;
+
+                    case RECORDING_ENTRY_LINE_SPACING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_LINE_SPACING";
+                        break;
+
+                    case RECORDING_ENTRY_PLANE_SPACING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PLANE_SPACING";
+                        break;
+
+                    case RECORDING_ENTRY_PLANE_WIDTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PLANE_WIDTH";
+                        break;
+
+                    case RECORDING_ENTRY_PLANE_HEIGHT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PLANE_HEIGHT";
+                        break;
+
+                    case RECORDING_ENTRY_VOLUME_DEPTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_VOLUME_DEPTH";
+                        break;
+
+                    case RECORDING_ENTRY_ROTATION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_ROTATION";
+                        break;
+
+                    case RECORDING_ENTRY_NUTATION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_NUTATION";
+                        break;
+
+                    case RECORDING_ENTRY_PRECESSION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PRECESSION";
+                        break;
+
+                    case RECORDING_ENTRY_SAMPLE_0TIME:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SAMPLE_0TIME";
+                        break;
+
+                    case RECORDING_ENTRY_START_SCAN_TRIGGER_IN:
+                        tempString[index++] = pad + "RECORDING_ENTRY_START_SCAN_TRIGGER_IN";
+                        break;
+
+                    case RECORDING_ENTRY_START_SCAN_TRIGGER_OUT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_START_SCAN_TRIGGER_OUT";
+                        break;
+
+                    case RECORDING_ENTRY_START_SCAN_EVENT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_START_SCAN_EVENT";
+                        break;
+
+                    case RECORDING_ENTRY_START_SCAN_TIME:
+                        tempString[index++] = pad + "RECORDING_ENTRY_START_SCAN_TIME";
+                        break;
+
+                    case RECORDING_ENTRY_STOP_SCAN_TRIGGER_IN:
+                        tempString[index++] = pad + "RECORDING_ENTRY_STOP_SCAN_TRIGGER_IN";
+                        break;
+
+                    case RECORDING_ENTRY_STOP_SCAN_TRIGGER_OUT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_STOP_SCAN_TRIGGER_OUT";
+                        break;
+
+                    case RECORDING_ENTRY_STOP_SCAN_EVENT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_STOP_SCAN_EVENT";
+                        break;
+
+                    case RECORDING_ENTRY_STOP_SCAN_TIME:
+                        tempString[index++] = pad + "RECORDING_ENTRY_STOP_SCAN_TIME";
+                        break;
+
+                    case RECORDING_ENTRY_USE_ROIS:
+                        tempString[index++] = pad + "RECORDING_ENTRY_USE_ROIS";
+                        break;
+
+                    case RECORDING_ENTRY_USE_REDUCED_MEMORY_ROIS:
+                        tempString[index++] = pad + "RECORDING_ENTRY_USE_REDUCED_MEMORY_ROIS";
+                        break;
+
+                    case RECORDING_ENTRY_USER:
+                        tempString[index++] = pad + "RECORDING_ENTRY_USER";
+                        break;
+
+                    case RECORDING_ENTRY_USE_BCCORRECTION:
+                        tempString[index++] = pad + "RECORDING_ENTRY_USE_BCCORRECTION";
+                        break;
+
+                    case RECORDING_ENTRY_POSITION_BCCORRECTION1:
+                        tempString[index++] = pad + "RECORDING_ENTRY_POSITION_BCCORRECTION1";
+                        break;
+
+                    case RECORDING_ENTRY_POSITION_BCCORRECTION2:
+                        tempString[index++] = pad + "RECORDING_ENTRY_POSITION_BCCORRECTION2";
+                        break;
+
+                    case RECORDING_ENTRY_INTERPOLATIONY:
+                        tempString[index++] = pad + "RECORDING_ENTRY_INTERPOLATIONY";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_BINNING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_BINNING";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_SUPERSAMPLING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_SUPERSAMPLING";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_FRAME_WIDTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_FRAME_WIDTH";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_FRAME_HEIGHT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_FRAME_HEIGHT";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_OFFSETX:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_OFFSETX";
+                        break;
+
+                    case RECORDING_ENTRY_CAMERA_OFFSETY:
+                        tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_OFFSETY";
+                        break;
+
+                    case TRACK_ENTRY_MULTIPLEX_TYPE:
+                        tempString[index++] = pad + "TRACK_ENTRY_MULTIPLEX_TYPE";
+                        break;
+
+                    case TRACK_ENTRY_MULTIPLEX_ORDER:
+                        tempString[index++] = pad + "TRACK_ENTRY_MULTIPLEX_ORDER";
+                        break;
+
+                    case TRACK_ENTRY_SAMPLING_MODE:
+                        tempString[index++] = pad + "TRACK_ENTRY_SAMPLING_MODE";
+                        break;
+
+                    case TRACK_ENTRY_SAMPLING_METHOD:
+                        tempString[index++] = pad + "TRACK_ENTRY_SAMPLING_METHOD";
+                        break;
+
+                    case TRACK_ENTRY_SAMPLING_NUMBER:
+                        tempString[index++] = pad + "TRACK_ENTRY_SAMPLING_NUMBER";
+                        break;
+
+                    case TRACK_ENTRY_ACQUIRE:
+                        tempString[index++] = pad + "TRACK_ENTRY_ACQUIRE";
+                        break;
+
+                    case TRACK_ENTRY_SAMPLE_OBSERVATION_TIME:
+                        tempString[index++] = pad + "TRACK_ENTRY_SAMPLE_OBSERVATION_TIME";
+                        break;
+
+                    case TRACK_ENTRY_TIME_BETWEEN_STACKS:
+                        tempString[index++] = pad + "TRACK_ENTRY_TIME_BETWEEN_STACKS";
+                        break;
+
+                    case TRACK_ENTRY_NAME:
+                        tempString[index++] = pad + "TRACK_ENTRY_NAME";
+                        break;
+
+                    case TRACK_ENTRY_COLLIMATOR1_NAME:
+                        tempString[index++] = pad + "TRACK_ENTRY_COLLIMATOR1_NAME";
+                        break;
+
+                    case TRACK_ENTRY_COLLIMATOR1_POSITION:
+                        tempString[index++] = pad + "TRACK_ENTRY_COLLIMATOR1_POSITION";
+                        break;
+
+                    case TRACK_ENTRY_COLLIMATOR2_NAME:
+                        tempString[index++] = pad + "TRACK_ENTRY_COLLIMATOR2_NAME";
+                        break;
+
+                    case TRACK_ENTRY_COLLIMATOR2_POSITION:
+                        tempString[index++] = pad + "TRACK_ENTRY_COLLIMATOR2_POSITION";
+                        break;
+
+                    case TRACK_ENTRY_IS_BLEACH_TRACK:
+                        tempString[index++] = pad + "TRACK_ENTRY_IS_BLEACH_TRACK";
+                        break;
+
+                    case TRACK_ENTRY_IS_BLEACH_AFTER_SCAN_NUMBER:
+                        tempString[index++] = pad + "TRACK_ENTRY_IS_BLEACH_AFTER_SCAN_NUMBER";
+                        break;
+
+                    case TRACK_ENTRY_BLEACH_SCAN_NUMBER:
+                        tempString[index++] = pad + "TRACK_ENTRY_BLEACH_SCAN_NUMBER";
+                        break;
+
+                    case TRACK_ENTRY_TRIGGER_IN:
+                        tempString[index++] = pad + "TRACK_ENTRY_TRIGGER_IN";
+                        break;
+
+                    case TRACK_ENTRY_TRIGGER_OUT:
+                        tempString[index++] = pad + "TRACK_ENTRY_TRIGGER_OUT";
+                        break;
+
+                    case TRACK_ENTRY_IS_RATIO_TRACK:
+                        tempString[index++] = pad + "TRACK_ENTRY_IS_RATIO_TRACK";
+                        break;
+
+                    case TRACK_ENTRY_BLEACH_COUNT:
+                        tempString[index++] = pad + "TRACK_ENTRY_BLEACH_COUNT";
+                        break;
+
+                    case TRACK_ENTRY_SPI_CENTER_WAVELENGTH:
+                        tempString[index++] = pad + "TRACK_ENTRY_SPI_CENTER_WAVELENGTH";
+                        break;
+
+                    case TRACK_ENTRY_PIXEL_TIME:
+                        tempString[index++] = pad + "TRACK_ENTRY_PIXEL_TIME";
+                        break;
+
+                    case TRACK_ENTRY_ID_CONDENSOR_FRONTLENS:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_CONDENSOR_FRONTLENS";
+                        break;
+
+                    case TRACK_ENTRY_CONDENSOR_FRONTLENS:
+                        tempString[index++] = pad + "TRACK_ENTRY_CONDENSOR_FRONTLENS";
+                        break;
+
+                    case TRACK_ENTRY_ID_FIELD_STOP:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_FIELD_STOP";
+                        break;
+
+                    case TRACK_ENTRY_FIELD_STOP_VALUE:
+                        tempString[index++] = pad + "TRACK_ENTRY_FIELD_STOP_VALUE";
+                        break;
+
+                    case TRACK_ENTRY_ID_CONDENSOR_APERTURE:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_CONDENSOR_APERTURE";
+                        break;
+
+                    case TRACK_ENTRY_CONDENSOR_APERTURE:
+                        tempString[index++] = pad + "TRACK_ENTRY_CONDENSOR_APERTURE";
+                        break;
+
+                    case TRACK_ENTRY_ID_CONDENSOR_REVOLVER:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_CONDENSOR_REVOLVER";
+                        break;
+
+                    case TRACK_ENTRY_CONDENSOR_FILTER:
+                        tempString[index++] = pad + "TRACK_ENTRY_CONDENSOR_FILTER";
+                        break;
+
+                    case TRACK_ENTRY_ID_TRANSMISSION_FILTER1:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TRANSMISSION_FILTER1";
+                        break;
+
+                    case TRACK_ENTRY_ID_TRANSMISSION1:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TRANSMISSION1";
+                        break;
+
+                    case TRACK_ENTRY_ID_TRANSMISSION_FILTER2:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TRANSMISSION_FILTER2";
+                        break;
+
+                    case TRACK_ENTRY_ID_TRANSMISSION2:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TRANSMISSION2";
+                        break;
+
+                    case TRACK_ENTRY_REPEAT_BLEACH:
+                        tempString[index++] = pad + "TRACK_ENTRY_REPEAT_BLEACH";
+                        break;
+
+                    case TRACK_ENTRY_ENABLE_SPOT_BLEACH_POS:
+                        tempString[index++] = pad + "TRACK_ENTRY_ENABLE_SPOT_BLEACH_POS";
+                        break;
+
+                    case TRACK_ENTRY_SPOT_BLEACH_POSX:
+                        tempString[index++] = pad + "TRACK_ENTRY_SPOT_BLEACH_POSX";
+                        break;
+
+                    case TRACK_ENTRY_SPOT_BLEACH_POSY:
+                        tempString[index++] = pad + "TRACK_ENTRY_SPOT_BLEACH_POSY";
+                        break;
+
+                    case TRACK_ENTRY_BLEACH_POSITION_Z:
+                        tempString[index++] = pad + "TRACK_ENTRY_BLEACH_POSITION_Z";
+                        break;
+
+                    case LASER_ENTRY_NAME:
+                        tempString[index++] = pad + "LASER_ENTRY_NAME";
+                        break;
+
+                    case LASER_ENTRY_ACQUIRE:
+                        tempString[index++] = pad + "LASER_ENTRY_ACQUIRE";
+                        break;
+
+                    case LASER_ENTRY_POWER:
+                        tempString[index++] = pad + "LASER_ENTRY_POWER";
+                        break;
+
+                    case DETCHANNEL_ENTRY_INTEGRATION_MODE:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_INTEGRATION_MODE";
+                        break;
+
+                    case DETCHANNEL_ENTRY_SPECIAL_MODE:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_SPECIAL_MODE";
+                        break;
+
+                    case DETCHANNEL_ENTRY_DETECTOR_GAIN_FIRST:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_DETECTOR_GAIN_FIRST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_DETECTOR_GAIN_LAST:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_DETECTOR_GAIN_LAST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_AMPLIFIER_GAIN_FIRST:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_AMPLIFIER_GAIN_FIRST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_AMPLIFIER_GAIN_LAST:
+                        tempString[index++] = pad + "DETCHANEL_ENTRY_AMPLIFIER_GAIN_LAST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_AMPLIFIER_OFFS_FIRST:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_AMPLIFIER_OFFS_FIRST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_AMPLIFIER_OFFS_LAST:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_AMPLIFIER_OFFS_LAST";
+                        break;
+
+                    case DETCHANNEL_ENTRY_PINHOLE_DIAMETER:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_PINHOLE_DIAMETER";
+                        break;
+
+                    case DETCHANNEL_ENTRY_COUNTING_TRIGGER:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_COUNTING_TRIGGER";
+                        break;
+
+                    case DETCHANNEL_ENTRY_ACQUIRE:
+                        tempString[index++] = pad + "DETCHANNEL_ENTRY_ACQUIRE";
+                        break;
+
+                    case DETCHANNEL_POINT_DETECTOR_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_POINT_DETECTOR_NAME";
+                        break;
+
+                    case DETCHANNEL_AMPLIFIER_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_AMPLIFIER_NAME";
+                        break;
+
+                    case DETCHANNEL_PINHOLE_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_PINHOLE_NAME";
+                        break;
+
+                    case DETCHANNEL_FILTER_SET_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_FILTER_SET_NAME";
+                        break;
+
+                    case DETCHANNEL_FILTER_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_FILTER_NAME";
+                        break;
+
+                    case DETCHANNEL_INTEGRATOR_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_INTEGRATOR_NAME";
+                        break;
+
+                    case DETCHANNEL_DETECTION_CHANNEL_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_DETECTION_CHANNEL_NAME";
+                        break;
+
+                    case DETCHANNEL_DETECTOR_GAIN_BC1:
+                        tempString[index++] = pad + "DETCHANNEL_DETECTOR_GAIN_BC1";
+                        break;
+
+                    case DETCHANNEL_DETECTOR_GAIN_BC2:
+                        tempString[index++] = pad + "DETCHANNEL_DETECTOR_GAIN_BC2";
+                        break;
+
+                    case DETCHANNEL_AMPLIFIER_GAIN_BC1:
+                        tempString[index++] = pad + "DETCHANNEL_AMPLIFIER_GAIN_BC1";
+                        break;
+
+                    case DETCHANNEL_AMPLIFIER_GAIN_BC2:
+                        tempString[index++] = pad + "DETCHANNEL_AMPLIFIER_GAIN_BC2";
+                        break;
+
+                    case DETCHANNEL_AMPLIFIER_OFFSET_BC1:
+                        tempString[index++] = pad + "DETCHANNEL_AMPLIFIER_OFFSET_BC1";
+                        break;
+
+                    case DETCHANNEL_AMPLIFIER_OFFSET_BC2:
+                        tempString[index++] = pad + "DETCHANNEL_AMPLIFIER_OFFSET_BC2";
+                        break;
+
+                    case DETCHANNEL_SPECTRAL_SCAN_CHANNELS:
+                        tempString[index++] = pad + "DETCHANNEL_SPECTRAL_SCAN_CHANNELS";
+                        break;
+
+                    case DETCHANNEL_SPI_WAVELENGTH_START:
+                        tempString[index++] = pad + "DETCHANNEL_SPI_WAVELENGTH_START";
+                        break;
+
+                    case DETCHANNEL_SPI_WAVELENGTH_END:
+                        tempString[index++] = pad + "DETCHANNEL_SPI_WAVELENGTH_END";
+                        break;
+
+                    case DETCHANNEL_DYE_NAME:
+                        tempString[index++] = pad + "DETCHANNEL_DYE_NAME";
+                        break;
+
+                    case DETCHANNEL_DYE_FOLDER:
+                        tempString[index++] = pad + "DETCHANNEL_DYE_FOLDER";
+                        break;
+
+                    case ILLUMCHANNEL_ENTRY_NAME:
+                        tempString[index++] = pad + "ILLUMCHANNEL_ENTRY_NAME";
+                        break;
+
+                    case ILLUMCHANNEL_ENTRY_POWER:
+                        tempString[index++] = pad + "ILLUMCHANNEL_ENTRY_POWER";
+                        break;
+
+                    case ILLUMCHANNEL_ENTRY_WAVELENGTH:
+                        tempString[index++] = pad + "ILLUMCHANNEL_ENTRY_WAVELENGTH";
+                        break;
+
+                    case ILLUMCHANNEL_ENTRY_ACQUIRE:
+                        tempString[index++] = pad + "ILLUMCHANNEL_ENTRY_ACQUIRE";
+                        break;
+
+                    case ILLUMCHANNEL_DETCHANNEL_NAME:
+                        tempString[index++] = pad + "ILLUMCHANNEL_DETCHANNEL_NAME";
+                        break;
+
+                    case ILLUMCHANNEL_POWER_BC1:
+                        tempString[index++] = pad + "ILLUMCHANNEL_POWER_BC1";
+                        break;
+
+                    case ILLUMCHANNEL_POWER_BC2:
+                        tempString[index++] = pad + "ILLUMCHANNEL_POWER_BC2";
+                        break;
+
+                    case BEAMSPLITTER_ENTRY_FILTER_SET:
+                        tempString[index++] = pad + "BEAMSPLITTER_ENTRY_FILTER_SET";
+                        break;
+
+                    case BEAMSPLITTER_ENTRY_FILTER:
+                        tempString[index++] = pad + "BEAMSPLITTER_ENTRY_FILTER";
+                        break;
+
+                    case BEAMSPLITTER_ENTRY_NAME:
+                        tempString[index++] = pad + "BEAMSPLITTER_ENTRY_NAME";
+                        break;
+
+                    case DATACHANNEL_ENTRY_NAME:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_NAME";
+                        break;
+
+                    case DATACHANNEL_ENTRY_COLOR:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_COLOR";
+                        break;
+
+                    case DATACHANNEL_ENTRY_SAMPLETYPE:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_SAMPLETYPE";
+                        break;
+
+                    case DATACHANNEL_ENTRY_BITSPERSAMPLE:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_BITSPERSAMPLE";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_TYPE:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_TYPE";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_TRACK1:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_TRACK1";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CHANNEL1:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CHANNEL1";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_TRACK2:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_TRACK2";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CHANNEL2:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CHANNEL2";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST1:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST1";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST2:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST2";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST3:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST3";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST4:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST4";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST5:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST5";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_CONST6:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_CONST6";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_FIRST_IMAGES1:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_FIRST_IMAGES1";
+                        break;
+
+                    case DATACHANNEL_ENTRY_RATIO_FIRST_IMAGES2:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_RATIO_FIRST_IMAGES2";
+                        break;
+
+                    case DATACHANNEL_ENTRY_DYE_NAME:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_DYE_NAME";
+                        break;
+
+                    case DATACHANNEL_ENTRY_DYE_FOLDER:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_DYE_FOLDER";
+                        break;
+
+                    case DATACHANNEL_ENTRY_SPECTRUM:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_SPECTRUM";
+                        break;
+
+                    case DATACHANNEL_ENTRY_ACQUIRE:
+                        tempString[index++] = pad + "DATACHANNEL_ENTRY_ACQUIRE";
+                        break;
+
+                    case TIMER_ENTRY_NAME:
+                        tempString[index++] = pad + "TIMER_ENTRY_NAME";
+                        break;
+
+                    case TIMER_ENTRY_DESCRIPTION:
+                        tempString[index++] = pad + "TIMER_ENTRY_DESCRIPTION";
+                        break;
+
+                    case TIMER_ENTRY_INTERVAL:
+                        tempString[index++] = pad + "TIMER_ENTRY_INTERVAL";
+                        break;
+
+                    case TIMER_ENTRY_TRIGGER_IN:
+                        tempString[index++] = pad + "TIMER_ENTRY_TRIGGER_IN";
+                        break;
+
+                    case TIMER_ENTRY_TRIGGER_OUT:
+                        tempString[index++] = pad + "TIMER_ENTRY_TRIGGER_OUT";
+                        break;
+
+                    case TIMER_ENTRY_ACTIVATION_TIME:
+                        tempString[index++] = pad + "TIMER_ENTRY_ACTIVATION_TIME";
+                        break;
+
+                    case TIMER_ENTRY_ACTIVATION_NUMBER:
+                        tempString[index++] = pad + "TIMER_ENTRY_ACTIVATION_NUMBER";
+                        break;
+
+                    case MARKER_ENTRY_NAME:
+                        tempString[index++] = pad + "MARKER_ENTRY_NAME";
+                        break;
+
+                    case MARKER_ENTRY_DESCRIPTION:
+                        tempString[index++] = pad + "MARKER_ENTRY_DESCRIPTION";
+                        break;
+
+                    case MARKER_ENTRY_TRIGGER_IN:
+                        tempString[index++] = pad + "MARKER_ENTRY_TRIGGER_IN";
+                        break;
+
+                    case MARKER_ENTRY_TRIGGER_OUT:
+                        tempString[index++] = pad + "MARKER_ENTRY_TRIGGER_OUT";
+                        break;
+
+                    default:
+                        // long longEntry = (long)entry;
+                        // longEntry = 0x00000000ffffffffL & longEntry;
+                        // System.out.println("entry = " + Long.toString(longEntry,16));
+                } // switch(entry)
+            }
+
+            if (scanType == TYPE_LONG) {
+                nLONG = scanSize / 4;
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                for (i = 0; i < nLONG; i++) {
+                    intValue = getInt(endianess);
+
+                    switch (entry) {
+
+                        case RECORDING_ENTRY_START_SCAN_EVENT:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Button (normal operation)";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "Trigger slow - Scanner off" +
+                                                          ", PMT high voltage off, reaction 300 msec";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "Trigger normal - Scanner " +
+                                                          "off, PMT high voltage on, reaction 30 msec";
+                                    break;
+
+                                case 3:
+                                    tempString[index++] = pad + "Trigger fast - Scanner on," +
+                                                          " PMT high voltage on, reaction 5 msec";
+                                    break;
+
+                                case 4:
+                                    tempString[index++] = pad + "Start time";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case RECORDING_ENTRY_STOP_SCAN_EVENT:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Button (normal operation button)";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "Trigger";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "End time";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case RECORDING_ENTRY_USE_ROIS:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "ROIs should not be used for the scan process";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "ROIs should be used for the scan process";
+                            }
+
+                            break;
+
+                        case RECORDING_ENTRY_USE_REDUCED_MEMORY_ROIS:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Scan memory was provided for the whole plane";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "Scan memory was provided " +
+                                                          "only for the ROI bounding rectangle";
+                            }
+
+                            break;
+
+                        case RECORDING_ENTRY_INTERPOLATIONY:
+                            switch (intValue) {
+
+                                case 1:
+                                    tempString[index++] = pad + "No interpolation was done";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "Scan 1 out of every " + String.valueOf(intValue) +
+                                                          " lines";
+                            }
+
+                            break;
+
+                        case RECORDING_ENTRY_CAMERA_SUPERSAMPLING:
+                            switch (intValue) {
+
+                                case 0:
+                                case 1:
+                                    tempString[index++] = pad + "No technique was used " +
+                                                          "to enlarge the number of pixels";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "Horizontal and vertical " +
+                                                          "enlargement of pixel number by factor of " +
+                                                          String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_MULTIPLEX_TYPE:
+                            switch (intValue) {
+
+                                case 2:
+                                    tempString[index++] = pad + "A switch to the next track is done afer a stack";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "A switch to the next track is done after a plane";
+                                    break;
+
+                                case 0:
+                                    tempString[index++] = pad + "A switch to the next track is done after a line";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_SAMPLING_MODE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Sample";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "Line-Average";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "Frame-Average";
+                                    break;
+
+                                case 3:
+                                    tempString[index++] = pad + "Integration mode";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_SAMPLING_METHOD:
+                            switch (intValue) {
+
+                                case 1:
+                                    tempString[index++] = pad + "Mean";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "Sum";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_ACQUIRE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "The track was not used during scan";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "The track was used during scan";
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_IS_BLEACH_TRACK:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "The track setting does not specify bleach parameters";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "The track setting does specify bleach parameters " +
+                                                          "and has no active detection channels";
+                            }
+
+                            break;
+
+                        case TRACK_ENTRY_CONDENSOR_FRONTLENS:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "No condensor front lens was in the beam path";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "The condensor front lens was in the beam path";
+                                    break;
+                            }
+
+                            break;
+
+                        case LASER_ENTRY_ACQUIRE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "The laser was off";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "The laser was on";
+                            }
+
+                            break;
+
+                        case DETCHANNEL_ENTRY_INTEGRATION_MODE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Integration mode";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "Photon counting mode";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case DETCHANNEL_ENTRY_ACQUIRE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "Detection channel was not used during scan";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "Detection channel was used during scan";
+                            }
+
+                            break;
+
+                        case ILLUMCHANNEL_ENTRY_ACQUIRE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "The attenuator was disabled";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + "The attenuator was enabled";
+                            }
+
+                            break;
+
+                        case DATACHANNEL_ENTRY_COLOR:
+                            redValue = intValue & 0x000000ff;
+                            greenValue = (intValue >> 8) & 0x000000ff;
+                            blueValue = (intValue >> 16) & 0x000000ff;
+                            tempString[index++] = pad + "red = " + String.valueOf(redValue);
+                            tempString[index++] = pad + "green = " + String.valueOf(greenValue);
+                            tempString[index++] = pad + "blue = " + String.valueOf(blueValue);
+                            break;
+
+                        case DATACHANNEL_ENTRY_SAMPLETYPE:
+                            switch (intValue) {
+
+                                case 1:
+                                    tempString[index++] = pad + "8 bit channel";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "12 bit channel";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case DATACHANNEL_ENTRY_BITSPERSAMPLE:
+                            switch (intValue) {
+
+                                case 8:
+                                    tempString[index++] = pad + "8 bit channel";
+                                    break;
+
+                                case 12:
+                                    tempString[index++] = pad + "12 bit channel";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        case DATACHANNEL_ENTRY_RATIO_TYPE:
+                            switch (intValue) {
+
+                                case 0:
+                                    tempString[index++] = pad + "No online calculation - " +
+                                                          "the data channel receives raw scan data";
+                                    break;
+
+                                case 1:
+                                    tempString[index++] = pad + "Online ratio: " + "(S1 + C1)/(S2 + C2)*C3+C4";
+                                    break;
+
+                                case 2:
+                                    tempString[index++] = pad + "Online subtraction: " + "(S1*C1 - S2*C3)/C2 + C4";
+                                    break;
+
+                                case 3:
+                                    tempString[index++] = pad + "Online ratio: " + "(S1-S2*C1)/(S1+S2*C2)*C3+C4";
+                                    break;
+
+                                case 4:
+                                    tempString[index++] = pad + "Online hill function: " + "C3*(C4/C5)*(S1-C1)/(C2-S2)";
+                                    break;
+
+                                case 5:
+                                    tempString[index++] = pad + "Online reference ratio: " + "(S1-S2+C1)/(S2-C2)*C3+C4";
+                                    break;
+
+                                case 6:
+                                    tempString[index++] = pad + "Online linear unmixing";
+                                    break;
+
+                                default:
+                                    tempString[index++] = pad + String.valueOf(intValue);
+                            }
+
+                            break;
+
+                        default:
+                            tempString[index++] = pad + String.valueOf(intValue);
+                    }
+                }
+            } // if (scanType == TYPE_LONG)
+            else if (scanType == TYPE_RATIONAL) {
+                nRATIONAL = scanSize / 8;
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                for (i = 0; i < nRATIONAL; i++) {
+                    doubleValue = getDouble(endianess);
+                    tempString[index++] = pad + String.valueOf(doubleValue);
+                }
+            } // else if (scanType == TYPE_RATIONAL) {
+            else if ((scanType == TYPE_ASCII) && (scanSize > 0)) {
+                description = new byte[scanSize];
+
+                for (i = 0; i < scanSize; i++) {
+                    description[i] = raFile.readByte();
+                }
+
+                endPos = 0;
+                foundEnd = false;
+
+                for (j = scanSize - 1; (j >= 0) && (!foundEnd); j--) {
+
+                    if (description[j] > 0x20) {
+                        endPos = j;
+                        foundEnd = true;
+                    }
+                }
+
+                startPos = 0;
+                foundStart = false;
+
+                for (j = 0; (j < endPos) && (!foundStart); j++) {
+
+                    if (description[j] > 0x20) {
+                        startPos = j;
+                        foundStart = true;
+                    }
+                }
+
+                pad = new String("");
+
+                for (i = 0; i < level; i++) {
+                    pad = pad + "    ";
+                }
+
+                if (endPos > 0) {
+                    tempString[index++] = pad + new String(description, startPos, endPos - startPos + 1);
+                }
+            }
+        } while (level > 0);
+
+        for (i = 0; i < (index - 1); i++) {
+            Preferences.debug(tempString[i] + "\n", Preferences.DEBUG_FILEIO);
+        }    
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -6130,6 +7530,71 @@ public class FileLSM extends FileBase {
             reserved[i][2] = getInt(endianess);
         }
 
+    }
+    
+    private void readOffsetCharacteristics() throws IOException {
+        
+    }
+    
+    private void readOffsetPalette() throws IOException {
+        
+    }
+    
+    private void readOffsetPositions() throws IOException {
+        int i;
+        int positions;
+        int positionX1[];
+        int positionY1[];
+        int positionX2[];
+        int positionY2[];
+        
+        positions = readInt(endianess);
+        Preferences.debug("The number of acquisition regions for which position information is stored = " 
+                           + positions + "\n", Preferences.DEBUG_FILEIO);
+        positionX1 = new int[positions];
+        positionY1 = new int[positions];
+        positionX2 = new int[positions];
+        positionY2 = new int[positions];
+        for (i = 0; i < positions; i++) {
+            Preferences.debug("For region " + (i+1) + ": \n", Preferences.DEBUG_FILEIO);
+            positionX1[i] = getInt(endianess);
+            Preferences.debug("Position X1 = " + positionX1[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionY1[i] = getInt(endianess);
+            Preferences.debug("Position Y1 = " + positionY1[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionX2[i] = getInt(endianess);
+            Preferences.debug("Position X2 = " + positionX2[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionY2[i] = getInt(endianess);
+            Preferences.debug("Position Y2 = " + positionY2[i] + " meters\n", Preferences.DEBUG_FILEIO);
+        }
+    }
+    
+    private void readOffsetTilePositions() throws IOException {
+        int i;
+        int positions;
+        int positionX1[];
+        int positionY1[];
+        int positionX2[];
+        int positionY2[];
+        
+        positions = readInt(endianess);
+        Preferences.debug("The number of tiles for which position information is stored = " 
+                           + positions + "\n", Preferences.DEBUG_FILEIO);
+        positionX1 = new int[positions];
+        positionY1 = new int[positions];
+        positionX2 = new int[positions];
+        positionY2 = new int[positions];
+        for (i = 0; i < positions; i++) {
+            Preferences.debug("For tile " + (i+1) + ": \n", Preferences.DEBUG_FILEIO);
+            positionX1[i] = getInt(endianess);
+            Preferences.debug("Position X1 = " + positionX1[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionY1[i] = getInt(endianess);
+            Preferences.debug("Position Y1 = " + positionY1[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionX2[i] = getInt(endianess);
+            Preferences.debug("Position X2 = " + positionX2[i] + " meters\n", Preferences.DEBUG_FILEIO);
+            positionY2[i] = getInt(endianess);
+            Preferences.debug("Position Y2 = " + positionY2[i] + " meters\n", Preferences.DEBUG_FILEIO);
+        }
+        
     }
 
     /**
