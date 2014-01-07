@@ -50,6 +50,10 @@ public class FileInfoLSM extends FileInfoBase {
 
     /** DOCUMENT ME! */
     private int channels = -1;
+    
+    private int dimensionM = 0;
+    
+    private int dimensionP = 0;
 
     /** DOCUMENT ME! */
     private double displayAspectTime = 0.0;
@@ -101,6 +105,18 @@ public class FileInfoLSM extends FileInfoBase {
 
     /** DOCUMENT ME! */
     private double objectiveSphereCorrection = -1.0;
+    
+    /** The x-offset of the center of the image in meter relative to the optical axis.
+     * For LSM images the x-direction is the direction of the x-scanner.
+     * In releases prior to 4.0 the entry was not used and the value 0 was written instead.
+     */
+    private double originX =0.0;
+    
+    /** The y-offset of the center of the image in meter relative to the optical axis.
+     * For LSM images the y-direction is the direction of the y-scanner.
+     * In releases prior to 4.0 the entry was not used and the value 0 was written instead.
+     */
+    private double originY = 0.0;
 
     /** DOCUMENT ME! */
     private int[] redArray = null;
@@ -110,6 +126,12 @@ public class FileInfoLSM extends FileInfoBase {
 
     /** DOCUMENT ME! */
     private int spectralScan = -1;
+    
+    private double timeDifferenceX = 0.0;
+    
+    private double timeDifferenceY = 0.0;
+    
+    private double timeDifferenceZ = 0.0;
 
     /** DOCUMENT ME! */
     private int timeDim = -1;
@@ -166,6 +188,14 @@ public class FileInfoLSM extends FileInfoBase {
         } else if (LSMDataType == 5) {
             dialog.append("32-bit floats\n");
         }
+        
+        if (originX != 0.0) {
+            dialog.append("The x-offset of the center of the image in meters relative to the optical axis = " + originX + "\n");
+        }
+        
+        if (originY != 0.0) {
+            dialog.append("The y-offset of the center of the image in meters relative to the optical axis = " + originY + "\n");
+        }
 
         if (scanType == 0) {
             dialog.append("Normal x-y-z-scan\n");
@@ -195,7 +225,7 @@ public class FileInfoLSM extends FileInfoBase {
             dialog.append("No spectral scan\n");
         } else if (spectralScan == 1) {
             dialog.append("Image has been acquired in spectral scan mode with a ");
-            dialog.append("Meta detector\n");
+            dialog.append("LSM 510 META or LSM 710 QUASAR detector\n");
         }
 
         if (LSMDataType2 == 0) {
@@ -203,7 +233,9 @@ public class FileInfoLSM extends FileInfoBase {
         } else if (LSMDataType2 == 1) {
             dialog.append("Calculated data\n");
         } else if (LSMDataType2 == 2) {
-            dialog.append("Animation\n");
+            dialog.append("3D reconstruction\n");
+        } else if (LSMDataType2 == 3) {
+            dialog.append("Topography height map\n");
         }
 
         if (timeInterval > 0.0) {
@@ -388,6 +420,29 @@ public class FileInfoLSM extends FileInfoBase {
                 dialog.append("End wavelength[" + (i + 1) + "]: " + wavelengths[(2 * i) + 1] + "\n");
             }
         } // if (wavelengths != null)
+        
+        if (timeDifferenceX != 0.0) {
+            dialog.append("The time difference for the acquisition of adjacent pixels in the x-direction in seconds = " +
+                          timeDifferenceX + "\n");
+        }
+        
+        if (timeDifferenceY != 0.0) {
+            dialog.append("The time difference for the acquisition of adjacent pixels in the y-direction in seconds = " +
+                          timeDifferenceY + "\n");
+        }
+        
+        if (timeDifferenceZ != 0.0) {
+            dialog.append("The time difference for the acquisition of adjacent pixels in the z-direction in seconds = " +
+                          timeDifferenceZ + "\n");
+        }
+        
+        if (dimensionP != 0) {
+            dialog.append("Number of intensity values in position-direction = " + dimensionP + "\n");
+        }
+        
+        if (dimensionM != 0) {
+            dialog.append("Number of intensity values in tile (mosaic) direction = " + dimensionM + "\n");
+        }
     }
 
     /**
@@ -496,6 +551,14 @@ public class FileInfoLSM extends FileInfoBase {
      */
     public void setChannels(int channels) {
         this.channels = channels;
+    }
+    
+    public void setDimensionM(int dimensionM) {
+        this.dimensionM = dimensionM;
+    }
+    
+    public void setDimensionP(int dimensionP) {
+        this.dimensionP = dimensionP;
     }
 
     /**
@@ -650,6 +713,14 @@ public class FileInfoLSM extends FileInfoBase {
     public void setObjectiveSphereCorrection(double objectiveSphereCorrection) {
         this.objectiveSphereCorrection = objectiveSphereCorrection;
     }
+    
+    public void setOriginX(double originX) {
+        this.originX = originX;
+    }
+    
+    public void setOriginY(double originY) {
+        this.originY = originY;
+    }
 
     /**
      * DOCUMENT ME!
@@ -676,6 +747,18 @@ public class FileInfoLSM extends FileInfoBase {
      */
     public void setSpectralScan(int spectralScan) {
         this.spectralScan = spectralScan;
+    }
+    
+    public void setTimeDifferenceX(double timeDifferenceX) {
+        this.timeDifferenceX = timeDifferenceX;
+    }
+    
+    public void setTimeDifferenceY(double timeDifferenceY) {
+        this.timeDifferenceY = timeDifferenceY;
+    }
+    
+    public void setTimeDifferenceZ(double timeDifferenceZ) {
+        this.timeDifferenceZ = timeDifferenceZ;
     }
 
     /**
