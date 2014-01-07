@@ -494,7 +494,7 @@ public class FileTiff extends FileBase {
     private boolean chunky = true;
 
     @SuppressWarnings("unchecked")
-    private Vector<Index>[] dataOffsets = new Vector[4000];
+    private Vector<Index>[] dataOffsets = new Vector[8000];
 
     /** DOCUMENT ME! */
     private byte[] dateTime;
@@ -532,7 +532,7 @@ public class FileTiff extends FileBase {
     private byte[] pageName;
 
     /** DOCUMENT ME! */
-    private int[] IFDoffsets = new int[4096];
+    private int[] IFDoffsets = new int[8192];
 
     /** DOCUMENT ME! */
     private ModelImage image;
@@ -630,7 +630,7 @@ public class FileTiff extends FileBase {
     private int tileOffsetNumber;
 
     /** DOCUMENT ME! */
-    private int[] tileOffsets = null;
+    private long[] tileOffsets = null;
 
     /** DOCUMENT ME! */
     private int tilesAcross;
@@ -645,7 +645,7 @@ public class FileTiff extends FileBase {
     private int tilesPerSlice;
 
     /** DOCUMENT ME! */
-    private int[] tileTemp;
+    private long[] tileTemp;
 
     /** DOCUMENT ME! */
     private int tileWidth;
@@ -1135,13 +1135,13 @@ public class FileTiff extends FileBase {
                     for (i = 0; i < imageSlice; i++) {
                         totalSize += dataOffsets[i].size();
                     }
-                    tileOffsets = new int[totalSize];
+                    tileOffsets = new long[totalSize];
                     tileByteCounts = new int[totalSize];
                     tileMaxByteCount = 0;
     
                     for (i = 0, k = 0; i < imageSlice; i++) {
                         for (int j = 0; j < dataOffsets[i].size(); j++) {
-                            tileOffsets[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                            tileOffsets[k] =  ((Index) (dataOffsets[i].elementAt(j))).index;
                             tileByteCounts[k] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
         
                             if (tileByteCounts[k] > tileMaxByteCount) {
@@ -7668,29 +7668,29 @@ public class FileTiff extends FileBase {
                     }
 
                     if (tileOffsetNumber == 0) {
-                        tileOffsets = new int[count];
+                        tileOffsets = new long[count];
 
                         for (i1 = 0; i1 < count; i1++) {
-                            tileOffsets[i1] = (int) valueArray[i1];
+                            tileOffsets[i1] = valueArray[i1];
                         }
 
                         tileOffsetNumber = count;
                     } // if (tileOffsetNumber == 0)
                     else {
-                        tileTemp = new int[tileOffsetNumber];
+                        tileTemp = new long[tileOffsetNumber];
 
                         for (i1 = 0; i1 < tileOffsetNumber; i1++) {
                             tileTemp[i1] = tileOffsets[i1];
                         }
 
-                        tileOffsets = new int[tileOffsetNumber + count];
+                        tileOffsets = new long[tileOffsetNumber + count];
 
                         for (i1 = 0; i1 < tileOffsetNumber; i1++) {
                             tileOffsets[i1] = tileTemp[i1];
                         }
 
                         for (i1 = 0; i1 < count; i1++) {
-                            tileOffsets[i1 + count] = (int) valueArray[i1];
+                            tileOffsets[i1 + count] = valueArray[i1];
                         }
 
                         tileOffsetNumber += count;
@@ -7720,7 +7720,7 @@ public class FileTiff extends FileBase {
 
                         tileByteNumber = count;
                     } else {
-                        tileTemp = new int[tileByteNumber];
+                        tileTemp = new long[tileByteNumber];
 
                         for (i1 = 0; i1 < tileByteNumber; i1++) {
                             tileTemp[i1] = tileByteCounts[i1];
@@ -7729,7 +7729,7 @@ public class FileTiff extends FileBase {
                         tileByteCounts = new int[tileByteNumber + count];
 
                         for (i1 = 0; i1 < tileByteNumber; i1++) {
-                            tileByteCounts[i1] = tileTemp[i1];
+                            tileByteCounts[i1] = (int)tileTemp[i1];
                         }
 
                         for (i1 = 0; i1 < count; i1++) {
@@ -11915,8 +11915,8 @@ public class FileTiff extends FileBase {
         // System.err.println("number of data offsets: " + nIndex);
         // System.err.println("buffer length: " + buffer.length);
         // ben mod: try calculating total length you'd need to read in ALL at one time
-        int firstIndex = ((Index) (dataOffsets[slice].elementAt(0))).index;
-        int lastIndex = ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).index;
+        long firstIndex = ((Index) (dataOffsets[slice].elementAt(0))).index;
+        long lastIndex = ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).index;
         
         // Buffers needed if photometric is YCbCr
         int YBuffer[] = null;
@@ -11987,10 +11987,10 @@ public class FileTiff extends FileBase {
                     nLength = buffer.length;
             } // switch (fileInfo.getDataType())
 
-            totalLength = nLength + lastIndex - firstIndex;
+            totalLength = (int)(nLength + lastIndex - firstIndex);
         } // if (((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount == 0)
         else {
-            totalLength = (lastIndex - firstIndex) + ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount;
+            totalLength = (int)((lastIndex - firstIndex) + ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount);
         }
 
         byteBuffer = new byte[totalLength];
@@ -12009,7 +12009,7 @@ public class FileTiff extends FileBase {
             try {
 
                 // System.err.println("Seeking to: " + ( (Index) (dataOffsets[slice].elementAt(idx))).index);
-                currentIndex = ((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex;
+                currentIndex = (int)(((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex);
                 //System.out.println("CurrentIndex = " + currentIndex);
 
                 // raFile.seek( ( (Index) (dataOffsets[slice].elementAt(idx))).index);
@@ -15296,9 +15296,9 @@ public class FileTiff extends FileBase {
         // System.err.println("number of data offsets: " + nIndex);
         // System.err.println("buffer length: " + buffer.length);
         // ben mod: try calculating total length you'd need to read in ALL at one time
-        int firstIndex = ((Index) (dataOffsets[slice].elementAt(0))).index;
-        int lastIndex = ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).index;
-        int totalLength = (lastIndex - firstIndex) + ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount;
+        long firstIndex = ((Index) (dataOffsets[slice].elementAt(0))).index;
+        long lastIndex = ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).index;
+        int totalLength = (int)((lastIndex - firstIndex) + ((Index) (dataOffsets[slice].elementAt(nIndex - 1))).byteCount);
         int currentIndex = 0;
 
         // System.err.println("first index: " + firstIndex + ", last index: " + lastIndex + ", totalLength: " +
@@ -15312,7 +15312,7 @@ public class FileTiff extends FileBase {
         for (a = 0; a < nIndex; a++, idx++) {
 
             try {
-                currentIndex = ((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex;
+                currentIndex = (int)( ((Index) (dataOffsets[slice].elementAt(idx))).index - firstIndex);
 
                 // raFile.seek( ( (Index) (dataOffsets[slice].elementAt(idx))).index);
                 nBytes = ((Index) (dataOffsets[slice].elementAt(idx))).byteCount;
@@ -18243,7 +18243,7 @@ public class FileTiff extends FileBase {
         public int byteCount = 0;
 
         /** DOCUMENT ME! */
-        public int index = 0;
+        public long index = 0;
 
         /**
          * Creates a new Index object.
