@@ -397,6 +397,28 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private static final int RECORDING_ENTRY_CAMERA_OFFSETY = 0x10000057;
+    
+    private static final int RECORDING_ENTRY_RT_BINNING = 0x10000059;
+    
+    private static final int RECORDING_ENTRY_RT_FRAME_WIDTH = 0x1000005A;
+    
+    private static final int RECORDING_ENTRY_RT_FRAME_HEIGHT = 0x1000005B;
+    
+    private static final int RECORDING_ENTRY_RT_REGION_WIDTH = 0x1000005C;
+    
+    private static final int RECORDING_ENTRY_RT_REGION_HEIGHT = 0x1000005D;
+    
+    private static final int RECORDING_ENTRY_RT_OFFSETX = 0x1000005E;
+    
+    private static final int RECORDING_ENTRY_RT_OFFSETY = 0x1000005F;
+    
+    private static final int RECORDING_ENTRY_RT_ZOOM = 0x10000060;
+    
+    private static final int RECORDING_ENTRY_RT_LINEPERIOD = 0x10000061;
+    
+    private static final int RECORDING_ENTRY_PRESCAN = 0x10000062;
+    
+    private static final int RECORDING_ENTRY_SCAN_DIRECTIONZ = 0x10000063;
 
     /** DOCUMENT ME! */
     private static final int TRACK_ENTRY_MULTIPLEX_TYPE = 0x40000001;
@@ -514,6 +536,18 @@ public class FileLSM extends FileBase {
 
     /** DOCUMENT ME! */
     private static final int TRACK_ENTRY_BLEACH_POSITION_Z = 0x40000036;
+    
+    private static final int TRACK_ENTRY_ID_TUBELENS = 0x40000037;
+    
+    private static final int TRACK_ENTRY_ID_TUBELENS_POSITION = 0x40000038;
+    
+    private static final int TRACK_TRANSMITTED_LIGHT = 0x40000039;
+    
+    private static final int TRACK_REFLECTED_LIGHT = 0x4000003A;
+    
+    private static final int TRACK_SIMULTAN_GRAB_AND_BLEACH = 0x4000003B;
+    
+    private static final int TRACK_BLEACH_PIXEL_TIME = 0x4000003C;
 
     /** DOCUMENT ME! */
     private static final int LASER_ENTRY_NAME = 0x50000001;
@@ -6606,6 +6640,50 @@ public class FileLSM extends FileBase {
                     case RECORDING_ENTRY_CAMERA_OFFSETY:
                         tempString[index++] = pad + "RECORDING_ENTRY_CAMERA_OFFSETY";
                         break;
+                        
+                    case RECORDING_ENTRY_RT_BINNING:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_BINNING";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_FRAME_WIDTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_FRAME_WIDTH";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_FRAME_HEIGHT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_FRAME_HEIGHT";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_REGION_WIDTH:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_REGION_WIDTH";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_REGION_HEIGHT:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_REGION_HEIGHT";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_OFFSETX:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_OFFSETX";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_OFFSETY:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_OFFSETY";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_ZOOM:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_ZOOM";
+                        break;
+                        
+                    case RECORDING_ENTRY_RT_LINEPERIOD:
+                        tempString[index++] = pad + "RECORDING_ENTRY_RT_LINEPERIOD";
+                        break;
+                        
+                    case RECORDING_ENTRY_PRESCAN:
+                        tempString[index++] = pad + "RECORDING_ENTRY_PRESCAN";
+                        break;
+                        
+                    case RECORDING_ENTRY_SCAN_DIRECTIONZ:
+                        tempString[index++] = pad + "RECORDING_ENTRY_SCAN_DIRECTIONZ";
+                        break;
 
                     case TRACK_ENTRY_MULTIPLEX_TYPE:
                         tempString[index++] = pad + "TRACK_ENTRY_MULTIPLEX_TYPE";
@@ -6761,6 +6839,30 @@ public class FileLSM extends FileBase {
 
                     case TRACK_ENTRY_BLEACH_POSITION_Z:
                         tempString[index++] = pad + "TRACK_ENTRY_BLEACH_POSITION_Z";
+                        break;
+                        
+                    case TRACK_ENTRY_ID_TUBELENS:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TUBELENS";
+                        break;
+                        
+                    case TRACK_ENTRY_ID_TUBELENS_POSITION:
+                        tempString[index++] = pad + "TRACK_ENTRY_ID_TUBELENS_POSITION";
+                        break;
+                        
+                    case TRACK_TRANSMITTED_LIGHT:
+                        tempString[index++] = pad + "TRACK_TRANSMITTED_LIGHT";
+                        break;
+                        
+                    case TRACK_REFLECTED_LIGHT:
+                        tempString[index++] = pad + "TRACK_REFLECTED_LIGHT";
+                        break;
+                        
+                    case TRACK_SIMULTAN_GRAB_AND_BLEACH:
+                        tempString[index++] = pad + "TRACK_SIMULTAN_GRAB_AND_BLEACH";
+                        break;
+                        
+                    case TRACK_BLEACH_PIXEL_TIME:
+                        tempString[index++] = pad + "TRACK_BLEACH_PIXEL_TIME";
                         break;
 
                     case LASER_ENTRY_NAME:
