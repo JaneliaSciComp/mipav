@@ -2,12 +2,16 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+
 import gov.nih.mipav.view.Preferences;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.*;
+import java.util.BitSet;
+import java.util.Vector;
 
 
 /**
@@ -32,7 +36,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float imageFillR = 0.0f;
-    
+
     private float imageFillI = 0.0f;
 
     /** if true then fill inside the VOI. If false then fill outside */
@@ -49,7 +53,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fill, boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage srcImg, final float fill, final boolean polarity, final boolean useVOI) {
 
         super(null, srcImg);
         imageFill = fill;
@@ -68,7 +72,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, Color _fillColor, boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage srcImg, final Color _fillColor, final boolean polarity, final boolean useVOI) {
 
         super(null, srcImg);
         this.polarity = polarity;
@@ -87,7 +91,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fill, boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage destImg, final ModelImage srcImg, final float fill, final boolean polarity,
+            final boolean useVOI) {
 
         super(destImg, srcImg);
         imageFill = fill;
@@ -108,7 +113,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage srcImg, final float fillR, final float fillG, final float fillB,
+            final boolean polarity, final boolean useVOI) {
 
         super(null, srcImg);
         imageFillR = fillR;
@@ -132,8 +138,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fillR, float fillG, float fillB,
-            boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage destImg, final ModelImage srcImg, final float fillR, final float fillG,
+            final float fillB, final boolean polarity, final boolean useVOI) {
 
         super(destImg, srcImg);
         imageFillR = fillR;
@@ -145,7 +151,7 @@ public class AlgorithmMask extends AlgorithmBase {
             mask = srcImage.generateVOIMask();
         }
     }
-    
+
     /**
      * Creates a new AlgorithmMask object.
      * 
@@ -155,7 +161,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fill, float fillI, boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage srcImg, final float fill, final float fillI, final boolean polarity,
+            final boolean useVOI) {
 
         super(null, srcImg);
         imageFill = fill;
@@ -177,8 +184,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param polarity flag indicating fill location, true = fill inside; false fill outside
      * @param useVOI use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fill, float fillI,
-            boolean polarity, boolean useVOI) {
+    public AlgorithmMask(final ModelImage destImg, final ModelImage srcImg, final float fill, final float fillI,
+            final boolean polarity, final boolean useVOI) {
 
         super(destImg, srcImg);
         imageFill = fill;
@@ -200,7 +207,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param fillValue value to be placed in the image where the mask is true
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25D(BitSet mask, float fillValue, int tSlice) {
+    public void calcInPlace25D(final BitSet mask, final float fillValue, final int tSlice) {
         calcInPlace25D(mask, fillValue, tSlice, null);
     }
 
@@ -213,7 +220,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param intensityLockVector Vector containing Integer objects that represent the intensity values that are not
      *            mutable
      */
-    public void calcInPlace25D(BitSet mask, float fillValue, int tSlice, Vector<Integer> intensityLockVector) {
+    public void calcInPlace25D(final BitSet mask, final float fillValue, int tSlice,
+            final Vector<Integer> intensityLockVector) {
 
         int i, z, t, end = 1, tEnd = 1;
         int imgLength, volLength = 0, offset;
@@ -232,12 +240,12 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0; i < intensityLockVector.size(); i++) {
 
                 try {
-                    Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+                    final Integer integerObj = intensityLockVector.elementAt(i);
 
                     if (integerObj != null) {
                         lockedIntensities[i] = integerObj.intValue();
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     continue;
                 }
             }
@@ -248,7 +256,7 @@ public class AlgorithmMask extends AlgorithmBase {
             try {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
                 errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -284,7 +292,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     try {
                         srcImage.exportData( (t * volLength) + (z * imgLength), imgLength, buffer); // locks and
                         // releases lock
-                    } catch (IOException error) {
+                    } catch (final IOException error) {
                         buffer = null;
                         bufferI = null;
                         errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -300,7 +308,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                     offset = z * imgLength;
 
-                    int mod = imgLength / 10;
+                    final int mod = imgLength / 10;
 
                     int sliceIndex;
 
@@ -365,7 +373,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                     try {
                         srcImage.importData( (t * volLength) + (z * imgLength), buffer, false);
-                    } catch (IOException error) {
+                    } catch (final IOException error) {
                         buffer = null;
                         bufferI = null;
                         errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -387,7 +395,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 bufferI = new float[imgLength];
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
                 errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -415,7 +423,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 try {
                     srcImage.exportComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), imgLength, buffer,
                             bufferI); // locks and releases lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                     return;
@@ -428,7 +436,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 offset = z * imgLength;
 
-                int mod = imgLength / 10;
+                final int mod = imgLength / 10;
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
@@ -469,7 +477,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 try {
                     srcImage.importComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
                             logMagDisplay);
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     bufferI = null;
                     errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -497,7 +505,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param fillColor color to be placed in the image where the mask is true
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DC(BitSet mask, Color fillColor, int tSlice, String rgbString, Vector<Integer> intensityLockVector) {
+    public void calcInPlace25DC(final BitSet mask, final Color fillColor, int tSlice, final String rgbString,
+            final Vector<Integer> intensityLockVector) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -507,7 +516,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int[] lockedIntensities = null;
         // since image B is color....we must CREATE a LUTB rather than getting it from
         // srcIMage.getParentFrame.getLUTB...in order to do the intensityLockVector stuff
-        ModelLUT lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});
+        final ModelLUT lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});
 
         byte red, green, blue;
 
@@ -515,15 +524,15 @@ public class AlgorithmMask extends AlgorithmBase {
         green = (byte) Math.round(fillColor.getGreen());
         blue = (byte) Math.round(fillColor.getBlue());
 
-        boolean useR = rgbString.indexOf("R") != -1;
-        boolean useG = rgbString.indexOf("G") != -1;
-        boolean useB = rgbString.indexOf("B") != -1;
+        final boolean useR = rgbString.indexOf("R") != -1;
+        final boolean useG = rgbString.indexOf("G") != -1;
+        final boolean useB = rgbString.indexOf("B") != -1;
         try {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -538,12 +547,12 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0; i < intensityLockVector.size(); i++) {
 
                 try {
-                    Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+                    final Integer integerObj = intensityLockVector.elementAt(i);
 
                     if (integerObj != null) {
                         lockedIntensities[i] = integerObj.intValue();
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     continue;
                 }
             }
@@ -570,7 +579,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
                 // releases
                 // lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                 return;
@@ -583,7 +592,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * paintLength;
 
-            int mod = imgLength / 10;
+            final int mod = imgLength / 10;
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
@@ -626,7 +635,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -652,7 +661,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param fillColor color to be placed in the image where the mask is true
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DCMask(BitSet mask, Color fillColor, int tSlice) {
+    public void calcInPlace25DCMask(final BitSet mask, final Color fillColor, int tSlice) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -671,7 +680,7 @@ public class AlgorithmMask extends AlgorithmBase {
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -701,7 +710,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
                 // releases
                 // lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                 return;
@@ -714,7 +723,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * paintLength;
 
-            int mod = imgLength / 10;
+            final int mod = imgLength / 10;
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
@@ -742,7 +751,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -767,7 +776,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param fillValue value to be placed in the image where the mask is true
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice) {
+    public void calcInPlace25DMask(final BitSet mask, final float fillValue, final int tSlice) {
         calcInPlace25DMask(mask, fillValue, tSlice, null);
     }
 
@@ -779,7 +788,8 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      * @param intensityLockVector DOCUMENT ME!
      */
-    public void calcInPlace25DMask(BitSet mask, float fillValue, int tSlice, Vector<Integer> intensityLockVector) {
+    public void calcInPlace25DMask(final BitSet mask, final float fillValue, int tSlice,
+            final Vector<Integer> intensityLockVector) {
 
         int i, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -796,12 +806,12 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0; i < intensityLockVector.size(); i++) {
 
                 try {
-                    Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+                    final Integer integerObj = intensityLockVector.elementAt(i);
 
                     if (integerObj != null) {
                         lockedIntensities[i] = integerObj.intValue();
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     continue;
                 }
             }
@@ -816,7 +826,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
                 errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -844,7 +854,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 try {
                     srcImage.exportData( (tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and
                     // releases lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     bufferI = null;
                     errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -859,7 +869,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 offset = z * imgLength;
 
-                int mod = imgLength / 10;
+                final int mod = imgLength / 10;
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
@@ -892,7 +902,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 try {
                     srcImage.importData( (tSlice * volLength) + (z * imgLength), buffer, false);
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     bufferI = null;
                     errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -911,7 +921,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 bufferI = new float[imgLength];
-            } catch (OutOfMemoryError e) {
+            } catch (final OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
                 errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -939,7 +949,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 try {
                     srcImage.exportComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), imgLength, buffer,
                             bufferI); // locks and releases lock
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     errorCleanUp("Algorithm Mask: Image(s) locked", false);
 
                     return;
@@ -952,7 +962,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 offset = z * imgLength;
 
-                int mod = imgLength / 10;
+                final int mod = imgLength / 10;
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
@@ -1002,7 +1012,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 try {
                     srcImage.importComplexData(2 * ( (tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
                             logMagDisplay);
-                } catch (IOException error) {
+                } catch (final IOException error) {
                     buffer = null;
                     bufferI = null;
                     errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1026,6 +1036,7 @@ public class AlgorithmMask extends AlgorithmBase {
     /**
      * Prepares this class for destruction.
      */
+    @Override
     public void finalize() {
         super.finalize();
     }
@@ -1033,6 +1044,7 @@ public class AlgorithmMask extends AlgorithmBase {
     /**
      * Starts the program.
      */
+    @Override
     public void runAlgorithm() {
 
         if (srcImage == null) {
@@ -1047,8 +1059,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (srcImage.getNDims() == 2) {
                     calcStoreInDest2DRGB();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcStoreInDest3DRGB();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcStoreInDest4DRGB();
                 }
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
@@ -1056,19 +1070,23 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (srcImage.getNDims() == 2) {
                     calcInPlace2DRGB();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcInPlace3DRGB();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcInPlace4DRGB();
                 }
             }
 
         } // if (srcImage.isColorImage())
         else if (srcImage.isComplexImage()) {
-        	if (destImage != null) {
+            if (destImage != null) {
 
                 if (srcImage.getNDims() == 2) {
                     calcStoreInDest2DComplex();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcStoreInDest3DComplex();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcStoreInDest4DComplex();
                 }
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
 
@@ -1076,10 +1094,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (srcImage.getNDims() == 2) {
                     calcInPlace2DComplex();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcInPlace3DComplex();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcInPlace4DComplex();
                 }
-            }	
+            }
         } // else if (srcImage.isComplexImage())
         else { // !colorImage
 
@@ -1087,8 +1107,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (srcImage.getNDims() == 2) {
                     calcStoreInDest2D();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcStoreInDest3D();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcStoreInDest4D();
                 }
 
                 destImage.getMatrixHolder().replaceMatrices(srcImage.getMatrixHolder().getMatrices());
@@ -1096,8 +1118,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 if (srcImage.getNDims() == 2) {
                     calcInPlace2D();
-                } else if (srcImage.getNDims() > 2) {
+                } else if (srcImage.getNDims() == 3) {
                     calcInPlace3D();
+                } else if (srcImage.getNDims() >= 4) {
+                    calcInPlace4D();
                 }
             }
         } // else !colorImage
@@ -1116,19 +1140,19 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
             return;
         }
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1153,7 +1177,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             // srcImage.reallocate(srcImage.getType());
             srcImage.importData(0, buffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1162,7 +1186,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         setCompleted(true);
     }
-    
+
     /**
      * Fills VOI of source image with fill value.
      */
@@ -1172,8 +1196,8 @@ public class AlgorithmMask extends AlgorithmBase {
         int length;
         double[] buffer;
         double[] bufferI;
-        boolean calcMinMax = true;
-        boolean logMagDisplay = false;
+        final boolean calcMinMax = true;
+        final boolean logMagDisplay = false;
 
         try {
             length = srcImage.getSliceSize();
@@ -1181,13 +1205,13 @@ public class AlgorithmMask extends AlgorithmBase {
             bufferI = new double[length];
             srcImage.exportDComplexData(0, length, buffer, bufferI); // locks and releases lock
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             bufferI = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1196,7 +1220,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1223,7 +1247,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             // srcImage.reallocate(srcImage.getType());
             srcImage.importDComplexData(0, buffer, bufferI, calcMinMax, logMagDisplay);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1247,12 +1271,12 @@ public class AlgorithmMask extends AlgorithmBase {
             buffer = new float[length];
             srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1261,7 +1285,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1286,7 +1310,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             // srcImage.reallocate(srcImage.getType());
             srcImage.importRGBData(1, 0, buffer, false);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1295,12 +1319,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             srcImage.exportRGBData(2, 0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1332,7 +1356,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             // srcImage.reallocate(srcImage.getType());
             srcImage.importRGBData(2, 0, buffer, false);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1341,12 +1365,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             srcImage.exportRGBData(3, 0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1379,7 +1403,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             // srcImage.reallocate(srcImage.getType());
             srcImage.importRGBData(3, 0, buffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1401,7 +1425,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1414,7 +1438,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportData(z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1443,7 +1467,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.importData(offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1454,7 +1478,7 @@ public class AlgorithmMask extends AlgorithmBase {
         srcImage.calcMinMax();
         setCompleted(true);
     }
-    
+
     /**
      * Fills VOI of the source image with fill value.
      */
@@ -1464,14 +1488,14 @@ public class AlgorithmMask extends AlgorithmBase {
         int length, offset;
         double[] buffer;
         double[] bufferI;
-        boolean calcMinMax = false;
-        boolean logMagDisplay = false;
+        final boolean calcMinMax = false;
+        final boolean logMagDisplay = false;
 
         try {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             bufferI = new double[length];
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             bufferI = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1484,8 +1508,8 @@ public class AlgorithmMask extends AlgorithmBase {
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
             try {
-                srcImage.exportDComplexData(2*length*z, length, buffer, bufferI); // locks and releases lock
-            } catch (IOException error) {
+                srcImage.exportDComplexData(2 * length * z, length, buffer, bufferI); // locks and releases lock
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1515,8 +1539,8 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             try {
-                srcImage.importDComplexData(2*length*z, buffer, bufferI, calcMinMax, logMagDisplay);
-            } catch (IOException error) {
+                srcImage.importDComplexData(2 * length * z, buffer, bufferI, calcMinMax, logMagDisplay);
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1541,7 +1565,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1554,7 +1578,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(1, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1563,8 +1587,8 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1585,7 +1609,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 // srcImage.reallocate(srcImage.getType());
                 srcImage.importRGBData(1, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1594,15 +1618,15 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(2, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
-            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1623,7 +1647,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 // srcImage.reallocate(srcImage.getType());
                 srcImage.importRGBData(2, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1632,15 +1656,15 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(3, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
-            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1661,13 +1685,313 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 // srcImage.reallocate(srcImage.getType());
                 srcImage.importRGBData(3, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
+        }
+
+        srcImage.calcMinMax();
+        setCompleted(true);
+    }
+
+    /**
+     * Fills VOI of the source image with fill value.
+     */
+    private void calcInPlace4D() {
+
+        int i, z, t;
+        int length, offset, volumeSize;
+        float[] buffer;
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new float[length];
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3]; t++) {
+            for (z = 0; z < srcImage.getExtents()[2]; z++) {
+                try {
+                    srcImage.exportData(t * volumeSize + z * length, length, buffer); // locks and releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                offset = z * length;
+
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFill;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFill;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    srcImage.importData(t * volumeSize + offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+            }
+        }
+
+        srcImage.calcMinMax();
+        setCompleted(true);
+    }
+
+    /**
+     * Fills VOI of the source image with fill value.
+     */
+    private void calcInPlace4DComplex() {
+
+        int i, z, t;
+        int length, offset, volumeSize;
+        double[] buffer;
+        double[] bufferI;
+        final boolean calcMinMax = false;
+        final boolean logMagDisplay = false;
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new double[length];
+            bufferI = new double[length];
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            bufferI = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3]; t++) {
+            for (z = 0; z < srcImage.getExtents()[2]; z++) {
+
+                try {
+                    srcImage.exportDComplexData(2 * t * volumeSize + 2 * length * z, length, buffer, bufferI); // locks
+                                                                                                               // and
+                                                                                                               // releases
+                                                                                                               // lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                offset = z * length;
+
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFill;
+                        bufferI[i] = imageFillI;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFill;
+                        bufferI[i] = imageFillI;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    srcImage.importDComplexData(2 * t * volumeSize + 2 * length * z, buffer, bufferI, calcMinMax,
+                            logMagDisplay);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+            }
+        }
+
+        srcImage.calcMinMax(logMagDisplay);
+        setCompleted(true);
+    }
+
+    /**
+     * Fills VOI of the source image with fill value.
+     */
+    private void calcInPlace4DRGB() {
+
+        int i, z, t;
+        int length, offset, volumeSize;
+        float[] buffer;
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new float[length];
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3]; t++) {
+            for (z = 0; z < srcImage.getExtents()[2]; z++) {
+
+                try {
+                    srcImage.exportRGBData(1, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                offset = z * length;
+
+                fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillR;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillR;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+
+                    // srcImage.reallocate(srcImage.getType());
+                    srcImage.importRGBData(1, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                try {
+                    srcImage.exportRGBData(2, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillG;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillG;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+
+                    // srcImage.reallocate(srcImage.getType());
+                    srcImage.importRGBData(2, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                try {
+                    srcImage.exportRGBData(3, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillB;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillB;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+
+                    // srcImage.reallocate(srcImage.getType());
+                    srcImage.importRGBData(3, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+            }
         }
 
         srcImage.calcMinMax();
@@ -1685,7 +2009,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Mask: Image(s) locked");
             setCompleted(false);
 
@@ -1697,12 +2021,12 @@ public class AlgorithmMask extends AlgorithmBase {
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1711,7 +2035,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1735,15 +2059,13 @@ public class AlgorithmMask extends AlgorithmBase {
 
             return;
         }
-        
-        
 
         destImage.calcMinMax();
         destImage.releaseLock();
 
         setCompleted(true);
     }
-    
+
     /**
      * Fills new image/VOI with new fill value;
      */
@@ -1753,8 +2075,8 @@ public class AlgorithmMask extends AlgorithmBase {
         int length;
         double[] buffer;
         double[] bufferI;
-        boolean calcMinMax = true;
-        boolean logMagDisplay = false;
+        final boolean calcMinMax = true;
+        final boolean logMagDisplay = false;
 
         try {
             length = srcImage.getSliceSize();
@@ -1762,13 +2084,13 @@ public class AlgorithmMask extends AlgorithmBase {
             bufferI = new double[length];
             srcImage.exportDComplexData(0, length, buffer, bufferI); // locks and releases lock
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             bufferI = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1777,14 +2099,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ( (i % mod) == 0) {
                 fireProgressStateChanged( ((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
             }
-            
+
             if ( (mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFill;
                 bufferI[i] = imageFillI;
@@ -1800,12 +2122,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
             return;
         }
-        
+
         try {
 
             // srcImage.reallocate(srcImage.getType());
             destImage.importDComplexData(0, buffer, bufferI, calcMinMax, logMagDisplay);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1828,12 +2150,12 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1842,7 +2164,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
-        int mod = length / 100; // mod is 1 percent of length
+        final int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1866,7 +2188,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             destImage.importRGBData(1, 0, buffer, false);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1875,12 +2197,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             srcImage.exportRGBData(2, 0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1909,7 +2231,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             destImage.importRGBData(2, 0, buffer, false);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1918,12 +2240,12 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             srcImage.exportRGBData(3, 0, length, buffer); // locks and releases lock
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
             return;
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1952,7 +2274,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             destImage.importRGBData(3, 0, buffer, true);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -1973,7 +2295,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
-        } catch (IOException error) {
+        } catch (final IOException error) {
             displayError("Algorithm Mask: Image(s) locked");
             setCompleted(false);
 
@@ -1984,7 +2306,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -1997,7 +2319,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportData(z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -2033,7 +2355,7 @@ public class AlgorithmMask extends AlgorithmBase {
         destImage.releaseLock();
         setCompleted(true);
     }
-    
+
     /**
      * Fills new image/VOI with new fill value;
      */
@@ -2043,15 +2365,15 @@ public class AlgorithmMask extends AlgorithmBase {
         int length, offset;
         double[] buffer;
         double[] bufferI;
-        boolean calcMinMax = false;
-        boolean logMagDisplay = false;
+        final boolean calcMinMax = false;
+        final boolean logMagDisplay = false;
 
         try {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             bufferI = new double[length];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -2064,7 +2386,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportDComplexData(2 * z * length, length, buffer, bufferI); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 bufferI = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -2079,14 +2401,14 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-            	if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                if ( (mask.get(offset + i) == true) && (polarity == true)) {
                     buffer[i] = imageFill;
                     bufferI[i] = imageFillI;
                 } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
                     buffer[i] = imageFill;
                     bufferI[i] = imageFillI;
                 }
-            
+
             }
             if (threadStopped) {
                 finalize();
@@ -2095,8 +2417,8 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             try {
-                destImage.importDComplexData(2*length*z, buffer, bufferI, calcMinMax, logMagDisplay);
-            } catch (IOException error) {
+                destImage.importDComplexData(2 * length * z, buffer, bufferI, calcMinMax, logMagDisplay);
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -2127,7 +2449,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
-        } catch (OutOfMemoryError e) {
+        } catch (final OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
 
@@ -2140,7 +2462,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(1, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -2149,8 +2471,8 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -2169,7 +2491,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 destImage.importRGBData(1, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -2178,15 +2500,15 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(2, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
-            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -2205,7 +2527,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 destImage.importRGBData(2, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
@@ -2214,15 +2536,15 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 srcImage.exportRGBData(3, 4 * z * length, length, buffer); // locks and releases lock
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
-            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage
-                    .getImageName(), "Masking ...");
+            fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                    srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -2241,13 +2563,323 @@ public class AlgorithmMask extends AlgorithmBase {
 
             try {
                 destImage.importRGBData(3, 4 * offset, buffer, false);
-            } catch (IOException error) {
+            } catch (final IOException error) {
                 buffer = null;
                 errorCleanUp("Algorithm Mask: Image(s) locked", true);
 
                 return;
             }
 
+        }
+
+        destImage.calcMinMax();
+
+        setCompleted(true);
+
+    }
+
+    /**
+     * Fills new image/VOI with new fill value;
+     */
+    private void calcStoreInDest4D() {
+
+        int i, z, t;
+        int length, maskOffset, fullOffset, volumeSize;
+        float[] buffer;
+
+        try {
+            destImage.setLock(ModelStorageBase.RW_LOCKED);
+        } catch (final IOException error) {
+            displayError("Algorithm Mask: Image(s) locked");
+            setCompleted(false);
+
+            return;
+        }
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new float[length];
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3] && !threadStopped; t++) {
+            for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
+
+                try {
+                    srcImage.exportData(t * volumeSize + z * length, length, buffer); // locks and releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                maskOffset = z * length;
+                fullOffset = t * volumeSize + z * length;
+
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(maskOffset + i) == true) && (polarity == false)) {
+                        destImage.set(fullOffset + i, buffer[i]);
+                    } else if ( (mask.get(maskOffset + i) == true) && (polarity == true)) {
+                        destImage.set(fullOffset + i, imageFill);
+                    } else if ( (mask.get(maskOffset + i) == false) && (polarity == false)) {
+                        destImage.set(fullOffset + i, imageFill);
+                    } else {
+                        destImage.set(fullOffset + i, buffer[i]);
+                    }
+                }
+            }
+        }
+
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        destImage.calcMinMax();
+        destImage.releaseLock();
+        setCompleted(true);
+    }
+
+    /**
+     * Fills new image/VOI with new fill value;
+     */
+    private void calcStoreInDest4DComplex() {
+
+        int i, z, t;
+        int length, offset, volumeSize;
+        double[] buffer;
+        double[] bufferI;
+        final boolean calcMinMax = false;
+        final boolean logMagDisplay = false;
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new double[length];
+            bufferI = new double[length];
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3] && !threadStopped; t++) {
+            for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
+
+                try {
+                    srcImage.exportDComplexData(2 * t * volumeSize + 2 * z * length, length, buffer, bufferI); // locks
+                                                                                                               // and
+                                                                                                               // releases
+                                                                                                               // lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    bufferI = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                offset = z * length;
+
+                fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
+                        "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFill;
+                        bufferI[i] = imageFillI;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFill;
+                        bufferI[i] = imageFillI;
+                    }
+
+                }
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    destImage.importDComplexData(2 * t * volumeSize + 2 * length * z, buffer, bufferI, calcMinMax,
+                            logMagDisplay);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+            }
+        }
+
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        destImage.calcMinMax(logMagDisplay);
+        setCompleted(true);
+    }
+
+    /**
+     * Fills new image/VOI with new fill value;
+     */
+    private void calcStoreInDest4DRGB() {
+
+        int i, z, t;
+        int length, offset, volumeSize;
+        float[] buffer;
+
+        try {
+            length = srcImage.getSliceSize();
+            volumeSize = srcImage.getVolumeSize();
+            buffer = new float[length];
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
+        } catch (final OutOfMemoryError e) {
+            buffer = null;
+            errorCleanUp("Algorithm Mask: Out of memory", true);
+
+            return;
+        }
+
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+
+        for (t = 0; t < srcImage.getExtents()[3] && !threadStopped; t++) {
+            for (z = 0; z < srcImage.getExtents()[2]; z++) {
+
+                try {
+                    srcImage.exportRGBData(1, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                offset = z * length;
+
+                fireProgressStateChanged( ((float) (3 * z) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillR;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillR;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    destImage.importRGBData(1, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                try {
+                    srcImage.exportRGBData(2, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                fireProgressStateChanged( ((float) ( (3 * z) + 1) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillG;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillG;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    destImage.importRGBData(2, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                try {
+                    srcImage.exportRGBData(3, 4 * t * volumeSize + 4 * z * length, length, buffer); // locks and
+                                                                                                    // releases lock
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+
+                fireProgressStateChanged( ((float) ( (3 * z) + 2) / ( (3 * (srcImage.getExtents()[2] - 1)) + 2)),
+                        srcImage.getImageName(), "Masking volume " + t + "...");
+
+                for (i = 0; (i < length) && !threadStopped; i++) {
+
+                    if ( (mask.get(offset + i) == true) && (polarity == true)) {
+                        buffer[i] = imageFillB;
+                    } else if ( (mask.get(offset + i) == false) && (polarity == false)) {
+                        buffer[i] = imageFillB;
+                    }
+                }
+
+                if (threadStopped) {
+                    finalize();
+
+                    return;
+                }
+
+                try {
+                    destImage.importRGBData(3, 4 * t * volumeSize + 4 * offset, buffer, false);
+                } catch (final IOException error) {
+                    buffer = null;
+                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
+
+                    return;
+                }
+            }
         }
 
         destImage.calcMinMax();
