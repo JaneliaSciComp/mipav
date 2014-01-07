@@ -94,6 +94,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
         }
 
         max = 0;
+        if(IDvisit.size()<2) return false;
         for (int i = 0; i < IDvisit.size(); i++) {
             visitType = IDvisit.get(i).split(" ");
             if (visitType.length == 2) {
