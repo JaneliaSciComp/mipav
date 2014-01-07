@@ -1121,7 +1121,7 @@ public class FileLSM extends FileBase {
     private boolean thumbNail = false;
 
     /** DOCUMENT ME! */
-    private int thumbnailOffset = 0;
+    private long thumbnailOffset = 0;
 
     /** DOCUMENT ME! */
     private int thumbNailX;
@@ -1145,7 +1145,7 @@ public class FileLSM extends FileBase {
     private int tileOffsetNumber;
 
     /** DOCUMENT ME! */
-    private int[] tileOffsets;
+    private long[] tileOffsets;
 
     /** DOCUMENT ME! */
     private int tilesAcross;
@@ -1160,7 +1160,7 @@ public class FileLSM extends FileBase {
     private int tilesPerSlice;
 
     /** DOCUMENT ME! */
-    private int[] tileTemp;
+    private long[] tileTemp;
 
     /** DOCUMENT ME! */
     private int tileWidth;
@@ -1434,7 +1434,7 @@ public class FileLSM extends FileBase {
                     numVectors++;
                 } while (dataOffsets[numVectors] != null);
 
-                tileOffsets = new int[numVectors * numPerVector];
+                tileOffsets = new long[numVectors * numPerVector];
                 tileByteCounts = new int[tileOffsets.length];
                 tileMaxByteCount = 0;
 
@@ -1443,7 +1443,7 @@ public class FileLSM extends FileBase {
                 for (int i = 0; i < numVectors; i++) {
 
                     for (int j = 0; j < numPerVector; j++, index++) {
-                        tileOffsets[index] = (int) ((Index) (dataOffsets[i].elementAt(j))).index;
+                        tileOffsets[index] = (long) ((Index) (dataOffsets[i].elementAt(j))).index;
                         tileByteCounts[index] = (int) ((Index) (dataOffsets[i].elementAt(j))).byteCount;
 
                     }
@@ -2190,7 +2190,7 @@ public class FileLSM extends FileBase {
                         }
                     } // else not (multiFile && (imgExtents.length == 3))
                 } catch (IOException error) {
-                    throw new IOException("FileTiff: readImage: " + error);
+                    throw new IOException("FileLSM: readImage: " + error);
                 }
 
                 if (multiFile == false) {
@@ -2262,7 +2262,7 @@ public class FileLSM extends FileBase {
         int[] byteTemp = new int[1000];
         int byteCountTemp = 0;
         boolean haveOffset = false;
-        int[] offsetTemp = new int[1000];
+        long[] offsetTemp = new long[1000];
         int offsetCountTemp = 0;
         boolean haveSamples = false;
         int samplesPerPixelTemp = 0;
@@ -2442,20 +2442,20 @@ public class FileLSM extends FileBase {
                 throw new IOException("OpenIFD: Unknown field type = " + type + " Tag = " + tag);
             }
 
-            Preferences.debug("\nFileTiff.openIFD: Tag = " + tag + "\n", Preferences.DEBUG_FILEIO);
+            Preferences.debug("\nFileLSM.openIFD: Tag = " + tag + "\n", Preferences.DEBUG_FILEIO);
 
             switch (type) {
 
                 case BYTE:
-                    Preferences.debug("FileTiff.openIFD: Type = BYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileLSM.openIFD: Type = BYTE  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case ASCII:
-                    Preferences.debug("FileTiff.openIFD: Type = ASCII  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileLSM.openIFD: Type = ASCII  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case SHORT:
-                    Preferences.debug("FileTiff.openIFD: Type = SHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("FileLSM.openIFD: Type = SHORT  Count = " + count + "\n", Preferences.DEBUG_FILEIO);
                     break;
 
                 case LONG:
@@ -2668,7 +2668,7 @@ public class FileLSM extends FileBase {
                         Preferences.debug("FileTiff.openIFD: Strip_offset = " + valueArray[0] + "\n", 
                         		Preferences.DEBUG_FILEIO);
                         offsetCountTemp = 1;
-                        offsetTemp[0] = valueArray[0];
+                        offsetTemp[0] = valueArray[0] & 0XFFFFFFFFL;
                     } else if (count > 1) {
                         Preferences.debug("FileTiff.openIFD: Strip_offset\n", Preferences.DEBUG_FILEIO);
                         offsetCountTemp = count;
@@ -2676,9 +2676,9 @@ public class FileLSM extends FileBase {
                         for (i1 = 0; i1 < count; i1++) {
 
                             // System.err.println("Strip byte count: " + valueArray[i1]);
-                            Preferences.debug("Value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
+                            Preferences.debug("Value[" + (i1 + 1) + "] = " + (valueArray[i1] & 0xFFFFFFFFL) + "\n",
                             		Preferences.DEBUG_FILEIO);
-                            offsetTemp[i1] = valueArray[i1];
+                            offsetTemp[i1] = valueArray[i1] & 0xFFFFFFFFL;
                         }
                     }
 
@@ -3060,29 +3060,29 @@ public class FileLSM extends FileBase {
                     Preferences.debug("FileTiff.openIFD: tilesPerImage = " + tilesPerImage + "\n", Preferences.DEBUG_FILEIO);
                     Preferences.debug("FileTiff.openIFD: tileOffsets are above\n", Preferences.DEBUG_FILEIO);
                     if (tileOffsetNumber == 0) {
-                        tileOffsets = new int[count];
+                        tileOffsets = new long[count];
 
                         for (i1 = 0; i1 < count; i1++) {
-                            tileOffsets[i1] = valueArray[i1];
+                            tileOffsets[i1] = valueArray[i1] & 0XFFFFFFFFL;
                         }
 
                         tileOffsetNumber = count;
                     } // if (tileOffsetNumber == 0)
                     else {
-                        tileTemp = new int[tileOffsetNumber];
+                        tileTemp = new long[tileOffsetNumber];
 
                         for (i1 = 0; i1 < tileOffsetNumber; i1++) {
                             tileTemp[i1] = tileOffsets[i1];
                         }
 
-                        tileOffsets = new int[tileOffsetNumber + count];
+                        tileOffsets = new long[tileOffsetNumber + count];
 
                         for (i1 = 0; i1 < tileOffsetNumber; i1++) {
                             tileOffsets[i1] = tileTemp[i1];
                         }
 
                         for (i1 = 0; i1 < count; i1++) {
-                            tileOffsets[i1 + count] = valueArray[i1];
+                            tileOffsets[i1 + count] = valueArray[i1] & 0XFFFFFFFFL;
                         }
 
                         tileOffsetNumber += count;
@@ -3119,7 +3119,7 @@ public class FileLSM extends FileBase {
 
                         tileByteNumber = count;
                     } else {
-                        tileTemp = new int[tileByteNumber];
+                        tileTemp = new long[tileByteNumber];
 
                         for (i1 = 0; i1 < tileByteNumber; i1++) {
                             tileTemp[i1] = tileByteCounts[i1];
@@ -3128,7 +3128,7 @@ public class FileLSM extends FileBase {
                         tileByteCounts = new int[tileByteNumber + count];
 
                         for (i1 = 0; i1 < tileByteNumber; i1++) {
-                            tileByteCounts[i1] = tileTemp[i1];
+                            tileByteCounts[i1] = (int)tileTemp[i1];
                         }
 
                         for (i1 = 0; i1 < count; i1++) {
@@ -3351,7 +3351,6 @@ public class FileLSM extends FileBase {
         for (a = 0; a < nIndex; a++, idx++) {
 
             try {
-
                 raFile.seek(((Index) (dataOffsets[slice].elementAt(idx))).index);
                 nBytes = ((Index) (dataOffsets[slice].elementAt(idx))).byteCount;
 
@@ -9807,14 +9806,14 @@ public class FileLSM extends FileBase {
         public int byteCount = 0;
 
         /** DOCUMENT ME! */
-        public int index = 0;
+        public long index = 0;
 
         /**
          * Creates a new Index object.
          *
          * @param  _index  DOCUMENT ME!
          */
-        public Index(int _index) {
+        public Index(long _index) {
             index = _index;
         }
     }
