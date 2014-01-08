@@ -22,6 +22,7 @@ import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -49,6 +50,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.WindowConstants;
 
@@ -796,6 +798,8 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 
         private final Vector<JCheckBox> voiCheckboxList = new Vector<JCheckBox>();
 
+        private int origVoiThickness = 1;
+
         public InteractiveReviewDialog(final Frame parent, final ModelImage img) {
             super(parent, false);
 
@@ -804,6 +808,10 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             origVOIs = img.getVOIsCopy();
 
             init();
+
+            if (Preferences.isPreferenceSet(Preferences.PREF_VOI_THICKNESS)) {
+                origVoiThickness = Preferences.getVOIThickness();
+            }
         }
 
         private void init() {
@@ -815,11 +823,19 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             gbc.gridheight = 1;
             gbc.anchor = GridBagConstraints.WEST;
             gbc.weightx = 1;
-            gbc.insets = new Insets(3, 3, 3, 3);
+            gbc.weighty = 1;
+            // gbc.insets = new Insets(3, 3, 3, 3);
             gbc.fill = GridBagConstraints.HORIZONTAL;
 
             final JPanel mainPanel = new JPanel(new GridBagLayout());
             mainPanel.setForeground(Color.black);
+
+            final JToggleButton showVoiButton = new JToggleButton("Show VOI borders", true);
+            showVoiButton.setFont(serif12B);
+            showVoiButton.addItemListener(this);
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            mainPanel.add(showVoiButton, gbc);
 
             final JPanel voiPanel = new JPanel(new GridLayout(0, 1));
             voiPanel.setForeground(Color.black);
@@ -834,10 +850,11 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
                 voiCheckboxList.add(checkbox);
                 voiPanel.add(checkbox);
             }
-            gbc.gridx = 0;
-            gbc.gridy = 0;
+            gbc.gridy++;
             mainPanel.add(new JLabel("Uncheck the box next to any nucleus segmentations that should be removed."), gbc);
             gbc.gridy++;
+            gbc.fill = GridBagConstraints.BOTH;
+            gbc.weighty = 2;
             mainPanel.add(scrollPane, gbc);
 
             final JPanel buttonPanel = new JPanel(new GridLayout());
@@ -848,13 +865,21 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
             saveButton.addActionListener(this);
             buttonPanel.add(saveButton);
 
-            final JButton discardButton = new JButton("Save all VOIs");
-            discardButton.setFont(serif12B);
-            discardButton.addActionListener(this);
-            buttonPanel.add(discardButton);
+            // final JButton discardButton = new JButton("Save all VOIs");
+            // discardButton.setFont(serif12B);
+            // discardButton.addActionListener(this);
+            // buttonPanel.add(discardButton);
 
-            getContentPane().add(mainPanel, BorderLayout.CENTER);
-            getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+            getContentPane().setLayout(new GridBagLayout());
+            final GridBagConstraints paneGBC = new GridBagConstraints();
+            paneGBC.insets = new Insets(10, 10, 10, 10);
+            paneGBC.gridx = 0;
+            paneGBC.gridy = 0;
+            paneGBC.weighty = 3;
+            getContentPane().add(mainPanel, paneGBC);
+            paneGBC.gridy++;
+            paneGBC.weighty = 1;
+            getContentPane().add(buttonPanel, paneGBC);
 
             this.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
             this.addWindowListener(new WindowAdapter() {
@@ -888,6 +913,10 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
 
             pack();
             // MipavUtil.centerOnScreen(this);
+            final Dimension size = getSize();
+            size.height += 20;
+            size.width += 20;
+            setSize(size);
             final Point loc = this.getParent().getLocationOnScreen();
             loc.x = loc.x - getSize().width;
             setLocation(loc);
@@ -923,7 +952,24 @@ public class PlugInDialogNucleiSegmentation extends JDialogStandaloneScriptableP
         public void itemStateChanged(final ItemEvent event) {
             if (event.getItem() instanceof JCheckBox) {
                 final JCheckBox source = (JCheckBox) event.getItem();
+            } else if (event.getItem() instanceof JToggleButton) {
+                final boolean doShowVoiBorder = ((JToggleButton) event.getItem()).isSelected();
 
+                final VOIVector vois = img.getVOIs();
+                for (final VOI voi : vois) {
+                    if (doShowVoiBorder) {
+                        voi.setThickness(origVoiThickness);
+                        // Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+                        voi.update();
+                        // updateVOIPanel(voi, image);
+                    } else {
+                        voi.setThickness(0);
+                        // Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
+                        voi.update();
+                        // updateVOIPanel(voi, image);
+                    }
+                }
+                img.notifyImageDisplayListeners();
             }
         }
 
