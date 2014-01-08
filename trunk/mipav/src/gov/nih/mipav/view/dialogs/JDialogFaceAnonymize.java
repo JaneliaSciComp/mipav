@@ -279,11 +279,11 @@ public class JDialogFaceAnonymize extends JDialogScriptableBase
             System.gc();
             if ( atlasImage != null )
             {
-            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, atlasImage, faceOrientation);
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, atlasImage);
             }
             else
             {
-            	defaceAlgo = new AlgorithmSkullRemoval(srcImage, faceOrientation);
+            	defaceAlgo = new AlgorithmSkullRemoval(srcImage);
             }
             defaceAlgo.setOutputOption( blur, remove, face, showFaceSegmentation, showSkullSegmentation );
             defaceAlgo.setOffSet(extraMMsToPad);

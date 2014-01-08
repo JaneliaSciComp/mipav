@@ -297,12 +297,12 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 			return null;
 		}
 
-		Vector3f[] akVertex = new Vector3f[iVQuantity];
-		for ( int i = 0; i < iVQuantity; i++ )
-		{
-			Vector3f kV = newVertices.elementAt(i);
-			akVertex[i] = new Vector3f(kV);
-		}
+//		Vector3f[] akVertex = new Vector3f[iVQuantity];
+//		for ( int i = 0; i < iVQuantity; i++ )
+//		{
+//			Vector3f kV = newVertices.elementAt(i);
+//			akVertex[i] = new Vector3f(kV);
+//		}
 
 		int[] aiConnect = new int[3 * iTQuantity];
 		int iIndex = 0;
@@ -314,7 +314,7 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 			aiConnect[iIndex++] = kT.V[1];
 			aiConnect[iIndex++] = kT.V[2];
 		}
-		return new TriMesh(new VertexBuffer(akVertex), new IndexBuffer(aiConnect));
+		return new TriMesh(new VertexBuffer(newVertices), new IndexBuffer(aiConnect));
 	}
 
 	/**

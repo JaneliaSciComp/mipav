@@ -625,6 +625,8 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
 	    3,
 	    0,
 	};
+	
+	private TriMesh resultMesh = null;
 
     public OpenCLAlgorithmMarchingCubes(final ModelImage image, final int level, final boolean entireImage, final boolean decFlag,
             final boolean blurFlag, final float sigma, final String fileName)
@@ -662,7 +664,7 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
 		
 		marchingCubes3D(0);
 		setCompleted(true);
-		System.err.println( "OpenCL MarchingCubes Time : " + super.getElapsedTime() );
+//		System.err.println( "OpenCL MarchingCubes Time : " + super.getElapsedTime() );
 	}
 
 	private void marchingCubes3D(int time)
@@ -690,11 +692,12 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
 
 		float[] input = new float[ elementCount ];
 		try {
+			this.entireImage = ( (srcImage.getMask() != null) && (srcImage.getMask().cardinality() > 0) ) ? this.entireImage : true;
 			if ( this.entireImage )
 			{
 				srcImage.exportData( time * input.length, input.length, input );
 			}
-			else
+			else 
 			{
 				srcImage.exportDataUseMask( time * input.length, input.length, input );				
 			}
@@ -962,16 +965,75 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 
-		
-		
-//		System.err.println( "OpenCL Marching Cubes : " + numV + "   " + numO + "    " + elementCount + "     " + positions.length );
-		try {
-			String fileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
-			saveMesh(positions, true, fileName );
-		} catch (IOException e) {
-			e.printStackTrace();
+
+
+		int numVertices = positions.length/4;
+
+		Vector<Vector3f> vertices = new Vector<Vector3f>();
+		Vector<TriangleKey> triangles = new Vector<TriangleKey>();
+		int triCount = 0;
+        for ( int i = 0; i < numVertices; i++)
+        {
+        	Vector3f pos1 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
+        	i++;
+        	Vector3f pos2 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
+        	i++;
+        	Vector3f pos3 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
+        	if ( Float.isNaN( pos1.X) || Float.isNaN( pos1.Y ) || Float.isNaN( pos1.Z ) )
+        	{
+        		System.err.println( i-2 );
+        		continue;
+        	}
+        	if ( Float.isNaN( pos2.X) || Float.isNaN( pos2.Y ) || Float.isNaN( pos2.Z ) )
+        	{
+        		System.err.println( i-1 );
+        		continue;
+        	}
+        	if ( Float.isNaN( pos3.X) || Float.isNaN( pos3.Y ) || Float.isNaN( pos3.Z ) )
+        	{
+        		System.err.println( i );
+        		continue;
+        	}
+        	vertices.add(pos1);
+        	vertices.add(pos2);
+        	vertices.add(pos3);
+        	triangles.add( new TriangleKey(triCount, triCount+1, triCount+2) );
+        	triCount += 3;
+        }
+		Vector<Vector3f> newVertices = new Vector<Vector3f>();
+		Vector<TriangleKey> newTriangles = new Vector<TriangleKey>();
+        ExtractSurfaceCubes.MakeUnique( vertices, triangles, newVertices, newTriangles );
+        
+
+        
+        int iTQuantity = newTriangles.size();
+		int[] aiConnect = new int[3 * iTQuantity];
+		int iIndex = 0;
+
+		for ( int i = 0; i < iTQuantity; i++ )
+		{
+			TriangleKey kT = newTriangles.elementAt(i);
+			aiConnect[iIndex++] = kT.V[0];
+			aiConnect[iIndex++] = kT.V[1];
+			aiConnect[iIndex++] = kT.V[2];
 		}
+		resultMesh = new TriMesh( new VertexBuffer(newVertices), new IndexBuffer(aiConnect));
+        
 		
+		Preferences.debug("\n\nVertex count reduced from " + vertices.size() + " to " + newVertices.size() + ".\n", Preferences.DEBUG_MINOR);
+		Preferences.debug("Triangle count reduced from " + triangles.size() + " to " + newTriangles.size() + ".\n\n", Preferences.DEBUG_MINOR);
+
+		if ( surfaceFileName != null )
+		{
+			//		System.err.println( "OpenCL Marching Cubes : " + numV + "   " + numO + "    " + elementCount + "     " + positions.length );
+//			System.err.println( "OpenCL Marching Cubes : " + surfaceFileName );
+			try {
+				String fileName = ViewUserInterface.getReference().getDefaultDirectory() + surfaceFileName;
+				saveMesh(newVertices, aiConnect, true, fileName );
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(numVertsTableBuffer);
@@ -1021,52 +1083,22 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
 		
 	    return sum[0];
 	}
-	private void saveMesh(float[] positions, final boolean flip, final String kName) throws IOException {
+	
+	public TriMesh getMesh()
+	{
+		System.err.println( resultMesh.VBuffer.GetVertexQuantity() + " " + resultMesh.GetTriangleQuantity() );
+		return resultMesh;
+	}
+	
+	private void saveMesh( Vector<Vector3f> newVertices, int[] aiConnect,
+			final boolean flip, final String kName) throws IOException {
         TransMatrix dicomMatrix = null;
         TransMatrix inverseDicomMatrix = null;
         // double[][] inverseDicomArray = null;
         float[] coord;
         float[] tCoord;
 
-		int numVertices = positions.length/4;
-
-		Vector<Vector3f> vertices = new Vector<Vector3f>();
-		Vector<TriangleKey> triangles = new Vector<TriangleKey>();
-		int triCount = 0;
-        for ( int i = 0; i < numVertices; i++)
-        {
-        	Vector3f pos1 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
-        	i++;
-        	Vector3f pos2 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
-        	i++;
-        	Vector3f pos3 = new Vector3f( positions[i*4+0], positions[i*4+1], positions[i*4+2]);
-        	if ( Float.isNaN( pos1.X) || Float.isNaN( pos1.Y ) || Float.isNaN( pos1.Z ) )
-        	{
-        		continue;
-        	}
-        	if ( Float.isNaN( pos2.X) || Float.isNaN( pos2.Y ) || Float.isNaN( pos2.Z ) )
-        	{
-        		continue;
-        	}
-        	if ( Float.isNaN( pos3.X) || Float.isNaN( pos3.Y ) || Float.isNaN( pos3.Z ) )
-        	{
-        		continue;
-        	}
-        	vertices.add(pos1);
-        	vertices.add(pos2);
-        	vertices.add(pos3);
-        	triangles.add( new TriangleKey(triCount, triCount+1, triCount+2) );
-        	triCount += 3;
-        }
-		Vector<Vector3f> newVertices = new Vector<Vector3f>();
-		Vector<TriangleKey> newTriangles = new Vector<TriangleKey>();
-        ExtractSurfaceCubes.MakeUnique( vertices, triangles, newVertices, newTriangles );
 		int iVQuantity = newVertices.size();
-		int iTQuantity = newTriangles.size();
-		
-		Preferences.debug("\n\nVertex count reduced from " + vertices.size() + " to " + newVertices.size() + ".\n", Preferences.DEBUG_MINOR);
-		Preferences.debug("Triangle count reduced from " + triangles.size() + " to " + newTriangles.size() + ".\n\n", Preferences.DEBUG_MINOR);
-
 
     	float[] res = srcImage.getResolutions(0);
         float[] startLocation = srcImage.getFileInfo()[0].getOrigin();
@@ -1116,18 +1148,6 @@ public class OpenCLAlgorithmMarchingCubes extends OpenCLAlgorithmBase
             	transformedPositions[i] = pos;
             }
         }
-        
-
-		int[] aiConnect = new int[3 * iTQuantity];
-		int iIndex = 0;
-
-		for ( int i = 0; i < iTQuantity; i++ )
-		{
-			TriangleKey kT = newTriangles.elementAt(i);
-			aiConnect[iIndex++] = kT.V[0];
-			aiConnect[iIndex++] = kT.V[1];
-			aiConnect[iIndex++] = kT.V[2];
-		}
 
 
         float[] box = new float[3];
