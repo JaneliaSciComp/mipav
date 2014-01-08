@@ -396,7 +396,7 @@ public class PlugInDialogNucleiStatistics extends JDialogStandaloneScriptablePlu
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Nuclei Statistics 06/06/2013");
+        setTitle("Nuclei Statistics 2014-01-08");
         // int length = image.getExtents()[0] * image.getExtents()[1];
 
         final GridBagConstraints gbc = new GridBagConstraints();
