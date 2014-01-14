@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.view.MipavUtil;
 
 
 
@@ -20,6 +21,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	private FileWriter csv;
 	private FileWriter concatCSV;
 	private boolean removeHeader;
+	private boolean failed;
 	
 	public PlugInAlgorithmParseSlips(){
 		super();
@@ -40,6 +42,7 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 		String[] reportString;
 		String[] slipString;
 		readCSV();
+		if (failed) return;
 		for(int i=0;i<reportLines.size();i++){
 			reportIDval = reportID.get(i);
 			reportString = reportLines.get(i);
@@ -250,6 +253,8 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 	}
 
 	private void readCSV(){
+		
+		int cnt = 0;
 
 		String[] lineArray;
 		try {
@@ -259,8 +264,9 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 				reportLines = new Vector<String[]>();
 				reportID = new Vector<String>();
 				String PID;
-
+				
 				while (( line = input.readLine()) != null){
+					cnt++;
 					//System.out.println(line);
 					lineArray = parseLine2(line);
 					if(lineArray.length != 0){
@@ -274,17 +280,26 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 						}
 					}
 				}
+			}catch(ArrayIndexOutOfBoundsException e){
+				MipavUtil.displayError("Exception in Report File. Check line " 
+						+ String.valueOf(cnt) + " of file for any errors.");
+				failed = true;
 			}
 			finally {
 				input.close();
 			}
 			input =  new BufferedReader(new FileReader(slipFile));
 			try {
+				cnt = 0;
 				String line = null; 
 				slipLines = new Vector<String[]>();
 				slipID = new Vector<String>();
-				if (removeHeader) input.readLine(); //Strip header from Coriell file
+				if (removeHeader) {
+					input.readLine(); //Strip header from Coriell file
+					cnt++;
+				}
 				while (( line = input.readLine()) != null){
+					cnt++;
 					//System.out.println(line);
 					line = line.replace("\"", "");
 					lineArray = parseLine(line); //semi-colon delimiter 
@@ -293,6 +308,11 @@ public class PlugInAlgorithmParseSlips extends AlgorithmBase{
 						slipID.add(lineArray[0]);
 					}
 				}
+			}
+			catch(ArrayIndexOutOfBoundsException e){
+			MipavUtil.displayError("Exception in Coriell   File. Check line " 
+					+ String.valueOf(cnt) + " of file for any errors.");
+			failed = true;
 			}
 			finally {
 				input.close();

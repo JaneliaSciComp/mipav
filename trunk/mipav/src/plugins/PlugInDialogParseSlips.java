@@ -125,9 +125,9 @@ public class PlugInDialogParseSlips extends JDialogStandalonePlugin implements A
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		// TODO Auto-generated method stub
-		if(algorithm instanceof PlugInAlgorithmParseSlips)
+		if(algorithm instanceof PlugInAlgorithmParseSlips && algorithm.isCompleted())
 			MipavUtil.displayInfo("Comparison file is in " + new File(reportField.getText()).getParent());
-		else if(algorithm instanceof PlugInAlgorithmCompleteCatalog)
+		else if(algorithm instanceof PlugInAlgorithmCompleteCatalog && algorithm.isCompleted())
 			MipavUtil.displayInfo("Output file is in " + new File(catalogField.getText()).getParent());
 		
 	}
