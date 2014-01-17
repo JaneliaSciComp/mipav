@@ -29,9 +29,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
     /** number of slices in the 3rd dimension. 4th dim length = sourceImage.3rd_dim / volumeLength */
     private int volumeLength = 1;
 
-    /** Whether all file information is copied */
-    private boolean copyAllInfo;
-
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -47,7 +44,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
      * @param unit4 units of measure for the 4rd dimension
      * @param copyAllInfo whether all file information is copied
      */
-    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4, boolean copyAllInfo) {
+    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4) {
         super(null, srcImg);
 
         this.volumeLength = volumeLength;
@@ -56,23 +53,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
         resolUnit3 = unit3;
         resolUnit4 = unit4;
-        
-        this.copyAllInfo = copyAllInfo;
-    }
-    
-    /**
-     * Constructs new algorithm and sets source.
-     * 
-     * @param srcImg source image model
-     * @param volumeLength the 3D image will be chopped upto to volumes of this length volumeLength should divide evenly
-     *            (without remainder) into the 3rd dimension length of the original image.
-     * @param res3 resolution of the 3rd dimension
-     * @param res4 resolution of the 4rd dimension
-     * @param unit3 units of measure for the 3rd dimension
-     * @param unit4 units of measure for the 4rd dimension
-     */
-    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4) {
-        this(srcImg, volumeLength, res3, res4, unit3, unit4, false);
     }
 
     // ~ Methods
@@ -216,6 +196,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                     destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
                     destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
                     destFileInfo[sliceCounter].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation()); 
+                    destFileInfo[sliceCounter].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(j));
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows
@@ -294,6 +275,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                     if (destImage.getFileInfo( (t * zDim) + z) instanceof FileInfoXML) {
                         ((FileInfoImageXML) (destImage.getFileInfo( (t * zDim) + z))).setMatrix(srcImage.getMatrix());
                     }
+                    destImage.getFileInfo((t * zDim) + z).setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
 
                 }
 
