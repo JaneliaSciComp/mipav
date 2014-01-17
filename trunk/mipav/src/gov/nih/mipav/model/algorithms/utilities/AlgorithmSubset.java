@@ -240,7 +240,8 @@ public class AlgorithmSubset extends AlgorithmBase {
                          destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
                          destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
                          destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
-                         destFileInfo[z].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());    
+                         destFileInfo[z].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
+                         destFileInfo[z].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
                          ((FileInfoDicom) destFileInfo[z]).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
                          ((FileInfoDicom) destFileInfo[z]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
                          sliceCounter++;  
@@ -260,6 +261,7 @@ public class AlgorithmSubset extends AlgorithmBase {
                 if ( removeDim == REMOVE_T ) {
                     fileInfoBuffer.setFileName(srcImage.getImageName() +"_T" + sliceNum);
                 }
+                fileInfoBuffer.setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
                 destImage.setFileInfo(fileInfoBuffer, d);
             }
         }
