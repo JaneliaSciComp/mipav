@@ -71,6 +71,8 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 	
 	private JCheckBox wallCB;
 	
+	private String separator = File.separator;
+	
 	public PlugInDialogWallNucleiStatsBulk() {
        
 		super();
@@ -202,7 +204,9 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 		String dirStr;
 		
 		dirStr = dirText.getText();
-		dirStr = dirStr.concat("Masks//");
+		if(!dirStr.endsWith(separator))
+			dirStr = dirStr + separator;
+		dirStr = dirStr.concat("Masks" + separator);
 		maskDir = new File(dirStr);
 		if(!maskDir.exists()) return false;
 		
@@ -340,7 +344,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 	private boolean initCSV(){
 		
 		String directory = imageList.get(0).getParent();
-		csv = new File(directory.concat("\\statistics.csv"));
+		csv = new File(directory.concat(separator + "statistics.csv"));
 		String units;
 		Unit unitStruct;
 		String unitAbbr;
@@ -352,7 +356,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 		try{
 			if(!(csv.exists())){
 				output = new FileWriter(csv);
-				output.append("Image, ,Wall, , , , , ,Nuclei, ,Units, " + unitAbbr + ", \n");
+				output.append("Image, ,Wall, , , , , ,Nuclei, ,Resolution, " + xResField.getText() + unitAbbr + ", \n");
 				output.append(",Min,Max,Average,Std. Dev,Area, ,Number,Min,Max,Average,Std. Dev,Area, \n");
 				output.flush();
 			}

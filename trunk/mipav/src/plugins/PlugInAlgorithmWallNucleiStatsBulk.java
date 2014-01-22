@@ -207,7 +207,7 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 				midline(maskBuffer, maxIndex, 1);
 				
 				try {
-					tempImage.importData(0, tempBuffer, false);
+					tempImage.importData(0, tempBuffer, true);
 				} catch (IOException e) {
 					MipavUtil.displayError("Could not import data");
 				}
@@ -223,8 +223,15 @@ public class PlugInAlgorithmWallNucleiStatsBulk extends AlgorithmBase{
 				}
 
 				if(showNuc){
-					new ViewJFrameImage(nImage, null, 
-							new Dimension(50, 300)).setTitle(rgbStr.concat("_nuclei"));
+					ViewJFrameImage dual = new ViewJFrameImage(rgbImage, null, 
+							new Dimension(50, 300));
+					dual.setImageB(nImage);
+					dual.setTitle(rgbStr.concat("_nuclei"));
+					dual.getLUTb().oneToZeroLUTAdjust();
+					//dual.setAlphaBlend(25);
+					dual.getControls().setAlphaSlider(75);
+					//dual.getControls().alphaSlider.setValue(25);
+					//dual.updateImages(true); 
 				}
 				
 				//Calculate statistics for the wall thickness

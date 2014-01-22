@@ -618,6 +618,10 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
             ((ViewToolBarBuilder.JScriptToolBar) scriptToolBar).setRecording(isRecording);
         }
     }
+    
+    public void setAlphaSlider(int i){
+    	alphaSlider.setValue(i);
+    }
 
     
     /**

@@ -93,6 +93,8 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	
 	private JCheckBox wallCB;
 	
+	private String separator = File.separator;
+	
 	
 	/**
 	 * Plugin for the Collin's lab. This accompanies the Wall and Nuclei Statistics plugin
@@ -136,6 +138,17 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         	//Changes the text field to match the directory selected by the user
         	dirText.setText(fileChooser.getSelectedFile().toString());
         	Preferences.setImageDirectory(fileChooser.getSelectedFile());
+        }
+        else if (command.equals("Prev")){
+        	if (counter > 0){
+        		counter--;
+        		display.close();
+        		openImage();
+        		String title = "Wall Drawing " + String.valueOf(counter+1) + " of "
+        				+ String.valueOf(listLength);
+                setTitle(title);
+        	}
+        	
         }
         else if (command.equals("Next")){
         	//Close the previous image and open the next one
@@ -269,7 +282,9 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		//so that only masked images are processed
 		
 		dirStr = dirText.getText();
-		dirStr = dirStr.concat("Masks//");
+		if(!dirStr.endsWith(separator))
+			dirStr = dirStr + separator;
+		dirStr = dirStr.concat("Masks" + separator);
 		maskDir = new File(dirStr);
 		if(!maskDir.exists()) maskDir.mkdir();
 		
@@ -305,7 +320,9 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		String dirStr;
 		
 		dirStr = dirText.getText();
-		dirStr = dirStr.concat("Masks//");
+		if(!dirStr.endsWith(separator))
+			dirStr = dirStr + separator;
+		dirStr = dirStr.concat("Masks" + separator);
 		maskDir = new File(dirStr);
 		if(!maskDir.exists()) return false;
 		
@@ -398,7 +415,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	private boolean initCSV(){
 		
 		String directory = imageList.get(0).getParent();
-		csv = new File(directory.concat("\\statistics.csv"));
+		csv = new File(directory.concat(separator + "statistics.csv"));
 		String units;
 		Unit unitStruct;
 		String unitAbbr;
@@ -549,6 +566,11 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         saveButton.addActionListener(this);
         buttonPanel.add(saveButton);
         
+        JButton prevButton = new JButton("Prev");
+        prevButton.setFont(serif12);
+        prevButton.addActionListener(this);
+        buttonPanel.add(prevButton);
+        
         JButton nextButton = new JButton("Next");
         nextButton.setFont(serif12);
         nextButton.addActionListener(this);
@@ -641,7 +663,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 			new ViewJFrameImage(outImage, null, new Dimension(50, 300));
 		destName = current.getName();
 		destName = destName.substring(0, destName.indexOf(".")).concat("_mask.xml");
-		opt = new FileWriteOptions(destName, maskDir.toString().concat("//"), true);
+		opt = new FileWriteOptions(destName, maskDir.toString().concat(separator), true);
 		imWriter = new FileIO();
 		imWriter.writeImage(outImage, opt, false);
 	}
