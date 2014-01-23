@@ -55,7 +55,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
 	/**Contains the wall images for batch processing	 */
 	private Vector<File> imageList;
 	
-	/**Contains the mask images fo batch processing */
+	/**Contains the mask images for batch processing */
 	private Vector<File> maskList;
 	
 	private PlugInAlgorithmWallNucleiStatsBulk midAlg = null;
@@ -89,7 +89,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
                 System.exit(0);
                 ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
             } else {
-                return;
+            	dispose();
             }
         }
         else if (command.equals("Choose")) openDir();
@@ -302,6 +302,7 @@ public class PlugInDialogWallNucleiStatsBulk extends JDialogStandalonePlugin imp
         resUnits.setFont(serif12);
         resUnits.setSelectedItem("Micrometers");
         resPanel.add(resUnits);
+
         
         JPanel optionsPanel = new JPanel();
         optionsPanel.setForeground(Color.black);

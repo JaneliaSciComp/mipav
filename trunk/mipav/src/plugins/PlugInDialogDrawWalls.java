@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -165,7 +166,7 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
         else if  (command.equals("OK")){
         	if (changed){
         		//If there are no images, tell the user
-	        	if(fileFilter()) {
+	        	if(populateImages(new File(dirText.getText()))) {
 	        		openImage();
 	        		initDrawer();
 	        	}
@@ -200,7 +201,6 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
                 ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
             } else {
             	dispose();
-                return;
             }
         }
     }
@@ -288,11 +288,33 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 		maskDir = new File(dirStr);
 		if(!maskDir.exists()) maskDir.mkdir();
 		
-		File[] files = dir.listFiles(new FilenameFilter() {
+		FilenameFilter jpgFilter = new FilenameFilter(){
 			public boolean accept(File dir, String name) {
 				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg"));
 			}
+		};
+		
+		File[] files = dir.listFiles(jpgFilter);
+		
+		File[] directories = dir.listFiles(new FileFilter() {
+			public boolean accept(File path) {
+				return path.isDirectory();
+			}
 		});
+		
+		for(int i=0;i<directories.length;i++){
+			File[] dirFiles = directories[i].listFiles(jpgFilter);
+			for(File im : dirFiles){
+				stripped = im.getName();
+				stripped = stripped.substring(0, stripped.indexOf("."));
+				stripped = stripped.concat("_mask.xml");
+				mask = new File(dirStr.concat(stripped));
+				
+		        if (!mask.exists()){
+		        	imageList.add(im);
+		        }
+			}
+		}
 		
 		for(File im : files){
 			stripped = im.getName();
@@ -303,6 +325,53 @@ public class PlugInDialogDrawWalls extends JDialogStandalonePlugin implements Al
 	        if (!mask.exists()){
 	        	imageList.add(im);
 	        }
+		}
+		
+		listLength = imageList.size();
+		return !imageList.isEmpty();
+	}
+	
+	private boolean populateImages(File dir){
+		
+		FilenameFilter jpgFilter = new FilenameFilter(){
+			public boolean accept(File dir, String name) {
+				return (name.toLowerCase().endsWith(".jpg") || name.toLowerCase().endsWith(".jpeg")||
+						name.toLowerCase().endsWith(".tif") || name.toLowerCase().endsWith(".tiff"));
+			}
+		};
+		File mask;
+		String stripped;
+		File[] files = dir.listFiles(jpgFilter);
+		String dirStr;
+		//Populate the mask images first, then use that to get the wall images
+		//so that only masked images are processed
+		
+		dirStr = dir.toString();
+		if(!dirStr.endsWith(separator))
+			dirStr = dirStr + separator;
+		dirStr = dirStr.concat("Masks" + separator);
+		maskDir = new File(dirStr);
+		if(!maskDir.exists() && files.length>0) maskDir.mkdir();
+		
+		for(File im : files){
+			stripped = im.getName();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+			stripped = stripped.concat("_mask.xml");
+			mask = new File(dirStr.concat(stripped));
+			
+	        if (!mask.exists()){
+	        	imageList.add(im);
+	        }
+		}
+		
+		File[] directories = dir.listFiles(new FileFilter() {
+			public boolean accept(File path) {
+				return path.isDirectory();
+			}
+		});
+		
+		for(int i=0;i<directories.length;i++){
+			populateImages(directories[i]);
 		}
 		
 		listLength = imageList.size();
