@@ -225,7 +225,8 @@ public class AlgorithmHoughLine extends AlgorithmBase {
             sinth[i] = Math.sin(theta);
         }
         d = Math.sqrt((xDimSource - 1.0)*(xDimSource - 1.0) + (yDimSource - 1.0)*(yDimSource - 1.0));
-        maxLinePoints = (int)Math.ceil(Math.sqrt(xDimSource*xDimSource + yDimSource*yDimSource));
+        // Multiply by factor of 2 to allow for staircase instead of ideal line.
+        maxLinePoints = 2*(int)Math.ceil(Math.sqrt(xDimSource*xDimSource + yDimSource*yDimSource));
         xArray = new int[houghSlice][maxLinePoints];
         yArray = new int[houghSlice][maxLinePoints];
         
