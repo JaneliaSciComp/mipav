@@ -87,7 +87,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         }
     }
 
-    private boolean register = true;
+    private boolean registerOne = true;
+    
+    private boolean registerAll = false;
 
     private boolean showAriMean = true;
 
@@ -201,7 +203,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
     /**
      * Constructor.
      * 
-     * @param register
+     * @param registerOne
+     * @param registerAll
      * @param rotateBeginX
      * @param rotateEndX
      * @param coarseRateX
@@ -258,7 +261,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
      * @param deconvDir
      * @param deconvShowResults
      */
-    public PlugInAlgorithmGenerateFusion(final boolean register, final float rotateBeginX, final float rotateEndX,
+    public PlugInAlgorithmGenerateFusion(final boolean registerOne, final boolean registerAll, 
+    		final float rotateBeginX, final float rotateEndX,
             final float coarseRateX, final float fineRateX, final float rotateBeginY, final float rotateEndY,
             final float coarseRateY, final float fineRateY, final float rotateBeginZ, final float rotateEndZ,
             final float coarseRateZ, final float fineRateZ, final boolean doShowPrefusion, final boolean doInterImages,
@@ -275,7 +279,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final AlgorithmMaximumIntensityProjection[] maxAlgo, final String saveType, final boolean doDeconv,
             final int deconvIterations, final float[] deconvSigmaA, final float[] deconvSigmaB,
             final boolean useDeconvSigmaConversionFactor, final File deconvDir, final boolean deconvShowResults) {
-        this.register = register;
+        this.registerOne = registerOne;
+        this.registerAll = registerAll;
         this.rotateBeginX = rotateBeginX;
         this.rotateEndX = rotateEndX;
         this.coarseRateX = coarseRateX;
@@ -377,7 +382,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
         final boolean appFrameFlag = ViewUserInterface.getReference().isAppFrameVisible();
         ViewUserInterface.getReference().setAppFrameVisible(false);
 
-        if (register) {
+        if (registerOne) {
             AlgorithmRegOAR3D regAlgo3D = null;
             final FileIO io = new FileIO();
             io.setQuiet(true);
@@ -465,7 +470,7 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 setCompleted(false);
                 return;
             }
-        } // if (register)
+        } // if (registerOne)
 
         final ThreadPoolExecutor exec = new ThreadPoolExecutor(concurrentNum, concurrentNum, 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>());
@@ -1213,47 +1218,99 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
 
             final boolean doPad = false;
-            final TransMatrix xfrm = new TransMatrix(4);
-            xfrm.identity();
-            if (mtxFileLoc == null) {
-                MipavUtil.displayError("mtxFileLoc = null");
-            }
-            try {
-                // search for file name relative to image first, then relative to MIPAV default, then absolute path
-                File file = null;
-
-                file = new File(transformImage.getImageDirectory() + mtxFileLoc);
-                if ( !file.exists()) {
-                    file = new File(ViewUserInterface.getReference().getDefaultDirectory() + mtxFileLoc);
-                }
-                if ( !file.exists()) {
-                    file = new File(mtxFileLoc);
-                }
-
-                final RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                final int fileInterp[] = new int[1];
-                final float fileXres[] = new float[1];
-                final float fileYres[] = new float[1];
-                final float fileZres[] = new float[1];
-                final int fileXdim[] = new int[1];
-                final int fileYdim[] = new int[1];
-                final int fileZdim[] = new int[1];
-                final boolean filetVOI[] = new boolean[1];
-                final boolean fileClip[] = new boolean[1];
-                final boolean filePad[] = new boolean[1];
-                xfrm.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim,
-                        filetVOI, fileClip, filePad, false);
-                raFile.close();
-
-                // We don't know the coordinate system that the transformation represents. Therefore
-                // bring up a dialog where the user can ID the coordinate system changes (i.e.
-                // world coordinate and/or the "left-hand" coordinate system!
-                // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
-            } catch (final IOException error) {
-                MipavUtil.displayError("Matrix read error");
-                xfrm.identity();
-            }
+            TransMatrix xfrm = new TransMatrix(4);
+            if (registerAll) {
+            	final int cost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED;
+                final int DOF = 12;
+                final int interp = AlgorithmTransform.TRILINEAR;
+                final boolean maxResol = true;
+                final boolean doSubsample = true;
+                final boolean doMultiThread = Preferences.isMultiThreadingEnabled() && (ThreadUtil.getAvailableCores() > 1);
+                final boolean fastMode = false;
+                final int maxIterations = 2;
+                final int numMinima = 3;
+                AlgorithmRegOAR3D regAlgo3D = new AlgorithmRegOAR3D(baseImage, transformImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ,
+                        coarseRateZ, fineRateZ, maxResol, doSubsample, doMultiThread, fastMode, maxIterations, numMinima);
+                regAlgo3D.run();
+                if (regAlgo3D.isCompleted()) {
+                    final int xdimA = baseImage.getExtents()[0];
+                    final int ydimA = baseImage.getExtents()[1];
+                    final int zdimA = baseImage.getExtents()[2];
+                    final float xresA = baseImage.getFileInfo(0).getResolutions()[0];
+                    final float yresA = baseImage.getFileInfo(0).getResolutions()[1];
+                    final float zresA = baseImage.getFileInfo(0).getResolutions()[2];
+                    xfrm = regAlgo3D.getTransform();
+                    // Do not do finalMatrix.Inverse()
+                    xfrm.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                    final String costName = "CORRELATION_RATIO_SMOOTHED";
+                    String message = "Using cost function, " + costName;
+                    message += ", the cost is " + Double.toString(regAlgo3D.getAnswer()) + ".\n";
+                    message += "Some registration settings: \n";
+                    message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                    message += "with a X coarse rate of " + coarseRateX + " and X fine rate of " + fineRateX + ".\n";
+                    message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
+                    message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
+                    message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
+                    message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
+                    mtxFileLoc = mtxFileDirectory + File.separator + transformImageName + "_To_" + baseImageName + ".mtx";
+                    final int interp2 = AlgorithmTransform.TRILINEAR;
+                    final boolean pad = false;
+                    System.out.println("xfrm = " + xfrm);
+                    xfrm.saveMatrix(mtxFileLoc, interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad,
+                            message);
+                    Preferences.debug("Saved " + mtxFileLoc + "\n", Preferences.DEBUG_FILEIO);
+                    regAlgo3D.disposeLocal();
+                    regAlgo3D = null;
+                } // if (regAlgo3D.isCompleted())
+                else {
+                    MipavUtil.displayError("AlgorithmRegOAR3D did not complete successfully");
+                    setCompleted(false);
+                    return;
+                }	
+            } // if (registerAll)
+            else { // !registerAll
+            	 xfrm.identity();
+	            if (mtxFileLoc == null) {
+	                MipavUtil.displayError("mtxFileLoc = null");
+	            }
+	            try {
+	                // search for file name relative to image first, then relative to MIPAV default, then absolute path
+	                File file = null;
+	
+	                file = new File(transformImage.getImageDirectory() + mtxFileLoc);
+	                if ( !file.exists()) {
+	                    file = new File(ViewUserInterface.getReference().getDefaultDirectory() + mtxFileLoc);
+	                }
+	                if ( !file.exists()) {
+	                    file = new File(mtxFileLoc);
+	                }
+	
+	                final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+	
+	                final int fileInterp[] = new int[1];
+	                final float fileXres[] = new float[1];
+	                final float fileYres[] = new float[1];
+	                final float fileZres[] = new float[1];
+	                final int fileXdim[] = new int[1];
+	                final int fileYdim[] = new int[1];
+	                final int fileZdim[] = new int[1];
+	                final boolean filetVOI[] = new boolean[1];
+	                final boolean fileClip[] = new boolean[1];
+	                final boolean filePad[] = new boolean[1];
+	                xfrm.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim,
+	                        filetVOI, fileClip, filePad, false);
+	                raFile.close();
+	
+	                // We don't know the coordinate system that the transformation represents. Therefore
+	                // bring up a dialog where the user can ID the coordinate system changes (i.e.
+	                // world coordinate and/or the "left-hand" coordinate system!
+	                // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+	            } catch (final IOException error) {
+	                MipavUtil.displayError("Matrix read error");
+	                xfrm.identity();
+	            }
+            } // else !registerAll
             final int interp = AlgorithmTransform.TRILINEAR;
             final int units[] = new int[3];
             units[0] = baseImage.getUnitsOfMeasure()[0];
