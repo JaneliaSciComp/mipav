@@ -1225,7 +1225,8 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
                 final int interp = AlgorithmTransform.TRILINEAR;
                 final boolean maxResol = true;
                 final boolean doSubsample = true;
-                final boolean doMultiThread = Preferences.isMultiThreadingEnabled() && (ThreadUtil.getAvailableCores() > 1);
+                // Already in multithreads
+                final boolean doMultiThread = false;
                 final boolean fastMode = false;
                 final int maxIterations = 2;
                 final int numMinima = 3;
