@@ -771,8 +771,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelRotateDegreesX = new JLabel("degrees");
         labelRotateDegreesX.setFont(serif12);
 
-        rotateBeginTextX = new JTextField("-30", 3);
-        rotateEndTextX = new JTextField("30", 3);
+        rotateBeginTextX = new JTextField("-10", 3);
+        rotateEndTextX = new JTextField("10", 3);
 
         rotateRangePanelX.add(labelRotateRangeX);
         rotateRangePanelX.add(rotateBeginTextX);
@@ -791,7 +791,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         final JLabel labelCoarseDegreesX = new JLabel("degrees");
         labelCoarseDegreesX.setFont(serif12);
-        coarseRateTextX = new JTextField("15", 3);
+        coarseRateTextX = new JTextField("3", 3);
 
         coarsePanelX.add(labelCoarseX);
         coarsePanelX.add(coarseRateTextX);
@@ -808,7 +808,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
 
         final JLabel labelFineDegreesX = new JLabel("degrees");
         labelFineDegreesX.setFont(serif12);
-        fineRateTextX = new JTextField("6", 3);
+        fineRateTextX = new JTextField("1", 3);
 
         finePanelX.add(labelFineX);
         finePanelX.add(fineRateTextX);
@@ -862,8 +862,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelRotateDegreesY = new JLabel("degrees");
         labelRotateDegreesY.setFont(serif12);
 
-        rotateBeginTextY = new JTextField("-30", 3);
-        rotateEndTextY = new JTextField("30", 3);
+        rotateBeginTextY = new JTextField("-10", 3);
+        rotateEndTextY = new JTextField("10", 3);
 
         rotateRangePanelY.add(labelRotateRangeY);
         rotateRangePanelY.add(rotateBeginTextY);
@@ -883,7 +883,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelCoarseDegreesY = new JLabel("degrees");
         labelCoarseDegreesY.setFont(serif12);
 
-        coarseRateTextY = new JTextField("15", 3);
+        coarseRateTextY = new JTextField("3", 3);
 
         coarsePanelY.add(labelCoarseY);
         coarsePanelY.add(coarseRateTextY);
@@ -901,7 +901,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelFineDegreesY = new JLabel("degrees");
         labelFineDegreesY.setFont(serif12);
 
-        fineRateTextY = new JTextField("6", 3);
+        fineRateTextY = new JTextField("1", 3);
 
         finePanelY.add(labelFineY);
         finePanelY.add(fineRateTextY);
@@ -922,8 +922,8 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelRotateDegreesZ = new JLabel("degrees");
         labelRotateDegreesZ.setFont(serif12);
 
-        rotateBeginTextZ = new JTextField("-30", 3);
-        rotateEndTextZ = new JTextField("30", 3);
+        rotateBeginTextZ = new JTextField("-10", 3);
+        rotateEndTextZ = new JTextField("10", 3);
 
         rotateRangePanelZ.add(labelRotateRangeZ);
         rotateRangePanelZ.add(rotateBeginTextZ);
@@ -943,7 +943,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelCoarseDegreesZ = new JLabel("degrees");
         labelCoarseDegreesZ.setFont(serif12);
 
-        coarseRateTextZ = new JTextField("15", 3);
+        coarseRateTextZ = new JTextField("3", 3);
 
         coarsePanelZ.add(labelCoarseZ);
         coarsePanelZ.add(coarseRateTextZ);
@@ -961,7 +961,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         final JLabel labelFineDegreesZ = new JLabel("degrees");
         labelFineDegreesZ.setFont(serif12);
 
-        fineRateTextZ = new JTextField("6", 3);
+        fineRateTextZ = new JTextField("1", 3);
 
         finePanelZ.add(labelFineZ);
         finePanelZ.add(fineRateTextZ);
@@ -1127,6 +1127,9 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         leftPanel.add(mtxPanel, gbc);
         
+        JPanel middlePanel = new JPanel(new GridBagLayout());
+        middlePanel.setForeground(Color.black);
+        
         JPanel rightPanel = new JPanel(new GridBagLayout());
         rightPanel.setForeground(Color.black);
         
@@ -1192,7 +1195,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         
         gbc.gridy = 0;
         gbc.gridx = 0;
-        rightPanel.add(algOptionPanel, gbc);
+        middlePanel.add(algOptionPanel, gbc);
         
         
         
@@ -1220,8 +1223,6 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         gbc.gridy++;
         outputPanel.add(maxProjPanel, gbc);
         gbc.gridy++;
-        outputPanel.add(deconvPanel, gbc);
-        gbc.gridy++;
         
         interImagesBox = gui.buildCheckBox("Show intermediate images", false);
         outputPanel.add(interImagesBox.getParent(), gbc);
@@ -1243,17 +1244,24 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         });
         
         gbc.gridy = 1;
-        rightPanel.add(outputPanel, gbc);
+        middlePanel.add(outputPanel, gbc);
         
         gbc.gridy++;
         okCancelPanel = gui.buildOKCancelPanel();
-        rightPanel.add(okCancelPanel, gbc);
+        middlePanel.add(okCancelPanel, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        rightPanel.add(deconvPanel, gbc);
+        gbc.gridy++;
         
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("File", leftPanel);
 
-        tabbedPane.addTab("Options", rightPanel);
+        tabbedPane.addTab("Options", middlePanel);
+        
+        tabbedPane.addTab("Decon", rightPanel);
 
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         
@@ -1636,7 +1644,7 @@ public class PlugInDialogGenerateFusion extends JDialogStandaloneScriptablePlugi
         GridBagConstraints gbc = createGBC();
         deconvParamPanel = new JPanel(new GridBagLayout());
         deconvParamPanel.setForeground(Color.black);
-        deconvParamPanel.setVisible(false);
+        deconvParamPanel.setVisible(true);
         //deconvParamPanel.setBorder(MipavUtil.buildTitledBorder("Deconvolution options"));
         
         deconvShowResultsCheckbox = gui.buildCheckBox("Show deconvolution images", false);
