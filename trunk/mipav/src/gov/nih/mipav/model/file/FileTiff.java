@@ -18067,7 +18067,9 @@ public class FileTiff extends FileBase {
 
             // The EchoTech standard uses mm for the ResolutionZ field,
             // so convert to millimeters
-            zRes = resZUnit.convertTo(zRes, Unit.MILLIMETERS);
+            if (resZUnit != Unit.getUnitFromLegacyNum(FileInfoBase.UNKNOWN_MEASURE)) {
+                zRes = resZUnit.convertTo(zRes, Unit.MILLIMETERS);
+            }
         }
 
         tRes = -1.0;
