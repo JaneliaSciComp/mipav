@@ -391,14 +391,14 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             ModelImage baseImage = io.readImage(baseImageAr[timeIndex].getAbsolutePath());
             for (int i = 0; i < baseImage.getExtents()[2]; i++) {
                 for (int j = 0; j < 3; j++) {
-                    baseImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.MICROMETERS, j);
+                    baseImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
                 }
             }
             final String baseImageName = baseImage.getImageName();
             ModelImage transformImage = io.readImage(transformImageAr[timeIndex].getAbsolutePath());
             for (int i = 0; i < transformImage.getExtents()[2]; i++) {
                 for (int j = 0; j < 3; j++) {
-                    transformImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.MICROMETERS, j);
+                    transformImage.getFileInfo(i).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
                 }
             }
             final String transformImageName = transformImage.getImageName();
@@ -485,14 +485,14 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
             for (int j = 0; j < baseImage.getExtents()[2]; j++) {
                 for (int k = 0; k < 3; k++) {
-                    baseImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.MICROMETERS, k);
+                    baseImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
                 }
             }
             final ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             io = null;
             for (int j = 0; j < transformImage.getExtents()[2]; j++) {
                 for (int k = 0; k < 3; k++) {
-                    transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.MICROMETERS, k);
+                    transformImage.getFileInfo(j).setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, k);
                 }
             }
 
@@ -1314,9 +1314,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             } // else !registerAll
             final int interp = AlgorithmTransform.TRILINEAR;
             final int units[] = new int[3];
-            units[0] = baseImage.getUnitsOfMeasure()[0];
-            units[1] = baseImage.getUnitsOfMeasure()[1];
-            units[2] = baseImage.getUnitsOfMeasure()[2];
+            units[0] = FileInfoBase.UNKNOWN_MEASURE;
+            units[1] = FileInfoBase.UNKNOWN_MEASURE;
+            units[2] = FileInfoBase.UNKNOWN_MEASURE;
             final boolean doClip = true;
             final boolean doVOI = false;
             final boolean doRotateCenter = false;
@@ -1352,9 +1352,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final boolean doPad = true;
             final int interp = AlgorithmTransform.TRILINEAR;
             final int units[] = new int[3];
-            units[0] = image.getUnitsOfMeasure()[0];
-            units[1] = image.getUnitsOfMeasure()[1];
-            units[2] = image.getUnitsOfMeasure()[2];
+            units[0] = FileInfoBase.UNKNOWN_MEASURE;
+            units[1] = FileInfoBase.UNKNOWN_MEASURE;
+            units[2] = FileInfoBase.UNKNOWN_MEASURE;
             final boolean doClip = true;
             final boolean doVOI = false;
             final boolean doRotateCenter = false;
