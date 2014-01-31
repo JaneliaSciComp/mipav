@@ -894,6 +894,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             }
 
             resultImageInfoBase.setResolutions(finalRes);
+            for (int j = 0; j < 3; j ++) {
+            	resultImageInfoBase.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
+            }
 
             if (showGeoMean || saveGeoMean) {
                 subGeoImage = ViewUserInterface.getReference().createBlankImage(
