@@ -29,6 +29,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 	/** Source Image Resolutions */
 	float [] imResolutions;
+	
+	/** Source Image Units of Measure */
+	int [] imUnitsOfMeasure;
 
 	/** The first slice in the intensity projection calculation: */
 	private int startSlice;
@@ -88,6 +91,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		projectionDirection = _projectionDirection;
 		if(srcImg != null) {
 		    imResolutions = srcImg.getResolutions(0);
+		    if (srcImg.getFileInfo() != null) {
+		        imUnitsOfMeasure = srcImg.getFileInfo()[0].getUnitsOfMeasure();
+		    }
 		}
 		resultImages = new Vector<ModelImage>();
 		
@@ -129,6 +135,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		projectionDirection = _projectionDirection;
 		if(srcImg != null) {
 		    imResolutions = srcImg.getResolutions(0);
+		    if (srcImg.getFileInfo() != null) {
+		        imUnitsOfMeasure = srcImg.getFileInfo()[0].getUnitsOfMeasure();
+		    }
 		}
 		resultImages = new Vector<ModelImage>();
 		
@@ -403,6 +412,12 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 		float [] YRes = ( newSlices == 1 ) ? new float[] {imResolutions[0], imResolutions[2] } :
 			new float[] {imResolutions[0], imResolutions[2], imResolutions[1] };
+		
+		int [] YMeasure = null;
+		if (imUnitsOfMeasure != null) {
+		    YMeasure = ( newSlices == 1 ) ? new int[] {imUnitsOfMeasure[0], imUnitsOfMeasure[2] } :
+			new int[] {imUnitsOfMeasure[0], imUnitsOfMeasure[2], imUnitsOfMeasure[1] };
+		}
 
 		int lengthY = dimZ * dimX; // No. of pixels Y projection image
 		
@@ -422,6 +437,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					srcImage.getImageName() + "_YProjectionMax" );
 			resultImages.add(YProjectionImageMax);
 			YProjectionImageMax.setResolutions(YRes);
+			if (YMeasure != null) {
+			    for (int i = 0; i < YProjectionImageMax.getFileInfo().length; i++) {
+				    YProjectionImageMax.getFileInfo()[i].setUnitsOfMeasure(YMeasure);
+			    }
+			}
 		}
 		if ( computeMinimum )
 		{
@@ -429,6 +449,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					srcImage.getImageName() + "_YProjectionMin" );
 			resultImages.add(YProjectionImageMin);
 			YProjectionImageMin.setResolutions(YRes);
+			if (YMeasure != null) {
+				for (int i = 0; i < YProjectionImageMin.getFileInfo().length; i++) {
+					YProjectionImageMin.getFileInfo()[i].setUnitsOfMeasure(YMeasure);
+				}
+			}
 		}			
 
 		float totalLength = (newSlices*dimZ*dimX);
@@ -589,6 +614,12 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 		float [] XRes = ( newSlices == 1 ) ? new float[] {imResolutions[2], imResolutions[1] } :
 			new float[] {imResolutions[2], imResolutions[1], imResolutions[0] };
+		
+		int [] XMeasure = null;
+		if (imUnitsOfMeasure != null) {
+		    XMeasure = ( newSlices == 1 ) ? new int[] {imUnitsOfMeasure[2], imUnitsOfMeasure[1] } :
+			new int[] {imUnitsOfMeasure[2], imUnitsOfMeasure[1], imUnitsOfMeasure[0] };
+		}
 
 		int lengthX = dimY * dimZ; // No. of pixels X projection image
 		
@@ -608,6 +639,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					srcImage.getImageName() + "_XProjectionMax" );
 			resultImages.add(XProjectionImageMax);
 			XProjectionImageMax.setResolutions(XRes);
+			if (XMeasure != null) {
+				for (int i = 0; i < XProjectionImageMax.getFileInfo().length; i++) {
+					XProjectionImageMax.getFileInfo()[i].setUnitsOfMeasure(XMeasure);
+				}
+			}
 		}
 		if ( computeMinimum )
 		{
@@ -615,6 +651,11 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					srcImage.getImageName() + "_XProjectionMin" );
 			resultImages.add(XProjectionImageMin);
 			XProjectionImageMin.setResolutions(XRes);
+			if (XMeasure != null) {
+				for (int i = 0; i < XProjectionImageMin.getFileInfo().length; i++) {
+					XProjectionImageMin.getFileInfo()[i].setUnitsOfMeasure(XMeasure);
+				}
+			}
 		}			
 
 		float totalLength = (newSlices*dimZ*dimY);
@@ -860,6 +901,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
     public void setSrcImage(ModelImage srcImage) {
         super.setSrcImage(srcImage);
         imResolutions = srcImage.getResolutions(0);
+        if (srcImage.getFileInfo() != null) {
+            imUnitsOfMeasure = srcImage.getFileInfo()[0].getUnitsOfMeasure();
+        }
     }
 
     /**
