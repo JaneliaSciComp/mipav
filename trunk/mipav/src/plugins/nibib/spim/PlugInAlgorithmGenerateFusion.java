@@ -985,7 +985,9 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
 
                     doMaxProj(deconvImg, false, true, deconvDir, options, io);
 
-                    deconvImg.disposeLocal(false);
+                    if (!deconvShowResults) {
+                        deconvImg.disposeLocal(false);
+                    }
                 }
 
                 if ( !doShowPrefusion && !doInterImages) {
@@ -1553,6 +1555,11 @@ public class PlugInAlgorithmGenerateFusion extends AlgorithmBase {
             final ModelImage resultImage = ViewUserInterface.getReference().createBlankImage(
                     (FileInfoBase) imageA.getFileInfo(0).clone(), false);
             resultImage.setImageName(name);
+            for (int i = 0; i < imageA.getFileInfo().length; i++) {
+            	for (int j = 0; j < 3; j++) {
+            	    resultImage.getFileInfo()[i].setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, j);
+            	}
+            }
 
             final OpenCLAlgorithmDeconvolution deconvAlgo = new OpenCLAlgorithmDeconvolution(resultImage, imageA,
                     imageB, deconvSigmaA, deconvSigmaB, true, deconvIterations, useDeconvSigmaConversionFactor);
