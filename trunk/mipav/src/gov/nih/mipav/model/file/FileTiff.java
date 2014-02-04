@@ -964,6 +964,10 @@ public class FileTiff extends FileBase {
     private boolean doTIFFOrientation = true;
 
     private boolean suppressProgressBar = false;
+    
+    private boolean haveResolutionUnit = false;
+    
+    private boolean haveZResolution = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1316,6 +1320,16 @@ public class FileTiff extends FileBase {
 
             tileOffsetNumber = 0;
             tileByteNumber = 0;
+            
+            if (haveZResolution) {
+            	if (haveResolutionUnit && (fileInfo.getUnitsOfMeasure(0) == Unit.UNKNOWN_MEASURE.getLegacyNum())) {
+            		fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 2);
+            	}
+            	else {
+                    // EchoTech uses mm for Z resolution units
+                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
+            	}
+            }
 
             if ( !foundTag43314) {
                 fileInfo.setResolutions(imgResols);
@@ -7640,15 +7654,16 @@ public class FileTiff extends FileBase {
                         throw new IOException("RESOLUTION_UNIT has illegal value = " + valueArray[0] + "\n");
                     }
 
+                    haveResolutionUnit = true;
                     if (valueArray[0] == 1) {
-                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE, 0);
-                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE, 1);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
                     } else if (valueArray[0] == 2) {
-                        fileInfo.setUnitsOfMeasure(Unit.INCHES, 0);
-                        fileInfo.setUnitsOfMeasure(Unit.INCHES, 1);
+                        fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
+                        fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
                     } else if (valueArray[0] == 3) {
-                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS, 0);
-                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS, 1);
+                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
+                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
                     }
 
                     Preferences.debug("FileTiff.openIFD: Resolution Unit = " + fileInfo.getUnitsOfMeasure(0) + "\n",
@@ -7703,14 +7718,12 @@ public class FileTiff extends FileBase {
                         throw new IOException("ZRESOLUTION has illegal count = " + count + "\n");
                     }
 
+                    haveZResolution = true;
                     imgResols[2] = (float) valueDouble[0];
                     if (debuggingFileIO) {
                         Preferences.debug("FileTiff.openIFD: Z Resolution = " + imgResols[2] + "\n",
                                 Preferences.DEBUG_FILEIO);
                     }
-
-                    // EchoTech uses mm for Z resolution units
-                    fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), Preferences.DEBUG_FILEIO);
                     break;
 
                 case TRESOLUTION:
