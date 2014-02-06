@@ -208,7 +208,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25D(final BitSet mask, final float fillValue, final int tSlice) {
-        calcInPlace25D(mask, fillValue, tSlice, null);
+        calcInPlace25D(mask, fillValue, tSlice, null, true);
     }
 
     /**
@@ -221,7 +221,7 @@ public class AlgorithmMask extends AlgorithmBase {
      *            mutable
      */
     public void calcInPlace25D(final BitSet mask, final float fillValue, int tSlice,
-            final Vector<Integer> intensityLockVector) {
+            final Vector<Integer> intensityLockVector, boolean showProgressBar) {
 
         int i, z, t, end = 1, tEnd = 1;
         int imgLength, volLength = 0, offset;
@@ -232,7 +232,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int[] lockedIntensities = null;
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+        if (showProgressBar) {
+            fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+        }
 
         if (intensityLockVector != null) {
             lockedIntensities = new int[intensityLockVector.size()];
@@ -300,7 +302,7 @@ public class AlgorithmMask extends AlgorithmBase {
                         return;
                     }
 
-                    if (srcImage.getNDims() > 2) {
+                    if (showProgressBar && (srcImage.getNDims() > 2)) {
                         fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)),
                                 srcImage.getImageName(), "Masking ...");
 
@@ -316,7 +318,7 @@ public class AlgorithmMask extends AlgorithmBase {
                         for (i = mask.nextSetBit(offset); i >= 0 && i < imgLength * (z + 1) && !threadStopped; i = mask
                                 .nextSetBit(i + 1)) {
 
-                            if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                            if (showProgressBar && (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
                                 fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(),
                                         "Masking ...");
 
@@ -344,7 +346,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     } else {
                         for (i = mask.nextClearBit(offset); i >= 0 && i < imgLength * (z + 1) && !threadStopped; i = mask
                                 .nextClearBit(i + 1)) {
-                            if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                            if (showProgressBar && (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
                                 fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(),
                                         "Masking ...");
 
@@ -429,7 +431,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     return;
                 }
 
-                if (srcImage.getNDims() == 3) {
+                if (showProgressBar && (srcImage.getNDims() == 3)) {
                     fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
                             "Masking ...");
                 }
@@ -440,7 +442,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-                    if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                    if (showProgressBar && (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
                         fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                     }
 
@@ -506,7 +508,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param tSlice indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25DC(final BitSet mask, final Color fillColor, int tSlice, final String rgbString,
-            final Vector<Integer> intensityLockVector) {
+            final Vector<Integer> intensityLockVector, boolean showProgressBar) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -539,7 +541,9 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+        if (showProgressBar) {
+            fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
+        }
 
         if (intensityLockVector != null) {
             lockedIntensities = new int[intensityLockVector.size()];
@@ -585,7 +589,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            if ( (srcImage.getNDims() == 3)) {
+            if (showProgressBar && (srcImage.getNDims() == 3)) {
                 fireProgressStateChanged( ((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(),
                         "Masking ...");
             }
@@ -596,7 +600,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
-                if ( (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
+                if (showProgressBar && (srcImage.getNDims() == 2) && ( (i % mod) == 0)) {
                     fireProgressStateChanged( ((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                 }
 
