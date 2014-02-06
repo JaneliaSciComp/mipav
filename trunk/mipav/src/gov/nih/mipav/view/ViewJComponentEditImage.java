@@ -975,24 +975,24 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector, showProgressBar);
             } else {
                 if (imageA.getNDims() == 4) {
                     if (commitMasksAs4D) {
                         for (int i = 0; i < imageA.getExtents()[3]; i++) {
                             maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                             maskAlgo.setRunningInSeparateThread(false);
-                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
+                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector, showProgressBar);
                         }
                     } else {
                         maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                         maskAlgo.setRunningInSeparateThread(false);
-                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector, showProgressBar);
                     }
                 } else {
                     maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
-                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector, showProgressBar);
                 }
 
                 if (imageA.getType() == ModelStorageBase.UBYTE) {
@@ -1028,24 +1028,24 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector);
+                maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice, rgbString, intensityLockVector, showProgressBar);
             } else {
                 if (imageA.getNDims() == 4) {
                     if (commitMasksAs4D) {
                         for (int i = 0; i < imageA.getExtents()[3]; i++) {
                             maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                             maskAlgo.setRunningInSeparateThread(false);
-                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector);
+                            maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, i, intensityLockVector, showProgressBar);
                         }
                     } else {
                         maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                         maskAlgo.setRunningInSeparateThread(false);
-                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                        maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector, showProgressBar);
                     }
                 } else {
                     maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
-                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector, showProgressBar);
                 }
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
