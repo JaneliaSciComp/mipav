@@ -1711,6 +1711,18 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             if (command.equalsIgnoreCase("listB")) {
                 removeRepeatedElements(listB);
             }
+            
+            boolean allClosed = true;
+            for(int i=0; i<selectedList.getModel().getSize(); i++) {
+                VOI voi = (VOI)selectedList.getModel().getElementAt(i);
+                VOIBaseVector v = voi.getCurves();
+                for(int j=0; j<v.size(); j++) {
+                    if(!v.get(j).isClosed()) {
+                        allClosed = false;
+                    }
+                }
+            }
+            checkBoxPanel.isOpenContour(!allClosed); //if all the contours are not closed, then some statistics need to be disabled
         }
     }
 
