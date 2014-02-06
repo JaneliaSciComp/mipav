@@ -219,6 +219,7 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
                         doPad, doRotateCenter, center);
                 algoTrans.setFillValue(fillValue);
                 algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.setSuppressProgressBar(true);
                 algoTrans.run();
                 resultImage = algoTrans.getTransformedImage();
                 if (algoTrans != null) {
