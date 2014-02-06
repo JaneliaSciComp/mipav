@@ -1,14 +1,11 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-
 import gov.nih.mipav.util.MipavCoordinateSystems;
-
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.MipavUtil;
 
 import java.io.*;
@@ -257,6 +254,16 @@ public class AlgorithmTiltCorrection extends AlgorithmBase {
                 // Set the gantry/detector tilt angle to "0.0"
                 ((FileInfoDicom) (finalImage.getFileInfo(z))).getTagTable().setValue("0018,1120",
                     new String("0.0"), 3);
+                if (((FileInfoDicom) (finalImage.getFileInfo(z))).getTagTable().getValue("0018,0050") == null) {
+                    // Slice thickness
+                    String res2 = String.valueOf(zRes);
+                    ((FileInfoDicom) (finalImage.getFileInfo(z))).getTagTable().setValue("0018,0050", res2, res2.length());
+                }
+            }
+            else {
+            	if (finalImage.getFileInfo(z).getSliceThickness() == 0) {
+            		finalImage.getFileInfo(z).setSliceThickness(zRes);
+            	}
             }
             
         } // for (z = 0; z < zDim; z++)
