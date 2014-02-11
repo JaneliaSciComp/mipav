@@ -1,50 +1,63 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.BitSet;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.plugins.JDialogStandalonePlugin;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 
-/**
- * Dialog accompanying the neuron segmentation algorithm for the
- * Giniger lab. Once started, the algorithm will run the initial
- * segmentation and display it on the image as a paint mask. 
- * Once the initial segmentation is displayed, the user can then
- * add or delete branches off the neuron as they please. 
- * 
- * @author wangvg
- *
- */
-public class PlugInDialogNeuronSegmentation extends JDialogBase implements
-		AlgorithmInterface, MouseListener, ChangeListener {
+
+public class PlugInDialogNeuronSegmentationGeneric extends
+		JDialogStandalonePlugin implements AlgorithmInterface, ChangeListener, MouseListener {
 	
-	private static final long serialVersionUID = -5444231504112876834L;
-
+	private static final long serialVersionUID = -829071275308963405L;
+	
+	private JFileChooser fileChooser;
+	
+	private ArrayList<File> images;
+	
+	private int numImages;
+	
 	private JRadioButton addRB;
 	
 	private JCheckBox centroidBox;
 	
+	private int counter;
+	
+	private File current;
+	
 	private JRadioButton deleteRB;
+	
+	private JTextField dirText;
 	
 	private int[] extents;
 	
@@ -58,66 +71,84 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	
 	private BitSet skeleton;
 	
+	private ModelImage srcImage;
+	
 	private JCheckBox tipBox;
 	
 	private JButton undoButton;
 	
 	private int width;
-
-	public PlugInDialogNeuronSegmentation(ViewJFrameImage imFrame, ModelImage image){
+	
+	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
-		extents = image.getExtents();
-		width = extents[0];
-		frame = imFrame;
-		
-		//Run the initial segmentation on start-up so that
-		//it is immediately displayed to the user
-		seg = new PlugInAlgorithmNeuronSegmentation(image);
-		seg.setSensitivity(0.01f);
-		seg.addListener(this);
-		if (isRunInSeparateThread()) {
-			if (seg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
-			}
-		} else {
-			seg.run();
-		}
-
+		images = new ArrayList<File>();
+		init();
 	}
 	
 	public void actionPerformed(ActionEvent e){
 		String command = e.getActionCommand();
 		
-		if(command.equals("Undo") || command.equals("Redo"))
+		if (command.equals("ApproveSelection")){
+			dirText.setText(fileChooser.getSelectedFile().toString());
+        	Preferences.setImageDirectory(fileChooser.getSelectedFile());
+        }
+		else if(command.equals("Cancel")){
+			
+			if (isExitRequired()) {
+	            System.exit(0);
+	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	        } else {
+	        	dispose();
+	        }
+		}
+		else if(command.equals("Choose")) chooseDir();
+		else if(command.equals("OK")){
+			if(!populateImages(new File(dirText.getText()))){
+        		MipavUtil.displayError("No images to segment");
+        		chooseDir();
+        	}
+        	else{
+        		counter = 0;
+        		openImage();
+        		initModifications();
+        		callAlgorithm();
+        	}
+		}
+		else if(command.equals("Prev")){
+			if (counter > 0){
+        		counter--;
+        		frame.close();
+        		openImage();
+        		callAlgorithm();
+        		
+        	}
+		}
+		else if (command.equals("Next")){
+        	//Close the previous image and open the next one
+        	counter++;
+        	if(counter < numImages){
+        		frame.close();
+        		openImage();
+        		callAlgorithm();
+        	}
+        	else finalize();
+        }
+		else if(command.equals("Undo") || command.equals("Redo"))
 			undo();
 		else if(command.equals("Save")){
 			seg.save();
 			seg.saveAsSWC();
 		}
 		else if(command.equals("End")){
-			frame.getComponentImage().removeMouseListener(this);
-			frame.removeWindowListener(this);
-			finalize();
+        	finalize();
 		}	
 		else{
 			super.actionPerformed(e);
 		}
-		
 	}
-	
-	/**
-	 * The algorithm's runAlgorithm() method provides the initial
-	 * segmentation, so once that is performed, display it on the
-	 * image as a paint mask, and set up the frame for later
-	 * operations.
-	 * 
-	 * Also, initialize the dialog for the user to add/delete
-	 * branches.
-	 */
+
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		//Displays the skeleton as a paint mask for the image,
-		//with opacity set to 1, and color set to white.
 		skeleton = seg.getSkeleton();
 		
 		frame.getComponentImage().getImageA().resetVOIs();
@@ -131,21 +162,126 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		//Add mouse listener so you can click to add/delete branches
 		frame.getComponentImage().addMouseListener(this);
 		frame.addWindowListener(this);
+		
+		if(tipBox.isSelected()) seg.displayTips();
+		if(centroidBox.isSelected()) seg.displayCentroid();
+		if(polygonalBox.isSelected()) seg.displayPolygonal();
 
-		init();
 	}
 	
 	public void finalize(){
+		
+		if (frame != null) frame.close();
+    	images.clear();
+    	srcImage.disposeLocal();
 		seg.finalize();
 		seg = null;
-		dispose();
 		skeleton = null;
+		
+		if (isExitRequired()) {
+            System.exit(0);
+            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        } else {
+        	dispose();
+        }
+	}
+	
+	protected void callAlgorithm(){
+		
+		extents = srcImage.getExtents();
+		if(extents.length > 2){
+			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
+			return;
+		}
+		width = extents[0];
+		
+		//Run the initial segmentation on start-up so that
+		//it is immediately displayed to the user
+		seg = new PlugInAlgorithmNeuronSegmentation(srcImage);
+		if(sensSlider == null){
+			seg.setSensitivity(0.01f);
+		}
+		else{
+			float sensitivity = 0.001f * (float)sensSlider.getValue();
+	        if(sensitivity == 0) sensitivity = 1;
+	        seg.setSensitivity(sensitivity);
+		}
+		
+		seg.addListener(this);
+		if (isRunInSeparateThread()) {
+			if (seg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+			seg.run();
+		}
+		
+		String title = "Neuron Segmentation " + String.valueOf(counter+1) + " of "
+				+ String.valueOf(numImages);
+        setTitle(title);
+	}
+	
+	private void chooseDir(){
+		String dirText = Preferences.getImageDirectory();
+		fileChooser = new JFileChooser(dirText);
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fileChooser.addActionListener(this);
+		fileChooser.showOpenDialog(this);
 	}
 	
 	private void init(){
 		
 		setForeground(Color.black);
-        setTitle("Add/Delete Branches");
+        setTitle("Neuron Segmentation");
+
+        JPanel dirPanel = new JPanel();
+        dirPanel.setForeground(Color.black);
+        dirPanel.setBorder(buildTitledBorder("Choose Image Directory"));
+        
+        String desc = "<html><b>Directions: </b><br>"
+        		+ "Please choose a folder that contains neurons requiring segmentation<br>"
+        		+ "or choose a single image.</html>";
+
+        JLabel dirLabel = new JLabel(desc);
+        dirLabel.setForeground(Color.black);
+        dirLabel.setFont(serif12);
+        dirPanel.add(dirLabel);
+        getContentPane().add(dirPanel, BorderLayout.NORTH);
+        
+        JPanel choosePanel = new JPanel();
+        
+        dirText = new JTextField(30);
+        dirText.setText(Preferences.getImageDirectory());
+        dirText.setFont(serif12);
+        choosePanel.add(dirText);
+        
+        JButton dirButton = new JButton("Choose");
+        dirButton.setFont(serif12);
+        dirButton.addActionListener(this);
+        choosePanel.add(dirButton);
+        
+        getContentPane().add(choosePanel, BorderLayout.CENTER);
+
+        JPanel OKCancelPanel = new JPanel();
+
+        buildOKButton();
+        OKCancelPanel.add(OKButton, BorderLayout.WEST);
+
+        buildCancelButton();
+        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
+        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
+
+        pack();
+        setVisible(true);
+        setResizable(false);
+        System.gc();
+	}
+
+	private void initModifications(){
+		
+		getContentPane().removeAll();
+		setForeground(Color.black);
+        //setTitle("Add/Delete Branches");
         
         JPanel descPanel = new JPanel();
         descPanel.setForeground(Color.black);
@@ -219,12 +355,26 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         polygonalBox.addItemListener(this);
         checkPanel.add(polygonalBox);
         
+        JPanel boxPanel = new JPanel();
+        boxPanel.setForeground(Color.black);
+        
+        JButton prevButton = new JButton("Prev");
+        prevButton.setFont(serif12);
+        prevButton.addActionListener(this);
+        boxPanel.add(prevButton);
+        
+        JButton nextButton = new JButton("Next");
+        nextButton.setFont(serif12);
+        nextButton.addActionListener(this);
+        boxPanel.add(nextButton);
+        
         
         PanelManager manage = new PanelManager();
         manage.add(radioPanel);
         manage.addOnNextLine(titlePanel);
         manage.addOnNextLine(sliderPanel);
         manage.addOnNextLine(checkPanel);
+        manage.addOnNextLine(boxPanel);
         
         getContentPane().add(descPanel, BorderLayout.NORTH);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
@@ -256,7 +406,67 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         System.gc();
 		
 	}
+
+	private void openImage() {
 	
+		FileIO imLoader = new FileIO();
+		
+		if(srcImage != null) srcImage.disposeLocal();
+		
+		current = images.get(counter);
+		srcImage = imLoader.readImage(current.toString());
+		srcImage.setImageName(current.getName(),false);
+		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
+		frame.setVisible(true);
+
+	}
+	
+	private boolean populateImages(File dir){
+		if(dir.isFile()){
+			images.add(dir);
+			numImages = 1;
+			return true;
+		}
+		
+		File skelName;
+		String stripped;
+		
+		FilenameFilter imFilter = new FilenameFilter(){
+			public boolean accept(File dir, String name) {
+				return (name.toLowerCase().endsWith(".tif") || name.toLowerCase().endsWith(".tiff")
+						|| name.toLowerCase().endsWith(".lsm"));
+			}
+		};
+		File[] files = dir.listFiles(imFilter);
+		String dirStr = dir.toString();
+		if(!dirStr.endsWith(File.separator))
+			dirStr = dirStr + File.separator;
+		dirStr = dirStr.concat("Branch_Images" + File.separator);
+		
+		for(File im : files){
+			stripped = im.getName();
+			stripped = stripped.substring(0, stripped.indexOf("."));
+			stripped = stripped.concat("_branches.swc");
+			skelName = new File(dirStr.concat(stripped));
+			if(!skelName.exists()){
+				images.add(im);
+			}
+		}
+		
+		File[] directories = dir.listFiles(new FileFilter() {
+			public boolean accept(File path) {
+				return (path.isDirectory() && !path.getName().equals("Branch_Images"));
+			}
+		});
+		
+		for(int i=0;i<directories.length;i++){
+			populateImages(directories[i]);
+		}
+		
+		numImages = images.size();
+		return !images.isEmpty();
+	}
+
 	/**
 	 * Very basic undo functionality is provided in the algorithm.
 	 * This could also easily be implemented as only part of the
@@ -377,12 +587,18 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	//Make sure if image window closes, so does the dialog.
 	@Override
 	public void windowClosing(WindowEvent event) {
-		if(event.getSource() != frame){
-			frame.getComponentImage().removeMouseListener(this);
-			frame.removeWindowListener(this);
+
+		cancelFlag = true;
+		if(seg == null){
+			if (isExitRequired()) {
+	            System.exit(0);
+	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+	        } else {
+	        	dispose();
+	        }
 		}
-        cancelFlag = true;
-        finalize();
+		else finalize();
+        
     }
 	
 	/**
@@ -411,5 +627,4 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	        
 	    }
 	}
-
 }
