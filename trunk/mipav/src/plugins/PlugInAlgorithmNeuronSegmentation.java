@@ -17,6 +17,7 @@ import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
+import gov.nih.mipav.view.MipavUtil;
 
 /**
  * Algorithm for neuron segmentation used to trace branches of the neuron
@@ -678,11 +679,15 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
 		swcDir += srcImage.getImageName().concat("_branches.swc");
+		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea);
 		
 		try {
 			swcOut = new FileWriter(swcDir);
+			swcOut.append(areaStr);
+			swcOut.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			MipavUtil.displayError("Unable to export to SWC file");
+			return;
 		}
 
 		//Delete the trail behind you as you traverse the skeleton
@@ -754,7 +759,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			swcOut.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			MipavUtil.displayError("Unable to close connection to SWC file");
+			return;
 		}
 		
 	}
@@ -978,7 +984,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         //output of object counting
 
         for(int i=0;i<length;i++){
-        	histo[buffer[i]]+=imBuffer[i];
+        	if(buffer[i] != 0){
+        		histo[buffer[i]]+=imBuffer[i];
+        	}
         }
         
         //Determine which pixel value contains
@@ -1085,55 +1093,21 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 		}
 		
-		System.out.printf("%d %d\n", endIndex[0], endIndex[1]);
+		//System.out.printf("%d %d\n", endIndex[0], endIndex[1]);
 		
 	}
 	
 	/**
 	 * Method to make the VOI contour that will represent the polygonal
 	 * area of the growth cone. Based on the branch tips VOI, which should
-	 * have already been calculated, the points are ordered in a clockwise 
-	 * manner to determine the original contour, which is then put through
-	 * the convex hull routine. This results in an imperfect polygonal area,
-	 * as it tends to overestimate the size. 
+	 * have already been calculated, the points are used in the convex
+	 * hull routine to generate the polygonal area curve. It tends to overestimate
+	 * the area because it doesn't include all the tips.
 	 * 
-	 * The new contour resulting from the convex hull is then used to 
-	 * calculate the area as well as the new centroid for the growth cone.
-	 * 
-	 * A lot of this code is superfluous, and may be removed, since the convex
-	 * hull only needs the tip points. Don't really need the whole angles part.
+	 * The centroid of the polygonal area is calculated alongside the area.
 	 */
 	
 	private void polygonalArea(){
-		
-		/*
-		Angles[] angles = new Angles[numPts];
-		float x,y, angle;
-		int ind;
-		
-		for(int i=0;i<numPts;i++){
-			ind = tipPts.get(i);
-			x = ind%width;
-			y = ind/width;
-			x -= centroidPts[0];
-			y = centroidPts[1] - y;
-			if (x==0) x = 1f/1000f;
-			angle = (float) (Math.atan(y/x) * 360d / (2*Math.PI));
-			if(x<0) angle += 180f;
-			if(x>0 && y<0) angle += 360f;
-			angles[i] = new Angles(i, angle);
-		}
-		
-		Arrays.sort(angles);
-		order = new int[numPts];
-		for(int i=0;i<numPts;i++){
-			order[i] = angles[i].tip;
-		}*/
-		
-		
-		//Everything before here is pretty much useless
-		//Convex hull takes care of any problems in the
-		//previous section
 		
 		int xi, yi, ind;
 		int numPts = tipPts.size();
@@ -1165,7 +1139,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		centroidPts[0] = (float)sumX/(float)area;
 		centroidPts[1] = (float)sumY/(float)area;
 		polyArea = area;
-		//System.out.println(area);
 		
 	}
 
@@ -1234,10 +1207,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	/**
 	 * Gathers information and writes it to the SWC file
 	 * 
-	 * @param line
-	 * @param i
-	 * @param type
-	 * @param connected
+	 * @param line which line in the SWC file we are on
+	 * @param i index of the pixel we are at
+	 * @param type whether it is a branch/fork or an endpoint. 
+	 * 0 denotes a fork, -1 denotes the start point, and anything else
+	 * is an endpoint
+	 * @param connected the branch which this component is connected to
 	 */
 	
 	private void writeInfo(int line, int i, int type, int connected){
@@ -1254,7 +1229,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			swcOut.append(output);
 			swcOut.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			MipavUtil.displayError("Unable to write to SWC file");
+			return;
 		}
 		System.out.printf("%d " + typeStr + " %d.0 %d.0 0.0 1.0 %d\n", line, x, y, connected);
 	}
@@ -1408,16 +1384,17 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			lastTips.clear();
 			lastTips.addAll(tempList);
 			
-			BitSet tempSet = (BitSet) skeleton.clone();
-			skeleton = (BitSet) lastSkel.clone();
+			
+			BitSet tempSet = skeleton;
+			skeleton = lastSkel;
 			lastSkel = tempSet;
 			
-			VOI tempVOI = (VOI) voiHull.clone();
-			voiHull = (VOI) lastHull.clone();
+			VOI tempVOI = voiHull;
+			voiHull = lastHull;
 			lastHull = tempVOI;
 			
-			float[] tempFloat = centroidPts.clone();
-			centroidPts = lastCentroid.clone();
+			float[] tempFloat = centroidPts;
+			centroidPts = lastCentroid;
 			lastCentroid = tempFloat;
 
 		}
