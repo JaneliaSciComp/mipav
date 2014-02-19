@@ -16,6 +16,7 @@ import java.util.Vector;
 
 import javax.swing.event.EventListenerList;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -2069,7 +2070,9 @@ public class VOI extends ModelSerialCloneable {
 			return null;
 		}
 
-		curve.importArrays(x, y, z, x.length);
+		curve.importArrays(x, y, z, x.length);		
+		curve.update( new ColorRGBA(color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f, color.getAlpha()/255f ) );
+
 		curves.addElement(curve);
 		return curve;
 	}
@@ -2091,7 +2094,9 @@ public class VOI extends ModelSerialCloneable {
 			return;
 		}
 
-		curve.importArrays(x, y, z, x.length);
+		curve.importArrays(x, y, z, x.length);	
+		curve.update( new ColorRGBA(color.getRed()/255f, color.getGreen()/255f, color.getBlue()/255f, color.getAlpha()/255f ) );
+
 		curves.addElement(curve);
 	}
 
