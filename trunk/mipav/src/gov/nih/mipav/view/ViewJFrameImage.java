@@ -2,7 +2,6 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.plugins.*;
-
 import gov.nih.mipav.model.algorithms.AlgorithmMatchForReference;
 import gov.nih.mipav.model.algorithms.itk.AutoItkLoader;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -12,7 +11,6 @@ import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
@@ -24,7 +22,6 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
-
 import ij.*;
 import ij.process.ImageProcessor;
 
@@ -38,6 +35,7 @@ import java.util.*;
 import javax.media.opengl.GLException;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+
 
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
@@ -2403,7 +2401,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
@@ -2444,7 +2444,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
@@ -2488,7 +2490,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
@@ -2532,7 +2536,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
@@ -2571,7 +2577,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
@@ -2609,7 +2617,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             		Container parent = ((JMenuItem) source).getParent();
             		if(((JMenuItem)source).getToolTipText() != null && ((JMenuItem)source).getToolTipText().contains(".jar")) {
             			URL[] url = new URL[]{new URL("jar:file:" + ((JMenuItem)source).getToolTipText() + "!/")}; //should really be full path
-        				cl = URLClassLoader.newInstance(url);
+        				cl = JarClassLoader.newInstance(url);
+                        ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                        ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
             		}
             	}
             	
