@@ -241,33 +241,33 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
 		 }
          
          chckbxUpdown = new JCheckBox("Up/Down");
-         chckbxUpdown.setBounds(104, 110, 69, 23);
+         chckbxUpdown.setBounds(104, 110, 100, 23);
          chckbxUpdown.addActionListener(this);
          
          chckbxRotationRX = new JCheckBox("Tilt ");
-         chckbxRotationRX.setBounds(304, 54, 83, 23);
+         chckbxRotationRX.setBounds(304, 54, 100, 23);
          chckbxRotationRX.addActionListener(this);
          
          chckbxLeftright = new JCheckBox("Left/Right");
-         chckbxLeftright.setBounds(104, 54, 73, 23);
+         chckbxLeftright.setBounds(104, 54, 100, 23);
          chckbxLeftright.addActionListener(this);
 
          invertPanel.add(chckbxLeftright);
          invertPanel.add(chckbxRotationRX);
          
          chckbxRotationRy = new JCheckBox("Roll");
-         chckbxRotationRy.setBounds(304, 110, 83, 23);
+         chckbxRotationRy.setBounds(304, 110, 100, 23);
          chckbxRotationRy.addActionListener(this);
          
          chckbxForwardsbackwards = new JCheckBox("Zoom In/Out");
-         chckbxForwardsbackwards.setBounds(104, 170, 88, 23);
+         chckbxForwardsbackwards.setBounds(104, 170, 120, 23);
          chckbxForwardsbackwards.addActionListener(this);
          invertPanel.add(chckbxForwardsbackwards);
          invertPanel.add(chckbxRotationRy);
          invertPanel.add(chckbxUpdown);
          
          chckbxRotationRz = new JCheckBox("Spin");
-         chckbxRotationRz.setBounds(304, 170, 83, 23);
+         chckbxRotationRz.setBounds(304, 170, 100, 23);
          chckbxRotationRz.addActionListener(this);
          invertPanel.add(chckbxRotationRz);
          
@@ -322,11 +322,11 @@ public class JPanel3DMouse_WM extends JInterfaceBase implements ChangeListener {
          invertPanel.add(rollIcon);
          
          lblTranslations = new JLabel("Translations");
-         lblTranslations.setBounds(68, 21, 71, 14);
+         lblTranslations.setBounds(68, 21, 100, 14);
          invertPanel.add(lblTranslations);
          
          lblRotations = new JLabel("Rotations");
-         lblRotations.setBounds(279, 21, 46, 14);
+         lblRotations.setBounds(279, 21, 100, 14);
          invertPanel.add(lblRotations);
          
          contentBox.add(cutoffPanel);
