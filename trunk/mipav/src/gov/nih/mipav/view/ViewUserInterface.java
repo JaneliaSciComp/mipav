@@ -506,7 +506,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("Java compiler:      " + System.getProperties().getProperty("java.compiler") + "\n");
         aboutJavaDialog.append("Java vendor:        " + System.getProperties().getProperty("java.vendor") + "\n");
         aboutJavaDialog.append("Java vendor.url:    " + System.getProperties().getProperty("java.vendor.url") + "\n");
-        aboutJavaDialog.append("Java class loader:	" + System.getProperties().getProperty("java.system.class.loader") + "\n");
+        aboutJavaDialog.append("Java class loader:	" + ClassLoader.getSystemClassLoader() + "\n");
         aboutJavaDialog.append("Java home:          " + System.getProperties().getProperty("java.home") + "\n");
         aboutJavaDialog
                 .append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
