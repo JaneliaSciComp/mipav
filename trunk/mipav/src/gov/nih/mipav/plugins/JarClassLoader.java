@@ -8,6 +8,8 @@ import java.net.URLClassLoader;
 import java.net.URLStreamHandlerFactory;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.TreeSet;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -16,23 +18,33 @@ public class JarClassLoader extends URLClassLoader {
 
 	private URLClassLoader internalClassLoader = null;
 	
+	private HashMap<String, Class> cachedClass;
+	
 	public JarClassLoader(ClassLoader c) throws MalformedURLException {
 		this(new URL[]{new URL("jar:file:/Users/justinsenseney/mipav/plugins/testjar.jar!/")}, c);
 		
 	}
 	
-	public JarClassLoader(URL[] arg0, ClassLoader arg1,
-			URLStreamHandlerFactory arg2) {
+	public JarClassLoader(URL[] arg0, ClassLoader arg1, URLStreamHandlerFactory arg2) {
 		super(arg0, arg1, arg2);
-		internalClassLoader = new URLClassLoader(arg0, arg1, arg2);
+		init(arg0, arg1, arg2);
 		System.out.println("Successfully created jar class loader1");
 	}
 
 	public JarClassLoader(URL[] arg0, ClassLoader arg1) {
 		super(arg0, arg1);
-		internalClassLoader = new URLClassLoader(arg0, arg1);
+		init(arg0, arg1, null);
 		System.out.println("Successfully created jar class loader2");
 		
+	}
+	
+	private void init(URL[] arg0, ClassLoader arg1, URLStreamHandlerFactory arg2) {
+		if(arg2 != null) {
+			internalClassLoader = new URLClassLoader(arg0, arg1, arg2);
+		} else {
+			internalClassLoader = new URLClassLoader(arg0, arg1);
+		}
+		cachedClass = new HashMap<String, Class>();
 	}
 
 	public boolean addJarContext(String context) throws MalformedURLException {
@@ -157,10 +169,31 @@ public class JarClassLoader extends URLClassLoader {
 	}
 
 	@Override
-	protected synchronized Class<?> loadClass(String arg0, boolean arg1)
+	protected synchronized Class<?> loadClass(String className, boolean resolveIt)
 			throws ClassNotFoundException {
-		MipavUtil.displayError("Warning, loadClass1 not implemented"); //not designed to be necessary
-		return super.loadClass(arg0, arg1);
+		
+		System.out.println("Loading class: "+className);
+		Class result;
+		byte[] classData;
+		result = (Class)cachedClass.get(className);
+		if(result != null) {
+			return result;
+		}
+		if(internalClassLoader != null) {
+			result = internalClassLoader.loadClass(className);
+			
+			if(result != null) {
+				return result;
+			}
+		}
+		
+		try {
+			result = super.findSystemClass(className);
+			return result;
+		} catch(ClassNotFoundException ex) {
+			System.out.println("Unable to find system class: "+className);
+			return null;
+		}
 	}
 
 	@Override
@@ -180,8 +213,11 @@ public class JarClassLoader extends URLClassLoader {
 
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		MipavUtil.displayError("Warning, findClass not implemented");//not designed to be necessary
-		return super.findClass(name);
+		Class<?> c = super.findClass(name);
+		if(c == null) {
+			MipavUtil.displayError("Warning, findClass not uniquely implemented");//not designed to be necessary
+		}
+		return c;
 	}
 
 	@Override
