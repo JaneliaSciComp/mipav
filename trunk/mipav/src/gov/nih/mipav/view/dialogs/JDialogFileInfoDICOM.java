@@ -1593,6 +1593,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         } else if (e.getActionCommand().equals("SaveTags")) {
             isAppend = false;
             saveTags();
+        } else if(e.getActionCommand().equals("NewTag")) {
+        	MipavUtil.displayError("This method has not been implemented, please contact bugs@mipav.cit.nih.gov to request its implementation.");
         } else if (e.getActionCommand().equals("SaveTagsAppend")) {
             isAppend = true;
             saveTags();
