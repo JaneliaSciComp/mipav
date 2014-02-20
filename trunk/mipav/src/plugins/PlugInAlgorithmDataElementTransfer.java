@@ -1,8 +1,8 @@
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.view.MipavUtil;
@@ -10,38 +10,113 @@ import gov.nih.mipav.view.MipavUtil;
 
 public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 	
+	/**
+	 * Writer to the output file (converted REDCap dictionary)
+	 */
+	private FileWriter csv;
+	
+	/**
+	 * File containing the CDE to covert to REDCap format
+	 */
 	private File inFile;
 	
+	/**
+	 * Rows pulled from the input CSV
+	 */
 	private ArrayList<String[]> fileLines;
+	
+	public PlugInAlgorithmDataElementTransfer(File input){
+		
+		//Output file is saved to the same directory
+		//With same name except with _redcap appended
+		inFile = input;
+		String name = inFile.getName();
+		name = name.substring(0, name.indexOf("."));
+		String parent = inFile.getParent() + File.separator;
+		File outFile = new File(parent + name + "_redcap.csv");
+		try {
+			csv = new FileWriter(outFile, false);
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to open CSV file for write");
+			return;
+		}
+	}
 
 	@Override
 	public void runAlgorithm() {
-		// TODO Auto-generated method stub
+		int i=0;
+		try{
+			if(readCSV() ||	initCSV()) 
+				return;
+	
+			String[] line;
+			String output;
+			
+			for(;i<fileLines.size();i++){
+				output = "";
+				line = fileLines.get(i);
+			
+				//Appends Variable Name. Form Name and Section Header
+				//are not present in CDE, so skip for now
+				output += adjustName(line[0]) + ",,,";
+				//Appends the field type
+				output += determineType(line) + ",";
+				//Appends the field label
+				output += line[1] + ",";
+				//Appends Choices/Calculations
+				if(!line[7].equalsIgnoreCase("Free-Form Entry"))
+					output += parseEntry(line[10], line[11]) + ",";
+				else output += ",";
+				//Appends Field Note
+				output += line[12] + ",";
+				//Appends Text Validation. Also, if it is a date, change 
+				//field note to say YYYY/MM/DD
+				if(line[5].equalsIgnoreCase("Date or Date & Time")){
+					output = output.substring(0, output.length()-1) + "YYYY/MM/DD,";
+					output += "date_ymd,";
+				}
+				else if(line[5].equalsIgnoreCase("Numeric Values") && line[7].equalsIgnoreCase("Free-Form Entry"))
+					output += "numeric,";
+				else output += ",";
+				//Appends Text Validation min/max
+				output += line[8] + "," + line[9] + ",";
+				
+				//Output to the CSV
+				csv.append(output + "\r\n");
+	
+			}
 		
-		readCSV();
-		String[] line;
-		String output = "";
-		for(int i=0;i<fileLines.size();i++){
-			line = fileLines.get(i);
-			output += adjustName(line[0]) + ",,,";
-			output += determineType(line[7].trim(), line[6].trim() ) + ",";
-			output += line[1] + ",";
-			output += parseEntry(line[10], line[11]) + ",";
-			output += line[12] + ",";
-			if(line[5].equals("Date or Date & Time"))
-				output += "date_ymd,";
-			else if(line[5].equalsIgnoreCase("Numeric Values"))
-				output += "numeric,"
-			else output += ",";
-			output += line[8] + "," + line[9] + ",";
-			
-			
 		}
+		catch(IOException e){
+			MipavUtil.displayError("Unable to write to CSV");
+			return;
+		}
+		catch(Exception e){
+			MipavUtil.displayError("Error during conversion at line: " + String.valueOf(i+2));
+			return;
+		}
+		try {
+			csv.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to close CSV file");
+			return;
+		}
+		
+		setCompleted(true);
 		
 
 	}
 	
+	/**
+	 * Variable names must be truncated to 26 characters
+	 * in the REDCap format. Also, the variable names must
+	 * be in all lowercase. 
+	 * 
+	 * @param input
+	 * @return
+	 */
 	private String adjustName(String input){
+		
 		String output;
 		int length = input.length();
 		output = input.toLowerCase();
@@ -51,16 +126,43 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		
 	}
 	
-	private String determineType(String input, String size){
+	/**
+	 * Based on what format the variable is in the CDE, 
+	 * choose a REDCap format. The decisions are described
+	 * below.
+	 * @param line
+	 * @return
+	 */
+	private String determineType(String[] line){
+		
+		String input = line[7];
+		String size = line[6];
+		String[] desc = line[11].split(";");
 		
 		String output;
+		//There are two types of text entries in REDCap,
+		//which are determined based on the given size
 		if(input.equalsIgnoreCase("Free-Form Entry")){
 			if(size.equals("") || size.equals("255"))
 				output = "text";
 			else output = "notes";
 		}
-		else if(input.equalsIgnoreCase("Single Pre-Defined Value Selected"))
-			output = "dropdown";
+		//If some of the options are missing, choose Radio
+		//This will have to be custom tailored after output
+		//As the user may want something to be a radio button
+		//instead of a dropdown, or vice versa
+		else if(input.equalsIgnoreCase("Single Pre-Defined Value Selected")){
+			boolean sparse = false;
+			for(int i=0;i<desc.length;i++){
+				if(desc[i].isEmpty()) {
+					sparse = true;
+					break;
+				}
+			}
+			if(sparse)
+				output = "radio";
+			else output = "dropdown";
+		}
 		else if(input.equalsIgnoreCase("Multiple Pre-Defined Values Selected"))
 			output = "checkbox";
 		else output = "N/A";
@@ -68,32 +170,97 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		return output;
 	}
 	
+	
+	/**
+	 * Parse through the Permissible Values cell in order to
+	 * covert into REDCap friendly form. Also makes a few
+	 * consistency modifications for Yes/No selections
+	 * @param valueIn
+	 * @param descIn
+	 * @return
+	 */
 	private String parseEntry(String valueIn, String descIn){
 		String output = "";
 		if(valueIn.isEmpty() || descIn.isEmpty()){
 			return "";
 		}
 		
+		valueIn = valueIn.replaceAll("\"", "");
+		descIn = descIn.replaceAll("\"", "");
+		
 		output += "\"";
-		//String[] values = new String[20];
-		//String[] desc = new String[20];
-		String[] values = valueIn.split(";");
-		String[] desc = descIn.split(";");
-		
-		
+
+		String[] values = splitEntry(valueIn);
+		String[] desc = splitEntry(descIn);
+		String valueCell;
+		String descCell;
+		boolean allInts = true;
+		//Check to see if all the values are integers or not
+		for(int i=0;i<values.length;i++){
+			try{
+			Integer.parseInt(values[i]);
+			}
+			catch(NumberFormatException e){
+
+				allInts = false;
+				break;
+			}
+		}
+		//Place the value with its associated label
+		if(allInts){
+			for(int i=0;i<values.length;i++){
+				valueCell = values[i];
+				descCell = desc[i];
+				output += valueCell + ", " + descCell + " | ";
+			}
+		}
+		//If Yes/No is not already attached to numeric values, make sure
+		//Yes = 1, No = 0
+		else if(values.length > 1 && ((values[0].startsWith("Yes") && values[1].startsWith("No")) 
+					|| (values[0].equalsIgnoreCase("y") && values[1].equalsIgnoreCase("n")))){
+			String temp = values[1];
+			values[1] = values[0];
+			values[0] = temp;
+			for(int i=0;i<values.length;i++){
+				valueCell = values[i];
+				output += String.valueOf(i) + ", " + values[i] + " | ";
+			}
+		}
+		//Otherwise, just label in increasing order, and show 
+		//both value and label (minus overlap)
+		else{
+			for(int i=0;i<values.length;i++){
+				valueCell = values[i];
+				descCell = desc[i];
+				if(descCell.startsWith(valueCell))
+					output += String.valueOf(i) + ", " + descCell + " | ";
+				else if(descCell.equals(""))
+					output += String.valueOf(i) + ", " + valueCell + " | ";
+				else output += String.valueOf(i) + ", " + valueCell + " (" + descCell + ") | ";
+			}
+		}
+		output = output.substring(0, output.length() - 2);
 		output += "\"";
 		return output;
 	}
 	
+	/**
+	 * Split rows from the CSV into arrays. Part of the problem is with 
+	 * quotation marks, so not only do you need to parse through commas, 
+	 * but single and double quotations.
+	 * @param line
+	 * @return
+	 */
 	private String[] parseLine(String line){
 		String[] output = new String[20];
 		int cnt = 0;
 		int ind;
 		int check;
 		
-		while(cnt<12){
+		while(cnt<13){
 			ind = -1;
 			check = -1;
+			//Parse through sections with quotations marks
 			if(line.startsWith("\"")){
 				while(ind==check){
 					ind = line.indexOf("\"", check + 2);
@@ -104,10 +271,15 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 				cnt++;
 				line = line.substring(ind+2);
 			}
+			//Split by the commas
 			else{
 				ind = line.indexOf(",");
 				if(ind > 0){
 					output[cnt] = line.substring(0, ind).trim();
+					cnt++;
+				}
+				else if(ind == 0){
+					output[cnt] = "";
 					cnt++;
 				}
 				else if (ind == -1) break;
@@ -123,35 +295,96 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		return realout;
 	}
 	
-	private void readCSV(){
+	/**
+	 * Initialize the output CSV header
+	 * @return
+	 */
+	private boolean initCSV(){
+		String header = "Variable / Field Name,Form Name,Section Header,Field Type,Field Label," 
+				+ "Choices OR Calculations,Field Note,Text Validation,Text Validation Min,"
+				+ "Text Validation Max,Identifier?,Branching Logic,Required Field?,"
+				+ "Custom Alignment,Question Number \n";
+		boolean fail = false;
+		try {
+			csv.append(header);
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to write to CSV file");
+			fail = true;
+		}
+		return fail;
+	}
+	
+	/**
+	 * Read the CSV. Due to CSV including line breaks in some cells, the
+	 * delimiter to check for is \r\n instead of just \n. This could cause
+	 * some problems, as this is a Windows-dependent solution.
+	 * @return
+	 */
+	private boolean readCSV(){
 
 		int cnt = 0;
+		boolean fail = false;
 
 		String[] lineArray;
-		BufferedReader input;
-		try {
-			input =  new BufferedReader(new FileReader(inFile));
-			String line = null; 
-			fileLines = new ArrayList<String[]>();
 
-			while (( line = input.readLine()) != null){
+		try {
+			
+			Scanner scan = new Scanner(inFile);
+			Scanner lineScan = scan.useDelimiter("\\r\\n");
+			fileLines = new ArrayList<String[]>();
+			String line;
+			scan.next();
+			while(lineScan.hasNext()){
 				cnt++;
-				//System.out.println(line);
-				lineArray = parseLine(line);
-				if(lineArray.length != 0){
-					fileLines.add(lineArray);
+				line = scan.next();
+				if(line.contains(",")){
+					lineArray = parseLine(line);
+					if(lineArray.length != 0){
+						fileLines.add(lineArray);
+					}
 				}
 			}
-			
-			input.close();
+			scan.close();
 		}
 		catch (IOException ex){
-			ex.printStackTrace();
+			MipavUtil.displayError("Exception in Report File. Check line " 
+					+ String.valueOf(cnt) + " of file for any errors.");
+			fail = true;
 		}catch(ArrayIndexOutOfBoundsException e){
 			MipavUtil.displayError("Exception in Report File. Check line " 
 					+ String.valueOf(cnt) + " of file for any errors.");
-			
+			fail = true;
 		}
+		return fail;
+	}
+	
+	/**
+	 * Actually goes through the entries in the Permissible
+	 * Values cell and splits the values into a string array
+	 * @param entry
+	 * @return
+	 */
+	private String[] splitEntry(String entry){
+		String[] out;
+		ArrayList<String> values = new ArrayList<String>();
+		//System.out.println(entry);
+		String part;
+		
+		int index = entry.indexOf(";");
+		
+		while(index != -1){
+			part = entry.substring(0, index);
+			values.add(part);
+			entry = entry.substring(index+1);
+			index = entry.indexOf(";");
+		}
+		values.add(entry);
+		out = values.toArray(new String[values.size()]);
+		
+		
+		return out;
+		
+		
 	}
 
 
