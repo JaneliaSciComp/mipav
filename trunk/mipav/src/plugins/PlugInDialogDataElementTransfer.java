@@ -9,6 +9,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -55,7 +56,17 @@ public class PlugInDialogDataElementTransfer extends JDialogStandalonePlugin
 	        }
 		}
 		else if(command.equals("OK")){
-			callAlgorithm();
+			String text = dirText.getText();
+			int ind = text.lastIndexOf(".");
+			String ext = text.substring(ind, text.length());
+			File inFile = new File(text);
+			
+			if(inFile.exists() && ext.equalsIgnoreCase(".csv")){
+				callAlgorithm();
+			}
+			else if (!inFile.exists())
+				MipavUtil.displayError("File does not exist");
+			else MipavUtil.displayError("File is not compatible, must be CSV");
 		}
 	}
 	
@@ -87,9 +98,13 @@ public class PlugInDialogDataElementTransfer extends JDialogStandalonePlugin
 	
 	private void chooseDir(){
 
+		FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("CSV file", "csv");
 		fileChooser = new JFileChooser();
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		fileChooser.addActionListener(this);
+		fileChooser.addChoosableFileFilter( csvFilter);
+		fileChooser.setAcceptAllFileFilterUsed(false);
+		fileChooser.setFileFilter(csvFilter);
 		fileChooser.showOpenDialog(this);
 	}
 	
