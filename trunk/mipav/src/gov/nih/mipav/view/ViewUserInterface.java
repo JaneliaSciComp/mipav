@@ -1,11 +1,11 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.plugins.JarClassLoader;
 import gov.nih.mipav.plugins.PlugInFile;
 import gov.nih.mipav.plugins.PlugInFileTransfer;
 import gov.nih.mipav.plugins.PlugInGeneric;
 import gov.nih.mipav.util.ThreadUtil;
-
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.FileDataProvenance;
@@ -38,7 +38,6 @@ import gov.nih.mipav.model.structures.ReminderThread;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
-
 import gov.nih.mipav.view.Argument.InstanceArgument;
 import gov.nih.mipav.view.Argument.StaticArgument;
 import gov.nih.mipav.view.dialogs.ActionDiscovery;
@@ -72,7 +71,6 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
-
 import ij.process.ImageProcessor;
 
 import java.awt.BorderLayout;
@@ -234,6 +232,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Vector to hold clipped VOIs (multiple). */
     private Vector<VOIBase> copyVOIList = new Vector<VOIBase>();
 
+    /** Class/resource loader for plugins that are in jars */
+    private JarClassLoader jarClassLoader;
+    
     /** String holding the command line arguments for data provenance usage. */
     private String cmdLineArguments = new String();
 
@@ -505,6 +506,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         aboutJavaDialog.append("Java compiler:      " + System.getProperties().getProperty("java.compiler") + "\n");
         aboutJavaDialog.append("Java vendor:        " + System.getProperties().getProperty("java.vendor") + "\n");
         aboutJavaDialog.append("Java vendor.url:    " + System.getProperties().getProperty("java.vendor.url") + "\n");
+        aboutJavaDialog.append("Java class loader:	" + System.getProperties().getProperty("java.system.class.loader") + "\n");
         aboutJavaDialog.append("Java home:          " + System.getProperties().getProperty("java.home") + "\n");
         aboutJavaDialog
                 .append("Java class version: " + System.getProperties().getProperty("java.class.version") + "\n");
@@ -1529,7 +1531,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                                                        // be
                                                                                                                        // full
                                                                                                                        // path
-                    cl = URLClassLoader.newInstance(url);
+                    cl = JarClassLoader.newInstance(url);
+                    ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
+                    ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
+        		
                 }
             }
 
@@ -1951,7 +1956,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return imageFrameVector;
     }
 
-    /**
+    public JarClassLoader getJarClassLoader() {
+		return jarClassLoader;
+	}
+
+	/**
      * Returns the last script file used from the preferences.
      * 
      * @return LastScript
@@ -3411,7 +3420,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
-    /**
+    public void setJarClassLoader(JarClassLoader jarClassLoader) {
+		this.jarClassLoader = jarClassLoader;
+	}
+
+	/**
      * Sets last used script files in preferences.
      * 
      * @param script Script to set the LastScript to.
