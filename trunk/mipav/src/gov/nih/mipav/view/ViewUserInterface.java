@@ -1531,10 +1531,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                                                        // be
                                                                                                                        // full
                                                                                                                        // path
-                    cl = JarClassLoader.newInstance(url);
-                    ViewUserInterface.getReference().setJarClassLoader((JarClassLoader)cl);
-                    ViewUserInterface.getReference().getJarClassLoader().addJarContext(((JMenuItem) source).getToolTipText());
-        		
+                    cl = URLClassLoader.newInstance(url);
                 }
             }
 
