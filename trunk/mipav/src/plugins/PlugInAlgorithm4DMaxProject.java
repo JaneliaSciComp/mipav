@@ -76,7 +76,7 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 				File dirFile = new File(directory);
 				if(!dirFile.exists())
 					dirFile.mkdir();
-				String fileName = srcImage.getImageName() + "_MIP_T=" + String.valueOf(i);
+				String fileName = srcImage.getImageName() + "_MIP_T=" + String.format("%03d", i);
 				dest.saveImage(directory, fileName, FileUtility.TIFF, false, false);
 			}
 			try {

@@ -1,18 +1,9 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Frame;
-
-
-
-
-
-
-
-
 import java.awt.event.ActionEvent;
 
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -26,9 +17,6 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 public class PlugInDialog4DMaxProject extends JDialogBase implements
 		AlgorithmInterface {
 	
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 4285561142126844278L;
 
 	private ModelImage srcImage;

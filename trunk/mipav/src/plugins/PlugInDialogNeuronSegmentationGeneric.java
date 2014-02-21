@@ -35,24 +35,35 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
 
-
+/**
+ * Dialog accompanying the neuron segmentation algorithm for the
+ * Giniger lab. This is the generic version of the plugin that
+ * allows for both standalone execution and calculating image
+ * segmentations over an entire folder (recursively)
+ * 
+ * @author wangvg
+ *
+ */
 public class PlugInDialogNeuronSegmentationGeneric extends
 		JDialogStandalonePlugin implements AlgorithmInterface, ChangeListener, MouseListener {
 	
 	private static final long serialVersionUID = -829071275308963405L;
-	
-	private JFileChooser fileChooser;
-	
-	private ArrayList<File> images;
-	
-	private int numImages;
-	
+
 	private JRadioButton addRB;
 	
 	private JCheckBox centroidBox;
 	
+	private JRadioButton changeRB;
+	
+	private int changeX;
+	
+	private int changeY;
+	
 	private int counter;
 	
+	/**
+	 * The current image that is open
+	 */
 	private File current;
 	
 	private JRadioButton deleteRB;
@@ -61,7 +72,17 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private int[] extents;
 	
+	private JFileChooser fileChooser;	
+	
 	private ViewJFrameImage frame;
+	
+	/**
+	 * List containing the images that need to be segmented 
+	 * during this run through
+	 */
+	private ArrayList<File> images;
+
+	private int numImages;
 	
 	private JCheckBox polygonalBox;
 	
@@ -82,6 +103,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	public PlugInDialogNeuronSegmentationGeneric(){
 		super();
 		images = new ArrayList<File>();
+		changeX = -1;
+		changeY = -1;
 		init();
 	}
 	
@@ -120,7 +143,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		frame.close();
         		openImage();
         		callAlgorithm();
-        		
         	}
 		}
 		else if (command.equals("Next")){
@@ -146,6 +168,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			super.actionPerformed(e);
 		}
 	}
+	
+	/**
+	 * Every time a new image is displayed and the segmentation
+	 * routine run, set up the new frame to display everything
+	 * correctly
+	 */
 
 	@Override
 	public void algorithmPerformed(AlgorithmBase algorithm) {
@@ -186,6 +214,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         }
 	}
 	
+	/**
+	 * Method that is called every time a new image is displayed
+	 * (so when Prev or Next is chosen). Initializes the new 
+	 * segmentation and adjusts the dialog title to reflect
+	 * which image we are currently on
+	 */
+	
 	protected void callAlgorithm(){
 		
 		extents = srcImage.getExtents();
@@ -198,6 +233,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
 		seg = new PlugInAlgorithmNeuronSegmentation(srcImage);
+		seg.setCoords(changeX, changeY);
 		if(sensSlider == null){
 			seg.setSensitivity(0.01f);
 		}
@@ -228,6 +264,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		fileChooser.addActionListener(this);
 		fileChooser.showOpenDialog(this);
 	}
+	
+	/**
+	 * Very minimal dialog that asks the user to choose
+	 * which directory to search through to segment images
+	 */
 	
 	private void init(){
 		
@@ -277,11 +318,17 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         System.gc();
 	}
 
+	/**
+	 * Initiates the dialog screen for the actual modifications.
+	 * This is the exact same as the algorithm plugin with the
+	 * exception of the Prev and Next buttons to allow navigation
+	 * through the selected images.
+	 */
+	
 	private void initModifications(){
 		
 		getContentPane().removeAll();
 		setForeground(Color.black);
-        //setTitle("Add/Delete Branches");
         
         JPanel descPanel = new JPanel();
         descPanel.setForeground(Color.black);
@@ -289,9 +336,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         String desc = "<html><b>Directions: </b><br>"
         		+ "Choose either add or delete, and then click on the image<br>"
         		+ "to modify the branches.<br>"
+        		+ "Choose \"Change Location\" to change where the neuron is <br>"
+        		+ "believed to be. <br>"
         		+ "Change sensitivity to change original segmentation.<br><br>"
-        		+ "<b>NOTE:</b> Changing sensitivity resets any branches<br>"
-        		+ "added or deleted previously.</html>";
+        		+ "<b>NOTE:</b> Changing sensitivity or location resets any <br>"
+        		+ "branches added or deleted previously.</html>";
         
         JLabel descLabel = new JLabel(desc);
         descLabel.setForeground(Color.black);
@@ -309,13 +358,18 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         deleteRB = new JRadioButton("Delete");
         deleteRB.setFont(serif12);
         deleteRB.setActionCommand("DELETE");
+
+        changeRB = new JRadioButton("Change Location");
+        changeRB.setFont(serif12);
         
         ButtonGroup group = new ButtonGroup();
         
         group.add(addRB);
         group.add(deleteRB);
+        group.add(changeRB);
         radioPanel.add(addRB);
         radioPanel.add(deleteRB);
+        radioPanel.add(changeRB);
         
         JPanel titlePanel = new JPanel();
         titlePanel.setForeground(Color.black);
@@ -420,6 +474,18 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		frame.setVisible(true);
 
 	}
+	
+	/**
+	 * Method used to determine which files in the chosen
+	 * directory to add, which are then added to the
+	 * list <code>images</code>. A filename filter is used
+	 * to choose images with filetype tif or lsm. This 
+	 * method also works recursively to add candidate images
+	 * in folder within the main directory.
+	 * 
+	 * @param dir the directory to search through for files
+	 * @return true if the list is non-empty
+	 */
 	
 	private boolean populateImages(File dir){
 		if(dir.isFile()){
@@ -542,7 +608,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		int y = (int) ((float)e.getY()/zoomY); //- top;
 
 		int i = x + y*width;
-		if(addRB.isSelected()) seg.addBranches(i);
+		if(changeRB.isSelected()){
+			seg.setCoords(x, y);
+			seg.runAlgorithm();
+			changeX = x;
+			changeY = y;
+		}
+		else if(addRB.isSelected()) seg.addBranches(i);
 		else seg.deleteBranches(i);
 		
 		skeleton = seg.getSkeleton();
