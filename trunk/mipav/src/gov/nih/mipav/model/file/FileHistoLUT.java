@@ -524,10 +524,25 @@ public class FileHistoLUT extends FileBase {
         	}
         	diff = max - min;
         	
-        	// remap the xfer function from 0->1 to min->max
-            for (int i = 0; i < nPts; i++) {
-                x[i] = (x[i] * diff) + min;
-            }            
+        	if((lut.getLUTType() == ModelLUT.SPECTRUM) 
+        			|| lut.getLUTType() == ModelLUT.STRIPED){
+	        	if(img.getType() == ModelImage.BYTE){
+	        		for (int i = 0; i < nPts; i++) {
+	                    x[i] = x[i] * 255f - 128f ;
+	                }    
+	        	}
+	        	else if(img.getType() == ModelImage.UBYTE){
+	        		for (int i = 0; i < nPts; i++) {
+	                    x[i] = x[i] * 255f;
+	                }    
+	        	}
+        	}
+        	else{
+	        	// remap the xfer function from 0->1 to min->max
+	            for (int i = 0; i < nPts; i++) {
+	                x[i] = (x[i] * diff) + min;
+	            }  
+        	}
             
         }
 
@@ -769,10 +784,26 @@ public class FileHistoLUT extends FileBase {
         	}
         	diff = max - min;
 
+        	
+        	if((lut.getLUTType() == ModelLUT.SPECTRUM) 
+        			|| lut.getLUTType() == ModelLUT.STRIPED){
+	        	if(img.getType()==ModelImage.BYTE){
+	        		for (int i = 0; i < nPts; i++) {
+	                    x[i] = x[i] / 255f + 0.5f;
+	                }
+	        	}
+	        	else if(img.getType()==ModelImage.UBYTE){
+	        		for (int i = 0; i < nPts; i++) {
+	                    x[i] = x[i] / 255f;
+	                }
+	        	}
         	// remap the xfer function from min->max to 0->1 
-            for (int i = 0; i < nPts; i++) {
-                x[i] = (x[i] -min) / diff;
-            }
+        	}
+        	else{
+	            for (int i = 0; i < nPts; i++) {
+	                x[i] = (x[i] -min) / diff;
+	            }
+        	}
         }
    
         
