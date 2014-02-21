@@ -44,6 +44,8 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	
 	private JCheckBox centroidBox;
 	
+	private JRadioButton changeRB;
+	
 	private JRadioButton deleteRB;
 	
 	private int[] extents;
@@ -153,9 +155,11 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         String desc = "<html><b>Directions: </b><br>"
         		+ "Choose either add or delete, and then click on the image<br>"
         		+ "to modify the branches.<br>"
+        		+ "Choose \"Change Location\" to change where the neuron is <br>"
+        		+ "believed to be. <br>" 
         		+ "Change sensitivity to change original segmentation.<br><br>"
-        		+ "<b>NOTE:</b> Changing sensitivity resets any branches<br>"
-        		+ "added or deleted previously.</html>";
+        		+ "<b>NOTE:</b> Changing sensitivity or location resets any <br>"
+        		+ "branches added or deleted previously.</html>";
         
         JLabel descLabel = new JLabel(desc);
         descLabel.setForeground(Color.black);
@@ -174,12 +178,17 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         deleteRB.setFont(serif12);
         deleteRB.setActionCommand("DELETE");
         
+        changeRB = new JRadioButton("Change Location");
+        changeRB.setFont(serif12);
+        
         ButtonGroup group = new ButtonGroup();
         
         group.add(addRB);
         group.add(deleteRB);
+        group.add(changeRB);
         radioPanel.add(addRB);
         radioPanel.add(deleteRB);
+        radioPanel.add(changeRB);
         
         JPanel titlePanel = new JPanel();
         titlePanel.setForeground(Color.black);
@@ -332,7 +341,11 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		int y = (int) ((float)e.getY()/zoomY); //- top;
 
 		int i = x + y*width;
-		if(addRB.isSelected()) seg.addBranches(i);
+		if(changeRB.isSelected()){
+			seg.setCoords(x, y);
+			seg.runAlgorithm();
+		}
+		else if(addRB.isSelected()) seg.addBranches(i);
 		else seg.deleteBranches(i);
 		
 		skeleton = seg.getSkeleton();

@@ -57,6 +57,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 */
 	private int centroidVOI;
 	
+	private int chooseX = -1;
+	
+	private int chooseY = -1;
+	
 	/**
 	 * The VOI list to be displayed by the image.
 	 */
@@ -765,6 +769,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 	}
 	
+	public void setCoords(int x, int y){
+		chooseX = x;
+		chooseY = y;
+	}
 	
 	/**
 	 * Changes the initial segmentation sensitivity to add or
@@ -959,7 +967,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	
 	private void largestObject(){
 		
-		int immax; 
+		float dist, adjusted;
+		int immax;
+		int x,y,diffX,diffY;
         int histmax = 0;
         int ind = 0;
         int[] histo; 
@@ -985,7 +995,17 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 
         for(int i=0;i<length;i++){
         	if(buffer[i] != 0){
-        		histo[buffer[i]]+=imBuffer[i];
+        		if(chooseX >= 0 && chooseY >= 0){
+        			x = i%width;
+        			y = i/width;
+        			diffX = x - chooseX;
+        			diffY = y - chooseY;
+        			dist = (float) Math.sqrt(diffX*diffX + diffY*diffY);
+        			adjusted = (float) imBuffer[i] / dist;
+        			histo[buffer[i]] += adjusted;
+        		}
+        		else
+        			histo[buffer[i]]+=imBuffer[i];
         	}
         }
         
