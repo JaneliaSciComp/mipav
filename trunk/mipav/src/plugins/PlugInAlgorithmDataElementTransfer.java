@@ -56,31 +56,91 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 				output = "";
 				line = fileLines.get(i);
 			
-				//Appends Variable Name. Form Name and Section Header
-				//are not present in CDE, so skip for now
-				output += adjustName(line[0]) + ",,,";
-				//Appends the field type
-				output += determineType(line) + ",";
-				//Appends the field label
-				output += line[1] + ",";
-				//Appends Choices/Calculations
-				if(!line[7].equalsIgnoreCase("Free-Form Entry"))
-					output += parseEntry(line[10], line[11]) + ",";
-				else output += ",";
-				//Appends Field Note
-				output += line[12] + ",";
-				//Appends Text Validation. Also, if it is a date, change 
-				//field note to say YYYY/MM/DD
-				if(line[5].equalsIgnoreCase("Date or Date & Time")){
-					output = output.substring(0, output.length()-1) + "YYYY/MM/DD,";
-					output += "date_ymd,";
+				//New branching statement here to account for Other, specify
+				//and DateTime variables
+				/*if(line[0].contains("DateTime") &&
+						line[5].equalsIgnoreCase("Date or Date & Time")){
+					String outputSplit = "";
+					outputSplit += line[0] + ",";
+					output += line[0] + "TimeSplit,";
+					outputSplit += adjustName(line[0]) + ",,,";
+					output += ",,,";
+					outputSplit += determineType(line) + ",";
+					output += determineType(line) + ",";
+					outputSplit += line[1] + ",";
+					output += ",";
+					outputSplit += ",";
+					output += ",";
+					outputSplit += "YYYY-MM-DD,";
+					output += "HH:MM (24-hour)";
+					outputSplit += "date_ymd,";
+					output += "time,";
+					csv.append(outputSplit + "\r\n");
+					
+				} else*/ if(line[7].equalsIgnoreCase("Free-Form Entry")
+						&& line[11].contains("Other, specify")){
+					String outputSplit = "";
+					outputSplit += line[0] + ",";
+					output += line[0] + "OtherSplit,";
+					outputSplit += adjustName(line[0]) + ",,,";
+					output += ",,,";
+					outputSplit += "dropdown,";
+					output += "text,";
+					outputSplit += line[1] + ",";
+					output += ",";
+					
+					String entries = parseEntry(line[10], line[11]);
+					outputSplit += entries + ",";
+					
+					output += ",";
+					outputSplit += ",";
+					output += ",";
+					outputSplit += line[12] + ",";
+					output += line[12] +",";
+					
+					output += ",,,,";
+					
+					int ind = entries.lastIndexOf("|");
+					String last = entries.substring(ind + 2).trim();
+					String value = last.substring(0, last.indexOf(","));
+					output += "[" + adjustName(line[0]) + "] = \"" + value + "\",";
+					
+					csv.append(outputSplit + "\r\n");
 				}
-				else if(line[5].equalsIgnoreCase("Numeric Values") && line[7].equalsIgnoreCase("Free-Form Entry"))
-					output += "numeric,";
-				else output += ",";
-				//Appends Text Validation min/max
-				output += line[8] + "," + line[9] + ",";
-				
+				else{
+					//Append original variable name for easier reversal
+					output += line[0] + ",";
+					//Appends Variable Name. Form Name and Section Header
+					//are not present in CDE, so skip for now
+					output += adjustName(line[0]) + ",,,";
+					//Appends the field type
+					output += determineType(line) + ",";
+					//Appends the field label
+					output += line[1] + ",";
+					//Appends Choices/Calculations
+					if(!line[7].equalsIgnoreCase("Free-Form Entry"))
+						output += parseEntry(line[10], line[11]);
+					else output += ",";
+					//Appends Field Note
+					output += line[12] + ",";
+					//Appends Text Validation. Also, if it is a date, change 
+					//field note to say YYYY-MM-DD
+					if(line[5].equalsIgnoreCase("Date or Date & Time")){
+						if(line[0].contains("DateTime")){
+							output = output.substring(0, output.length()-1) + "YYYY-MM-DD + HH:MD Military Time,";
+							output += "datetime_ymd,";
+						}
+						else{
+							output = output.substring(0, output.length()-1) + "YYYY-MM-DD,";
+							output += "date_ymd,";
+						}
+					}
+					else if(line[5].equalsIgnoreCase("Numeric Values") && line[7].equalsIgnoreCase("Free-Form Entry"))
+						output += "numeric,";
+					else output += ",";
+					//Appends Text Validation min/max
+					output += line[8] + "," + line[9] + ",";
+				}
 				//Output to the CSV
 				csv.append(output + "\r\n");
 	
@@ -216,8 +276,12 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 		}
 		//If Yes/No is not already attached to numeric values, make sure
 		//Yes = 1, No = 0
+		//Also check for Left/Right and Normal/Abnormal are consistent
 		else if(values.length > 1 && ((values[0].startsWith("Yes") && values[1].startsWith("No")) 
-					|| (values[0].equalsIgnoreCase("y") && values[1].equalsIgnoreCase("n")))){
+					|| (values[0].equalsIgnoreCase("y") && values[1].equalsIgnoreCase("n"))
+					|| (values[0].startsWith("Right") && values[1].startsWith("Left"))
+					|| (values[0].equalsIgnoreCase("r") && values[1].equalsIgnoreCase("l"))
+					|| (values[0].startsWith("Normal") && values[1].startsWith("Abnormal")))){
 			String temp = values[1];
 			values[1] = values[0];
 			values[0] = temp;
@@ -240,7 +304,29 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 			}
 		}
 		output = output.substring(0, output.length() - 2);
-		output += "\"";
+		output += "\",\"";
+		
+		//Now also add the numerical labels with permissible
+		//values ONLY
+		
+		
+		if(allInts){
+			for(int i=0;i<values.length;i++){
+				valueCell = values[i];
+				output += valueCell + ", " + valueCell + " | ";
+			}
+		}
+		else{
+			for(int i=0;i<values.length;i++){
+				valueCell = values[i];
+				output += String.valueOf(i) + ", " + valueCell + " | ";
+			}
+		}
+		output = output.substring(0, output.length() - 2);
+		output += "\",";
+		
+		
+		
 		return output;
 	}
 	
@@ -300,8 +386,10 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 	 * @return
 	 */
 	private boolean initCSV(){
-		String header = "Variable / Field Name,Form Name,Section Header,Field Type,Field Label," 
-				+ "Choices OR Calculations,Field Note,Text Validation,Text Validation Min,"
+		String header = "Original Name,"
+				+ "Variable / Field Name,Form Name,Section Header,Field Type,Field Label," 
+				+ "Choices OR Calculations, Permissible Values (CDE),"
+				+ "Field Note,Text Validation,Text Validation Min,"
 				+ "Text Validation Max,Identifier?,Branching Logic,Required Field?,"
 				+ "Custom Alignment,Question Number \n";
 		boolean fail = false;
