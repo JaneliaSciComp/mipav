@@ -685,6 +685,8 @@ public class Preferences {
     public static final String PREF_BUG_REPORT_URGENCY = "BugReportUrgency";
 
     public static final String PREF_USE_INCORRECT_ACPC_XDIM = "UseIncorrectAcpcXDim";
+    
+    public static final String PREF_FORCE_HISTO_UBYTE = "ForceUBTYETransferFuncTo255";
 
     /**
      * The character that separates an item from its value in a definition or mapping (such as in the user file type
@@ -828,6 +830,9 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_NUMBER_OF_THREADS,
                 String.valueOf(ThreadUtil.getAvailableCores()));
         Preferences.defaultProps.setProperty(Preferences.PREF_GPU_COMP_ENABLED, "false");
+        
+        
+        Preferences.defaultProps.setProperty(Preferences.PREF_FORCE_HISTO_UBYTE, "false");
 
     }
 

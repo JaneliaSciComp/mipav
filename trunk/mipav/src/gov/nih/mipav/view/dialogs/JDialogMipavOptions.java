@@ -135,6 +135,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JTextField frameRateField;
 
+    private JCheckBox histoForceUBYTE;
+    
     /** DOCUMENT ME! */
     private JComboBox imageChooser;
 
@@ -331,6 +333,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeLogMagImageOptions(gbc, gbl);
         makeInterpolateImageOptions(gbc, gbl);
         makeHistogramImageOptions(gbc, gbl);
+        makeUbyteHistoOptions(gbc, gbl);
+        /** add in new checkbox here*/
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -588,6 +592,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSButton.isSelected()));
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_MENU_FONT_SIZE, fontSizeField.getText());
+            Preferences.setProperty(Preferences.PREF_FORCE_HISTO_UBYTE, String.valueOf(histoForceUBYTE.isSelected()));
 
             int fontSize = 12;
 
@@ -1283,7 +1288,23 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                displayHistogram.setSelected(Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
            }
        }
-    
+       
+       
+    protected void makeUbyteHistoOptions(final GridBagConstraints gbc2, final GridBagLayout gbl){
+    	
+    	histoForceUBYTE = new JCheckBox("Force Saved/Loaded Transfer Functions to Absolute Point");
+    	histoForceUBYTE.setFont(serif12);
+    	histoForceUBYTE.setForeground(Color.black);
+    	
+    	gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(histoForceUBYTE, gbc2);
+        
+        if(Preferences.is(Preferences.PREF_FORCE_HISTO_UBYTE)){
+        	histoForceUBYTE.setSelected(true);
+        }
+    }
     
     /**
      * Makes the options for crosshair display.

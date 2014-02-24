@@ -1,11 +1,9 @@
 package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-
 import java.util.*;
 
 
@@ -519,12 +517,10 @@ public class FileHistoLUT extends FileBase {
         	}
         	min = (float)img.getMin();
         	max = (float)img.getMax();
-        	if(!keepImgRef) {
-        	    img = null;
-        	}
+        	
         	diff = max - min;
         	
-        	if((lut.getLUTType() == ModelLUT.SPECTRUM) 
+        	/*if((lut.getLUTType() == ModelLUT.SPECTRUM) 
         			|| lut.getLUTType() == ModelLUT.STRIPED){
 	        	if(img.getType() == ModelImage.BYTE){
 	        		for (int i = 0; i < nPts; i++) {
@@ -535,13 +531,21 @@ public class FileHistoLUT extends FileBase {
 	        		for (int i = 0; i < nPts; i++) {
 	                    x[i] = x[i] * 255f;
 	                }    
-	        	}
+	        	}*/
+        	if(img.getType() == ModelImage.UBYTE &&
+        			Preferences.is(Preferences.PREF_FORCE_HISTO_UBYTE)){
+        		for (int i = 0; i < nPts; i++) {
+                    x[i] = x[i] * 255f;
+                }
         	}
         	else{
 	        	// remap the xfer function from 0->1 to min->max
 	            for (int i = 0; i < nPts; i++) {
 	                x[i] = (x[i] * diff) + min;
 	            }  
+        	}
+        	if(!keepImgRef) {
+        	    img = null;
         	}
             
         }
@@ -779,24 +783,15 @@ public class FileHistoLUT extends FileBase {
             }
         	min = (float)img.getMin();
         	max = (float)img.getMax();
-        	if(!keepImgRef) {
-        	    img = null;
-        	}
+        	
         	diff = max - min;
 
         	
-        	if((lut.getLUTType() == ModelLUT.SPECTRUM) 
-        			|| lut.getLUTType() == ModelLUT.STRIPED){
-	        	if(img.getType()==ModelImage.BYTE){
-	        		for (int i = 0; i < nPts; i++) {
-	                    x[i] = x[i] / 255f + 0.5f;
-	                }
-	        	}
-	        	else if(img.getType()==ModelImage.UBYTE){
-	        		for (int i = 0; i < nPts; i++) {
-	                    x[i] = x[i] / 255f;
-	                }
-	        	}
+        	if(img.getType() == ModelImage.UBYTE &&
+        			Preferences.is(Preferences.PREF_FORCE_HISTO_UBYTE)){
+        		for (int i = 0; i < nPts; i++) {
+                    x[i] = x[i] / 255f;
+                }
         	// remap the xfer function from min->max to 0->1 
         	}
         	else{
@@ -804,9 +799,11 @@ public class FileHistoLUT extends FileBase {
 	                x[i] = (x[i] -min) / diff;
 	            }
         	}
+	        if(!keepImgRef) {
+	    	    img = null;
+	    	}
         }
-   
-        
+
         for (int i = 0; i < nPts; i++) {
             file.writeBytes(Float.toString(x[i]) + "\t" + Float.toString(y[i]) + "\t" + Float.toString(z[i]) + "\r\n");
         }
