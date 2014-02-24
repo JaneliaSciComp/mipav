@@ -1292,7 +1292,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
        
     protected void makeUbyteHistoOptions(final GridBagConstraints gbc2, final GridBagLayout gbl){
     	
-    	histoForceUBYTE = new JCheckBox("Force Saved/Loaded Transfer Functions to Absolute Point");
+    	histoForceUBYTE = new JCheckBox("Force saved/loaded unsigned byte transfer functions to absolute point");
     	histoForceUBYTE.setFont(serif12);
     	histoForceUBYTE.setForeground(Color.black);
     	
