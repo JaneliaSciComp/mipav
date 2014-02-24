@@ -3100,7 +3100,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {        
         // Get the reference to the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        Vector<String> copyNameList = ViewUserInterface.getReference().getCopyVOINames();
         copyList.clear();
+        copyNameList.clear();
         VOIVector kVOIs = getActiveImage().getVOIs();
         for ( int i = 0; i < kVOIs.size(); i++ )
         {
@@ -3111,6 +3113,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 if ( kCurrentVOI.isActive() && !copyList.contains(kCurrentVOI) )
                 {
                     copyList.add(kCurrentVOI);
+                    copyNameList.add(kCurrentGroup.getName());
                 }
             }
         }
@@ -4457,21 +4460,19 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         // Get the Global copy list:
         Vector<VOIBase> copyList = ViewUserInterface.getReference().getCopyVOIs();
+        Vector<String> copyNameList = ViewUserInterface.getReference().getCopyVOINames();
         
         // make new VOI groups:
         VOIVector newVOIs = new VOIVector();
         int iAdded = 0;
+        short sID = (short)(kActive.getVOIs().getUniqueID());
         while ( iAdded < copyList.size() )
         {
         	// get last non-added contour:
-            VOIBase kCurrentVOI = copyList.elementAt(iAdded++ );
-            
+            VOIBase kCurrentVOI = copyList.elementAt(iAdded);
+            String kName = copyNameList.elementAt(iAdded++);
             // create a new VOI
-            short sID = (short)(kActive.getVOIs().getUniqueID());
-            String kName = kCurrentVOI.getClass().getName();
-            int index = kName.lastIndexOf('.') + 1;
-            kName = kName.substring(index);
-            VOI kNewVOI = new VOI(sID, kName + "_" + sID );
+            VOI kNewVOI = new VOI(sID++, kName);
             kNewVOI.setCurveType( kCurrentVOI.getType() );
             kNewVOI.setColor( kCurrentVOI.getGroup().getColor() );
                         
