@@ -231,6 +231,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private Vector<VOIBase> copyVOIList = new Vector<VOIBase>();
+    
+    /** Vector to hold VOI names (multiple). */
+    private Vector<String> copyVOINameList = new Vector<String>();
 
     /** Class/resource loader for plugins that are in jars */
     private JarClassLoader jarClassLoader;
@@ -1838,6 +1841,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     public Vector<VOIBase> getCopyVOIs() {
         return this.copyVOIList;
+    }
+    
+    public Vector<String> getCopyVOINames() {
+    	return this.copyVOINameList;
     }
 
     /**
