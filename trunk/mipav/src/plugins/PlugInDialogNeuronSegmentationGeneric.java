@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
@@ -140,8 +141,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		else if(command.equals("Prev")){
 			if (counter > 0){
         		counter--;
+        		Point loc = frame.getLocation();
         		frame.close();
         		openImage();
+        		frame.setLocation(loc);
         		callAlgorithm();
         	}
 		}
@@ -149,8 +152,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	//Close the previous image and open the next one
         	counter++;
         	if(counter < numImages){
+        		Point loc = frame.getLocation();
         		frame.close();
         		openImage();
+        		frame.setLocation(loc);
         		callAlgorithm();
         	}
         	else finalize();
