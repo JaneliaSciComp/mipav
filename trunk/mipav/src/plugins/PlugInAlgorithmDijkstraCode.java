@@ -212,7 +212,7 @@ public class PlugInAlgorithmDijkstraCode extends AlgorithmBase {
 					if(i==0 && j==0) continue;
 					ind = nx + ny*width;
 					if(visited[ind]) continue;
-					if(mode == COST) dijkstra.offer(new Path(next.V2, ind, costs[ind] + next.W + 5));
+					if(mode == COST) dijkstra.offer(new Path(next.V2, ind, costs[ind] + next.W /*+ 5*/));
 					//For true Dijkstra's with added path length bias, 
 					//set mode to 1
 					else{
