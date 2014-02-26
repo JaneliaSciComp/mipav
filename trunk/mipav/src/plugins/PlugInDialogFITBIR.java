@@ -26,12 +26,12 @@ import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.WidgetFactory;
 
-import gov.nih.tbi.dictionary.model.hibernate.BasicDataStructure;
+import gov.nih.tbi.commons.model.RepeatableType;
+import gov.nih.tbi.dictionary.model.DictionaryRestServiceModel.DataStructureList;
 import gov.nih.tbi.dictionary.model.hibernate.DataStructure;
 import gov.nih.tbi.dictionary.model.hibernate.MapElement;
 import gov.nih.tbi.dictionary.model.hibernate.RepeatableGroup;
 import gov.nih.tbi.dictionary.model.hibernate.ValueRange;
-import gov.nih.tbi.dictionary.ws.DictionaryProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -117,6 +117,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.commons.lang3.text.WordUtils;
+import org.apache.cxf.jaxrs.client.WebClient;
 import org.bouncycastle.util.encoders.Hex;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -256,9 +257,12 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** Full authentication server url */
     private static String authServerURL = authProdServer;
 
-    private DictionaryProvider dictionaryProvider;
+    private static final String ddRequestBase = "/portal/ws/ddt/dictionary/FormStructure";
 
-    private List<BasicDataStructure> dataStructureList;
+    private static final String ddStructListRequest = ddRequestBase
+            + "/Published/list?page=1&pageSize=100000&ascending=false&sort=shortName";
+
+    private List<DataStructure> dataStructureList;
 
     private File csvFile;
 
@@ -274,7 +278,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.13";
+    private static final String pluginVersion = "0.14";
 
     private static final String STRUCT_STATUS_ARCHIVED = "ARCHIVED";
 
@@ -282,8 +286,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String STRUCT_STATUS_PUBLISHED = "PUBLISHED";
 
     private static final String STRUCT_TYPE_IMAGING = "Imaging";
-
-    private static final String MAIN_GROUP_NAME = "Main";
 
     private static final String FILE_ELEMENT_TYPE = "File";
 
@@ -300,6 +302,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private static final String IMG_HASH_CODE_ELEMENT_NAME = "ImgFileHashCode";
 
     private static final String recordIndicatorColumn = "record";
+
+    private static final String recordIndicatorValue = "x";
 
     private static final String PDBP_IMAGING_STRUCTURE_PREFIX = "PDBPImag";
 
@@ -366,7 +370,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
         }
 
-        final Thread thread = new WebServiceThread(this);
+        // final Thread thread = new WebServiceThread(this);
+        final Thread thread = new RESTThread(this);
         thread.start();
 
     }
@@ -2405,6 +2410,30 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         return "";
     }
 
+    /**
+     * Attempts to convert from DICOM patient age tag (in format xxx[DWMY]) to the BRICS AgeVal (in months). Day and
+     * week to month conversions are approximations.
+     * 
+     * @param dicomAge The DICOM patient age tag value (hopefully in the format xxx[DWMY]).
+     * @return The patient age in months, as close as possible with the DICOM age given. If it does not match the
+     *         format, return an empty string.
+     */
+    private static final String convertDicomAgeToBRICS(final String dicomAge) {
+        final String temp = dicomAge.substring(0, dicomAge.length() - 6);
+
+        if (dicomAge.contains("D")) {
+            return Double.toString(Integer.parseInt(temp) / 30.4166666667);
+        } else if (dicomAge.contains("W")) {
+            return Double.toString(Integer.parseInt(temp) / 4.34523809524);
+        } else if (dicomAge.contains("M")) {
+            return temp;
+        } else if (dicomAge.contains("Y")) {
+            return Double.toString(Integer.parseInt(temp) * 12);
+        }
+
+        return "";
+    }
+
     private static final void setElementComponentValue(final JComponent comp, final String value) {
         if (value != null && !value.equals("")) {
             if (comp instanceof JTextField) {
@@ -2773,7 +2802,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             structsTable.getColumn("Description").setMinWidth(300);
 
             // new way of doing web service
-            for (final BasicDataStructure ds : dataStructureList) {
+            for (final DataStructure ds : dataStructureList) {
                 if (ds.getShortName().equals("")) {
                     // something is wrong. a shortname is required. this is to work around an apparent stage DDT problem
                     continue;
@@ -2988,7 +3017,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
         private boolean addedPreviewImage = false;
 
-        private BasicDataStructure dataStructure;
+        private DataStructure dataStructure;
 
         private final boolean setInitialVisible;
 
@@ -3047,7 +3076,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             // tabScrollPane.setPreferredSize(new Dimension(660, 500));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
-            for (final BasicDataStructure ds : dataStructureList) {
+            for (final DataStructure ds : dataStructureList) {
                 if (ds.getShortName().equalsIgnoreCase(dataStructureName)) {
                     dataStructure = ds;
                 }
@@ -3573,11 +3602,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
             }
 
+            final GridBagConstraints gbc2 = new GridBagConstraints();
+            gbc2.fill = GridBagConstraints.HORIZONTAL;
+            gbc2.gridx = 0;
+            gbc2.gridy = 0;
+            gbc2.insets = new Insets(2, 5, 2, 5);
+
             final TreeMap<String, JPanel> groupPanels = new TreeMap<String, JPanel>();
             for (final RepeatableGroup g : groups) {
                 final JPanel p = new JPanel(new GridBagLayout());
                 p.setBorder(buildTitledBorder(g.getName()));
                 groupPanels.put(g.getName(), p);
+
+                System.err.println(g.toString());
+
+                gbc2.gridy = g.getPosition(); // group position is 0-based (unlike data element position)
+                mainPanel.add(p, gbc2);
             }
 
             final Set<JLabel> keySet = labelsAndComps.keySet();
@@ -3655,7 +3695,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                 gbc.anchor = GridBagConstraints.NORTHWEST;
                                 gbc.weightx = 0;
                                 gbc.gridx = 0;
-                                gbc.gridy = de.getPosition() - 1;
+                                gbc.gridy = de.getPosition() - 1; // data element position is 1-based
                                 curPanel.add(l, gbc);
                                 gbc.gridx = 1;
                                 gbc.anchor = GridBagConstraints.NORTHEAST;
@@ -3673,19 +3713,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 }
             }
 
-            final GridBagConstraints gbc2 = new GridBagConstraints();
-            gbc2.fill = GridBagConstraints.HORIZONTAL;
-            gbc2.gridx = 0;
-            gbc2.gridy = 0;
-            gbc2.insets = new Insets(2, 5, 2, 5);
-            if (groupPanels.containsKey(MAIN_GROUP_NAME)) {
-                mainPanel.add(groupPanels.get(MAIN_GROUP_NAME), gbc2);
-                gbc2.gridy++;
-            }
-            for (final String g : groupPanels.navigableKeySet()) {
-                if ( !g.equals(MAIN_GROUP_NAME) /* && groupPanels.get(g).getComponentCount() > 0 */) {
-                    mainPanel.add(groupPanels.get(g), gbc2);
-                    gbc2.gridy++;
+            for (final RepeatableGroup g : groups) {
+                final GridBagConstraints egbc = new GridBagConstraints();
+                egbc.insets = new Insets(2, 5, 2, 5);
+                egbc.fill = GridBagConstraints.HORIZONTAL;
+                egbc.weightx = 1;
+                egbc.gridx = 0;
+                egbc.anchor = GridBagConstraints.WEST;
+
+                // TODO: repeatable groups GUI
+                final JPanel curPanel = groupPanels.get(g.getName());
+                egbc.gridy = g.getSize();
+                if ( (g.getType() == RepeatableType.LESSTHAN || g.getType() == RepeatableType.EXACTLY)
+                        && g.getThreshold() == 0) {
+                    // curPanel.add(new JLabel("Optional, without limit"), egbc);
+                } else {
+                    // curPanel.add(new JLabel(g.getType().name() + " " + g.getThreshold()), egbc);
                 }
             }
         }
@@ -3695,19 +3738,18 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * 
          * @param ds
          */
-        private void parse_new(final BasicDataStructure dataStructure, final DataStruct ds2, final String shortname,
+        private void parse_new(final DataStructure dataStructure, final DataStruct ds2, final String shortname,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
-            final List<BasicDataStructure> bdsToGet = new Vector<BasicDataStructure>();
+            final List<DataStructure> bdsToGet = new Vector<DataStructure>();
             bdsToGet.add(dataStructure);
 
-            @SuppressWarnings("deprecation")
-            final List<DataStructure> dsList = dictionaryProvider.getDataDictionary(bdsToGet);
-
+            final WebClient client = WebClient.create(ddServerURL + ddRequestBase + "/" + dataStructure.getShortName()
+                    + "/" + dataStructure.getVersion());
+            final DataStructure ds = client.accept("text/xml").get(DataStructure.class);
             Set<MapElement> dataElements = null;
-            for (final DataStructure ds : dsList) {
-                dataElements = ds.getDataElements();
-                groups = ds.getRepeatableGroups();
-            }
+            dataElements = ds.getDataElements();
+            groups = ds.getRepeatableGroups();
+
             final Iterator<MapElement> iter = dataElements.iterator();
             while (iter.hasNext()) {
                 final MapElement dataElement = iter.next();
@@ -4150,22 +4192,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                         final String bandwidth = (String) (fileInfoDicom.getTagTable().getValue("0018,0095"));
 
                         if (csvFieldNames[i].equalsIgnoreCase("AgeVal") && ageVal != null) {
-                            String ageInMonths = ageVal;
-                            if (ageVal.contains("Y")) {
-                                final String temp = ageVal.substring(0, ageVal.length() - 6);
-                                ageInMonths = Integer.toString(Integer.parseInt(temp) * 12);
-                            }
+                            final String ageInMonths = convertDicomAgeToBRICS(ageVal);
+
                             if ( !csvParams[i].trim().equals(ageInMonths)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
                                 headerList.add(ageInMonths);
                             }
                         } else if (csvFieldNames[i].equalsIgnoreCase("AgeYrs") && ageVal != null) {
-                            String ageInYears = ageVal;
-                            if (ageVal.contains("Y")) {
-                                final String temp = ageVal.substring(0, ageVal.length() - 6);
-                                ageInYears = Integer.toString(Integer.parseInt(temp));
-                            }
+                            final String ageInYears = String
+                                    .valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
                             if ( !csvParams[i].trim().equals(ageInYears)) {
                                 csvFList.add(csvFieldNames[i]);
                                 csvPList.add(csvParams[i]);
@@ -4527,18 +4563,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     final String patientID = (String) (fileInfoDicom.getTagTable().getValue("0010,0020"));
 
                     if (l.equalsIgnoreCase("AgeVal") && ageVal != null && !ageVal.equals("")) {
-                        String ageInMonths = ageVal;
-                        if (ageVal.contains("Y")) {
-                            final String temp = ageVal.substring(0, ageVal.length() - 6);
-                            ageInMonths = Integer.toString(Integer.parseInt(temp) * 12);
-                        }
+                        final String ageInMonths = convertDicomAgeToBRICS(ageVal);
                         setElementComponentValue(comp, ageInMonths);
                     } else if (l.equalsIgnoreCase("AgeYrs") && ageVal != null && !ageVal.equals("")) {
-                        String ageInYears = ageVal;
-                        if (ageVal.contains("Y")) {
-                            final String temp = ageVal.substring(0, ageVal.length() - 6);
-                            ageInYears = Integer.toString(Integer.parseInt(temp));
-                        }
+                        final String ageInYears = String.valueOf(Integer.valueOf(convertDicomAgeToBRICS(ageVal)) / 12);
                         setElementComponentValue(comp, ageInYears);
                     } else if (l.equalsIgnoreCase("SiteName")) {
                         setElementComponentValue(comp, siteName);
@@ -5578,18 +5606,15 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     }
 
     /**
-     * Class that connects to FITBIR data dictionary web service
-     * 
-     * @author pandyan
-     * 
+     * Class that connects to BRICS data dictionary web service (via RESTful API).
      */
-    public class WebServiceThread extends Thread implements ActionListener {
+    public class RESTThread extends Thread implements ActionListener {
 
         JButton progressCancelButton;
 
         PlugInDialogFITBIR dial;
 
-        WebServiceThread(final PlugInDialogFITBIR dial) {
+        RESTThread(final PlugInDialogFITBIR dial) {
             super();
             this.dial = dial;
         }
@@ -5610,9 +5635,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // otherwise the value set above at initialization is used.
                 readConfig();
 
-                dictionaryProvider = new DictionaryProvider(ddServerURL, authServerURL);
-
-                dataStructureList = dictionaryProvider.getDataStructures();
+                final WebClient client = WebClient.create(ddServerURL + ddStructListRequest);
+                final DataStructureList dsl = client.accept("text/xml").get(DataStructureList.class);
+                dataStructureList = dsl.getList();
 
                 progressBar.updateValue(80);
 
