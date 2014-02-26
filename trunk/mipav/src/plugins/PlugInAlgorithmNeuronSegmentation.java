@@ -548,10 +548,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		//Store the cost function for the modified 
 		//Dijkstra's method, and convert to UBYTE
-		probImage = probabilityMap(srcImage);
+		/*probImage = probabilityMap(srcImage);
 		AlgorithmChangeType change = new AlgorithmChangeType(probImage, DataType.UINTEGER.getLegacyNum(),
 				probImage.getMin(), probImage.getMax(), 0, 255, false);
-		change.run();
+		change.run();*/
 		
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
@@ -561,12 +561,17 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		changeZ.run();
 		destImage = probabilityMap(zImage);
 		
+		probImage = (ModelImage) destImage.clone();
+		AlgorithmChangeType change = new AlgorithmChangeType(probImage, DataType.UINTEGER.getLegacyNum(),
+				probImage.getMin(), probImage.getMax(), 0, 255, false);
+		change.run();
+		
 		//Hard segmentation of the filtered image
 		//results in a general structure for the
 		//growth cone, which can then be skeletonized
 		//to identify branches.
 		
-		float[] threshold = {0, sensitivity};
+		float[] threshold = {0, (float) (- sensitivity * Math.log(sensitivity))};
         
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(destImage, threshold, 1, 1, true, false);
         nThresh.run();
@@ -680,10 +685,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		int start = tipPts.get(endIndex[0]);
 		int line = 1;
 		boolean trip;
+		int tripind = 0;
 		
 		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
 		swcDir += srcImage.getImageName().concat("_branches.swc");
-		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea);
+		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
 		
 		try {
 			swcOut = new FileWriter(swcDir);
@@ -723,7 +729,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			for(int ny=y+1;ny>=y-1;ny--){
 				if(ny<0||ny>=height) continue;
 				for(int nx=x+1;nx>=x-1;nx--){
-					if(nx<0||nx>=width) continue;
+					if(nx<0||nx>=width || (nx == x && ny == y)) continue;
 					ind = nx + ny*width;
 					if(skelClone.get(ind)){
 						//Reached the end of a branch, don't need to add
@@ -736,27 +742,36 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 						//on these points, so do not consider other points
 						//to add. Also write out the information
 						else if(branchPts.contains(ind)){
+							if(branchPts.contains(start))
+								connection.addFirst(line);
 							line++;
 							writeInfo(line, ind, 0, connection.pop());
-							pathBuffer.clear();
+							//pathBuffer.clear();
 							skelClone.flip(ind);
-							path.addFirst(ind);
+							//path.addFirst(ind);
 							trip = true;
+							tripind = ind;
+							
 						}
 						else
 							pathBuffer.add(ind);
 						//Keep track of where you are connecting to
-						if(branchPts.contains(start))
-							connection.addFirst(line);
+						/*if(branchPts.contains(start))
+							connection.addFirst(line);*/
 					}
-					if(trip) break;
+					//if(trip) break;
 				}
-				if(trip) break;
+				//if(trip) break;
 			}
 			//Refill the stack with points to traverse
 			while(!pathBuffer.isEmpty()){
+				if(branchPts.contains(start) || trip)
+					connection.addFirst(line);
 				path.addFirst(pathBuffer.get(0));
 				skelClone.flip(pathBuffer.remove(0));
+			}
+			if(trip){
+				path.addFirst(tripind);
 			}
 		}
 		
@@ -1170,7 +1185,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * based on how likely that pixel value is in THAT image. 
 	 * Due to the nature of the image, background is usually a much
 	 * higher probability than signal, resulting in an image where
-	 * darker pixels are more likely to be signal
+	 * darker pixels are more likely to be signal.
+	 * 
+	 * This has since been changed to output entropy:
+	 * p*ln(p)
+	 * instead of just p.
 	 * 
 	 * @param image to transform to probability.
 	 * @return the transformed probability map
@@ -1209,8 +1228,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			if(p[i] > pmax) pmax = p[i];
 		}
 
+		float pVal;
 		for(int i=0;i<length;i++){
-			pImage[i] = (p[buffer[i]/bins]);
+			pVal = (p[buffer[i]/bins]);
+			pImage[i] = (float) (- pVal * Math.log(pVal));
 		}
 
 		outImage = new ModelImage(ModelImage.FLOAT, extents, image.getImageName() + "_prob");
@@ -1264,6 +1285,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * based on a 2-sample unequal variance test (which doesn't make a ton of sense but
 	 * it seems to work). The effect of the filter is to essentially dilate some edges,
 	 * which helps bring out some of the harder ones to detect.
+	 * 
+	 * However, this is almost equivalent to a 3x3 mean filter, should probably either
+	 * use that instead, or find a better filtering method
 	 * 
 	 * @return the filtered Z-score image.
 	 */
