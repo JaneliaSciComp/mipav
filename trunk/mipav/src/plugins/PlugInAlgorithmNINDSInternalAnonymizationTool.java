@@ -730,6 +730,7 @@ public class PlugInAlgorithmNINDSInternalAnonymizationTool extends AlgorithmBase
 		int sdmm = Integer.valueOf(sdmmString);
 		int sddd = Integer.valueOf(sdddString);
 		int sdyyyy = Integer.valueOf(sdyyyyString);
+		sdyyyyString = String.valueOf(sdyyyy - 100);
 		
 		if(tagTable.containsTag(patientDOBKey)) {
 			dob = ((String)tagTable.getValue(patientDOBKey)).trim();
