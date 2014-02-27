@@ -13,7 +13,6 @@ import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -611,11 +610,14 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * subfolder of the original image, labeled "Branch_Images." Each
 	 * skeleton image then has its own subfolder to save the VOIs, 
 	 * labeled "Endpoints", "Centroid", and "Polygonal Area."
+	 * 
+	 * As of 2/27/14, the VOIs are no longer saved, as they don't necessarily
+	 * serve a purpose.
 	 */
 	
 	public void save(){
 		
-		int ind, x,y;
+		//int ind, x,y;
 
 		
 		ModelImage skelImage = new ModelImage(ModelImage.BOOLEAN, extents, srcImage.getImageName().concat("_branches"));
@@ -631,7 +633,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			dirFile.mkdir();
 		skelImage.saveImage(imDir, null, FileUtility.TIFF, true);
 		
-		String voiDir = imDir + File.separator + "defaultVOIs_" + skelImage.getImageName() + File.separator;
+		/*String voiDir = imDir + File.separator + "defaultVOIs_" + skelImage.getImageName() + File.separator;
 		dirFile = new File(voiDir);
 		if(!dirFile.exists())
 			dirFile.mkdir();
@@ -658,7 +660,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		} catch (IOException e) {
 			MipavUtil.displayError("VOI file locked");
 			e.printStackTrace();
-		}
+		}*/
 
 		skelImage.disposeLocal();
 	}
@@ -676,7 +678,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * Depending on the user's needs, the Z-coordinate and the neuron
 	 * radius may need to be implemented as well, as those are not
 	 * stored and/or easily calculated in this framework.
+	 * 
+	 * As of 2/27/14, this method is no longer used, as a new version
+	 * was written that is more robust and can handle loops
 	 */
+	
+	/*
 	public void saveAsSWC2(){
 		
 		longestPath(); //determine the endpoints of the longest path
@@ -769,8 +776,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 						else
 							pathBuffer.add(ind);
 						//Keep track of where you are connecting to
-						/*if(branchPts.contains(start))
-							connection.addFirst(line);*/
+						//if(branchPts.contains(start))
+						//	connection.addFirst(line);
 					}
 					//if(trip) break;
 				}
@@ -796,15 +803,28 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			return;
 		}
 		
-	}
+	}*/
 	
 	/**
-	 * Redone version, a little more robust
+	 * Redone version, a little more robust. It has fewer problems
+	 * making the right connections when viewed in the SWC format
+	 * 
+	 * Method for saving the skeletonized neuron in the SWC format. By
+	 * using the coordinates gathered from the tips as 
+	 * determined by the skeleton, traverse the skeleton and add 
+	 * information to the text file (using writeInfo) whenever you hit
+	 * one of these points.
+	 * 
+	 * Start at one of the two endpoints as determined by the longest
+	 * path in the skeleton.
+	 * 
+	 * This method can handle stranger structures, especially those
+	 * with loops in them
 	 */
 	
 	public void saveAsSWC(){
 		longestPath(); //determine the endpoints of the longest path
-		//findBranchPoints(); 
+		polygonalArea(); //Update polygonal area and centroid location
 		
 		int x,y,ind, num;
 		BitSet skelClone = (BitSet)skeleton.clone();
@@ -813,8 +833,6 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		ArrayDeque<BranchContainer> path = new ArrayDeque<BranchContainer>();
 		//List of points to add to the stacks after searching
 		ArrayList<Integer> pathBuffer = new ArrayList<Integer>();
-		//ArrayList<BranchContainer> pathBuffer = new ArrayList<BranchContainer>();
-		//ArrayList<BranchContainer> branching = new ArrayList<BranchContainer>();
 		
 		int start = tipPts.get(endIndex[0]);
 		int line = 1;
@@ -879,13 +897,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 							pathBuffer.add(ind);
 							num++;
 						}
-						//Keep track of where you are connecting to
-						/*if(branchPts.contains(start))
-							connection.addFirst(line);*/
 					}
-					//if(trip) break;
 				}
-				//if(trip) break;
 			}
 			//Refill the stack with points to traverse
 			if(num >= 2){
@@ -893,6 +906,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				writeInfo(line, start, 0, current.line);
 				current.line = line;
 			}
+			//Check if you need to bridge any gaps in cyclic neurons
 			else if(num == 0){
 				Iterator<BranchContainer> iter;
 				BranchContainer check;
@@ -966,8 +980,13 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * Method to determine which points are considered branching points
 	 * (or as considered in the SWC files, forks). Uses multiple criteria
 	 * to choose which points are considered branching points.
+	 * 
+	 * As of 2/27/14 this method is no longer needed as it worked for some
+	 * cases, but failed in a couple of strange cases that could ultimately
+	 * hurt export to SWC
 	 */
 	
+	/*
 	private void findBranchPoints(){
 		int x,y,nx,ny,ind,num;
 		int[] direction = {-1, 1};
@@ -1075,7 +1094,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		for(int i=0;i<removal.size();i++){
 			branchPts.remove(removal.get(i));
 		}
-	}
+	}*/
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton
@@ -1442,12 +1461,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * However, this is almost equivalent to a 3x3 mean filter, should probably either
 	 * use that instead, or find a better filtering method.
 	 * 
-	 * No longer used (as of 2/26/14)
+	 * No longer used (as of 2/26/14) since mean filter is practically the same
 	 * 
 	 * @return the filtered Z-score image.
 	 */
 
-	private ModelImage zScoreFilter(){
+	/*private ModelImage zScoreFilter(){
 		
 		
 		float sum, sumSquared, std, num, mean;
@@ -1523,7 +1542,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		}
 
 		return outImage;
-	}
+	}*/
 	
 	private class BranchContainer{
 		
