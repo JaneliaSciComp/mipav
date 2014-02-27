@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
@@ -167,6 +169,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			source.exportData(0, length, imBuffer);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
 
@@ -555,7 +558,11 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
-		ModelImage zImage = zScoreFilter();
+		AlgorithmMean mean = new AlgorithmMean(srcImage, 3, true);
+		mean.run();
+		
+		//ModelImage zImage = zScoreFilter();
+		ModelImage zImage = (ModelImage)srcImage.clone();
 		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, DataType.UINTEGER.getLegacyNum(),
 				zImage.getMin(), zImage.getMax(), 0, 255, false);
 		changeZ.run();
@@ -584,6 +591,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         try {
 			destImage.exportData(0, length, skeleton);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
         
@@ -614,6 +622,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			skelImage.importData(0, skeleton, true);
 		} catch (IOException e1) {
+			MipavUtil.displayError("Image locked");
 			e1.printStackTrace();
 		}
 		String imDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
@@ -647,6 +656,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	            saver.writeVOI(copy.VOIAt(i), true);
 			}
 		} catch (IOException e) {
+			MipavUtil.displayError("VOI file locked");
 			e.printStackTrace();
 		}
 
@@ -667,7 +677,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * radius may need to be implemented as well, as those are not
 	 * stored and/or easily calculated in this framework.
 	 */
-	public void saveAsSWC(){
+	public void saveAsSWC2(){
 		
 		longestPath(); //determine the endpoints of the longest path
 		findBranchPoints(); 
@@ -681,19 +691,22 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		ArrayDeque<Integer> connection = new ArrayDeque<Integer>();
 		//List of points to add to the stacks after searching
 		ArrayList<Integer> pathBuffer = new ArrayList<Integer>();
+		ArrayList<Integer> branching = new ArrayList<Integer>();
 		
 		int start = tipPts.get(endIndex[0]);
 		int line = 1;
 		boolean trip;
-		int tripind = 0;
 		
 		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
 		swcDir += srcImage.getImageName().concat("_branches.swc");
 		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
+		String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
+				+ String.valueOf(centroidPts[1]) + ")\n";
 		
 		try {
 			swcOut = new FileWriter(swcDir);
 			swcOut.append(areaStr);
+			swcOut.append(centroidStr);
 			swcOut.flush();
 		} catch (IOException e) {
 			MipavUtil.displayError("Unable to export to SWC file");
@@ -719,7 +732,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			}
 		}
 		
-		writeInfo(1, tipPts.get(0), -1, -1);
+		writeInfo(1, tipPts.get(endIndex[0]), -1, -1);
 		
 		while(!path.isEmpty()){
 			trip = false;
@@ -750,7 +763,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 							skelClone.flip(ind);
 							//path.addFirst(ind);
 							trip = true;
-							tripind = ind;
+							branching.add(ind);
 							
 						}
 						else
@@ -771,7 +784,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				skelClone.flip(pathBuffer.remove(0));
 			}
 			if(trip){
-				path.addFirst(tripind);
+				while(!branching.isEmpty())
+					path.addFirst(branching.remove(0));
 			}
 		}
 		
@@ -782,6 +796,140 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			return;
 		}
 		
+	}
+	
+	/**
+	 * Redone version, a little more robust
+	 */
+	
+	public void saveAsSWC(){
+		longestPath(); //determine the endpoints of the longest path
+		//findBranchPoints(); 
+		
+		int x,y,ind, num;
+		BitSet skelClone = (BitSet)skeleton.clone();
+		
+		//Used as a stack to follow paths to completion
+		ArrayDeque<BranchContainer> path = new ArrayDeque<BranchContainer>();
+		//List of points to add to the stacks after searching
+		ArrayList<Integer> pathBuffer = new ArrayList<Integer>();
+		//ArrayList<BranchContainer> pathBuffer = new ArrayList<BranchContainer>();
+		//ArrayList<BranchContainer> branching = new ArrayList<BranchContainer>();
+		
+		int start = tipPts.get(endIndex[0]);
+		int line = 1;
+
+		BranchContainer current;
+		
+		String swcDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
+		swcDir += srcImage.getImageName().concat("_branches.swc");
+		String areaStr = "# Polygonal Area: " + String.valueOf(polyArea) + "\n";
+		String centroidStr = "# Centroid: (" + String.valueOf(centroidPts[0]) + ", "
+				+ String.valueOf(centroidPts[1]) + ")\n";
+		
+		try {
+			swcOut = new FileWriter(swcDir);
+			swcOut.append(areaStr);
+			swcOut.append(centroidStr);
+			swcOut.flush();
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to export to SWC file");
+			return;
+		}
+
+		//Delete the trail behind you as you traverse the skeleton
+		skelClone.flip(start);
+		
+		//Start seeding traversal with one of the longest path points
+		x = start%width;
+		y = start/width;
+		for(int ny=y+1;ny>=y-1;ny--){
+			if(ny<0||ny>=height) continue;
+			for(int nx=x+1;nx>=x-1;nx--){
+				if(nx<0||nx>=width) continue;
+				ind = nx + ny*width;
+				if(skelClone.get(ind)){
+					path.addFirst(new BranchContainer(ind, 1));
+					skelClone.flip(ind);
+				}
+			}
+		}
+		
+		writeInfo(1, tipPts.get(endIndex[0]), -1, -1);
+		
+		while(!path.isEmpty()){
+			num = 0;
+			current = path.pop();
+			start = current.i;
+			x = start%width;
+			y = start/width;
+			for(int ny=y+1;ny>=y-1;ny--){
+				if(ny<0||ny>=height) continue;
+				for(int nx=x+1;nx>=x-1;nx--){
+					if(nx<0||nx>=width || (nx == x && ny == y)) continue;
+					ind = nx + ny*width;
+					if(skelClone.get(ind)){
+						//Reached the end of a branch, don't need to add
+						//anymore points, just write information
+						if(tipPts.contains(ind)){
+							line++;
+							writeInfo(line, ind, 1, current.line);
+						}
+						else{
+							pathBuffer.add(ind);
+							num++;
+						}
+						//Keep track of where you are connecting to
+						/*if(branchPts.contains(start))
+							connection.addFirst(line);*/
+					}
+					//if(trip) break;
+				}
+				//if(trip) break;
+			}
+			//Refill the stack with points to traverse
+			if(num >= 2){
+				line++;
+				writeInfo(line, start, 0, current.line);
+				current.line = line;
+			}
+			else if(num == 0){
+				Iterator<BranchContainer> iter;
+				BranchContainer check;
+				BranchContainer toRemove = null;
+				loop:for(int ny=y+1;ny>=y-1;ny--){
+					if(ny<0||ny>=height) continue;
+					for(int nx=x+1;nx>=x-1;nx--){
+						if(nx<0||nx>=width || (nx == x && ny == y)) continue;
+						ind = nx + ny*width;
+						iter = path.iterator();
+						while(iter.hasNext()){
+							check = iter.next();
+							if(check.i == ind && check.line != current.line){
+								line++;
+								writeInfo(line, start ,0, check.line);
+								line++;
+								writeInfo(line, start, 0, current.line);
+								toRemove = check;
+								break loop;
+							}
+						}
+					}
+				}
+				if(toRemove != null) path.remove(toRemove);
+			}
+			while(!pathBuffer.isEmpty()){
+				path.addFirst(new BranchContainer(pathBuffer.get(0), current.line));
+				skelClone.flip(pathBuffer.remove(0));
+			}
+		}
+		
+		try {
+			swcOut.close();
+		} catch (IOException e) {
+			MipavUtil.displayError("Unable to close connection to SWC file");
+			return;
+		}
 	}
 	
 	public void setCoords(int x, int y){
@@ -1002,6 +1150,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         try {
 			destImage.exportData(0, length, buffer);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
         
@@ -1010,6 +1159,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 
         for(int i=0;i<length;i++){
         	if(buffer[i] != 0){
+        		//Use an adjusted measure to take into account distance
+        		//from chosen point
         		if(chooseX >= 0 && chooseY >= 0){
         			x = i%width;
         			y = i/width;
@@ -1212,6 +1363,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			image.exportData(0, length, buffer);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
 
@@ -1238,6 +1390,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			outImage.importData(0, pImage, true);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
 		
@@ -1287,7 +1440,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * which helps bring out some of the harder ones to detect.
 	 * 
 	 * However, this is almost equivalent to a 3x3 mean filter, should probably either
-	 * use that instead, or find a better filtering method
+	 * use that instead, or find a better filtering method.
+	 * 
+	 * No longer used (as of 2/26/14)
 	 * 
 	 * @return the filtered Z-score image.
 	 */
@@ -1308,6 +1463,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			srcImage.exportData(0, length, buffer);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
 
@@ -1362,10 +1518,24 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		try {
 			outImage.importData(0, diffImage, true);
 		} catch (IOException e) {
+			MipavUtil.displayError("Image locked");
 			e.printStackTrace();
 		}
 
 		return outImage;
+	}
+	
+	private class BranchContainer{
+		
+		private int i;
+		
+		private int line;
+		
+		private BranchContainer(int index, int lineNum){
+			i = index;
+			line = lineNum;
+		}
+		
 	}
 	
 	/**
