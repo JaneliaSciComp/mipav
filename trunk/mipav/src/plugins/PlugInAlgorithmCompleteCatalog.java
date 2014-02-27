@@ -104,7 +104,10 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
                 }
             }
         }
-        num = max / 6 + 1;
+        if(which.equals(new Integer(3)))
+        	num = max / 12 + 1;
+        else
+        	num = max / 6 + 1;
         return (num == IDvisit.size());
     }
 
