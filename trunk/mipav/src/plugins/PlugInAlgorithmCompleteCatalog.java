@@ -59,6 +59,7 @@ public class PlugInAlgorithmCompleteCatalog extends AlgorithmBase {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        setCompleted(true);
 
     }
 
