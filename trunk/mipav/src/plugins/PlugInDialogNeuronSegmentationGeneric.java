@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -87,7 +88,15 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private JCheckBox polygonalBox;
 	
+	private JCheckBox saveSkelBox;
+	
+	private JCheckBox saveVOIBox;
+	
 	private PlugInAlgorithmNeuronSegmentation seg;
+	
+	private ViewJFrameImage segFrame;
+	
+	private JCheckBox segImageBox;
 	
 	private JSlider sensSlider;
 	
@@ -146,6 +155,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		openImage();
         		frame.setLocation(loc);
         		callAlgorithm();
+        		if(segFrame != null){
+        			segFrame.close();
+        			segFrame = null;
+        		}
+        		segImageBox.setSelected(false);
         	}
 		}
 		else if (command.equals("Next")){
@@ -157,18 +171,27 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         		openImage();
         		frame.setLocation(loc);
         		callAlgorithm();
+        		if(segFrame != null){
+        			segFrame.close();
+        			segFrame = null;
+        		}
+        		segImageBox.setSelected(false);
         	}
         	else finalize();
         }
 		else if(command.equals("Undo") || command.equals("Redo"))
 			undo();
 		else if(command.equals("Save")){
-			seg.save();
+			if(saveSkelBox.isSelected())
+				seg.save(saveVOIBox.isSelected());
 			seg.saveAsSWC();
 		}
 		else if(command.equals("End")){
         	finalize();
 		}	
+		else if(command.equals("Reset")){
+			callAlgorithm();
+		}
 		else{
 			super.actionPerformed(e);
 		}
@@ -233,7 +256,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
 			return;
 		}
-		width = extents[0];
+		//width = extents[0];
 		
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
@@ -282,11 +305,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
         JPanel dirPanel = new JPanel();
         dirPanel.setForeground(Color.black);
-        dirPanel.setBorder(buildTitledBorder("Choose Image Directory"));
+        dirPanel.setBorder(buildTitledBorder("Choose Image File/Directory"));
         
         String desc = "<html><b>Directions: </b><br>"
         		+ "Please choose a folder that contains neurons requiring segmentation<br>"
-        		+ "or choose a single image.</html>";
+        		+ "<b>OR</b> choose a single image.</html>";
 
         JLabel dirLabel = new JLabel(desc);
         dirLabel.setForeground(Color.black);
@@ -414,6 +437,25 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         polygonalBox.addItemListener(this);
         checkPanel.add(polygonalBox);
         
+        JPanel optionsPanel = new JPanel(new GridLayout(0, 2));
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("Misc. Options"));
+        
+        segImageBox = new JCheckBox("Display segmentation");
+        segImageBox.setFont(serif12);
+        segImageBox.addItemListener(this);
+        optionsPanel.add(segImageBox);
+        
+        saveSkelBox = new JCheckBox("Save branches as TIFF");
+        saveSkelBox.setFont(serif12);
+        saveSkelBox.setSelected(true);
+        optionsPanel.add(saveSkelBox);
+        
+        saveVOIBox = new JCheckBox("Save VOIs");
+        saveVOIBox.setFont(serif12);
+        saveVOIBox.setSelected(true);
+        optionsPanel.add(saveVOIBox);
+        
         JPanel boxPanel = new JPanel();
         boxPanel.setForeground(Color.black);
         
@@ -433,6 +475,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         manage.addOnNextLine(titlePanel);
         manage.addOnNextLine(sliderPanel);
         manage.addOnNextLine(checkPanel);
+        manage.addOnNextLine(optionsPanel);
         manage.addOnNextLine(boxPanel);
         
         getContentPane().add(descPanel, BorderLayout.NORTH);
@@ -440,6 +483,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         
         JPanel buttonPanel = new JPanel();
         buttonPanel.setForeground(Color.black);
+        
+        JButton resetButton = new JButton("Reset");
+        resetButton.setFont(serif12);
+        resetButton.addActionListener(this);
+        buttonPanel.add(resetButton);
         
         JButton saveButton = new JButton("Save");
         saveButton.setFont(serif12);
@@ -595,6 +643,21 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			}
 			else seg.removePolygonal();
 		}
+		else if(source == segImageBox){
+			if(segImageBox.isSelected()){
+				if(segFrame == null){
+					ModelImage segImage = seg.getSegImage();
+					segFrame = new ViewJFrameImage(segImage);
+					segFrame.addWindowListener(this);
+				}
+				segFrame.setVisible(true);
+			}
+			else{
+				if(segFrame != null){
+					segFrame.setVisible(false);
+				}
+			}
+		}
 		
 	}
 	
@@ -614,10 +677,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 		int i = x + y*width;
 		if(changeRB.isSelected()){
-			seg.setCoords(x, y);
-			seg.runAlgorithm();
 			changeX = x;
 			changeY = y;
+			seg.setCoords(x, y);
+			seg.runAlgorithm();
 		}
 		else if(addRB.isSelected()) seg.addBranches(i);
 		else seg.deleteBranches(i);
@@ -665,6 +728,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void windowClosing(WindowEvent event) {
 
+		ViewJFrameImage source = (ViewJFrameImage) event.getSource();
+		if(source == segFrame){
+			segFrame = null;
+			segImageBox.setSelected(false);
+			return;
+		}
 		cancelFlag = true;
 		if(seg == null){
 			if (isExitRequired()) {
