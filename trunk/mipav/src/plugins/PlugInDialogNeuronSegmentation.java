@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
@@ -54,7 +55,15 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	
 	private JCheckBox polygonalBox;
 	
+	private JCheckBox saveSkelBox;
+	
+	private JCheckBox saveVOIBox;
+	
 	private PlugInAlgorithmNeuronSegmentation seg;
+	
+	private ViewJFrameImage segFrame;
+	
+	private JCheckBox segImageBox;
 	
 	private JSlider sensSlider;
 	
@@ -93,7 +102,8 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		if(command.equals("Undo") || command.equals("Redo"))
 			undo();
 		else if(command.equals("Save")){
-			seg.save();
+			if(saveSkelBox.isSelected())
+				seg.save(saveVOIBox.isSelected());
 			seg.saveAsSWC();
 		}
 		else if(command.equals("End")){
@@ -101,6 +111,17 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 			frame.removeWindowListener(this);
 			finalize();
 		}	
+		else if(command.equals("Reset")){
+			seg.runAlgorithm();
+			
+			skeleton = seg.getSkeleton();
+			frame.getComponentImage().setPaintMask(skeleton);
+			frame.updateImages();
+			
+			if(tipBox.isSelected()) seg.displayTips();
+			if(centroidBox.isSelected()) seg.displayCentroid();
+			if(polygonalBox.isSelected()) seg.displayPolygonal();
+		}
 		else{
 			super.actionPerformed(e);
 		}
@@ -228,18 +249,41 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         polygonalBox.addItemListener(this);
         checkPanel.add(polygonalBox);
         
+        JPanel optionsPanel = new JPanel(new GridLayout(0,2));
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("Misc. Options"));
+        
+        segImageBox = new JCheckBox("Display segmentation");
+        segImageBox.setFont(serif12);
+        segImageBox.addItemListener(this);
+        optionsPanel.add(segImageBox);
+        
+        saveSkelBox = new JCheckBox("Save branches as TIFF");
+        saveSkelBox.setFont(serif12);
+        saveSkelBox.setSelected(true);
+        optionsPanel.add(saveSkelBox);
+        
+        saveVOIBox = new JCheckBox("Save VOIs");
+        saveVOIBox.setFont(serif12);
+        optionsPanel.add(saveVOIBox);
         
         PanelManager manage = new PanelManager();
         manage.add(radioPanel);
         manage.addOnNextLine(titlePanel);
         manage.addOnNextLine(sliderPanel);
         manage.addOnNextLine(checkPanel);
+        manage.addOnNextLine(optionsPanel);
         
         getContentPane().add(descPanel, BorderLayout.NORTH);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
         
         JPanel buttonPanel = new JPanel();
         buttonPanel.setForeground(Color.black);
+        
+        JButton resetButton = new JButton("Reset");
+        resetButton.setFont(serif12);
+        resetButton.addActionListener(this);
+        buttonPanel.add(resetButton);
         
         JButton saveButton = new JButton("Save");
         saveButton.setFont(serif12);
@@ -323,6 +367,21 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 			}
 			else seg.removePolygonal();
 		}
+		else if(source == segImageBox){
+			if(segImageBox.isSelected()){
+				if(segFrame == null){
+					ModelImage segImage = seg.getSegImage();
+					segFrame = new ViewJFrameImage(segImage);
+					segFrame.addWindowListener(this);
+				}
+				segFrame.setVisible(true);
+			}
+			else{
+				if(segFrame != null){
+					segFrame.setVisible(false);
+				}
+			}
+		}
 		
 	}
 	
@@ -390,7 +449,13 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	//Make sure if image window closes, so does the dialog.
 	@Override
 	public void windowClosing(WindowEvent event) {
-		if(event.getSource() != frame){
+		ViewJFrameImage source = (ViewJFrameImage) event.getSource();
+		if(source == segFrame){
+			segFrame = null;
+			segImageBox.setSelected(false);
+			return;
+		}
+		else if(source != frame){
 			frame.getComponentImage().removeMouseListener(this);
 			frame.removeWindowListener(this);
 		}
@@ -412,7 +477,7 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	        float sensitivity = 0.001f * (float)sensSlider.getValue();
 	        if(sensitivity == 0) sensitivity = 1;
 	        seg.setSensitivity(sensitivity);
-			seg.runAlgorithm();
+	        seg.runAlgorithm();
 			
 			skeleton = seg.getSkeleton();
 			frame.getComponentImage().setPaintMask(skeleton);

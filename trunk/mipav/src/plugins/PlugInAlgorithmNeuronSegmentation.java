@@ -13,6 +13,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -98,6 +99,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * psuedo-Dijkstra routine
 	 */
 	private ModelImage probImage;
+	
+	private ModelImage segImage;
 	/**
 	 * Used after the initial segmentation to change the
 	 * upper threshold on the probability map segmentation
@@ -442,6 +445,10 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		return centroidPts;
 	}
 	
+	public ModelImage getSegImage(){
+		return (ModelImage) segImage.clone();
+	}
+	
 	public ArrayList<Integer> getTipPts(){
 		return tipPts;
 	}
@@ -547,6 +554,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		if(probImage != null){
 			probImage.disposeLocal();
 		}
+		if(segImage != null){
+			segImage.disposeLocal();
+		}
 		
 		//Store the cost function for the modified 
 		//Dijkstra's method, and convert to UBYTE
@@ -557,11 +567,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
-		AlgorithmMean mean = new AlgorithmMean(srcImage, 3, true);
+		ModelImage zImage = (ModelImage)srcImage.clone();
+		AlgorithmMean mean = new AlgorithmMean(zImage, 3, true);
 		mean.run();
 		
 		//ModelImage zImage = zScoreFilter();
-		ModelImage zImage = (ModelImage)srcImage.clone();
+		
 		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, DataType.UINTEGER.getLegacyNum(),
 				zImage.getMin(), zImage.getMax(), 0, 255, false);
 		changeZ.run();
@@ -582,6 +593,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(destImage, threshold, 1, 1, true, false);
         nThresh.run();
         largestObject();
+        
+        segImage = (ModelImage) destImage.clone();
         
         AlgorithmMorphology2D skeletonize = new AlgorithmMorphology2D(destImage, AlgorithmMorphology2D.CONNECTED4,
         		1.0f, AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0, true);
@@ -613,11 +626,14 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	 * 
 	 * As of 2/27/14, the VOIs are no longer saved, as they don't necessarily
 	 * serve a purpose.
+	 * 
+	 * As of 2/28/14, VOIs can be saved, an option was added to the dialog
+	 * that allows for the toggling
 	 */
 	
-	public void save(){
+	public void save(boolean saveVOI){
 		
-		//int ind, x,y;
+		int ind, x,y;
 
 		
 		ModelImage skelImage = new ModelImage(ModelImage.BOOLEAN, extents, srcImage.getImageName().concat("_branches"));
@@ -627,40 +643,42 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			MipavUtil.displayError("Image locked");
 			e1.printStackTrace();
 		}
-		String imDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
-		File dirFile = new File(imDir);
-		if(!dirFile.exists())
-			dirFile.mkdir();
-		skelImage.saveImage(imDir, null, FileUtility.TIFF, true);
-		
-		/*String voiDir = imDir + File.separator + "defaultVOIs_" + skelImage.getImageName() + File.separator;
-		dirFile = new File(voiDir);
-		if(!dirFile.exists())
-			dirFile.mkdir();
-		FileVOI saver;
-
-		VOIVector copy = new VOIVector();
-		copy.add(voiHull);
-		VOI voi = new VOI((short) 1, "Centroid", VOI.POINT, -1);
-		voi.importPoint(new Vector3f(centroidPts[0], centroidPts[1], 0));
-		copy.add(voi);
-		voi = new VOI((short) 0, "Endpoints", VOI.POINT, 0);
-		for(int i=0;i<tipPts.size();i++){
-			ind = tipPts.get(i);
-			x = ind%width;
-			y = ind/width;
-			voi.importPoint(new Vector3f(x,y,0));
-		}
-		copy.add(voi);
-		try {
-			for(int i=0;i<3;i++){
-				saver = new FileVOI(copy.VOIAt(i).getName() + ".xml", voiDir, skelImage);
-	            saver.writeVOI(copy.VOIAt(i), true);
+		if(saveVOI){
+			String imDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
+			File dirFile = new File(imDir);
+			if(!dirFile.exists())
+				dirFile.mkdir();
+			skelImage.saveImage(imDir, null, FileUtility.TIFF, true);
+			
+			String voiDir = imDir + File.separator + "defaultVOIs_" + skelImage.getImageName() + File.separator;
+			dirFile = new File(voiDir);
+			if(!dirFile.exists())
+				dirFile.mkdir();
+			FileVOI saver;
+	
+			VOIVector copy = new VOIVector();
+			copy.add(voiHull);
+			VOI voi = new VOI((short) 1, "Centroid", VOI.POINT, -1);
+			voi.importPoint(new Vector3f(centroidPts[0], centroidPts[1], 0));
+			copy.add(voi);
+			voi = new VOI((short) 0, "Endpoints", VOI.POINT, 0);
+			for(int i=0;i<tipPts.size();i++){
+				ind = tipPts.get(i);
+				x = ind%width;
+				y = ind/width;
+				voi.importPoint(new Vector3f(x,y,0));
 			}
-		} catch (IOException e) {
-			MipavUtil.displayError("VOI file locked");
-			e.printStackTrace();
-		}*/
+			copy.add(voi);
+			try {
+				for(int i=0;i<3;i++){
+					saver = new FileVOI(copy.VOIAt(i).getName() + ".xml", voiDir, skelImage);
+		            saver.writeVOI(copy.VOIAt(i), true);
+				}
+			} catch (IOException e) {
+				MipavUtil.displayError("VOI file locked");
+				e.printStackTrace();
+			}
+		}
 
 		skelImage.disposeLocal();
 	}
