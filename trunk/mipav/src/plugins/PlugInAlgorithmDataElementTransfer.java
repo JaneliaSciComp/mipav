@@ -386,9 +386,10 @@ public class PlugInAlgorithmDataElementTransfer extends AlgorithmBase {
 	 * @return
 	 */
 	private boolean initCSV(){
-		String header = "Original Name,"
+		String header = "Original Name (Delete before importing into REDCAP),"
 				+ "Variable / Field Name,Form Name,Section Header,Field Type,Field Label," 
-				+ "Choices OR Calculations, Permissible Values (CDE),"
+				+ "Choices OR Calculations,"
+				+ "Permissible Values (From NINDS CDE, Delete before importing into REDCAP),"
 				+ "Field Note,Text Validation,Text Validation Min,"
 				+ "Text Validation Max,Identifier?,Branching Logic,Required Field?,"
 				+ "Custom Alignment,Question Number \n";
