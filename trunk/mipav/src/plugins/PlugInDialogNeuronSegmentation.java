@@ -192,14 +192,12 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         
         addRB = new JRadioButton("Add");
         addRB.setFont(serif12);
-        addRB.setActionCommand("ADD");
         addRB.setSelected(true);
         
         deleteRB = new JRadioButton("Delete");
         deleteRB.setFont(serif12);
-        deleteRB.setActionCommand("DELETE");
         
-        changeRB = new JRadioButton("Change Location");
+        changeRB = new JRadioButton("Change location");
         changeRB.setFont(serif12);
         
         ButtonGroup group = new ButtonGroup();
@@ -230,34 +228,34 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         sensSlider.setPaintLabels(true);
         sliderPanel.add(sensSlider);
         
-        JPanel checkPanel = new JPanel();
+        JPanel checkPanel = new JPanel(new GridLayout(2,2));
         checkPanel.setForeground(Color.black);
-        checkPanel.setBorder(buildTitledBorder("Display Options"));
+        checkPanel.setBorder(buildTitledBorder("Display options"));
         
         centroidBox = new JCheckBox("Centroid");
         centroidBox.setFont(serif12);
         centroidBox.addItemListener(this);
         checkPanel.add(centroidBox);
         
-        tipBox = new JCheckBox("Branch Tips");
+        tipBox = new JCheckBox("Branch tips");
         tipBox.setFont(serif12);
         tipBox.addItemListener(this);
         checkPanel.add(tipBox);
         
-        polygonalBox = new JCheckBox("Polygonal Area");
+        polygonalBox = new JCheckBox("Polygonal area");
         polygonalBox.setFont(serif12);
         polygonalBox.addItemListener(this);
         checkPanel.add(polygonalBox);
         
+        segImageBox = new JCheckBox("Initial segmentation");
+        segImageBox.setFont(serif12);
+        segImageBox.addItemListener(this);
+        checkPanel.add(segImageBox);
+        
         JPanel optionsPanel = new JPanel(new GridLayout(0,2));
         optionsPanel.setForeground(Color.black);
         optionsPanel.setBorder(buildTitledBorder("Misc. Options"));
-        
-        segImageBox = new JCheckBox("Display segmentation");
-        segImageBox.setFont(serif12);
-        segImageBox.addItemListener(this);
-        optionsPanel.add(segImageBox);
-        
+   
         saveSkelBox = new JCheckBox("Save branches as TIFF");
         saveSkelBox.setFont(serif12);
         saveSkelBox.setSelected(true);
@@ -277,7 +275,7 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
         getContentPane().add(descPanel, BorderLayout.NORTH);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
         
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel(new GridLayout(1,4));
         buttonPanel.setForeground(Color.black);
         
         JButton resetButton = new JButton("Reset");

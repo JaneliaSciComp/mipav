@@ -72,6 +72,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private JTextField dirText;
 	
+	private JCheckBox excludeBox;
+	
 	private int[] extents;
 	
 	private JFileChooser fileChooser;	
@@ -329,7 +331,19 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         dirButton.addActionListener(this);
         choosePanel.add(dirButton);
         
-        getContentPane().add(choosePanel, BorderLayout.CENTER);
+        JPanel checkPanel = new JPanel();
+        checkPanel.setForeground(Color.black);
+        
+        excludeBox = new JCheckBox("Exclude images with previous segmentations");
+        excludeBox.setFont(serif12);
+        excludeBox.setSelected(true);
+        checkPanel.add(excludeBox);
+        
+        PanelManager manage = new PanelManager();
+        manage.add(choosePanel);
+        manage.addOnNextLine(checkPanel);
+        
+        getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
 
         JPanel OKCancelPanel = new JPanel();
 
@@ -380,14 +394,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         
         addRB = new JRadioButton("Add");
         addRB.setFont(serif12);
-        addRB.setActionCommand("ADD");
         addRB.setSelected(true);
         
         deleteRB = new JRadioButton("Delete");
         deleteRB.setFont(serif12);
-        deleteRB.setActionCommand("DELETE");
 
-        changeRB = new JRadioButton("Change Location");
+        changeRB = new JRadioButton("Change location");
         changeRB.setFont(serif12);
         
         ButtonGroup group = new ButtonGroup();
@@ -418,7 +430,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         sensSlider.setPaintLabels(true);
         sliderPanel.add(sensSlider);
         
-        JPanel checkPanel = new JPanel();
+        JPanel checkPanel = new JPanel(new GridLayout(2,2));
         checkPanel.setForeground(Color.black);
         checkPanel.setBorder(buildTitledBorder("Display Options"));
         
@@ -427,25 +439,25 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         centroidBox.addItemListener(this);
         checkPanel.add(centroidBox);
         
-        tipBox = new JCheckBox("Branch Tips");
+        tipBox = new JCheckBox("Branch tips");
         tipBox.setFont(serif12);
         tipBox.addItemListener(this);
         checkPanel.add(tipBox);
         
-        polygonalBox = new JCheckBox("Polygonal Area");
+        polygonalBox = new JCheckBox("Polygonal area");
         polygonalBox.setFont(serif12);
         polygonalBox.addItemListener(this);
         checkPanel.add(polygonalBox);
         
+        segImageBox = new JCheckBox("Initial segmentation");
+        segImageBox.setFont(serif12);
+        segImageBox.addItemListener(this);
+        checkPanel.add(segImageBox);
+        
         JPanel optionsPanel = new JPanel(new GridLayout(0, 2));
         optionsPanel.setForeground(Color.black);
         optionsPanel.setBorder(buildTitledBorder("Misc. Options"));
-        
-        segImageBox = new JCheckBox("Display segmentation");
-        segImageBox.setFont(serif12);
-        segImageBox.addItemListener(this);
-        optionsPanel.add(segImageBox);
-        
+
         saveSkelBox = new JCheckBox("Save branches as TIFF");
         saveSkelBox.setFont(serif12);
         saveSkelBox.setSelected(true);
@@ -456,7 +468,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         saveVOIBox.setSelected(true);
         optionsPanel.add(saveVOIBox);
         
-        JPanel boxPanel = new JPanel();
+        JPanel boxPanel = new JPanel(new GridLayout(1,2));
         boxPanel.setForeground(Color.black);
         
         JButton prevButton = new JButton("Prev");
@@ -481,7 +493,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         getContentPane().add(descPanel, BorderLayout.NORTH);
         getContentPane().add(manage.getPanel(), BorderLayout.CENTER);
         
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel(new GridLayout(1,4));
         buttonPanel.setForeground(Color.black);
         
         JButton resetButton = new JButton("Reset");
@@ -563,11 +575,16 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		dirStr = dirStr.concat("Branch_Images" + File.separator);
 		
 		for(File im : files){
-			stripped = im.getName();
-			stripped = stripped.substring(0, stripped.indexOf("."));
-			stripped = stripped.concat("_branches.swc");
-			skelName = new File(dirStr.concat(stripped));
-			if(!skelName.exists()){
+			if(excludeBox.isSelected()){
+				stripped = im.getName();
+				stripped = stripped.substring(0, stripped.indexOf("."));
+				stripped = stripped.concat("_branches.swc");
+				skelName = new File(dirStr.concat(stripped));
+				if(!skelName.exists()){
+					images.add(im);
+				}
+			}
+			else{
 				images.add(im);
 			}
 		}
