@@ -11,14 +11,15 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
+import gov.nih.mipav.model.algorithms.filters.AlgorithmSobel;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
-import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.MipavUtil;
 
 /**
@@ -574,15 +575,20 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		//ModelImage zImage = zScoreFilter();
 		
-		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, DataType.UINTEGER.getLegacyNum(),
+		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, ModelImage.UBYTE,
 				zImage.getMin(), zImage.getMax(), 0, 255, false);
 		changeZ.run();
+		ModelImage sobel = doSobel(zImage);
 		destImage = probabilityMap(zImage);
 		
 		probImage = (ModelImage) destImage.clone();
-		AlgorithmChangeType change = new AlgorithmChangeType(probImage, DataType.UINTEGER.getLegacyNum(),
+		AlgorithmChangeType change = new AlgorithmChangeType(probImage, ModelImage.UBYTE,
 				probImage.getMin(), probImage.getMax(), 0, 255, false);
 		change.run();
+		
+		AlgorithmImageCalculator calc = new AlgorithmImageCalculator(probImage, sobel, 0, 1, true, "");
+		calc.run();
+		sobel.disposeLocal();
 		
 		//Hard segmentation of the filtered image
 		//results in a general structure for the
@@ -1114,6 +1120,47 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			branchPts.remove(removal.get(i));
 		}
 	}*/
+	
+	private ModelImage doSobel(ModelImage input){
+		
+		ModelImage output = new ModelImage(ModelImage.UBYTE, extents, input.getImageName() + "_sobelMax");
+		int[] newExtents = {width-2, height-2,2};
+		ModelImage cloned = new ModelImage(ModelImage.DOUBLE, newExtents, "temp");
+		AlgorithmSobel sobel = new AlgorithmSobel(cloned, input, true, 3);
+		sobel.run();
+		int num = (width-2)*(height-2);
+		int max = (int)cloned.getMax();
+		int min = (int)cloned.getMin();
+		max = Math.abs(min) > Math.abs(max) ? min:max;
+		int[] filtered = new int[num*2];
+		int[] outBuffer = new int[length];
+		try {
+			cloned.exportData(0, num*2, filtered);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		int val1, val2;
+		int x, y, ind;
+		for(int i=0;i<num;i++){
+			val1 = Math.abs(filtered[i]);
+			val2 = Math.abs(filtered[i+num]);
+			x = i%(width-2);
+			y = i/(width-2);
+			ind = (x+1) + (y+1) * width;
+			outBuffer[ind] = Math.max(val1, val2)*255/max;
+		}
+		
+		try {
+			output.importData(0, outBuffer, true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		cloned.disposeLocal();
+		
+		return output;
+		
+	}
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton

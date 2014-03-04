@@ -258,7 +258,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "Next"));
 			return;
 		}
-		//width = extents[0];
+		width = extents[0];
 		
 		//Run the initial segmentation on start-up so that
 		//it is immediately displayed to the user
@@ -533,6 +533,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		if(srcImage != null) srcImage.disposeLocal();
 		
 		current = images.get(counter);
+		
 		srcImage = imLoader.readImage(current.toString());
 		srcImage.setImageName(current.getName(),false);
 		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
@@ -749,10 +750,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		if(source == segFrame){
 			segFrame = null;
 			segImageBox.setSelected(false);
-			return;
 		}
-		cancelFlag = true;
-		if(seg == null){
+		else if(source == frame){
+			cancelFlag = true;
+			images.clear();
+			seg.finalize();
 			if (isExitRequired()) {
 	            System.exit(0);
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
@@ -760,7 +762,18 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	        	dispose();
 	        }
 		}
-		else finalize();
+		else{
+			cancelFlag = true;
+			if(seg == null){
+				if (isExitRequired()) {
+		            System.exit(0);
+		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+		        } else {
+		        	dispose();
+		        }
+			}
+			else finalize();
+		}
         
     }
 	
