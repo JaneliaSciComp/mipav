@@ -431,6 +431,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 	
 	public void finalize(){
 		probImage.disposeLocal();
+		segImage.disposeLocal();
 		skeleton = null;
 		undoer = null;
 		
