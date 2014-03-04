@@ -895,7 +895,7 @@ public class FileUtility {
                         final String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
                         final String headerFile = FileInterfile.isInterfile(fileHeaderName, fileDir);
                         if (headerFile != null) {
-                            fileType = FileUtility.INTERFILE;
+                            return FileUtility.INTERFILE;
                         } else {
                             // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
                             // unless a SPM2 with extended header size > 348 is present.
@@ -975,7 +975,7 @@ public class FileUtility {
                         } else {
                             final String headerFile = FileInterfile.isInterfile(fileName, fileDir);
                             if (headerFile != null) {
-                                fileType = FileUtility.INTERFILE;
+                                return FileUtility.INTERFILE;
                             } else {
                                 // Note that SPM99 and SPM2 Analyze variant files are read as Mayo Analyze 7.5
                                 // unless a SPM2 with extended header size > 348 is present.
