@@ -404,6 +404,7 @@ public class FileAnalyze extends FileBase {
             bigEndian = false;
             sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
             if (sizeOfHeader != HEADER_SIZE) {
+            	raFile.close();
                 return FileUtility.UNDEFINED;
             }
         }
