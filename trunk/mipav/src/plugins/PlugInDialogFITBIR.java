@@ -5671,7 +5671,148 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     System.exit(0);
                 }
             }
-
         }
+    }
+    
+    public class DataElementValue {
+    	private GroupRepeat deGroup;
+    	private JComponent deComp;
+    	private DataElement deInfo;
+    	private String deValue;
+    	
+    	public DataElementValue(GroupRepeat group, JComponent comp, DataElement info, String val) {
+    		deGroup = group;
+    		deComp = comp;
+    		deInfo = info;
+    		deValue = val;
+    	}
+    	
+    	public DataElementValue(GroupRepeat group, DataElement info) {
+    		deGroup = group;
+    		deInfo = info;
+    	}
+    	
+    	public GroupRepeat getGroup() {
+			return deGroup;
+		}
+
+		public void setGroup(GroupRepeat deGroup) {
+			this.deGroup = deGroup;
+		}
+
+		public JComponent getComp() {
+			return deComp;
+		}
+
+		public void setComp(JComponent deComp) {
+			this.deComp = deComp;
+		}
+
+		public DataElement getDataElementInfo() {
+			return deInfo;
+		}
+
+		public void setDataElementInfo(DataElement deInfo) {
+			this.deInfo = deInfo;
+		}
+
+		public String getValue() {
+			return deValue;
+		}
+
+		public void setValue(String deValue) {
+			this.deValue = deValue;
+		}
+    }
+    
+    public class GroupRepeat {
+    	private RepeatableGroup groupInfo;
+    	private FormStructureData parentStruct;
+    	private Vector<DataElementValue> dataElements;
+    	private int repeatNumber;
+    	
+		public GroupRepeat(RepeatableGroup groupInfo, FormStructureData parentStruct, Vector<DataElementValue> dataElements, int repeatNumber) {
+			this.groupInfo = groupInfo;
+			this.parentStruct = parentStruct;
+			this.dataElements = dataElements;
+			this.repeatNumber = repeatNumber;
+		}
+		
+		public GroupRepeat(RepeatableGroup groupInfo, FormStructureData parentStruct, int repeatNumber) {
+			this.groupInfo = groupInfo;
+			this.parentStruct = parentStruct;
+			this.repeatNumber = repeatNumber;
+			this.dataElements = new Vector<DataElementValue>();
+		}
+
+		public RepeatableGroup getGroupInfo() {
+			return groupInfo;
+		}
+
+		public void setGroupInfo(RepeatableGroup groupInfo) {
+			this.groupInfo = groupInfo;
+		}
+
+		public FormStructureData getParentStruct() {
+			return parentStruct;
+		}
+
+		public void setParentStruct(FormStructureData parentStruct) {
+			this.parentStruct = parentStruct;
+		}
+		
+		public void addDataElement(DataElementValue de) {
+			dataElements.add(de);
+		}
+
+		public Vector<DataElementValue> getDataElements() {
+			return dataElements;
+		}
+
+		public void setDataElements(Vector<DataElementValue> dataElements) {
+			this.dataElements = dataElements;
+		}
+
+		public int getRepeatNumber() {
+			return repeatNumber;
+		}
+
+		public void setRepeatNumber(int repeatNumber) {
+			this.repeatNumber = repeatNumber;
+		}
+    }
+    
+    public class FormStructureData {
+    	private DataStruct structInfo;
+    	private Hashtable<String, Vector<GroupRepeat>> groupTable;
+		
+    	public FormStructureData(DataStruct structInfo) {
+    		this.structInfo = structInfo;
+    		groupTable = new Hashtable<String, Vector<GroupRepeat>>();
+    	}
+    	
+    	public void addGroup(String groupName) {
+    		groupTable.put(groupName, new Vector<GroupRepeat>());
+    	}
+    	
+    	public void addGroupRepeat(String groupName, GroupRepeat repeat) {
+    		repeat.setRepeatNumber(groupTable.get(groupName).size() + 1);
+    		groupTable.get(groupName).add(repeat);
+    	}
+    	
+    	public void removeLastGroupRepeat(String groupName) {
+    		int numRepeats = groupTable.get(groupName).size();
+    		if (numRepeats > 0) {
+    			groupTable.get(groupName).removeElementAt(numRepeats - 1);
+    		}
+    	}
+    	
+    	public DataStruct getStructInfo() {
+			return structInfo;
+		}
+		
+		public void setStructInfo(DataStruct structInfo) {
+			this.structInfo = structInfo;
+		}
     }
 }
