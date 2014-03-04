@@ -354,7 +354,8 @@ public class FileInterfile extends FileBase {
             	// Needed because raFile.read returns null without an IOException if the EOF
             	// is encountered before even one byte is read.
             	Preferences.debug("FileInterfile: Error reading file: File is zero length - " +
-            			fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);	
+            			fDir + File.separator + fName + "\n", Preferences.DEBUG_FILEIO);
+            	raFile.close();
             	return null;	
             }
 
@@ -395,15 +396,13 @@ public class FileInterfile extends FileBase {
             if (tempString == null) {
                 return null;
             }
-
-            String removedString = removeChars(tempString);
-            String keyString = returnKey(removedString);
-
-            if ((keyString == null) || !keyString.equalsIgnoreCase("INTERFILE")) {
-                return null;
-            } else {
-                return fileHeaderName;
+            if ((!tempString.contains("INTERFILE")) && (!tempString.contains("interfile"))) {
+            	return null;
             }
+            else {
+            	return fileHeaderName;
+            }
+
         } catch (FileNotFoundException e) {
             // do not display a hard error in the is*() methods
             // MipavUtil.displayError("FileInterfile: Error reading file.");
@@ -509,13 +508,10 @@ public class FileInterfile extends FileBase {
                 raFile.close();
                 throw new IOException("The file had no uncommented lines");
             }
-
-            removedString = removeChars(lineString);
-            keyString = returnKey(removedString);
-
-            if ((keyString == null) || !keyString.equalsIgnoreCase("INTERFILE")) {
-                raFile.close();
-                throw new IOException("Required INTERFILE key not found at start of file");
+            
+            if ((!lineString.contains("INTERFILE")) && (!lineString.contains("interfile"))) {
+            	raFile.close();
+                throw new IOException("Required INTERFILE key not found at start of file");	
             }
 
             while (lineString != null) {
@@ -681,7 +677,8 @@ public class FileInterfile extends FileBase {
                     } else if (keyString.equalsIgnoreCase("PATIENTSEX")) {
 
                         if ((valueString == null) || (valueString.equalsIgnoreCase("M")) ||
-                                (valueString.equalsIgnoreCase("F")) || (valueString.equalsIgnoreCase("UNKNOWN"))) {
+                                (valueString.equalsIgnoreCase("F")) || (valueString.equalsIgnoreCase("UNKNOWN")) ||
+                        	    (valueString.equalsIgnoreCase("OTHER"))) {
                             fileInfo.setPatientSex(valueString);
                         } else {
                             raFile.close();
