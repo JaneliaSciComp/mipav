@@ -1,10 +1,13 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
@@ -13,16 +16,21 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -80,11 +88,18 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	
 	private ViewJFrameImage frame;
 	
+	private JCheckBox imageBox;
 	/**
 	 * List containing the images that need to be segmented 
 	 * during this run through
 	 */
 	private ArrayList<File> images;
+	
+	private JList<String> list;
+	
+	private JDialog listDialog;
+	
+	private JButton jumpButton;
 
 	private int numImages;
 	
@@ -194,6 +209,24 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		else if(command.equals("Reset")){
 			callAlgorithm();
 		}
+		else if(command.equals("Jump")){
+			counter = list.getSelectedIndex();
+			Point loc = frame.getLocation();
+			frame.close();
+			openImage();
+			frame.setLocation(loc);
+			callAlgorithm();
+			if(segFrame != null){
+				segFrame.close();
+				segFrame = null;
+			}
+			segImageBox.setSelected(false);
+		}
+		else if(command.equals("CloseList")){
+			listDialog.dispose();
+			listDialog = null;
+			imageBox.setSelected(false);
+		}
 		else{
 			super.actionPerformed(e);
 		}
@@ -230,6 +263,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	public void finalize(){
 		
 		if (frame != null) frame.close();
+		if (listDialog != null) listDialog.dispose();
     	images.clear();
     	srcImage.disposeLocal();
 		seg.finalize();
@@ -359,7 +393,85 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         setResizable(false);
         System.gc();
 	}
+	
+	/**
+	 * Method to display the list of images to segment. This will
+	 * allow the user to properly account for what images were 
+	 * chosen in the given directory. An added feature of this list
+	 * is to allow for the user to jump to whichever
+	 */
 
+	private void initList(){
+		
+		listDialog = new JDialog();
+		listDialog.addWindowListener(this);
+		
+		int listHeight;
+		if(numImages >= 26) listHeight = 500;
+		else if(numImages <= 5) listHeight = 125;
+		else listHeight = numImages * 18 + 30;
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.anchor = GridBagConstraints.LINE_START;
+		
+		numImages = images.size();
+		String[] imList = new String[numImages];
+		Iterator<File> iter = images.iterator();
+		int cnt = 0;
+		while(iter.hasNext()){
+			imList[cnt] = ((File)iter.next()).getName();
+			cnt++;
+		}
+		
+		list = new JList<String>(imList);
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		list.setLayoutOrientation(JList.VERTICAL);
+		list.setVisibleRowCount(-1);
+		list.setSelectedIndex(counter);
+		
+		
+		
+        JScrollPane listScroller = new JScrollPane(list);
+        listScroller.setPreferredSize(new Dimension(200, listHeight));
+        listScroller.setAlignmentX(LEFT_ALIGNMENT);
+        listScroller.setFont(serif12);
+        
+        JPanel listPane = new JPanel(new GridBagLayout());
+        listPane.add(listScroller, gbc);
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setForeground(Color.black);
+        
+        jumpButton = new JButton("Jump to...");
+        jumpButton.setFont(serif12);
+        jumpButton.addActionListener(this);
+        jumpButton.setActionCommand("Jump");
+        
+        JButton cancelListButton = new JButton("Close");
+        cancelListButton.setFont(serif12);
+        cancelListButton.addActionListener(this);
+        cancelListButton.setActionCommand("CloseList");
+        
+        buttonPanel.add(jumpButton);
+        buttonPanel.add(cancelListButton);
+        list.addMouseListener(new MouseAdapter() {
+	            public void mouseClicked(MouseEvent e) {
+	                if (e.getClickCount() == 2) {
+	                    jumpButton.doClick(); //emulate button click
+	                }
+	            }
+	        });
+        listDialog.setTitle("Image List");
+        listDialog.add(listScroller, BorderLayout.CENTER);
+        listDialog.add(buttonPanel, BorderLayout.SOUTH);
+        listDialog.pack();
+        listDialog.setVisible(true);
+
+	}
+	
 	/**
 	 * Initiates the dialog screen for the actual modifications.
 	 * This is the exact same as the algorithm plugin with the
@@ -467,6 +579,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         saveVOIBox.setFont(serif12);
         saveVOIBox.setSelected(true);
         optionsPanel.add(saveVOIBox);
+        
+        imageBox = new JCheckBox("Show image list");
+        imageBox.setFont(serif12);
+        imageBox.addItemListener(this);
+        optionsPanel.add(imageBox);
         
         JPanel boxPanel = new JPanel(new GridLayout(1,2));
         boxPanel.setForeground(Color.black);
@@ -676,6 +793,14 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				}
 			}
 		}
+		else if(source == imageBox){
+			if(imageBox.isSelected()){
+				initList();
+			}
+			else{
+				listDialog.dispose();
+			}
+		}
 		
 	}
 	
@@ -746,7 +871,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	@Override
 	public void windowClosing(WindowEvent event) {
 
-		ViewJFrameImage source = (ViewJFrameImage) event.getSource();
+		Object source = event.getSource();
 		if(source == segFrame){
 			segFrame = null;
 			segImageBox.setSelected(false);
@@ -760,7 +885,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 	        } else {
 	        	dispose();
+	        	if(listDialog != null) 
+	        		listDialog.dispose();
 	        }
+		}
+		else if(source == listDialog){
+			imageBox.setSelected(false);
 		}
 		else{
 			cancelFlag = true;
@@ -770,6 +900,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		            ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		        } else {
 		        	dispose();
+		        	if(listDialog != null) 
+		        		listDialog.dispose();
 		        }
 			}
 			else finalize();
