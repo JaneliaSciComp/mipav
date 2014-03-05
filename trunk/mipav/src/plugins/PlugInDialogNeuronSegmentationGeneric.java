@@ -89,15 +89,22 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private ViewJFrameImage frame;
 	
 	private JCheckBox imageBox;
+	
 	/**
 	 * List containing the images that need to be segmented 
 	 * during this run through
 	 */
 	private ArrayList<File> images;
 	
+	/**
+	 * Displayed list of images that can be used to jump to
+	 * other images
+	 */
 	private JList<String> list;
 	
 	private JDialog listDialog;
+	
+	private boolean listenersOn;
 	
 	private JButton jumpButton;
 
@@ -132,6 +139,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		images = new ArrayList<File>();
 		changeX = -1;
 		changeY = -1;
+		listenersOn = false;
 		init();
 	}
 	
@@ -207,6 +215,9 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         	finalize();
 		}	
 		else if(command.equals("Reset")){
+			sensSlider.setValue(10);
+			changeX = -1;
+			changeY = -1;
 			callAlgorithm();
 		}
 		else if(command.equals("Jump")){
@@ -251,8 +262,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		frame.updateImages();
 
 		//Add mouse listener so you can click to add/delete branches
-		frame.getComponentImage().addMouseListener(this);
-		frame.addWindowListener(this);
+		if(!listenersOn){
+			frame.getComponentImage().addMouseListener(this);
+			frame.addWindowListener(this);
+			listenersOn = true;
+		}
 		
 		if(tipBox.isSelected()) seg.displayTips();
 		if(centroidBox.isSelected()) seg.displayCentroid();
@@ -307,7 +321,10 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	        seg.setSensitivity(sensitivity);
 		}
 		
+		createProgressBar("Segmenting Neuron", "Creating branches..." , seg);
+		progressBar.setVisible(true);
 		seg.addListener(this);
+		
 		if (isRunInSeparateThread()) {
 			if (seg.startMethod(Thread.MIN_PRIORITY) == false) {
 				MipavUtil.displayError("A thread is already running on this object");
@@ -398,7 +415,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 * Method to display the list of images to segment. This will
 	 * allow the user to properly account for what images were 
 	 * chosen in the given directory. An added feature of this list
-	 * is to allow for the user to jump to whichever
+	 * is to allow for the user to jump to whichever image they want
+	 * in the list
 	 */
 
 	private void initList(){
@@ -419,11 +437,23 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		
 		numImages = images.size();
 		String[] imList = new String[numImages];
-		Iterator<File> iter = images.iterator();
-		int cnt = 0;
-		while(iter.hasNext()){
-			imList[cnt] = ((File)iter.next()).getName();
-			cnt++;
+		String dirString = dirText.getText();
+		File dir = new File(dirString);
+		if(dir.isDirectory()){
+			dirString += File.separator;
+			Iterator<File> iter = images.iterator();
+			String next;
+			String out;
+			int cnt = 0;
+			while(iter.hasNext()){
+				next = iter.next().toString();
+				out = next.replace(dirString, "");
+				imList[cnt] = out;
+				cnt++;
+			}
+		}
+		else{
+			imList[0] = images.get(0).getName();
 		}
 		
 		list = new JList<String>(imList);
@@ -648,6 +678,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		FileIO imLoader = new FileIO();
 		
 		if(srcImage != null) srcImage.disposeLocal();
+		if(listDialog != null) list.setSelectedIndex(counter);
 		
 		current = images.get(counter);
 		
@@ -655,6 +686,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		srcImage.setImageName(current.getName(),false);
 		frame = new ViewJFrameImage(srcImage, null, new Dimension(0,300));
 		frame.setVisible(true);
+		listenersOn = false;
 
 	}
 	
@@ -798,7 +830,8 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 				initList();
 			}
 			else{
-				listDialog.dispose();
+				if(listDialog != null)
+					listDialog.dispose();
 			}
 		}
 		
@@ -822,21 +855,22 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		if(changeRB.isSelected()){
 			changeX = x;
 			changeY = y;
-			seg.setCoords(x, y);
-			seg.runAlgorithm();
+			callAlgorithm();
 		}
-		else if(addRB.isSelected()) seg.addBranches(i);
-		else seg.deleteBranches(i);
-		
-		skeleton = seg.getSkeleton();
-		frame.getComponentImage().setPaintMask(skeleton);
-		frame.updateImages();
-		
-		if(tipBox.isSelected()) seg.displayTips();
-		if(centroidBox.isSelected()) seg.displayCentroid();
-		if(polygonalBox.isSelected()) seg.displayPolygonal();
-		
-		undoButton.setText("Undo");
+		else {
+			if(addRB.isSelected()) seg.addBranches(i);
+			else seg.deleteBranches(i);
+			
+			skeleton = seg.getSkeleton();
+			frame.getComponentImage().setPaintMask(skeleton);
+			frame.updateImages();
+			
+			if(tipBox.isSelected()) seg.displayTips();
+			if(centroidBox.isSelected()) seg.displayCentroid();
+			if(polygonalBox.isSelected()) seg.displayPolygonal();
+			
+			undoButton.setText("Undo");
+		}
 		
 	}
 	
@@ -920,9 +954,12 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 
 		JSlider source = (JSlider)e.getSource();
 	    if (!source.getValueIsAdjusting()) {
-	        float sensitivity = 0.001f * (float)sensSlider.getValue();
+	    	callAlgorithm();
+	        /*float sensitivity = 0.001f * (float)sensSlider.getValue();
 	        if(sensitivity == 0) sensitivity = 1;
 	        seg.setSensitivity(sensitivity);
+	        createProgressBar("Segmenting Neuron", "Creating branches..." , seg);
+			progressBar.setVisible(true);
 			seg.runAlgorithm();
 			
 			skeleton = seg.getSkeleton();
@@ -931,7 +968,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			
 			if(tipBox.isSelected()) seg.displayTips();
 			if(centroidBox.isSelected()) seg.displayCentroid();
-			if(polygonalBox.isSelected()) seg.displayPolygonal();
+			if(polygonalBox.isSelected()) seg.displayPolygonal();*/
 	        
 	    }
 	}
