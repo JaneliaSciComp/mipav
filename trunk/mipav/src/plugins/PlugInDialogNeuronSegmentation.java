@@ -47,11 +47,17 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	
 	private JRadioButton changeRB;
 	
+	private int changeX;
+	
+	private int changeY;
+	
 	private JRadioButton deleteRB;
 	
 	private int[] extents;
 	
 	private ViewJFrameImage frame;
+	
+	private boolean listenersOn;
 	
 	private JCheckBox polygonalBox;
 	
@@ -69,6 +75,8 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	
 	private BitSet skeleton;
 	
+	private ModelImage srcImage;
+	
 	private JCheckBox tipBox;
 	
 	private JButton undoButton;
@@ -77,22 +85,16 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 
 	public PlugInDialogNeuronSegmentation(ViewJFrameImage imFrame, ModelImage image){
 		super();
+		srcImage = image;
 		extents = image.getExtents();
 		width = extents[0];
 		frame = imFrame;
+		changeX = -1;
+		changeY = -1;
+		listenersOn = false;
 		
-		//Run the initial segmentation on start-up so that
-		//it is immediately displayed to the user
-		seg = new PlugInAlgorithmNeuronSegmentation(image);
-		seg.setSensitivity(0.01f);
-		seg.addListener(this);
-		if (isRunInSeparateThread()) {
-			if (seg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
-			}
-		} else {
-			seg.run();
-		}
+		callAlgorithm();
+		init();
 
 	}
 	
@@ -112,15 +114,10 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 			finalize();
 		}	
 		else if(command.equals("Reset")){
-			seg.runAlgorithm();
-			
-			skeleton = seg.getSkeleton();
-			frame.getComponentImage().setPaintMask(skeleton);
-			frame.updateImages();
-			
-			if(tipBox.isSelected()) seg.displayTips();
-			if(centroidBox.isSelected()) seg.displayCentroid();
-			if(polygonalBox.isSelected()) seg.displayPolygonal();
+			sensSlider.setValue(10);
+			changeX = -1;
+			changeY = -1;
+			callAlgorithm();
 		}
 		else{
 			super.actionPerformed(e);
@@ -152,10 +149,15 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		frame.updateImages();
 
 		//Add mouse listener so you can click to add/delete branches
-		frame.getComponentImage().addMouseListener(this);
-		frame.addWindowListener(this);
-
-		init();
+		if(!listenersOn){
+			frame.getComponentImage().addMouseListener(this);
+			frame.addWindowListener(this);
+			listenersOn = true;
+		}
+		
+		if(tipBox.isSelected()) seg.displayTips();
+		if(centroidBox.isSelected()) seg.displayCentroid();
+		if(polygonalBox.isSelected()) seg.displayPolygonal();
 	}
 	
 	public void finalize(){
@@ -163,6 +165,31 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		seg = null;
 		dispose();
 		skeleton = null;
+	}
+	
+	protected void callAlgorithm(){
+		//Run the initial segmentation on start-up so that
+		//it is immediately displayed to the user
+		
+		seg = new PlugInAlgorithmNeuronSegmentation(srcImage);
+		if(sensSlider == null){
+			seg.setSensitivity(0.01f);
+		}
+		else{
+			float sensitivity = 0.001f * (float)sensSlider.getValue();
+	        if(sensitivity == 0) sensitivity = 1;
+	        seg.setSensitivity(sensitivity);
+		}
+		seg.setCoords(changeX, changeY);
+		createProgressBar("Segmenting Neuron", "Creating branches..." , seg);
+		seg.addListener(this);
+		if (isRunInSeparateThread()) {
+			if (seg.startMethod(Thread.MIN_PRIORITY) == false) {
+				MipavUtil.displayError("A thread is already running on this object");
+			}
+		} else {
+			seg.run();
+		}
 	}
 	
 	private void init(){
@@ -399,21 +426,24 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 
 		int i = x + y*width;
 		if(changeRB.isSelected()){
-			seg.setCoords(x, y);
-			seg.runAlgorithm();
+			changeX = x;
+			changeY = y;
+			callAlgorithm();
 		}
-		else if(addRB.isSelected()) seg.addBranches(i);
-		else seg.deleteBranches(i);
-		
-		skeleton = seg.getSkeleton();
-		frame.getComponentImage().setPaintMask(skeleton);
-		frame.updateImages();
-		
-		if(tipBox.isSelected()) seg.displayTips();
-		if(centroidBox.isSelected()) seg.displayCentroid();
-		if(polygonalBox.isSelected()) seg.displayPolygonal();
-		
-		undoButton.setText("Undo");
+		else {
+			if(addRB.isSelected()) seg.addBranches(i);
+			else seg.deleteBranches(i);
+			
+			skeleton = seg.getSkeleton();
+			frame.getComponentImage().setPaintMask(skeleton);
+			frame.updateImages();
+			
+			if(tipBox.isSelected()) seg.displayTips();
+			if(centroidBox.isSelected()) seg.displayCentroid();
+			if(polygonalBox.isSelected()) seg.displayPolygonal();
+			
+			undoButton.setText("Undo");
+		}
 		
 	}
 	
@@ -475,6 +505,7 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 	        float sensitivity = 0.001f * (float)sensSlider.getValue();
 	        if(sensitivity == 0) sensitivity = 1;
 	        seg.setSensitivity(sensitivity);
+	        createProgressBar("Segmenting Neuron", "Creating branches..." , seg);
 	        seg.runAlgorithm();
 			
 			skeleton = seg.getSkeleton();

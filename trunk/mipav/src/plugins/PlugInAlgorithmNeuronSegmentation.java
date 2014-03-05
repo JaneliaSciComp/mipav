@@ -567,9 +567,12 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		//Pre-processing step for segmentation. 
 		//See method for details on what it does.
+		
 		ModelImage zImage = (ModelImage)srcImage.clone();
 		AlgorithmMean mean = new AlgorithmMean(zImage, 3, true);
 		mean.run();
+		
+		fireProgressStateChanged(25);
 		
 		//ModelImage zImage = zScoreFilter();
 		
@@ -583,6 +586,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		AlgorithmChangeType change = new AlgorithmChangeType(probImage, ModelImage.UBYTE,
 				probImage.getMin(), probImage.getMax(), 0, 255, false);
 		change.run();
+		
+		fireProgressStateChanged(50);
 		
 		/*AlgorithmImageCalculator calc = new AlgorithmImageCalculator(probImage, sobel, 0, 1, true, "");
 		calc.run();
@@ -598,6 +603,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         AlgorithmThresholdDual nThresh = new AlgorithmThresholdDual(destImage, threshold, 1, 1, true, false);
         nThresh.run();
         largestObject();
+        
+        fireProgressStateChanged(75);
         
         segImage = (ModelImage) destImage.clone();
         
@@ -616,6 +623,8 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
         
         findTips();
         polygonalArea();
+        
+        fireProgressStateChanged(100);
         
         destImage.disposeLocal();
         zImage.disposeLocal();
