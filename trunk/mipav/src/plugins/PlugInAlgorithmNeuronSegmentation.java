@@ -11,9 +11,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmMean;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmSobel;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -578,7 +576,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		AlgorithmChangeType changeZ = new AlgorithmChangeType(zImage, ModelImage.UBYTE,
 				zImage.getMin(), zImage.getMax(), 0, 255, false);
 		changeZ.run();
-		ModelImage sobel = doSobel(zImage);
+		//ModelImage sobel = doSobel(zImage);
 		destImage = probabilityMap(zImage);
 		
 		probImage = (ModelImage) destImage.clone();
@@ -586,9 +584,9 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 				probImage.getMin(), probImage.getMax(), 0, 255, false);
 		change.run();
 		
-		AlgorithmImageCalculator calc = new AlgorithmImageCalculator(probImage, sobel, 0, 1, true, "");
+		/*AlgorithmImageCalculator calc = new AlgorithmImageCalculator(probImage, sobel, 0, 1, true, "");
 		calc.run();
-		sobel.disposeLocal();
+		sobel.disposeLocal();*/
 		
 		//Hard segmentation of the filtered image
 		//results in a general structure for the
@@ -1121,7 +1119,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		}
 	}*/
 	
-	private ModelImage doSobel(ModelImage input){
+	/*private ModelImage doSobel(ModelImage input){
 		
 		ModelImage output = new ModelImage(ModelImage.UBYTE, extents, input.getImageName() + "_sobelMax");
 		int[] newExtents = {width-2, height-2,2};
@@ -1160,7 +1158,7 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 		
 		return output;
 		
-	}
+	}*/
 	
 	/**
 	 * Method to find any ends of branches. All the true bits in the skeleton
