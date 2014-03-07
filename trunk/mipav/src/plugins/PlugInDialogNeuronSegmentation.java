@@ -93,8 +93,9 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 		changeY = -1;
 		listenersOn = false;
 		
-		callAlgorithm();
 		init();
+		callAlgorithm();
+		
 
 	}
 	
@@ -502,6 +503,7 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 
 		JSlider source = (JSlider)e.getSource();
 	    if (!source.getValueIsAdjusting()) {
+	    	callAlgorithm();/*
 	        float sensitivity = 0.001f * (float)sensSlider.getValue();
 	        if(sensitivity == 0) sensitivity = 1;
 	        seg.setSensitivity(sensitivity);
@@ -515,7 +517,7 @@ public class PlugInDialogNeuronSegmentation extends JDialogBase implements
 			if(tipBox.isSelected()) seg.displayTips();
 			if(centroidBox.isSelected()) seg.displayCentroid();
 			if(polygonalBox.isSelected()) seg.displayPolygonal();
-	        
+	        */
 	    }
 	}
 
