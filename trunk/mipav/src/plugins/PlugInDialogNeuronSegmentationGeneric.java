@@ -16,7 +16,6 @@ import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Iterator;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -234,8 +233,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			segImageBox.setSelected(false);
 		}
 		else if(command.equals("CloseList")){
-			listDialog.dispose();
-			listDialog = null;
+			listDialog.setVisible(false);
 			imageBox.setSelected(false);
 		}
 		else{
@@ -422,6 +420,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	private void initList(){
 		
 		listDialog = new JDialog();
+		listDialog.setForeground(Color.black);
 		listDialog.addWindowListener(this);
 		
 		int listHeight;
@@ -440,16 +439,14 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		String dirString = dirText.getText();
 		File dir = new File(dirString);
 		if(dir.isDirectory()){
-			dirString += File.separator;
-			Iterator<File> iter = images.iterator();
+			if(!dirString.endsWith(File.separator))
+				dirString += File.separator;
 			String next;
 			String out;
-			int cnt = 0;
-			while(iter.hasNext()){
-				next = iter.next().toString();
+			for(int i=0;i<numImages;i++){
+				next = images.get(i).toString();
 				out = next.replace(dirString, "");
-				imList[cnt] = out;
-				cnt++;
+				imList[i] = out;
 			}
 		}
 		else{
@@ -459,13 +456,11 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		list = new JList<String>(imList);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setLayoutOrientation(JList.VERTICAL);
-		list.setVisibleRowCount(-1);
+		list.setVisibleRowCount(0);
 		list.setSelectedIndex(counter);
 		
-		
-		
         JScrollPane listScroller = new JScrollPane(list);
-        listScroller.setPreferredSize(new Dimension(200, listHeight));
+        listScroller.setPreferredSize(new Dimension(250, listHeight));
         listScroller.setAlignmentX(LEFT_ALIGNMENT);
         listScroller.setFont(serif12);
         
@@ -498,7 +493,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         listDialog.add(listScroller, BorderLayout.CENTER);
         listDialog.add(buttonPanel, BorderLayout.SOUTH);
         listDialog.pack();
-        listDialog.setVisible(true);
+        //listDialog.setVisible(true);
 
 	}
 	
@@ -607,7 +602,6 @@ public class PlugInDialogNeuronSegmentationGeneric extends
         
         saveVOIBox = new JCheckBox("Save VOIs");
         saveVOIBox.setFont(serif12);
-        saveVOIBox.setSelected(true);
         optionsPanel.add(saveVOIBox);
         
         imageBox = new JCheckBox("Show image list");
@@ -827,11 +821,13 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 		}
 		else if(source == imageBox){
 			if(imageBox.isSelected()){
-				initList();
+				if(listDialog == null)
+					initList();
+				listDialog.setVisible(true);
 			}
 			else{
 				if(listDialog != null)
-					listDialog.dispose();
+					listDialog.setVisible(false);
 			}
 		}
 		
