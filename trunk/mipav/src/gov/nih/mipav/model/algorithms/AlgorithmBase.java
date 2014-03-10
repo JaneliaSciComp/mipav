@@ -2,11 +2,13 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.ModelImage;
+
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ProgressChangeEvent;
 import gov.nih.mipav.view.ProgressChangeListener;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewJProgressBarMulti;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -884,6 +886,12 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
                 ((ProgressChangeListener) listeners[i + 1]).progressStateChanged(event);
             }
         }
+        
+        progress = value;
+        
+        /*if(value == 0){
+        	System.err.println("Value is 0");
+        }*/
     }
 
     /**
@@ -917,6 +925,35 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
             for (int i = 0; i < listeners.length; i++) {
                 baseAlgo.addProgressChangeListener(listeners[i]);
+            }
+        }
+    }
+    
+    /**
+     * New helper function for use with the ViewJProgressBarMulti. This allows for keeping track of multi-threaded
+     * algorithms and allow the user to better keep track of multiple processes being run. Any linked algorithms
+     * should update together in the manner specificed by min/max. 
+     *  
+     * @param baseAlgo the subalgorithm created within current algorithm
+     * @param title the title shown in the progress bar panel
+     * @param min the lower bound of the updating portion of the parent algorithm
+     * @param max the upper bound of the updating portion of the parent algorithm
+     */
+    
+    protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo, String title, int min, int max){
+    	ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+    	
+    	if (listeners != null) {
+
+            for (int i = 0; i < listeners.length; i++) {
+                baseAlgo.addProgressChangeListener(listeners[i]);
+                if(listeners[i] instanceof ViewJProgressBarMulti){
+                	ViewJProgressBarMulti bar = (ViewJProgressBarMulti)listeners[i];
+                	bar.addRunnable(baseAlgo, title, 0, 100);
+                	baseAlgo.setMinProgressValue(0);
+                	baseAlgo.setMaxProgressValue(100);
+                	bar.setLink(this, baseAlgo, min, max);
+                }
             }
         }
     }
