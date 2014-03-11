@@ -61,6 +61,7 @@
     <property name="listfiles" value="no" />
     <property name="version.target" value="1.6" />
     <property name="version.source" value="1.6" />
+    <property name="java.boot.classpath.dir" value="${user.home}/lib/jdk1.6.0_29/jre/lib/" />
     <property name="sysAssert" value="yes" />
 
     <!--
@@ -115,6 +116,13 @@
         </path>
         <property name="build.cp" refid="build.classpath" />
 
+        <path id="java.boot.classpath">
+            <fileset dir="${java.boot.classpath.dir}">
+                <filename description="bootstrap jars to compile with" name="*.jar"/>
+            </fileset>
+        </path>
+        <property name="java.boot.cp" refid="java.boot.classpath"/>
+
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
     </target>
@@ -154,6 +162,7 @@
                 id="${project.name} build"
                 source="${version.source}"
                 target="${version.target}"
+                bootclasspath="${java.boot.cp}"
                 destdir="${dir.dest}"
                 srcdir="${dir.source}"
                 compiler="modern">
@@ -209,6 +218,7 @@
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Main-Class" value="${project.main}"/>
+                <attribute name="Permissions" value="all-permissions"/>
             </manifest>
             <fileset dir="${dir.dest}"/>
         </jar>
