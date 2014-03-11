@@ -99,7 +99,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 	 * Displayed list of images that can be used to jump to
 	 * other images
 	 */
-	private JList<String> list;
+	private JList list;
 	
 	private JDialog listDialog;
 	
@@ -453,7 +453,7 @@ public class PlugInDialogNeuronSegmentationGeneric extends
 			imList[0] = images.get(0).getName();
 		}
 		
-		list = new JList<String>(imList);
+		list = new JList(imList);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setVisibleRowCount(0);
