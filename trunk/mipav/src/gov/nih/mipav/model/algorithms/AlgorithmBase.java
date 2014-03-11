@@ -974,6 +974,19 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             }
         }
     }
+    
+    protected void delinkProgressToAlgorithmMulti(AlgorithmBase baseAlgo){
+    	ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+
+        if (listeners != null) {
+
+            for (int i = 0; i < listeners.length; i++) {
+                baseAlgo.removeProgressChangeListener(listeners[i]);
+                if(listeners[i] instanceof ViewJProgressBarMulti)
+                	((ViewJProgressBarMulti)listeners[i]).removeAlgorithm(baseAlgo);
+            }
+        }
+    }
 
 	public synchronized float getProgress() {
 		return progress;
