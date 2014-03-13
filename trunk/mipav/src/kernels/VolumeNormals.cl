@@ -193,10 +193,10 @@ __kernel void NormalKernel25DSlicesColor(
 	 int currentIndex = z * sliceSize + y * width + x;
      float val = (input[currentIndex * 4 + 1] + input[currentIndex * 4 + 2] + input[currentIndex * 4 + 3]) / 3.0;
      float values[14];
-     float count = 0;
-     float sum = 0;
      for ( int i = 0; i < 14; i++ ) {
         values[i] = val;
+        float count = 0;
+        float sum = 0;
         for ( int j = 1; j < 4 ; j++ )
         {
            if ( (index[i] * 4 + j) < numElements && (index[i] * 4 + j) >= 0 )

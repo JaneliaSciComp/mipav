@@ -172,15 +172,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     {
         super("GPUVolumeRender",0,0,512,512, new ColorRGBA(0.0f,0.0f,0.0f,0.0f));
     
-        try {
-    		if(SpaceNavigatorController.hasSpaceNavigator() && SpaceNavigatorPoller.getListeners().length == 0) {
-    			SpaceNavigatorPoller.registerListener(this);
-    		}
-    	} catch (Error e) {
-    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-    		e.printStackTrace();
-    	}
-        checkIfSpaceNavNeedsCalibration();
+//        try {
+//    		if(SpaceNavigatorController.hasSpaceNavigator() && SpaceNavigatorPoller.getListeners().length == 0) {
+//    			SpaceNavigatorPoller.registerListener(this);
+//    		}
+//    	} catch (Error e) {
+//    		Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+////    		e.printStackTrace();
+//    	}
+//        checkIfSpaceNavNeedsCalibration();
     }
     
     /**
@@ -1454,14 +1454,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
 	public void mousePressed(MouseEvent e)
 	{
 		super.mousePressed(e);
-		try {
-	    	if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.hasInstanceOf(this)) {
-	    		SpaceNavigatorPoller.registerListener(this);
-	    	}
-		} catch (Error er) {
-			Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
-			er.printStackTrace();
-		}
+//		try {
+//	    	if(SpaceNavigatorController.hasSpaceNavigator() && !SpaceNavigatorPoller.hasInstanceOf(this)) {
+//	    		SpaceNavigatorPoller.registerListener(this);
+//	    	}
+//		} catch (Error er) {
+//			Preferences.debug("Unable to load space navigator libraries.  See console output for details.\n", Preferences.DEBUG_MINOR);
+//			er.printStackTrace();
+//		}
 	}
 	
 	/**

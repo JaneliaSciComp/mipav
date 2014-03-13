@@ -3566,10 +3566,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
     }
 
     @Override
-    public void updateData(boolean bCopyToCPU) {
-        // TODO Auto-generated method stub
-        
-    }
+    public void updateData() {}
 
     @Override
     public void setPaintMask(BitSet mask) {

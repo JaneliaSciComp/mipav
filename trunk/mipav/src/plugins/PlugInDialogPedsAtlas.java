@@ -5060,10 +5060,7 @@ public class PlugInDialogPedsAtlas extends ViewJFrameBase implements AlgorithmIn
 
 
 	@Override
-	public void updateData(boolean bCopyToCPU) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void updateData() {}
 
 
 

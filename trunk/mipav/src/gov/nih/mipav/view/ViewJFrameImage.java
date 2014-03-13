@@ -2030,7 +2030,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            try {
+//            try {
                 float[] res;
                 float diffRatio;
                 int[] units = new int[4];
@@ -2073,22 +2073,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         }
                     }
                 } else {
-                	try {
+//                	try {
                 		VolumeTriPlanarInterface triVolume = new VolumeTriPlanarInterface(imageA, imageB);
                     	if(LUTa != null || LUTb != null) {
                     		triVolume.updateImages(LUTa, LUTb, true, -1);
                     	}
                 		// new VolumeTriPlanarDialog(imageA, imageB);
-                    } catch (GLException e) {
-                    	e.printStackTrace();
-                    	MipavUtil.displayError("Unable to start GPU renderer.\n" +
-                    			               "Your GPU/driver/OS combination may not support the\n" +
-                    			               "version of OpenGL the renderer requires.");
-                    }
+//                    } catch (GLException e) {
+//                    	e.printStackTrace();
+//                    	MipavUtil.displayError("Unable to start GPU renderer.\n" +
+//                    			               "Your GPU/driver/OS combination may not support the\n" +
+//                    			               "version of OpenGL the renderer requires.");
+//                    }
                 }
-            } catch (final OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
-            }
+//            } catch (final OutOfMemoryError error) {
+//                MipavUtil.displayError("Out of memory: unable to open Volume Triplanar frame.");
+//            }
         } else if (command.equals("MagSettings")) {
             final JDialogMagnificationControls magSettings = new JDialogMagnificationControls(this, componentImage,
                     componentImage.getZoomX(), null);
@@ -5895,7 +5895,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
      */
-    public void updateData(final boolean bCopyToCPU) {}
+    public void updateData() {}
 
     @Override
     public ModelLUT getActiveLUT() {

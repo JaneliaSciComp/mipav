@@ -38,5 +38,5 @@ public interface VOIManagerInterfaceListener
     public void setCursor( Cursor kCursor );
     public void setModified();
     public void setPaintMask(final BitSet mask);
-    public void updateData(boolean bCopyToCPU);
+    public void updateData();
 }

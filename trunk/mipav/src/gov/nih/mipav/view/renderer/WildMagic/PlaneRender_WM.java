@@ -185,6 +185,7 @@ implements GLEventListener, ScreenCoordinateListener
 	/** For zooming with the mouse. */
 	private float m_fMouseY;
 	private boolean m_bShowSurface = false;
+	private boolean m_bShowVOIs = false;
 
 	private Vector3f m_kPatientPt = new Vector3f();
 	private Vector3f m_kVolumeScale = new Vector3f();
@@ -365,7 +366,10 @@ implements GLEventListener, ScreenCoordinateListener
 					kSlices.ShowSurface(false);
 				}
 			}
-			drawVOIs( arg0, m_kVolumeImageA.GetImage().getVOIs() );
+			if ( m_bShowVOIs )
+			{
+				drawVOIs( arg0, m_kVolumeImageA.GetImage().getVOIs() );
+			}
 			drawAxes(arg0);
 			m_pkRenderer.EndScene();
 		}
@@ -388,6 +392,11 @@ implements GLEventListener, ScreenCoordinateListener
 	public void displaySurface( boolean bOn )
 	{
 		m_bShowSurface = bOn;
+	}
+	
+	public void displayVOIs( boolean bOn )
+	{
+		m_bShowVOIs = bOn;
 	}
 
 	/**

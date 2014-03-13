@@ -970,7 +970,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     		if ( bAddNormal_TexturesA && (m_kPShaderCMP != null) )
     		{		
-    			System.err.println( iTex + " " + m_kVolumeImageA.GetNormalMapTarget().GetName() );
     			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName(), "eNormalMapA");
     			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget(), "eNormalMapA");    
     		}

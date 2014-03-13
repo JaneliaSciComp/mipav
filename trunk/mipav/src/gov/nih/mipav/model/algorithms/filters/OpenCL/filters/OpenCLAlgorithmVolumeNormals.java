@@ -39,6 +39,16 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 	}
 
 	/**
+	 * Create an OpenCL Algorithm for calculating the volume normals. Does not use OpenGL Shared texture.
+	 * @param srcImg source image
+	 * @param type OpenCL Platform type, may be CL.CL_DEVICE_TYPE_GPU to specify the GPU or CL.CL_DEVICE_TYPE_CPU to specify the CPU.
+	 */
+	public OpenCLAlgorithmVolumeNormals(final ModelImage srcImg, ModelImage destImg, long type) {
+
+		super( destImg, srcImg, true, type);
+	}
+
+	/**
 	 * Create an OpenCL Algorithm for calculating the volume normals. Uses OpenGL Shared texture.
 	 * @param srcImg source image
 	 * @param gl OpenGL context, must be current
@@ -95,8 +105,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 		int elementCount = width * height * depth * color;
 		initCL(m_iDeviceType, null);
 		long maxAllocSize = getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( ((Sizeof.cl_float * elementCount * nBuffers) > maxAllocSize) || 
-				((Sizeof.cl_float * (width * height * depth * 4) * nBuffers) > maxAllocSize) )
+		if ( elementCount > (maxAllocSize / (nBuffers * Sizeof.cl_float)) )
 		{
 			calcNormalsSlices();
 			return;

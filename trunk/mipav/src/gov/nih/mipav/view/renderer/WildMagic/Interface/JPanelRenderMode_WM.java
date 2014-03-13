@@ -67,6 +67,9 @@ public class JPanelRenderMode_WM extends JInterfaceBase
 
     /** Turn display 3D TriMesh Surface on/off */
     protected JCheckBox m_kDisplaySurfaceCheck;
+
+    /** Turn display VOIs on/off */
+    protected JCheckBox m_kDisplayVOICheck;
         
     /** The combo box for the polygon mode to display. */
     private JComboBox m_kStereoModeCB;
@@ -242,6 +245,14 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     }
     
     /**
+     * Get the VOI check box. 
+     * @return true or false
+     */
+    public JCheckBox getVOICheck() {
+    	return m_kDisplayVOICheck;
+    }
+    
+    /**
      * Get the volume display checkbox.
      * @return  true or false
      */
@@ -317,6 +328,15 @@ public class JPanelRenderMode_WM extends JInterfaceBase
     public void setDisplaySurfaceCheck(boolean flag ) {
     	m_kDisplaySurfaceCheck.setSelected(flag);
     	m_kDisplaySurfaceCheck.setEnabled(flag);
+    }
+    
+    /**
+     * Set the VOI check box to true of false
+     * @param flag  true or false
+     */
+    public void setDisplaVOICheck(boolean flag ) {
+    	m_kDisplayVOICheck.setSelected(flag);
+    	m_kDisplayVOICheck.setEnabled(flag);
     }
     
     /**
@@ -498,6 +518,17 @@ public class JPanelRenderMode_WM extends JInterfaceBase
          gbc.gridx = 0;
          gbc.gridy = 1;
          componentsPanel.add(m_kDisplaySurfaceCheck, gbc);
+         
+         m_kDisplayVOICheck = new JCheckBox( "Display VOIs" );
+         m_kDisplayVOICheck.setSelected(true);
+         m_kDisplayVOICheck.setEnabled(true);
+         m_kDisplayVOICheck.setActionCommand( "VOIs");
+         m_kDisplayVOICheck.addActionListener(this);
+         gbc.gridx = 1;
+         gbc.gridy = 1;
+         componentsPanel.add(m_kDisplayVOICheck, gbc);
+         
+         
 
          gbc.gridx = 0;
          gbc.gridy = 3;

@@ -180,6 +180,19 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		{
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
+			
+			char ucKey = e.getKeyChar();
+			switch (ucKey) {
+			case 'a':
+				m_kParent.openVOIs();
+				break;
+			case 'l':
+				m_kParent.showNextVOI();
+				break;
+			case 'L':
+				m_kParent.showPreviousVOI();
+				break;
+			}
 		}
 		return;
 	}
@@ -285,7 +298,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	}
 
 
-
+	public void updateVOIs()
+	{
+		for ( int i = 0; i < m_kDisplayList.size(); i++ )
+		{
+			if ( m_kDisplayList.elementAt(i) instanceof VolumeVOI )
+			{
+				((VolumeVOI)m_kDisplayList.elementAt(i)).needsUpdate(true);
+			}
+		}
+	}
 
 	protected void updateVOIs( VOIVector kVOIs )
 	{

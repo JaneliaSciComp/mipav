@@ -5794,7 +5794,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * 
      * @see gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterfaceListener#updateData(boolean)
      */
-    public void updateData(final boolean bCopyToCPU) {}
+    public void updateData() {}
 
     @Override
     public void setActiveImage(final ModelImage kImage) {
