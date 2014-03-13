@@ -3142,7 +3142,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             kActive.getMask().flip(0, iSize );
         }
         kActive.useMask(true);
-        m_kParent.updateData(false);
+        m_kParent.updateData();
     }
 
     private void createMask( String command )
@@ -4813,7 +4813,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             {
                 redoImage();
             }
-            m_kParent.updateData(false);
+            m_kParent.updateData();
         }
         else
         {
@@ -6043,7 +6043,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             {
                 undoImage();
             }
-            m_kParent.updateData(false);
+            m_kParent.updateData();
         }
         else
         {

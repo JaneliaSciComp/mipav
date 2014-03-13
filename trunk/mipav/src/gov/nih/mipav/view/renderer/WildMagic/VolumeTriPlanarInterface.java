@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.JFrameHistogram;
@@ -24,6 +25,7 @@ import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.Preferences.OperatingSystem;
 import gov.nih.mipav.view.renderer.ViewJComponentVolOpacityBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialog4DVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanel3DMouse_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelClip_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelCustomBlend;
@@ -496,7 +498,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             clipSaveButton.setEnabled(true);
             setModified();
         } else if (command.equals("UndoCropVolume")) {
-            updateData(false);
+            updateData();
             clipMaskUndoButton.setEnabled(false);
             clipSaveButton.setEnabled(false);
         } else if (command.equals("SaveCropVolume")) {
@@ -517,6 +519,18 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 
                     if (m_akPlaneRender[i] != null) {
                         m_akPlaneRender[i].displaySurface(rendererGUI.getSurfaceCheck().isSelected());
+                    }
+                }
+            }
+
+        }  else if (command.equals("VOIs")) {
+            raycastRenderWM.displayVOIs(rendererGUI.getVOICheck().isSelected());
+
+            if (m_akPlaneRender != null) {
+                for (int i = 0; i < 3; i++) {
+
+                    if (m_akPlaneRender[i] != null) {
+                        m_akPlaneRender[i].displayVOIs(rendererGUI.getVOICheck().isSelected());
                     }
                 }
             }
@@ -680,6 +694,8 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		        panelCoronal.add(m_akPlaneRender[2].GetCanvas(), BorderLayout.CENTER);
 		        setModified();
 		        mainPane.revalidate();
+		        
+		        isConfigured = true;
 			}
     	}
     }
@@ -713,6 +729,75 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
             geodesicGUI.setEnabled(true);
             geodesicGUI.setSurfacePanel(surfaceGUI);
         }
+    }
+    
+    private boolean isConfigured = false;
+    public boolean isConfigured()
+    {
+    	return isConfigured;
+    }
+    
+    Vector<VOIVector> voisList;
+    int voisIndex = -1;
+    public void addVOIS( Vector<VOIVector> vois )
+    {
+    	menuObj.setMenuItemSelected("VOI toolbar", true);
+        final boolean showVOI = menuObj.isMenuItemSelected("VOI toolbar");
+        if ( m_kVOIInterface == null )
+        {
+            initVOI();
+        }
+        m_kVOIInterface.getToolBar().setVisible(showVOI);
+        setModified();
+        mainPane.revalidate();
+        voisList = vois;
+        if ( voisList.size() > 0 )
+        {
+        	showVOI(0);
+        }
+    }
+    
+    public void openVOIs()
+    {
+    	new JDialog4DVOI( this, m_kVolumeImageA.GetImage() );
+    }
+    
+    public void showNextVOI()
+    {
+    	voisIndex++;
+    	if ( voisIndex >= voisList.size() )
+    	{
+    		voisIndex = 0;
+    	}
+    	showVOI(voisIndex);
+    }
+    
+    public void showPreviousVOI()
+    {
+    	voisIndex--;
+    	if ( voisIndex < 0 )
+    	{
+    		voisIndex = voisList.size()-1;
+    	}
+    	showVOI(voisIndex);
+    }
+    
+    public void showVOI(int index)
+    {
+    	if ( voisList == null )
+    		return;
+    	if ( voisList.size() <= index )
+    	{
+    		return;
+    	}
+    	
+    	m_kVolumeImageA.GetImage().resetVOIs();
+    	m_kVolumeImageA.GetImage().restoreVOIs(voisList.elementAt(index));
+    	voisIndex = index;
+    	
+    	raycastRenderWM.updateVOIs();
+    	
+//    	System.err.println( index + "   " + voisList.elementAt(index).size() );
     }
 
     /**
@@ -1956,6 +2041,7 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     public void setTimeSlice(final int slice) {
         m_kVolume4DGUI.setTimeSlice(slice);
         m_kVolumeImageA.SetTimeSlice(slice);
+        showVOI(slice);
         setModified();
     }
 
@@ -2113,13 +2199,13 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
     /**
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
-    public void updateData(boolean bCopyToCopy) {
+    public void updateData() {
         if (m_kVolumeImageA != null) {
-            m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage(), bCopyToCopy);
+            m_kVolumeImageA.UpdateData(m_kVolumeImageA.GetImage());
         }
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            m_kVolumeImageB.UpdateData(m_kVolumeImageB.GetImage(), bCopyToCopy);
+            m_kVolumeImageB.UpdateData(m_kVolumeImageB.GetImage());
         }
         raycastRenderWM.updateData();
         setModified();

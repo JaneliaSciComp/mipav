@@ -315,7 +315,7 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		m_kZRotate.fromAxisAngle(Vector3f.UNIT_Z, (float) Math.PI / 18.0f);
 		m_kYRotate.fromAxisAngle(Vector3f.UNIT_Y, (float) Math.PI / 18.0f);
 		m_kXRotate.fromAxisAngle(Vector3f.UNIT_X, (float) Math.PI / 18.0f);
-		enableSculpt(false);
+//		enableSculpt(false);
 	}
 
 	/**
@@ -709,6 +709,19 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	public void displaySurface(boolean bDisplay) {
 		for (int i = 0; i < m_kDisplayList.size(); i++) {
 			if (m_kDisplayList.get(i) instanceof VolumeSurface) {
+				m_kDisplayList.get(i).SetDisplay(bDisplay);
+			}
+		}
+	}
+
+	/**
+	 * Toggle surface display on/off.
+	 * 
+	 * @param bDisplay
+	 */
+	public void displayVOIs(boolean bDisplay) {
+		for (int i = 0; i < m_kDisplayList.size(); i++) {
+			if (m_kDisplayList.get(i) instanceof VolumeVOI) {
 				m_kDisplayList.get(i).SetDisplay(bDisplay);
 			}
 		}

@@ -57,12 +57,14 @@ import javax.swing.event.ListSelectionListener;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Meshes.ConvexHull3f;
 import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Detail.ClodMesh;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
+import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -137,7 +139,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private JScrollPane scroller;
 
     /** Smooth button. */
-    private JButton invertNormals, smooth1Button, smooth2Button, smooth3Button, extractConnected;
+    private JButton invertNormals, smooth1Button, smooth2Button, smooth3Button, convexHull, subdivideTriangles, extractConnected;
 
     /** Polyline list box in the dialog for surfaces. */
     private JList polylineList;
@@ -315,6 +317,14 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if ( command.equals("ExtractConnected") )
         {
         	extractConnectedComponents(surfaceList.getSelectedIndices());
+        }
+        else if ( command.equals("ConvexHull") )
+        {
+        	convexHull(surfaceList.getSelectedIndices());
+        }
+        else if ( command.equals( "SubdivideTriangles" ) )
+        {
+        	subDivideTriangles( surfaceList.getSelectedIndices() );
         }
     }
 
@@ -866,7 +876,9 @@ public class JPanelSurface_WM extends JInterfaceBase
         JToolBar toolBar = new JToolBar();
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         toolBar.setFloatable(false);
-
+        
+        subdivideTriangles = toolbarBuilder.buildButton("SubdivideTriangles", "divide triangles", "decimate");
+        convexHull = toolbarBuilder.buildButton("ConvexHull", "compute convex hull", "decimate");
         extractConnected = toolbarBuilder.buildButton("ExtractConnected", "Extract connected components", "decimate");
         invertNormals = toolbarBuilder.buildButton("InvertNormals", "Reverses triangle order", "decimate");
         smooth1Button = toolbarBuilder.buildButton("Smooth", "Smooth level 1", "sm1");
@@ -878,6 +890,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         saveSTLSurfaceButton = toolbarBuilder.buildButton("saveSTLSurface", "Save prostate surface to a STL file", "savestl");
         
         toolBar.add(invertNormals);
+        toolBar.add(subdivideTriangles);
+        toolBar.add(convexHull);
         toolBar.add(extractConnected);
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
@@ -1029,6 +1043,108 @@ public class JPanelSurface_WM extends JInterfaceBase
             }
         }
     }
+    
+    private void convexHull(int[] aiSelected) {
+        
+        if ( m_kVolumeViewer != null )
+        {           
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            int iSize = kList.getSize();
+            for (int i = 0; i < aiSelected.length; i++) {
+            	
+                TriMesh mesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
+                TriMesh chMesh = convexHull(mesh);
+                
+                chMesh.SetName(mesh.GetName() + "_convex_hull" );
+
+            	SurfaceState kSurface = new SurfaceState( chMesh, chMesh.GetName() );
+
+            	//System.err.println( mesh.GetName() );
+
+            	kList.add( iSize++, chMesh.GetName() );
+
+            	m_akSurfaceStates.add( kSurface );        
+            	m_kVolumeViewer.addSurface( kSurface );
+            }
+        }
+    }
+
+    
+    private float[] CalcMinMaxEdgeLength( TriMesh mesh )
+    {
+    	float[] distance = new float[]{Float.MAX_VALUE, -Float.MAX_VALUE};
+    
+    	int[] tris = new int[3];
+    	for ( int i = 0; i < mesh.GetTriangleQuantity(); i++ )
+    	{
+    		if ( mesh.GetTriangle(i, tris) )
+    		{
+    			Vector3f p0 = mesh.VBuffer.GetPosition3(tris[0]);
+    			Vector3f p1 = mesh.VBuffer.GetPosition3(tris[1]);
+    			Vector3f p2 = mesh.VBuffer.GetPosition3(tris[2]);
+
+    			float lengthP0P1 = p0.distance(p1);
+    			float lengthP1P2 = p1.distance(p2);
+    			float lengthP2P0 = p2.distance(p0);
+
+    			distance[0] = Math.min( distance[0], lengthP0P1 );
+    			distance[0] = Math.min( distance[0], lengthP1P2 );
+    			distance[0] = Math.min( distance[0], lengthP2P0 );
+
+    			distance[1] = Math.max( distance[1], lengthP0P1 );
+    			distance[1] = Math.max( distance[1], lengthP1P2 );
+    			distance[1] = Math.max( distance[1], lengthP2P0 );
+    		}
+    	}
+    	
+    	return distance;
+    }
+    
+    private void subDivideTriangles( int[] aiSelected )
+    {
+        if ( m_kVolumeViewer != null )
+        {           
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            int iSize = kList.getSize();
+            for (int i = 0; i < aiSelected.length; i++) {
+            	
+                TriMesh mesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
+                
+                float[] distance = CalcMinMaxEdgeLength(mesh);
+                System.err.println( distance[0] + " " + distance[1] );
+                
+                TriMesh chMesh = StandardMesh.SubDivide(mesh, distance[1]/4f );
+                
+                chMesh.SetName(mesh.GetName() + "_div" );
+
+            	SurfaceState kSurface = new SurfaceState( chMesh, chMesh.GetName() );
+
+            	//System.err.println( mesh.GetName() );
+
+            	kList.add( iSize++, chMesh.GetName() );
+
+            	m_akSurfaceStates.add( kSurface );        
+            	m_kVolumeViewer.addSurface( kSurface );
+            }
+        }
+    }
+    
+    
+
+    private TriMesh convexHull( TriMesh mesh )
+    {
+		ConvexHull3f convexHull = new ConvexHull3f( mesh.VBuffer.GetVertexQuantity(), mesh.VBuffer.GetPositionArray(), 0.00001f, true );
+		IndexBuffer iBuffer = new IndexBuffer(convexHull.GetIndices());
+		VertexBuffer vBuffer = new VertexBuffer( mesh.VBuffer );
+		TriMesh convexHullMesh = new TriMesh( vBuffer, iBuffer );
+
+		System.err.println( mesh.GetTriangleQuantity() + " " + convexHullMesh.GetTriangleQuantity() );
+//		System.err.println( convexHullMesh.VBuffer.GetVertexQuantity() );
+		convexHullMesh = removeUnusedVertices(convexHullMesh);
+		return convexHullMesh;
+    }
+
+    
 
     /**
      * Display the Surface Material dialog for the selected surfaces.
@@ -1727,6 +1843,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         decimateButton.setEnabled(flag);
         colorButton.setEnabled(flag);
+        subdivideTriangles.setEnabled(flag);
+        convexHull.setEnabled(flag);
         extractConnected.setEnabled(flag);
         invertNormals.setEnabled(flag);
         smooth1Button.setEnabled(flag);
