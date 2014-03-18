@@ -1248,8 +1248,8 @@ public class FilePARREC extends FileBase {
         
  
         //Create bvalue String array from V3 par/rec file (for DTI par/rec files)
-        float [] flBvalueArray = new float[numVolumes];
-        float[][] flGradientArray = new float[numVolumes][3];
+        double [] flBvalueArray = new double[numVolumes];
+        double[][] flGradientArray = new double[numVolumes][3];
         
         if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
             dtiparams = new DTIParameters(numVolumes);
@@ -1307,7 +1307,7 @@ public class FilePARREC extends FileBase {
                         String sliceIndex = Slices.get(i*numSlices);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");                      
-                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                        flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
 
                         }
                     dtiparams.setbValues(flBvalueArray);                   
@@ -1318,7 +1318,7 @@ public class FilePARREC extends FileBase {
                         String sliceIndex = Slices.get(i);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                        flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
 
                     }
                     dtiparams.setbValues(flBvalueArray);
@@ -1343,10 +1343,10 @@ public class FilePARREC extends FileBase {
                         String sliceIndex = Slices.get(i*numSlices);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
-                        flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
-                        flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
-                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                        flGradientArray[i][0] = Double.valueOf(sliceArr[gradIndex]);
+                        flGradientArray[i][1] = Double.valueOf(sliceArr[gradIndex+1]);
+                        flGradientArray[i][2] = Double.valueOf(sliceArr[gradIndex+2]);
+                        flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
                         }
                     
                     dtiparams.setbValues(flBvalueArray);
@@ -1359,10 +1359,10 @@ public class FilePARREC extends FileBase {
                         String sliceIndex = Slices.get(i);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
-                        flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
-                        flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
-                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                        flGradientArray[i][0] = Double.valueOf(sliceArr[gradIndex]);
+                        flGradientArray[i][1] = Double.valueOf(sliceArr[gradIndex+1]);
+                        flGradientArray[i][2] = Double.valueOf(sliceArr[gradIndex+2]);
+                        flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
                         }
                     
                     dtiparams.setbValues(flBvalueArray);
