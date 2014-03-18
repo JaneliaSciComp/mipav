@@ -1610,28 +1610,28 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     dtiparams.setNumVolumes(numVolumes);
                     
                     if ((String) tagTable.getValue("0019,100C") != null){
-                        float [] flBvalueArray = new float[numVolumes];
-                        float[][] flGradientArray = new float[numVolumes][3];
-                        float[][] flBmatrixArray = new float[numVolumes][6];
+                        double [] flBvalueArray = new double[numVolumes];
+                        double[][] flGradientArray = new double[numVolumes][3];
+                        double[][] flBmatrixArray = new double[numVolumes][6];
                         
                         for (int i = 0; i < numVolumes; i++) {                   
                             // Get Bvalues from Siemens Tags
                             FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
                             FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
                             String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
-                            flBvalueArray[i] = Float.parseFloat(siemenBvalue);
+                            flBvalueArray[i] = Double.parseDouble(siemenBvalue);
                             
                             if ((String) tagTable.getValue("0019,1027") != null){
                                 String siemenBmatrix = (String) dicom3dInfo.getTagTable().getValue("0019,1027");
                                 siemenBmatrix = siemenBmatrix.trim();
                                 String bMatrix = siemenBmatrix.replace('\\', '\t');
                                 final String[] arr2 = bMatrix.split("\t");
-                                flBmatrixArray[i][0] = Float.valueOf(arr2[0]);
-                                flBmatrixArray[i][1] = Float.valueOf(arr2[1]);
-                                flBmatrixArray[i][2] = Float.valueOf(arr2[2]);
-                                flBmatrixArray[i][3] = Float.valueOf(arr2[3]);
-                                flBmatrixArray[i][4] = Float.valueOf(arr2[4]);
-                                flBmatrixArray[i][5] = Float.valueOf(arr2[5]);
+                                flBmatrixArray[i][0] = Double.valueOf(arr2[0]);
+                                flBmatrixArray[i][1] = Double.valueOf(arr2[1]);
+                                flBmatrixArray[i][2] = Double.valueOf(arr2[2]);
+                                flBmatrixArray[i][3] = Double.valueOf(arr2[3]);
+                                flBmatrixArray[i][4] = Double.valueOf(arr2[4]);
+                                flBmatrixArray[i][5] = Double.valueOf(arr2[5]);
                             }
     
                             // Get Gradients from Siemens Tags
@@ -1657,9 +1657,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                      dtiparams.setNumVolumes(numVolumes);
                      
                      if ((String) tagTable.getValue("0019,100C") != null){
-                         float [] flBvalueArray = new float[numVolumes];
-                         float[][] flGradientArray = new float[numVolumes][3];
-                         float[][] flBmatrixArray = new float[numVolumes][6];
+                         double [] flBvalueArray = new double[numVolumes];
+                         double[][] flGradientArray = new double[numVolumes][3];
+                         double[][] flBmatrixArray = new double[numVolumes][6];
     
                          for (int i = 0; i < numVolumes; i++) {
                             FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
@@ -1667,7 +1667,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             // Get Bvalues from Siemens Tags
                             FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
                             String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
-                            flBvalueArray[i] = Float.parseFloat(siemenBvalue);
+                            flBvalueArray[i] = Double.parseDouble(siemenBvalue);
                             
                             //Get B-matrix from Siemen's Tags
                             if ((String) tagTable.getValue("0019,1027") != null){
@@ -1675,12 +1675,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 siemenBmatrix = siemenBmatrix.trim();
                                 String bMatrix = siemenBmatrix.replace('\\', '\t');
                                 final String[] arr2 = bMatrix.split("\t");
-                                flBmatrixArray[i][0] = Float.valueOf(arr2[0]);
-                                flBmatrixArray[i][1] = Float.valueOf(arr2[1]);
-                                flBmatrixArray[i][2] = Float.valueOf(arr2[2]);
-                                flBmatrixArray[i][3] = Float.valueOf(arr2[3]);
-                                flBmatrixArray[i][4] = Float.valueOf(arr2[4]);
-                                flBmatrixArray[i][5] = Float.valueOf(arr2[5]);
+                                flBmatrixArray[i][0] = Double.valueOf(arr2[0]);
+                                flBmatrixArray[i][1] = Double.valueOf(arr2[1]);
+                                flBmatrixArray[i][2] = Double.valueOf(arr2[2]);
+                                flBmatrixArray[i][3] = Double.valueOf(arr2[3]);
+                                flBmatrixArray[i][4] = Double.valueOf(arr2[4]);
+                                flBmatrixArray[i][5] = Double.valueOf(arr2[5]);
                         }
     
                             // Get Gradients from Siemens Tags
@@ -1710,8 +1710,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         dtiparams.setNumVolumes(numVolumes);
                     
                         if ((String) tagTable.getValue("0018,9087") != null){
-                            float [] flBvalueArray = new float[numVolumes];
-                            float[][] flGradientArray = new float[numVolumes][3];
+                            double [] flBvalueArray = new double[numVolumes];
+                            double[][] flGradientArray = new double[numVolumes][3];
        
                             for (int i = 0; i < numVolumes; i++) {
                                FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i*image.getExtents()[2]);
@@ -1719,7 +1719,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                // Get Bvalues from Philips Tags
                                FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
                                String philipsBvalue = (String) tag4dTable.getValue("0018,9087");
-                               flBvalueArray[i] = Float.parseFloat(philipsBvalue);
+                               flBvalueArray[i] = Double.parseDouble(philipsBvalue);
        
                                // Get Gradients from Philips Tags
                                if ((String) tagTable.getValue("0018,9089") != null){
@@ -1727,9 +1727,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                philipsGrads = philipsGrads.trim();
                                String grads = philipsGrads.replace('\\', '\t');
                                final String[] arr2 = grads.split("\t");
-                               flGradientArray[i][0] = Float.valueOf(arr2[1]);
-                               flGradientArray[i][1] = Float.valueOf(arr2[2]);
-                               flGradientArray[i][2] = Float.valueOf(arr2[0]);
+                               flGradientArray[i][0] = Double.valueOf(arr2[1]);
+                               flGradientArray[i][1] = Double.valueOf(arr2[2]);
+                               flGradientArray[i][2] = Double.valueOf(arr2[0]);
                                }
                            }                          
                            dtiparams.setbValues(flBvalueArray);
@@ -1747,8 +1747,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                   dtiparams.setNumVolumes(numVolumes);
               
                   if ((String) tagTable.getValue("0019,10BB") != null){
-                      float [] flBvalueArray = new float[numVolumes];
-                      float[][] flGradientArray = new float[numVolumes][3];
+                      double [] flBvalueArray = new double[numVolumes];
+                      double[][] flGradientArray = new double[numVolumes][3];
  
                       for (int i = 0; i < numVolumes; i++) {
                          FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i*image.getExtents()[2]);
@@ -1759,13 +1759,13 @@ nList:      for (int i = 0; i < nListImages; i++) {
                          geBvalue = geBvalue.trim();
                          String bval = geBvalue.replace('\\', '\t');
                          final String[] arr2 = bval.split("\t");
-                         flBvalueArray[i] = Float.valueOf(arr2[0]);
+                         flBvalueArray[i] = Double.valueOf(arr2[0]);
  
                          // Get Gradients from Philips Tags
                          if ((String) tagTable.getValue("0019,10BB") != null){
-                         flGradientArray[i][0] = Float.valueOf((String) tag4dTable.getValue("0019,10BB"));
-                         flGradientArray[i][1] = Float.valueOf((String) tag4dTable.getValue("0019,10BC"));
-                         flGradientArray[i][2] = Float.valueOf((String) tag4dTable.getValue("0019,10BD"));
+                         flGradientArray[i][0] = Double.valueOf((String) tag4dTable.getValue("0019,10BB"));
+                         flGradientArray[i][1] = Double.valueOf((String) tag4dTable.getValue("0019,10BC"));
+                         flGradientArray[i][2] = Double.valueOf((String) tag4dTable.getValue("0019,10BD"));
                          }
                      }                    
                      dtiparams.setbValues(flBvalueArray);
