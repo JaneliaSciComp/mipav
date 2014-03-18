@@ -364,14 +364,14 @@ import javax.swing.table.DefaultTableModel;
                       if(isBmatFile==true){
                           if (srcTableModel.getRowCount() != 0){
                               if (!srcTableModel.getValueAt(0, 5).equals("")){
-                                  float[][] flBmatrixArray = new float[numVolumes][6];
+                                  double[][] flBmatrixArray = new double[numVolumes][6];
                                   for (int i = 0; i < numVolumes; i++) {  
-                                      flBmatrixArray[i][0] = Float.valueOf((String)srcTableModel.getValueAt(i, 1));
-                                      flBmatrixArray[i][1] = Float.valueOf((String)srcTableModel.getValueAt(i, 2));
-                                      flBmatrixArray[i][2] = Float.valueOf((String)srcTableModel.getValueAt(i, 3));
-                                      flBmatrixArray[i][3] = Float.valueOf((String)srcTableModel.getValueAt(i, 4));
-                                      flBmatrixArray[i][4] = Float.valueOf((String)srcTableModel.getValueAt(i, 5));
-                                      flBmatrixArray[i][5] = Float.valueOf((String)srcTableModel.getValueAt(i, 6));
+                                      flBmatrixArray[i][0] = Double.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      flBmatrixArray[i][1] = Double.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                      flBmatrixArray[i][2] = Double.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                      flBmatrixArray[i][3] = Double.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                      flBmatrixArray[i][4] = Double.valueOf((String)srcTableModel.getValueAt(i, 5));
+                                      flBmatrixArray[i][5] = Double.valueOf((String)srcTableModel.getValueAt(i, 6));
                                   }
                                   dtiparams.setbMatrixVals(flBmatrixArray);
                               }
@@ -381,33 +381,33 @@ import javax.swing.table.DefaultTableModel;
                       else {
                           if (srcTableModel.getRowCount() != 0){
                               if (!srcTableModel.getValueAt(0, 1).equals("")){
-                                  float [] flBvalueArr= new float[numVolumes]; 
+                                  double [] flBvalueArr= new double[numVolumes]; 
                                   for (int i = 0; i < numVolumes; i++) { 
-                                      flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      flBvalueArr[i]= Double.valueOf((String)srcTableModel.getValueAt(i, 1));
                                       }
                                  dtiparams.setbValues(flBvalueArr);
                               }
                               
                               if (!srcTableModel.getValueAt(0, 3).equals("")){
-                                  float[][] flGradArr = new float[numVolumes][3];
+                                  double[][] flGradArr = new double[numVolumes][3];
                                   for (int i = 0; i < numVolumes; i++) {
                                       if (!srcTableModel.getValueAt(i, 2).equals("")){
-                                          flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                          flGradArr[i][0]= Double.valueOf((String)srcTableModel.getValueAt(i, 2));
                                           }
                                           else{
-                                              flGradArr[i][0]= (float) 0.0;
+                                              flGradArr[i][0]= 0.0;
                                               }
                                       if (!srcTableModel.getValueAt(i, 3).equals("")){
-                                          flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                          flGradArr[i][1]= Double.valueOf((String)srcTableModel.getValueAt(i, 3));
                                           }
                                           else{
-                                              flGradArr[i][1]= (float) 0.0;
+                                              flGradArr[i][1]= 0.0;
                                               }
                                       if (!srcTableModel.getValueAt(i, 4).equals("")){
-                                          flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                          flGradArr[i][2]= Double.valueOf((String)srcTableModel.getValueAt(i, 4));
                                           }
                                           else{
-                                              flGradArr[i][2]= (float) 0.0;
+                                              flGradArr[i][2]= 0.0;
                                           }
                                       }
     
@@ -444,14 +444,14 @@ import javax.swing.table.DefaultTableModel;
                           if(isBmatFile==true){
                               if (srcTableModel.getRowCount() != 0){
                                   if (!srcTableModel.getValueAt(0, 5).equals("")){
-                                      float[][] flBmatrixArray = new float[numVolumes][6];
+                                      double[][] flBmatrixArray = new double[numVolumes][6];
                                       for (int i = 0; i < numVolumes; i++) {  
-                                          flBmatrixArray[i][0] = Float.valueOf((String)srcTableModel.getValueAt(i, 1));
-                                          flBmatrixArray[i][1] = Float.valueOf((String)srcTableModel.getValueAt(i, 2));
-                                          flBmatrixArray[i][2] = Float.valueOf((String)srcTableModel.getValueAt(i, 3));
-                                          flBmatrixArray[i][3] = Float.valueOf((String)srcTableModel.getValueAt(i, 4));
-                                          flBmatrixArray[i][4] = Float.valueOf((String)srcTableModel.getValueAt(i, 5));
-                                          flBmatrixArray[i][5] = Float.valueOf((String)srcTableModel.getValueAt(i, 6));
+                                          flBmatrixArray[i][0] = Double.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                          flBmatrixArray[i][1] = Double.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                          flBmatrixArray[i][2] = Double.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                          flBmatrixArray[i][3] = Double.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                          flBmatrixArray[i][4] = Double.valueOf((String)srcTableModel.getValueAt(i, 5));
+                                          flBmatrixArray[i][5] = Double.valueOf((String)srcTableModel.getValueAt(i, 6));
                                       }
                                       newDTIparams.setbMatrixVals(flBmatrixArray);
                                   }
@@ -462,33 +462,33 @@ import javax.swing.table.DefaultTableModel;
                           if (srcTableModel.getRowCount() != 0 ){
                               newDTIparams = new DTIParameters(m_kDWIImage.getExtents()[3]);
                               if (!srcTableModel.getValueAt(0, 1).equals("")){
-                                  float [] flBvalueArr= new float[m_kDWIImage.getExtents()[3]]; 
+                                  double [] flBvalueArr= new double[m_kDWIImage.getExtents()[3]]; 
                                   for (int i = 0; i < m_kDWIImage.getExtents()[3]; i++) {
-                                      flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      flBvalueArr[i]= Double.valueOf((String)srcTableModel.getValueAt(i, 1));
                                       }
                                  newDTIparams.setbValues(flBvalueArr);
                               }
                               
                               if (!srcTableModel.getValueAt(0, 3).equals("")){
-                                  float[][] flGradArr = new float[m_kDWIImage.getExtents()[3]][3];
+                                  double[][] flGradArr = new double[m_kDWIImage.getExtents()[3]][3];
                                   for (int i = 0; i < numVolumes; i++) {
                                       if (!srcTableModel.getValueAt(i, 2).equals("")){
-                                          flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                          flGradArr[i][0]= Double.valueOf((String)srcTableModel.getValueAt(i, 2));
                                           }
                                           else{
-                                              flGradArr[i][0]= (float) 0.0;
+                                              flGradArr[i][0]= 0.0;
                                           }
                                       if (!srcTableModel.getValueAt(i, 3).equals("")){
-                                          flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                          flGradArr[i][1]= Double.valueOf((String)srcTableModel.getValueAt(i, 3));
                                           }
                                           else{
-                                              flGradArr[i][1]= (float) 0.0;
+                                              flGradArr[i][1]= 0.0;
                                           }
                                       if (!srcTableModel.getValueAt(i, 4).equals("")){
-                                          flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                          flGradArr[i][2]= Double.valueOf((String)srcTableModel.getValueAt(i, 4));
                                           }
                                           else{
-                                              flGradArr[i][1]= (float) 0.0;
+                                              flGradArr[i][1]= 0.0;
                                           }
                                       }
                                   
@@ -1282,14 +1282,14 @@ import javax.swing.table.DefaultTableModel;
                             // Populate Volume column
                             srcTableModel.setValueAt(String.valueOf(i),i,0);
                             // Populate Bvalue column
-                            float[] flBvalArr = dtiparams.getbValues();
+                            double[] flBvalArr = dtiparams.getbValues();
                             srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
                      }
                     }
                     if (dtiparams.getGradients() != null){ 
                         for (int i = 0; i < numVolumes; i++) {
                              // Populate Gradient column
-                             float[][] flGradArr = dtiparams.getGradients();
+                             double[][] flGradArr = dtiparams.getGradients();
                              srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
                              srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
                              srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
@@ -1302,7 +1302,7 @@ import javax.swing.table.DefaultTableModel;
                         srcTableModel.setColumnIdentifiers(newColIdentifiers);
                         for (int i = 0; i < numVolumes; i++) {
                             // Populate Gradient column
-                            float[][] flGradArr = dtiparams.getbMatrixVals();
+                            double[][] flGradArr = dtiparams.getbMatrixVals();
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 1);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 2);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 3);
@@ -1336,14 +1336,14 @@ import javax.swing.table.DefaultTableModel;
                                 // Populate Volume column
                                 srcTableModel.setValueAt(String.valueOf(i),i,0);
                                 // Populate Bvalue column
-                                float[] flBvalArr = parDTIParams.getbValues();
+                                double[] flBvalArr = parDTIParams.getbValues();
                                 srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
                          }
                         }
                         if (parDTIParams.getGradients() != null){ 
                             for (int i = 0; i < numVolumes; i++) {
                                  // Populate Gradient column
-                                 float[][] flGradArr = parDTIParams.getGradients();
+                                 double[][] flGradArr = parDTIParams.getGradients();
                                  srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
                                  srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
                                  srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
@@ -2641,7 +2641,7 @@ import javax.swing.table.DefaultTableModel;
             }
             else if (numVolumes==8 || numVolumes==17 || numVolumes==34 || numVolumes==32){
 
-                float[] flBvalArr = null;
+                double[] flBvalArr = null;
                 if (dtiparams != null){
                     flBvalArr = dtiparams.getbValues();
                 }
@@ -2677,7 +2677,7 @@ import javax.swing.table.DefaultTableModel;
                 }
             }
             else if(numVolumes==31){
-                float[] flBvalArr = dtiparams.getbValues();
+                double[] flBvalArr = dtiparams.getbValues();
                 int bval0Count = 0;
                 for (int i = 0; i<numVolumes; i++){
 
@@ -2981,8 +2981,8 @@ import javax.swing.table.DefaultTableModel;
             
      
             //Create bvalue String array from V3 par/rec file (for DTI par/rec files)
-            float [] flBvalueArray = new float[numVolumes];
-            float[][] flGradientArray = new float[numVolumes][3];
+            double [] flBvalueArray = new double[numVolumes];
+            double[][] flGradientArray = new double[numVolumes][3];
                 
             parDTIParams = new DTIParameters(numVolumes);
  
@@ -3040,7 +3040,7 @@ import javax.swing.table.DefaultTableModel;
                             String sliceIndex = Slices.get(i*numSlices);
                             sliceIndex = sliceIndex.trim();
                             final String[] sliceArr = sliceIndex.split("\\s+");                      
-                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
 
 
                             }
@@ -3052,7 +3052,7 @@ import javax.swing.table.DefaultTableModel;
                             String sliceIndex = Slices.get(i);
                             sliceIndex = sliceIndex.trim();
                             final String[] sliceArr = sliceIndex.split("\\s+");
-                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
                             
 
                         }
@@ -3078,10 +3078,10 @@ import javax.swing.table.DefaultTableModel;
                             String sliceIndex = Slices.get(i*numSlices);
                             sliceIndex = sliceIndex.trim();
                             final String[] sliceArr = sliceIndex.split("\\s+");
-                            flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
-                            flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
-                            flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
-                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            flGradientArray[i][0] = Double.valueOf(sliceArr[gradIndex]);
+                            flGradientArray[i][1] = Double.valueOf(sliceArr[gradIndex+1]);
+                            flGradientArray[i][2] = Double.valueOf(sliceArr[gradIndex+2]);
+                            flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
                             }
                         
                         parDTIParams.setbValues(flBvalueArray);
@@ -3364,13 +3364,11 @@ import javax.swing.table.DefaultTableModel;
                                         srcTableModel.setValueAt(arr2[1], i, 3);
                                         srcTableModel.setValueAt(arr2[2], i, 4); 
                                         
-                                        if (dtiparams != null && dtiparams.getbValues() != null ){
-                                            float [] flBvalueArr= new float[numVolumes]; 
+                                        if (dtiparams != null && dtiparams.getbValues() != null ){ 
                                             srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
 
                                         }
                                         else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                             float [] flBvalueArr= new float[numVolumes]; 
                                              srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
                                         }                                   
                                     }
@@ -3504,14 +3502,12 @@ import javax.swing.table.DefaultTableModel;
                                //dcm2nii file text file format (3 lines the length of numVolumes with gradient values) 
                                 if (dtiparams != null && dtiparams.getbValues() != null ){
                                     for (int i = 0; i < numVolumes; i++){
-                                        float [] flBvalueArr= new float[numVolumes]; 
                                         srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
                                     }
     
                                 }
                                 else if (parDTIParams != null && parDTIParams.getbValues() != null ){
                                     for (int i = 0; i < numVolumes; i++){
-                                         float [] flBvalueArr= new float[numVolumes]; 
                                          srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
                                     }
     
@@ -3636,12 +3632,10 @@ import javax.swing.table.DefaultTableModel;
                                 srcTableModel.setValueAt(arrGrads[1], i, 3);
                                 srcTableModel.setValueAt(arrGrads[2], i, 4);
                                 
-                                if (dtiparams != null && dtiparams.getbValues() != null ){
-                                    float [] flBvalueArr= new float[numVolumes]; 
+                                if (dtiparams != null && dtiparams.getbValues() != null ){ 
                                     srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);   
                                 }
                                 else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                     float [] flBvalueArr= new float[numVolumes]; 
                                      srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);   
                                 }                           
                             }
