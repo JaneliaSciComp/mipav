@@ -92,11 +92,11 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	public TransMatrix b0toStructMatrix;
 
-    public float[][] gradients;
+    public double[][] gradients;
     
-    public float[][] bmatValues;
+    public double[][] bmatValues;
     
-    public float[] bvalues;
+    public double[] bvalues;
     
     public int refImageNum;
     
