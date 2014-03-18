@@ -115,9 +115,9 @@ public class FileImageXML extends FileXML {
     
     private int numVolumes;
     
-    private float [][] gradients;
+    private double [][] gradients;
     
-    private float [] bValues;
+    private double [] bValues;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -2233,7 +2233,7 @@ public class FileImageXML extends FileXML {
                     //Write bvalues to XML header on a single line
                     String bVals = "";
                     for (i=0; i<dtiparams.getNumVolumes(); i++){
-                        bVals = bVals + Float.toString(dtiparams.getbValues()[i])+"/";
+                        bVals = bVals + Double.toString(dtiparams.getbValues()[i])+"/";
                     }
                     closedTag("bValues", bVals);
                 }
@@ -2243,7 +2243,7 @@ public class FileImageXML extends FileXML {
                     
                     for (i=0; i<dtiparams.getNumVolumes(); i++){
                     
-                        closedTag("gradient", Float.toString(dtiparams.getGradients()[i][0]) + "," + Float.toString(dtiparams.getGradients()[i][1]) + "," + Float.toString(dtiparams.getGradients()[i][2]) );
+                        closedTag("gradient", Double.toString(dtiparams.getGradients()[i][0]) + "," + Double.toString(dtiparams.getGradients()[i][1]) + "," + Double.toString(dtiparams.getGradients()[i][2]) );
                     }
                     openTag("VolumeGradients", false);
                 }
@@ -3604,19 +3604,19 @@ public class FileImageXML extends FileXML {
                 
             }
               else if (currentKey.equals("bValues")){
-                  bValues = new float[numVolumes];
+                  bValues = new double[numVolumes];
                   for (int i = 0; i < numVolumes; i++) {                     
                       String[] arr = elementBuffer.split("/");
-                      bValues[i] = Float.parseFloat(arr[i]);
+                      bValues[i] = Double.parseDouble(arr[i]);
                   }
                   dtiparams.setbValues(bValues);
                 
             } else if (currentKey.equals("gradient")){
                 gradCount++;
                 String[] arr = elementBuffer.split(",");
-                gradients[gradCount][0] = Float.parseFloat(arr[0]);
-                gradients[gradCount][1] = Float.parseFloat(arr[1]);
-                gradients[gradCount][2] = Float.parseFloat(arr[2]); 
+                gradients[gradCount][0] = Double.parseDouble(arr[0]);
+                gradients[gradCount][1] = Double.parseDouble(arr[1]);
+                gradients[gradCount][2] = Double.parseDouble(arr[2]); 
             }
             
         }
@@ -3751,7 +3751,7 @@ public class FileImageXML extends FileXML {
                 tlrcRes = new float[7];
             }
             else if (currentKey.equals("VolumeGradients")) {
-                gradients = new float[numVolumes][3];
+                gradients = new double[numVolumes][3];
                 
             }
             else {
