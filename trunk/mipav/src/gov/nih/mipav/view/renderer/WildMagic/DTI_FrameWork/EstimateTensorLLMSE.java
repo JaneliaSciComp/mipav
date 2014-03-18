@@ -64,7 +64,7 @@ public class EstimateTensorLLMSE {
 	 *   Last updated: 8/13/2008 Bennett Landman.
 	 ****************************************************/
 	public static float[][][][] estimate(float [][][][]DWdata, 
-			float []bvalues, float [][]grads, byte [][][]mask, boolean usePartialEstimates) {
+			double []bvalues, double [][]grads, byte [][][]mask, boolean usePartialEstimates) {
 
 		/****************************************************
 		 * Step 1: Validate Input Arguments 
@@ -127,7 +127,7 @@ public class EstimateTensorLLMSE {
 
 			if(bvalues[i]>0 && grads[i][0]<90) {
 				gradList[Ngrad]=i;
-				float norm = (float)Math.sqrt(grads[i][0]*grads[i][0]+
+				double norm = Math.sqrt(grads[i][0]*grads[i][0]+
 						grads[i][1]*grads[i][1]+
 						grads[i][2]*grads[i][2]);
 				if(norm==0)
@@ -440,8 +440,8 @@ public class EstimateTensorLLMSE {
 		}
 		
 		float[][][][] DWdata = new float[dimX][dimY][dimZ][tempDimDW];
-		float[] bvalues = new float[tempDimDW];
-		float[][] grads = new float[tempDimDW][3];
+		double[] bvalues = new double[tempDimDW];
+		double[][] grads = new double[tempDimDW][3];
 		byte[][][] mask = null;
 		if ( maskImage != null )
 		{
@@ -1067,8 +1067,8 @@ public class EstimateTensorLLMSE {
 		Matrix tensor = new Matrix(6,1);
 		java.util.Random r= new java.util.Random();
 		float [][][][] DWdata = new float[1][1][1][17];
-		float []bvalues = new float[17];
-		float [][]grads = new float[17][3];
+		double []bvalues = new double[17];
+		double [][]grads = new double[17][3];
 
 		for(int i=0;i<count;i++) {
 			for(int j=0;j<6;j++)
@@ -1086,13 +1086,13 @@ public class EstimateTensorLLMSE {
 				if(j<2)
 					bvalues[j]=0;
 				else { 
-					bvalues[j]=1000.f*r.nextFloat()+100;
-					float norm =0;
+					bvalues[j]=1000.0*r.nextDouble()+100;
+					double norm =0;
 					for(int k=0;k<3;k++) {
-						grads[j][k] = r.nextFloat()-0.5f;
+						grads[j][k] = r.nextDouble()-0.5;
 						norm+=grads[j][k]*grads[j][k];
 					}
-					norm=(float)Math.sqrt(norm);
+					norm=Math.sqrt(norm);
 					for(int k=0;k<3;k++)
 						grads[j][k]/=norm;
 				}				
@@ -1247,13 +1247,13 @@ public class EstimateTensorLLMSE {
 			return null;
 		}
 
-		float[][] bMatrix = dtiparams.getbMatrixVals();
+		double[][] bMatrix = dtiparams.getbMatrixVals();
 		GMatrixf gMatrix = new GMatrixf( bMatrix.length, 7 );
 		for ( int i = 0; i < bMatrix.length; i++ )
 		{
 			for ( int j = 0; j < 6; j++ )
 			{
-				gMatrix.Set(i, j, bMatrix[i][j]);
+				gMatrix.Set(i, j, (float)bMatrix[i][j]);
 			}
 			gMatrix.Set(i, 6, 1);	
 		}
