@@ -16,11 +16,11 @@ public class DTIParameters implements Serializable {
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
 
-    private float[] bValues;
+    private double[] bValues;
 
-    private float[][] gradients;
+    private double[][] gradients;
     
-    private float[][] bMatrixVals;
+    private double[][] bMatrixVals;
     
     private int numVolumes;
 
@@ -39,17 +39,17 @@ public class DTIParameters implements Serializable {
         this.numVolumes = params.numVolumes;
     	if ( params.bValues != null )
     	{
-    		this.bValues = new float[numVolumes];
+    		this.bValues = new double[numVolumes];
     	}
 
     	if ( params.gradients != null )
     	{
-    		this.gradients = new float[numVolumes][3];
+    		this.gradients = new double[numVolumes][3];
     	}
     	
     	if ( params.bMatrixVals != null )
     	{
-    		this.bMatrixVals = new float[numVolumes][6];
+    		this.bMatrixVals = new double[numVolumes][6];
     	}
         for ( int i = 0; i < numVolumes; i++ )
         {   
@@ -77,27 +77,27 @@ public class DTIParameters implements Serializable {
     }
 
     // Getters and Setters
-    public float[] getbValues() {
+    public double[] getbValues() {
         return bValues;
     }
 
-    public void setbValues(float[] bValues) {
+    public void setbValues(double[] bValues) {
         this.bValues = bValues;
     }
 
-    public float[][] getGradients() {
+    public double[][] getGradients() {
         return gradients;
     }
 
-    public void setGradients(float[][] gradients) {
+    public void setGradients(double[][] gradients) {
         this.gradients = gradients;
     }
     
-    public float[][] getbMatrixVals() {
+    public double[][] getbMatrixVals() {
         return bMatrixVals;
     }
 
-    public void setbMatrixVals (float[][] bMatrixVals) {
+    public void setbMatrixVals (double[][] bMatrixVals) {
         this.bMatrixVals = bMatrixVals;
     }
 
