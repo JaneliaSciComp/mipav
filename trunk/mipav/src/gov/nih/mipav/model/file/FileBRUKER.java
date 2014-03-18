@@ -50,6 +50,8 @@ public class FileBRUKER extends FileBase {
 
     /** The preferred image name, used if inversion time exists. */
     private String prefImageName = null;
+    
+    private int numVolumes = -1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -164,6 +166,9 @@ public class FileBRUKER extends FileBase {
     public void readMethod() throws IOException {
         String lineString = null;
         String[] parseString;
+        boolean okay;
+        int numVars;
+        int numFound;
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
         lineString = readLine();
@@ -187,7 +192,69 @@ public class FileBRUKER extends FileBase {
                     throw new IOException("##$ACQ_slice_sepn_mode has parseString with length = " + parseString.length);
                 }
 
-            } 
+            }
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat")) {
+            	okay = true;
+            	if (parseString.length == 6) {
+	                if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwBMat parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	Preferences.debug("For PVM_DwBMat parseString[1] unexpectedly == " + parseString[1] + "\n", Preferences.DEBUG_FILEIO);
+	                	okay = false;
+	                }
+	                if (okay) {
+		                if (parseString[2].endsWith(",")) {
+		                    numVolumes = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+		                    Preferences.debug("For PVM_DwBMat numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n", Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }
+	                }
+	                if (okay) {
+		                if (parseString[3].equals("3,")) {
+		                    Preferences.debug("For PVM_DwBMat parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[3] unexpectedly == " + parseString[3] + "\n",
+		                			          Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }
+	                }
+	                if (okay) {
+	                	if (parseString[4].equals("3")) {
+		                    Preferences.debug("For PVM_DwBMat parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwBMat parseString[4] unexpectedly == " + parseString[4] + "\n",
+		                			          Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }	
+	                }
+	                if (okay) {
+	                    if (parseString[5].equals(")")) {
+	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n", Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+	                }
+            	}
+            	else {
+            		Preferences.debug("For PVM_DwBMat parseString.length unexpectedly == " + parseString.length + "\n",
+            				          Preferences.DEBUG_FILEIO);
+            		okay = false;
+            	}
+            	if (okay) {
+                    numVars = 9 * numVolumes;
+            		numFound = 0;
+            		
+            	}
+            } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat"))
 
             lineString = readLine();
         } // while (lineString != null)
