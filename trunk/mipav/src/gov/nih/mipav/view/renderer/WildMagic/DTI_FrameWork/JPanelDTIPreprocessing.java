@@ -467,8 +467,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 							//		result35RegImage.getDTIParameters().getGradients()[i][1] + " " + 
 							//		result35RegImage.getDTIParameters().getGradients()[i][2] + "      --->     ");
 
-							float[] grad = result35RegImage.getDTIParameters().getGradients()[i];
-							Vector4f gradVec = new Vector4f( grad[0], grad[1], grad[2], 0 );
+							double[] grad = result35RegImage.getDTIParameters().getGradients()[i];
+							Vector4f gradVec = new Vector4f((float)grad[0], (float)grad[1], (float)grad[2], 0 );
 							Vector4f newGradVec = arrayTransMatrix[i].mult( gradVec );
 							grad[0] = newGradVec.X;
 							grad[1] = newGradVec.Y;
