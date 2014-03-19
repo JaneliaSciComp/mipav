@@ -141,12 +141,19 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 				
 			}else if(varName.equalsIgnoreCase("-numPoints")) {
 				
-				if(value.equalsIgnoreCase("27_points")) {
+				/*if(value.equalsIgnoreCase("27_points")) {
 					headless.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._27POINTS);
 				}else if(value.equalsIgnoreCase("75_points")) {
 					headless.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._75POINTS);
 				}else if(value.equalsIgnoreCase("147_points")) {
 					headless.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._147POINTS);
+				}*/
+				
+				
+				if(value.equalsIgnoreCase("27A_points")) {
+					headless.setNumPointsString(PlugInDialogDrosophilaStandardColumnRegistration._27APOINTS);
+				}else if(value.equalsIgnoreCase("75A_points")) {
+					headless.setNumPointsString(PlugInDialogDrosophilaStandardColumnRegistration._75APOINTS);
 				}
 				
 			}else if(varName.equalsIgnoreCase("-orientation")) {

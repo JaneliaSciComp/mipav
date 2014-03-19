@@ -78,7 +78,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration - Batch Processing   v1.5");
+        setTitle("Drosophila Standard Column Registration - Batch Processing   v2.1");
         
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -379,7 +379,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 				plugin.flipZCB.setSelected(true);
 			}
 			
-			if(vars[5].equalsIgnoreCase("27_points")) {
+			/*if(vars[5].equalsIgnoreCase("27_points")) {
 				plugin._27PointsRadio.setSelected(true);
 				plugin._75PointsRadio.setSelected(false);
 				plugin._147PointsRadio.setSelected(false);
@@ -391,14 +391,33 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 				plugin._27PointsRadio.setSelected(false);
 				plugin._75PointsRadio.setSelected(false);
 				plugin._147PointsRadio.setSelected(true);
+			}*/
+			
+			
+			if(vars[5].equalsIgnoreCase("27A_points")) {
+				plugin._27APointsRadio.setSelected(true);
+				plugin._75APointsRadio.setSelected(false);
+			}else if(vars[5].equalsIgnoreCase("75A_points")) {
+				plugin._27APointsRadio.setSelected(false);
+				plugin._75APointsRadio.setSelected(true);
 			}
-			if(plugin._27PointsRadio.isSelected()) {
+			
+			/*if(plugin._27PointsRadio.isSelected()) {
 				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._27POINTS);
 			}else if (plugin._75PointsRadio.isSelected()) {
 				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._75POINTS);
 			}else if (plugin._147PointsRadio.isSelected()) {
 				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._147POINTS);
+			}*/
+			
+			if(plugin._27APointsRadio.isSelected()) {
+				plugin.setNumPointsString(PlugInDialogDrosophilaStandardColumnRegistration._27APOINTS);
+			}else if (plugin._75APointsRadio.isSelected()) {
+				plugin.setNumPointsString(PlugInDialogDrosophilaStandardColumnRegistration._75APOINTS);
 			}
+			
+			
+			
 			
 			
 			

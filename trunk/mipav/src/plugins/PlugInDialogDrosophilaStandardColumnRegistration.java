@@ -117,9 +117,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
     /** radio buttons * */
     public JRadioButton lvrdRadio, rvldRadio, rigTPSRadio, rigRadio;
     
-    public JRadioButton _27PointsRadio, _75PointsRadio, _147PointsRadio;
+    //public JRadioButton _27PointsRadio, _75PointsRadio, _147PointsRadio;
     
-    
+    public JRadioButton _27APointsRadio, _75APointsRadio;
     
 
     
@@ -142,11 +142,24 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
    
    private boolean plugInCompleted = false;
    
-   public static final int _27POINTS = 27;
-   public static final int _75POINTS = 75;
-   public static final int _147POINTS = 147;
+   //public static final int _27POINTS = 27;
+   //public static final int _75POINTS = 75;
+   //public static final int _147POINTS = 147;
    
-   private int numPoints;
+   //public static final int _27POINTSA = 27;
+   //public static final int _75POINTSA = 75;
+   
+   
+   public static final String _27POINTS = "27";
+   public static final String _75POINTS = "75";
+   public static final String _147POINTS = "147";
+   
+   public static final String _27APOINTS = "27A";
+   public static final String _75APOINTS = "75A";
+   
+   //private int numPoints;
+   
+   private String numPointsString;
    
 
 	
@@ -167,17 +180,22 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 		init();
 	}
 	
-	public  void setNumPoints(int numPoints) {
+	/*public  void setNumPoints(int numPoints) {
 		this.numPoints = numPoints;
+	}*/
+	
+	
+	
+	public void setNumPointsString(String numPointsString) {
+		this.numPointsString = numPointsString;
 	}
-	
-	
+
 	/**
 	 * init
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v5.4");
+        setTitle("Drosophila Standard Column Registration v6.4");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -228,18 +246,30 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
         
         
         pointsGroup = new ButtonGroup();
-        _27PointsRadio = new JRadioButton("27 Points (3X3X3)");
-        _75PointsRadio = new JRadioButton("75 Points (5X5X3)");
-        _75PointsRadio.setSelected(true);
-        _147PointsRadio = new JRadioButton("147 Points (7X7X3)");
+        //_27PointsRadio = new JRadioButton("27 Points (3X3X3)");
+        //_75PointsRadio = new JRadioButton("75 Points (5X5X3)");
+        
+        //_147PointsRadio = new JRadioButton("147 Points (7X7X3)");
+        
+        _27APointsRadio = new JRadioButton("9 points per layer (27)");
+        _75APointsRadio = new JRadioButton("25 points per layer (75)");
+        _27APointsRadio.setSelected(true);
 
-        pointsGroup.add(_27PointsRadio);
-        pointsGroup.add(_75PointsRadio);
-        pointsGroup.add(_147PointsRadio);
+        //pointsGroup.add(_27PointsRadio);
+        //pointsGroup.add(_75PointsRadio);
+        //pointsGroup.add(_147PointsRadio);
+        
+        pointsGroup.add(_27APointsRadio);
+        pointsGroup.add(_75APointsRadio);
+
+        
         JPanel pointsPanel = new JPanel();
-        pointsPanel.add(_27PointsRadio);
-        pointsPanel.add(_75PointsRadio);
-        pointsPanel.add(_147PointsRadio);
+        //pointsPanel.add(_27PointsRadio);
+        //pointsPanel.add(_75PointsRadio);
+        //pointsPanel.add(_147PointsRadio);
+        
+        pointsPanel.add(_27APointsRadio);
+        pointsPanel.add(_75APointsRadio);
         
         
         eyeGroup = new ButtonGroup();
@@ -766,14 +796,19 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 			
 		}
 		
-		if(_27PointsRadio.isSelected()) {
-			numPoints = _27POINTS;
+		/*if(_27PointsRadio.isSelected()) {
+			numPointsString = _27POINTS;
 		}else if (_75PointsRadio.isSelected()) {
-			numPoints = _75POINTS;
+			numPointsString = _75POINTS;
 		}else if (_147PointsRadio.isSelected()) {
-			numPoints = _147POINTS;
-		}
+			numPointsString = _147POINTS;
+		}*/
 		
+		if(_27APointsRadio.isSelected()) {
+			numPointsString = _27APOINTS;
+		}else if (_75APointsRadio.isSelected()) {
+			numPointsString = _75APOINTS;
+		}
 		
 		if(doSWC) {
 		
@@ -838,7 +873,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	public void callAlgorithm() {
 		float samplingRate = Float.valueOf((String)surfaceFileSamplingCB.getSelectedItem()).floatValue();
 
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected(),numPoints);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,outputTextArea,flipXCB.isSelected(), flipYCB.isSelected(), flipZCB.isSelected(),greenThreshold,subsamplingDistance,rigRadio.isSelected(),doSWC,rvldRadio.isSelected(),numPointsString);
 		alg.addListener(this);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		
