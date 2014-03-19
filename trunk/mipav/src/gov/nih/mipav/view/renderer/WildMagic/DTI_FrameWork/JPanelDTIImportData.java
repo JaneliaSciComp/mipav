@@ -3094,10 +3094,10 @@ import javax.swing.table.DefaultTableModel;
                             String sliceIndex = Slices.get(i);
                             sliceIndex = sliceIndex.trim();
                             final String[] sliceArr = sliceIndex.split("\\s+");
-                            flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
-                            flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
-                            flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
-                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            flGradientArray[i][0] = Double.valueOf(sliceArr[gradIndex]);
+                            flGradientArray[i][1] = Double.valueOf(sliceArr[gradIndex+1]);
+                            flGradientArray[i][2] = Double.valueOf(sliceArr[gradIndex+2]);
+                            flBvalueArray[i] = Double.parseDouble(sliceArr[bValueIndex]);
                             }
                         
                         parDTIParams.setbValues(flBvalueArray);
