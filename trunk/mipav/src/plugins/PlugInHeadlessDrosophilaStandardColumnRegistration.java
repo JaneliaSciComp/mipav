@@ -70,11 +70,18 @@ public class PlugInHeadlessDrosophilaStandardColumnRegistration implements Algor
    
    private boolean plugInCompleted = false;
    
-   public static final int _27POINTS = 27;
+   /*public static final int _27POINTS = 27;
    public static final int _75POINTS = 75;
-   public static final int _147POINTS = 147;
+   public static final int _147POINTS = 147;*/
    
-   private int numPoints;
+   
+   public static final String _27POINTS = "27";
+   public static final String _75POINTS = "75";
+   public static final String _147POINTS = "147";
+   public static final String _27APOINTS = "27A";
+   public static final String _75APOINTS = "75A";
+   
+   private String numPointsString;
    
    private float samplingRate;
    
@@ -97,8 +104,8 @@ public class PlugInHeadlessDrosophilaStandardColumnRegistration implements Algor
 
 
 	
-	public  void setNumPoints(int numPoints) {
-		this.numPoints = numPoints;
+	public  void setNumPointsString(String numPointsString) {
+		this.numPointsString = numPointsString;
 	}
 	
 	
@@ -313,7 +320,7 @@ public class PlugInHeadlessDrosophilaStandardColumnRegistration implements Algor
 	 * call algorithm
 	 */
 	public void callAlgorithm() {
-		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,null,flipX, flipY, flipZ,greenThreshold,subsamplingDistance,rigidOnly,doSWC,rvld,numPoints);
+		alg = new PlugInAlgorithmDrosophilaStandardColumnRegistration(neuronImage,pointsMap,allFilamentCoords,surfaceFile,samplingRate,cityBlockImage,pointsFile,null,flipX, flipY, flipZ,greenThreshold,subsamplingDistance,rigidOnly,doSWC,rvld,numPointsString);
 		alg.addListener(this);
 		alg.run();
 
