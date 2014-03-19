@@ -3363,10 +3363,10 @@ numCount++;
 }*/
 
 /*//Convert bvalue String array to bvalue int array from V3 par/rec file
-float flBvalueArray[][] = new float[Slices.size()/numSlices][numSlices];
+double flBvalueArray[][] = new double[Slices.size()/numSlices][numSlices];
 for (int i = 0; i < Slices.size()/numSlices; i++){          
 for (int j = 0; j <numSlices ; j++){
-    flBvalueArray[i][j] = Float.parseFloat(bvalues[i][j]);
+    flBvalueArray[i][j] = Double.parseDouble(bvalues[i][j]);
    
    
 }
