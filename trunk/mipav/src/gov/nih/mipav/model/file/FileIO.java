@@ -1640,9 +1640,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 siemenGrads = siemenGrads.trim();
                                 String grads = siemenGrads.replace('\\', '\t');
                                 final String[] arr2 = grads.split("\t");
-                                flGradientArray[i][0] = Float.valueOf(arr2[0]);
-                                flGradientArray[i][1] = Float.valueOf(arr2[1]);
-                                flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                                flGradientArray[i][0] = Double.valueOf(arr2[0]);
+                                flGradientArray[i][1] = Double.valueOf(arr2[1]);
+                                flGradientArray[i][2] = Double.valueOf(arr2[2]);
                             }*/
                         }
                         dtiparams.setbValues(flBvalueArray);
@@ -1689,9 +1689,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
                                 siemenGrads = siemenGrads.trim();
                                 String grads = siemenGrads.replace('\\', '\t');
                                 final String[] arr2 = grads.split("\t");
-                                flGradientArray[i][0] = Float.valueOf(arr2[0]);
-                                flGradientArray[i][1] = Float.valueOf(arr2[1]);
-                                flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                                flGradientArray[i][0] = Double.valueOf(arr2[0]);
+                                flGradientArray[i][1] = Double.valueOf(arr2[1]);
+                                flGradientArray[i][2] = Double.valueOf(arr2[2]);
                             }*/
                         }
                         
