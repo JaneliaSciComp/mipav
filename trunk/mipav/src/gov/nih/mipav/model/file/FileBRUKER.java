@@ -52,6 +52,14 @@ public class FileBRUKER extends FileBase {
     private String prefImageName = null;
     
     private int numVolumes = -1;
+    
+    private DTIParameters dtiParams = null;
+    
+    private double bMatrixVals[][] = null;
+    
+    private double gradients[][] = null;
+    
+    private double bValues[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -127,6 +135,7 @@ public class FileBRUKER extends FileBase {
      * files and sets other elements to <code>null</code>.
      */
     public void finalize() {
+    	int i;
         fileName = null;
         fileDir = null;
         fileInfo = null;
@@ -135,6 +144,20 @@ public class FileBRUKER extends FileBase {
         image = null;
         imgResols = null;
         LUT = null;
+        bValues = null;
+        if (gradients != null) {
+        	for (i = 0; i < gradients.length; i++) {
+        		gradients[i] = null;
+        	}
+        	gradients = null;
+        }
+        if (bMatrixVals != null) {
+        	for (i = 0; i < bMatrixVals.length; i++) {
+        		bMatrixVals[i] = null;
+        	}
+        	bMatrixVals = null;
+        }
+        dtiParams = null;
         try {
             super.finalize();
         } catch (Throwable er) { }
@@ -150,12 +173,20 @@ public class FileBRUKER extends FileBase {
     }
 
     /**
-     * Rreturns LUT if defined.
+     * returns LUT if defined.
      *
      * @return  the LUT if defined else it is null
      */
     public ModelLUT getModelLUT() {
         return LUT;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public DTIParameters getDTIParameters() {
+    	return dtiParams;
     }
     
     /**
@@ -169,6 +200,14 @@ public class FileBRUKER extends FileBase {
         boolean okay;
         int numVars;
         int numFound;
+        double bMat[][][] = null;
+        boolean bMatOkay;
+        int index0;
+        int index1;
+        int index2;
+        boolean gradientsOkay;
+        boolean bValuesOkay;
+        int i;
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
         lineString = readLine();
@@ -201,7 +240,8 @@ public class FileBRUKER extends FileBase {
 	                }
 	                else
 	                {
-	                	Preferences.debug("For PVM_DwBMat parseString[1] unexpectedly == " + parseString[1] + "\n", Preferences.DEBUG_FILEIO);
+	                	Preferences.debug("For PVM_DwBMat parseString[1] unexpectedly == " + parseString[1] + "\n", 
+	                			Preferences.DEBUG_FILEIO);
 	                	okay = false;
 	                }
 	                if (okay) {
@@ -210,7 +250,8 @@ public class FileBRUKER extends FileBase {
 		                    Preferences.debug("For PVM_DwBMat numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
 		                }
 		                else {
-		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n", Preferences.DEBUG_FILEIO);
+		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n",
+		                			Preferences.DEBUG_FILEIO);
 		                	okay = false;
 		                }
 	                }
@@ -239,7 +280,8 @@ public class FileBRUKER extends FileBase {
 	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
 	                    }
 	                    else {
-	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n", Preferences.DEBUG_FILEIO);
+	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
 		                	okay = false;	
 	                    }
 	                }
@@ -252,9 +294,253 @@ public class FileBRUKER extends FileBase {
             	if (okay) {
                     numVars = 9 * numVolumes;
             		numFound = 0;
-            		
-            	}
+            		bMat = new double[numVolumes][3][3];
+            		index0 = 0;
+            		index1 = 0;
+            		index2 = 0;
+            		bMatOkay = true;
+            		while ((numFound < numVars) && (lineString != null) && bMatOkay) {
+            			lineString = readLine();
+            			if (lineString != null) {
+            			    parseString = parse(lineString);
+            			    for (i = 0; i < parseString.length && bMatOkay; i++) {
+            			    	try {
+            			    	    bMat[index0][index1][index2] = Double.valueOf(parseString[i]);
+            			    	}
+            			    	catch(NumberFormatException nfe) {
+                                    Preferences.debug("bMat[" + index0 + "][" + index1 + "][" + index2 + "] could not be read.",
+                                    		Preferences.DEBUG_FILEIO);
+                                    bMatOkay = false;
+                                }
+            			    	if (bMatOkay) {
+            			    		numFound++;
+            			    		if (index2 < 2) {
+            			    			index2++;
+            			    		}
+            			    		else if (index1 < 2) {
+            			    			index2 = 0;
+            			    			index1++;
+            			    		}
+            			    		else {
+            			    			index2 = 0;
+            			    			index1 = 0;
+            			    			index0++;
+            			    		}
+            			    	}
+            			    }
+            			} // if (lineString != null)
+            			else {
+            				Preferences.debug("For PVM_DwBMat lineString == null while numFound == " + numFound + 
+            						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+            				bMatOkay = false;
+            			}
+            		} // while ((numFound < numVars) && (lineString != null) && bMatOkay)
+            		if (numFound == numVars) {
+            			for (i = 0; i < numVolumes && bMatOkay; i++) {
+            			    if (bMat[i][0][1] != bMat[i][1][0]) {
+            			    	Preferences.debug("bMat[" + i + "][0][1] = " + bMat[i][0][1] + " but bMat["+i+"][1][0] = " +
+            			                           bMat[i][1][0] + "\n", Preferences.DEBUG_FILEIO);
+            			    	bMatOkay = false;
+            			    }
+            			    if (bMat[i][0][2] != bMat[i][2][0]) {
+            			    	Preferences.debug("bMat[" + i + "][0][2] = " + bMat[i][0][2] + " but bMat["+i+"][2][0] = " +
+            			                           bMat[i][2][0] + "\n", Preferences.DEBUG_FILEIO);
+            			    	bMatOkay = false;
+            			    }
+            			    if (bMat[i][1][2] != bMat[i][2][1]) {
+            			    	Preferences.debug("bMat[" + i + "][1][2] = " + bMat[i][1][2] + " but bMat["+i+"][2][1] = " +
+            			                           bMat[i][2][1] + "\n", Preferences.DEBUG_FILEIO);
+            			    	bMatOkay = false;
+            			    }
+            			} // for (i = 0; i < numVolumes && bMatOkay; i++)
+            			if (bMatOkay) {
+            				if (dtiParams == null) {
+            					dtiParams = new DTIParameters(numVolumes);
+            				}
+            				bMatrixVals = new double[numVolumes][6];
+            				for (i = 0; i < numVolumes; i++) {
+            					bMatrixVals[i][0] = bMat[i][0][0];
+            					bMatrixVals[i][1] = bMat[i][0][1];
+            					bMatrixVals[i][2] = bMat[i][0][2];
+            					bMatrixVals[i][3] = bMat[i][1][1];
+            					bMatrixVals[i][4] = bMat[i][1][2];
+            					bMatrixVals[i][5] = bMat[i][2][2];
+            			    }
+            				dtiParams.setbMatrixVals(bMatrixVals);
+            				Preferences.debug("Just did dtiParams.setbMatrixVals(bMatrixVals)\n", Preferences.DEBUG_FILEIO);
+            			} // if (bMatOkay)
+            		} // if (numFound == numVars)
+            	} // if (okay)
             } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat"))
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradVec")) {
+            	okay = true;
+            	if (parseString.length == 5) {
+	                if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwGradVec parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	Preferences.debug("For PVM_DwGradVec parseString[1] unexpectedly == " + parseString[1] + "\n",
+	                			Preferences.DEBUG_FILEIO);
+	                	okay = false;
+	                }
+	                if (okay) {
+		                if (parseString[2].endsWith(",")) {
+		                    numVolumes = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+		                    Preferences.debug("For PVM_DwGradVec numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwGradVec parseString[2] unexpectedly == " + parseString[2] + "\n",
+		                			Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }
+	                }
+	                if (okay) {
+	                	if (parseString[3].equals("3")) {
+		                    Preferences.debug("For PVM_DwGradVec parseString[3] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+		                }
+		                else {
+		                	Preferences.debug("For PVM_DwGradVec parseString[3] unexpectedly == " + parseString[3] + "\n",
+		                			          Preferences.DEBUG_FILEIO);
+		                	okay = false;
+		                }	
+	                }
+	                if (okay) {
+	                    if (parseString[4].equals(")")) {
+	                        Preferences.debug("For PVM_DwGradVec parseString[4] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwGradVec parseString[4] unexpectedly == " + parseString[4] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+	                }
+            	}
+            	else {
+            		Preferences.debug("For PVM_DwGradVec parseString.length unexpectedly == " + parseString.length + "\n",
+            				          Preferences.DEBUG_FILEIO);
+            		okay = false;
+            	}
+            	if (okay) {
+                    numVars = 3 * numVolumes;
+            		numFound = 0;
+            		gradients = new double[numVolumes][3];
+            		index0 = 0;
+            		index1 = 0;
+            		gradientsOkay = true;
+            		while ((numFound < numVars) && (lineString != null) && gradientsOkay) {
+            			lineString = readLine();
+            			if (lineString != null) {
+            			    parseString = parse(lineString);
+            			    for (i = 0; i < parseString.length && gradientsOkay; i++) {
+            			    	try {
+            			    	    gradients[index0][index1] = Double.valueOf(parseString[i]);
+            			    	}
+            			    	catch(NumberFormatException nfe) {
+                                    Preferences.debug("gradients[" + index0 + "][" + index1 + "] could not be read.",
+                                    		Preferences.DEBUG_FILEIO);
+                                    gradientsOkay = false;
+                                }
+            			    	if (gradientsOkay) {
+            			    		numFound++;
+            			    		if (index1 < 2) {
+            			    			index1++;
+            			    		}
+            			    		else {
+            			    			index1 = 0;
+            			    			index0++;
+            			    		}
+            			    	}
+            			    }
+            			} // if (lineString != null)
+            			else {
+            				Preferences.debug("For PVM_DwGradVec lineString == null while numFound == " + numFound + 
+            						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+            				gradientsOkay = false;
+            			}
+            		} // while ((numFound < numVars) && (lineString != null) && gradientsOkay)
+            		if (numFound == numVars) {
+            			if (gradientsOkay) {
+            				if (dtiParams == null) {
+            					dtiParams = new DTIParameters(numVolumes);
+            				}
+            				dtiParams.setGradients(gradients);
+            				Preferences.debug("Just did dtiParams.setGradients(gradients)\n", Preferences.DEBUG_FILEIO);
+            			} // if (gradientsOkay)
+            		} // if (numFound == numVars)
+            	} // if (okay)
+            } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradVec"))
+            else if (parseString[0].equalsIgnoreCase("##$PVM_DwEffBval")) {
+            	okay = true;
+            	if (parseString.length == 4) {
+	                if (parseString[1].equals("(")) {
+	                	Preferences.debug("For PVM_DwEffBval parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+	                }
+	                else
+	                {
+	                	Preferences.debug("For PVM_DwEffBval parseString[1] unexpectedly == " + parseString[1] + "\n",
+	                			Preferences.DEBUG_FILEIO);
+	                	okay = false;
+	                }
+	                if (okay) {
+		                numVolumes = Integer.valueOf(parseString[2]);
+		                Preferences.debug("For PVM_DwEffBval numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+	                }
+	                if (okay) {
+	                    if (parseString[3].equals(")")) {
+	                        Preferences.debug("For PVM_DwEffBval parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+	                    }
+	                    else {
+	                    	Preferences.debug("For PVM_DwEffBval parseString[3] unexpectedly == " + parseString[3] + "\n",
+	                    			Preferences.DEBUG_FILEIO);
+		                	okay = false;	
+	                    }
+	                }
+            	}
+            	else {
+            		Preferences.debug("For PVM_DwEffBval parseString.length unexpectedly == " + parseString.length + "\n",
+            				          Preferences.DEBUG_FILEIO);
+            		okay = false;
+            	}
+            	if (okay) {
+            		numFound = 0;
+            		bValues = new double[numVolumes];
+            		bValuesOkay = true;
+            		while ((numFound < numVolumes) && (lineString != null) && bValuesOkay) {
+            			lineString = readLine();
+            			if (lineString != null) {
+            			    parseString = parse(lineString);
+            			    for (i = 0; i < parseString.length && bValuesOkay; i++) {
+            			    	try {
+            			    	    bValues[numFound] = Double.valueOf(parseString[i]);
+            			    	}
+            			    	catch(NumberFormatException nfe) {
+                                    Preferences.debug("bValues[" + numFound + "] could not be read.",
+                                    		Preferences.DEBUG_FILEIO);
+                                    bValuesOkay = false;
+                                }
+            			    	if (bValuesOkay) {
+            			    		numFound++;
+            			    	}
+            			    }
+            			} // if (lineString != null)
+            			else {
+            				Preferences.debug("For PVM_DwEffBval lineString == null while numFound == " + numFound + 
+            						           " and numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+            				gradientsOkay = false;
+            			}
+            		} // while ((numFound < numVOlumes) && (lineString != null) && bValuesOkay)
+            		if (numFound == numVolumes) {
+            			if (bValuesOkay) {
+            				if (dtiParams == null) {
+            					dtiParams = new DTIParameters(numVolumes);
+            				}
+            				dtiParams.setbValues(bValues);
+            				Preferences.debug("Just did dtiParams.setbValues(bValues)\n", Preferences.DEBUG_FILEIO);
+            			} // if (bValuesOkay)
+            		} // if (numFound == numVolumes)
+            	} // if (okay)
+            } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwEffBval"))
 
             lineString = readLine();
         } // while (lineString != null)
