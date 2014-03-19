@@ -6814,6 +6814,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
         File directoryFile;
         String workingDirectory; // refers to loaction of 2dseq, d3proc, and reco file
         String parentDirectoryName;
+        DTIParameters dtiParams = null;
 
         try {
             fileName = "d3proc";
@@ -6878,6 +6879,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
             final File methodFile = new File(imageFile.getFileDir() + File.separator + "method");
             if (methodFile.exists()) {
                 imageFile.readMethod();
+                dtiParams = imageFile.getDTIParameters();
             }
 
         } catch (final IOException error) {
@@ -6938,6 +6940,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         imageFile.finalize();
         imageFile = null;
+        if (dtiParams != null) {
+        	image.setDTIParameters(dtiParams);
+        }
         return image;
     }
 
