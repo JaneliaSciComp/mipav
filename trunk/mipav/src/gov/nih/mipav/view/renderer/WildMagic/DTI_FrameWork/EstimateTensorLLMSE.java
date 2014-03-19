@@ -1153,7 +1153,7 @@ public class EstimateTensorLLMSE {
 				failed++;
 			}
 			//			float [][][][]DWdata, 
-			//			float []bvalues, float [][]grads, boolean [][][]mask
+			//			double []bvalues, double [][]grads, boolean [][][]mask
 		}
 		if(failed==0) {
 			System.out.println("jist.plugins"+"\t"+"Random Testing Passed.");
