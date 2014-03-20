@@ -27,9 +27,8 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
 import Jama.Matrix;
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.GMatrixd;
 import WildMagic.LibFoundation.Mathematics.Vector3d;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
 import apps.EstimateSNR;
 import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
@@ -74,7 +73,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterfac
     private float m_fMeanNoise;
 
     /** General matrix storing BMatrix values. */
-    private GMatrixf m_kBMatrix = null;
+    private GMatrixd m_kBMatrix = null;
 
     /** List of file names for the Diffusion Weighted Images, from the .path file. */
     private String[][] m_aakDWIList = null;
@@ -120,7 +119,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterfac
      */
     public AlgorithmDWI2DTI(final ModelImage kMaskImage, final boolean bDisplayB0, final int iSlices, final int iDimX,
             final int iDimY, final int iBOrig, final int iWeights, final float fMeanNoise, final String[][] aakDWIList,
-            final int[] aiMatrixEntries, final GMatrixf kBMatrix, final String kRawFormat) {
+            final int[] aiMatrixEntries, final GMatrixd kBMatrix, final String kRawFormat) {
         m_kMaskImage = kMaskImage;
         m_iSlices = iSlices;
         m_iDimX = iDimX;
@@ -152,7 +151,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterfac
 		double[] bvalues = dtiparams.getbValues();
 		double[][] grads = dtiparams.getGradients();
 		double[][] bMatrix = dtiparams.getbMatrixVals();
-		m_kBMatrix = new GMatrixf( dimDW, 7 );
+		m_kBMatrix = new GMatrixd( dimDW, 7 );
 
 		if ( grads != null )
 		{
@@ -171,21 +170,21 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterfac
 		{
 			if ( (bvalues != null) && (grads != null) )
 			{
-				m_kBMatrix.Set(i, 0, (float)(bvalues[i] * grads[i][0] * grads[i][0]));
-				m_kBMatrix.Set(i, 1, (float)(bvalues[i] * grads[i][0] * grads[i][1] * 2));
-				m_kBMatrix.Set(i, 2, (float)(bvalues[i] * grads[i][0] * grads[i][2] * 2));
-				m_kBMatrix.Set(i, 3, (float)(bvalues[i] * grads[i][1] * grads[i][1]));
-				m_kBMatrix.Set(i, 4, (float)(bvalues[i] * grads[i][1] * grads[i][2] * 2));
-				m_kBMatrix.Set(i, 5, (float)(bvalues[i] * grads[i][2] * grads[i][2]));
+				m_kBMatrix.Set(i, 0, bvalues[i] * grads[i][0] * grads[i][0]);
+				m_kBMatrix.Set(i, 1, bvalues[i] * grads[i][0] * grads[i][1] * 2);
+				m_kBMatrix.Set(i, 2, bvalues[i] * grads[i][0] * grads[i][2] * 2);
+				m_kBMatrix.Set(i, 3, bvalues[i] * grads[i][1] * grads[i][1]);
+				m_kBMatrix.Set(i, 4, bvalues[i] * grads[i][1] * grads[i][2] * 2);
+				m_kBMatrix.Set(i, 5, bvalues[i] * grads[i][2] * grads[i][2]);
 				m_kBMatrix.Set(i, 6, 1);
 			}
 			else if ( bMatrix != null )
 			{
 				for ( int j = 0; j < 6; j++ )
 				{
-					m_kBMatrix.Set(i, j, (float)bMatrix[i][j]);
+					m_kBMatrix.Set(i, j, bMatrix[i][j]);
 				}
-				m_kBMatrix.Set(i, 6, 1);				
+				m_kBMatrix.Set(i, 6, 1.0);				
 			}
 			else
 			{
