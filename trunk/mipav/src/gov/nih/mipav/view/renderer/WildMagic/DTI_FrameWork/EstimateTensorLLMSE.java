@@ -17,9 +17,7 @@ import inverters.ThreeTensorInversion;
 import inverters.TwoTensorInversion;
 import inverters.WeightedLinearDT_Inversion;
 import Jama.Matrix;
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
-import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.GMatrixd;
 import apps.EstimateSNR;
 
 public class EstimateTensorLLMSE {
@@ -278,7 +276,7 @@ public class EstimateTensorLLMSE {
 	}
 	
 
-	public static ModelImage estimate(ModelImage dwiImage, ModelImage mask, GMatrixf matrix, boolean usePartialEstimates) {
+	public static ModelImage estimate(ModelImage dwiImage, ModelImage mask, GMatrixd matrix, boolean usePartialEstimates) {
 
 
         int iDimX =   dwiImage.getExtents().length > 0 ? dwiImage.getExtents()[0] : 1;
@@ -1240,7 +1238,7 @@ public class EstimateTensorLLMSE {
 		return image;
 	}
 	
-	private static GMatrixf getMatrix( DTIParameters dtiparams )
+	private static GMatrixd getMatrix( DTIParameters dtiparams )
 	{
 		if ( dtiparams.getbMatrixVals() == null )
 		{
@@ -1248,12 +1246,12 @@ public class EstimateTensorLLMSE {
 		}
 
 		double[][] bMatrix = dtiparams.getbMatrixVals();
-		GMatrixf gMatrix = new GMatrixf( bMatrix.length, 7 );
+		GMatrixd gMatrix = new GMatrixd( bMatrix.length, 7 );
 		for ( int i = 0; i < bMatrix.length; i++ )
 		{
 			for ( int j = 0; j < 6; j++ )
 			{
-				gMatrix.Set(i, j, (float)bMatrix[i][j]);
+				gMatrix.Set(i, j, bMatrix[i][j]);
 			}
 			gMatrix.Set(i, 6, 1);	
 		}
