@@ -776,7 +776,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 			{
 				System.err.println( stringFor_errorCode(errcode[0]) );
 			}
-			saveImage(output, i, (i == depth-1));
+			saveImage(output, time, i, (i == depth-1));
 
 			clReleaseMemObject(inputBuffer);
 		}

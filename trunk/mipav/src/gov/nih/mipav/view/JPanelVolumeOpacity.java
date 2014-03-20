@@ -1460,9 +1460,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 	{
 		if ( gradMagRescale_A == null )
 		{
-			String kImageName = ModelImage.makeImageName(imageA.getFileInfo(0).getFileName(), "");
-			String dir = imageA.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-			ModelImage gradMag_A = VolumeImage.getGradientMagnitude( imageA, 0, dir );
+			ModelImage gradMag_A = VolumeImage.getGradientMagnitude( imageA, 0 );
 			if ( gradMag_A != null )
 			{
 				/** Scale the intensity range to 1024. */
@@ -1489,9 +1487,7 @@ public class JPanelVolumeOpacity extends JPanel implements ActionListener, Chang
 		
 		if ( (imageB != null) && (gradMagRescale_B == null) )
 		{
-			String kImageName = ModelImage.makeImageName(imageB.getFileInfo(0).getFileName(), "");
-			String dir = imageB.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
-			ModelImage gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0, dir );
+			ModelImage gradMag_B = VolumeImage.getGradientMagnitude( imageB, 0 );
 			if ( gradMag_B != null )
 			{
 				/** Scale the intensity range to 1024. */

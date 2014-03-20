@@ -524,7 +524,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 	 */
 	@Override
 	public void display(GLAutoDrawable arg0) {
-		MeasureTime();
 
 		if (m_kVolumeImageA == null) {
 			return;
@@ -549,6 +548,10 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 			dispose(arg0);
 			return;
 		}
+		
+		MeasureTime();
+		
+		
 		if (m_kDeleteList.size() > 0) {
 			for (int i = m_kDeleteList.size() - 1; i >= 0; i--) {
 				VolumeObject kObj = m_kDeleteList.remove(0);
@@ -579,18 +582,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 
 		// System.err.println( "fps: " + m_dFrameRate);
 
-		if (m_iUpdateNormals == 1) {
-			long time = nanoTime();
-			ModelImage kImage = m_kVolumeImageA.GetImage();
-			OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals(
-					kImage, CL.CL_DEVICE_TYPE_GPU);
-			oclNormals.run();
-			time = nanoTime() - time;
-			out.println("OCL GPU computation took: " + (time / 1000000) + "ms");
-			m_iUpdateNormals = -1;
-			ModelImage result = oclNormals.getDestImage();
-			m_kVolumeImageA.CopyNormalFiles(0, result);
-		}
 		if (m_bPlay4D) {
 			if (m_iAnimateCount++ > m_fAnimateRate) {
 				m_iAnimateCount = 0;
@@ -1413,18 +1404,6 @@ public class VolumeTriPlanarRenderBase extends GPURenderBase implements
 		char ucKey = e.getKeyChar();
 		super.keyPressed(e);
 		switch (ucKey) {
-		case '0':
-			m_iUpdateNormals = 0;
-			break;
-		case '1':
-			m_iUpdateNormals = 1;
-			break;
-		case '2':
-			m_iUpdateNormals = 2;
-			break;
-		case '3':
-			m_iUpdateNormals = 3;
-			break;
 		case 'z':
 			m_bDoClip = !m_bDoClip;
 			System.err.println("Clipping is " + m_bDoClip);
