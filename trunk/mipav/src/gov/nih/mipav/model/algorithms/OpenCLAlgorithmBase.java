@@ -276,12 +276,12 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		super.finalize();
 	}
 
-	public void saveImage(float[] data, int i, boolean calcMinMax )
+	public void saveImage(float[] data, int time, int zSlice, boolean calcMinMax )
 	{
 		if ( destImage == null )
 		{
 			try {
-				srcImage.importData(i* data.length, data, false);
+				srcImage.importData(zSlice * data.length, data, false);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -293,7 +293,42 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		else
 		{
 			try {
-				destImage.importData(i* data.length, data, false);
+				destImage.importData(zSlice * data.length, data, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if ( calcMinMax )
+			{
+				destImage.calcMinMax();
+			}
+		}
+	}
+
+	public void saveImage(float[] data, int time, boolean calcMinMax )
+	{
+		if ( destImage == null )
+		{
+			try {
+				srcImage.importData(time * data.length, data, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if ( calcMinMax )
+			{
+				srcImage.calcMinMax();
+			}
+		}
+		else
+		{
+			try {
+				if ( destImage.getNDims() == 3 )
+				{
+					destImage.importData(0, data, false);					
+				}
+				else
+				{
+					destImage.importData(time * data.length, data, false);
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -553,6 +588,11 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
      */
     public void setRed(boolean flag) {
         colorMask[1] = flag ? 1 : 0;
+    }
+    
+    public void setTime( int timeSlice )
+    {
+    	time = timeSlice;
     }
 
 	/**

@@ -437,7 +437,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 	 * 3D Implementation: Create the OpenCL Buffers, Kernel, and CommandQueue. 
 	 * Run the Kernel and save the results into a new image.
 	 */  
-	private void gradientMagnitude3D( int time )
+	public void gradientMagnitude3D( int time )
 	{
 		initCL(m_iDeviceType, null);
 
@@ -872,7 +872,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 			{
 				System.err.println( stringFor_errorCode(errcode[0]) );
 			}
-			saveImage(output, i, (i == depth-1) );
+			saveImage(output, time, i, (i == depth-1) );
 
 			clReleaseMemObject(inputBuffer);
 		}
@@ -884,7 +884,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 	 * 3D Implementation: Create the OpenCL Buffers, Kernel, and CommandQueue. 
 	 * Run the Kernel and save the results into a new image.
 	 */  
-	private void gradientMagnitudeSep3D( int time )
+	public void gradientMagnitudeSep3D( int time )
 	{
 		initCL(m_iDeviceType, null);				
 		int nBuffers = 5;
@@ -1043,6 +1043,8 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		}
 		saveImage(output, time, true );
 
+		input = null;
+		output = null;
 		clReleaseMemObject(inputBuffer);
 	}
 

@@ -105,7 +105,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Sp
     protected boolean m_bSurfaceUpdate = false;
     /** Set to true when the surface mask should be recalculated. */
     protected boolean m_bSurfaceMaskUpdate = false;
-    protected int m_iUpdateNormals = -1;
     protected boolean m_bExtract = false;
     
     protected boolean m_bDoClip = true;

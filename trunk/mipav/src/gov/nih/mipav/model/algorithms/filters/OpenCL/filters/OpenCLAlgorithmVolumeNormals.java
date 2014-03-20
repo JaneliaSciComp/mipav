@@ -113,7 +113,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 
 		float[] input = new float[ elementCount ];
 		try {
-			srcImage.exportData( 0, input.length, input );
+			srcImage.exportData( time * input.length, input.length, input );
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -211,22 +211,23 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 
-
+		int sliceSize = width * height * color;
+		int imageSize = width * height * depth * color;
 		float[] input = new float[ elementCount ];
 		for ( int i = 0; i < depth; i++ )
 		{
 			try {
 				if ( i < (depth - 2) )
 				{
-					srcImage.exportData( i * (width * height * color), input.length, input );
+					srcImage.exportData( time * imageSize + i * sliceSize, input.length, input );
 				}
 				else if ( i < (depth - 1) )
 				{
-					srcImage.exportData( (i-1) * (width * height * color), input.length, input );
+					srcImage.exportData( time * imageSize + (i-1) * sliceSize, input.length, input );
 				}
 				else
 				{
-					srcImage.exportData( (i-2) * (width * height * color), input.length, input );
+					srcImage.exportData( time * imageSize + (i-2) * sliceSize, input.length, input );
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -262,7 +263,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 			{
 				System.err.println( "clEnqueueReadBuffer " + stringFor_errorCode(errcode[0]) );
 			}
-			saveImage(output, i, (i == depth-1) );
+			saveImage(output, time, i, (i == depth-1) );
 
 			clReleaseMemObject(inputBuffer);
 		}
