@@ -7,7 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.GMatrixd;
 
 public class TestingFileUtil {
     /**
@@ -52,7 +52,7 @@ public class TestingFileUtil {
      * @param matrixEntries
      * @return
      */
-    public static GMatrixf readDTIBMatrixFile( String bMatrixFileName, int nweights, int[] matrixEntries) {
+    public static GMatrixd readDTIBMatrixFile( String bMatrixFileName, int nweights, int[] matrixEntries) {
         File kFile = new File(bMatrixFileName);
         if ( !kFile.exists() || !kFile.canRead() )
         {
@@ -68,7 +68,7 @@ public class TestingFileUtil {
             BufferedReader in = new BufferedReader(new FileReader(kFile));
             String str;
             
-            GMatrixf bMatrix = new GMatrixf( nweights, 6 + 1 );
+            GMatrixd bMatrix = new GMatrixd( nweights, 6 + 1 );
             
             String[] kBMatrixString = new String[nweights];
             int nb = 0;
@@ -97,10 +97,10 @@ public class TestingFileUtil {
                 java.util.StringTokenizer st = new java.util.StringTokenizer(str);
                 for ( int iCol = 0; iCol < 6; iCol++ )
                 {
-                    float fValue = Float.valueOf(st.nextToken()).floatValue();
-                    bMatrix.Set( iRow, iCol, fValue );
+                    double dValue = Double.valueOf(st.nextToken()).doubleValue();
+                    bMatrix.Set( iRow, iCol, dValue );
                 }
-                bMatrix.Set( iRow, 6, 1f );
+                bMatrix.Set( iRow, 6, 1.0 );
             } 
             in.close();
             return bMatrix;
