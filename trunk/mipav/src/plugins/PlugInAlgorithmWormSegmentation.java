@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -4267,8 +4268,14 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
             int nVOI = VOIs.size();
 
             for (int i = 0; i < nVOI; i++) {
-            	FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, image);
-            	fileVOI.writeXML(VOIs.VOIAt(i), true, true);
+                if (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) {
+                	FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, image);
+                	fileVOI.writeXML(VOIs.VOIAt(i), true, true);
+                }
+                else {
+                    FileVOI fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".lbl", voiDir, image);
+                    fileVOI.writeAnnotationInVoiAsXML(VOIs.VOIAt(i).getName(),true);             	
+                }
             }
 
         } catch (final IOException error) {
@@ -4293,15 +4300,6 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     		marker.setColor( Color.yellow );
     		marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
     		image.registerVOI(marker);
-    		
-//    		int colorID = 0;
-//    		VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + i, VOI.ANNOTATION, -1.0f);
-//    		VOIText textVOI = new VOIText( );
-//    		textVOI.add( left_right_markers.elementAt(i) );
-//    		textVOI.add( Vector3f.add( new Vector3f(1,1,1), left_right_markers.elementAt(i)) );
-//    		textVOI.setText("Seed_"+i);
-//    		newTextVOI.getCurves().add(textVOI);
-//    		image.registerVOI(newTextVOI);
     	}
 		String voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
         File voiFileDir = new File(voiDir);
@@ -4326,6 +4324,42 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
             voiFileDir.mkdir();
         }
     	saveAllVOIsTo( voiDir, image );
+    	
+    	for ( int i = 0; i < left_right_markers.size(); i++ )
+    	{
+    		Vector3f pt = left_right_markers.elementAt(i);   
+    		int colorID = 0;
+    		VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + i, VOI.ANNOTATION, -1.0f);
+    		VOIText textVOI = new VOIText( );
+    		textVOI.add( pt );
+    		textVOI.add( Vector3f.add( new Vector3f(2,0,0), pt) );
+    		textVOI.setText("LR_"+i);
+    		newTextVOI.getCurves().add(textVOI);
+    		image.registerVOI(newTextVOI);
+    	}
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator;
+        voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) { // do nothing
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) { // voiFileDir.delete();
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+		voiDir = image.getImageDirectory() + JDialogBase.makeImageName( image.getImageName(), "") + File.separator +
+    			"annotated_left_right_markers" + File.separator;
+        voiFileDir = new File(voiDir);
+        if (voiFileDir.exists() && voiFileDir.isDirectory()) {
+        	String[] list = voiFileDir.list();
+        	for ( int i = 0; i < list.length; i++ )
+        	{
+//        		System.err.println( list[i] );
+        		File lrFile = new File( voiDir + list[i] );
+        		lrFile.delete();
+        	}
+        } else if (voiFileDir.exists() && !voiFileDir.isDirectory()) {
+        } else { // voiFileDir does not exist
+            voiFileDir.mkdir();
+        }
+    	saveAllVOIsTo( voiDir, image );
     }
 
 
@@ -4335,7 +4369,7 @@ public class PlugInAlgorithmWormSegmentation extends PlugInAlgorithmWormStraight
     	int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
     	int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
     	int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
-    	ModelImage output2D = new ModelImage( ModelStorageBase.ARGB_FLOAT, new int[]{dimX,dimY}, JDialogBase.makeImageName( image.getImageName(), "_mp.tif") );
+    	ModelImage output2D = new ModelImage( ModelStorageBase.ARGB, new int[]{dimX,dimY}, JDialogBase.makeImageName( image.getImageName(), "_mp.tif") );
     	image.calcMinMax();
     	float min = (float) image.getMin();
     	float max = (float) image.getMax();
