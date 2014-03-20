@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Test;
 
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.GMatrixd;
 
 
 public class AlgorithmDWI2DTITest extends TestCase{
@@ -26,7 +26,7 @@ public class AlgorithmDWI2DTITest extends TestCase{
     private int nweights;
     private int xDim;
     private int yDim;
-    private GMatrixf BMatrix;
+    private GMatrixd BMatrix;
     private float[] dtiData;
     /**
      * The number of different B matrix rows.
