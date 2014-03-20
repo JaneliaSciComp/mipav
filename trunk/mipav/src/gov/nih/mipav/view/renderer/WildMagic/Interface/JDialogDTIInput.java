@@ -41,7 +41,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.GMatrixd;
 
 
 /**
@@ -117,7 +117,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
     private JTextField m_kDWIMaskPath;
 
     /** General matrix storing BMatrix values. */
-    private GMatrixf m_kBMatrix = null;
+    private GMatrixd m_kBMatrix = null;
 
     /** List of file names for the Diffusion Weighted Images, from the .path file. */
     private String[][] m_aakDWIList = null;
@@ -542,7 +542,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
             final BufferedReader in = new BufferedReader(new FileReader(kFile));
             String str;
 
-            m_kBMatrix = new GMatrixf(m_iWeights, 6 + 1);
+            m_kBMatrix = new GMatrixd(m_iWeights, 6 + 1);
 
             final String[] kBMatrixString = new String[m_iWeights];
             int nb = 0;
@@ -567,10 +567,10 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
 
                 final java.util.StringTokenizer st = new java.util.StringTokenizer(str);
                 for (int iCol = 0; iCol < 6; iCol++) {
-                    final float fValue = Float.valueOf(st.nextToken()).floatValue();
-                    m_kBMatrix.Set(iRow, iCol, fValue);
+                    final double dValue = Double.valueOf(st.nextToken()).doubleValue();
+                    m_kBMatrix.Set(iRow, iCol, dValue);
                 }
-                m_kBMatrix.Set(iRow, 6, 1f);
+                m_kBMatrix.Set(iRow, 6, 1.0);
             }
             in.close();
 
