@@ -153,12 +153,24 @@ public class PlugInDialogWormSegmentation extends JDialogStandalonePlugin implem
     			int fileCount = 0;
     			boolean fileExists = true;
     			while ( fileExists )
-    			{
-    	    		String fileName = baseFileDir + File.separator + baseFileNameText.getText() + "_" + fileCount++ + ".tif";
-    	            File voiFile = new File(fileName);
+    			{    	    	
+    				String fileName = baseFileNameText.getText() + "_" + fileCount++ + ".tif";
+    				File voiFile = new File(baseFileDir + File.separator + fileName);
     	            if ( voiFile.exists() )
     	            {
     	            	System.err.println( fileName );
+    	                FileIO fileIO = new FileIO();
+    	                if(wormImage != null) {
+    	                	wormImage.disposeLocal();
+    	                	wormImage = null;
+    	                }
+    	                wormImage = fileIO.readImage(fileName, baseFileDir + File.separator, false, null);  
+    					PlugInAlgorithmWormSegmentation alg = new PlugInAlgorithmWormSegmentation(wormImage);
+    					alg.setOutputLattice( lattice.isSelected() );
+    					alg.setOutputLeftRight( leftRight.isSelected() );
+    					alg.setOutputHead( headSegmentation.isSelected() );
+    					alg.setOutputMaxIntensityProjection( maximumIntensityProjection.isSelected() );
+    					alg.run();
     	            }    				
     	            else
     	            {
