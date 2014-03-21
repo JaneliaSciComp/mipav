@@ -3,62 +3,62 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
     import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMosaicToSlices;
-    import gov.nih.mipav.model.file.DTIParameters;
+import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
-    import gov.nih.mipav.model.file.FileIO;
-    import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoNIFTI;
-    import gov.nih.mipav.model.file.FileInfoPARREC;
-    import gov.nih.mipav.model.structures.ModelImage;
-
-    import gov.nih.mipav.view.MipavUtil;
-    import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.model.file.FileInfoPARREC;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewOpenFileUI;
-    import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.ViewUserInterface;
 
     import java.awt.Color;
-    import java.awt.Dimension;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
-    import java.awt.GridBagConstraints;
-    import java.awt.GridBagLayout;
-    import java.awt.GridLayout;
-    import java.awt.Insets;
-    import java.awt.event.ActionEvent;
-    import java.awt.event.ActionListener;
-    import java.awt.event.MouseEvent;
-    import java.io.File;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.io.EOFException;
+import java.io.File;
 import java.io.FileNotFoundException;
-    import java.io.FileOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-    import java.io.PrintStream;
-    import java.io.RandomAccessFile;
-    import java.text.DecimalFormat;
+import java.io.PrintStream;
+import java.io.RandomAccessFile;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-    import java.util.Vector;
+import java.util.Vector;
 
     import javax.swing.ButtonGroup;
-    import javax.swing.JButton;
-    import javax.swing.JCheckBox;
-    import javax.swing.JComboBox;
-    import javax.swing.JFileChooser;
-    import javax.swing.JLabel;
-    import javax.swing.JPanel;
-    import javax.swing.JRadioButton;
-    import javax.swing.JScrollPane;
-    import javax.swing.JTable;
-    import javax.swing.JTextArea;
-    import javax.swing.JTextField;
-    import javax.swing.ScrollPaneConstants;
-    import javax.swing.border.EtchedBorder;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
-    import javax.swing.border.TitledBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 
@@ -3281,16 +3281,33 @@ import javax.swing.table.DefaultTableModel;
         
         
         /**
-         * reads the bval/gradient file...both dti studio format and fsl format are accepted
+         * reads the bval/gradient file...dti studio format, BRUKER method, and fsl format are accepted
          * 
          * @param gradientFilePath
          * @return
          */
         public boolean readBVGradBMatfile(final String gradientFilePath) {
+        	String lineString = null;
+            String[] parseString;
+            boolean okay;
+            int numVars;
+            int numFound;
+            double bMat[][][] = null;
+            boolean bMatOkay;
+            int index0;
+            int index1;
+            int index2;
+            boolean gradientsOkay = false;
+            boolean bValuesOkay = false;
+            int i;
+            boolean foundEOF[] = new boolean[]{false};
+            double bMatrixVals[][] = null;
+            double gradients[][] = null;
+            double bValues[] = null;
                    
             if (srcTableModel.getRowCount()>0){
                 int rowCount = srcTableModel.getRowCount();
-                for (int i = 0; i < rowCount; i++) {
+                for (i = 0; i < rowCount; i++) {
                     int delRow = (rowCount-i)-1;
                     srcTableModel.removeRow(delRow);                             
                 }               
@@ -3301,20 +3318,308 @@ import javax.swing.table.DefaultTableModel;
                 final File file = new File(gradientFilePath);
                 textBvalGradFile.setText(gradientFilePath);
                 final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+                if (gradientFilePath.contains("method")) {
+                	raFile.seek(0);
+                	lineString = readLine(raFile, foundEOF);
 
-                String firstLine = raFile.readLine();
-                if (firstLine.contains(":")) {
-                    String line;
-                    int lineCount = 0;
-                    // counts number of lines in file
-                    while ( (line = raFile.readLine()) != null) {
-                        lineCount++;
-                    }
-                    numVolumes = m_kDWIImage.getExtents()[3];
+                    while (lineString != null) {
+                        parseString = parse(lineString);
 
-                    raFile.seek(0);
-                    
-                    // this is DTI Studio and MIPAV standard file format                   
+                        if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat")) {
+                        	okay = true;
+                        	if (parseString.length == 6) {
+            	                if (parseString[1].equals("(")) {
+            	                	Preferences.debug("For PVM_DwBMat parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+            	                }
+            	                else
+            	                {
+            	                	Preferences.debug("For PVM_DwBMat parseString[1] unexpectedly == " + parseString[1] + "\n", 
+            	                			Preferences.DEBUG_FILEIO);
+            	                	okay = false;
+            	                }
+            	                if (okay) {
+            		                if (parseString[2].endsWith(",")) {
+            		                    numVolumes = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+            		                    Preferences.debug("For PVM_DwBMat numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+            		                }
+            		                else {
+            		                	Preferences.debug("For PVM_DwBMat parseString[2] unexpectedly == " + parseString[2] + "\n",
+            		                			Preferences.DEBUG_FILEIO);
+            		                	okay = false;
+            		                }
+            	                }
+            	                if (okay) {
+            		                if (parseString[3].equals("3,")) {
+            		                    Preferences.debug("For PVM_DwBMat parseString[3] equals '3,', as expected\n", Preferences.DEBUG_FILEIO);			
+            		                }
+            		                else {
+            		                	Preferences.debug("For PVM_DwBMat parseString[3] unexpectedly == " + parseString[3] + "\n",
+            		                			          Preferences.DEBUG_FILEIO);
+            		                	okay = false;
+            		                }
+            	                }
+            	                if (okay) {
+            	                	if (parseString[4].equals("3")) {
+            		                    Preferences.debug("For PVM_DwBMat parseString[4] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+            		                }
+            		                else {
+            		                	Preferences.debug("For PVM_DwBMat parseString[4] unexpectedly == " + parseString[4] + "\n",
+            		                			          Preferences.DEBUG_FILEIO);
+            		                	okay = false;
+            		                }	
+            	                }
+            	                if (okay) {
+            	                    if (parseString[5].equals(")")) {
+            	                        Preferences.debug("For PVM_DwMat parseString[5] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+            	                    }
+            	                    else {
+            	                    	Preferences.debug("For PVM_DwBMat parseString[5] unexpectedly == " + parseString[5] + "\n",
+            	                    			Preferences.DEBUG_FILEIO);
+            		                	okay = false;	
+            	                    }
+            	                }
+                        	}
+                        	else {
+                        		Preferences.debug("For PVM_DwBMat parseString.length unexpectedly == " + parseString.length + "\n",
+                        				          Preferences.DEBUG_FILEIO);
+                        		okay = false;
+                        	}
+                        	if (okay) {
+                                numVars = 9 * numVolumes;
+                        		numFound = 0;
+                        		bMat = new double[numVolumes][3][3];
+                        		index0 = 0;
+                        		index1 = 0;
+                        		index2 = 0;
+                        		bMatOkay = true;
+                        		while ((numFound < numVars) && (lineString != null) && bMatOkay) {
+                        			lineString = readLine(raFile, foundEOF);
+                        			if (lineString != null) {
+                        			    parseString = parse(lineString);
+                        			    for (i = 0; i < parseString.length && bMatOkay; i++) {
+                        			    	try {
+                        			    	    bMat[index0][index1][index2] = Double.valueOf(parseString[i]);
+                        			    	}
+                        			    	catch(NumberFormatException nfe) {
+                                                Preferences.debug("bMat[" + index0 + "][" + index1 + "][" + index2 + "] could not be read.",
+                                                		Preferences.DEBUG_FILEIO);
+                                                bMatOkay = false;
+                                            }
+                        			    	if (bMatOkay) {
+                        			    		numFound++;
+                        			    		if (index2 < 2) {
+                        			    			index2++;
+                        			    		}
+                        			    		else if (index1 < 2) {
+                        			    			index2 = 0;
+                        			    			index1++;
+                        			    		}
+                        			    		else {
+                        			    			index2 = 0;
+                        			    			index1 = 0;
+                        			    			index0++;
+                        			    		}
+                        			    	}
+                        			    }
+                        			} // if (lineString != null)
+                        			else {
+                        				Preferences.debug("For PVM_DwBMat lineString == null while numFound == " + numFound + 
+                        						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+                        				bMatOkay = false;
+                        			}
+                        		} // while ((numFound < numVars) && (lineString != null) && bMatOkay)
+                        		if (numFound == numVars) {
+                        			for (i = 0; i < numVolumes && bMatOkay; i++) {
+                        			    if (bMat[i][0][1] != bMat[i][1][0]) {
+                        			    	Preferences.debug("bMat[" + i + "][0][1] = " + bMat[i][0][1] + " but bMat["+i+"][1][0] = " +
+                        			                           bMat[i][1][0] + "\n", Preferences.DEBUG_FILEIO);
+                        			    	bMatOkay = false;
+                        			    }
+                        			    if (bMat[i][0][2] != bMat[i][2][0]) {
+                        			    	Preferences.debug("bMat[" + i + "][0][2] = " + bMat[i][0][2] + " but bMat["+i+"][2][0] = " +
+                        			                           bMat[i][2][0] + "\n", Preferences.DEBUG_FILEIO);
+                        			    	bMatOkay = false;
+                        			    }
+                        			    if (bMat[i][1][2] != bMat[i][2][1]) {
+                        			    	Preferences.debug("bMat[" + i + "][1][2] = " + bMat[i][1][2] + " but bMat["+i+"][2][1] = " +
+                        			                           bMat[i][2][1] + "\n", Preferences.DEBUG_FILEIO);
+                        			    	bMatOkay = false;
+                        			    }
+                        			} // for (i = 0; i < numVolumes && bMatOkay; i++)
+                        			if (bMatOkay) {
+                        				bMatrixVals = new double[numVolumes][6];
+                        				for (i = 0; i < numVolumes; i++) {
+                        					bMatrixVals[i][0] = bMat[i][0][0];
+                        					bMatrixVals[i][1] = bMat[i][0][1];
+                        					bMatrixVals[i][2] = bMat[i][0][2];
+                        					bMatrixVals[i][3] = bMat[i][1][1];
+                        					bMatrixVals[i][4] = bMat[i][1][2];
+                        					bMatrixVals[i][5] = bMat[i][2][2];
+                        			    }
+                        			} // if (bMatOkay)
+                        		} // if (numFound == numVars)
+                        	} // if (okay)
+                        } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwBMat"))
+                        else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradVec")) {
+                        	okay = true;
+                        	if (parseString.length == 5) {
+            	                if (parseString[1].equals("(")) {
+            	                	Preferences.debug("For PVM_DwGradVec parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+            	                }
+            	                else
+            	                {
+            	                	Preferences.debug("For PVM_DwGradVec parseString[1] unexpectedly == " + parseString[1] + "\n",
+            	                			Preferences.DEBUG_FILEIO);
+            	                	okay = false;
+            	                }
+            	                if (okay) {
+            		                if (parseString[2].endsWith(",")) {
+            		                    numVolumes = Integer.valueOf(parseString[2].substring(0,parseString[2].length()-1));
+            		                    Preferences.debug("For PVM_DwGradVec numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+            		                }
+            		                else {
+            		                	Preferences.debug("For PVM_DwGradVec parseString[2] unexpectedly == " + parseString[2] + "\n",
+            		                			Preferences.DEBUG_FILEIO);
+            		                	okay = false;
+            		                }
+            	                }
+            	                if (okay) {
+            	                	if (parseString[3].equals("3")) {
+            		                    Preferences.debug("For PVM_DwGradVec parseString[3] equals 3, as expected\n", Preferences.DEBUG_FILEIO);			
+            		                }
+            		                else {
+            		                	Preferences.debug("For PVM_DwGradVec parseString[3] unexpectedly == " + parseString[3] + "\n",
+            		                			          Preferences.DEBUG_FILEIO);
+            		                	okay = false;
+            		                }	
+            	                }
+            	                if (okay) {
+            	                    if (parseString[4].equals(")")) {
+            	                        Preferences.debug("For PVM_DwGradVec parseString[4] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+            	                    }
+            	                    else {
+            	                    	Preferences.debug("For PVM_DwGradVec parseString[4] unexpectedly == " + parseString[4] + "\n",
+            	                    			Preferences.DEBUG_FILEIO);
+            		                	okay = false;	
+            	                    }
+            	                }
+                        	}
+                        	else {
+                        		Preferences.debug("For PVM_DwGradVec parseString.length unexpectedly == " + parseString.length + "\n",
+                        				          Preferences.DEBUG_FILEIO);
+                        		okay = false;
+                        	}
+                        	if (okay) {
+                                numVars = 3 * numVolumes;
+                        		numFound = 0;
+                        		gradients = new double[numVolumes][3];
+                        		index0 = 0;
+                        		index1 = 0;
+                        		gradientsOkay = true;
+                        		while ((numFound < numVars) && (lineString != null) && gradientsOkay) {
+                        			lineString = readLine(raFile, foundEOF);
+                        			if (lineString != null) {
+                        			    parseString = parse(lineString);
+                        			    for (i = 0; i < parseString.length && gradientsOkay; i++) {
+                        			    	try {
+                        			    	    gradients[index0][index1] = Double.valueOf(parseString[i]);
+                        			    	}
+                        			    	catch(NumberFormatException nfe) {
+                                                Preferences.debug("gradients[" + index0 + "][" + index1 + "] could not be read.",
+                                                		Preferences.DEBUG_FILEIO);
+                                                gradientsOkay = false;
+                                            }
+                        			    	if (gradientsOkay) {
+                        			    		numFound++;
+                        			    		if (index1 < 2) {
+                        			    			index1++;
+                        			    		}
+                        			    		else {
+                        			    			index1 = 0;
+                        			    			index0++;
+                        			    		}
+                        			    	}
+                        			    }
+                        			} // if (lineString != null)
+                        			else {
+                        				Preferences.debug("For PVM_DwGradVec lineString == null while numFound == " + numFound + 
+                        						           " and numVars = " + numVars + "\n", Preferences.DEBUG_FILEIO);
+                        				gradientsOkay = false;
+                        			}
+                        		} // while ((numFound < numVars) && (lineString != null) && gradientsOkay)
+                        		if (numFound < numVars) {
+                        			gradientsOkay = false;
+                        		}
+                        	} // if (okay)
+                        } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwGradVec"))
+                        else if (parseString[0].equalsIgnoreCase("##$PVM_DwEffBval")) {
+                        	okay = true;
+                        	if (parseString.length == 4) {
+            	                if (parseString[1].equals("(")) {
+            	                	Preferences.debug("For PVM_DwEffBval parseString[1] == '(' as expected\n", Preferences.DEBUG_FILEIO);
+            	                }
+            	                else
+            	                {
+            	                	Preferences.debug("For PVM_DwEffBval parseString[1] unexpectedly == " + parseString[1] + "\n",
+            	                			Preferences.DEBUG_FILEIO);
+            	                	okay = false;
+            	                }
+            	                if (okay) {
+            		                numVolumes = Integer.valueOf(parseString[2]);
+            		                Preferences.debug("For PVM_DwEffBval numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+            	                }
+            	                if (okay) {
+            	                    if (parseString[3].equals(")")) {
+            	                        Preferences.debug("For PVM_DwEffBval parseString[3] == ')' as expected\n", Preferences.DEBUG_FILEIO);	
+            	                    }
+            	                    else {
+            	                    	Preferences.debug("For PVM_DwEffBval parseString[3] unexpectedly == " + parseString[3] + "\n",
+            	                    			Preferences.DEBUG_FILEIO);
+            		                	okay = false;	
+            	                    }
+            	                }
+                        	}
+                        	else {
+                        		Preferences.debug("For PVM_DwEffBval parseString.length unexpectedly == " + parseString.length + "\n",
+                        				          Preferences.DEBUG_FILEIO);
+                        		okay = false;
+                        	}
+                        	if (okay) {
+                        		numFound = 0;
+                        		bValues = new double[numVolumes];
+                        		bValuesOkay = true;
+                        		while ((numFound < numVolumes) && (lineString != null) && bValuesOkay) {
+                        			lineString = readLine(raFile, foundEOF);
+                        			if (lineString != null) {
+                        			    parseString = parse(lineString);
+                        			    for (i = 0; i < parseString.length && bValuesOkay; i++) {
+                        			    	try {
+                        			    	    bValues[numFound] = Double.valueOf(parseString[i]);
+                        			    	}
+                        			    	catch(NumberFormatException nfe) {
+                                                Preferences.debug("bValues[" + numFound + "] could not be read.",
+                                                		Preferences.DEBUG_FILEIO);
+                                                bValuesOkay = false;
+                                            }
+                        			    	if (bValuesOkay) {
+                        			    		numFound++;
+                        			    	}
+                        			    }
+                        			} // if (lineString != null)
+                        			else {
+                        				Preferences.debug("For PVM_DwEffBval lineString == null while numFound == " + numFound + 
+                        						           " and numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
+                        				bValuesOkay = false;
+                        			}
+                        		} // while ((numFound < numVOlumes) && (lineString != null) && bValuesOkay)
+                        		if (numFound < numVolumes) {
+                        			bValuesOkay = false;
+                        		} // if (numFound < numVolumes)
+                        	} // if (okay)
+                        } // else if (parseString[0].equalsIgnoreCase("##$PVM_DwEffBval"))
+
+                        lineString = readLine(raFile, foundEOF);
+                    } // while (lineString != null)
                     for (int j = 0; j < numVolumes; j++) {
                         final Vector<String> rowData = new Vector<String>();
                         rowData.add("");
@@ -3324,389 +3629,524 @@ import javax.swing.table.DefaultTableModel;
                         rowData.add("");
                         srcTableModel.addRow(rowData);
                     }
-                    str = raFile.readLine();
-                    final String[] arrCheck = str.split(":");
-                    if(arrCheck.length ==2){
-                        final String gradCheck = arrCheck[1].trim();
-                        final String[]arr2check = gradCheck.split("\\s+");
-                        if(arr2check.length==6){
-                            //Change table indentifiers for bmatrix file
-                            isBmatFile = true;
-                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
-                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
-                        }
+                   
+                    if (bMatrixVals != null) {
+                    	//Change table indentifiers for bmatrix file
+                        isBmatFile = true;
+                        java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                        srcTableModel.setColumnIdentifiers(newColIdentifiers);  		
                     }
-
-                    raFile.seek(0);
-                    for (int i = 0; i < numVolumes; i++) {
+                   
+                    for (i = 0; i < numVolumes; i++) {
                         if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
-                            
-                            str = raFile.readLine();
-                            if (!str.equals("")) {
-                                final String[] arr = str.split(":");
-
-                                if (arr.length == 2) {
-                                    // Populate Volume column
-                                    srcTableModel.setValueAt(String.valueOf(i),i,0);
-                                    final String grads = arr[1].trim();
-                                    final String []arr2 = grads.split("\\s+");
-
-                                    if (arr2.length == 4){
-                                        // MIPAV Standard bval/grad text file format
-                                        srcTableModel.setValueAt(arr2[0], i, 1);
-                                        srcTableModel.setValueAt(arr2[1], i, 2);
-                                        srcTableModel.setValueAt(arr2[2], i, 3);
-                                        srcTableModel.setValueAt(arr2[3], i, 4);
-                                    }
-                                    else if (arr2.length == 3) {
-                                     // DTI Studio grad text file format
-                                        srcTableModel.setValueAt(arr2[0], i, 2);
-                                        srcTableModel.setValueAt(arr2[1], i, 3);
-                                        srcTableModel.setValueAt(arr2[2], i, 4); 
-                                        
-                                        if (dtiparams != null && dtiparams.getbValues() != null ){ 
-                                            srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
-
-                                        }
-                                        else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                             srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
-                                        }                                   
-                                    }
-                                    else if(arr2.length == 6){
-                                        //MIPAV Standard bmatrix text file format
-                                        srcTableModel.setValueAt(arr2[0], i, 1);
-                                        srcTableModel.setValueAt(arr2[1], i, 2);
-                                        srcTableModel.setValueAt(arr2[2], i, 3);
-                                        srcTableModel.setValueAt(arr2[3], i, 4);
-                                        srcTableModel.setValueAt(arr2[4], i, 5);
-                                        srcTableModel.setValueAt(arr2[5], i, 6);                                        
-                                    }
-                                }                               
-                            }
-                        }
-                    }
-
-                    
-
-                } else {
-                 // this is FSL, dcm2nii, and Miscellaneous  text file format 
-
-                    // String line;
-                    try{
-                    int decimalCount = 0;
-                    StringBuffer buffFirstLine = new StringBuffer(firstLine);
-                    int length = buffFirstLine.length();
-                    // count number of decimal points in first line
-                    for (int i = 0; i < length; i++) {
-                        char index = buffFirstLine.charAt(i);
-                        if (index == '.') {
-                            decimalCount++;
-                            
-                        }
-                    }
-                    int blineCount = 0;
-                    while (raFile.readLine() != null){
-                        blineCount++;
-                    }
-
-                    raFile.seek(0);
-                    //System.out.println("decimal count: " +decimalCount);
-
-                    if (decimalCount > 4 && decimalCount != 6 ) {
-                        raFile.seek(0);
-                        int lineCount = 0;
-                        while (raFile.readLine() != null){
-                            lineCount++;
-                        }
-                        raFile.seek(0);
-                        numVolumes = m_kDWIImage.getExtents()[3];                       
-
-                        
-                        for (int j = 0; j < numVolumes; j++) {
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(j),j,0);
-                        }
-
-                        final int numRows = srcTableModel.getRowCount();
-                        int start = 0;
-                        if(lineCount <5){
-                            for (int i = 0; i < numRows; i++) {
-                                if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
-                                    start = i;
-                                    break;
-                                }
-                            }
-    
-                            int k = start;
-                            String firstline = raFile.readLine();
-                            firstline = firstline.trim();
-                            String[] arr = firstline.split("\\s+");
-    
-                            for (final String element : arr) {
-                                if (k < numRows) {
-                                    srcTableModel.setValueAt(element, k, 2);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-    
-                            k = start;
-                            String secondLine = raFile.readLine();
-                            secondLine = secondLine.trim();
-                            arr = secondLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {
-                                    srcTableModel.setValueAt(element, k, 3);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-    
-                            k = start;
-                            String thirdlLine = raFile.readLine();
-                            thirdlLine = thirdlLine.trim();
-                            arr = thirdlLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {                                   
-                                    srcTableModel.setValueAt(element, k, 4);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }     
-                            if (lineCount == 4){
-                                // this is FSL (4 lines the length of numVolumes with gradients and bvalues)
-                                k = start;
-                                String fourthLine = raFile.readLine();
-                                fourthLine = fourthLine.trim();
-                                arr = fourthLine.split("\\s+");
-                                for (final String element : arr) {
-                                    if (k < numRows) {
-                                        srcTableModel.setValueAt(element, k, 1);
-                                        k = k + 1;
-                                    } else {
-                                        break;
-                                    }
-                                }
-                            }
-                            else if (lineCount == 3){
-                               //dcm2nii file text file format (3 lines the length of numVolumes with gradient values) 
-                                if (dtiparams != null && dtiparams.getbValues() != null ){
-                                    for (int i = 0; i < numVolumes; i++){
-                                        srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
-                                    }
-    
-                                }
-                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                    for (int i = 0; i < numVolumes; i++){
-                                         srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
-                                    }
-    
-                                }
-                                                      
-                            }
-                        }
-                        else if (lineCount == 6){
-                            isBmatFile = true;
-                            //6 lines the length of numVolumes with bmatrix values
-                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
-                            srcTableModel.setColumnIdentifiers(newColIdentifiers);
-                            int k = start;
-                            String firstline = raFile.readLine();
-                            firstline = firstline.trim();
-                            String[] arr = firstline.split("\\s+");
-    
-                            for (final String element : arr) {
-                                if (k < numRows) {
-                                    srcTableModel.setValueAt(element, k, 1);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }    
-                            k = start;
-                            String secondLine = raFile.readLine();
-                            secondLine = secondLine.trim();
-                            arr = secondLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {
-                                    srcTableModel.setValueAt(element, k, 2);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }    
-                            k = start;
-                            String thirdlLine = raFile.readLine();
-                            thirdlLine = thirdlLine.trim();
-                            arr = thirdlLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {                                   
-                                    srcTableModel.setValueAt(element, k, 3);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-                            k = start;
-                            String fourthLine = raFile.readLine();
-                            fourthLine = fourthLine.trim();
-                            arr = fourthLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {                                   
-                                    srcTableModel.setValueAt(element, k, 4);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-                            k = start;
-                            String fifthLine = raFile.readLine();
-                            fifthLine = fifthLine.trim();
-                            arr = fifthLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {                                   
-                                    srcTableModel.setValueAt(element, k, 5);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }
-                            k = start;
-                            String sixthLine = raFile.readLine();
-                            sixthLine = sixthLine.trim();
-                            arr = sixthLine.split("\\s+");
-                            for (final String element : arr) {
-                                if (k < numRows) {                                   
-                                    srcTableModel.setValueAt(element, k, 6);
-                                    k = k + 1;
-                                } else {
-                                    break;
-                                }
-                            }                                                      
-                        }
-                    }
-                    else if(decimalCount == 3 || decimalCount == 6 ){
-                        //Miscellaneous text file format- 3 gradients or 6 bmatrix values corresponding 
-                        //to one volume per line (without volume number)
-                        raFile.seek(0);
-                        numVolumes = m_kDWIImage.getExtents()[3];
-                        String firstLineFile = raFile.readLine();
-                        String [] arrfirstLine = firstLineFile.split("\\s+");
-
-                        for (int j = 0; j < numVolumes; j++) {
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(j),j,0);
-                        }
-                        
-                        if (arrfirstLine.length == 6){
-                            isBmatFile = true;
-                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
-                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
-                        }
-                        
-                        raFile.seek(0);
-                        for (int i = 0; i < numVolumes; i++){
-                            String grads = raFile.readLine();
-                            grads = grads.trim();
-                            String [] arrGrads = grads.split("\\s+");
-                            if(arrGrads.length == 3){
-                                //gradients
-                                srcTableModel.setValueAt(arrGrads[0], i, 2);
-                                srcTableModel.setValueAt(arrGrads[1], i, 3);
-                                srcTableModel.setValueAt(arrGrads[2], i, 4);
-                                
-                                if (dtiparams != null && dtiparams.getbValues() != null ){ 
-                                    srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);   
-                                }
-                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                     srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);   
-                                }                           
-                            }
-                            else if(arrGrads.length == 6){
-                                //bmatrix values
-                                srcTableModel.setValueAt(arrGrads[0], i, 1);
-                                srcTableModel.setValueAt(arrGrads[1], i, 2);
-                                srcTableModel.setValueAt(arrGrads[2], i, 3);
-                                srcTableModel.setValueAt(arrGrads[3], i, 4);
-                                srcTableModel.setValueAt(arrGrads[4], i, 5);
-                                srcTableModel.setValueAt(arrGrads[5], i, 6);                                     
-                            }
-                        }
-                                                
-                    }
-                    else if(decimalCount == 0){
-                        raFile.seek(0);
-                        numVolumes = m_kDWIImage.getExtents()[3];
-                        String firstLineFile = raFile.readLine();
-                        String [] arrfirstLine = firstLineFile.split("\\s+");
-
-                        for (int j = 0; j < numVolumes; j++) {
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(j),j,0);
-                        }
-                        if (arrfirstLine.length == 6){
-                            isBmatFile = true;
-                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
-                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
-                        }
-                        
-                        raFile.seek(0);
-                        for (int i = 0; i < numVolumes; i++){
-                            String grads = raFile.readLine();
-                            grads = grads.trim();
-                            String [] arrGrads = grads.split("\\s+");
-                                if(arrGrads.length == 6){
-                                 //FSL bmatrix values
-                                srcTableModel.setValueAt(arrGrads[0], i, 1);
-                                srcTableModel.setValueAt(arrGrads[1], i, 2);
-                                srcTableModel.setValueAt(arrGrads[2], i, 3);
-                                srcTableModel.setValueAt(arrGrads[0], i, 4);
-                                srcTableModel.setValueAt(arrGrads[1], i, 5);
-                                srcTableModel.setValueAt(arrGrads[2], i, 6);                                                       
-                                }                           
-                        }
-                        
-                    }
-                    }
-                    catch (Exception e){
-                        MipavUtil.displayError("Invalid Bval/Gradient Text File");
-                        
-                    }
-
-                }
+                        	srcTableModel.setValueAt(String.valueOf(i),i,0);
+                        	if (isBmatFile) {
+	                        	//MIPAV Standard bmatrix text file format
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][0]), i, 1);
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][1]), i, 2);
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][2]), i, 3);
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][3]), i, 4);
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][4]), i, 5);
+	                            srcTableModel.setValueAt(String.valueOf(bMatrixVals[i][5]), i, 6); 
+                        	} // if (isBMatFile)
+                        	else {
+                        		if (bValuesOkay) {
+                        		    srcTableModel.setValueAt(String.valueOf(bValues[i]), i , 1);	
+                        		}
+                        		if (gradientsOkay) {
+                        			srcTableModel.setValueAt(String.valueOf(gradients[i][0]), i, 2);
+                        			srcTableModel.setValueAt(String.valueOf(gradients[i][1]), i, 3);
+                        			srcTableModel.setValueAt(String.valueOf(gradients[i][2]), i, 4);
+                        		}
+                        	}
+                        } // if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")
+                    } // for (i = 0; i < numVolumes; i++)
+                } // if (gradientFilePath.contains("method"))
+                else { // gradientFilePath does not contain "method"
+	                String firstLine = raFile.readLine();
+	                if (firstLine.contains(":")) {
+	                    String line;
+	                    int lineCount = 0;
+	                    // counts number of lines in file
+	                    while ( (line = raFile.readLine()) != null) {
+	                        lineCount++;
+	                    }
+	                    numVolumes = m_kDWIImage.getExtents()[3];
+	
+	                    raFile.seek(0);
+	                    
+	                    // this is DTI Studio and MIPAV standard file format                   
+	                    for (int j = 0; j < numVolumes; j++) {
+	                        final Vector<String> rowData = new Vector<String>();
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        rowData.add("");
+	                        srcTableModel.addRow(rowData);
+	                    }
+	                    str = raFile.readLine();
+	                    final String[] arrCheck = str.split(":");
+	                    if(arrCheck.length ==2){
+	                        final String gradCheck = arrCheck[1].trim();
+	                        final String[]arr2check = gradCheck.split("\\s+");
+	                        if(arr2check.length==6){
+	                            //Change table indentifiers for bmatrix file
+	                            isBmatFile = true;
+	                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+	                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+	                        }
+	                    }
+	
+	                    raFile.seek(0);
+	                    for (i = 0; i < numVolumes; i++) {
+	                        if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+	                            
+	                            str = raFile.readLine();
+	                            if (!str.equals("")) {
+	                                final String[] arr = str.split(":");
+	
+	                                if (arr.length == 2) {
+	                                    // Populate Volume column
+	                                    srcTableModel.setValueAt(String.valueOf(i),i,0);
+	                                    final String grads = arr[1].trim();
+	                                    final String []arr2 = grads.split("\\s+");
+	
+	                                    if (arr2.length == 4){
+	                                        // MIPAV Standard bval/grad text file format
+	                                        srcTableModel.setValueAt(arr2[0], i, 1);
+	                                        srcTableModel.setValueAt(arr2[1], i, 2);
+	                                        srcTableModel.setValueAt(arr2[2], i, 3);
+	                                        srcTableModel.setValueAt(arr2[3], i, 4);
+	                                    }
+	                                    else if (arr2.length == 3) {
+	                                     // DTI Studio grad text file format
+	                                        srcTableModel.setValueAt(arr2[0], i, 2);
+	                                        srcTableModel.setValueAt(arr2[1], i, 3);
+	                                        srcTableModel.setValueAt(arr2[2], i, 4); 
+	                                        
+	                                        if (dtiparams != null && dtiparams.getbValues() != null ){ 
+	                                            srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+	
+	                                        }
+	                                        else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+	                                             srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+	                                        }                                   
+	                                    }
+	                                    else if(arr2.length == 6){
+	                                        //MIPAV Standard bmatrix text file format
+	                                        srcTableModel.setValueAt(arr2[0], i, 1);
+	                                        srcTableModel.setValueAt(arr2[1], i, 2);
+	                                        srcTableModel.setValueAt(arr2[2], i, 3);
+	                                        srcTableModel.setValueAt(arr2[3], i, 4);
+	                                        srcTableModel.setValueAt(arr2[4], i, 5);
+	                                        srcTableModel.setValueAt(arr2[5], i, 6);                                        
+	                                    }
+	                                }                               
+	                            }
+	                        }
+	                    }
+	
+	                    
+	
+	                } else {
+	                 // this is FSL, dcm2nii, and Miscellaneous  text file format 
+	
+	                    // String line;
+	                    try{
+	                    int decimalCount = 0;
+	                    StringBuffer buffFirstLine = new StringBuffer(firstLine);
+	                    int length = buffFirstLine.length();
+	                    // count number of decimal points in first line
+	                    for (i = 0; i < length; i++) {
+	                        char index = buffFirstLine.charAt(i);
+	                        if (index == '.') {
+	                            decimalCount++;
+	                            
+	                        }
+	                    }
+	                    int blineCount = 0;
+	                    while (raFile.readLine() != null){
+	                        blineCount++;
+	                    }
+	
+	                    raFile.seek(0);
+	                    //System.out.println("decimal count: " +decimalCount);
+	
+	                    if (decimalCount > 4 && decimalCount != 6 ) {
+	                        raFile.seek(0);
+	                        int lineCount = 0;
+	                        while (raFile.readLine() != null){
+	                            lineCount++;
+	                        }
+	                        raFile.seek(0);
+	                        numVolumes = m_kDWIImage.getExtents()[3];                       
+	
+	                        
+	                        for (int j = 0; j < numVolumes; j++) {
+	                            final Vector<String> rowData = new Vector<String>();
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            srcTableModel.addRow(rowData);
+	                            // Populate Volume column
+	                            srcTableModel.setValueAt(String.valueOf(j),j,0);
+	                        }
+	
+	                        final int numRows = srcTableModel.getRowCount();
+	                        int start = 0;
+	                        if(lineCount <5){
+	                            for (i = 0; i < numRows; i++) {
+	                                if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+	                                    start = i;
+	                                    break;
+	                                }
+	                            }
+	    
+	                            int k = start;
+	                            String firstline = raFile.readLine();
+	                            firstline = firstline.trim();
+	                            String[] arr = firstline.split("\\s+");
+	    
+	                            for (final String element : arr) {
+	                                if (k < numRows) {
+	                                    srcTableModel.setValueAt(element, k, 2);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }
+	    
+	                            k = start;
+	                            String secondLine = raFile.readLine();
+	                            secondLine = secondLine.trim();
+	                            arr = secondLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {
+	                                    srcTableModel.setValueAt(element, k, 3);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }
+	    
+	                            k = start;
+	                            String thirdlLine = raFile.readLine();
+	                            thirdlLine = thirdlLine.trim();
+	                            arr = thirdlLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {                                   
+	                                    srcTableModel.setValueAt(element, k, 4);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }     
+	                            if (lineCount == 4){
+	                                // this is FSL (4 lines the length of numVolumes with gradients and bvalues)
+	                                k = start;
+	                                String fourthLine = raFile.readLine();
+	                                fourthLine = fourthLine.trim();
+	                                arr = fourthLine.split("\\s+");
+	                                for (final String element : arr) {
+	                                    if (k < numRows) {
+	                                        srcTableModel.setValueAt(element, k, 1);
+	                                        k = k + 1;
+	                                    } else {
+	                                        break;
+	                                    }
+	                                }
+	                            }
+	                            else if (lineCount == 3){
+	                               //dcm2nii file text file format (3 lines the length of numVolumes with gradient values) 
+	                                if (dtiparams != null && dtiparams.getbValues() != null ){
+	                                    for (i = 0; i < numVolumes; i++){
+	                                        srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+	                                    }
+	    
+	                                }
+	                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+	                                    for (i = 0; i < numVolumes; i++){
+	                                         srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+	                                    }
+	    
+	                                }
+	                                                      
+	                            }
+	                        }
+	                        else if (lineCount == 6){
+	                            isBmatFile = true;
+	                            //6 lines the length of numVolumes with bmatrix values
+	                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+	                            srcTableModel.setColumnIdentifiers(newColIdentifiers);
+	                            int k = start;
+	                            String firstline = raFile.readLine();
+	                            firstline = firstline.trim();
+	                            String[] arr = firstline.split("\\s+");
+	    
+	                            for (final String element : arr) {
+	                                if (k < numRows) {
+	                                    srcTableModel.setValueAt(element, k, 1);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }    
+	                            k = start;
+	                            String secondLine = raFile.readLine();
+	                            secondLine = secondLine.trim();
+	                            arr = secondLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {
+	                                    srcTableModel.setValueAt(element, k, 2);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }    
+	                            k = start;
+	                            String thirdlLine = raFile.readLine();
+	                            thirdlLine = thirdlLine.trim();
+	                            arr = thirdlLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {                                   
+	                                    srcTableModel.setValueAt(element, k, 3);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }
+	                            k = start;
+	                            String fourthLine = raFile.readLine();
+	                            fourthLine = fourthLine.trim();
+	                            arr = fourthLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {                                   
+	                                    srcTableModel.setValueAt(element, k, 4);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }
+	                            k = start;
+	                            String fifthLine = raFile.readLine();
+	                            fifthLine = fifthLine.trim();
+	                            arr = fifthLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {                                   
+	                                    srcTableModel.setValueAt(element, k, 5);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }
+	                            k = start;
+	                            String sixthLine = raFile.readLine();
+	                            sixthLine = sixthLine.trim();
+	                            arr = sixthLine.split("\\s+");
+	                            for (final String element : arr) {
+	                                if (k < numRows) {                                   
+	                                    srcTableModel.setValueAt(element, k, 6);
+	                                    k = k + 1;
+	                                } else {
+	                                    break;
+	                                }
+	                            }                                                      
+	                        }
+	                    }
+	                    else if(decimalCount == 3 || decimalCount == 6 ){
+	                        //Miscellaneous text file format- 3 gradients or 6 bmatrix values corresponding 
+	                        //to one volume per line (without volume number)
+	                        raFile.seek(0);
+	                        numVolumes = m_kDWIImage.getExtents()[3];
+	                        String firstLineFile = raFile.readLine();
+	                        String [] arrfirstLine = firstLineFile.split("\\s+");
+	
+	                        for (int j = 0; j < numVolumes; j++) {
+	                            final Vector<String> rowData = new Vector<String>();
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            srcTableModel.addRow(rowData);
+	                            // Populate Volume column
+	                            srcTableModel.setValueAt(String.valueOf(j),j,0);
+	                        }
+	                        
+	                        if (arrfirstLine.length == 6){
+	                            isBmatFile = true;
+	                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+	                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+	                        }
+	                        
+	                        raFile.seek(0);
+	                        for (i = 0; i < numVolumes; i++){
+	                            String grads = raFile.readLine();
+	                            grads = grads.trim();
+	                            String [] arrGrads = grads.split("\\s+");
+	                            if(arrGrads.length == 3){
+	                                //gradients
+	                                srcTableModel.setValueAt(arrGrads[0], i, 2);
+	                                srcTableModel.setValueAt(arrGrads[1], i, 3);
+	                                srcTableModel.setValueAt(arrGrads[2], i, 4);
+	                                
+	                                if (dtiparams != null && dtiparams.getbValues() != null ){ 
+	                                    srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);   
+	                                }
+	                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+	                                     srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);   
+	                                }                           
+	                            }
+	                            else if(arrGrads.length == 6){
+	                                //bmatrix values
+	                                srcTableModel.setValueAt(arrGrads[0], i, 1);
+	                                srcTableModel.setValueAt(arrGrads[1], i, 2);
+	                                srcTableModel.setValueAt(arrGrads[2], i, 3);
+	                                srcTableModel.setValueAt(arrGrads[3], i, 4);
+	                                srcTableModel.setValueAt(arrGrads[4], i, 5);
+	                                srcTableModel.setValueAt(arrGrads[5], i, 6);                                     
+	                            }
+	                        }
+	                                                
+	                    }
+	                    else if(decimalCount == 0){
+	                        raFile.seek(0);
+	                        numVolumes = m_kDWIImage.getExtents()[3];
+	                        String firstLineFile = raFile.readLine();
+	                        String [] arrfirstLine = firstLineFile.split("\\s+");
+	
+	                        for (int j = 0; j < numVolumes; j++) {
+	                            final Vector<String> rowData = new Vector<String>();
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            rowData.add("");
+	                            srcTableModel.addRow(rowData);
+	                            // Populate Volume column
+	                            srcTableModel.setValueAt(String.valueOf(j),j,0);
+	                        }
+	                        if (arrfirstLine.length == 6){
+	                            isBmatFile = true;
+	                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+	                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+	                        }
+	                        
+	                        raFile.seek(0);
+	                        for (i = 0; i < numVolumes; i++){
+	                            String grads = raFile.readLine();
+	                            grads = grads.trim();
+	                            String [] arrGrads = grads.split("\\s+");
+	                                if(arrGrads.length == 6){
+	                                 //FSL bmatrix values
+	                                srcTableModel.setValueAt(arrGrads[0], i, 1);
+	                                srcTableModel.setValueAt(arrGrads[1], i, 2);
+	                                srcTableModel.setValueAt(arrGrads[2], i, 3);
+	                                srcTableModel.setValueAt(arrGrads[0], i, 4);
+	                                srcTableModel.setValueAt(arrGrads[1], i, 5);
+	                                srcTableModel.setValueAt(arrGrads[2], i, 6);                                                       
+	                                }                           
+	                        }
+	                        
+	                    }
+	                    }
+	                    catch (Exception e){
+	                        MipavUtil.displayError("Invalid Bval/Gradient Text File");
+	                        
+	                    }
+	
+	                }
+                } // else gradientFilePath does not contain "method"
                 raFile.close();
 
             } catch (final Exception e) {
 
-                MipavUtil.displayError("Error reading B-Value/Grad File...DTI Studio, FSL, and .txt formats are accepted");
+                MipavUtil.displayError("Error reading B-Value/Grad File...DTI Studio, FSL, BRUKER method, and .txt formats are accepted");
                 return false;
             }
 
             return true;
+        }
+        
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   inString  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        private String[] parse(String inString) {
+            String[] tmpString = new String[50];
+            String[] outString;
+            int i;
+            int sNum = 0;
+            int firstEl = 0;
+
+            for (i = 0; i < inString.length(); i++) {
+
+                if ((inString.charAt(i) <= 0x20) || (inString.charAt(i) == '=')) {
+
+                    if (firstEl != i) {
+                        tmpString[sNum++] = inString.substring(firstEl, i);
+                    }
+
+                    firstEl = i + 1;
+                }
+            }
+
+            if (firstEl != i) {
+                tmpString[sNum++] = inString.substring(firstEl, i);
+            }
+
+            if (sNum == 0) {
+                outString = new String[1];
+                outString[0] = inString;
+            } else {
+                outString = new String[sNum];
+
+                for (i = 0; i < (sNum); i++) {
+                    outString[i] = tmpString[i];
+                }
+            }
+
+            return outString;
+
+        }
+        
+        /**
+         * Reads lines of the file until a nonnull String results or the end of the file is reached.
+         *
+         * @return     the line read in
+         *
+         * @exception  IOException  if there is an error reading the file
+         */
+        private String readLine(RandomAccessFile raFile, boolean foundEOF[]) throws IOException {
+            String tempString = null;
+
+            while ((tempString == null) && (raFile.getFilePointer() < (raFile.length() - 1)) && (!foundEOF[0])) {
+
+                try {
+                    tempString = raFile.readLine();
+                } catch (EOFException error) {
+                    tempString = null;
+                    foundEOF[0] = true;
+                } catch (IOException error) {
+                    throw (error);
+                }
+
+
+                if (tempString != null) {
+
+                    if (tempString.length() == 0) {
+                        tempString = null;
+                    }
+                }
+            } // while
+
+            return tempString;
         }
         /**
          * This method creates the B-Value/Gradient file for DTI Tab
