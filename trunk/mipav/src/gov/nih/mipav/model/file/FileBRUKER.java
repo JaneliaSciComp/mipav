@@ -527,7 +527,7 @@ public class FileBRUKER extends FileBase {
             			else {
             				Preferences.debug("For PVM_DwEffBval lineString == null while numFound == " + numFound + 
             						           " and numVolumes = " + numVolumes + "\n", Preferences.DEBUG_FILEIO);
-            				gradientsOkay = false;
+            				bValuesOkay = false;
             			}
             		} // while ((numFound < numVOlumes) && (lineString != null) && bValuesOkay)
             		if (numFound == numVolumes) {
