@@ -935,6 +935,14 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(
                                                 CustomUIBuilder.PARAM_VOI_GRAPH_AVERAGE_INTENSITY_THRESHOLD, false)}),
                                 ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Worm VOI", true,
+                                        new JMenuItem[] 
+                                        		{
+                                                menuBuilder.buildMenuItem("Build Lattice", "buildWormLattice", 0, null,
+                                                        false)
+                                        		}
+                                ),
+                                ViewMenuBar.separator,
                                 // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, false),
                                 // menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_STATISTICS, false),
                                 menuBuilder.buildMenuItem("View VOI Properties", "VOIProperties", 'P', null, true),
