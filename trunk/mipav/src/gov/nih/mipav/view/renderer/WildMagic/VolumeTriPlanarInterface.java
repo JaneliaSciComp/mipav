@@ -123,7 +123,6 @@ import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
-
 public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateInterface, ActionListener, WindowListener, 
 																ComponentListener, ChangeListener, VOIManagerInterfaceListener, 
 																PropertyChangeListener
@@ -2389,21 +2388,22 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
      */
     public void windowDeactivated(final WindowEvent event) {}
     
-    /**
-     * Does nothing.
-     * 
-     * @param event the window event
-     */
-    public void windowDeiconified(final WindowEvent event) {}
-    
 
-    
-    /**
-     * Does nothing.
-     * 
-     * @param event the window event
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowDeiconified(java.awt.event.WindowEvent)
      */
-    public void windowIconified(final WindowEvent event) {}
+    public void windowDeiconified(final WindowEvent event) 
+    {
+		raycastRenderWM.setVisible(true);
+    }
+    
+    /* (non-Javadoc)
+     * @see java.awt.event.WindowListener#windowIconified(java.awt.event.WindowEvent)
+     */
+    public void windowIconified(final WindowEvent event) 
+    {
+		raycastRenderWM.setVisible(false);
+    }
     
     public void windowOpened(final WindowEvent arg0) {}
 
@@ -3583,5 +3583,11 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
 		{
 			raycastRenderWM.setPlaneConstant(distance);
 		}
+	}
+	
+	public void setVisible( boolean b )
+	{
+		super.setVisible(b);
+		raycastRenderWM.setVisible(b);
 	}
 }

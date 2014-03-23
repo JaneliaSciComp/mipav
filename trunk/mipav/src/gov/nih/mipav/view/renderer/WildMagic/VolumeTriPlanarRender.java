@@ -110,7 +110,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	@Override
 	public void display(GLAutoDrawable arg0) {
-
+		
 		super.display(arg0);
 		if ( m_bSurfaceMaskUpdate )
 		{

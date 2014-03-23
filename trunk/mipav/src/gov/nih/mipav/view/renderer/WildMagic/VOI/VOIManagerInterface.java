@@ -84,6 +84,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogLattice;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 
 import java.awt.BorderLayout;
@@ -465,6 +466,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
             }
 
             if (fileName != null) {
@@ -1151,8 +1153,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             } else {
                 MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
             }
-        }
-        else {
+        } else if ( command.equals("buildWormLattice") ) {
+
+        	new JDialogLattice( getActiveImage() );
+        } else {
             doVOI(command);
         }
 
