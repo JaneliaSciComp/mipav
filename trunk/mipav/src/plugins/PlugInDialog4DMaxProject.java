@@ -60,6 +60,8 @@ public class PlugInDialog4DMaxProject extends JDialogBase implements
 		setVisible(false);
 		project = new PlugInAlgorithm4DMaxProject(srcImage, dstImage, saveBox.isSelected());
 		project.addListener(this);
+		createProgressBar("4D Max Projection", "Converting to 3D: Max Projecting...", project);
+			
 		if (isRunInSeparateThread()) {
 			if (project.startMethod(Thread.MIN_PRIORITY) == false) {
 				MipavUtil.displayError("A thread is already running on this object");

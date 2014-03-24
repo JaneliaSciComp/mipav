@@ -4142,6 +4142,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
         int numFiles;
         // If true, zero funused fields in analyze write
         boolean zerofunused[] = new boolean[1];
+        
+        suppressProgressBar = !bDisplayProgress;
 
         // set it to quiet mode (no prompting) if the options were
         // created during a script
