@@ -443,6 +443,7 @@ import javax.swing.table.DefaultTableModel;
                           numVolumes = m_kDWIImage.getExtents()[3];
                           if(isBmatFile==true){
                               if (srcTableModel.getRowCount() != 0){
+                            	  newDTIparams = new DTIParameters(m_kDWIImage.getExtents()[3]);
                                   if (!srcTableModel.getValueAt(0, 5).equals("")){
                                       double[][] flBmatrixArray = new double[numVolumes][6];
                                       for (int i = 0; i < numVolumes; i++) {  
