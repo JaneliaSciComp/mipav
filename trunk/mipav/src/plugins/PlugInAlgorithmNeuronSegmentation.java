@@ -657,12 +657,13 @@ public class PlugInAlgorithmNeuronSegmentation extends AlgorithmBase {
 			MipavUtil.displayError("Image locked");
 			e1.printStackTrace();
 		}
-		if(saveVOI){
-			String imDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
+		String imDir = srcImage.getImageDirectory() + File.separator + "Branch_Images" + File.separator;
 			File dirFile = new File(imDir);
 			if(!dirFile.exists())
 				dirFile.mkdir();
 			skelImage.saveImage(imDir, null, FileUtility.TIFF, true);
+			
+		if(saveVOI){
 			
 			String voiDir = imDir + File.separator + "defaultVOIs_" + skelImage.getImageName() + File.separator;
 			dirFile = new File(voiDir);

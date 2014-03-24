@@ -45,8 +45,12 @@ public class PlugInAlgorithm4DMaxProject extends AlgorithmBase {
 		int xUnit = info.getUnitsOfMeasure(0);
 		int yUnit = info.getUnitsOfMeasure(1);*/
 		String[] slices = new String[] {"0"};
+		progress = 0;
 
 		for(int i=0;i<extents[3];i++){
+			
+			progress = 100f * (float)i/(float)extents[3];
+			fireProgressStateChanged((int)progress, null, "Converting to 3D: Max Projecting..." + (i+1) + " of " + extents[3]);
 			System.out.println(String.valueOf(i));
 			extract = new AlgorithmSubset(srcImage, volume, AlgorithmSubset.REMOVE_T, i);
 			extract.run();
