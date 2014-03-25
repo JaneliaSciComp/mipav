@@ -82,7 +82,7 @@ public class DTIParameters implements Serializable {
     }
 
     public void setbValues(double[] bValues) {
-        this.bValues = bValues;
+        this.bValues = bValues.clone();
     }
 
     public double[][] getGradients() {
@@ -90,7 +90,7 @@ public class DTIParameters implements Serializable {
     }
 
     public void setGradients(double[][] gradients) {
-        this.gradients = gradients;
+        this.gradients = gradients.clone();
     }
     
     public double[][] getbMatrixVals() {
@@ -98,7 +98,7 @@ public class DTIParameters implements Serializable {
     }
 
     public void setbMatrixVals (double[][] bMatrixVals) {
-        this.bMatrixVals = bMatrixVals;
+        this.bMatrixVals = bMatrixVals.clone();
     }
 
     public int getNumVolumes() {
