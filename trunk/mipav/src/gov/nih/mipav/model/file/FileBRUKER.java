@@ -564,8 +564,6 @@ public class FileBRUKER extends FileBase {
         int[] imageExtents;
         int xDim;
         int yDim;
-        int zDim;
-        int tDim;
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
         lineString = readLine();
