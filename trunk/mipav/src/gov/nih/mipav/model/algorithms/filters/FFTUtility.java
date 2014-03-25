@@ -9,7 +9,7 @@ import gov.nih.mipav.view.Preferences;
 
 /**
  * This FFT should only be used when it is necessary to perform a N-dimensional FFT on non-power of two data without
- * adding padding. Otherwise, developsers should use AlgorithmFFT (which has multithreading/jocl optimizations).
+ * adding padding. Otherwise, developers should use AlgorithmFFT (which has multithreading/jocl optimizations).
  * 
  * For forward transforms arrays a and b originally hold the real and imaginary components of the data, and return the
  * real and imaginary components of the resulting fourier coefficients. The roles reverse for the inverse transform.
