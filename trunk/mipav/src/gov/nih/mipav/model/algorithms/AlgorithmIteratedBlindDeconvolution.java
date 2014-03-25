@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
-import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
