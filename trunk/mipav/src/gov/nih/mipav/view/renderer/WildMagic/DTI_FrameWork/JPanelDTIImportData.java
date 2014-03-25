@@ -1277,41 +1277,44 @@ import javax.swing.table.DefaultTableModel;
                         rowData.add("");
                         srcTableModel.addRow(rowData);
                     }
-                
-                    if (dtiparams.getbValues() != null){
-                        for (int i = 0; i < numVolumes; i++) { 
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(i),i,0);
-                            // Populate Bvalue column
-                            double[] flBvalArr = dtiparams.getbValues();
-                            srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
-                     }
-                    }
-                    if (dtiparams.getGradients() != null){ 
-                        for (int i = 0; i < numVolumes; i++) {
-                             // Populate Gradient column
-                             double[][] flGradArr = dtiparams.getGradients();
-                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
-                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
-                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
-                            }
-                         }
                     
                     if (dtiparams.getbMatrixVals() != null){ 
                         isBmatFile = true;
                         java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
                         srcTableModel.setColumnIdentifiers(newColIdentifiers);
+                        // Populate Gradient column
+                        double[][] flGradArr = dtiparams.getbMatrixVals();
                         for (int i = 0; i < numVolumes; i++) {
-                            // Populate Gradient column
-                            double[][] flGradArr = dtiparams.getbMatrixVals();
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 1);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 2);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 3);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][3]), i, 4);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][4]), i, 5);
                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][5]), i, 6);
-                           }
                         }
+                    }
+                    else {
+	                    if (dtiparams.getbValues() != null){
+	                    	// Populate Bvalue column
+	                        double[] flBvalArr = dtiparams.getbValues();
+	                        for (int i = 0; i < numVolumes; i++) { 
+	                            // Populate Volume column
+	                            srcTableModel.setValueAt(String.valueOf(i),i,0);
+	                            srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
+	                        }
+	                    }
+	                    if (dtiparams.getGradients() != null){ 
+	                    	// Populate Gradient column
+	                        double[][] flGradArr = dtiparams.getGradients();
+	                        for (int i = 0; i < numVolumes; i++) {
+	                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
+	                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
+	                             srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
+	                         }
+	                     }
+                    } // else
+                    
+                    
 
                 
                 }
