@@ -559,6 +559,13 @@ public class FileBRUKER extends FileBase {
         String sliceSeparationMode = null;
         float sliceSeparation = -1.0f;
         float sliceThickness;
+        int ni = -1;
+        int nr = -1;
+        int[] imageExtents;
+        int xDim;
+        int yDim;
+        int zDim;
+        int tDim;
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
         lineString = readLine();
@@ -601,6 +608,20 @@ public class FileBRUKER extends FileBase {
                     raFile.close();
                     throw new IOException("##$ACQ_slice_thick has parseString with length = " + parseString.length);
                 }
+            } else if (parseString[0].equalsIgnoreCase("##$NI")) {
+            	if (parseString.length == 2) {
+                    ni = Integer.valueOf(parseString[1]).intValue();
+                } else {
+                    raFile.close();
+                    throw new IOException("##$NI has parseString with length = " + parseString.length);
+                }
+            } else if (parseString[0].equalsIgnoreCase("##$NR")) {
+            	if (parseString.length == 2) {
+                    nr = Integer.valueOf(parseString[1]).intValue();
+                } else {
+                    raFile.close();
+                    throw new IOException("##$NR has parseString with length = " + parseString.length);
+                }	
             }
 
             lineString = readLine();
@@ -615,6 +636,20 @@ public class FileBRUKER extends FileBase {
             fileInfo.setResolutions(imgResols);
             fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 2);
             fileInfo.setHaveZResol(true);
+        }
+        
+        if ((ni > 1) && (nr > 1)) {
+        	imageExtents = fileInfo.getExtents();
+        	if ((imageExtents.length == 3) && ((ni * nr) == imageExtents[2])) {
+        	    xDim = imageExtents[0];
+        	    yDim = imageExtents[1];
+        	    imageExtents = new int[4];
+        	    imageExtents[0] = xDim;
+        	    imageExtents[1] = yDim;
+        	    imageExtents[2] = ni;
+        	    imageExtents[3] = nr;
+        	    fileInfo.setExtents(imageExtents);
+        	}
         }
 
     }
