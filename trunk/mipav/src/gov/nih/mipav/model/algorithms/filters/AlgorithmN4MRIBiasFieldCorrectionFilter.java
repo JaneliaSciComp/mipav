@@ -8,8 +8,12 @@ import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.structures.ModelImage;
 	
 
-	import java.io.IOException;
 
+
+	import java.io.IOException;
+import java.util.Vector;
+
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import gov.nih.mipav.view.ViewJProgressBar;
 	
 	
@@ -40,6 +44,10 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    
 	    private double biasFieldFullWidthAtHalfMaximum = 0.15;
 	    
+	    private double sigmoidNormalizedAlpha = 0.0;
+	    
+	    private double sigmoidNormalizedBeta = 0.5;
+	    
 	    private int maximumNumberOfLevels = 1;
 	    
 	    private int maximumNumberOfIterationsArray[] = new int[maximumNumberOfLevels];
@@ -49,6 +57,12 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    private double convergenceThreshold = 0.001;
 	    
 	    private int length;
+	    
+	    private float origin[];
+	    
+	    private int xDim;
+	    
+	    private int sliceSize;
 	
 	    //~ Constructors ---------------------------------------------------------------------------------------------------
 	
@@ -127,12 +141,15 @@ import gov.nih.mipav.view.ViewJProgressBar;
         }
         
         srcImage.calcMinMax();
-        imageMax = (float)srcImage.getMax();
+        imageMax = srcImage.getMax();
+        origin = srcImage.getOrigin();
         nDims = srcImage.getNDims();
+        xDim = srcImage.getExtents()[0];
         length = srcImage.getExtents()[0];
         for (i = 1; i < nDims; i++) {
         	length *= srcImage.getExtents()[i];
         }
+        sliceSize = srcImage.getExtents()[0] * srcImage.getExtents()[1];
         buffer = new double[length];
         logFilter = new double[length];
         logUncorrected = new double[length];
@@ -212,8 +229,6 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double exponent;
     	int paddedHistogramSize;
     	int histogramOffset;
-    	double VR[];
-    	double VI[];
     	int n;
     	FFTUtility fft;
     	double VfR[];
@@ -221,8 +236,6 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double scaledFWHM;
     	double expFactor;
     	double scaleFactor;
-    	double FR[];
-    	double FI[];
     	int halfSize;
     	double FfR[];
     	double FfI[];
@@ -230,6 +243,20 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double GfI[];
     	double cR;
     	double cI;
+    	double denom1;
+    	double denom2;
+    	double denom;
+    	double UfR[];
+    	double UfI[];
+    	double UR[];
+    	double UI[];
+    	double numeratorR[];
+    	double numeratorI[];
+    	double temp;
+    	double denominatorR[];
+    	double denominatorI[];
+    	double E[];
+    	double correctedPixel;
     	
     	for (i = 0; i < length; i++) {
     		if (entireImage || mask.get(i)) {
@@ -269,12 +296,9 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	exponent = Math.ceil(Math.log(numberOfHistogramBins)/Math.log(2.0)) + 1.0;
     	paddedHistogramSize = (int)(Math.pow(2.0, exponent) + 0.5);
     	histogramOffset = (int)(0.5 * (paddedHistogramSize - numberOfHistogramBins));
-    	VR = new double[paddedHistogramSize];
-    	VI = new double[paddedHistogramSize];
     	VfR = new double[paddedHistogramSize];
     	VfI = new double[paddedHistogramSize];
     	for (n = 0; n < numberOfHistogramBins; n++) {
-    		VR[n + histogramOffset] = H[n];
     		VfR[n + histogramOffset] = H[n];
     	}
     	
@@ -290,20 +314,15 @@ import gov.nih.mipav.view.ViewJProgressBar;
         expFactor = 4.0 * Math.log(2.0)/(scaledFWHM * scaledFWHM);
         scaleFactor = 2.0 * Math.sqrt(Math.log(2.0)/Math.PI)/scaledFWHM;
         
-        FR = new double[paddedHistogramSize];
-        FI = new double[paddedHistogramSize];
         FfR = new double[paddedHistogramSize];
         FfI = new double[paddedHistogramSize];
-        FR[0] = scaleFactor;
+        FfR[0] = scaleFactor;
         halfSize = (int)(0.5 * paddedHistogramSize);
         for (n = 1; n <= halfSize; n++) {
-        	FR[n] = FR[paddedHistogramSize - n] = scaleFactor * Math.exp(-n * n * expFactor);
+        	FfR[n] = FfR[paddedHistogramSize - n] = scaleFactor * Math.exp(-n * n * expFactor);
         }
         if (paddedHistogramSize % 2 == 0) {
-            FR[halfSize] = scaleFactor * Math.exp(-0.25 * paddedHistogramSize * paddedHistogramSize * expFactor);	
-        }
-        for (n = 0; n < paddedHistogramSize; n++) {
-        	FfR[n] = FR[n];
+            FfR[halfSize] = scaleFactor * Math.exp(-0.25 * paddedHistogramSize * paddedHistogramSize * expFactor);	
         }
         
     	// -1 for forward transform
@@ -317,13 +336,157 @@ import gov.nih.mipav.view.ViewJProgressBar;
         GfI = new double[paddedHistogramSize];
         for (n = 0; n < paddedHistogramSize; n++) {
         	cR = FfR[n];
-        	cI = - FfI[n];
+        	cI = - FfI[n]; 
+        	// (cR + jcI)/(cR*FfR[n] - cI*FfI[n] + WeinerFilterNoise + j(cR*FfI[n] + cI*FfR[n])
+        	// Multiply numerator and denominator by complex conjugate of denominator
+        	denom1 = cR*FfR[n] - cI*FfI[n] + WeinerFilterNoise;
+        	denom2 = cR*FfI[n] + cI*FfR[n];
+        	denom = denom1*denom1 + denom2*denom2;
+        	GfR[n] = (cR*cR + cR*FfR[n] + cR*WeinerFilterNoise + cI*cI*FfR[n])/denom;
+        	GfI[n] = (-cR*cR*FfI[n] -cR*cI*FfR[n] +cR*cI + cI*FfR[n] - cI*cI*FfI[n] + cI*WeinerFilterNoise)/denom;
+        }
+        UfR = new double[paddedHistogramSize];
+        UfI = new double[paddedHistogramSize];
+        UR = new double[paddedHistogramSize];
+        UI = new double[paddedHistogramSize];
+        for (n = 0; n < paddedHistogramSize; n++) {
+        	UfR[n] = VfR[n] * GfR[n];
+        	UR[n] = UfR[n];
+        	UfI[n] = VfI[n] * GfR[n];
+        	UI[n] = UfI[n];
+        }
+        // +1 for backward transform
+    	fft = new FFTUtility(UR, UI, 1, paddedHistogramSize, 1, 1, FFTUtility.FFT);
+        fft.run();
+        fft.finalize();
+        fft = null;
+        denominatorR = new double[paddedHistogramSize];
+        denominatorI = new double[paddedHistogramSize];
+        for (n = 0; n < paddedHistogramSize; n++) {
+        	UR[n] = Math.max(UR[n], 0.0);
+        	denominatorR[n] = UR[n];
+        	UI[n] = 0.0;
+        }
+        
+        // Compute mapping E(u|v)
+        numeratorR = new double[paddedHistogramSize];
+        numeratorI = new double[paddedHistogramSize];
+        for (n = 0; n < paddedHistogramSize; n++) {
+            numeratorR[n] = (binMinimum + (n - histogramOffset) * histogramSlope) * UR[n];
+        }
+        // -1 for forward transform
+    	fft = new FFTUtility(numeratorR, numeratorI, 1, paddedHistogramSize, 1, -1, FFTUtility.FFT);
+        fft.run();
+        fft.finalize();
+        fft = null;
+        for (n = 0; n < paddedHistogramSize; n++) {
+        	temp = numeratorR[n];
+        	numeratorR[n] = numeratorR[n]*FfR[n] - numeratorI[n]*FfI[n];
+        	numeratorI[n] = temp*FfI[n] + numeratorI[n]*FfR[n];
+        }
+        // +1 for backward transform
+    	fft = new FFTUtility(numeratorR, numeratorI, 1, paddedHistogramSize, 1, 1, FFTUtility.FFT);
+        fft.run();
+        fft.finalize();
+        fft = null;
+        // -1 for forward transform
+        fft = new FFTUtility(denominatorR, denominatorI, 1, paddedHistogramSize, 1, -1, FFTUtility.FFT);
+        fft.run();
+        fft.finalize();
+        fft = null;
+        for (n = 0; n < paddedHistogramSize; n++) {
+        	temp = denominatorR[n];
+        	denominatorR[n] = denominatorR[n]*FfR[n] - denominatorI[n]*FfI[n];
+        	denominatorI[n] = temp*FfI[n] + denominatorI[n]*FfR[n];
+        }
+        // +1 for backward transform
+    	fft = new FFTUtility(denominatorR, denominatorI, 1, paddedHistogramSize, 1, 1, FFTUtility.FFT);
+        fft.run();
+        fft.finalize();
+        fft = null;
+        // Remove the zero-padding from the mapping
+        E = new double[numberOfHistogramBins];
+        for (n = 0; n < numberOfHistogramBins; n++) {
+        	E[n] = numeratorR[n + histogramOffset] / denominatorR[n + histogramOffset];
+        	if (Double.isNaN(E[n]) || Double.isInfinite(E[n])) {
+        		E[n] = 0.0;
+        	}
+        }
+        
+        // Sharpen the image with the new mapping, E(u|v)
+        for (i = 0; i < length; i++) {
+    		if (entireImage || mask.get(i)) {
+    		    cidx = (unsharpened[i] - binMinimum) / histogramSlope;
+    		    idx = (int)Math.floor(cidx);
+    		    
+    		    if (idx < E.length - 1) {
+    		    	correctedPixel = E[idx] + (E[idx + 1] - E[idx]) * (cidx - idx);
+    		    }
+    		    else {
+    		    	correctedPixel = E[E.length - 1];
+    		    }
+    		    sharpened[i] = correctedPixel;
+    		}
         }
     	return sharpened;
     }
     
     private double[] updateBiasFieldEstimate(double[] fieldEstimate) {
     	double smoothField[] = new double[fieldEstimate.length];
+    	double maxAbsValue;
+    	double minAbsValue;
+    	int i;
+    	double pixel;
+    	double direction[][] = new double[3][3];
+    	Vector<Vector3d> pointLocation = new Vector<Vector3d>();
+    	Vector<Double> pointData = new Vector<Double>();
+    	int index;
+    	int x;
+    	int y;
+    	int z;
+    	Vector3d point;
+    	double sigmoidWeight;
+    	// Calculate min/max for sigmoid weighting.  Calculate mean for offsetting
+    	// bias field calculations since B-spline algorithm biases the result to zero.
+    	maxAbsValue = -Double.MAX_VALUE;
+    	minAbsValue = Double.MAX_VALUE;
+    	for (i = 0; i < length; i++) {
+    		if (entireImage || mask.get(i)) {
+    			pixel = Math.abs(fieldEstimate[i]);
+    			if (pixel > maxAbsValue) {
+    				maxAbsValue = pixel;
+    			}
+    			if (pixel < minAbsValue) {
+    				minAbsValue = pixel;
+    			}
+    		} // if (entireImage || mask.get(i))	
+        } // for (i = 0; i < length; i++)
+    	
+    	// Get original direction and change to identity temporarily for the
+    	// b-spline fitting
+    	// In ITK:
+    	// row direction = direction cosines of first axis = [m_Direction[0][0], m_Direction[0][1], m_Direction[0][2]]
+    	// column direction = direction cosines of second axis = [m_Direction[1][0], m_Direction[1][1], m_Direction[1][2]]
+    	// slice direction = direction cosines of third axis = [m_Direction[2][0], m_Direction[2][1], m_Direction[2][2]]
+    	direction[0][0] = 1.0;
+    	direction[1][1] = 1.0;
+    	direction[2][2] = 1.0;
+    	index = 0;
+    	for (i = 0; i < length; i++) {
+    		if (entireImage || mask.get(i)) {
+    			x = (i % sliceSize) % xDim;
+    			y = (i % sliceSize) / xDim;
+    			z = i/sliceSize;
+    			// Remember direction cosine matrix has been set to identity
+    			point = new Vector3d(x + origin[0], y + origin[1], z + origin[2]);
+    			pointData.add(index, fieldEstimate[i]);
+    			pointLocation.add(index, point);
+    			sigmoidWeight = 1.0;
+    			if (sigmoidNormalizedAlpha > 0.0) {
+    				
+    			}
+    		}
+    	}
     	return smoothField;
     }
     
