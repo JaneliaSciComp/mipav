@@ -28,10 +28,15 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	    //~ Instance fields ------------------------------------------------------------------------------------------------
 	
 	    /**
-	     * Flag, if true, indicates that the whole image should be processed. If false on process the image over the mask
-	     * areas.
+	     * Flag, if true, indicates that the whole image should be processed. If false either:
+	     * 1.) Process where the mask is set true
+	     * 2.) Make sure the mask is set false and process where the confidence image is > 0.0
 	     */
 	    private boolean entireImage;
+	    
+	    private ModelImage confidenceImage = null;
+	    
+	    private double confidence[] = null;
 	   
 	    /* Assigned to srcImage if replace image, assigned to destImage if new image */
 	    private ModelImage targetImage = null;
@@ -73,7 +78,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 	     * @param  maskFlag  DOCUMENT ME!
 	     */
 	    public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage srcImg, boolean maskFlag) {
-        this(null, srcImg, maskFlag);
+        this(null, srcImg, null, maskFlag);
     }
 
     /**
@@ -81,11 +86,12 @@ import gov.nih.mipav.view.ViewJProgressBar;
      *
      * @param  destImg   the destination image
      * @param  srcImg    the source image
+     * @param  confidenceImage
      * @param  maskFlag  the mask flag
-     * @param  img25D    the 2.5D indicator
      */
-    public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage destImg, ModelImage srcImg, boolean maskFlag) {
+    public AlgorithmN4MRIBiasFieldCorrectionFilter(ModelImage destImg, ModelImage srcImg, ModelImage confidenceImage, boolean maskFlag) {
         super(destImg, srcImg);
+        this.confidenceImage = confidenceImage;
         entireImage = maskFlag;
     }
 
@@ -97,6 +103,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     public void finalize() {
         destImage = null;
         srcImage = null;
+        confidenceImage = null;
         super.finalize();
     }
 
@@ -165,10 +172,24 @@ import gov.nih.mipav.view.ViewJProgressBar;
             return;
         }
         
+        if (confidenceImage != null) {
+        	confidence = new double[length];
+        	try {
+                confidenceImage.exportData(0, length, confidence); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm N4 MRI Bias Field Correction Filter: confidenceImage locked");
+                setCompleted(false);
+                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                confidenceImage.releaseLock();
+
+                return;
+            }
+        }
+        
         // Calculate the log of the input image
         // Set NaNs, infinities, and negatives to zero
         for (i = 0; i < length; i++) {
-        	if (entireImage || mask.get(i)) {
+        	if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
                 logFilter[i] = Math.log(buffer[i]);
                 if ((Double.isNaN(logFilter[i])) || (Double.isInfinite(logFilter[i])) || (logFilter[i] < 0.0)) {
                 	logFilter[i] = 0.0;
@@ -189,7 +210,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
                 // Sharpen the current estimate of the uncorrected image
             	logSharpened = sharpen(logUncorrected);
             	for (i = 0; i < length; i++) {
-            		if (entireImage || mask.get(i)) {
+            		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
             		    subtracter1[i] = logUncorrected[i] - logSharpened[i];    	
             		}
             	}
@@ -200,7 +221,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
             	currentConvergenceMeasurement = calculateConvergenceMeasurement(logBiasField, newLogBiasField);
             	logBiasField = newLogBiasField;
             	for (i = 0; i < length; i++) {
-            		if (entireImage || mask.get(i)) {
+            		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
             			logUncorrected[i] = logFilter[i] - logBiasField[i];
             		}
             	}
@@ -259,7 +280,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double correctedPixel;
     	
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     			pixel = unsharpened[i];
     			if (pixel > binMaximum) {
     				binMaximum = pixel;
@@ -267,14 +288,14 @@ import gov.nih.mipav.view.ViewJProgressBar;
     			if (pixel < binMinimum) {
     				binMinimum = pixel;
     			}
-    		} // if (entireImage || (mask.get(i))
+    		} // if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     	} // for (i = 0; i < length; i++)
     	
     	histogramSlope = (binMaximum - binMinimum)/(double)(numberOfHistogramBins - 1);
     	// Create the intensity profile (within the masked region, if applicable)
     	// using a triangular parzen windowing scheme
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     			pixel = unsharpened[i];
     			cidx = (pixel - binMinimum)/histogramSlope;
     			idx = (int)Math.floor(cidx);
@@ -287,7 +308,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     				H[idx] += 1.0 - offset;
     				H[idx+1] += offset;
     			}
-    		} // if (entireImage || (mask.get(i))
+    		} // if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0)))
     	} // for (i = 0; i < length; i++)	
     	
     	// Determine information about thne intensity histogram and zero-pad
@@ -415,7 +436,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
         
         // Sharpen the image with the new mapping, E(u|v)
         for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+        	if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     		    cidx = (unsharpened[i] - binMinimum) / histogramSlope;
     		    idx = (int)Math.floor(cidx);
     		    
@@ -445,22 +466,28 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	int y;
     	int z;
     	Vector3d point;
+    	double confidenceWeight;
     	double sigmoidWeight;
+    	double alpha;
+    	double beta;
+    	Vector<Double> weights = new Vector<Double>();
     	// Calculate min/max for sigmoid weighting.  Calculate mean for offsetting
     	// bias field calculations since B-spline algorithm biases the result to zero.
     	maxAbsValue = -Double.MAX_VALUE;
     	minAbsValue = Double.MAX_VALUE;
-    	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
-    			pixel = Math.abs(fieldEstimate[i]);
-    			if (pixel > maxAbsValue) {
-    				maxAbsValue = pixel;
-    			}
-    			if (pixel < minAbsValue) {
-    				minAbsValue = pixel;
-    			}
-    		} // if (entireImage || mask.get(i))	
-        } // for (i = 0; i < length; i++)
+    	if (sigmoidNormalizedAlpha > 0.0) {
+	    	for (i = 0; i < length; i++) {
+	    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
+	    			pixel = Math.abs(fieldEstimate[i]);
+	    			if (pixel > maxAbsValue) {
+	    				maxAbsValue = pixel;
+	    			}
+	    			if (pixel < minAbsValue) {
+	    				minAbsValue = pixel;
+	    			}
+	    		} // if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0)))	
+	        } // for (i = 0; i < length; i++)
+    	} // if (sigmoidNormalizedAlpha > 0.0)
     	
     	// Get original direction and change to identity temporarily for the
     	// b-spline fitting
@@ -473,7 +500,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	direction[2][2] = 1.0;
     	index = 0;
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     			x = (i % sliceSize) % xDim;
     			y = (i % sliceSize) / xDim;
     			z = i/sliceSize;
@@ -481,10 +508,18 @@ import gov.nih.mipav.view.ViewJProgressBar;
     			point = new Vector3d(x + origin[0], y + origin[1], z + origin[2]);
     			pointData.add(index, fieldEstimate[i]);
     			pointLocation.add(index, point);
+    			confidenceWeight = 1.0;
+    			if (confidence != null) {
+    				confidenceWeight = confidence[i];
+    			}
     			sigmoidWeight = 1.0;
     			if (sigmoidNormalizedAlpha > 0.0) {
-    				
-    			}
+    			    alpha = (maxAbsValue - minAbsValue) / (12.0 * sigmoidNormalizedAlpha);
+    			    beta = minAbsValue + (maxAbsValue - minAbsValue) * sigmoidNormalizedBeta;
+    			    sigmoidWeight = 1.0 / (1.0 + Math.exp(-(fieldEstimate[i] - beta)/alpha));
+    			} // if (sigmoidNormalizedAlpha > 0.0)
+    			weights.insertElementAt(sigmoidWeight * confidenceWeight, index);
+    			index++;
     		}
     	}
     	return smoothField;
@@ -494,7 +529,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	int i;
     	double subtracter[] = new double[fieldEstimate1.length];
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     			subtracter[i] = fieldEstimate1[i] - fieldEstimate2[i];
     		}
     	}
@@ -505,7 +540,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
     	double N = 0.0;
     	
     	for (i = 0; i < length; i++) {
-    		if (entireImage || mask.get(i)) {
+    		if (entireImage || mask.get(i) || ((confidence != null) && (confidence[i] > 0.0))) {
     			double pixel = Math.exp(subtracter[i]);
     			N += 1.0;
     			
