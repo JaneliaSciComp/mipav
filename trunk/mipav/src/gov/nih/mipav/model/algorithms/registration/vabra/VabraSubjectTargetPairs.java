@@ -741,6 +741,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if ((x + defX) < XN && (x + defX) >= 0 && y < YN && y >= 0 && z < ZN && z >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, (x + defX), y, z);
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -754,6 +757,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if ((x - defX) < XN && (x - defX) >= 0 && y < YN && y >= 0 && z < ZN && z >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, (x - defX), y, z);
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -767,6 +773,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if (x < XN && x >= 0 && (y + defY) < YN && (y + defY) >= 0 && z < ZN && z >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, x, y + defY, z);
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -780,6 +789,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if (x < XN && x >= 0 && (y - defY) < YN && (y - defY) >= 0 && z < ZN && z >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, x, y - defY, z);
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -793,6 +805,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if (x < XN && x >= 0 && y < YN && y >= 0 && (z + defZ) < ZN && (z + defZ) >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, x, y, (z + defZ));
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -806,6 +821,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 							if (x < XN && x >= 0 && y < YN && y >= 0 && (z - defZ) < ZN && (z - defZ) >= 0) {
 								testValsD = RegistrationUtilities.TrilinearInterpolation(subject.data, subject.XN, subject.YN,	subject.ZN, x, y, (z - defZ));
 								testBins = subject.calculateBin(testValsD);
+								if (testBins < 0) {
+									testBins = 0;
+								}
 							} else {
 								testBins = 0;
 							}
@@ -997,6 +1015,9 @@ public class VabraSubjectTargetPairs implements RealFunctionOfOneVariable {
 						interpValsD = RegistrationUtilities.TrilinearInterpolation(referenceSubject.data, XN, YN, ZN, x + defX, y + defY,z + defZ);
 						// TODO ditch this fcn call:
 						testBin = referenceSubject.calculateBin(interpValsD);
+						if (testBin < 0) {
+							testBin = 0;
+						}
 						//if(coeff == 0 && subjectBins[ch] != testBin[ch]) System.out.format(subjectBins[ch]+" "+interpValsD[ch]+" "+ testBin[ch]+"\n");
 
 						//targetBins[ch] = imgSubTarPairs.targetBinned.data.getUByte(i, j, k);
