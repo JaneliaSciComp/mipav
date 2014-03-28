@@ -1376,6 +1376,20 @@ public class VolumeTriPlanarInterface extends JFrame implements ViewImageUpdateI
         tabbedPane.addTab(_name, null, _panel);
         tabbedPane.setSelectedIndex(tabbedPane.getTabCount() - 1);
     }
+    
+    public boolean is3DMouseEnabled()
+    {
+    	return m_kVOIInterface == null ? false : m_kVOIInterface.is3DMouseEnabled();
+    }
+    
+    public void set3DMouseEnabled( boolean enabled )
+    {
+    	if ( m_kVOIInterface != null )
+    	{
+    		m_kVOIInterface.set3DMouseEnabled(enabled);
+    	}
+    }
+
 
     @Override
     public void maskToPaint()
