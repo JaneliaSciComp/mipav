@@ -162,7 +162,7 @@ public class VabraVolumeCollection implements Cloneable {
 	}
 
 	public int calculateBin(double val) {
-		return (int) Math.floor((val - minValsD) / intervalsD);
+		return (int) Math.max(Math.floor((val - minValsD) / intervalsD), 0);
 	}
 
 
