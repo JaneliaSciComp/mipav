@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import java.util.Vector;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
@@ -79,10 +80,13 @@ public abstract class VolumeObject
     protected float m_fX, m_fY, m_fZ;
 
     /** Surface light shader for rendering objects without volume-texture mapping. */
-    protected MipavLightingEffect m_kLightShader = null;
-    
+    protected MipavLightingEffect m_kLightShader = null;    
 
     protected Vector<Spatial> m_kDeleteList = new Vector<Spatial>();
+    
+
+    protected Vector3f m_kVolumeScale, m_kVolumeTrans, m_kLocalScale, m_kResolutions;
+    protected float m_fVolumeDiv, m_fVolumeMult;
     
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for
@@ -135,6 +139,23 @@ public abstract class VolumeObject
         m_kZBufferTransparency = new ZBufferState();
         m_kZBufferTransparency.Enabled = true;
         m_kZBufferTransparency.Writable = false;
+        
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kLocalScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(xBox, yBox, zBox);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
     }
     
     /**
@@ -388,6 +409,41 @@ public abstract class VolumeObject
     public void Translate(Vector3f kTranslate)
     {
         m_kTranslate.add(kTranslate);
+    }
+    
+    
+    /**
+     * Converts the input point from volume-index coordinates into local coordinates used to display the object in the volume renderer.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
+    public void volumeToLocalCoords(Vector3f kVolume)
+    {
+    	kVolume.mult( m_kVolumeScale ).sub( m_kVolumeTrans ).scale( m_fVolumeDiv );			
+    }
+
+    /**
+     * Converts the input point from local coordinates used to display the object in the volume renderer into volume-index coordinates.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
+    public void localToVolumeCoords(Vector3f kPt)
+    {
+    	kPt.scale( m_fVolumeMult ).add( m_kVolumeTrans ).mult( m_kLocalScale );
+    }
+
+
+    /**
+     * Converts the input point from local coordinates used to display the object in the volume renderer to scanner coordinates.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
+    public void localToScannerCoords(Vector3f kPt)
+    {
+    	localToVolumeCoords(kPt);    	
+    	Vector3f kScanner = new Vector3f();
+    	MipavCoordinateSystems.fileToScanner( kPt, kScanner, m_kVolumeImageA.GetImage() );
+    	kPt.copy(kScanner);
     }
         
     protected void scale( VertexBuffer kVertexBuffer )

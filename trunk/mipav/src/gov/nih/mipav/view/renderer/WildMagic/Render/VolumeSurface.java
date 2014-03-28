@@ -156,26 +156,8 @@ public class VolumeSurface extends VolumeObject
 //         kDate = new Date();
 //         long lEnd = kDate.getTime();
 //         System.err.println("End build tree " + (float)(lEnd - lStart)/1000.0f);
-        
-        
+              
 
-    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
-    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
-    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
-        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
-        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
-        //System.err.println( m_kResolutions );
-
-		float xBox = (iDimX - 1) * afResolutions[0];
-		float yBox = (iDimY - 1) * afResolutions[1];
-		float zBox = (iDimZ - 1) * afResolutions[2];
-		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
-		m_kMeshScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
-    	m_kVolumeTrans = new Vector3f(xBox, yBox, zBox);
-    	m_fVolumeDiv = 1f/(2.0f*maxBox);
-    	m_fVolumeMult = (2.0f*maxBox);
     	
     	m_akUnitsLabel = new String[3];
     	for ( int i = 0; i < 3; i++ )
@@ -274,12 +256,6 @@ public class VolumeSurface extends VolumeObject
 //         long lEnd = kDate.getTime();
 //         System.err.println("End build tree " + (float)(lEnd - lStart)/1000.0f);
         
-        
-		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
-		m_kMeshScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
-    	m_kVolumeTrans = new Vector3f(xBox, yBox, zBox);
-    	m_fVolumeDiv = 1f/(2.0f*maxBox);
-    	m_fVolumeMult = (2.0f*maxBox);
     	
     	m_akUnitsLabel = new String[3];
     	for ( int i = 0; i < 3; i++ )
@@ -292,8 +268,6 @@ public class VolumeSurface extends VolumeObject
     }
     
     private String[] m_akUnitsLabel;
-    private Vector3f m_kVolumeScale, m_kVolumeTrans, m_kMeshScale, m_kResolutions;
-    private float m_fVolumeDiv, m_fVolumeMult;
     private BoxBV  m_kBoundingBox = null;
     private Vector3f m_kMinBB, m_kMaxBB;
     
@@ -364,9 +338,9 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
             
-            meshToVolumeCoords( kPos0 );
-            meshToVolumeCoords( kPos1 );
-            meshToVolumeCoords( kPos2 );            
+            localToVolumeCoords( kPos0 );
+            localToVolumeCoords( kPos1 );
+            localToVolumeCoords( kPos2 );            
             
             // Area of a triangle = || P0 X P1 + P1 X P2 + P2 X P0 ||/2
             // Area = 0.5* (det1 + det2 + det3), where
@@ -502,9 +476,9 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
             
-            meshToVolumeCoords( kPos0 );
-            meshToVolumeCoords( kPos1 );
-            meshToVolumeCoords( kPos2 );
+            localToVolumeCoords( kPos0 );
+            localToVolumeCoords( kPos1 );
+            localToVolumeCoords( kPos2 );
             
             // compute triple scalar product
             // The scalar triple product of three vectors A, B, and C is denoted
@@ -1479,7 +1453,7 @@ public class VolumeSurface extends VolumeObject
     			{
     				kTest.set(x,y,z);
     				// convert to 'mesh' coords...
-    				volumeToMeshCoords(kTest);
+    				volumeToLocalCoords(kTest);
 
     				if ( m_kBoundingBox.Contains( kTest ) )
     				{
@@ -1515,7 +1489,7 @@ public class VolumeSurface extends VolumeObject
     	m_kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
     	for ( int i = 0; i < kBoxCorners.length; i++ )
     	{
-        	meshToVolumeCoords(kBoxCorners[i]);
+        	localToVolumeCoords(kBoxCorners[i]);
     		m_kMaxBB.max( kBoxCorners[i] );
     		m_kMinBB.min( kBoxCorners[i] );
     	}
@@ -1553,7 +1527,7 @@ public class VolumeSurface extends VolumeObject
 
     	// convert to 'mesh' coords...
     	Vector3f kP0Mesh = new Vector3f(kP0);    	
-    	volumeToMeshCoords(kP0Mesh);
+    	volumeToLocalCoords(kP0Mesh);
 
     	if ( m_kBoundingBox.Contains( kP0Mesh ) )
     	{
@@ -1595,8 +1569,8 @@ public class VolumeSurface extends VolumeObject
     	Vector3f kP0Mesh = new Vector3f(kP0);
     	Vector3f kP1Mesh = new Vector3f(kP1);
     	
-    	volumeToMeshCoords(kP0Mesh);
-    	volumeToMeshCoords(kP1Mesh);
+    	volumeToLocalCoords(kP0Mesh);
+    	volumeToLocalCoords(kP1Mesh);
     	
 		if ( bPrint )
 		{
@@ -1636,51 +1610,6 @@ public class VolumeSurface extends VolumeObject
     	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
 		return m_kVolumeMask.get( (int) (kPos.Z * iDimX * iDimY + kPos.Y * iDimX + kPos.X) );
-    }
-    
-    
-    /**
-     * Converts the input point from volume-index coordinates into local mesh coordinates used to display the surface in the volume renderer.
-     * The input position is overwritten in the process.
-     * @param kVolume the input position.
-     */
-    private void volumeToMeshCoords(Vector3f kVolume)
-    {
-    	kVolume.mult( m_kVolumeScale ).sub( m_kVolumeTrans ).scale( m_fVolumeDiv );			
-    }
-
-    /**
-     * Converts the input point from local mesh coordinates used to display the surface in the volume renderer into volume-index coordinates.
-     * The input position is overwritten in the process.
-     * @param kVolume the input position.
-     */
-    private void meshToVolumeCoordsA(Vector3f kMesh)
-    {
-    	kMesh.scale( m_fVolumeMult ).add( m_kVolumeTrans ).scale( .5f );
-    }
-
-    /**
-     * Converts the input point from local mesh coordinates used to display the surface in the volume renderer into volume-index coordinates.
-     * The input position is overwritten in the process.
-     * @param kVolume the input position.
-     */
-    private void meshToVolumeCoords(Vector3f kMesh)
-    {
-    	kMesh.scale( m_fVolumeMult ).add( m_kVolumeTrans ).mult( m_kMeshScale );
-    }
-
-
-    /**
-     * Converts the input point from local mesh coordinates used to display the surface in scanner coordinates.
-     * The input position is overwritten in the process.
-     * @param kVolume the input position.
-     */
-    private void meshToScannerCoords(Vector3f kMesh)
-    {
-    	meshToVolumeCoords(kMesh);    	
-    	Vector3f kScanner = new Vector3f();
-    	MipavCoordinateSystems.fileToScanner( kMesh, kScanner, m_kVolumeImageA.GetImage() );
-    	kMesh.copy(kScanner);
     }
     
     /**
@@ -1799,7 +1728,7 @@ public class VolumeSurface extends VolumeObject
         {
             m_kMesh.VBuffer.GetPosition3( i, kPos );
             m_kCenter.add( kPos );
-            meshToScannerCoords(kPos);
+            localToScannerCoords(kPos);
             m_kCenterScanner.add( kPos );
         }
         m_kCenter.scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
@@ -2205,9 +2134,9 @@ public class VolumeSurface extends VolumeObject
 			m_kMesh.VBuffer.GetPosition3(iV1, kV1);
 			m_kMesh.VBuffer.GetPosition3(iV2, kV2);
 
-			meshToVolumeCoords(kV0);
-			meshToVolumeCoords(kV1);
-			meshToVolumeCoords(kV2);
+			localToVolumeCoords(kV0);
+			localToVolumeCoords(kV1);
+			localToVolumeCoords(kV2);
 
 			// compute the axis-aligned bounding box of the triangle
 			min.copy( kV0 );

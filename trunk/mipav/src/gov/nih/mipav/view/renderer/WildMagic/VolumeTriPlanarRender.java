@@ -2,6 +2,8 @@ package gov.nih.mipav.view.renderer.WildMagic;
 
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.model.structures.VOIText;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
@@ -12,6 +14,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Navigation.NavigationBehavior;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -24,9 +27,11 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
+import WildMagic.LibFoundation.Distance.DistanceVector3Segment3;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
@@ -48,7 +53,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	protected VolumeTriPlanarInterface m_kParent = null;
 
 	private NavigationBehavior navigationBehavior;
-	
+
 	/**
 	 * Default Constructor.
 	 */
@@ -110,7 +115,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 	 */
 	@Override
 	public void display(GLAutoDrawable arg0) {
-		
+
 		super.display(arg0);
 		if ( m_bSurfaceMaskUpdate )
 		{
@@ -180,7 +185,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		{
 			m_kParent.setCameraParameters();
 			m_kParent.setObjectParameters();
-			
+
 			char ucKey = e.getKeyChar();
 			switch (ucKey) {
 			case 'a':
@@ -196,6 +201,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		}
 		return;
 	}
+
+	public void mousePressed(MouseEvent e) {
+		super.mousePressed(e);
+		if (e.isControlDown() && m_kParent.is3DMouseEnabled()) {
+			m_iXPick = e.getX();
+			m_iYPick = e.getY();
+			m_bPickPending = true;
+		}
+	}
+
 
 	/** Rotates the object with a virtual trackball:
 	 * @param e the MouseEvent
@@ -246,43 +261,126 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 					GetHeight(),kPos,kDir))
 			{
 				m_bPickPending = false;
-				for ( int i = 0; i < m_kDisplayList.size(); i++ )
+				if ( m_kParent.is3DMouseEnabled() )
 				{
-					if ( m_kDisplayList.get(i).GetPickable() )
-					{
-						m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
-								Float.MAX_VALUE);
-						if (m_kPicker.Records.size() > 0)
+					m_kPicker.Execute(m_kVolumeRayCast.GetScene(),kPos,kDir,0.0f,
+							Float.MAX_VALUE);
+
+					if ( m_kPicker.Records.size() >= 2 )
+					{				        						
+						Vector3f firstIntersectionPoint = new Vector3f();
+						Vector3f secondIntersectionPoint = new Vector3f();
+						
+						Vector3f pickedPoints[] = new Vector3f[m_kPicker.Records.size()];
+						float distances[] = new float[m_kPicker.Records.size()];
+						
+						for ( int i = 0; i < m_kPicker.Records.size(); i++ )
 						{
-							//System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
-							//System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
-							if ( m_bPaintEnabled )
+							PickRecord kPickPoint = m_kPicker.Records.elementAt(i);
+							Vector3f kP0 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV0 );
+							kP0.scale(kPickPoint.B0);
+							Vector3f kP1 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV1 );
+							kP1.scale( kPickPoint.B1);
+							Vector3f kP2 = m_kVolumeRayCast.getMesh().VBuffer.GetPosition3( kPickPoint.iV2 );
+							kP2.scale( kPickPoint.B2 );
+							Vector3f kPoint = Vector3f.add( kP0, kP1 );
+							kPoint.add( kP2 );
+							
+							m_kVolumeRayCast.localToVolumeCoords( kPoint );
+							pickedPoints[i] = kPoint;
+							distances[i] = kPickPoint.T;	
+						}
+						
+						if ( m_kPicker.Records.size() == 2 )
+						{
+							firstIntersectionPoint.copy(pickedPoints[0]);
+							secondIntersectionPoint.copy(pickedPoints[1]);
+							
+							
+							float maxValue = -Float.MAX_VALUE;
+							Vector3f maxPt = new Vector3f();
+							
+							Vector3f p0 = new Vector3f(firstIntersectionPoint);
+							Vector3f p1 = new Vector3f(secondIntersectionPoint);
+							Vector3f step = Vector3f.sub(p1, p0);
+							float numSteps = step.length() + 1;
+							step.normalize();
+							for ( int i = 0; i < numSteps; i++ )
 							{
-								//System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
-								if ( m_bPaint )
+								p0.add(step);
+								float value = m_kVolumeImageA.GetImage().getFloatTriLinearBounds(p0.X, p0.Y, p0.Z);
+								if ( value > maxValue )
 								{
-									m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
-								}
-								else if ( m_bDropper || m_bPaintCan )
-								{
-									ColorRGBA kDropperColor = new ColorRGBA();
-									Vector3f kPickPoint = new Vector3f();
-									m_kDisplayList.get(i).Dropper( m_kPicker.GetClosestNonnegative(), kDropperColor, kPickPoint );
-									m_kParent.setDropperColor( kDropperColor, kPickPoint );
-								} 
-								else if ( m_bErase )
-								{
-									m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
+									maxValue = value;
+									maxPt.copy(p0);
 								}
 							}
-							if ( m_bGeodesicEnabled )
-							{
-								m_kParent.setGeodesic( m_kDisplayList.get(i).GetMesh(), m_kPicker.GetClosestNonnegative() );
+							
+							if ( maxValue != -Float.MAX_VALUE )
+							{						
+								short id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+								VOI marker = new VOI(id, "marker_" + id, VOI.POINT, (float)Math.random() );
+								marker.importPoint(maxPt);
+								marker.setColor( Color.yellow );
+								marker.getCurves().elementAt(0).update( new ColorRGBA(1, 1, 0, 1));
+								m_kVolumeImageA.GetImage().registerVOI(marker);
+								
+								id = (short) m_kVolumeImageA.GetImage().getVOIs().getUniqueID();
+					    		int colorID = 0;
+					    		VOI newTextVOI = new VOI((short) colorID, "annotation3d_" + id, VOI.ANNOTATION, -1.0f);
+					    		VOIText textVOI = new VOIText( );
+					    		textVOI.add( maxPt );
+					    		textVOI.add( Vector3f.add( new Vector3f(2,0,0), maxPt) );
+					    		textVOI.setText("LR_" + id);
+					    		newTextVOI.getCurves().add(textVOI);
+					    		m_kVolumeImageA.GetImage().registerVOI(newTextVOI);
+					    		
+//					    		m_kParent.addLeftRightMarkers( marker, newTextVOI );
 							}
-							if ( m_bPickCorrespondence )
+						}
+					}
+				}
+
+				else
+				{
+					for ( int i = 0; i < m_kDisplayList.size(); i++ )
+					{
+						if ( m_kDisplayList.get(i).GetPickable() )
+						{
+							m_kPicker.Execute(m_kDisplayList.get(i).GetScene(),kPos,kDir,0.0f,
+									Float.MAX_VALUE);
+							if (m_kPicker.Records.size() > 0)
 							{
-								PickRecord kRecord = m_kPicker.GetClosestNonnegative();
-								m_kParent.PickCorrespondence( kRecord.iV0, kRecord.iV1, kRecord.iV2 );
+								//System.err.println( kPos.X() + " " + kPos.Y() + " " + kPos.Z() );
+								//System.err.println( kDir.X() + " " + kDir.Y() + " " + kDir.Z() );
+								if ( m_bPaintEnabled )
+								{
+									//System.err.println("Picked " + m_kDisplayList.get(i).getClass().getName());
+									if ( m_bPaint )
+									{
+										m_kDisplayList.get(i).Paint( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_kPaintColor, m_iBrushSize );
+									}
+									else if ( m_bDropper || m_bPaintCan )
+									{
+										ColorRGBA kDropperColor = new ColorRGBA();
+										Vector3f kPickPoint = new Vector3f();
+										m_kDisplayList.get(i).Dropper( m_kPicker.GetClosestNonnegative(), kDropperColor, kPickPoint );
+										m_kParent.setDropperColor( kDropperColor, kPickPoint );
+									} 
+									else if ( m_bErase )
+									{
+										m_kDisplayList.get(i).Erase( m_pkRenderer, m_kPicker.GetClosestNonnegative(), m_iBrushSize );
+									}
+								}
+								if ( m_bGeodesicEnabled )
+								{
+									m_kParent.setGeodesic( m_kDisplayList.get(i).GetMesh(), m_kPicker.GetClosestNonnegative() );
+								}
+								if ( m_bPickCorrespondence )
+								{
+									PickRecord kRecord = m_kPicker.GetClosestNonnegative();
+									m_kParent.PickCorrespondence( kRecord.iV0, kRecord.iV1, kRecord.iV2 );
+								}
 							}
 						}
 					}
@@ -336,7 +434,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_kParent.setModified();
 		}
 	}
-	
+
 	/**
 	 * Toggle Navigation mode.
 	 * 
@@ -424,7 +522,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode3.AttachChild(kSpherePosition3);
 		kSphereNode3.SetName("Threshold");
 		// AddNode(kSphereNode3);
-		
+
 		// tracking point
 		Attributes kAttr4 = new Attributes();
 		kAttr4.SetPChannels(3);
@@ -449,7 +547,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kAttr_Vbl.SetNChannels(3);
 		kAttr_Vbl.SetCChannels(0, 3);
 		StandardMesh kSM_Vbl = new StandardMesh(kAttr_Vbl);
-		
+
 		TriMesh kSpherePosition_Vbl = kSM_Vbl.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Vbl.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Vbl.VBuffer.SetColor3(0, i, 0, 1, 0);
@@ -459,15 +557,15 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Vbl.AttachChild(kSpherePosition_Vbl);
 		kSphereNode_Vbl.SetName("Vbl");
 		// AddNode(kSphereNode_Vbl);
-		
-		
+
+
 		// ---------------------------------------------------------------
 		Attributes kAttr_Vtl = new Attributes();
 		kAttr_Vtl.SetPChannels(3);
 		kAttr_Vtl.SetNChannels(3);
 		kAttr_Vtl.SetCChannels(0, 3);
 		StandardMesh kSM_Vtl = new StandardMesh(kAttr_Vtl);
-		
+
 		TriMesh kSpherePosition_Vtl = kSM_Vtl.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Vtl.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Vtl.VBuffer.SetColor3(0, i, 0, 1, 0);
@@ -477,14 +575,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Vtl.AttachChild(kSpherePosition_Vtl);
 		kSphereNode_Vtl.SetName("Vtl");
 		// AddNode(kSphereNode_Vtl);
-		
+
 		// -------------------------------------------------------------
 		Attributes kAttr_Vbr = new Attributes();
 		kAttr_Vbr.SetPChannels(3);
 		kAttr_Vbr.SetNChannels(3);
 		kAttr_Vbr.SetCChannels(0, 3);
 		StandardMesh kSM_Vbr = new StandardMesh(kAttr_Vbr);
-		
+
 		TriMesh kSpherePosition_Vbr = kSM_Vbr.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Vbr.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Vbr.VBuffer.SetColor3(0, i, 0, 1, 0);
@@ -494,14 +592,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Vbr.AttachChild(kSpherePosition_Vbr);
 		kSphereNode_Vbr.SetName("Vbr");
 		// AddNode(kSphereNode_Vbr);
-		
+
 		// --------------------------------------------------------------
 		Attributes kAttr_Vtr = new Attributes();
 		kAttr_Vtr.SetPChannels(3);
 		kAttr_Vtr.SetNChannels(3);
 		kAttr_Vtr.SetCChannels(0, 3);
 		StandardMesh kSM_Vtr = new StandardMesh(kAttr_Vtr);
-		
+
 		TriMesh kSpherePosition_Vtr = kSM_Vtr.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Vtr.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Vtr.VBuffer.SetColor3(0, i, 0, 1, 0);
@@ -511,14 +609,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Vtr.AttachChild(kSpherePosition_Vtr);
 		kSphereNode_Vtr.SetName("Vtr");
 		// AddNode(kSphereNode_Vtr);
-		
+
 		// --------------------------------  far plane ---------------------
 		Attributes kAttr_Wbl = new Attributes();
 		kAttr_Wbl.SetPChannels(3);
 		kAttr_Wbl.SetNChannels(3);
 		kAttr_Wbl.SetCChannels(0, 3);
 		StandardMesh kSM_Wbl = new StandardMesh(kAttr_Wbl);
-		
+
 		TriMesh kSpherePosition_Wbl = kSM_Wbl.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Wbl.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Wbl.VBuffer.SetColor3(0, i, 1, 0, 0);
@@ -528,14 +626,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Wbl.AttachChild(kSpherePosition_Wbl);
 		kSphereNode_Wbl.SetName("Wbl");
 		// AddNode(kSphereNode_Wbl);
-		
+
 		// ---------------------------------------------------------------
 		Attributes kAttr_Wtl = new Attributes();
 		kAttr_Wtl.SetPChannels(3);
 		kAttr_Wtl.SetNChannels(3);
 		kAttr_Wtl.SetCChannels(0, 3);
 		StandardMesh kSM_Wtl = new StandardMesh(kAttr_Wtl);
-		
+
 		TriMesh kSpherePosition_Wtl = kSM_Wtl.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Wtl.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Wtl.VBuffer.SetColor3(0, i, 1, 0, 0);
@@ -545,14 +643,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Wtl.AttachChild(kSpherePosition_Wtl);
 		kSphereNode_Wtl.SetName("Wtl");
 		// AddNode(kSphereNode_Wtl);
-		
+
 		// -----------------------------------------------------------------
 		Attributes kAttr_Wbr = new Attributes();
 		kAttr_Wbr.SetPChannels(3);
 		kAttr_Wbr.SetNChannels(3);
 		kAttr_Wbr.SetCChannels(0, 3);
 		StandardMesh kSM_Wbr = new StandardMesh(kAttr_Wbr);
-		
+
 		TriMesh kSpherePosition_Wbr = kSM_Wbr.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Wbr.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Wbr.VBuffer.SetColor3(0, i, 1, 0, 0);
@@ -562,14 +660,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Wbr.AttachChild(kSpherePosition_Wbr);
 		kSphereNode_Wbr.SetName("Wbr");
 		// AddNode(kSphereNode_Wbr);
-		
+
 		// ----------------------------------------------------------------
 		Attributes kAttr_Wtr = new Attributes();
 		kAttr_Wtr.SetPChannels(3);
 		kAttr_Wtr.SetNChannels(3);
 		kAttr_Wtr.SetCChannels(0, 3);
 		StandardMesh kSM_Wtr = new StandardMesh(kAttr_Wtr);
-		
+
 		TriMesh kSpherePosition_Wtr = kSM_Wtr.Sphere(10, 10, 0.006f);
 		for (int i = 0; i < kSpherePosition_Wtr.VBuffer.GetVertexQuantity(); i++) {
 			kSpherePosition_Wtr.VBuffer.SetColor3(0, i, 1, 0, 0);
@@ -579,7 +677,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		kSphereNode_Wtr.AttachChild(kSpherePosition_Wtr);
 		kSphereNode_Wtr.SetName("Wtr");
 		// AddNode(kSphereNode_Wtr);
-		
+
 	}
 
 	/**
@@ -598,25 +696,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 			m_spkCamera.SetFrame(kCLoc, kCDir, kCUp, kCRight);
 
 			// if (iEvent == NavigationBehavior.EVENT_CHANGE_POSITION) {
-				// updateSlicesCenter();
+			// updateSlicesCenter();
 			// }
 		}
 
 	}
-	
-    /**
-     * Currently only being used to update the picking point
-     * @param name   surface name
-     * @param position  surface location
-     */
+
+	/**
+	 * Currently only being used to update the picking point
+	 * @param name   surface name
+	 * @param position  surface location
+	 */
 	public void updateSceneNodePoint(String name, Vector3f position) {
 		Matrix3f currentRotation = getObjectRotation();
 		Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
 		Vector3f location = rotationInverse.mult(position);
 		m_kParent.translateSurface(name, location);
 	}
-	
-	
+
+
 	/**
 	 * Update the bottom 3 planar view center
 	 */
@@ -631,45 +729,45 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Na
 		location.X *= (m_kVolumeImageA.GetImage().getExtents()[0]-1);
 		location.Y *= (m_kVolumeImageA.GetImage().getExtents()[1]-1);
 		location.Z *= (m_kVolumeImageA.GetImage().getExtents()[2]-1);
-        m_kParent.setSliceFromPlane(location);
+		m_kParent.setSliceFromPlane(location);
 	}
-	
+
 	/**
 	 * Update the camera in 3D view window.
 	 * @param kCenter   center in image space
 	 */
-	 public void setCameraCenter(Vector3f kCenter) {
-		  
-		 if ( isNavigationEnabled ) {
-	
-			  int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
-			  Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
-					  (kCenter.Y / (aiExtents[1] -1)),
-					  (kCenter.Z / (aiExtents[2] -1))  );
-			  tfCenter.X *= m_fX;
-			  tfCenter.Y *= m_fY;
-			  tfCenter.Z *= m_fZ;
-	
-			  tfCenter.add(m_kTranslate);
-			  
-			  m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,getNearPlane(),10.0f);
-			
-			  Matrix3f currentRotation = getObjectRotation();
-			  Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
-			  Vector3f location = rotationInverse.multLeft(tfCenter);
-			  
-			  navigationBehavior.setViewPoint(location);
-			  navigationBehavior.setDirection(m_spkCamera.GetDVector());
-			  navigationBehavior.setUpVector(m_spkCamera.GetUVector());
-			  Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
-			  
-			  m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
-		  
-		  }
-		  
-	  }
-	 
-	  public void setCameraViewRotationDegree(int degree) {
-		  navigationBehavior.setCamerViewRotationDegree(degree);
-	  }
+	public void setCameraCenter(Vector3f kCenter) {
+
+		if ( isNavigationEnabled ) {
+
+			int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
+			Vector3f tfCenter = new Vector3f( (kCenter.X / (aiExtents[0] -1)),
+					(kCenter.Y / (aiExtents[1] -1)),
+					(kCenter.Z / (aiExtents[2] -1))  );
+			tfCenter.X *= m_fX;
+			tfCenter.Y *= m_fY;
+			tfCenter.Z *= m_fZ;
+
+			tfCenter.add(m_kTranslate);
+
+			m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,getNearPlane(),10.0f);
+
+			Matrix3f currentRotation = getObjectRotation();
+			Matrix3f rotationInverse = Matrix3f.inverse(currentRotation);
+			Vector3f location = rotationInverse.multLeft(tfCenter);
+
+			navigationBehavior.setViewPoint(location);
+			navigationBehavior.setDirection(m_spkCamera.GetDVector());
+			navigationBehavior.setUpVector(m_spkCamera.GetUVector());
+			Vector3f cameraRight = Vector3f.unitCross(m_spkCamera.GetDVector(), m_spkCamera.GetUVector());
+
+			m_spkCamera.SetFrame(location, m_spkCamera.GetDVector(), m_spkCamera.GetUVector(), cameraRight);			  
+
+		}
+
+	}
+
+	public void setCameraViewRotationDegree(int degree) {
+		navigationBehavior.setCamerViewRotationDegree(degree);
+	}
 }

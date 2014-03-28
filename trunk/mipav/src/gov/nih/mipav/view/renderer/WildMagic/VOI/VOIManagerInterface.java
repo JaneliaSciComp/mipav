@@ -270,6 +270,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     
     private boolean m_bDefaultImage;
     private ModelImage m_kTempImage = null;
+    
+    private boolean mouse3D = false;
 
     /**
      * Creates a VOIManagerInterface object.
@@ -1153,14 +1155,81 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             } else {
                 MipavUtil.displayError("At least 1 VOI must be present to perform Logical Operations");
             }
-        } else if ( command.equals("buildWormLattice") ) {
+        } else if ( command.equals("OpenLeftRightMarkers") ) {
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
 
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+            	VOIVector leftRightMarkers = new VOIVector();
+                voiDir = new String(directory + fileName + File.separator);
+                loadAllVOIsFrom(voiDir, false, leftRightMarkers);
+                System.err.println( "Left Right Markers " + leftRightMarkers.size() );
+            }
+        } else if ( command.equals("OpenLattice") ) {
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String voiDir = null;
+
+            final JFileChooser chooser = new JFileChooser();
+
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            }
+
+            if (fileName != null) {
+            	lattice = new VOIVector();
+                voiDir = new String(directory + fileName + File.separator);
+                loadAllVOIsFrom(voiDir, false, lattice);
+                System.err.println( "Lattice " + lattice.size() );
+            }
+        } else if ( command.equals("AddLeftRightMarkers") ) {
+        	mouse3D = true;
+        } else if ( command.equals("buildWormLattice") ) {
         	new JDialogLattice( getActiveImage() );
+        } else if ( command.equals("straightenLattice") ) {
+        	if ( lattice != null )
+        	{
+        		JDialogLattice.interpolateLattice(getActiveImage(), lattice.elementAt(0));
+        	}
         } else {
             doVOI(command);
         }
 
     }
+	VOIVector lattice = null;
 
     @Override
     public void addedCurve(VOIEvent added) {
@@ -2019,6 +2088,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 return;
             }
         }
+    }
+    
+    public boolean is3DMouseEnabled()
+    {
+    	return mouse3D;
+    }
+    
+    public void set3DMouseEnabled( boolean enabled )
+    {
+    	mouse3D = enabled;
     }
 
     /* (non-Javadoc)
@@ -3840,6 +3919,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * @param quietMode if true indicates that warnings should not be displayed.
      */
     private void loadAllVOIsFrom(final String voiDir, boolean quietMode) {
+    	loadAllVOIsFrom(voiDir, quietMode, null);
+    }
+    
+
+    /**
+     * This method loads all VOIs to the active image from a given directory.
+     * @param voiDir the directory to load voi's from
+     * @param quietMode if true indicates that warnings should not be displayed.
+     */
+    private void loadAllVOIsFrom(final String voiDir, boolean quietMode, VOIVector resultVector) {
 
         int i, j;
         VOI[] VOIs;
@@ -3895,6 +3984,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                     currentImage.registerVOI(VOIs[j]);
                     VOIs[j].addVOIListener(this);
                     advanceVOIUID();
+                    
+                    if ( resultVector != null )
+                    {
+                    	resultVector.add(VOIs[j]);
+                    }
                 }
             }
 

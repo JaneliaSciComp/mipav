@@ -280,6 +280,24 @@ public class VolumeRayCast extends VolumeObject
         m_kTranslate = new Vector3f( m_kScene.WorldBound.GetCenter() );
         m_kTranslate.neg();
         m_kScene.GetChild(0).Local.SetTranslate( m_kTranslate );
+        
+        
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kLocalScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(0, 0, 0);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
     }
     
     /** delete local memory. */
@@ -343,6 +361,12 @@ public class VolumeRayCast extends VolumeObject
     {
         return m_kMaterial;
     }
+    
+    public TriMesh getMesh()
+    {
+    	return m_kMesh;
+    }
+    
 	/** Returns the VolumeShaderEffect.
      * @return the VolumeShaderEffect.
      */
@@ -351,6 +375,7 @@ public class VolumeRayCast extends VolumeObject
         return m_kVolumeShaderEffect;
         
     }
+    
 	/** Returns the translation vector.
      * @return the translation vector.
      */
@@ -358,6 +383,7 @@ public class VolumeRayCast extends VolumeObject
     {
         return m_kTranslate;
     }
+    
     public Matrix4f GetWorld()
     {
         m_kScene.UpdateGS();
