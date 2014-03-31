@@ -783,32 +783,65 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 	 */
 	private void runVabra()
     {
+		Preferences.debug("Entered runVabra()\n", Preferences.DEBUG_ALGORITHM);
     	if ( registeredB0 == null && registeredDWI != null )
     	{
+    		Preferences.debug("registeredB0 == null && registeredDWI != null\n", Preferences.DEBUG_ALGORITHM);
     		// extract from registered DWI image:
+    		Preferences.debug("refImageNumText.getText() = " + refImageNumText.getText() + "\n", Preferences.DEBUG_ALGORITHM);
             int indexB0 = Integer.parseInt(refImageNumText.getText());
+            Preferences.debug("indexB0 = " + indexB0 + "\n", Preferences.DEBUG_ALGORITHM);
     		registeredB0 = extractSubVolume( registeredDWI, indexB0 );
+    		Preferences.debug("Completed registeredB0 = extractSubVolume( registeredDWI, indexB0)\n", Preferences.DEBUG_ALGORITHM);
     	}
     	if ( resampledT2 != null && registeredB0 != null)
     	{
     		VabraAlgorithm vabra = new VabraAlgorithm();
+    		Preferences.debug("Completed VabraAlgorithm vabra = new VabraAlgorithm()\n", Preferences.DEBUG_ALGORITHM);
     		vabra.solve( registeredB0, resampledT2 );
+    		Preferences.debug("Completed vabra.solve( registeredB0, resampledT2 )\n", Preferences.DEBUG_ALGORITHM);
     		// Opens the Deformation Field in a window:
     		deformationB0T2 = vabra.getDeformationField();
+    		if (deformationB0T2 != null) {
+    			Preferences.debug("deformationB0T2 != null\n", Preferences.DEBUG_ALGORITHM);
+    		}
+    		else {
+    			Preferences.debug("deformationB0T2 == null\n", Preferences.DEBUG_ALGORITHM);
+    		}
     		ModelImage registeredB0 = vabra.getRegisteredResults();
+    		if (registeredB0 != null) {
+    			Preferences.debug("registeredB0 != null\n", Preferences.DEBUG_ALGORITHM);
+    		}
+    		else {
+    		    Preferences.debug("registeredB0 == null\n", Preferences.DEBUG_ALGORITHM);
+    		}
     		if ( displayDeformationField.isEnabled() && displayDeformationField.isSelected() )
     		{
+    			Preferences.debug("Doing new ViewJFrameImage(deformationB0T2)\n", Preferences.DEBUG_ALGORITHM);
     			new ViewJFrameImage( deformationB0T2 );
     		}
     		if ( displayRegisteredB0.isEnabled() && displayRegisteredB0.isSelected() )
     		{
+    			Preferences.debug("Doing new ViewJFrameImage( registeredB0 )\n", Preferences.DEBUG_ALGORITHM);
     			new ViewJFrameImage( registeredB0 );
     		}
+    		Preferences.debug("deformationB0T2.getImageName() = " + deformationB0T2.getImageName() + "\n", Preferences.DEBUG_ALGORITHM);
 			ModelImage.saveImage( deformationB0T2, deformationB0T2.getImageName() + ".xml", outputDir.getText() );
+			Preferences.debug("registeredB0.getImageName() = " + registeredB0.getImageName() + "\n", Preferences.DEBUG_ALGORITHM);
 			ModelImage.saveImage( registeredB0, registeredB0.getImageName() + ".xml", outputDir.getText() );
-			
+			Preferences.debug("Completed ModelImage.saveImavge( registeredB0\n", Preferences.DEBUG_ALGORITHM);
 			deformationB0T2Text.setText( outputDir.getText() + File.separator + deformationB0T2.getImageName() + ".xml");
+			Preferences.debug("Completed deformationB0T2Text.setText\n", Preferences.DEBUG_ALGORITHM);
 			enableComputeEpiDistortion();
+			Preferences.debug("Completed enabledComputeEpiDistortion()\n", Preferences.DEBUG_ALGORITHM);
+    	}
+    	else {
+    		if (resampledT2 == null) {
+    			Preferences.debug("resampledT2 == null\n", Preferences.DEBUG_ALGORITHM);
+    		}
+    		if (registeredB0 == null) {
+    			Preferences.debug("registeredB0 == null\n", Preferences.DEBUG_ALGORITHM);
+    		}
     	}
     }
 	public JPanel buildLoadPanel( ActionListener listener, JPanel mainPanel, 
